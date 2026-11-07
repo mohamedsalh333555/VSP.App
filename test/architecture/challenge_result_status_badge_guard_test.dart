@@ -1,0 +1,19 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('submit-result badge is limited to ended unsubmitted matches', () {
+    final source = File(
+      'lib/features/player/widgets/user_bookings/challenge_result_actions.dart',
+    ).readAsStringSync();
+    final start = source.indexOf('static Widget buildChallengeStatusBadge(');
+    final end = source.indexOf('static Widget buildStatusBadge(', start);
+    expect(start, greaterThanOrEqualTo(0));
+    expect(end, greaterThan(start));
+    final badge = source.substring(start, end);
+    expect(badge, contains('booking.matchResultStatus == MatchResultStatus.noResult &&'));
+    expect(badge, contains('!booking.endTime.isAfter(VSPTimeService.now)'));
+    expect(badge, contains('buildStatusBadge(l10n.submitResult, VSPColors.warning)'));
+  });
+}

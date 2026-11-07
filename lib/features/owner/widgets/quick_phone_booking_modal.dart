@@ -56,7 +56,7 @@ class QuickPhoneBookingModal extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => QuickPhoneBookingModal(
         stadium: stadium,
         date: date,
@@ -190,12 +190,13 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
       }
     }
 
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final initiatingUserId = authProvider.currentUser?.id;
     setState(() => _isSaving = true);
     HapticFeedback.mediumImpact();
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final ownerId = authProvider.currentUser?.uid ?? widget.stadium.ownerId;
+      final ownerId = initiatingUserId ?? widget.stadium.ownerId;
       final bookingRef = 'MAN_${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
       final cleanPhone = rawPhone.isNotEmpty ? PhoneUtils.normalize(rawPhone) : null;
@@ -218,19 +219,25 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
 
       final createdBookingId = response?['booking_id']?.toString() ?? response?['id']?.toString() ?? bookingRef;
 
-      if (!mounted) return;
+      if (!mounted ||
+          authProvider.currentUser?.id != initiatingUserId) {
+        return;
+      }
       HapticFeedback.lightImpact();
+      final parentContext = Navigator.of(context).context;
+      final parentNavigator = Navigator.of(context);
 
       // Refresh bookings in provider immediately
       Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(ownerId);
 
-      // Dismiss modal
-      Navigator.pop(context, true);
+      // Dismiss modal before showing the follow-up receipt on the host route.
+      parentNavigator.pop(true);
+      if (!parentContext.mounted) return;
 
       // If phone was provided, prompt WhatsApp receipt dialog, otherwise show direct success toast
       if (cleanPhone != null && cleanPhone.isNotEmpty) {
         showQuickBookingReceiptSheet(
-          context: context,
+          context: parentContext,
           stadium: widget.stadium,
           bookingRef: createdBookingId.length >= 8 ? createdBookingId.substring(0, 8).toUpperCase() : createdBookingId,
           customerName: customerName,
@@ -243,12 +250,15 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
         );
       } else {
         VSPFeedback.showSuccess(
-          context,
+          parentContext,
           isAr ? 'تم تأكيد حجز $customerName بنجاح' : 'Booking confirmed for $customerName',
         );
       }
-    } catch (e) {
-      if (mounted) {
+    } catch (e, stackTrace) {
+      debugPrint('Owner quick phone booking failed: $e\n$stackTrace');
+      if (mounted &&
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id ==
+              initiatingUserId) {
         setState(() => _isSaving = false);
         final err = e.toString().toLowerCase();
         final isAr = Localizations.localeOf(context).languageCode == 'ar';
@@ -261,8 +271,12 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
         } else if (err.contains('unauthorized') || err.contains('owner_mismatch')) {
           VSPFeedback.showError(context, isAr ? 'غير مصرح لك، يرجى إعادة تسجيل الدخول' : 'Unauthorized operation');
         } else {
-          final cleanMsg = e.toString().replaceAll('Exception:', '').trim();
-          VSPFeedback.showError(context, cleanMsg.isNotEmpty ? cleanMsg : (isAr ? 'حدث خطأ أثناء حفظ الحجز' : 'Failed to save phone booking'));
+          VSPFeedback.showError(
+            context,
+            isAr
+                ? 'تعذر حفظ الحجز الهاتفي. تحقق من البيانات والاتصال ثم حاول مرة أخرى.'
+                : 'Could not save the phone booking. Check the details and connection, then retry.',
+          );
         }
       }
     }
@@ -275,19 +289,14 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
     final startTimeStr = AppDateFormatter.formatTime(widget.startTime.toLocal(), isAr ? 'ar' : 'en');
     final endTimeStr = AppDateFormatter.formatTime(_effectiveEndTime.toLocal(), isAr ? 'ar' : 'en');
     final dynamicSlotWindow = '$startTimeStr - $endTimeStr';
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: bottomInset,
-      ),
-      child: Container(
+    return Container(
         padding: EdgeInsets.fromLTRB(
           VSPSpacing.lg,
           VSPSpacing.lg,
           VSPSpacing.lg,
-          bottomInset > 0 ? VSPSpacing.md : (bottomPadding > 0 ? bottomPadding + 16 : 24),
+          bottomPadding + 16,
         ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
@@ -313,7 +322,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
               Text(
                 isAr ? 'حجز يدوي' : 'Manual Booking',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VSPColors.white,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
                   letterSpacing: -0.3,
@@ -326,23 +335,38 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
                 children: [
                   const Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 13),
                   const SizedBox(width: 4),
-                  Text(
-                    widget.stadium.name,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      widget.stadium.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: VSPColors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
                   ),
                   const SizedBox(width: 6),
                   const Text('•', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
                   const SizedBox(width: 6),
-                  Text(
-                    dateStr,
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  Flexible(
+                    flex: 2,
+                    child: Text(
+                      dateStr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                    ),
                   ),
                   const SizedBox(width: 6),
                   const Text('•', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
                   const SizedBox(width: 6),
-                  Text(
-                    dynamicSlotWindow,
-                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w700, fontSize: 12),
+                  Flexible(
+                    flex: 2,
+                    child: Text(
+                      dynamicSlotWindow,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w700, fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -390,7 +414,6 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
             ],
           ),
         ),
-      ),
     );
   }
 }

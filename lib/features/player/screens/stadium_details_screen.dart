@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/ui/vsp_ui.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/repositories/stadium_repository.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../widgets/stadium_details/stadium_bottom_booking_bar.dart';
@@ -21,36 +23,62 @@ class StadiumDetailsScreen extends StatefulWidget {
 
 class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late final List<String> _displayImages;
-  late final Stream<List<Map<String, dynamic>>> _stadiumStream;
+  late Stream<List<Map<String, dynamic>>> _stadiumStream;
+
+  void _subscribeToStadium() {
+    _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
+  }
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
+    unawaited(
+      AnalyticsService.logVenueViewed(venueId: widget.stadium.id),
+    );
+  }
 
-    // Parse ALL genuine stadium images (primary imageUrl + images array + features['allImages'])
-    final List<String> rawImages = [];
-    if (widget.stadium.imageUrl.isNotEmpty) {
-      rawImages.add(widget.stadium.imageUrl);
+  List<String> _collectDisplayImages(Stadium stadium) {
+    // Parse all genuine stadium images while preserving their source order.
+    final images = <String>[];
+    if (stadium.imageUrl.trim().isNotEmpty) {
+      images.add(stadium.imageUrl.trim());
     }
-    for (final img in widget.stadium.images) {
-      if (img.isNotEmpty && !rawImages.contains(img)) {
-        rawImages.add(img);
+    for (final image in stadium.images) {
+      final value = image.trim();
+      if (value.isNotEmpty && !images.contains(value)) {
+        images.add(value);
       }
     }
-    final features = widget.stadium.features;
+    final features = stadium.features;
     if (features is Map && features['allImages'] is List) {
-      for (final img in (features['allImages'] as List)) {
-        final imgStr = img.toString().trim();
-        if (imgStr.isNotEmpty && !rawImages.contains(imgStr)) {
-          rawImages.add(imgStr);
+      for (final image in features['allImages'] as List) {
+        // Ignore malformed non-string metadata instead of turning values such
+        // as null or maps into bogus network-image URLs.
+        if (image is! String) continue;
+        final value = image.trim();
+        if (value.isNotEmpty && !images.contains(value)) {
+          images.add(value);
         }
       }
     }
+    return images;
+  }
 
-    _displayImages = rawImages;
+  @override
+  void didUpdateWidget(covariant StadiumDetailsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stadium.id != widget.stadium.id) {
+      _stadiumStream =
+          StadiumRepository().streamStadiumRaw(widget.stadium.id);
+      // A different stadium starts at the first information tab rather than
+      // inheriting the previous stadium's tab selection.
+      _tabController.index = 0;
+      unawaited(
+        AnalyticsService.logVenueViewed(venueId: widget.stadium.id),
+      );
+    }
   }
 
   @override
@@ -62,13 +90,17 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   Widget _buildTabItem(int index, String label) {
     final isSelected = _tabController.index == index;
     return Expanded(
-      child: GestureDetector(
-        onTap: () => _tabController.animateTo(index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.all(4),
+      child: Material(
+        color: VSPColors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
+          onTap: () => _tabController.animateTo(index),
+          child: AnimatedContainer(
+          duration: VSPDSMotion.selection,
+          height: 48,
+          margin: EdgeInsets.zero,
           decoration: BoxDecoration(
-            color: isSelected ? VSPColors.accent : Colors.transparent,
+            color: isSelected ? VSPColors.accent : VSPColors.transparent,
             borderRadius: BorderRadius.circular(VSPRadius.xl),
           ),
           alignment: Alignment.center,
@@ -83,6 +115,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -94,19 +127,77 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       stream: _stadiumStream,
       builder: (context, snapshot) {
         Stadium stadium = widget.stadium;
+        var parseFailed = false;
         if (snapshot.hasData && snapshot.data!.isNotEmpty) {
           try {
             stadium = Stadium.fromFirestore(snapshot.data!.first, widget.stadium.id);
-          } catch (_) {}
+          } catch (_) {
+            parseFailed = true;
+          }
         }
+        // Derive the gallery from the same resolved stadium snapshot used by
+        // the information tabs. This keeps images in sync with live DB updates,
+        // not only with the route's original widget argument.
+        final displayImages = _collectDisplayImages(stadium);
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        final hasStreamIssue = snapshot.hasError ||
+            (snapshot.hasData && snapshot.data!.isEmpty) ||
+            parseFailed;
 
         return VSPScaffold(
           backgroundColor: VSPColors.background,
           body: Column(
             children: [
+              if (hasStreamIssue)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    VSPSpacing.md,
+                    VSPSpacing.sm,
+                    VSPSpacing.md,
+                    0,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: VSPSpacing.md,
+                      vertical: VSPSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: VSPColors.warning.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(
+                        color: VSPColors.warning.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          color: VSPColors.warning,
+                          size: 18,
+                        ),
+                        const SizedBox(width: VSPSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            isArabic
+                                ? 'تعذر تحديث بيانات الملعب. نعرض آخر بيانات متاحة.'
+                                : 'Could not refresh stadium details. Showing the last available information.',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => setState(_subscribeToStadium),
+                          child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               StadiumImageCarousel(
                 stadium: stadium,
-                displayImages: _displayImages,
+                displayImages: displayImages,
               ),
               Container(
                 color: VSPColors.background,

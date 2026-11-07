@@ -48,7 +48,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     setState(() => _isProcessing = true);
     try {
       final success = await MatchRepository().leavePublicMatch(widget.booking.id, userId);
-      if (!mounted) return;
+      if (!mounted ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (success) {
         VSPFeedback.showSuccess(context, isArabic ? 'تم خروجك من المباراة بنجاح.' : 'You left the match successfully.');
@@ -56,7 +59,17 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
         VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
       }
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e.toString());
+      debugPrint('Open Join leave failed: $e');
+      if (mounted &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر الخروج من المباراة. حاول مرة أخرى.'
+              : 'Could not leave the match. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
@@ -67,7 +80,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     setState(() => _isProcessing = true);
     try {
       final success = await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
-      if (!mounted) return;
+      if (!mounted ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (success) {
         VSPFeedback.showSuccess(context, isArabic ? 'تم إلغاء طلب الانضمام.' : 'Join request cancelled.');
@@ -75,7 +91,17 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
         VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
       }
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e.toString());
+      debugPrint('Open Join request cancellation failed: $e');
+      if (mounted &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إلغاء طلب الانضمام. حاول مرة أخرى.'
+              : 'Could not cancel the join request. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
@@ -88,41 +114,80 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
   }
 
   Future<void> _openChat() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final userId = context.read<app_auth.AuthProvider>().currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isArabic ? 'سجّل الدخول أولاً لفتح المحادثة.' : 'Sign in to open this chat.'),
+      ));
+      return;
+    }
     final other = <String>[
       widget.booking.ownerId,
       widget.booking.createdByUserId,
       ...widget.booking.joinedUserIds,
     ].firstWhere((id) => id.isNotEmpty && id != userId, orElse: () => '');
-    if (other.isEmpty) return;
+    if (other.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isArabic ? 'لا يوجد مشارك متاح للمحادثة حالياً.' : 'No participant is available to chat with yet.'),
+      ));
+      return;
+    }
     try {
       final chat = await ChatRepository().getOrCreateDirectChat(
         otherUserId: other,
-        isArabic: Localizations.localeOf(context).languageCode == 'ar',
+        isArabic: isArabic,
         contextType: 'booking',
         contextId: widget.booking.id,
       );
+      if (!mounted ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
       final chatId = chat['id']?.toString();
-      if (chatId == null || !mounted) return;
+      if (chatId == null || chatId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(isArabic ? 'تعذر فتح المحادثة حالياً. حاول مرة أخرى.' : 'Could not open the chat. Please try again.'),
+        ));
+        return;
+      }
       Navigator.push(context, MaterialPageRoute(
         builder: (_) => ChatScreen(booking: widget.booking, conversationId: chatId, otherUserId: other),
       ));
     } catch (e) {
       debugPrint('Open Join chat unavailable: $e');
+      if (!mounted ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isArabic ? 'تعذر فتح المحادثة حالياً. حاول مرة أخرى.' : 'Could not open the chat. Please try again.'),
+      ));
     }
   }
 
-  void _shareMatch() {
+  Future<void> _shareMatch() async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    SharingService.shareMatch(
-      bookingId: widget.booking.id,
-      teamName: widget.booking.playerTeamName ??
-          widget.booking.hostName ??
-          (isArabic ? 'مباراة تجميعية' : 'Open Join Match'),
-      stadiumName: widget.booking.stadiumName,
-      date: '${widget.booking.formattedDate} - ${widget.booking.formattedTimeRange}',
-    );
+    try {
+      await SharingService.shareMatch(
+        bookingId: widget.booking.id,
+        teamName: widget.booking.playerTeamName ??
+            widget.booking.hostName ??
+            (isArabic ? 'مباراة تجميعية' : 'Open Join Match'),
+        stadiumName: widget.booking.stadiumName,
+        date: '${widget.booking.formattedDate} - ${widget.booking.formattedTimeRange}',
+      );
+    } catch (e) {
+      debugPrint('Open Join match sharing failed: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذرت مشاركة المباراة. حاول مرة أخرى.'
+              : 'Could not share the match. Please try again.',
+        );
+      }
+    }
   }
 
   bool _canHostCancel() {
@@ -210,13 +275,16 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     } else if (isPending) {
       statusColor = VSPColors.warning;
       statusText = isArabic ? 'طلبك قيد المراجعة' : 'Join request pending';
+    } else if (remaining == 0) {
+      statusColor = VSPColors.textSecondary;
+      statusText = isArabic ? 'اكتمل العدد' : 'Full';
     } else {
       statusColor = VSPColors.success;
       statusText = isArabic ? 'مفتوحة للانضمام' : 'Open to join';
     }
 
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(VSPRadius.card),
         onTap: _openDetails,
@@ -392,7 +460,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                       child: VSPAnimatedButton(
                         text: isArabic ? 'تفاصيل المباراة' : 'Match details',
                         color: VSPColors.accent,
-                        textColor: Colors.black,
+                        textColor: VSPColors.black,
                         onPressed: _openDetails,
                       ),
                     ),
@@ -416,7 +484,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                       child: VSPAnimatedButton(
                         text: isArabic ? 'إدارة اللاعبين' : 'Manage players',
                         color: VSPColors.accent,
-                        textColor: Colors.black,
+                        textColor: VSPColors.black,
                         onPressed: () => ManageParticipantsModal.show(context, booking: booking),
                       ),
                     ),
@@ -488,7 +556,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                 VSPAnimatedButton(
                   text: isArabic ? 'تفاصيل المباراة' : 'Match details',
                   color: VSPColors.accent,
-                  textColor: Colors.black,
+                  textColor: VSPColors.black,
                   onPressed: _openDetails,
                 ),
               ],

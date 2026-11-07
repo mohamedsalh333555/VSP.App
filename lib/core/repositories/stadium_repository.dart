@@ -225,6 +225,11 @@ class StadiumRepository {
     double? minPrice,
     double? maxPrice,
     bool? noDepositOnly,
+    List<String>? amenities,
+    String? quickFilter,
+    String? floorType,
+    String? searchQuery,
+    String? sortBy,
   }) async {
     try {
       dynamic query = _supabase
@@ -233,13 +238,14 @@ class StadiumRepository {
           .eq('is_verified', true)
           .eq('is_blocked', false)
           .eq('is_deleted_by_owner', false);
+      final orGroups = <String>[];
 
       // 1. Governorate Filter
       if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
         final String? standardGov = EgyptGovernorates.resolveGoogleName(governorate);
         if (standardGov != null) {
           final String arGov = EgyptGovernorates.governorateToArabic[standardGov] ?? standardGov;
-          query = query.or('governorate.eq.$standardGov,governorate.eq.$arGov');
+          orGroups.add('or(governorate.eq.$standardGov,governorate.eq.$arGov)');
         }
       }
 
@@ -249,20 +255,45 @@ class StadiumRepository {
           .where((s) => s.isNotEmpty && s != 'All')
           .toList();
       if (normalizedSports.isNotEmpty) {
-        query = query.inFilter('type', normalizedSports);
+        final sportExpressions = normalizedSports.map((sport) {
+          final safeSport = sport.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
+          return 'description.ilike.%Sport:$safeSport%,notes.ilike.%Sport:$safeSport%';
+        }).join(',');
+        orGroups.add('or($sportExpressions)');
       } else if (sportType != null && sportType.isNotEmpty && sportType != 'All') {
-        query = query.or('type.ilike.%$sportType%,description.ilike.%|Sport:$sportType%');
+        final safeSport = sportType.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
+        orGroups.add(
+          'or(description.ilike.%Sport:$safeSport%,notes.ilike.%Sport:$safeSport%)',
+        );
       }
 
       // 3. Pitch Size Filter
       final normalizedSizes = (pitchSizes ?? const <String>[])
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
+          .map((value) => int.tryParse(RegExp(r'\d+').firstMatch(value)?.group(0) ?? ''))
+          .whereType<int>()
+          .toSet()
           .toList();
       if (normalizedSizes.isNotEmpty) {
-        query = query.inFilter('size', normalizedSizes);
-      } else if (pitchSize != null && pitchSize.isNotEmpty) {
-        query = query.eq('size', pitchSize);
+        query = query.inFilter('players_per_team', normalizedSizes);
+      } else if (pitchSize != null && pitchSize.isNotEmpty && pitchSize != 'All') {
+        final playerCount = int.tryParse(RegExp(r'\d+').firstMatch(pitchSize)?.group(0) ?? '');
+        if (playerCount != null) query = query.eq('players_per_team', playerCount);
+      }
+
+      // 3b. Floor type and text search are applied before pagination.
+      final cleanFloorType = floorType?.trim() ?? '';
+      if (cleanFloorType.isNotEmpty && cleanFloorType != 'All') {
+        query = query.ilike('features->>floorType', '%$cleanFloorType%');
+      }
+      final cleanSearch = (searchQuery ?? '')
+          .trim()
+          .replaceAll(RegExp(r'[^A-Za-z0-9\u0600-\u06FF\s-]'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' ');
+      if (cleanSearch.isNotEmpty) {
+        orGroups.add(
+          'or(name.ilike.%$cleanSearch%,location.ilike.%$cleanSearch%,'
+          'city.ilike.%$cleanSearch%,governorate.ilike.%$cleanSearch%)',
+        );
       }
 
       // 4. Price Range Filter
@@ -275,17 +306,76 @@ class StadiumRepository {
 
       // 5. No Deposit Filter
       if (noDepositOnly == true) {
-        query = query.eq('needs_deposit', false);
+        orGroups.add('or(needs_deposit.eq.false,deposit_amount.lte.0)');
+      }
+
+      if (quickFilter == 'night_shift') {
+        // closing_time is a PostgreSQL TIME column, not text.
+        orGroups.add(
+          'or(closing_time.lt.06:00:00,'
+          'features->workingHours->>end.ilike.%AM%,'
+          'features->workingHours->>end.ilike.%صباحاً%,'
+          'features->workingHours->>end.ilike.%00:%,'
+          'features->workingHours->>end.ilike.%01:%,'
+          'features->workingHours->>end.ilike.%02:%,'
+          'features->workingHours->>end.ilike.%03:%,'
+          'features->workingHours->>end.ilike.%04:%,'
+          'features->workingHours->>end.ilike.%05:%)',
+        );
+      } else if (quickFilter == 'no_deposit' && noDepositOnly != true) {
+        orGroups.add('or(needs_deposit.eq.false,deposit_amount.lte.0)');
+      }
+
+      // Apply each selected amenity before range pagination.
+      for (final amenity in amenities ?? const <String>[]) {
+        final expression = _amenityOrExpression(amenity);
+        if (expression == null) throw ArgumentError('Unsupported stadium amenity filter');
+        orGroups.add('or($expression)');
       }
       
-      query = query
-          .order('is_featured', ascending: false)
-          .order('created_at', ascending: false);
+      // One nested PostgREST expression combines every OR group with AND semantics.
+      if (orGroups.isNotEmpty) {
+        query = query.or('and(${orGroups.join(',')})');
+      }
+
+      switch (sortBy) {
+        case 'priceLowToHigh':
+          query = query
+              .order('price_per_hour', ascending: true)
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
+          break;
+        case 'priceHighToLow':
+          query = query
+              .order('price_per_hour', ascending: false)
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
+          break;
+        case 'topRated':
+          query = query
+              .order('rating', ascending: false)
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
+          break;
+        default:
+          query = query
+              .order('is_featured', ascending: false)
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
+      }
 
       final int startIndex = (startAfter is int) ? startAfter : 0;
       final int endIndex = startIndex + limit - 1;
       
+      // Debug-only timing for real-device discovery baselines. No location,
+      // search text, account identifiers, or result contents are logged.
+      final queryTimer = Stopwatch()..start();
       final response = await query.range(startIndex, endIndex);
+      queryTimer.stop();
+      VSPLogger.d(
+        'stadium_discovery_query_ms=${queryTimer.elapsedMilliseconds} '
+        'page_size=${response.length}',
+      );
       final items = (response as List)
           .map((doc) => Stadium.fromFirestore(doc as Map<String, dynamic>, doc['id'].toString()))
           .toList();
@@ -296,7 +386,29 @@ class StadiumRepository {
       };
     } catch (e) {
       VSPLogger.e('FAILED TO FETCH STADIUMS', e);
-      return {'items': <Stadium>[], 'lastDoc': null};
+      rethrow;
+    }
+  }
+
+  String? _amenityOrExpression(String amenity) {
+    switch (amenity.trim().toLowerCase()) {
+      case 'دش وحمام':
+      case 'showers & baths':
+        return 'features->>bathOption.ilike.%yes%,features->>hasShower.eq.true,features->>shower.eq.true';
+      case 'غرف تغيير ملابس':
+      case 'changing rooms':
+        return 'features->>changingRoom.eq.true,features->>changingRooms.eq.true,features->>hasChangingRooms.eq.true';
+      case 'كافتيريا ومشروبات':
+      case 'cafeteria & drinks':
+        return 'features->>cafeteria.gt.0,features->>cafeteria.eq.true,features->>hasCafeteria.eq.true';
+      case 'جراج سيارات':
+      case 'garage & parking':
+        return 'features->>garage.eq.true,features->>hasGarage.eq.true,features->>parking.eq.true';
+      case 'مقاعد':
+      case 'spectator seats':
+        return 'features->>hasSeats.eq.true,features->>seats.gt.0';
+      default:
+        return null;
     }
   }
 
@@ -336,11 +448,8 @@ class StadiumRepository {
         .eq('id', stadiumId)
         .timeout(
           const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
-        .handleError((e) {
-          VSPLogger.w('Handled realtime error in stadium details stream: $e');
-        });
+          onTimeout: (sink) => sink.addError(StateError('stadium_stream_timeout')),
+        );
   }
 
   /// Stream reviews for a stadium
@@ -351,16 +460,13 @@ class StadiumRepository {
         .eq('stadium_id', stadiumId)
         .timeout(
           const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
+          onTimeout: (sink) => sink.addError(StateError('stadium_reviews_stream_timeout')),
         )
         .map((list) {
           final sorted = List<Map<String, dynamic>>.from(list);
           sorted.sort((a, b) => DateTime.parse(b['created_at'].toString())
               .compareTo(DateTime.parse(a['created_at'].toString())));
           return sorted;
-        })
-        .handleError((e) {
-          VSPLogger.w('Handled realtime error in stadium reviews stream: $e');
         });
   }
 
@@ -421,7 +527,7 @@ class StadiumRepository {
           .toList();
     } catch (e) {
       VSPLogger.e('FAILED TO FETCH NEARBY STADIUMS', e);
-      return [];
+      rethrow;
     }
   }
 

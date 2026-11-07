@@ -40,17 +40,29 @@ class BookingCancellationCoordinator {
     if (booking == null) {
       throw Exception('بيانات الحجز غير متوفرة.');
     }
+    if (bookingId.trim().isEmpty) {
+      throw ArgumentError('معرّف الحجز مطلوب لإتمام الإلغاء.');
+    }
+    if (booking.id != bookingId) {
+      throw ArgumentError('معرّف الحجز لا يطابق بيانات الحجز المطلوب إلغاؤه.');
+    }
 
     try {
       final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
 
       if (isManual) {
         try {
-          await _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
+          final manualResult = await _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
             'p_booking_id': bookingId,
             'p_owner_id': booking.ownerId,
             'p_refund_deposit': false,
           });
+          if (manualResult is! Map || manualResult['success'] != true) {
+            throw Exception(sanitizeCancellationError(
+              null,
+              manualResult['message']?.toString(),
+            ));
+          }
         } catch (e) {
           // Never fall back to a direct bookings UPDATE: cancellation must pass
           // the server-side authorization/state/financial rules atomically.
@@ -70,6 +82,24 @@ class BookingCancellationCoordinator {
             if (data is Map && data['success'] == true) {
               VSPLogger.i('Paymob refund processed successfully for booking: $bookingId');
               paymobProcessed = true;
+            } else if (data is Map &&
+                data['refund_pending'] == true &&
+                data['manual_review'] != true) {
+              // The refund Edge Function can return success:false after it has
+              // already cancelled the booking and queued/manualized the refund.
+              // Confirm the persisted booking state before reporting cancellation success.
+              final persisted = await _supabase
+                  .from('bookings')
+                  .select('status,payment_status')
+                  .eq('id', bookingId)
+                  .maybeSingle();
+              if (persisted != null && persisted['status'] == 'cancelled') {
+                VSPLogger.w('Booking cancelled; refund remains pending for booking: $bookingId');
+                paymobProcessed = true;
+              } else {
+                final msg = data['message']?.toString();
+                throw Exception(sanitizeCancellationError(null, msg));
+              }
             } else {
               final msg = data is Map ? data['message']?.toString() : null;
               throw Exception(sanitizeCancellationError(null, msg));
@@ -85,7 +115,7 @@ class BookingCancellationCoordinator {
               'p_user_id': _supabase.auth.currentUser?.id,
               'p_reason': 'User requested cancellation from app',
             });
-            if (rpcRes is Map && rpcRes['success'] == false) {
+            if (rpcRes is! Map || rpcRes['success'] != true) {
               throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
             }
           }
@@ -95,7 +125,7 @@ class BookingCancellationCoordinator {
             'p_user_id': _supabase.auth.currentUser?.id,
             'p_reason': 'User requested cancellation from app',
           });
-          if (rpcRes is Map && rpcRes['success'] == false) {
+          if (rpcRes is! Map || rpcRes['success'] != true) {
             throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
           }
         }

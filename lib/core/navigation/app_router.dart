@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../ui/vsp_ui.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/welcome_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -20,13 +21,13 @@ import '../../features/player/screens/match_details_screen.dart';
 import '../../features/player/widgets/collective_match_invite_route.dart';
 import '../../features/player/screens/team_profile_screen.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
+import '../../features/player/screens/profile_subscreens/edit_profile_screen.dart';
 import 'offline_error_screen.dart';
 import 'suspended_account_screen.dart';
 import 'root_screen.dart';
 import '../../features/player/screens/championship_details_screen.dart';
 import '../../core/repositories/tournament_repository.dart';
 import '../../data/models.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../features/copilot/screens/vsp_copilot_screen.dart';
 import '../../features/copilot/screens/copilot_test_playground.dart';
 
@@ -163,28 +164,57 @@ class AppRouter {
  return FutureBuilder<Championship?>(
  future: TournamentRepository().getChampionshipById(id),
  builder: (context, snapshot) {
- if (snapshot.hasData && snapshot.data != null) {
- return ChampionshipDetailsScreen(championship: snapshot.data!);
- }
- return const Scaffold(
- backgroundColor: VSPColors.background,
- body: Center(
-   child: Column(
-     mainAxisSize: MainAxisSize.min,
-     children: [
-       CircularProgressIndicator(color: VSPColors.accent),
-       SizedBox(height: 16),
-       Text(
-         'جاري تحميل تفاصيل البطولة...',
-         style: TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+   if (snapshot.connectionState != ConnectionState.done) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     return VSPScaffold(
+       body: SafeArea(
+         child: VSPStateView(
+           state: VSPUiState.loading,
+           title: isArabic
+               ? 'جاري تحميل تفاصيل البطولة...'
+               : 'Loading championship details...',
+         ),
        ),
-     ],
-   ),
+     );
+   }
+
+   final championship = snapshot.data;
+   if (snapshot.hasError || championship == null) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     final hasError = snapshot.hasError;
+     return VSPScaffold(
+       body: SafeArea(
+         child: VSPStateView(
+           state: hasError ? VSPUiState.error : VSPUiState.empty,
+           title: hasError
+               ? (isArabic
+                   ? 'تعذر تحميل تفاصيل البطولة'
+                   : 'Could not load championship details')
+               : (isArabic ? 'البطولة غير متاحة' : 'Championship unavailable'),
+           message: hasError
+               ? (isArabic
+                   ? 'يمكنك العودة للرئيسية والمحاولة لاحقاً.'
+                   : 'Return home and try again later.')
+               : (isArabic
+                   ? 'قد تكون البطولة حُذفت أو لم تعد متاحة.'
+                   : 'This championship may have been removed or is no longer available.'),
+           action: OutlinedButton(
+             onPressed: () => context.go('/'),
+             child: Text(isArabic ? 'العودة للرئيسية' : 'Back to home'),
+           ),
+         ),
+       ),
+     );
+   }
+
+   return ChampionshipDetailsScreen(championship: championship);
+ },
+ );
+ },
  ),
- );
- },
- );
- },
+ GoRoute(
+ path: '/edit-profile',
+ builder: (context, state) => const EditProfileScreen(),
  ),
  GoRoute(
  path: '/notifications',

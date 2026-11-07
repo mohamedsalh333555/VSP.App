@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../screens/booking_confirmation_screen.dart';
@@ -33,7 +34,7 @@ class BookTonightSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => BookTonightSheet(
         stadiums: stadiums,
         service: service,
@@ -50,6 +51,8 @@ class BookTonightSheet extends StatefulWidget {
 class _BookTonightSheetState extends State<BookTonightSheet> {
   late final BookTonightService _service;
   bool _isLoading = true;
+  bool _hasLoadError = false;
+  bool _isLoadInFlight = false;
   List<TonightStadiumOffer> _offers = [];
 
   @override
@@ -62,16 +65,33 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
   }
 
   Future<void> _loadTonightSlots() async {
-    final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
-    final results = await _service.findTonightOffers(
-      stadiums: widget.stadiums,
-      isArabic: isArabic,
-      currentTime: widget.currentTime,
-    );
-    if (mounted) {
+    if (!mounted || _isLoadInFlight) return;
+    _isLoadInFlight = true;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() {
+      _isLoading = true;
+      _hasLoadError = false;
+    });
+    try {
+      final results = await _service.findTonightOffers(
+        stadiums: widget.stadiums,
+        isArabic: isArabic,
+        currentTime: widget.currentTime,
+      );
+      if (!mounted) return;
+      _isLoadInFlight = false;
       setState(() {
         _offers = results;
         _isLoading = false;
+      });
+    } catch (error, stackTrace) {
+      debugPrint('Book tonight offers failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      _isLoadInFlight = false;
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasLoadError = true;
       });
     }
   }
@@ -112,7 +132,7 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
             width: 44,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white24,
+              color: VSPColors.white24,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -144,8 +164,8 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
                       const SizedBox(height: 2),
                       Text(
                         isArabic
-                            ? 'اختر الساعة المناسبة واحجز مباشرة بدون انتظار'
-                            : 'Pick your slot and confirm instantly in seconds',
+                            ? 'اختر الموعد المناسب وراجع تفاصيل الحجز'
+                            : 'Choose a slot and review the booking details',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                     ],
@@ -157,61 +177,46 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
           const Divider(color: VSPColors.divider, height: 16),
           Expanded(
             child: _isLoading
-                ? _buildLoadingState()
-                : _offers.isEmpty
-                    ? _buildEmptyState(isArabic)
-                    : _buildOffersList(isArabic),
+                ? _buildLoadingState(isArabic)
+                : _hasLoadError
+                    ? VSPStateView(
+                        state: VSPUiState.error,
+                        title: isArabic ? 'تعذر تحميل المواعيد' : 'Could not load available slots',
+                        message: isArabic
+                            ? 'حدثت مشكلة أثناء جلب المواعيد. تحقق من الاتصال وحاول مرة أخرى.'
+                            : 'We could not retrieve available slots. Check your connection and try again.',
+                        onRetry: _loadTonightSlots,
+                      )
+                    : _offers.isEmpty
+                        ? _buildEmptyState(isArabic)
+                        : _buildOffersList(isArabic),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLoadingState() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(40.0),
-        child: CircularProgressIndicator(
-          strokeWidth: 2.5,
-          valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
-        ),
-      ),
+  Widget _buildLoadingState(bool isArabic) {
+    return VSPStateView(
+      state: VSPUiState.loading,
+      title: isArabic ? 'جارٍ البحث عن المواعيد' : 'Finding available slots',
+      message: isArabic
+          ? 'نفحص الملاعب والمواعيد المتاحة الليلة.'
+          : 'Checking stadiums and available times for tonight.',
     );
   }
 
   Widget _buildEmptyState(bool isArabic) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Iconsax.calendar_tick_copy, color: VSPColors.textSecondary.withValues(alpha: 0.4), size: 56),
-            const SizedBox(height: 16),
-            Text(
-              isArabic ? 'ملاعب الليلة مكتملة الحجز بالكامل!' : 'All Pitches Fully Booked Tonight!',
-              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isArabic
-                  ? 'جميع الساعات محجوزة الليلة في منطقتك. يمكنك استكشاف مباريات عامة بحاجة للاعبين أو حجز موعد للغد.'
-                  : 'No open slots left tonight in your area. Join open matches or reserve for tomorrow.',
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.4),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            if (widget.onNavigate != null)
-              PrimaryButton(
-                text: isArabic ? 'استكشف مباريات تحتاج لاعبين' : 'Explore Open Matches',
-                onPressed: () {
-                  Navigator.pop(context);
-                  widget.onNavigate!(1); // Switch to Matches tab
-                },
-              ),
-          ],
-        ),
+    return VSPStateView(
+      state: VSPUiState.empty,
+      title: isArabic ? 'لا توجد مواعيد متاحة ضمن هذه النتائج' : 'No available slots in these results',
+      message: isArabic ? 'جرّب موعدًا آخر أو استكشف مباريات تحتاج لاعبين.' : 'Try another time or explore matches looking for players.',
+      action: widget.onNavigate == null ? null : PrimaryButton(
+        text: isArabic ? 'استكشف مباريات تحتاج لاعبين' : 'Explore Open Matches',
+        onPressed: () {
+          Navigator.pop(context);
+          widget.onNavigate!(1);
+        },
       ),
     );
   }

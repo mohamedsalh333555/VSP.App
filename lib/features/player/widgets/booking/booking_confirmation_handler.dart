@@ -63,14 +63,30 @@ class BookingConfirmationHandler {
     required ValueChanged<bool> onLoadingChanged,
     required VoidCallback onSlotsCleared,
   }) async {
-    onLoadingChanged(true);
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final currentUserModel = authProvider.userModel;
-    if (currentUserModel == null) {
+    if (selectedTimeSlots.isEmpty ||
+        selectedTimeSlots.any((slot) => slot.trim().isEmpty)) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'اختار موعد الحجز الأول قبل التأكيد.'
+            : 'Select at least one booking time slot before confirming.',
+      );
       onLoadingChanged(false);
       return;
     }
+
+    onLoadingChanged(true);
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.currentUser?.id;
+    final currentUserModel = authProvider.userModel;
+    if (currentUserModel == null || userId == null || currentUserModel.uid != userId) {
+      onLoadingChanged(false);
+      return;
+    }
+    bool isSameUser() =>
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId;
 
     final nav = Navigator.of(context);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
@@ -84,6 +100,10 @@ class BookingConfirmationHandler {
       final (position, resolvedGovernorate) =
           await LocationService().getThrottledLocation(force: true);
       if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
 
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (resolvedGovernorate == 'mock_location_detected') {
@@ -129,6 +149,16 @@ class BookingConfirmationHandler {
     } catch (e) {
       VSPLogger.w('Location verification fallback to online-preferred: $e');
       isCrossGovernorate = true;
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      crossGovMessage = isArabic
+          ? 'تعذر التحقق من موقعك حالياً. لتأكيد الحجز، يرجى اختيار الدفع الإلكتروني أو دفع العربون.'
+          : 'We could not verify your location right now. Please use online payment or pay the deposit to confirm your booking.';
+    }
+
+    if (!context.mounted) return;
+    if (!isSameUser()) {
+      onLoadingChanged(false);
+      return;
     }
 
     // ── Pre-confirmation double-check ────────────────────────────────────────
@@ -145,6 +175,10 @@ class BookingConfirmationHandler {
       }
 
       if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
 
       final sortedCheck = List<String>.from(selectedTimeSlots)
         ..sort((a, b) => BookingSlotCalculator.getSlotDateTime(
@@ -157,11 +191,16 @@ class BookingConfirmationHandler {
               selectedDate: selectedDate,
             )));
 
-      final isConflict = BookingSlotCalculator.isSlotBooked(
-        slotKey: sortedCheck.first,
-        stadium: stadium,
-        selectedDate: selectedDate,
-        existingBookings: currentBookings,
+      // Every selected half-hour must still be free at confirmation time.
+      // Checking only the first slot allowed a later slot in a multi-slot
+      // booking to be taken between selection and submission.
+      final isConflict = sortedCheck.any(
+        (slotKey) => BookingSlotCalculator.isSlotBooked(
+          slotKey: slotKey,
+          stadium: stadium,
+          selectedDate: selectedDate,
+          existingBookings: currentBookings,
+        ),
       );
 
       if (isConflict) {
@@ -181,6 +220,26 @@ class BookingConfirmationHandler {
       }
     } catch (e, stack) {
       VSPLogger.e('Error checking slot availability before booking', e, stack);
+      if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
+      onLoadingChanged(false);
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من إتاحة الموعد حالياً. لم يتم إرسال الحجز؛ حاول مرة أخرى.'
+            : 'Could not verify this time slot right now. No booking was submitted; please try again.',
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+    if (!isSameUser()) {
+      onLoadingChanged(false);
+      return;
     }
 
     HapticFeedback.mediumImpact();
@@ -305,8 +364,34 @@ class BookingConfirmationHandler {
     // any additional booking must be paid in full online. This is mirrored
     // by the database trigger as the final authority.
     final directRepo = SupabaseBookingRepository();
-    final existingUserBookings = await directRepo.getUserBookingsDirectly(currentUserModel.uid);
+    List<Booking> existingUserBookings;
+    try {
+      // This read gates a payment policy. Never interpret a query failure as
+      // an empty booking history, or an active cash booking could be bypassed.
+      existingUserBookings =
+          await directRepo.getUserBookingsDirectlyStrict(userId);
+    } catch (e, stack) {
+      VSPLogger.e('Could not verify existing bookings before payment routing', e, stack);
+      if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
+      onLoadingChanged(false);
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من حجوزاتك الحالية. لم يتم إرسال الحجز؛ حاول مرة أخرى.'
+            : 'Could not verify your current bookings. No booking was submitted; please try again.',
+      );
+      return;
+    }
     if (!context.mounted) return;
+    if (!isSameUser()) {
+      onLoadingChanged(false);
+      return;
+    }
 
     final hasActiveCashBooking = existingUserBookings.any((b) =>
         b.paymentMethod.toLowerCase() == 'cash' &&
@@ -316,9 +401,12 @@ class BookingConfirmationHandler {
 
     if (hasActiveCashBooking) {
       HapticFeedback.lightImpact();
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       VSPFeedback.showInfo(
         context,
-        'عندك حجز كاش قائم، فالحجز الجديد لازم يتدفع بالكامل أونلاين.',
+        isArabic
+            ? 'عندك حجز كاش قائم، فالحجز الجديد لازم يتدفع بالكامل أونلاين.'
+            : 'You have an active cash booking, so this booking must be paid in full online.',
       );
 
       final forcedFullDraft = draft.copyWith(

@@ -8,6 +8,7 @@ import '../../../../core/services/paymob_service.dart';
 import '../../../../core/services/remote_config_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../screens/paymob_web_view_screen.dart';
@@ -19,6 +20,7 @@ import 'league_1v1/league_1v1_prize_card.dart';
 import 'league_1v1/league_1v1_registration_action_card.dart';
 import 'league_1v1/league_1v1_roster_list.dart';
 import 'league_1v1/league_1v1_standings_view.dart';
+import '../../../../shared/widgets/vsp_error_state.dart';
 
 /// 1v1 individual tournament tab on the Champion screen.
 class Vsp1v1LeagueTab extends StatefulWidget {
@@ -73,10 +75,17 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
       stream: widget.getActive1v1Stream(effectiveLocation),
       builder: (context, tourneySnap) {
         if (tourneySnap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل دوري 1 ضد 1' : 'Loading 1v1 league',
+            message: isArabic ? 'نحدّث البطولة النشطة في محافظتك.' : 'Fetching the active tournament in your governorate.',
+          );
         }
 
         final tournament = tourneySnap.data;
+        if (tourneySnap.hasError && tournament == null) {
+          return VSPErrorState(onRetry: widget.onRetry);
+        }
         if (tournament == null) {
           final locName = championTranslateItem(context, effectiveLocation);
           return Column(
@@ -100,6 +109,8 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
 
         return Column(
           children: [
+            if (tourneySnap.hasError)
+              _buildStaleDataWarning(isArabic),
             if (isBrowsingDifferentGov)
               League1v1GovernorateBanner(
                 selectedLocation: widget.selectedLocation,
@@ -116,11 +127,11 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                 decoration: BoxDecoration(
                   color: VSPColors.surface,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                  border: Border.all(color: VSPColors.medalGold.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Iconsax.cup_copy, color: Colors.amber, size: 22),
+                    const Icon(Iconsax.cup_copy, color: VSPColors.medalGold, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -128,12 +139,12 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                         children: [
                           Text(
                             isArabic ? '🏆 موعد ومكان تسليم الجائزة للبطل' : '🏆 Champion Prize Handover',
-                            style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: VSPColors.medalGold, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 3),
                           Text(
                             tournament['prize_delivery_details'].toString(),
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                            style: const TextStyle(color: VSPColors.white, fontSize: 12),
                           ),
                         ],
                       ),
@@ -181,6 +192,17 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: widget.getTournamentPlayersStream(tournamentId),
       builder: (context, playersSnap) {
+        if (playersSnap.connectionState == ConnectionState.waiting &&
+            !playersSnap.hasData) {
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل اللاعبين' : 'Loading players',
+            message: isArabic ? 'نحدّث قائمة المشاركين.' : 'Fetching the participant list.',
+          );
+        }
+        if (playersSnap.hasError && !playersSnap.hasData) {
+          return VSPErrorState(onRetry: widget.onRetry);
+        }
         final players = playersSnap.data ?? [];
         final registeredCount = players.length;
         final remainingCount = (targetCount - registeredCount).clamp(0, 999);
@@ -197,6 +219,8 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (playersSnap.hasError)
+                _buildStaleDataWarning(isArabic),
               League1v1HeroCard(
                 tourneyName: tourneyName,
                 governorate: tournament['governorate']?.toString(),
@@ -246,6 +270,39 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStaleDataWarning(bool isArabic) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'نعرض آخر بيانات متاحة؛ تعذر تحديث البيانات لحظياً.'
+                  : 'Showing the latest available data; live updates are unavailable.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: widget.onRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
     );
   }
 

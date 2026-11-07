@@ -18,7 +18,8 @@ Future<void> showTournamentPrizeDeliveryDialog(
 
   await showDialog(
     context: context,
-    barrierDismissible: false,
+    useSafeArea: true,
+      barrierDismissible: false,
     builder: (ctx) {
       return StatefulBuilder(
         builder: (dialogCtx, setDialogState) {
@@ -26,15 +27,23 @@ Future<void> showTournamentPrizeDeliveryDialog(
               championship.prizePool > 0 ? championship.prizePool : championship.grandPrize;
           return AlertDialog(
             backgroundColor: VSPColors.surface,
-            surfaceTintColor: Colors.transparent,
+            surfaceTintColor: VSPColors.transparent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
             title: Row(
               children: [
                 const Icon(Iconsax.award_copy, color: VSPColors.success, size: 22),
                 const SizedBox(width: 8),
-                Text(
-                  isAr ? 'توثيق تسليم الجائزة للبطل' : 'Record Prize Handover',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                Expanded(
+                  child: Text(
+                    isAr ? 'توثيق تسليم الجائزة للبطل' : 'Record Prize Handover',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: VSPColors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -55,20 +64,30 @@ Future<void> showTournamentPrizeDeliveryDialog(
                       children: [
                         Text(
                           championship.name,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              isAr ? 'مبلغ الجائزة (الوعاء الفعلي):' : 'Prize Pool:',
-                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                            Expanded(
+                              child: Text(
+                                isAr ? 'مبلغ الجائزة (الوعاء الفعلي):' : 'Prize Pool:',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                              ),
                             ),
-                            Text(
-                              '${prizeAmount.toInt()} ${isAr ? "ج.م" : "EGP"}',
-                              style: const TextStyle(
-                                  color: VSPColors.success, fontWeight: FontWeight.bold, fontSize: 13),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                '${prizeAmount.toInt()} ${isAr ? "ج.م" : "EGP"}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                                style: const TextStyle(
+                                    color: VSPColors.success, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
                             ),
                           ],
                         ),
@@ -93,13 +112,19 @@ Future<void> showTournamentPrizeDeliveryDialog(
             ),
             actions: [
               TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(64, 48),
+                  tapTargetSize: MaterialTapTargetSize.padded,
+                ),
                 onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
                 child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.success,
-                  foregroundColor: Colors.black,
+                  foregroundColor: VSPColors.black,
+                  minimumSize: const Size(64, 48),
+                  tapTargetSize: MaterialTapTargetSize.padded,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),
                 onPressed: isSubmitting
@@ -111,7 +136,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
                             championship.id,
                             notes: notesController.text.trim(),
                           );
-                          if (context.mounted) {
+                          if (ctx.mounted && context.mounted) {
                             Navigator.pop(ctx);
                             VSPFeedback.showSuccess(
                               context,
@@ -121,10 +146,18 @@ Future<void> showTournamentPrizeDeliveryDialog(
                             );
                             onDelivered?.call();
                           }
-                        } catch (e) {
-                          setDialogState(() => isSubmitting = false);
+                        } catch (e, stackTrace) {
+                          debugPrint('Tournament prize handover failed: $e\n$stackTrace');
+                          if (ctx.mounted) {
+                            setDialogState(() => isSubmitting = false);
+                          }
                           if (context.mounted) {
-                            VSPFeedback.showError(context, e.toString());
+                            VSPFeedback.showError(
+                              context,
+                              isAr
+                                  ? 'تعذر توثيق تسليم الجائزة. حاول مرة أخرى.'
+                                  : 'Could not record the prize handover. Please try again.',
+                            );
                           }
                         }
                       },
@@ -132,7 +165,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                       )
                     : Text(isAr ? 'تأكيد التسليم' : 'Confirm Handover',
                         style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -143,4 +176,5 @@ Future<void> showTournamentPrizeDeliveryDialog(
       );
     },
   );
+  notesController.dispose();
 }

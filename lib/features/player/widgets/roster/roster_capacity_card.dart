@@ -38,7 +38,7 @@ class RosterCapacityCard extends StatelessWidget {
               Text(
                 isArabic ? 'إجمالي عدد التشكيلة' : 'Total Roster',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VSPColors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),

@@ -27,7 +27,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
     await showModalBottomSheet(
       context: context,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       isScrollControlled: true,
       builder: (ctx) => FacilityUpgradeBottomSheet(isAr: isAr, user: user),
     );
@@ -35,9 +35,17 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final availableHeight = (media.size.height -
+            media.padding.top -
+            media.padding.bottom -
+            24)
+        .clamp(0.0, media.size.height)
+        .toDouble();
+
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
+        maxHeight: availableHeight,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
@@ -50,9 +58,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
         24,
         20,
         24,
-        MediaQuery.of(context).padding.bottom > 0
-            ? MediaQuery.of(context).padding.bottom + 16
-            : 36,
+        media.padding.bottom + 16,
       ),
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -88,7 +94,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
             isAr ? 'ترقية الباقة لإضافة ملاعب أخرى' : 'Upgrade Plan to Add More Stadiums',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.white,
               fontSize: 19,
               fontWeight: FontWeight.w900,
             ),
@@ -144,8 +150,8 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
                 _FeatureRow(
                   icon: Iconsax.headphones_copy,
                   text: isAr
-                      ? 'دعم فني وأولوية تشغيلية على مدار الساعة'
-                      : '24/7 Priority owner support',
+                      ? 'أولوية في التواصل مع فريق الدعم'
+                      : 'Priority access to the support team',
                 ),
               ],
             ),
@@ -156,7 +162,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
           PrimaryButton(
             text: isAr ? ' اشترك الآن في الباقة الاحترافية' : ' Upgrade to Pro Now',
             color: VSPColors.proAccent,
-            textColor: Colors.black,
+            textColor: VSPColors.black,
             onPressed: () async {
               // Capture navigator reference before pop to avoid deactivation issues
               final navigator = Navigator.of(context);

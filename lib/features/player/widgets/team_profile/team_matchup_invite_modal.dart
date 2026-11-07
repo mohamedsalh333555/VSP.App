@@ -9,7 +9,7 @@ Future<void> showTeamMatchupInviteModal(BuildContext context, String code) async
   return showModalBottomSheet(
     context: context,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     builder: (ctx) => Container(
       padding: EdgeInsets.fromLTRB(
         VSPSpacing.xl,
@@ -37,7 +37,7 @@ Future<void> showTeamMatchupInviteModal(BuildContext context, String code) async
           const SizedBox(height: VSPSpacing.md),
           const Text(
             'كود دعوة المواجهة الجديد',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            style: TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -67,7 +67,7 @@ Future<void> showTeamMatchupInviteModal(BuildContext context, String code) async
                 ),
                 const SizedBox(width: 16),
                 IconButton(
-                  icon: const Icon(Iconsax.copy_copy, color: Colors.white),
+                  icon: const Icon(Iconsax.copy_copy, color: VSPColors.white),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: code));
                     VSPFeedback.showSuccess(ctx, 'تم نسخ كود المواجهة! ');

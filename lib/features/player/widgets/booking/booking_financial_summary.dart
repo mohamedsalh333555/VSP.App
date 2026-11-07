@@ -54,7 +54,7 @@ class BookingFinancialSummary extends StatelessWidget {
                   isArabic
                       ? "الحجز النقدي مقيد مؤقتاً - يرجى الدفع أونلاين بالفيزا أو المحفظة لتأكيد مكانك فوراً واستعادة تقييمك."
                       : "Cash booking is temporarily restricted - Pay online via card or mobile wallet to confirm your spot immediately and restore your rating.",
-                  style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
+                  style: const TextStyle(color: VSPColors.white, fontSize: 12, height: 1.4),
                 ),
               ],
             ),
@@ -123,7 +123,7 @@ class BookingFinancialSummary extends StatelessWidget {
                   ? 'طريقة الدفع: كاش بالكامل عند الحضور للملعب (بدون عربون مسبق)'
                   : 'Payment: 100% Cash at the pitch (No deposit required)',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),

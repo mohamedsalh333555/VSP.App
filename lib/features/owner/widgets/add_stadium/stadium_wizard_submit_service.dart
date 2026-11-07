@@ -46,8 +46,14 @@ class StadiumWizardSubmitService {
     required double? longitude,
     required String? uid,
   }) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (auth.userModel?.isBlocked == true) {
-      VSPFeedback.showError(context, "Your account is blocked. You cannot save or submit stadium details.");
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'حسابك موقوف، ولا يمكنك حفظ بيانات الملعب أو إرسالها.'
+            : 'Your account is blocked. You cannot save or submit stadium details.',
+      );
       return false;
     }
 
@@ -59,7 +65,10 @@ class StadiumWizardSubmitService {
       final user = auth.currentUser;
 
       if (user == null) {
-        VSPFeedback.showError(context, "Authentication lost. Please login again.");
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Authentication lost. Please login again.',
+        );
         return false;
       }
 
@@ -116,7 +125,9 @@ class StadiumWizardSubmitService {
           lat: latitude,
           lng: longitude,
           notes: notes.trim().isEmpty
-              ? "We ensure a professional environment. Please arrive on time. Respect the facility and equipment. Late arrival may result in reduced playing time."
+              ? (isArabic
+                  ? 'نحرص على توفير بيئة احترافية. يرجى الحضور في الموعد المحدد والمحافظة على الملعب ومعداته. قد يؤدي التأخر إلى تقليل وقت اللعب.'
+                  : 'We ensure a professional environment. Please arrive on time. Respect the facility and equipment. Late arrival may result in reduced playing time.')
               : notes.trim(),
           features: stadiumFeatures,
         );
@@ -135,24 +146,35 @@ class StadiumWizardSubmitService {
       }
 
       if (context.mounted) {
-        if (stadiumId == null) {
-          await StadiumWizardDraftService.clearDraft(uid);
-          await UserRepository().updateOnboardingConfirmed(user.uid, true);
-          await auth.updateProfile({
-            'hasStadium': true,
-            'is_onboarding_confirmed': true,
-          });
+        var profileSyncFailed = false;
+        try {
+          if (stadiumId == null) {
+            await StadiumWizardDraftService.clearDraft(uid);
+            await UserRepository().updateOnboardingConfirmed(user.uid, true);
+            await auth.updateProfile({
+              'hasStadium': true,
+              'is_onboarding_confirmed': true,
+            });
+          }
+          await auth.refreshProfile();
+        } catch (syncError, stackTrace) {
+          profileSyncFailed = true;
+          debugPrint('Stadium was saved, but owner profile synchronization failed: $syncError');
+          debugPrintStack(stackTrace: stackTrace);
         }
-        await auth.refreshProfile();
 
         if (!context.mounted) return true;
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showSuccess(
-          context,
-          stadiumId == null
-              ? (isArabic ? 'تم إرسال بيانات الملعب للمراجعة.' : 'Stadium submitted for review.')
-              : (isArabic ? 'تم إرسال التعديلات للمراجعة.' : 'Changes submitted for review.'),
-        );
+        final successMessage = stadiumId == null
+            ? (isArabic ? 'تم حفظ بيانات الملعب وإرسالها للمراجعة.' : 'Stadium details were saved and submitted for review.')
+            : (isArabic ? 'تم حفظ التعديلات وإرسالها للمراجعة.' : 'Changes were saved and submitted for review.');
+        final syncWarning = isArabic
+            ? 'تم حفظ الملعب، لكن تعذر تحديث بعض بيانات الحساب. أعد فتح التطبيق أو سجّل الدخول مرة أخرى.'
+            : 'The stadium was saved, but some account details could not be refreshed. Reopen the app or sign in again.';
+        if (profileSyncFailed) {
+          VSPFeedback.showError(context, syncWarning);
+        } else {
+          VSPFeedback.showSuccess(context, successMessage);
+        }
         Navigator.pop(context);
         return true;
       }

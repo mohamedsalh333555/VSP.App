@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -33,17 +34,24 @@ class OwnerQuickCashCard extends StatefulWidget {
 }
 
 class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
-  String? _confirmingBookingId;
+  final Set<String> _confirmingBookingIds = <String>{};
 
   Future<void> _onConfirmCash(Booking booking) async {
-    setState(() => _confirmingBookingId = booking.id);
+    if (_confirmingBookingIds.contains(booking.id)) return;
+    setState(() => _confirmingBookingIds.add(booking.id));
     HapticFeedback.heavyImpact();
 
-    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-    final success = await bookingProvider.updatePaymentStatus(booking.id, true);
-
-    if (mounted) {
-      setState(() => _confirmingBookingId = null);
+    var success = false;
+    try {
+      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+      success = await bookingProvider.updatePaymentStatus(booking.id, true);
+    } catch (error, stackTrace) {
+      debugPrint('Cash confirmation UI failed for booking ${booking.id}: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    } finally {
+      if (mounted) {
+        setState(() => _confirmingBookingIds.remove(booking.id));
+      }
     }
 
     if (success && mounted) {
@@ -107,19 +115,23 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
     showModalBottomSheet(
       context: context,
       backgroundColor: VSPColors.surface,
+      isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: VSPColors.white24,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -159,6 +171,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -166,11 +179,15 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
 
   @override
   Widget build(BuildContext context) {
-    final now = widget.currentTime ?? DateTime.now();
+    final now = widget.currentTime ?? VSPTimeService.now;
 
     final pendingCashBookings = widget.allBookings.where((b) {
-      if (b.status == BookingStatus.cancelled) return false;
-      if (b.isPaid || b.paymentStatus == 'paid') return false;
+      if (b.status == BookingStatus.cancelled || !b.isCash) return false;
+      if (b.effectivePaymentState == 'fully_paid' ||
+          b.effectivePaymentState == 'refunded' ||
+          b.effectivePaymentState == 'refund_pending') {
+        return false;
+      }
       if (widget.selectedStadiumFilter != 'all' && b.stadiumId != widget.selectedStadiumFilter) return false;
       return DateUtils.isSameDay(b.startTime.toLocal(), now);
     }).toList()
@@ -178,8 +195,9 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
 
     if (pendingCashBookings.isEmpty) {
       final todayPaidBookings = widget.allBookings.where((b) {
-        if (b.status == BookingStatus.cancelled) return false;
-        if (!b.isPaid && b.paymentStatus != 'paid') return false;
+        if (b.status == BookingStatus.cancelled || !b.isCash) return false;
+        if (b.effectivePaymentState != 'fully_paid') return false;
+        if (widget.selectedStadiumFilter != 'all' && b.stadiumId != widget.selectedStadiumFilter) return false;
         return DateUtils.isSameDay(b.startTime.toLocal(), now);
       });
 
@@ -208,10 +226,10 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
       );
     }
 
-    final totalRemainingCash = pendingCashBookings.fold<double>(0.0, (sum, b) {
-      final deposit = b.depositPaid;
-      return sum + (b.totalPrice - deposit).clamp(0.0, 999999.0);
-    });
+    final totalRemainingCash = pendingCashBookings.fold<double>(
+      0.0,
+      (sum, booking) => sum + booking.remainingAmount,
+    );
 
     final String locale = widget.isArabic ? 'ar' : 'en';
 
@@ -221,7 +239,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        border: Border.all(color: VSPColors.white08, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,9 +249,9 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
+                  color: VSPColors.white04,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                  border: Border.all(color: VSPColors.white06),
                 ),
                 child: const Icon(Iconsax.wallet_2_copy, color: VSPColors.accent, size: 17),
               ),
@@ -263,9 +281,9 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: VSPColors.white05,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  border: Border.all(color: VSPColors.white10),
                 ),
                 child: Text(
                   '${pendingCashBookings.length} ${widget.isArabic ? 'قيد التحصيل' : 'Pending'}',
@@ -275,7 +293,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
             ],
           ),
           const SizedBox(height: 12),
-          Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+          Divider(color: VSPColors.white05, height: 1),
           const SizedBox(height: 10),
           for (int i = 0; i < pendingCashBookings.length; i++) ...[
             if (i > 0) const SizedBox(height: 10),
@@ -287,16 +305,16 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
   }
 
   Widget _buildBookingCard(Booking b, String locale) {
-    final isConfirming = _confirmingBookingId == b.id;
+    final isConfirming = _confirmingBookingIds.contains(b.id);
     final deposit = b.depositPaid;
     final cashRemaining = (b.totalPrice - deposit).clamp(0.0, 999999.0);
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.02),
+        color: VSPColors.white02,
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: VSPColors.white05),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +324,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: VSPColors.white05,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -324,7 +342,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               ),
               Text(
                 '${cashRemaining.toInt()} ${widget.isArabic ? "ج.م" : "EGP"}',
-                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+                style: const TextStyle(color: VSPColors.white, fontSize: 13, fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -332,7 +350,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
             const SizedBox(height: 4),
             Text(
               widget.isArabic ? 'عربون مدفوع إلكترونياً: ${deposit.toInt()} ج.م' : 'Online deposit paid: ${deposit.toInt()} EGP',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10.5),
+              style: TextStyle(color: VSPColors.white50, fontSize: 10.5),
             ),
           ],
           const SizedBox(height: 10),
@@ -340,11 +358,11 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 36,
+                  height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VSPColors.success,
-                      foregroundColor: Colors.white,
+                      foregroundColor: VSPColors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
                       padding: EdgeInsets.zero,
@@ -354,7 +372,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                         ? const SizedBox(
                             width: 14,
                             height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.white),
                           )
                         : const Icon(Iconsax.wallet_3_copy, size: 16),
                     label: Text(
@@ -366,18 +384,21 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               ),
               if (b.playerPhone != null && b.playerPhone!.isNotEmpty) ...[
                 const SizedBox(width: 8),
-                SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.02),
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
-                      padding: EdgeInsets.zero,
+                Tooltip(
+                  message: widget.isArabic ? 'الاتصال باللاعب' : 'Call player',
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: VSPColors.white02,
+                        side: BorderSide(color: VSPColors.white10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: () => VSPLauncherUtils.makePhoneCall(context, b.playerPhone!),
+                      child: const Icon(Iconsax.call_copy, size: 15, color: VSPColors.white70),
                     ),
-                    onPressed: () => VSPLauncherUtils.makePhoneCall(context, b.playerPhone!),
-                    child: const Icon(Iconsax.call_copy, size: 15, color: Colors.white70),
                   ),
                 ),
               ],

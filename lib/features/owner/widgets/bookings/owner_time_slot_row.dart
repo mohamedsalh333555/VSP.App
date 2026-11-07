@@ -37,11 +37,13 @@ class OwnerTimeSlotRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isMerged = slot['merged'] == true;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _handleTap(context),
-      onLongPress: () => _handleLongPress(context),
-      child: Row(
+    return Material(
+      color: VSPColors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        onTap: () => _handleTap(context),
+        onLongPress: () => _handleLongPress(context),
+        child: Row(
         crossAxisAlignment: isMerged ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           // Time Column
@@ -58,6 +60,8 @@ class OwnerTimeSlotRow extends StatelessWidget {
                         color: VSPColors.textSecondary,
                         fontSize: 12,
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (isMerged) ...[
                   const SizedBox(height: 2),
@@ -68,6 +72,8 @@ class OwnerTimeSlotRow extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
                 if ((slot['nightLabel'] as String?)?.isNotEmpty ?? false) ...[
@@ -79,6 +85,8 @@ class OwnerTimeSlotRow extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       fontSize: 9,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],
@@ -90,6 +98,7 @@ class OwnerTimeSlotRow extends StatelessWidget {
             child: OwnerSlotCard(slot: slot),
           ),
         ],
+        ),
       ),
     );
   }
@@ -197,7 +206,7 @@ class OwnerTimeSlotRow extends StatelessWidget {
 
   Future<void> _handleLongPress(BuildContext context) async {
     if (slot['type'] == 'empty') {
-      final now = DateTime.now();
+      final now = VSPTimeService.now;
       final DateTime? slotTime = slot['slotTime'] as DateTime?;
       final bool isToday = selectedDayIndex == 0;
       final bool isPast = isToday && slotTime != null && now.isAfter(slotTime.add(const Duration(minutes: 15)));
@@ -250,12 +259,20 @@ class OwnerTimeSlotRow extends StatelessWidget {
 
       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
       final created = await bookingProvider.createBooking(draft, uid);
-      if (created != null && context.mounted) {
+      if (!context.mounted || auth.currentUser?.id != uid) return;
+      if (created != null) {
         VSPFeedback.showSuccess(
           context,
           isAr ? 'تم تثبيت الحجز التليفوني السريع بنجاح.' : 'Quick phone booking confirmed successfully.',
         );
         onQuickBookingDone();
+      } else {
+        VSPFeedback.showError(
+          context,
+          isAr
+              ? 'تعذر تثبيت الحجز التليفوني. لم يتم إنشاء الحجز؛ حاول مرة أخرى.'
+              : 'Could not confirm the phone booking. No booking was created; please try again.',
+        );
       }
     }
   }

@@ -12,6 +12,10 @@ class TeamRepository {
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
   late final TeamRosterCoordinator _rosterCoordinator;
 
+  /// Invitations that failed after the team was successfully created.
+  /// Read immediately after createTeam on the same repository instance.
+  final List<String> failedInvitationUserIds = <String>[];
+
   TeamRepository({
     SupabaseClient? client,
     TeamRosterCoordinator? rosterCoordinator,
@@ -28,6 +32,11 @@ class TeamRepository {
   /// Fetch list of player profiles (id, name, phone, position) for members of a team
   Future<List<Map<String, String>>> getTeamMemberProfiles(String teamId) =>
       _rosterCoordinator.getTeamMemberProfiles(teamId);
+
+  /// Propagates RPC failures so a roster screen can show retry instead of
+  /// incorrectly presenting a network error as an empty team.
+  Future<List<Map<String, String>>> getTeamMemberProfilesStrict(String teamId) =>
+      _rosterCoordinator.getTeamMemberProfilesStrict(teamId);
 
   Future<bool> checkIsTeamOfficial(String teamId) =>
       TeamOpponentService.checkIsTeamOfficial(
@@ -49,63 +58,135 @@ class TeamRepository {
          'p_outcome': finalOutcome.name,
        },
      );
-     if (response is Map && response['success'] == false) {
-       throw Exception(response['error']?.toString() ?? 'فشل تحديث نتيجة المباراة');
+     if (response is! Map || response['success'] != true) {
+       throw Exception(response is Map
+           ? (response['error']?.toString() ?? 'فشل تحديث نتيجة المباراة')
+           : 'استجابة غير متوقعة عند تحديث نتيجة المباراة');
      }
    } catch (e) {
      debugPrint('Error updating match result through atomic RPC: $e');
      rethrow;
    }
  }
- Future<Team?> getUserTeam(String userId) async {
- try {
- final response = await _supabase
- .from('team_members')
- .select('team_id')
- .eq('user_id', userId);
- final List membership = response as List;
- if (membership.isEmpty) return null;
- 
- final teamId = membership.first['team_id'];
- return await getTeam(teamId);
- } catch (e) {
- debugPrint('Error getting user team: $e');
- return null;
+ Future<Set<String>> getUserCaptainTeamIds(String userId) async {
+   try {
+     return await getUserCaptainTeamIdsStrict(userId);
+   } catch (e) {
+     debugPrint('Error getting user captain teams: $e');
+     return <String>{};
+   }
  }
+
+ /// Strict variant for flows where an empty result has business meaning.
+ /// Propagates query failures so callers can distinguish "not a captain"
+ /// from "could not verify captain access".
+ Future<Set<String>> getUserCaptainTeamIdsStrict(String userId) async {
+   final response = await _supabase
+       .from('teams_public')
+       .select('id')
+       .eq('captain_id', userId);
+   return (response as List)
+       .map((row) => row['id']?.toString() ?? '')
+       .where((id) => id.isNotEmpty)
+       .toSet();
+ }
+
+ /// Returns every team membership for the signed-in user.
+ Future<Set<String>> getUserTeamIdsStrict(String userId) async {
+   final response = await _supabase
+       .from('team_members')
+       .select('team_id')
+       .eq('user_id', userId);
+   return (response as List)
+       .map((row) => row['team_id']?.toString() ?? '')
+       .where((id) => id.isNotEmpty)
+       .toSet();
+ }
+
+ Future<Team?> getUserTeam(String userId) async {
+   try {
+     return await getUserTeamStrict(userId);
+   } catch (e) {
+     debugPrint('Error getting user team: $e');
+     return null;
+   }
+ }
+
+ /// Strict lookup for screens that must distinguish no membership from a
+ /// failed membership/team query.
+ Future<Team?> getUserTeamStrict(String userId) async {
+   final response = await _supabase
+       .from('team_members')
+       .select('team_id')
+       .eq('user_id', userId);
+   final List membership = response as List;
+   if (membership.isEmpty) return null;
+
+   // Existing behavior selects the first membership. Multiple-team selection
+   // policy remains a product decision; no ordering is inferred here.
+   final teamId = membership.first['team_id']?.toString();
+   if (teamId == null || teamId.isEmpty) return null;
+   return await getTeamStrict(teamId);
  }
 
  Future<String?> createTeam(Map<String, dynamic> data) async {
+  failedInvitationUserIds.clear();
   final memberUids = List<String>.from((data['memberUids'] as List? ?? []).map((e) => e.toString()).where((e) => !e.startsWith('guest_')));
   final pgData = TeamPayloadBuilder.buildCreatePayload(data);
-  final response = await _supabase.rpc('create_team_atomic', params: {
+  final captainId = _supabase.auth.currentUser?.id;
+  if (captainId == null || !memberUids.contains(captainId)) {
+    throw StateError('Captain must be signed in and included in the team');
+  }
+  // Creating a team never enrolls invited players without their consent.
+  final response = await _supabase.rpc('create_team_with_consent', params: {
     'p_data': pgData,
-    'p_member_uids': memberUids,
+    'p_member_uids': [captainId],
   });
-  if (response is Map && response['success'] == true) return response['team_id']?.toString();
+  if (response is Map && response['success'] == true) {
+    final teamId = response['team_id']?.toString();
+    if (teamId == null || teamId.isEmpty) {
+      throw StateError('Team creation returned no team ID');
+    }
+    for (final userId in memberUids.where((id) => id != captainId)) {
+      try {
+        await inviteTeamMember(teamId, userId);
+      } catch (error) {
+        failedInvitationUserIds.add(userId);
+        debugPrint('Team created, but invitation to $userId failed: $error');
+      }
+    }
+    return teamId;
+  }
   throw Exception(response is Map ? response['error'] ?? 'فشل إنشاء الفريق' : 'فشل إنشاء الفريق');
  }
   Future<Team?> getTeam(String id) async {
     try {
-      final response = await _supabase
-          .from('teams_public')
-          .select()
-          .eq('id', id)
-          .maybeSingle();
-      if (response == null) return null;
-
-      final memberUids = await getTeamMemberUids(id);
-      final playerImages = await getTeamPlayerImages(memberUids);
-
-      final data = Map<String, dynamic>.from(response);
-      data['memberUids'] = memberUids;
-      data['playerImages'] = playerImages;
-      data['playersCount'] = memberUids.length;
-
-      return Team.fromFirestore(data, id);
+      return await getTeamStrict(id);
     } catch (e) {
       debugPrint('Error getting team: $e');
       return null;
     }
+  }
+
+  /// Strict team lookup for screens that must distinguish a missing team from
+  /// a failed network/query request.
+  Future<Team?> getTeamStrict(String id) async {
+    final response = await _supabase
+        .from('teams_public')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+    if (response == null) return null;
+
+    final memberUids = await getTeamMemberUids(id);
+    final playerImages = await getTeamPlayerImages(memberUids);
+
+    final data = Map<String, dynamic>.from(response);
+    data['memberUids'] = memberUids;
+    data['playerImages'] = playerImages;
+    data['playersCount'] = memberUids.length;
+
+    return Team.fromFirestore(data, id);
   }
 
   Future<List<Team>> fetchTeamsDirectly({String? governorate}) async {
@@ -166,7 +247,7 @@ class TeamRepository {
         teamId: teamId,
       );
 
- Future<Map<String, int>> getHeadToHeadStats(String team1Id, String team2Id) async {
+ Future<Map<String, int>?> getHeadToHeadStats(String team1Id, String team2Id) async {
  try {
  final response = await _supabase
  .from('bookings')
@@ -177,12 +258,115 @@ class TeamRepository {
  return TeamPayloadBuilder.calculateHeadToHead(response as List, team1Id, team2Id);
  } catch (e) {
  debugPrint('Error getting head to head stats: $e');
- return {'teamAWins': 0, 'draws': 0, 'teamBWins': 0, 'totalMatches': 0};
+ return null;
  }
  }
 
   @Deprecated('Use lookupChallengeCode or team ID instead of captain phone')
   Future<Team?> getTeamByCaptainPhone(String phone) async => null;
+
+  /// Request consent before adding a registered player to a team.
+  Future<String> inviteTeamMember(String teamId, String userId) async {
+    if (_supabase.auth.currentUser == null) {
+      throw StateError('Sign in before inviting a player');
+    }
+    if (teamId.trim().isEmpty || userId.trim().isEmpty ||
+        teamId == 'null' || userId == 'null' || userId.startsWith('guest_')) {
+      throw ArgumentError('Valid team ID and registered player ID are required');
+    }
+    if (userId == _supabase.auth.currentUser!.id) {
+      throw ArgumentError('Captain cannot invite themselves');
+    }
+    final response = await _supabase.rpc(
+      'invite_team_member',
+      params: {'p_team_id': teamId, 'p_user_id': userId},
+    );
+    if (response is! Map || response['success'] != true) {
+      throw StateError(
+        response is Map ? (response['error']?.toString() ?? 'Invitation failed') : 'Invitation failed',
+      );
+    }
+    final invitationId = response['invitation_id']?.toString();
+    if (invitationId == null ||
+        invitationId.trim().isEmpty ||
+        invitationId == 'null') {
+      throw StateError('Invitation succeeded without a valid invitation ID');
+    }
+    return invitationId;
+  }
+
+  /// Only the recipient can accept or decline a pending invitation.
+  Future<void> respondToTeamInvitation(String invitationId, {required bool accept}) async {
+    if (_supabase.auth.currentUser == null) {
+      throw StateError('Sign in before responding to a team invitation');
+    }
+    if (invitationId.trim().isEmpty || invitationId == 'null') {
+      throw ArgumentError.value(invitationId, 'invitationId', 'A valid invitation ID is required');
+    }
+    final response = await _supabase.rpc(
+      'respond_team_membership_invitation',
+      params: {'p_invitation_id': invitationId, 'p_accept': accept},
+    );
+    if (response is! Map || response['success'] != true) {
+      throw StateError(
+        response is Map ? (response['error']?.toString() ?? 'Invitation response failed') : 'Invitation response failed',
+      );
+    }
+  }
+
+  /// RLS limits these rows to invitations addressed to the signed-in player.
+  Future<List<Map<String, dynamic>>> getPendingTeamInvitations(String userId) async {
+    if (_supabase.auth.currentUser?.id != userId) {
+      throw StateError('Cannot read invitations for another user');
+    }
+    final response = await _supabase
+        .from('team_membership_invitations')
+        .select('id, team_id, invited_by, created_at, expires_at')
+        .eq('invited_user_id', userId)
+        .eq('status', 'pending')
+        .gt('expires_at', DateTime.now().toUtc().toIso8601String())
+        .order('created_at', ascending: false);
+    final invitations = (response as List)
+        .map((row) => Map<String, dynamic>.from(row as Map))
+        .toList();
+    if (invitations.isEmpty) return invitations;
+
+    // Resolve human-readable team names from the public, restricted view.
+    // Do not expose private team records or silently show an empty inbox if
+    // the name lookup fails.
+    final teamIds = invitations
+        .map((invite) => invite['team_id']?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
+    if (teamIds.isEmpty) return invitations;
+    try {
+      final teams = await _supabase
+          .from('teams_public')
+          .select('id, name')
+          .inFilter('id', teamIds);
+      final names = <String, String>{
+        for (final team in (teams as List))
+          if (team['id'] != null && team['name'] != null)
+            team['id'].toString(): team['name'].toString(),
+      };
+      for (final invite in invitations) {
+        final teamId = invite['team_id']?.toString();
+        final teamName = names[teamId];
+        if (teamName == null || teamName.trim().isEmpty) {
+          throw StateError('Team details unavailable for invitation ${invite['id']}');
+        }
+        invite['team_name'] = teamName;
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Could not resolve invitation team names: $error');
+      Error.throwWithStackTrace(
+        StateError('Failed to load invitation team details: $error'),
+        stackTrace,
+      );
+    }
+    return invitations;
+  }
 
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) =>
       _rosterCoordinator.addMemberToTeam(teamId, userId, imageUrl);

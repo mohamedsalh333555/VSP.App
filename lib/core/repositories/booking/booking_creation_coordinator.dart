@@ -53,8 +53,10 @@ class BookingCreationCoordinator {
       const double platformFee = 0.0;
       final dynamic rpcResult;
       if (draft.bookingType == BookingType.challenge &&
-          draft.challengeCode != null &&
-          draft.challengeCode!.trim().isNotEmpty) {
+          (draft.challengeCode == null || draft.challengeCode!.trim().isEmpty)) {
+        throw ArgumentError('كود التحدي مطلوب لإتمام حجز التحدي.');
+      }
+      if (draft.bookingType == BookingType.challenge) {
         rpcResult = await _supabase.rpc('create_challenge_booking_atomic', params: {
           'p_challenge_code': draft.challengeCode!.trim(),
           'p_stadium_id': draft.stadiumId,
@@ -132,7 +134,7 @@ class BookingCreationCoordinator {
       }
 
       final bookingId = (rpcResult is Map) ? rpcResult['booking_id']?.toString() : null;
-      if (bookingId == null) {
+      if (bookingId == null || bookingId.trim().isEmpty || bookingId == 'null') {
         throw Exception('فشل تسجيل الحجز في قاعدة البيانات.');
       }
 
@@ -147,7 +149,11 @@ class BookingCreationCoordinator {
       VSPLogger.i('Atomic booking created: ${created.id}');
       return created;
     } on PostgrestException catch (e) {
-      if (e.code == '23P11' || e.message.contains('overlapping') || e.message.contains('exclude') || e.code == '23505') {
+      if (e.code == '23P11' ||
+          e.code == '23P01' ||
+          e.code == '23505' ||
+          e.message.toLowerCase().contains('overlapping') ||
+          e.message.toLowerCase().contains('exclude')) {
         throw Exception('عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.');
       }
       rethrow;

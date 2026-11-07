@@ -58,19 +58,30 @@ class AuthRegistrationService {
           'is_email_verified': firebaseUser.emailConfirmedAt != null,
         };
 
-        final registrationCompleted =
-            await _userRepository.completeRegistrationFlags(firebaseUser.id, profileData);
-        if (!registrationCompleted) {
-          return (
-            success: false,
-            user: null,
-            userModel: null,
-            error: 'REGISTRATION_COMPLETION_FAILED'
-          );
+        final isEmailConfirmed = firebaseUser.emailConfirmedAt != null;
+
+        // When email confirmation is enabled Supabase intentionally returns a
+        // user without an authenticated session. The insert trigger has already
+        // persisted the submitted profile metadata, but an unauthenticated
+        // client must not call the completion RPC yet. Doing so used to turn a
+        // successful signup into REGISTRATION_COMPLETION_FAILED.
+        if (isEmailConfirmed) {
+          final registrationCompleted =
+              await _userRepository.completeRegistrationFlags(firebaseUser.id, profileData);
+          if (!registrationCompleted) {
+            return (
+              success: false,
+              user: null,
+              userModel: null,
+              error: 'REGISTRATION_COMPLETION_FAILED'
+            );
+          }
         }
 
         UserModel? userModel;
-        final existingData = await _userRepository.getUserData(firebaseUser.id);
+        final existingData = isEmailConfirmed
+            ? await _userRepository.getUserData(firebaseUser.id)
+            : null;
         if (existingData != null) {
           userModel = UserModel.fromFirestore(existingData);
           if (!userModel.isRegistrationComplete) {
@@ -86,7 +97,7 @@ class AuthRegistrationService {
             position: userData?['position'] ?? 'GK',
             governorate: userData?['governorate'] ?? governorate,
             isRegistrationComplete: true,
-            isEmailVerified: true,
+            isEmailVerified: isEmailConfirmed,
             dateOfBirth: userData?['date_of_birth'] != null
                 ? DateTime.tryParse(userData!['date_of_birth'])
                 : null,

@@ -64,10 +64,16 @@ class OwnerChatItemCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          timeStr,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: VSPColors.textSecondary,
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 76),
+                          child: Text(
+                            timeStr,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: VSPColors.textSecondary,
+                            ),
                           ),
                         ),
                       ],
@@ -75,6 +81,8 @@ class OwnerChatItemCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: VSPColors.accent,
                         fontWeight: FontWeight.bold,
@@ -91,7 +99,7 @@ class OwnerChatItemCard extends StatelessWidget {
                   child: Text(
                     unreadCount > 0 ? '$unreadCount' : '',
                     style: const TextStyle(
-                      color: Colors.black,
+                      color: VSPColors.black,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),

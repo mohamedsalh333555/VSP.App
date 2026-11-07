@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import '../../../core/models/user_model.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/image_pick_service.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/roster_parser_utils.dart';
@@ -56,11 +58,13 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (context) => AddPlayerSheet(
         requiredGovernorate: context.read<AuthProvider>().userModel?.governorate?.trim(),
         onPlayerAdded: (user) {
+          if (!mounted) return;
           setState(() {
+            if (_teamMembers.length >= 11) return;
             if (!_teamMembers.any((m) => m.uid == user.uid)) {
               _teamMembers.add(user);
             }
@@ -72,9 +76,16 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
 
   Future<void> _pasteFromWhatsApp() async {
     final parsedNames = await RosterParserUtils.showImportSquadDialog(context);
+    if (!mounted) return;
     if (parsedNames.isEmpty) {
       if (mounted) {
-        VSPFeedback.showError(context, 'لم يتم العثور على أسماء واضحة في النص الملصوق.');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'لم يتم العثور على أسماء واضحة في النص الملصوق.'
+            : 'No clear player names were found in the pasted text.',
+      );
       }
       return;
     }
@@ -103,15 +114,18 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       VSPFeedback.showSuccess(
         context,
         isArabic
-            ? 'تمت إضافة $addedCount أعضاء من النص بنجاح.'
-            : 'Added $addedCount members from the pasted text.',
+            ? 'تم استيراد $addedCount اسمًا كمسودة فقط. لن يصبحوا أعضاء ولن تصلهم دعوات حتى تختار حساباتهم المسجلة.'
+            : 'Imported $addedCount names as draft entries only. They will not join or receive invitations until you select their registered accounts.',
       );
     }
   }
 
   Future<void> _handleCreateTeam() async {
+    // Ignore repeated taps while the create RPC or logo upload is pending.
+    if (_isSubmitting) return;
     final name = _nameController.text.trim();
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (name.isEmpty) {
       VSPFeedback.showError(context, l10n.enterTeamName);
@@ -120,33 +134,30 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
 
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.uid;
+      final uid = auth.currentUser?.id;
 
       if (uid == null) {
-        VSPFeedback.showError(context, 'Session expired. Please sign in again.');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.' : 'Session expired. Please sign in again.',
+        );
         return;
       }
 
       final captainGovernorate = auth.userModel?.governorate?.trim();
       if (captainGovernorate == null || captainGovernorate.isEmpty) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
-          'يجب تحديد محافظة الكابتن قبل إنشاء الفريق.',
+          isArabic
+              ? 'يجب تحديد محافظة الكابتن قبل إنشاء الفريق.'
+              : 'Set the captain’s governorate before creating the team.',
         );
         return;
       }
 
       setState(() => _isSubmitting = true);
-
-      if (_teamMembers.isEmpty && mounted) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showSuccess(
-          context,
-          isArabic
-              ? 'يمكن إنشاء الفريق بالكابتن فقط. يمكنك إضافة اللاعبين لاحقاً قبل التسجيل في البطولة.'
-              : 'The team can be created with the captain only. You can add players before tournament registration.',
-        );
-      }
 
       if (_selectedLogo != null) {
         _uploadedLogoUrl = await StorageService().uploadFile(
@@ -159,7 +170,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       final teamData = {
         'name': name,
         'bio': _bioController.text.trim(),
-        'captainName': auth.userModel?.name ?? 'Captain',
+        'captainName': auth.userModel?.name ?? (isArabic ? 'الكابتن' : 'Captain'),
         'captainPhone': PhoneUtils.normalize(auth.userModel?.phone ?? ''),
         'captainImageUrl': auth.userModel?.profileImageUrl ?? '',
         'logoUrl': _uploadedLogoUrl ?? '',
@@ -173,24 +184,42 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         'sportType': _selectedSport,
       };
 
-      final teamId = await TeamRepository().createTeam(teamData);
+      final teamRepository = TeamRepository();
+      final teamId = await teamRepository.createTeam(teamData);
+      final failedInvitations = teamRepository.failedInvitationUserIds.length;
+      final guestPlayers = _teamMembers.where((member) => member.uid.startsWith('guest_')).length;
 
       if (teamId != null && mounted) {
+        unawaited(
+          AnalyticsService.logTeamCreated(sportType: _selectedSport),
+        );
+        final messenger = ScaffoldMessenger.of(context);
+        final successTextStyle = Theme.of(context)
+            .textTheme
+            .labelLarge
+            ?.copyWith(color: VSPColors.background, fontWeight: FontWeight.bold);
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text(
-              l10n.teamCreatedSuccess,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
-                  ?.copyWith(color: VSPColors.background, fontWeight: FontWeight.bold),
+              failedInvitations == 0 && guestPlayers == 0
+                  ? l10n.teamCreatedSuccess
+                  : (isArabic
+                      ? 'تم إنشاء الفريق. الدعوات الفاشلة: $failedInvitations، والأسماء غير المسجلة: $guestPlayers. الأعضاء لا ينضموا إلا بعد قبول الدعوة.'
+                      : 'Team created. Failed invitations: $failedInvitations; unregistered names: $guestPlayers. Players join only after accepting an invitation.'),
+              style: successTextStyle,
             ),
-            backgroundColor: VSPColors.accent,
+            backgroundColor: failedInvitations == 0 && guestPlayers == 0
+                ? VSPColors.accent
+                : Colors.orange.shade800,
           ),
         );
       } else if (mounted) {
-        VSPFeedback.showError(context, 'فشل إنشاء الفريق، يرجى إعادة المحاولة.');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'فشل إنشاء الفريق. حاول مرة أخرى.' : 'Team creation failed. Please try again.',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -210,12 +239,16 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final bottomInset = MediaQuery.of(context).padding.bottom +
-        MediaQuery.of(context).viewInsets.bottom +
-        16;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final media = MediaQuery.of(context);
+    // The scroll-controlled SafeArea modal route already constrains the
+    // sheet to the keyboard-safe viewport. Do not subtract keyboard/system
+    // insets again from the full screen height.
+    final availableHeight = media.size.height;
+    final bottomInset = media.padding.bottom + 16;
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
+      constraints: BoxConstraints(maxHeight: availableHeight),
       padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.lg, VSPSpacing.md, bottomInset),
       decoration: const BoxDecoration(
         color: VSPColors.background,
@@ -245,18 +278,23 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                     const SizedBox(height: VSPSpacing.xs),
                     Text(
                       l10n.createTeamSubtitle,
+                      softWrap: true,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.start,
                       style: Theme.of(context)
                           .textTheme
                           .labelSmall
-                          ?.copyWith(color: VSPColors.textSecondary),
+                          ?.copyWith(
+                            color: VSPColors.textSecondary,
+                            height: 1.35,
+                          ),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: _isSubmitting ? null : () => Navigator.pop(context),
                 icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
               ),
             ],
@@ -275,9 +313,11 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   const SizedBox(height: VSPSpacing.sm),
                   TextField(
                     controller: _nameController,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
                     style: Theme.of(context).textTheme.bodyMedium,
                     decoration: InputDecoration(
-                      hintText: 'e.g. Star Team',
+                      hintText: isArabic ? 'مثال: فريق النجوم' : 'e.g. Star Team',
                       hintStyle: Theme.of(context)
                           .textTheme
                           .bodyMedium
@@ -295,16 +335,20 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   const SizedBox(height: VSPSpacing.md),
 
                   // Team bio
-                  Text('نبذة عن الفريق', style: Theme.of(context).textTheme.labelMedium),
+                  Text(isArabic ? 'نبذة عن الفريق' : 'Team description', style: Theme.of(context).textTheme.labelMedium),
                   const SizedBox(height: VSPSpacing.sm),
                   TextField(
                     controller: _bioController,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
                     minLines: 2,
                     maxLines: 4,
                     maxLength: 160,
                     style: Theme.of(context).textTheme.bodyMedium,
                     decoration: InputDecoration(
-                      hintText: 'اكتب نبذة قصيرة عن الفريق وطريقة لعبه...',
+                      hintText: isArabic
+                        ? 'اكتب نبذة قصيرة عن الفريق وطريقة لعبه...'
+                        : 'Add a short description of your team and playing style...',
                       filled: true,
                       fillColor: VSPColors.surface,
                       border: OutlineInputBorder(
@@ -373,7 +417,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancelBtn,
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: _isSubmitting ? null : () => Navigator.pop(context),
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                 ),

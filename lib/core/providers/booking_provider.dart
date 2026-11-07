@@ -19,12 +19,19 @@ class BookingProvider with ChangeNotifier {
   Booking? _currentBooking;
   BookingDraft? _currentDraft;
   String? _activeOwnerId;
+  String? _activeUserId;
 
   bool _isLoading = false;
+  int _userBookingLoadCount = 0;
+  int _ownerBookingLoadCount = 0;
+  bool _hasLoadedOwnerBookings = false;
+  String? _ownerBookingsError;
   bool _isLoadingPublicMatches = false;
   bool _hasMoreMatches = true;
   String? _errorMessage;
   final Set<String> _cancellingIds = {};
+  final Set<String> _updatingPaymentIds = {};
+  int _draftRestoreGeneration = 0;
 
   // Getters - _userBookings is the Single Source of Truth (SSOT)
   List<Booking> get userBookings =>
@@ -58,6 +65,10 @@ class BookingProvider with ChangeNotifier {
   Booking? get currentBooking => _currentBooking;
   BookingDraft? get currentDraft => _currentDraft;
   bool get isLoading => _isLoading;
+  bool get isLoadingUserBookings => _userBookingLoadCount > 0;
+  bool get isLoadingOwnerBookings => _ownerBookingLoadCount > 0;
+  bool get hasLoadedOwnerBookings => _hasLoadedOwnerBookings;
+  String? get ownerBookingsError => _ownerBookingsError;
   bool get isLoadingPublicMatches => _isLoadingPublicMatches;
   bool get isLoadingMoreMatches => _isLoadingPublicMatches;
   bool get hasMoreMatches => _hasMoreMatches;
@@ -73,8 +84,16 @@ class BookingProvider with ChangeNotifier {
     _restoreDraft();
   }
 
+  Future<void> _clearDraftOnAccountScopeChange() async {
+    _draftRestoreGeneration++;
+    _currentDraft = null;
+    await BookingDraftStorage.clear();
+  }
+
   Future<void> _restoreDraft() async {
+    final generation = ++_draftRestoreGeneration;
     final restored = await BookingDraftStorage.restore();
+    if (generation != _draftRestoreGeneration || _currentDraft != null) return;
     if (restored != null) {
       _currentDraft = restored;
       notifyListeners();
@@ -83,6 +102,7 @@ class BookingProvider with ChangeNotifier {
 
   /// Set the current booking draft (used between screens)
   void setDraft(BookingDraft draft) {
+    _draftRestoreGeneration++;
     _currentDraft = draft;
     BookingDraftStorage.save(draft);
     notifyListeners();
@@ -107,6 +127,7 @@ class BookingProvider with ChangeNotifier {
     String? challengeCode,
   }) {
     if (_currentDraft != null) {
+      _draftRestoreGeneration++;
       _currentDraft = BookingListModifier.applyDraftUpdates(
         _currentDraft!,
         paymentMethod: paymentMethod,
@@ -132,6 +153,7 @@ class BookingProvider with ChangeNotifier {
 
   /// Clear the current draft
   void clearDraft() {
+    _draftRestoreGeneration++;
     _currentDraft = null;
     BookingDraftStorage.clear();
     notifyListeners();
@@ -189,45 +211,92 @@ class BookingProvider with ChangeNotifier {
   }
 
   /// Load user's bookings
-  void loadUserBookings(String userId) {
-    _syncCoordinator.syncUserBookings(
-      userId: userId,
-      onData: (userBookings, _) {
-        _userBookings = userBookings;
-        notifyListeners();
-      },
-      onError: (e) {
-        _errorMessage = e;
-        notifyListeners();
-      },
-    );
+  Future<bool> loadUserBookings(String userId) async {
+    if (_activeUserId != userId) {
+      if (_activeUserId != null || _activeOwnerId != null) {
+        await _clearDraftOnAccountScopeChange();
+      }
+      _activeUserId = userId;
+      _activeOwnerId = null;
+      _userBookings = [];
+      _hasLoadedOwnerBookings = false;
+      _ownerBookingsError = null;
+    }
+    _userBookingLoadCount++;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      return await _syncCoordinator.syncUserBookings(
+        userId: userId,
+        onData: (userBookings, _) {
+          if (_activeUserId != userId) return;
+          _userBookings = userBookings;
+          _errorMessage = null;
+          notifyListeners();
+        },
+        onError: (e) {
+          if (_activeUserId != userId) return;
+          _errorMessage = e;
+          notifyListeners();
+        },
+      );
+    } finally {
+      if (_userBookingLoadCount > 0) _userBookingLoadCount--;
+      notifyListeners();
+    }
   }
 
   /// Load owner's bookings (for stadium owners)
-  Future<void> loadOwnerBookings(String ownerId, {List<String>? stadiumIds, bool forceRefresh = false}) async {
-    if (!forceRefresh && _activeOwnerId == ownerId) {
-      return;
-    }
-    _activeOwnerId = ownerId;
+  Future<void> loadOwnerBookings(
+    String ownerId, {
+    List<String>? stadiumIds,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh && _activeOwnerId == ownerId) return;
 
-    await _syncCoordinator.syncOwnerBookings(
-      ownerId: ownerId,
-      stadiumIds: stadiumIds,
-      getCurrentBookings: () => _userBookings,
-      cancellingIds: _cancellingIds,
-      onData: (merged, _) {
-        _userBookings = merged;
-        notifyListeners();
-      },
-      onError: (e) {
-        _errorMessage = e;
-        notifyListeners();
-      },
-    );
+    if (_activeOwnerId != ownerId || _activeUserId != null) {
+      if (_activeOwnerId != null || _activeUserId != null) {
+        await _clearDraftOnAccountScopeChange();
+      }
+      _activeUserId = null;
+      _activeOwnerId = ownerId;
+      _userBookings = [];
+      _hasLoadedOwnerBookings = false;
+      _ownerBookingsError = null;
+    }
+    _ownerBookingLoadCount++;
+    _ownerBookingsError = null;
+    notifyListeners();
+
+    try {
+      await _syncCoordinator.syncOwnerBookings(
+        ownerId: ownerId,
+        stadiumIds: stadiumIds,
+        getCurrentBookings: () => _userBookings,
+        cancellingIds: _cancellingIds,
+        onData: (merged, _) {
+          if (_activeOwnerId != ownerId) return;
+          _userBookings = merged;
+          _hasLoadedOwnerBookings = true;
+          _ownerBookingsError = null;
+          notifyListeners();
+        },
+        onError: (e) {
+          if (_activeOwnerId != ownerId) return;
+          _ownerBookingsError = e;
+          notifyListeners();
+        },
+      );
+    } finally {
+      if (_ownerBookingLoadCount > 0) _ownerBookingLoadCount--;
+      notifyListeners();
+    }
   }
 
   /// Cancel a booking
   Future<bool> cancelBooking(String bookingId) async {
+    // Prevent duplicate cancellation RPCs from rapid taps or concurrent callers.
+    if (_cancellingIds.contains(bookingId)) return false;
     _cancellingIds.add(bookingId);
     _errorMessage = null;
     notifyListeners();
@@ -235,7 +304,48 @@ class BookingProvider with ChangeNotifier {
     try {
       final success = await _repository.cancelBooking(bookingId);
       if (success) {
-        BookingListModifier.removeBooking(_userBookings, bookingId);
+        // Keep the cancelled booking in history so a pending/confirmed refund
+        // remains visible and trackable from the user's booking record.
+        try {
+          final updatedBooking = await _repository.getBookingByIdStrict(bookingId);
+          if (updatedBooking != null) {
+            BookingListModifier.updateBooking(_userBookings, updatedBooking);
+            if (_currentBooking?.id == bookingId) {
+              _currentBooking = updatedBooking;
+            }
+          } else {
+            // A successful cancellation must not erase the booking history
+            // merely because the follow-up read returned no record.
+            final existingIndex =
+                _userBookings.indexWhere((item) => item.id == bookingId);
+            if (existingIndex >= 0) {
+              BookingListModifier.updateBooking(
+                _userBookings,
+                _userBookings[existingIndex]
+                    .copyWith(status: BookingStatus.cancelled),
+              );
+            }
+            if (_currentBooking?.id == bookingId) {
+              _currentBooking =
+                  _currentBooking!.copyWith(status: BookingStatus.cancelled);
+            }
+          }
+        } catch (refreshError) {
+          // Cancellation is already confirmed. Keep the record in history with
+          // a cancelled status while the next strict sync refreshes refund fields.
+          final existingIndex = _userBookings.indexWhere((item) => item.id == bookingId);
+          if (existingIndex >= 0) {
+            BookingListModifier.updateBooking(
+              _userBookings,
+              _userBookings[existingIndex].copyWith(status: BookingStatus.cancelled),
+            );
+          }
+          if (_currentBooking?.id == bookingId) {
+            _currentBooking =
+                _currentBooking!.copyWith(status: BookingStatus.cancelled);
+          }
+          debugPrint('Cancellation succeeded but booking refresh failed: $refreshError');
+        }
         await Future.delayed(const Duration(milliseconds: 300));
       } else {
         _errorMessage ??= 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
@@ -357,6 +467,20 @@ class BookingProvider with ChangeNotifier {
         review: review,
       );
 
+      // A disputed submission may also change the server-side booking state
+      // even when the RPC reports no finalized result. Refresh on both paths.
+      // A read failure must never change the original submission outcome.
+      try {
+        final updated = await _repository.getBookingByIdStrict(bookingId);
+        if (updated != null) {
+          BookingListModifier.updateBooking(_userBookings, updated);
+          if (_currentBooking?.id == bookingId) {
+            _currentBooking = updated;
+          }
+        }
+      } catch (refreshError) {
+        debugPrint('Match result booking refresh failed: $refreshError');
+      }
       if (!success) {
         _errorMessage = 'Failed to submit result or results do not match.';
       }
@@ -371,12 +495,54 @@ class BookingProvider with ChangeNotifier {
 
   /// Update payment status
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
-    final success = await _repository.updatePaymentStatus(bookingId, isPaid);
-    if (success) {
-      BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
+    // Serialize updates for one booking to avoid conflicting payment writes.
+    if (!_updatingPaymentIds.add(bookingId)) return false;
+    _errorMessage = null;
+    try {
+      final success = await _repository.updatePaymentStatus(bookingId, isPaid);
+      if (success) {
+        BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
+        if (_currentBooking?.id == bookingId) {
+          final current = <Booking>[_currentBooking!];
+          BookingListModifier.updatePaymentStatus(current, bookingId, isPaid);
+          _currentBooking = current.single;
+        }
+        // Publish the confirmed write immediately. The server refresh can be
+        // slow; owners should not see the previous payment state while waiting.
+        notifyListeners();
+        // Reconcile the full payment/deposit fields with the server rather
+        // than treating the optimistic flag as authoritative.
+        try {
+          final updated = await _repository.getBookingByIdStrict(bookingId);
+          if (updated != null) {
+            final index = _userBookings.indexWhere((b) => b.id == bookingId);
+            if (index >= 0) {
+              BookingListModifier.updateBooking(_userBookings, updated);
+            }
+            if (_currentBooking?.id == bookingId) {
+              _currentBooking = updated;
+            }
+          }
+        } catch (refreshError) {
+          debugPrint('Payment status refresh failed: $refreshError');
+        }
+      } else {
+        _errorMessage = 'تعذر تحديث حالة الدفع';
+      }
       notifyListeners();
+      return success;
+    } catch (error, stackTrace) {
+      // Payment confirmation is a user-facing owner action. Keep repository
+      // and network details in diagnostics; callers receive a safe failure
+      // result and can restore their loading state without an uncaught error.
+      debugPrint('Booking payment-status update failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      _errorMessage = 'تعذر تحديث حالة الدفع';
+      notifyListeners();
+      return false;
+    } finally {
+      _updatingPaymentIds.remove(bookingId);
     }
-    return success;
   }
 
   /// Update manual booking details (owner operation)

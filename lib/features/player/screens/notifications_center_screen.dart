@@ -25,14 +25,24 @@ class NotificationsCenterScreen extends StatefulWidget {
 }
 
 class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
-  late final Stream<List<AppNotification>> _notificationsStream;
-  late final String _userId;
+  late Stream<List<AppNotification>> _notificationsStream;
+  late String _userId;
 
   @override
   void initState() {
     super.initState();
-    _userId = context.read<AuthProvider>().currentUser?.uid ?? '';
+    _userId = context.read<AuthProvider>().currentUser?.id ?? '';
     _notificationsStream = NotificationRepository().getUserNotifications(_userId);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentUserId = context.watch<AuthProvider>().currentUser?.id ?? '';
+    if (currentUserId != _userId) {
+      _userId = currentUserId;
+      _notificationsStream = NotificationRepository().getUserNotifications(_userId);
+    }
   }
 
   @override
@@ -50,21 +60,58 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => NotificationRepository().markAllAsRead(_userId),
+            onPressed: () async {
+              final success = await NotificationRepository().markAllAsRead(_userId);
+              if (!context.mounted || success) return;
+              final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isArabic
+                        ? 'تعذر تحديث حالة الإشعارات. حاول مرة أخرى.'
+                        : 'Could not update notification status. Please retry.',
+                  ),
+                  backgroundColor: VSPColors.error,
+                ),
+              );
+            },
             child: Text(AppLocalizations.of(context)!.markAll, style: const TextStyle(color: VSPColors.accent, fontSize: 13)),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: StreamBuilder<List<AppNotification>>(
-        stream: _notificationsStream,
+      body: SafeArea(
+        top: false,
+        bottom: true,
+        child: StreamBuilder<List<AppNotification>>(
+          key: ValueKey(_userId),
+          stream: _notificationsStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              (snapshot.data == null || snapshot.data!.isEmpty)) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             return VSPStateView(
               state: VSPUiState.loading,
               title: isArabic ? 'جاري تحميل الإشعارات' : 'Loading notifications',
               message: isArabic ? 'بنجهّز آخر التنبيهات والإجراءات المطلوبة.' : 'Refreshing your latest alerts and required actions.',
+            );
+          }
+
+          if (snapshot.hasError &&
+              (snapshot.data == null || snapshot.data!.isEmpty)) {
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            return VSPStateView(
+              state: VSPUiState.error,
+              title: isArabic ? 'تعذر تحميل الإشعارات' : 'Could not load notifications',
+              message: isArabic
+                  ? 'تحقق من اتصالك بالإنترنت ثم أعد المحاولة.'
+                  : 'Check your internet connection and try again.',
+              onRetry: () {
+                setState(() {
+                  _notificationsStream =
+                      NotificationRepository().getUserNotifications(_userId);
+                });
+              },
             );
           }
 
@@ -84,8 +131,57 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             );
           }
 
-          return ListView.separated(
-            padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 24),
+          return Column(
+            children: [
+              if (snapshot.hasError)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(
+                    VSPSpacing.md,
+                    VSPSpacing.sm,
+                    VSPSpacing.md,
+                    0,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: VSPSpacing.md,
+                    vertical: VSPSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 17),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'تعذر تحديث الإشعارات. نعرض آخر قائمة تم تحميلها.'
+                              : 'Could not refresh notifications. Showing the last loaded list.',
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _notificationsStream = NotificationRepository().getUserNotifications(_userId);
+                        }),
+                        child: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'إعادة المحاولة' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: ListView.separated(
+            // SafeArea already applies the device bottom inset to this list.
+            // Keep only intentional breathing room here to avoid double-counting it.
+            padding: const EdgeInsets.fromLTRB(
+              VSPSpacing.md,
+              VSPSpacing.md,
+              VSPSpacing.md,
+              24,
+            ),
             physics: const BouncingScrollPhysics(),
             itemCount: notifications.length,
             separatorBuilder: (_, __) => const SizedBox(height: 0),
@@ -97,8 +193,8 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                   key: ValueKey(notification.id),
                   direction: DismissDirection.endToStart,
                   background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
+                    alignment: AlignmentDirectional.centerEnd,
+                    padding: const EdgeInsetsDirectional.only(end: 20),
                     margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
                     decoration: BoxDecoration(
                       color: VSPColors.error.withValues(alpha: 0.2),
@@ -106,16 +202,39 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                     ),
                     child: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 24),
                   ),
-                  onDismissed: (_) {
+                  onDismissed: (_) async {
                     final deletedItem = notification;
+                    // Bind the delete/Undo operation to the account that owned this row.
+                    // The screen may remain mounted while AuthProvider switches accounts.
+                    final deletingUserId = _userId;
                     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                    NotificationRepository().deleteNotification(_userId, deletedItem.id);
+                    final repository = NotificationRepository();
+                    final deleted = await repository.deleteNotification(deletingUserId, deletedItem.id);
+
+                    if (!context.mounted || _userId != deletingUserId) return;
+                    if (!deleted) {
+                      setState(() {
+                        _notificationsStream = repository.getUserNotifications(_userId);
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isArabic ? 'تعذر حذف الإشعار. حاول مرة أخرى.' : 'Could not delete the notification. Please try again.',
+                            style: const TextStyle(color: VSPColors.white),
+                          ),
+                          backgroundColor: VSPColors.error,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+
                     ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           isArabic ? 'تم حذف الإشعار' : 'Notification deleted',
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: VSPColors.white),
                         ),
                         backgroundColor: VSPColors.surface,
                         behavior: SnackBarBehavior.floating,
@@ -123,8 +242,23 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                         action: SnackBarAction(
                           label: isArabic ? 'تراجع' : 'Undo',
                           textColor: VSPColors.accent,
-                          onPressed: () {
-                            NotificationRepository().sendNotification(_userId, deletedItem);
+                          onPressed: () async {
+                            // Never restore an old account's notification into a newly
+                            // signed-in account if the user changed while the SnackBar was visible.
+                            if (!context.mounted || _userId != deletingUserId) return;
+                            final restored = await repository.restoreNotification(deletingUserId, deletedItem);
+                            if (!restored && context.mounted && _userId == deletingUserId) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isArabic ? 'تعذرت استعادة الإشعار.' : 'Could not restore the notification.',
+                                    style: const TextStyle(color: VSPColors.white),
+                                  ),
+                                  backgroundColor: VSPColors.error,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
                           },
                         ),
                         duration: const Duration(seconds: 4),
@@ -135,8 +269,12 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                 ),
               );
             },
+          ),
+              ),
+            ],
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -193,8 +331,8 @@ class _NotificationCard extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          _localizeText(context, notification.title),
-                          maxLines: 1,
+                          _localizeNotificationText(context, notification, isTitle: true),
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
@@ -210,7 +348,7 @@ class _NotificationCard extends StatelessWidget {
                   ),
                   const SizedBox(height: VSPSpacing.xs),
                   Text(
-                    _localizeText(context, notification.body),
+                    _localizeNotificationText(context, notification, isTitle: false),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: notification.isRead ? VSPColors.textSecondary.withValues(alpha: 0.6) : VSPColors.textSecondary,
                     ),
@@ -223,8 +361,11 @@ class _NotificationCard extends StatelessWidget {
                       text: isArabic ? 'عرض تفاصيل التحدي' : 'View Challenge Details',
                       height: 44,
                       onPressed: () {
-                        NotificationRepository().markNotificationAsRead(userId, notification.id);
-                        NotificationUiHelper.navigateToBooking(context, notification.bookingId!);
+                        _markAsReadBeforeNavigation(context).then((_) {
+                          if (context.mounted) {
+                            NotificationUiHelper.navigateToBooking(context, notification.bookingId!);
+                          }
+                        });
                       },
                     ),
                   ],
@@ -237,9 +378,46 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  void _onNotificationTap(BuildContext context) {
+  Future<void> _markAsReadBeforeNavigation(BuildContext context) async {
+    if (notification.isRead) return;
+    final marked = await NotificationRepository().markNotificationAsRead(
+      userId,
+      notification.id,
+    );
+    if (!context.mounted || marked) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isArabic
+              ? 'تعذر تحديث حالة الإشعار. سيظل محفوظاً في القائمة.'
+              : 'Could not update this notification. It will remain in your list.',
+        ),
+        backgroundColor: VSPColors.warning,
+      ),
+    );
+  }
+
+  Future<void> _onNotificationTap(BuildContext context) async {
     if (!notification.isRead) {
-      NotificationRepository().markNotificationAsRead(userId, notification.id);
+      final marked = await NotificationRepository().markNotificationAsRead(
+        userId,
+        notification.id,
+      );
+      if (!context.mounted) return;
+      if (!marked) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isArabic
+                  ? 'تعذر تحديث حالة الإشعار. سيظل محفوظاً في القائمة.'
+                  : 'Could not update this notification. It will remain in your list.',
+            ),
+            backgroundColor: VSPColors.warning,
+          ),
+        );
+      }
     }
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -283,7 +461,9 @@ class _NotificationCard extends StatelessWidget {
     // Default announcement dialog for system / informational notifications
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.card)),
         title: Row(
@@ -292,14 +472,14 @@ class _NotificationCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _localizeText(context, notification.title),
+                _localizeNotificationText(context, notification, isTitle: true),
                 style: const TextStyle(color: VSPColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
         content: Text(
-          _localizeText(context, notification.body),
+          _localizeNotificationText(context, notification, isTitle: false),
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.5),
         ),
         actions: [
@@ -345,6 +525,8 @@ class _NotificationCard extends StatelessWidget {
         return Iconsax.verify_copy;
       case 'public_match_joined':
         return Iconsax.user_add_copy;
+      case 'join_request_accepted':
+        return Iconsax.tick_circle_copy;
       case 'match_full':
         return Iconsax.people_copy;
       case 'chat':
@@ -375,6 +557,8 @@ class _NotificationCard extends StatelessWidget {
       case 'match_full':
       case 'result_confirmation':
         return VSPColors.accent;
+      case 'join_request_accepted':
+        return VSPColors.success;
       case 'booking_cancelled':
       case 'debt_warning':
       case 'debt_grace':
@@ -399,6 +583,24 @@ class _NotificationCard extends StatelessWidget {
     if (diff.inMinutes < 60) return AppLocalizations.of(context)!.minutesAgo(diff.inMinutes);
     if (diff.inHours < 24) return AppLocalizations.of(context)!.hoursAgo(diff.inHours);
     return AppDateFormatter.formatDayMonth(dt, isArabic ? 'ar' : 'en');
+  }
+
+  String _localizeNotificationText(
+    BuildContext context,
+    AppNotification notification, {
+    required bool isTitle,
+  }) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final metadata = notification.metadata ?? const <String, dynamic>{};
+    final key = isTitle
+        ? (isArabic ? 'title_ar' : 'title_en')
+        : (isArabic ? 'body_ar' : 'body_en');
+    final localized = metadata[key]?.toString().trim();
+    if (localized != null && localized.isNotEmpty) return localized;
+    return _localizeText(
+      context,
+      isTitle ? notification.title : notification.body,
+    );
   }
 
   String _localizeText(BuildContext context, String text) {

@@ -21,17 +21,21 @@ class BookingSheetCancelDialog {
   }) {
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(title, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
         content: Text(content, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(cancelBtn, style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(confirmBtn, style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
           ),
@@ -48,16 +52,22 @@ class BookingSheetCancelDialog {
   }) async {
     final result = await showDialog<ManualBookingCancelDecision>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
             const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 22),
             const SizedBox(width: 8),
-            Text(
-              isArabic ? 'إلغاء حجز بعربون' : 'Cancel Deposit Booking',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            Expanded(
+              child: Text(
+                isArabic ? 'إلغاء حجز بعربون' : 'Cancel Deposit Booking',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -93,7 +103,7 @@ class BookingSheetCancelDialog {
                         children: [
                           Text(
                             isArabic ? 'تم رد العربون للعميل' : 'Refund Deposit to Client',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -131,7 +141,7 @@ class BookingSheetCancelDialog {
                         children: [
                           Text(
                             isArabic ? 'احتساب العربون كشرط جزائي' : 'Keep Deposit as Penalty',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -151,6 +161,7 @@ class BookingSheetCancelDialog {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, ManualBookingCancelDecision.abort),
             child: Text(
               isArabic ? 'تراجع وعدم الإلغاء' : 'Keep Booking',

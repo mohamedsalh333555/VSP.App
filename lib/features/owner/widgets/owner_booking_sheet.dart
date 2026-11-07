@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/owner_repository.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -120,17 +121,21 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       );
 
   Future<void> _handleConfirmBooking(AppLocalizations l10n, bool isArabic) async {
+    if (!mounted || !widget.parentContext.mounted) return;
     final String customerName = _nameController.text.trim().isNotEmpty
         ? _nameController.text.trim()
         : (isArabic ? 'حجز يدوي' : 'Manual Booking');
 
     setState(() => _isSaving = true);
+    AuthProvider? authProvider;
+    String? initiatingUserId;
 
     try {
       final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
-      final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
+      authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
 
       final uid = authProvider.currentUser?.id;
+      initiatingUserId = uid;
       if (uid == null) {
         throw Exception(isArabic ? 'انتهت الجلسة، يرجى إعادة تسجيل الدخول' : 'Session expired');
       }
@@ -208,7 +213,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         if (res is Map && res['success'] == false) {
           throw Exception(res['error']?.toString() ?? res['message']?.toString() ?? 'Failed to save booking');
         }
+        if (!mounted || authProvider.currentUser?.id != uid) return;
         await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+        if (!mounted || authProvider.currentUser?.id != uid) return;
       } else {
         final booking = widget.slot['booking'] as Booking?;
         if (booking != null) {
@@ -256,7 +263,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           );
 
           await OwnerRepository().updateBookingDetails(booking.id, updateMap);
+          if (!mounted || authProvider.currentUser?.id != uid) return;
           await bookingProvider.loadOwnerBookings(uid);
+          if (!mounted || authProvider.currentUser?.id != uid) return;
         }
       }
 
@@ -274,7 +283,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         }
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted &&
+          (authProvider == null ||
+              authProvider.currentUser?.id == initiatingUserId)) {
         final cleanErr = OwnerBookingSheetService.formatBookingErrorMessage(e, isArabic: isArabic);
         VSPFeedback.showError(context, cleanErr);
       }
@@ -297,11 +308,22 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
 
   Future<void> _handleReportNoShow(Booking booking, bool isArabic) async {
     final parentContext = widget.parentContext;
+    if (!mounted || !parentContext.mounted) return;
     final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
     final bookingProvider = Provider.of<BookingProvider>(parentContext, listen: false);
+    final uid = authProvider.currentUser?.id;
+    if (uid == null) {
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى.' : 'Your session expired. Please sign in again.',
+      );
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
         title: Text(isArabic ? 'تسجيل عدم حضور اللاعب' : 'Report Player No-Show'),
@@ -315,20 +337,23 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'إلغاء' : 'Cancel')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.warning, foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.warning, foregroundColor: VSPColors.black),
             child: Text(isArabic ? 'تأكيد عدم الحضور' : 'Confirm No-Show'),
           ),
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true ||
+        !mounted ||
+        authProvider.currentUser?.id != uid) {
+      return;
+    }
     setState(() => _isSaving = true);
     try {
       await OwnerRepository().recordPlayerNoShow(bookingId: booking.id);
-      final uid = authProvider.currentUser?.id;
-      if (uid != null) {
-        await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
-      }
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+      if (!mounted || authProvider.currentUser?.id != uid) return;
       if (mounted) {
         Navigator.pop(context);
         if (widget.parentContext.mounted) {
@@ -336,8 +361,14 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         }
       }
     } catch (e) {
-      if (mounted) {
-        VSPFeedback.showError(context, isArabic ? 'تعذر تسجيل عدم الحضور: $e' : 'Could not record no-show: $e');
+      VSPLogger.w('Owner no-show report failed: $e');
+      if (mounted && authProvider.currentUser?.id == uid) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر تسجيل عدم الحضور. تحقق من الاتصال وحاول مرة أخرى.'
+              : 'Could not record the no-show. Check your connection and try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -345,6 +376,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
   }
 
   Future<void> _lockSlotForMaintenance(AppLocalizations l10n, bool isArabic) async {
+    if (!mounted || !widget.parentContext.mounted) return;
     final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
     final ownerId = authProvider.currentUser?.id;
     if (ownerId == null) {
@@ -383,9 +415,10 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         throw Exception(result['error']?.toString() ?? 'Failed to lock slot');
       }
 
+      if (!mounted || authProvider.currentUser?.id != ownerId) return;
       await bookingProvider.loadOwnerBookings(ownerId, forceRefresh: true);
 
-      if (!mounted) return;
+      if (!mounted || authProvider.currentUser?.id != ownerId) return;
       navigator.pop();
       if (parentContext.mounted) {
         VSPFeedback.showSuccess(
@@ -394,7 +427,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && authProvider.currentUser?.id == ownerId) {
         VSPFeedback.showError(
           context,
           isArabic ? 'تعذر قفل الفترة للصيانة.' : 'Could not lock this slot for maintenance.',
@@ -424,8 +457,11 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       manualBookingTitle: l10n.manualBookingTitle,
     );
 
-    final double systemBottomPadding = MediaQuery.of(context).padding.bottom;
-    final double keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
+    final media = MediaQuery.of(context);
+    final double systemBottomPadding = media.padding.bottom;
+    // The scroll-controlled modal route already constrains this sheet around
+    // the keyboard and system bars; keep only a preferred content-height cap.
+    final double availableSheetHeight = media.size.height * 0.92;
     final int maxMins = _getMaxAvailableMinutes();
 
     final formattedSlotTime = OwnerBookingSheetService.formatSlotTime(
@@ -438,13 +474,13 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
+        maxHeight: availableSheetHeight,
       ),
       padding: EdgeInsets.fromLTRB(
         VSPSpacing.md,
         VSPSpacing.md,
         VSPSpacing.md,
-        systemBottomPadding + keyboardPadding + 16,
+        systemBottomPadding + 16,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,

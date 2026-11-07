@@ -109,7 +109,7 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     isAr ? 'طلب تسوية وسحب الرصيد' : 'Request Payout Settlement',
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12.5),
+                    style: const TextStyle(color: VSPColors.black, fontWeight: FontWeight.bold, fontSize: 12.5),
                   ),
                 ),
               ),

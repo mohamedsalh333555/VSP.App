@@ -43,14 +43,14 @@ class QuickBookingDurationSection extends StatelessWidget {
         onDurationChanged(minutes);
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: VSPDSMotion.navigationSwitch,
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
           color: isSelected ? VSPColors.accent : VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.full),
           border: Border.all(
-            color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.1),
+            color: isSelected ? VSPColors.accent : VSPColors.white.withValues(alpha: 0.1),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -58,7 +58,7 @@ class QuickBookingDurationSection extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.white,
+            color: isSelected ? VSPColors.black : VSPColors.white,
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
           ),
@@ -105,7 +105,7 @@ class QuickBookingDurationSection extends StatelessWidget {
       children: [
         Text(
           isAr ? 'مدة الحجز (عدد الساعات)' : 'Booking Duration',
-          style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: VSPColors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
 
@@ -116,9 +116,8 @@ class QuickBookingDurationSection extends StatelessWidget {
               final index = availableDurations.indexOf(mins);
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(
-                    right: isAr ? (index > 0 ? 6 : 0) : 0,
-                    left: isAr ? 0 : (index > 0 ? 6 : 0),
+                  padding: EdgeInsetsDirectional.only(
+                    start: index > 0 ? 6 : 0,
                   ),
                   child: _buildDurationChip(mins, _formatDurationLabel(mins, isAr)),
                 ),
@@ -132,7 +131,7 @@ class QuickBookingDurationSection extends StatelessWidget {
             child: Row(
               children: availableDurations.map((mins) {
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsetsDirectional.only(start: 8),
                   child: _buildDurationChip(mins, _formatDurationLabel(mins, isAr)),
                 );
               }).toList(),
@@ -145,10 +144,10 @@ class QuickBookingDurationSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.04),
+              color: VSPColors.white.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: VSPColors.white.withValues(alpha: 0.1),
               ),
             ),
             child: Row(
@@ -163,7 +162,7 @@ class QuickBookingDurationSection extends StatelessWidget {
                   child: Text(
                     obstacleText,
                     style: const TextStyle(
-                      color: Colors.white70,
+                      color: VSPColors.white70,
                       fontSize: 11.5,
                       fontWeight: FontWeight.w500,
                     ),

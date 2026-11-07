@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/utils/owner_financial_calculator.dart';
 import '../../../../data/models.dart';
 import '../../../../models/dashboard_analytics.dart';
@@ -22,6 +23,8 @@ class OwnerProInsightsView extends StatelessWidget {
   final ValueChanged<String> onStadiumFilterChanged;
   final void Function(DateTime start, DateTime end)? onCustomRangeSelected;
   final DashboardAnalytics? analytics;
+  final bool isInitialLoading;
+  final bool hasInitialLoadError;
   final DashboardFilter? dashboardFilter;
   final Function(int)? onNavigateTab;
   final bool isArabic;
@@ -37,6 +40,8 @@ class OwnerProInsightsView extends StatelessWidget {
     required this.onStadiumFilterChanged,
     this.onCustomRangeSelected,
     this.analytics,
+    this.isInitialLoading = false,
+    this.hasInitialLoadError = false,
     this.dashboardFilter,
     this.onNavigateTab,
     required this.isArabic,
@@ -57,6 +62,40 @@ class OwnerProInsightsView extends StatelessWidget {
       if (selectedStadiumFilter != 'all' && b.stadiumId != selectedStadiumFilter) return false;
       return true;
     }).toList();
+
+    if (isInitialLoading || hasInitialLoadError) {
+      return Column(
+        children: [
+          const SizedBox(height: 6),
+          InsightsTopFiltersRow(
+            selectedStadiumFilter: selectedStadiumFilter,
+            selectedTimePeriod: selectedTimePeriod,
+            stadiums: stadiums,
+            onStadiumFilterChanged: onStadiumFilterChanged,
+            onTimePeriodChanged: onTimePeriodChanged,
+            onCustomRangeSelected: onCustomRangeSelected,
+            isArabic: isArabic,
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 220,
+            child: VSPStateView(
+              state: isInitialLoading ? VSPUiState.loading : VSPUiState.error,
+              title: isInitialLoading
+                  ? (isArabic ? 'جارٍ تحميل التحليلات' : 'Loading analytics')
+                  : (isArabic ? 'تعذر تحميل التحليلات' : 'Could not load analytics'),
+              message: isInitialLoading
+                  ? (isArabic
+                      ? 'نحمّل بيانات التحليلات من الخادم.'
+                      : 'Fetching analytics data from the server.')
+                  : (isArabic
+                      ? 'تحقق من الاتصال ثم أعد المحاولة من التنبيه أعلى الصفحة.'
+                      : 'Check your connection and retry from the notice above.'),
+            ),
+          ),
+        ],
+      );
+    }
 
     // التحليلات المالية/التشغيلية المعروضة في Pro يجب أن تأتي من مصدر التحليلات الرسمي في Supabase.
     // لا نستخدم إعادة حساب محلية كبديل لأن ذلك قد ينتج أرقاماً مختلفة عن الـSSOT.

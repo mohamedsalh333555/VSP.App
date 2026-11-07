@@ -10,20 +10,26 @@ class VSPTermsAndPrivacyModal {
   static void show(BuildContext context, {bool isOwner = false}) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.75),
+      barrierColor: VSPColors.black.withValues(alpha: 0.75),
       builder: (dialogContext) {
         final isAr = Localizations.localeOf(dialogContext).languageCode == 'ar';
         final titleText = isAr ? 'الشروط وأحكام الخصوصية' : 'Terms & Privacy Policy';
         final buttonText = isAr ? 'موافق' : 'I Understand';
+        final media = MediaQuery.of(dialogContext);
+        // Dialog applies keyboard viewInsets through its own route padding.
+        // Keep a content cap without subtracting the keyboard height twice.
+        final availableDialogHeight = (media.size.height - 48)
+            .clamp(0.0, media.size.height)
+            .toDouble();
 
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
           child: Dialog(
-            backgroundColor: Colors.transparent,
+            backgroundColor: VSPColors.transparent,
             insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Container(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(dialogContext).size.height * 0.85,
+                maxHeight: availableDialogHeight,
               ),
               decoration: BoxDecoration(
                 color: VSPColors.surface,
@@ -36,7 +42,7 @@ class VSPTermsAndPrivacyModal {
                 children: [
                   // Header
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 16, 14),
+                    padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 16, 14),
                     child: Row(
                       children: [
                         const VSPIconBadge(
@@ -59,9 +65,12 @@ class VSPTermsAndPrivacyModal {
                         IconButton(
                           onPressed: () => Navigator.pop(dialogContext),
                           icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 20),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          splashRadius: 20,
+                          padding: const EdgeInsets.all(8),
+                          constraints: const BoxConstraints(
+                            minWidth: 48,
+                            minHeight: 48,
+                          ),
+                          splashRadius: 24,
                         ),
                       ],
                     ),

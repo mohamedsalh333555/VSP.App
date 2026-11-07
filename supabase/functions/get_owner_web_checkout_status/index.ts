@@ -133,7 +133,7 @@ serve(async(req:Request)=>{
     if(!validUuid(id)) return out(req,{success:false,error:"INVALID_ORDER_ID"},400);
 
     const {data:order,error}=await sb.from("owner_subscription_orders")
-      .select("id,owner_id,checkout_email,status,plan_code,billing_period,amount,vsp_fee_amount,paymob_fee_amount,gross_amount,paid_at,payment_source,paymob_order_id,paymob_transaction_id")
+      .select("id,owner_id,status,plan_code,billing_period,amount,vsp_fee_amount,paymob_fee_amount,gross_amount,paid_at,payment_source,paymob_order_id,paymob_transaction_id")
       .eq("id",id).maybeSingle();
     if(error||!order) return out(req,{success:false,error:"ORDER_NOT_FOUND"},404);
 
@@ -145,7 +145,7 @@ serve(async(req:Request)=>{
       .maybeSingle();
 
     const isAdmin = userProfile && ["admin", "super_admin", "co_founder", "cofounder"].includes(userProfile.role);
-    const isOrderOwner = (order.owner_id && order.owner_id === callerUser.id) || (order.checkout_email && callerUser.email && order.checkout_email.toLowerCase() === callerUser.email.toLowerCase());
+    const isOrderOwner = order.owner_id === callerUser.id;
 
     if (!isAdmin && !isOrderOwner) {
       return out(req, { success: false, error: "FORBIDDEN_NOT_ORDER_OWNER", message: "You are not authorized to view this order status." }, 403);

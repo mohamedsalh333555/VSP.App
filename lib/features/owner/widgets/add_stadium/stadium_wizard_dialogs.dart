@@ -10,7 +10,9 @@ class StadiumWizardDialogs {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final shouldLeave = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(
@@ -25,10 +27,18 @@ class StadiumWizardDialogs {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(isArabic ? 'خروج' : 'Exit', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
           ),
@@ -47,7 +57,9 @@ class StadiumWizardDialogs {
 
     final confirm = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(
@@ -62,6 +74,10 @@ class StadiumWizardDialogs {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
@@ -69,7 +85,9 @@ class StadiumWizardDialogs {
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.error,
-              foregroundColor: Colors.white,
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+              foregroundColor: VSPColors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
             ),
             child: Text(isArabic ? 'تأكيد الإخفاء' : 'Confirm Hide'),
@@ -99,7 +117,7 @@ class StadiumWizardDialogs {
         if (!context.mounted) return;
         if (success) {
           final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-          final uid = auth.currentUser?.uid;
+          final uid = auth.currentUser?.id;
           if (uid != null) {
             final bool stillHas = await StadiumRepository().checkOwnerHasRemainingStadiums(uid);
             await auth.updateProfile({'hasStadium': stillHas});

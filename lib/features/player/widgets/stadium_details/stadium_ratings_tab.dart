@@ -5,6 +5,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/stadium_repository.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
@@ -22,13 +23,20 @@ class StadiumRatingsTab extends StatefulWidget {
 }
 
 class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
-  late final Stream<List<Map<String, dynamic>>> _reviewsStream;
+  late Stream<List<Map<String, dynamic>>> _reviewsStream;
   static const Color _ratingUnselectedColor = VSPColors.surfaceAlt;
 
   @override
   void initState() {
     super.initState();
     _reviewsStream = StadiumRepository().streamReviews(widget.stadium.id);
+  }
+
+  void _retryReviews() {
+    if (!mounted) return;
+    setState(() {
+      _reviewsStream = StadiumRepository().streamReviews(widget.stadium.id);
+    });
   }
 
   Future<void> _showAddReviewSheet(BuildContext context) async {
@@ -50,7 +58,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
         context: context,
         useSafeArea: true,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         builder: (sheetCtx) {
           return StatefulBuilder(
             builder: (context, setSheetState) {
@@ -105,7 +113,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                       const SizedBox(height: 16),
                       TextField(
                         controller: commentController,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        style: const TextStyle(color: VSPColors.white, fontSize: 14),
                         maxLines: 3,
                         decoration: InputDecoration(
                           hintText: isArabic
@@ -328,8 +336,21 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
           );
         }
 
+        if (snapshot.hasError && docs.isEmpty) {
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر تحميل التقييمات' : 'Could not load reviews',
+            message: isArabic ? 'تحقق من اتصالك وحاول تحميل التقييمات مرة أخرى.' : 'Check your connection and retry loading reviews.',
+            onRetry: _retryReviews,
+          );
+        }
+
         if (snapshot.connectionState == ConnectionState.waiting && docs.isEmpty) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل التقييمات' : 'Loading reviews',
+            message: isArabic ? 'نحدّث تقييمات وآراء اللاعبين.' : 'Fetching player ratings and reviews.',
+          );
         }
 
         if (docs.isEmpty) {
@@ -352,16 +373,46 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
           );
         }
 
+        final hasStaleError = snapshot.hasError && docs.isNotEmpty;
         return ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           padding: const EdgeInsets.all(VSPSpacing.md),
-          itemCount: docs.length + 1,
+          itemCount: docs.length + 1 + (hasStaleError ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == 0) {
               return buildReviewHeader();
             }
+            if (hasStaleError && index == 1) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+                decoration: BoxDecoration(
+                  color: VSPColors.warning.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: VSPColors.warning, size: 18),
+                    const SizedBox(width: VSPSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        isArabic ? 'تعذر تحديث التقييمات. نعرض آخر بيانات تم تحميلها.' : 'Could not refresh reviews. Showing the last loaded data.',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
+                      onPressed: _retryReviews,
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-            final doc = docs[index - 1];
+            final reviewIndex = index - (hasStaleError ? 2 : 1);
+            final doc = docs[reviewIndex];
             final createdAtStr = doc['created_at'] as String?;
             final userName = doc['user_name']?.toString() ?? doc['userName']?.toString() ?? l10n.player;
             final userImage = doc['user_image_url']?.toString() ?? doc['userImageUrl']?.toString() ?? '';

@@ -147,8 +147,8 @@ class OwnerCupCard extends StatelessWidget {
                     height: 30,
                     child: Stack(
                       children: List.generate(tournament.joinedTeams.length.clamp(0, 4), (i) {
-                        return Positioned(
-                          left: i * 18.0,
+                        return PositionedDirectional(
+                          start: i * 18.0,
                           child: Container(
                             width: 28,
                             height: 28,

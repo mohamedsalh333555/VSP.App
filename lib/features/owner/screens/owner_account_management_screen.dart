@@ -170,13 +170,13 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final userModel = authProvider.userModel;
-    final currentUid = authProvider.currentUser?.uid ?? '';
+    final currentUid = authProvider.currentUser?.id ?? '';
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         centerTitle: true,
@@ -236,7 +236,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
           border: Border(top: BorderSide(color: VSPColors.divider.withValues(alpha: 0.2), width: 1)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: VSPColors.black.withValues(alpha: 0.5),
               blurRadius: 10,
               offset: const Offset(0, -4),
             ),

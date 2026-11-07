@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'collective_match_invite_sheet.dart';
 
 class CollectiveMatchInviteRoute extends StatefulWidget {
@@ -30,8 +31,14 @@ class _CollectiveMatchInviteRouteState extends State<CollectiveMatchInviteRoute>
   }
 
   @override
-  Widget build(BuildContext context) => const Scaffold(
+  Widget build(BuildContext context) => Scaffold(
     backgroundColor: VSPColors.background,
-    body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+    body: SafeArea(
+      child: VSPStateView(
+        state: VSPUiState.loading,
+        title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ فتح الدعوة' : 'Opening invitation',
+        message: Localizations.localeOf(context).languageCode == 'ar' ? 'نجهّز تفاصيل الحجز والدعوة.' : 'Preparing booking and invitation details.',
+      ),
+    ),
   );
 }

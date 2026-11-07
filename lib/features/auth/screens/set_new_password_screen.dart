@@ -106,7 +106,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  elevation: 0,
  leading: const VSPBackButton(),
  title: Text(
@@ -118,7 +118,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  ),
  centerTitle: true,
  ),
- body: SafeArea(
+ body: SafeArea(top: false,
  child: SingleChildScrollView(
  padding: const EdgeInsets.all(VSPSpacing.xl),
  child: Form(

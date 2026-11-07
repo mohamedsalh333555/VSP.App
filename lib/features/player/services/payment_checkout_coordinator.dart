@@ -9,13 +9,16 @@ import 'payment_checkout_service.dart';
 /// for the payment checkout screen.
 class PaymentCheckoutCoordinator {
   SupabaseBookingRepository? _bookingRepo;
+  final SupabaseClient? _client;
   Timer? _countdownTimer;
   Timer? _webhookTimeoutTimer;
   Timer? _fallbackPollingTimer;
   StreamSubscription? _bookingSubscription;
+  int _pollingGeneration = 0;
 
-  PaymentCheckoutCoordinator({SupabaseBookingRepository? bookingRepo})
-      : _bookingRepo = bookingRepo;
+  PaymentCheckoutCoordinator({SupabaseBookingRepository? bookingRepo, SupabaseClient? client})
+      : _bookingRepo = bookingRepo,
+        _client = client;
 
   @visibleForTesting
   SupabaseBookingRepository get bookingRepo => _bookingRepo ??= SupabaseBookingRepository();
@@ -72,14 +75,21 @@ class PaymentCheckoutCoordinator {
     Duration interval = const Duration(seconds: 10),
   }) {
     _fallbackPollingTimer?.cancel();
+    final pollingGeneration = ++_pollingGeneration;
+    var isFetching = false;
+    var hasConfirmed = false;
     _fallbackPollingTimer = Timer.periodic(interval, (timer) async {
+      if (isFetching || hasConfirmed) return;
+      isFetching = true;
       try {
         final booking = await fetchBooking(bookingId);
+        if (pollingGeneration != _pollingGeneration) return;
         if (booking != null &&
             PaymentCheckoutService.isPaymentConfirmed(
               status: booking.status.toDbValue(),
               paymentStatus: booking.paymentStatus,
             )) {
+          hasConfirmed = true;
           timer.cancel();
           _webhookTimeoutTimer?.cancel();
           _fallbackPollingTimer?.cancel();
@@ -87,12 +97,15 @@ class PaymentCheckoutCoordinator {
         }
       } catch (e) {
         debugPrint('Fallback polling notice: $e');
+      } finally {
+        isFetching = false;
       }
     });
   }
 
   /// Cancels active fallback polling timer.
   void cancelFallbackPolling() {
+    _pollingGeneration++;
     _fallbackPollingTimer?.cancel();
     _fallbackPollingTimer = null;
   }
@@ -106,10 +119,17 @@ class PaymentCheckoutCoordinator {
     required void Function(Map<String, dynamic>) onPaid,
   }) {
     _fallbackPollingTimer?.cancel();
+    final pollingGeneration = ++_pollingGeneration;
+    var isFetching = false;
+    var hasConfirmed = false;
     _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      if (isFetching || hasConfirmed) return;
+      isFetching = true;
       try {
         final status = await fetchStatus(orderReference);
+        if (pollingGeneration != _pollingGeneration) return;
         if (status['success'] == true && status['payment_status'] == 'paid') {
+          hasConfirmed = true;
           timer.cancel();
           _webhookTimeoutTimer?.cancel();
           _fallbackPollingTimer?.cancel();
@@ -117,6 +137,8 @@ class PaymentCheckoutCoordinator {
         }
       } catch (e) {
         debugPrint('Tournament payment polling notice: $e');
+      } finally {
+        isFetching = false;
       }
     });
   }
@@ -156,7 +178,7 @@ class PaymentCheckoutCoordinator {
       final orderReference = paymentOrderReference;
       if (orderReference != null && orderReference.isNotEmpty) {
         try {
-          await Supabase.instance.client.rpc(
+          await (_client ?? Supabase.instance.client).rpc(
             'cancel_tournament_payment_order_atomic',
             params: {'p_order_reference': orderReference},
           );
@@ -214,6 +236,7 @@ class PaymentCheckoutCoordinator {
 
   /// Cancels all active timers and stream subscriptions.
   void cancelAllTimers() {
+    _pollingGeneration++;
     _countdownTimer?.cancel();
     _webhookTimeoutTimer?.cancel();
     _fallbackPollingTimer?.cancel();

@@ -10,16 +10,17 @@ import '../../../auth/screens/welcome_screen.dart';
 class OwnerDeleteAccountCard extends StatelessWidget {
   const OwnerDeleteAccountCard({super.key});
 
-  void _showDeleteAccountDialog(BuildContext context) {
+  Future<void> _showDeleteAccountDialog(BuildContext context) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     bool isDeleting = false;
     final passwordController = TextEditingController();
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
+            scrollable: true,
             backgroundColor: VSPColors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
             title: Text(
@@ -62,37 +63,34 @@ class OwnerDeleteAccountCard extends StatelessWidget {
             ),
             actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
             actions: [
-              Row(
-                children: [
-                  Expanded(
-                    child: PrimaryButton(
-                      text: isArabic ? 'إلغاء' : 'Cancel',
-                      height: 48,
-                      color: VSPColors.surfaceAlt,
-                      textColor: VSPColors.textPrimary,
-                      onPressed: isDeleting ? null : () => Navigator.pop(dialogCtx),
-                    ),
-                  ),
-                  const SizedBox(width: VSPSpacing.md),
-                  Expanded(
-                    child: PrimaryButton(
-                      text: isArabic ? 'حذف' : 'Delete',
-                      height: 48,
-                      color: VSPColors.error,
-                      textColor: VSPColors.background,
-                      isLoading: isDeleting,
-                      onPressed: isDeleting
-                          ? null
-                          : () async {
-                              if (passwordController.text.isEmpty) {
-                                VSPFeedback.showWarning(
-                                  dialogCtx,
-                                  isArabic ? 'أدخل كلمة مرور الحساب أولاً.' : 'Enter your account password first.',
-                                );
-                                return;
-                              }
+              LayoutBuilder(
+                builder: (_, constraints) {
+                  final cancelButton = PrimaryButton(
+                    text: isArabic ? 'إلغاء' : 'Cancel',
+                    height: 48,
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.textPrimary,
+                    onPressed: isDeleting ? null : () => Navigator.pop(dialogCtx),
+                  );
+                  final deleteButton = PrimaryButton(
+                    text: isArabic ? 'حذف' : 'Delete',
+                    height: 48,
+                    color: VSPColors.error,
+                    textColor: VSPColors.background,
+                    isLoading: isDeleting,
+                    onPressed: isDeleting
+                        ? null
+                        : () async {
+                            if (passwordController.text.isEmpty) {
+                              VSPFeedback.showWarning(
+                                dialogCtx,
+                                isArabic ? 'أدخل كلمة مرور الحساب أولاً.' : 'Enter your account password first.',
+                              );
+                              return;
+                            }
 
-                              setDialogState(() => isDeleting = true);
+                            setDialogState(() => isDeleting = true);
+                            try {
                               final authProvider = Provider.of<AuthProvider>(context, listen: false);
                               final verified = await authProvider.reauthenticateWithPassword(passwordController.text);
                               if (!dialogCtx.mounted) return;
@@ -107,33 +105,61 @@ class OwnerDeleteAccountCard extends StatelessWidget {
                               }
 
                               final success = await authProvider.deleteAccount();
-
-                              if (!context.mounted) return;
+                              if (!dialogCtx.mounted) return;
 
                               if (success) {
-                                Navigator.of(context).pushAndRemoveUntil(
+                                Navigator.of(dialogCtx).pushAndRemoveUntil(
                                   MaterialPageRoute(builder: (_) => const WelcomeScreen()),
                                   (route) => false,
                                 );
                               } else {
                                 setDialogState(() => isDeleting = false);
                                 VSPFeedback.showError(
-                                  context,
-                                  authProvider.errorMessage ??
-                                      (isArabic ? 'فشل حذف الحساب' : 'Failed to delete account'),
+                                  dialogCtx,
+                                  isArabic
+                                      ? 'تعذر حذف الحساب. حاول مرة أخرى.'
+                                      : 'Could not delete the account. Please try again.',
                                 );
-                                Navigator.pop(dialogCtx);
                               }
-                            },
-                    ),
-                  ),
-                ],
+                            } catch (e) {
+                              if (!dialogCtx.mounted) return;
+                              setDialogState(() => isDeleting = false);
+                              VSPFeedback.showError(
+                                dialogCtx,
+                                isArabic
+                                    ? 'تعذر حذف الحساب. تحقق من الاتصال وحاول مرة أخرى.'
+                                    : 'Could not delete the account. Check your connection and try again.',
+                              );
+                            }
+                          },
+                  );
+
+                  if (constraints.maxWidth < 360) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        cancelButton,
+                        const SizedBox(height: VSPSpacing.sm),
+                        deleteButton,
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(child: cancelButton),
+                      const SizedBox(width: VSPSpacing.md),
+                      Expanded(child: deleteButton),
+                    ],
+                  );
+                },
               ),
             ],
           );
         },
       ),
     );
+    passwordController.dispose();
   }
 
   @override
@@ -188,7 +214,7 @@ class OwnerDeleteAccountCard extends StatelessWidget {
               onPressed: () => _showDeleteAccountDialog(context),
               style: TextButton.styleFrom(
                 backgroundColor: VSPColors.error,
-                foregroundColor: Colors.white,
+                foregroundColor: VSPColors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),

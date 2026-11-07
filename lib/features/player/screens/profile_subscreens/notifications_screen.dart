@@ -76,7 +76,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         title: Text(
@@ -87,9 +87,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
         centerTitle: true,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
-          : SingleChildScrollView(
+      body: SafeArea(
+        top: false,
+        child: _isLoading
+            ? VSPStateView(
+                state: VSPUiState.loading,
+                title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل الإشعارات' : 'Loading notifications',
+                message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث تفضيلات الإشعارات.' : 'Fetching notification preferences.',
+              )
+            : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -238,6 +244,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ],
               ),
             ),
+      ),
     );
   }
 
@@ -290,7 +297,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           onChanged: onChanged,
           activeColor: VSPColors.accent,
           activeTrackColor: VSPColors.accent.withValues(alpha: 0.3),
-          inactiveThumbColor: Colors.white.withValues(alpha: 0.8),
+          inactiveThumbColor: VSPColors.white.withValues(alpha: 0.8),
           inactiveTrackColor: VSPColors.surfaceAlt,
         ),
       ],

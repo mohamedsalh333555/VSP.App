@@ -37,8 +37,10 @@ class TeamProfileScreen extends StatefulWidget {
 class _TeamProfileScreenState extends State<TeamProfileScreen> {
   final List<UserModel> _teamMembers = [];
   bool _isLoadingMembers = true;
+  bool _hasMemberLoadError = false;
   Team? _fetchedTeam;
   bool _isLoadingTeam = false;
+  bool _hasTeamLoadError = false;
   bool _has1v1Champion = false;
   List<Map<String, dynamic>> _headToHeadRecords = [];
   bool _isGeneratingCode = false;
@@ -89,13 +91,15 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   Future<void> _loadTeamAndMembers() async {
     setState(() {
       _isLoadingTeam = true;
+      _hasTeamLoadError = false;
     });
     try {
-      final t = await TeamRepository().getTeam(widget.teamId!);
+      final t = await TeamRepository().getTeamStrict(widget.teamId!);
       if (mounted) {
         setState(() {
           _fetchedTeam = t;
           _isLoadingTeam = false;
+          _hasTeamLoadError = false;
         });
         if (t != null) {
           _loadMemberDetails();
@@ -106,30 +110,64 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       if (mounted) {
         setState(() {
           _isLoadingTeam = false;
+          _hasTeamLoadError = true;
         });
       }
     }
   }
 
   Future<void> _loadMemberDetails() async {
-    if (team.memberUids.length > 1) {
-      final memberIds = team.memberUids.sublist(1);
-      try {
-        final members = await UserRepository().getUsersByIds(memberIds);
-        if (mounted) {
-          setState(() {
-            _teamMembers.clear();
-            _teamMembers.addAll(members);
-            _isLoadingMembers = false;
-          });
-        }
-      } catch (e) {
-        debugPrint('Error loading team members: $e');
-        if (mounted) setState(() => _isLoadingMembers = false);
+    // team_members has no guaranteed row order; never assume the captain is
+    // the first returned UID. Exclude the captain by identity instead.
+    final memberIds = team.memberUids
+        .where((id) => id.isNotEmpty && id != team.captainId)
+        .toSet()
+        .toList();
+    if (memberIds.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _teamMembers.clear();
+          _isLoadingMembers = false;
+          _hasMemberLoadError = false;
+        });
       }
-    } else {
-      if (mounted) setState(() => _isLoadingMembers = false);
+      return;
     }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingMembers = true;
+        _hasMemberLoadError = false;
+      });
+    }
+    try {
+      final members = await UserRepository().getUsersByIdsStrict(memberIds);
+      if (mounted) {
+        setState(() {
+          _teamMembers
+            ..clear()
+            ..addAll(members);
+          _isLoadingMembers = false;
+          // A partial profile response is not a verified complete roster.
+          // Keep retry available if any registered member is missing.
+          _hasMemberLoadError = members.length < memberIds.length;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading team members: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingMembers = false;
+          _hasMemberLoadError = true;
+        });
+      }
+    }
+  }
+
+  int get _teamMemberCount {
+    final ids = team.memberUids.where((id) => id.isNotEmpty).toSet();
+    if (team.captainId.isNotEmpty) ids.add(team.captainId);
+    return ids.length;
   }
 
   Future<void> _generateMatchupInviteCode() async {
@@ -139,12 +177,28 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       final code = res['invite_code']?.toString() ?? '';
 
       if (!mounted) return;
+      if (res['success'] == false || code.isEmpty) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إنشاء كود الدعوة. حاول مرة أخرى.'
+              : 'Could not generate the invite code. Please try again.',
+        );
+        return;
+      }
 
       await showTeamMatchupInviteModal(context, code);
     } catch (e) {
       debugPrint('Error generating invite code: $e');
       if (mounted) {
-        VSPFeedback.showError(context, 'تعذر توليد كود الدعوة: $e');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إنشاء كود الدعوة. حاول مرة أخرى.'
+              : 'Could not generate the invite code. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isGeneratingCode = false);
@@ -177,39 +231,75 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingTeam) {
-      return const VSPScaffold(
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(
-          child: CircularProgressIndicator(color: VSPColors.accent),
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: VSPStateView(
+            state: VSPUiState.loading,
+            title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل الفريق' : 'Loading team',
+            message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث بيانات الفريق وأعضائه.' : 'Fetching team details and members.',
+          ),
         ),
       );
     }
 
     if (widget.team == null && _fetchedTeam == null) {
-      return const VSPScaffold(
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(
-          child: Text('Team not found ', style: TextStyle(color: Colors.white)),
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _hasTeamLoadError
+                        ? (isArabic ? 'تعذر تحميل بيانات الفريق' : 'Could not load team')
+                        : (isArabic ? 'الفريق غير متاح' : 'Team not found'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textPrimary),
+                  ),
+                  if (_hasTeamLoadError && widget.teamId != null) ...[
+                    const SizedBox(height: VSPSpacing.md),
+                    TextButton(
+                      onPressed: _loadTeamAndMembers,
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ),
       );
     }
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    final currentUid = auth.currentUser?.uid;
+    // Rebuild captain-only actions when the authenticated account changes.
+    final auth = Provider.of<app_auth.AuthProvider>(context, listen: true);
+    final currentUid = auth.currentUser?.id;
+    // Membership query order is not guaranteed; captain-only UI must use
+    // the authoritative captain_id field, never the first roster row.
     final isCaptain = currentUid != null &&
-        (currentUid == team.captainId || (team.memberUids.isNotEmpty && team.memberUids.first == currentUid));
+        team.captainId.isNotEmpty &&
+        currentUid == team.captainId;
 
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         title: Text(isArabic ? 'ملف الفريق' : 'Team Profile', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(top: false, bottom: true, child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
@@ -249,7 +339,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             // 2. Stats Grid
             TeamProfileStatsGrid(
               team: team,
-              totalMembersCount: 1 + _teamMembers.length,
+              totalMembersCount: _teamMemberCount,
             ),
 
             const SizedBox(height: 32),
@@ -266,6 +356,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             TeamProfileRosterSection(
               members: _teamMembers,
               isLoading: _isLoadingMembers,
+              hasError: _hasMemberLoadError,
+              onRetry: _loadMemberDetails,
             ),
 
             const SizedBox(height: 32),
@@ -295,7 +387,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             const SizedBox(height: 24),
           ],
         ),
-      ),
+      )),
     );
   }
 }

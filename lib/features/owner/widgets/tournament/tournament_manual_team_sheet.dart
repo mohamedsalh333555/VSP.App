@@ -32,19 +32,20 @@ void showTournamentManualTeamSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     builder: (sheetContext) {
       return Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(sheetContext).size.height * 0.88,
+          // The scroll-controlled modal route owns keyboard/system insets.
+          // This is only a preferred content-height cap; parent constraints
+          // enforce the actual available viewport.
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.88,
         ),
         padding: EdgeInsets.fromLTRB(
           20,
           20,
           20,
-          MediaQuery.of(sheetContext).padding.bottom +
-              MediaQuery.of(sheetContext).viewInsets.bottom +
-              16,
+          MediaQuery.paddingOf(sheetContext).bottom + 16,
         ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
@@ -77,12 +78,16 @@ void showTournamentManualTeamSheet(
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      isArabic ? 'إضافة فريق يدويًا' : 'Add Team Manually',
-                      style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    Expanded(
+                      child: Text(
+                        isArabic ? 'إضافة فريق يدويًا' : 'Add Team Manually',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
+                              color: VSPColors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
@@ -182,7 +187,7 @@ void showTournamentManualTeamSheet(
                           onPressed: isSubmitting ? null : () => Navigator.pop(sheetContext),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: VSPColors.surfaceAlt,
-                            foregroundColor: Colors.white,
+                            foregroundColor: VSPColors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -199,7 +204,7 @@ void showTournamentManualTeamSheet(
                         child: PrimaryButton(
                           text: isArabic ? 'تأكيد إضافة الفريق' : 'Confirm Add Team',
                           color: canSubmit ? VSPColors.accent : VSPColors.surfaceAlt,
-                          textColor: canSubmit ? Colors.black : VSPColors.textSecondary,
+                          textColor: canSubmit ? VSPColors.black : VSPColors.textSecondary,
                           isLoading: isSubmitting,
                           onPressed: !canSubmit
                               ? null
@@ -229,7 +234,7 @@ void showTournamentManualTeamSheet(
                                   try {
                                     final auth = Provider.of<AuthProvider>(context, listen: false);
                                     final currentUserId =
-                                        auth.currentUser?.uid ?? auth.currentUser?.id;
+                                        auth.currentUser?.id;
 
                                     if (currentUserId == null || currentUserId.isEmpty) {
                                       VSPFeedback.showError(
@@ -262,10 +267,18 @@ void showTournamentManualTeamSheet(
                                       : 'Team added to tournament successfully.',
                                 );
                               }
-                            } catch (e) {
-                              setDialogState(() => isSubmitting = false);
+                            } catch (e, stackTrace) {
+                              debugPrint('Manual tournament team registration failed: $e\n$stackTrace');
+                              if (sheetContext.mounted) {
+                                setDialogState(() => isSubmitting = false);
+                              }
                               if (context.mounted) {
-                                VSPFeedback.showError(context, e.toString());
+                                VSPFeedback.showError(
+                                  context,
+                                  isArabic
+                                      ? 'تعذر إضافة الفريق للبطولة. حاول مرة أخرى.'
+                                      : 'Could not add the team to the tournament. Please try again.',
+                                );
                               }
                             }
                           },
@@ -288,7 +301,7 @@ void showTournamentManualTeamSheet(
 
 Widget _buildSectionLabel(String label) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 6, left: 4),
+    padding: const EdgeInsetsDirectional.only(bottom: 6, start: 4),
     child: Text(
       label,
       style: const TextStyle(

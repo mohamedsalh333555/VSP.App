@@ -282,7 +282,7 @@ class AddStadiumStep1Details extends StatelessWidget {
                       ? ['الالتزام بالموعد', 'الحفاظ على النظافة', 'ممنوع التدخين', 'إحضار الكرة الخاصة بك']
                       : ['Punctuality', 'Cleanliness', 'No Smoking', 'Bring your own ball'])
                   .map((template) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsetsDirectional.only(end: 8),
                         child: ActionChip(
                           label: Text(template, style: const TextStyle(fontSize: 12)),
                           backgroundColor: VSPColors.surface,

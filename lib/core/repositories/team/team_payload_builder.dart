@@ -11,8 +11,6 @@ class TeamPayloadBuilder {
       'logo_url': data['logoUrl'] ?? data['logo_url'] ?? '',
       'primary_color': data['primaryColor'] ?? data['primary_color'] ?? '#FFFFFF',
       'secondary_color': data['secondaryColor'] ?? data['secondary_color'] ?? '#000000',
-      'preferred_formation': data['preferredFormation'] ?? data['preferred_formation'] ?? '2-2-1',
-      'elo_rating': 1200,
       'points': 0,
       'wins': 0,
       'draws': 0,
@@ -20,9 +18,7 @@ class TeamPayloadBuilder {
       'matches_played': 0,
       'current_winning_streak': 0,
       'championships_won': 0,
-      'is_active': true,
-      'is_blocked': false,
-      'is_verified': false,
+      'is_official': false,
     };
   }
 
@@ -39,10 +35,6 @@ class TeamPayloadBuilder {
     if (data.containsKey('secondary_color')) pgData['secondary_color'] = data['secondary_color'];
     if (data.containsKey('customLogoBase64')) pgData['custom_logo_base64'] = data['customLogoBase64'];
     if (data.containsKey('custom_logo_base64')) pgData['custom_logo_base64'] = data['custom_logo_base64'];
-    if (data.containsKey('preferredFormation')) pgData['preferred_formation'] = data['preferredFormation'];
-    if (data.containsKey('preferred_formation')) pgData['preferred_formation'] = data['preferred_formation'];
-    if (data.containsKey('isActive')) pgData['is_active'] = data['isActive'];
-    if (data.containsKey('is_active')) pgData['is_active'] = data['is_active'];
     return pgData;
   }
 

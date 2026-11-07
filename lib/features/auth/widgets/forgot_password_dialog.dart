@@ -15,11 +15,13 @@ class ForgotPasswordDialog {
     final resetEmailController = TextEditingController();
     return showDialog(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
         bool isLoading = false;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
+              scrollable: true,
               backgroundColor: VSPColors.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -54,6 +56,7 @@ class ForgotPasswordDialog {
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
                         child: Text(
                           AppLocalizations.of(context)!.cancel,
                           style: const TextStyle(color: VSPColors.textSecondary),
@@ -88,8 +91,9 @@ class ForgotPasswordDialog {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(0, 48),
                           backgroundColor: VSPColors.accent,
-                          foregroundColor: Colors.black,
+                          foregroundColor: VSPColors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(VSPRadius.md),
                           ),
@@ -98,7 +102,7 @@ class ForgotPasswordDialog {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                               )
                             : Text(
                                 AppLocalizations.of(context)!.submit,

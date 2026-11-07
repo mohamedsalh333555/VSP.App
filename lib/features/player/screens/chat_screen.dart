@@ -196,7 +196,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Row(children: [
                     const Icon(Iconsax.flag_copy, color: VSPColors.warning, size: 18),
                     const SizedBox(width: 8),
-                    Text(ar ? 'إبلاغ عن المستخدم' : 'Report User', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                    Text(ar ? 'إبلاغ عن المستخدم' : 'Report User', style: const TextStyle(color: VSPColors.white, fontSize: 13)),
                   ]),
                 ),
                 PopupMenuItem(
@@ -211,7 +211,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
         ],
       ),
-      body: Column(children: [
+      body: SafeArea(top: false, bottom: true, child: Column(children: [
         if (_checkingPolicy) const LinearProgressIndicator(minHeight: 2, color: VSPColors.accent),
         Expanded(
           child: StreamBuilder<List<ChatMessage>>(
@@ -246,7 +246,7 @@ class _ChatScreenState extends State<ChatScreen> {
           isSending: _isSending,
           onSendMessage: _sendMessage,
         ),
-      ]),
+      ])),
     );
   }
 }

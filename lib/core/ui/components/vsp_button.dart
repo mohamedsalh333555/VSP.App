@@ -13,6 +13,9 @@ class VSPPrimaryButton extends StatelessWidget {
   final Color? textColor;
   final double? height;
   final List<Color>? gradientColors;
+  final double? width;
+  final EdgeInsetsGeometry? padding;
+  final IconData? icon;
 
   const VSPPrimaryButton({
     super.key,
@@ -23,6 +26,9 @@ class VSPPrimaryButton extends StatelessWidget {
     this.textColor,
     this.height,
     this.gradientColors,
+    this.width,
+    this.padding,
+    this.icon,
   });
 
   @override
@@ -31,58 +37,98 @@ class VSPPrimaryButton extends StatelessWidget {
     final resolvedColor = color ?? VSPDSSemanticColors.accent;
     final resolvedTextColor = textColor ?? VSPDSColors.black;
     final isDisabled = onPressed == null || isLoading;
-
-    return SizedBox(
-      height: resolvedHeight,
-      width: double.infinity,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(VSPDSRadius.button),
-          gradient: gradientColors == null
-              ? null
-              : LinearGradient(
-                  colors: gradientColors!,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          color: gradientColors == null
-              ? (isDisabled
-                  ? resolvedColor.withValues(alpha: VSPDSOpacity.disabled)
-                  : resolvedColor)
-              : null,
-          boxShadow: isDisabled
-              ? const <BoxShadow>[]
-              : const <BoxShadow>[VSPDSComponentEffects.buttonShadow],
-        ),
-        child: ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            foregroundColor: resolvedTextColor,
-            disabledForegroundColor:
-                resolvedTextColor.withValues(alpha: VSPDSOpacity.disabled),
-            elevation: VSPDSElevation.none,
-            shadowColor: Colors.transparent,
-            minimumSize: Size.zero,
-            padding: EdgeInsets.zero,
-            shape: const StadiumBorder(),
-            overlayColor: VSPDSColors.white12,
-          ),
-          child: isLoading
-              ? SizedBox(
-                  width: VSPDSizes.buttonProgress,
-                  height: VSPDSizes.buttonProgress,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: resolvedTextColor,
-                  ),
+    final effectiveTextColor = isDisabled
+        ? resolvedTextColor.withValues(
+            alpha: resolvedTextColor.a * VSPDSOpacity.disabled,
+          )
+        : resolvedTextColor;
+    final effectiveGradientColors = gradientColors
+        ?.map((gradientColor) {
+          return isDisabled
+              ? gradientColor.withValues(
+                  alpha: gradientColor.a * VSPDSOpacity.disabled,
                 )
-              : Text(
-                  text,
-                  style: VSPDSTypography.button.copyWith(
-                    color: resolvedTextColor,
+              : gradientColor;
+        })
+        .toList(growable: false);
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: resolvedHeight),
+      child: SizedBox(
+        width: width ?? double.infinity,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(VSPDSRadius.button),
+            gradient: gradientColors == null
+                ? null
+                : LinearGradient(
+                    colors: effectiveGradientColors!,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ),
+            color: gradientColors == null
+                ? (isDisabled
+                      ? resolvedColor.withValues(alpha: VSPDSOpacity.disabled)
+                      : resolvedColor)
+                : null,
+            boxShadow: isDisabled
+                ? const <BoxShadow>[]
+                : const <BoxShadow>[VSPDSComponentEffects.buttonShadow],
+          ),
+          child: ElevatedButton(
+            onPressed: isLoading ? null : onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VSPDSColors.transparent,
+              foregroundColor: effectiveTextColor,
+              disabledForegroundColor: resolvedTextColor.withValues(
+                alpha: VSPDSOpacity.disabled,
+              ),
+              elevation: VSPDSElevation.none,
+              shadowColor: VSPDSColors.transparent,
+              minimumSize: Size.zero,
+              padding:
+                  padding ??
+                  const EdgeInsets.symmetric(
+                    horizontal: VSPDSSpacing.md,
+                    vertical: VSPDSSpacing.xs,
+                  ),
+              shape: const StadiumBorder(),
+              overlayColor: VSPDSColors.white12,
+            ),
+            child: isLoading
+                ? SizedBox(
+                    width: VSPDSizes.buttonProgress,
+                    height: VSPDSizes.buttonProgress,
+                    child: CircularProgressIndicator(
+                      strokeWidth: VSPDSizes.progressStroke,
+                      color: effectiveTextColor,
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (icon != null) ...[
+                        Icon(
+                          icon,
+                          size: VSPDSizes.iconMd,
+                          color: effectiveTextColor,
+                        ),
+                        const SizedBox(width: VSPDSSpacing.xs),
+                      ],
+                      Flexible(
+                        child: Text(
+                          text,
+                          softWrap: true,
+                          textAlign: TextAlign.center,
+                          style: VSPDSTypography.button.copyWith(
+                            color: effectiveTextColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );

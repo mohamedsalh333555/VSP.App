@@ -317,16 +317,28 @@ class MatchRepository {
 
  Future<bool> acceptJoinRequest(String bookingId, String userId) async {
  try {
- await _supabase.rpc('accept_join_request', params: {'p_booking_id': bookingId, 'p_user_id': userId});
- return true;
- } catch (e) { return false; }
+ final response = await _supabase.rpc(
+ 'accept_join_request',
+ params: {'p_booking_id': bookingId, 'p_user_id': userId},
+ );
+ return response is Map && response['success'] == true;
+ } catch (e, stack) {
+ VSPLogger.e('Failed to accept public-match join request', e, stack);
+ return false;
+ }
  }
 
  Future<bool> rejectJoinRequest(String bookingId, String userId) async {
  try {
- await _supabase.rpc('reject_join_request', params: {'p_booking_id': bookingId, 'p_user_id': userId});
- return true;
- } catch (e) { return false; }
+ final response = await _supabase.rpc(
+ 'reject_join_request',
+ params: {'p_booking_id': bookingId, 'p_user_id': userId},
+ );
+ return response is Map && response['success'] == true;
+ } catch (e, stack) {
+ VSPLogger.e('Failed to reject public-match join request', e, stack);
+ return false;
+ }
  }
 
  Future<bool> leavePublicMatch(String bookingId, String userId) async {

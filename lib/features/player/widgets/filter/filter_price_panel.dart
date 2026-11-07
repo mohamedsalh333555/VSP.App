@@ -33,7 +33,7 @@ class FilterPricePanel extends StatelessWidget {
           children: [
             Text(
               isArabic ? 'السعر بالساعة' : 'Price / Hour',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
             ),
             Text(
               '${priceRange.start.round()} - ${priceRange.end.round()} $currency',
@@ -52,7 +52,7 @@ class FilterPricePanel extends StatelessWidget {
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: VSPColors.accent,
-            inactiveTrackColor: Colors.white10,
+            inactiveTrackColor: VSPColors.white10,
             thumbColor: VSPColors.accent,
             overlayColor: VSPColors.accent.withValues(alpha: 0.2),
             rangeThumbShape: const RoundRangeSliderThumbShape(enabledThumbRadius: 8),
@@ -75,24 +75,22 @@ class FilterPricePanel extends StatelessWidget {
         const SizedBox(height: 16),
         const Divider(color: VSPColors.divider),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Checkbox(
-              value: noDepositOnly,
-              activeColor: VSPColors.accent,
-              checkColor: Colors.black,
-              onChanged: (val) => onNoDepositChanged(val ?? false),
+        CheckboxListTile(
+          value: noDepositOnly,
+          onChanged: (value) => onNoDepositChanged(value ?? false),
+          activeColor: VSPColors.accent,
+          checkColor: VSPColors.black,
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          title: Text(
+            isArabic ? 'ملاعب بدون عربون' : 'No Deposit Required',
+            style: const TextStyle(
+              color: VSPColors.white,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
             ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => onNoDepositChanged(!noDepositOnly),
-                child: Text(
-                  isArabic ? 'ملاعب بدون عربون' : 'No Deposit Required',
-                  style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );

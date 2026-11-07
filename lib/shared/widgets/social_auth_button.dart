@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
-/// Reusable social login/signup button with gradient border
+/// Reusable social login/signup button with accessible Material interaction.
 class SocialAuthButton extends StatelessWidget {
   final Widget iconWidget;
   final VoidCallback? onPressed;
@@ -16,34 +16,43 @@ class SocialAuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: CustomPaint(
-        painter: GradientBorderPainter(
-          strokeWidth: 1.5,
-          radius: VSPRadius.button,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white.withValues(alpha: 0.30),
-              Colors.transparent,
-              Colors.white.withValues(alpha: 0.30),
-            ],
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
-        child: Container(
-          width: double.infinity,
-          height: height ?? VSPSize.buttonHeight,
-          decoration: BoxDecoration(
-            color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.button),
-          ),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: iconWidget,
+    final borderRadius = BorderRadius.circular(VSPDSRadius.button);
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      child: Material(
+        color: VSPDSSemanticColors.surface,
+        borderRadius: borderRadius,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: borderRadius,
+          child: CustomPaint(
+            painter: GradientBorderPainter(
+              strokeWidth: VSPDSBorders.fieldFocus,
+              radius: VSPDSRadius.button,
+              textDirection: Directionality.of(context),
+              gradient: LinearGradient(
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
+                colors: [
+                  VSPDSColors.white.withValues(alpha: 0.30),
+                  VSPDSColors.transparent,
+                  VSPDSColors.white.withValues(alpha: 0.30),
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: height ?? VSPDSizes.buttonHeight,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: VSPDSSpacing.inputHorizontal,
+                  ),
+                  child: iconWidget,
+                ),
+              ),
             ),
           ),
         ),
@@ -52,16 +61,18 @@ class SocialAuthButton extends StatelessWidget {
   }
 }
 
-/// CustomPainter for gradient borders on buttons and cards
+/// CustomPainter for gradient borders on buttons and cards.
 class GradientBorderPainter extends CustomPainter {
   final double strokeWidth;
   final double radius;
   final Gradient gradient;
+  final TextDirection textDirection;
 
   GradientBorderPainter({
     required this.strokeWidth,
     required this.radius,
     required this.gradient,
+    required this.textDirection,
   });
 
   @override
@@ -72,13 +83,16 @@ class GradientBorderPainter extends CustomPainter {
       Radius.circular(radius - strokeWidth / 2),
     );
     final paint = Paint()
-      ..shader = gradient.createShader(rect)
+      ..shader = gradient.createShader(rect, textDirection: textDirection)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
-
     canvas.drawRRect(rrect, paint);
   }
 
   @override
-  bool shouldRepaint(covariant GradientBorderPainter oldDelegate) => false;
+  bool shouldRepaint(covariant GradientBorderPainter oldDelegate) =>
+      oldDelegate.strokeWidth != strokeWidth ||
+      oldDelegate.radius != radius ||
+      oldDelegate.textDirection != textDirection ||
+      oldDelegate.gradient != gradient;
 }

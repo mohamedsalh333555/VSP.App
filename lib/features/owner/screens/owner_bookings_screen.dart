@@ -12,6 +12,7 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../widgets/bookings/owner_bookings_filter_bar.dart';
 import '../widgets/bookings/owner_schedule_slots_builder.dart';
 import '../widgets/bookings/owner_time_slot_row.dart';
@@ -29,6 +30,10 @@ class OwnerBookingsScreen extends StatefulWidget {
 
 class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   int _selectedDayIndex = 0;
+  bool _isInitialLoadPending = true;
+  String? _activeOwnerScope;
+  bool _hasObservedOwnerScope = false;
+  int _ownerScopeGeneration = 0;
   Stadium? _selectedStadium;
   final ScrollController _scrollController = ScrollController();
 
@@ -45,15 +50,37 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.id;
-      if (uid != null) {
-        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-        bookingProvider.loadOwnerBookings(uid);
-        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
-      }
-    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthProvider>();
+    final ownerId = auth.isOwner ? auth.currentUser?.id : null;
+    if (!_hasObservedOwnerScope || ownerId != _activeOwnerScope) {
+      _hasObservedOwnerScope = true;
+      _activeOwnerScope = ownerId;
+      final generation = ++_ownerScopeGeneration;
+      _isInitialLoadPending = ownerId != null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || generation != _ownerScopeGeneration) return;
+        if (ownerId != null &&
+            context.read<AuthProvider>().currentUser?.id == ownerId &&
+            context.read<AuthProvider>().isOwner) {
+          context.read<BookingProvider>().loadOwnerBookings(
+                ownerId,
+                forceRefresh: true,
+              );
+          context.read<StadiumProvider>().listenToOwnerStadiums(
+                ownerId,
+                forceRefresh: true,
+              );
+        }
+        if (mounted && generation == _ownerScopeGeneration) {
+          setState(() => _isInitialLoadPending = false);
+        }
+      });
+    }
   }
 
   @override
@@ -74,6 +101,23 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final auth = context.watch<AuthProvider>();
+    if (!auth.isOwner || auth.currentUser == null) {
+      return VSPScaffold(
+        backgroundColor: VSPDSSemanticColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Text(
+              isArabic
+                  ? 'هذه الشاشة متاحة لحسابات أصحاب الملاعب فقط.'
+                  : 'This screen is available to stadium-owner accounts only.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      );
+    }
 
     return VSPScaffold(
       backgroundColor: VSPDSSemanticColors.background,
@@ -92,11 +136,76 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           final stadiums = stadiumProvider.stadiums;
           final selectedStadium = _getEffectiveStadium(stadiums);
 
+          if (_isInitialLoadPending) {
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isArabic ? 'جارٍ تحميل جدول الملاعب' : 'Loading stadium schedule',
+              message: isArabic
+                  ? 'نحدّث الملاعب والحجوزات المتاحة.'
+                  : 'Updating your stadiums and booking schedule.',
+            );
+          }
+
+          if (stadiums.isEmpty && stadiumProvider.isLoading) {
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isArabic ? 'جارٍ تحميل جدول الملاعب' : 'Loading stadium schedule',
+              message: isArabic
+                  ? 'نحدّث الملاعب والحجوزات المتاحة.'
+                  : 'Updating your stadiums and booking schedule.',
+            );
+          }
+
+          if (stadiums.isEmpty && stadiumProvider.errorMessage != null) {
+            return VSPErrorState(
+              customMessage: Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'تعذر تحميل ملاعبك. تحقق من اتصالك ثم حاول مرة أخرى.'
+                  : 'Could not load your stadiums. Check your connection and try again.',
+              onRetry: () {
+                final ownerId = Provider.of<AuthProvider>(context, listen: false)
+                    .currentUser?.id;
+                if (ownerId != null) {
+                  stadiumProvider.listenToOwnerStadiums(
+                    ownerId,
+                    forceRefresh: true,
+                  );
+                }
+              },
+            );
+          }
+
           if (selectedStadium == null) {
             return VSPEmptyState(
               icon: Iconsax.building_copy,
               title: l10n.stadiumsEmptyTitle,
               subtitle: l10n.stadiumsEmptySubtitle,
+            );
+          }
+
+          if (!bookingProvider.hasLoadedOwnerBookings) {
+            if (bookingProvider.ownerBookingsError != null) {
+              return VSPErrorState(
+                customMessage: Localizations.localeOf(context).languageCode == 'ar'
+                    ? 'تعذر تحميل حجوزات ملاعبك. تحقق من اتصالك ثم حاول مرة أخرى.'
+                    : 'Could not load your stadium bookings. Check your connection and try again.',
+                onRetry: () async {
+                  final ownerId = Provider.of<AuthProvider>(context, listen: false)
+                      .currentUser?.id;
+                  if (ownerId != null) {
+                    await bookingProvider.loadOwnerBookings(
+                      ownerId,
+                      forceRefresh: true,
+                    );
+                  }
+                },
+              );
+            }
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isArabic ? 'جارٍ تحميل جدول الملاعب' : 'Loading stadium schedule',
+              message: isArabic
+                  ? 'نحدّث الملاعب والحجوزات المتاحة.'
+                  : 'Updating your stadiums and booking schedule.',
             );
           }
 
@@ -135,6 +244,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   onSelectDate: () => _selectDate(context, baseDate),
                   onDaySelected: (dayIdx) => setState(() => _selectedDayIndex = dayIdx),
                 ),
+                _buildBookingSyncWarning(context, bookingProvider),
                 Expanded(
                   child: VSPEmptyState(
                     icon: Iconsax.clock_copy,
@@ -159,6 +269,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                 onSelectDate: () => _selectDate(context, baseDate),
                 onDaySelected: (dayIdx) => setState(() => _selectedDayIndex = dayIdx),
               ),
+              _buildBookingSyncWarning(context, bookingProvider),
               Expanded(
                 child: ListView.separated(
                   controller: _scrollController,
@@ -198,6 +309,67 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     );
   }
 
+  Widget _buildBookingSyncWarning(
+    BuildContext context,
+    BookingProvider bookingProvider,
+  ) {
+    if (!bookingProvider.hasLoadedOwnerBookings ||
+        bookingProvider.ownerBookingsError == null) {
+      return const SizedBox.shrink();
+    }
+
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final errorColor = Theme.of(context).colorScheme.error;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(
+        VSPDSSpacing.md,
+        VSPDSSpacing.xs,
+        VSPDSSpacing.md,
+        VSPDSSpacing.xs,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: VSPDSSpacing.sm,
+        vertical: VSPDSSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: errorColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(VSPDSRadius.md),
+        border: Border.all(color: errorColor.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(Iconsax.info_circle_copy, color: errorColor, size: 18),
+          const SizedBox(width: VSPDSSpacing.sm),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'تعذر تحديث الحجوزات. يتم عرض آخر بيانات تم تحميلها.'
+                  : 'Could not refresh bookings. Showing the last loaded data.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: errorColor,
+                  ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final ownerId = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              ).currentUser?.id;
+              if (ownerId != null) {
+                await bookingProvider.loadOwnerBookings(
+                  ownerId,
+                  forceRefresh: true,
+                );
+              }
+            },
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _selectDate(BuildContext context, DateTime baseDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -209,7 +381,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           data: Theme.of(pickerCtx).copyWith(
             colorScheme: const ColorScheme.dark(
               primary: VSPDSSemanticColors.accent,
-              onPrimary: Colors.black,
+              onPrimary: VSPDSColors.black,
               surface: VSPDSSemanticColors.surface,
               onSurface: VSPDSSemanticColors.textPrimary,
             ),

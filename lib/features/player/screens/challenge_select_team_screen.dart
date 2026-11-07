@@ -18,6 +18,7 @@ import '../../../shared/widgets/vsp_back_button.dart';
 import '../services/challenge_team_service.dart';
 import '../widgets/challenge/challenge_team_card.dart';
 import 'booking_confirmation_screen.dart';
+import '../widgets/create_team_sheet.dart';
 
 /// الشاشة الرسمية لحجز مباريات التحدي (Challenge Match)
 /// المسار المعتمد الوحيد: إدخال كود التحدي -> التحقق من السيرفر -> ظهور بطاقة الخصم -> المتابعة للحجز
@@ -44,12 +45,34 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   bool _isGeneratingCode = false;
   Map<String, int>? _h2hStats;
   bool _isLoadingH2H = false;
+  bool _hasH2HError = false;
+  bool _isLoadingUserTeam = true;
+  bool _hasUserTeamLoadError = false;
+  bool _isContinuing = false;
+  String? _activeUserId;
+  bool _hasObservedUserId = false;
+  int _teamRequestGeneration = 0;
+  int _opponentRequestGeneration = 0;
   final Map<String, bool> _championStatusMap = {};
 
   @override
   void initState() {
     super.initState();
-    _loadUserTeam();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userId = context.watch<app_auth.AuthProvider>().currentUser?.id;
+    if (!_hasObservedUserId || userId != _activeUserId) {
+      _hasObservedUserId = true;
+      _activeUserId = userId;
+      final generation = ++_teamRequestGeneration;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || generation != _teamRequestGeneration) return;
+        _loadUserTeam(expectedUserId: userId, requestGeneration: generation);
+      });
+    }
   }
 
   @override
@@ -58,16 +81,156 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     super.dispose();
   }
 
-  Future<void> _loadUserTeam() async {
-    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.uid;
-    if (uid != null) {
-      final team = await TeamRepository().getUserTeam(uid);
-      if (mounted) {
+  Future<void> _loadUserTeam({
+    String? expectedUserId,
+    int? requestGeneration,
+  }) async {
+    final generation = requestGeneration ?? ++_teamRequestGeneration;
+    final uid = expectedUserId ?? context.read<app_auth.AuthProvider>().currentUser?.id;
+    if (mounted) {
+      setState(() {
+        _isLoadingUserTeam = true;
+        _hasUserTeamLoadError = false;
+      });
+    }
+    if (uid == null) {
+      if (mounted && generation == _teamRequestGeneration) {
         setState(() {
-          _userTeam = team;
+          _userTeam = null;
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = true;
         });
       }
+      return;
+    }
+    try {
+      final team = await TeamRepository().getUserTeamStrict(uid);
+      if (!mounted ||
+          generation != _teamRequestGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != uid) {
+        return;
+      }
+      setState(() {
+        _userTeam = team;
+        _isLoadingUserTeam = false;
+        _hasUserTeamLoadError = false;
+      });
+    } catch (e) {
+      debugPrint('Failed to verify challenge captain team: $e');
+      if (!mounted ||
+          generation != _teamRequestGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != uid) {
+        return;
+      }
+      setState(() {
+        _userTeam = null;
+        _isLoadingUserTeam = false;
+        _hasUserTeamLoadError = true;
+      });
+    }
+  }
+
+  Future<void> _openCreateTeam() async {
+    final created = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: VSPColors.transparent,
+      builder: (_) => const CreateTeamSheet(),
+    );
+    if (!mounted || created != true) return;
+    await _loadUserTeam();
+  }
+
+  Future<void> _continueWithChallenge() async {
+    if (_isContinuing || _selectedTeam == null || _appliedChallengeCode == null) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    // A code can be edited after lookup. Never proceed with a stale verified opponent.
+    if (_challengeCodeController.text.trim().toUpperCase() != _appliedChallengeCode) {
+      _clearSelectedOpponent();
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تم تغيير كود التحدي. تحقق من الكود الجديد قبل متابعة الحجز.'
+            : 'The challenge code changed. Verify the new code before booking.',
+      );
+      return;
+    }
+    final auth = context.read<app_auth.AuthProvider>();
+    final uid = auth.currentUser?.id;
+    if (uid == null) {
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.' : 'Your session expired. Please sign in again.',
+      );
+      return;
+    }
+
+    final verifiedOpponent = _selectedTeam!;
+    final verifiedCode = _appliedChallengeCode!;
+    final opponentGeneration = _opponentRequestGeneration;
+    setState(() => _isContinuing = true);
+    try {
+      final team = await TeamRepository().getUserTeamStrict(uid);
+      if (!mounted) return;
+      if (context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
+      // The async team check must not finalize a different opponent or code.
+      if (opponentGeneration != _opponentRequestGeneration ||
+          _selectedTeam?.id != verifiedOpponent.id ||
+          _appliedChallengeCode != verifiedCode ||
+          _challengeCodeController.text.trim().toUpperCase() != verifiedCode) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تغيّر التحدي أثناء التحقق. أعد التحقق من الفريق المنافس.'
+              : 'The challenge changed during verification. Verify the opponent again.',
+        );
+        return;
+      }
+      if (team == null) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'يجب أن تكون عضواً في فريق قبل تأكيد مباراة التحدي.'
+              : 'You must belong to a team before confirming a challenge match.',
+        );
+        return;
+      }
+      if (!ChallengeTeamService.isFairPlayEligible(team) ||
+          !ChallengeTeamService.isFairPlayEligible(verifiedOpponent)) {
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.fairPlayBannedError);
+        return;
+      }
+
+      context.read<BookingProvider>().updateDraft(
+        opponentTeamId: verifiedOpponent.id,
+        opponentTeamName: verifiedOpponent.name,
+        playerTeamId: team.id,
+        playerTeamName: team.name,
+        challengeCode: verifiedCode,
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingConfirmationScreen(
+            stadium: widget.stadium,
+            bookingType: widget.bookingType,
+            opponentTeam: verifiedOpponent,
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Failed to verify team before challenge booking: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر التحقق من فريقك. أعد المحاولة قبل متابعة الحجز.'
+              : 'Could not verify your team. Retry before continuing.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isContinuing = false);
     }
   }
 
@@ -86,6 +249,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   }
 
   Future<void> _handleLookupCode() async {
+    if (_isLookingUpCode) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final code = _challengeCodeController.text.trim();
     if (code.isEmpty) {
       VSPFeedback.showInfo(
@@ -98,16 +263,26 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     }
 
     FocusScope.of(context).unfocus();
+    final opponentGeneration = ++_opponentRequestGeneration;
     setState(() => _isLookingUpCode = true);
 
     try {
       final res = await TeamRepository().lookupChallengeCode(code);
-      if (!mounted) return;
+      if (!mounted || opponentGeneration != _opponentRequestGeneration) return;
+      // Ignore an in-flight lookup if the player edited the code meanwhile.
+      if (_challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) {
+        setState(() => _isLookingUpCode = false);
+        return;
+      }
 
       if (res['success'] == true && res['opponent_team_id'] != null) {
         final oppId = res['opponent_team_id'].toString();
         final oppTeam = await TeamRepository().getTeam(oppId);
-        if (!mounted) return;
+        if (!mounted || opponentGeneration != _opponentRequestGeneration) return;
+        if (_challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) {
+          setState(() => _isLookingUpCode = false);
+          return;
+        }
 
         if (oppTeam != null) {
           final validatedCode = (res['code']?.toString() ?? code).toUpperCase();
@@ -117,68 +292,86 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             _isLookingUpCode = false;
             _isLoadingH2H = true;
             _h2hStats = null;
+            _hasH2HError = false;
           });
 
           // Fetch head-to-head stats if user has a team
           if (_userTeam != null) {
             final stats = await TeamRepository().getHeadToHeadStats(_userTeam!.id, oppTeam.id);
-            if (mounted) {
+            if (mounted && opponentGeneration == _opponentRequestGeneration &&
+                _selectedTeam?.id == oppTeam.id) {
               setState(() {
                 _h2hStats = stats;
                 _isLoadingH2H = false;
+                _hasH2HError = stats == null;
               });
             }
           } else {
-            if (mounted) setState(() => _isLoadingH2H = false);
+            if (mounted) setState(() {
+              _isLoadingH2H = false;
+              _hasH2HError = false;
+            });
           }
 
-          if (mounted) {
+          if (mounted && opponentGeneration == _opponentRequestGeneration &&
+              _selectedTeam?.id == oppTeam.id &&
+              _challengeCodeController.text.trim().toUpperCase() == validatedCode) {
             VSPFeedback.showSuccess(
               context,
-              'تم التحقق بنجاح من الفريق المنافس: ${oppTeam.name}',
+              isArabic
+                  ? 'تم التحقق من الفريق المنافس: ${oppTeam.name}'
+                  : 'Opponent team verified: ${oppTeam.name}',
             );
           }
           return;
         }
       }
 
-      if (!mounted) return;
+      if (!mounted || opponentGeneration != _opponentRequestGeneration ||
+          _challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) return;
       setState(() => _isLookingUpCode = false);
       final err = res['error']?.toString() ?? '';
       String errorMsg;
       if (err == 'CODE_INVALID_OR_USED') {
-        errorMsg = 'كود التحدي غير صالح أو تم استخدامه مسبقاً.';
+        errorMsg = isArabic ? 'كود التحدي غير صالح أو تم استخدامه مسبقاً.' : 'This challenge code is invalid or has already been used.';
       } else if (err == 'CODE_EXPIRED') {
-        errorMsg = 'كود التحدي منتهي الصلاحية.';
+        errorMsg = isArabic ? 'كود التحدي منتهي الصلاحية.' : 'This challenge code has expired.';
       } else if (err == 'CALLER_NOT_A_CAPTAIN') {
-        errorMsg = 'يجب أن تكون كابتن فريق لتحدي هذا الكود.';
+        errorMsg = isArabic ? 'يجب أن تكون كابتن فريق لتحدي هذا الكود.' : 'Only a team captain can use this challenge code.';
       } else if (err == 'CANNOT_CHALLENGE_OWN_TEAM') {
-        errorMsg = 'لا يمكنك إدخال كود فريقك نفسه.';
+        errorMsg = isArabic ? 'لا يمكنك إدخال كود فريقك نفسه.' : 'You cannot enter your own team code.';
       } else if (err == 'TEAM_NOT_FOUND') {
-        errorMsg = 'تعذر العثور على الفريق التابع لهذا الكود.';
+        errorMsg = isArabic ? 'تعذر العثور على الفريق التابع لهذا الكود.' : 'The team linked to this code could not be found.';
       } else {
-        errorMsg = 'تعذر التحقق من كود التحدي. تأكد من الكود وأعد المحاولة.';
+        errorMsg = isArabic ? 'تعذر التحقق من كود التحدي. تأكد من الكود وأعد المحاولة.' : 'Could not verify the challenge code. Check it and retry.';
       }
       VSPFeedback.showError(context, errorMsg);
     } catch (e) {
       if (mounted) {
         setState(() => _isLookingUpCode = false);
-        VSPFeedback.showError(context, 'حدث خطأ أثناء فحص الكود');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'حدث خطأ أثناء فحص الكود.' : 'An error occurred while checking the code.',
+        );
       }
     }
   }
 
   void _clearSelectedOpponent() {
+    ++_opponentRequestGeneration;
     setState(() {
       _selectedTeam = null;
       _appliedChallengeCode = null;
       _h2hStats = null;
+      _isLoadingH2H = false;
+      _hasH2HError = false;
       _challengeCodeController.clear();
     });
   }
 
   Future<void> _showMyChallengeCodeModal() async {
     if (_userTeam == null) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     setState(() => _isGeneratingCode = true);
 
     try {
@@ -191,8 +384,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         VSPFeedback.showError(
           context,
           err == 'CAPTAIN_ONLY'
-              ? 'توليد الكود متاح لكابتن الفريق فقط.'
-              : 'تعذر توليد كود التحدي حالياً.',
+              ? (isArabic ? 'توليد الكود متاح لكابتن الفريق فقط.' : 'Only the team captain can generate a code.')
+              : (isArabic ? 'تعذر توليد كود التحدي حالياً.' : 'Could not generate the challenge code right now.'),
         );
         return;
       }
@@ -202,7 +395,10 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isGeneratingCode = false);
-        VSPFeedback.showError(context, 'حدث خطأ أثناء توليد الكود');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'حدث خطأ أثناء توليد الكود.' : 'An error occurred while generating the code.',
+        );
       }
     }
   }
@@ -213,22 +409,31 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      backgroundColor: VSPColors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
-        padding: EdgeInsets.fromLTRB(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(ctx).height * 0.9,
+        ),
+        padding: const EdgeInsets.fromLTRB(
           VSPSpacing.lg,
           VSPSpacing.md,
           VSPSpacing.lg,
-          MediaQuery.of(ctx).padding.bottom + VSPSpacing.lg,
+          VSPSpacing.lg,
         ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SafeArea(
+          top: false,
+          bottom: true,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
             Center(
               child: Container(
                 width: 40,
@@ -252,7 +457,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             Text(
               isArabic ? 'كود تحدي فريقك' : 'Team Challenge Code',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -293,13 +498,14 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
+                      foregroundColor: VSPColors.white,
                       side: const BorderSide(color: VSPColors.divider),
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      minimumSize: const Size(0, 48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     ),
-                    icon: const Icon(Iconsax.copy_copy, size: 18, color: Colors.white),
-                    label: Text(isArabic ? 'نسخ الكود' : 'Copy', style: const TextStyle(color: Colors.white)),
+                    icon: const Icon(Iconsax.copy_copy, size: 18, color: VSPColors.white),
+                    label: Text(isArabic ? 'نسخ الكود' : 'Copy', style: const TextStyle(color: VSPColors.white)),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: code));
                       Navigator.pop(ctx);
@@ -312,8 +518,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VSPColors.whatsApp,
-                      foregroundColor: Colors.white,
+                      foregroundColor: VSPColors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      minimumSize: const Size(0, 48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     ),
                     icon: const Icon(Icons.chat_bubble_outline, size: 18),
@@ -329,7 +536,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 ),
               ],
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -377,6 +586,65 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  if (_isLoadingUserTeam)
+                    const LinearProgressIndicator(
+                      minHeight: 2,
+                      color: VSPColors.accent,
+                      backgroundColor: VSPColors.surfaceAlt,
+                    )
+                  else if (_hasUserTeamLoadError)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      decoration: BoxDecoration(
+                        color: VSPColors.warning.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.25)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              isArabic
+                                  ? 'تعذر التحقق من فريقك. أعد المحاولة قبل متابعة الحجز.'
+                                  : 'Could not verify your team. Retry before continuing.',
+                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _loadUserTeam,
+                            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (_userTeam == null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.divider),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isArabic
+                                ? 'تحتاج إلى الانضمام لفريق قبل متابعة مباراة التحدي.'
+                                : 'Join or create a team before continuing with a challenge match.',
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                          ),
+                          const SizedBox(height: VSPSpacing.sm),
+                          TextButton(
+                            onPressed: _openCreateTeam,
+                            child: Text(isArabic ? 'إنشاء فريق' : 'Create team'),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // كرت كود فريق الكابتن الحالي للمشاركة
                   if (_userTeam != null) ...[
                     Container(
@@ -404,7 +672,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                                 Text(
                                   isArabic ? 'كود التحدي لفريقك' : 'Your Team Challenge Code',
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: VSPColors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -426,7 +694,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                             onPressed: _isGeneratingCode ? null : _showMyChallengeCodeModal,
                             style: TextButton.styleFrom(
                               backgroundColor: VSPColors.accent,
-                              foregroundColor: Colors.black,
+                              foregroundColor: VSPColors.black,
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
                             ),
@@ -434,7 +702,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                                 ? const SizedBox(
                                     width: 14,
                                     height: 14,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                                   )
                                 : Text(
                                     isArabic ? 'مشاركة' : 'Share',
@@ -467,7 +735,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                             Text(
                               isArabic ? 'كود التحدي من كابتن الخصم' : 'Opponent Challenge Code',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: VSPColors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -509,7 +777,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                                   textCapitalization: TextCapitalization.characters,
                                   enabled: !_isLookingUpCode,
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: VSPColors.white,
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.5,
@@ -532,12 +800,12 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                             ),
                             const SizedBox(width: 10),
                             SizedBox(
-                              height: 46,
+                              height: 48,
                               child: ElevatedButton(
                                 onPressed: _isLookingUpCode ? null : _handleLookupCode,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: VSPColors.accent,
-                                  foregroundColor: Colors.black,
+                                  foregroundColor: VSPColors.black,
                                   padding: const EdgeInsets.symmetric(horizontal: 18),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -549,7 +817,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                                         height: 18,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: Colors.black,
+                                          color: VSPColors.black,
                                         ),
                                       )
                                     : Text(
@@ -639,68 +907,15 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             child: SafeArea(
               child: PrimaryButton(
                 text: AppLocalizations.of(context)!.continueButton,
-                onPressed: (_selectedTeam == null || _appliedChallengeCode == null)
+                isLoading: _isContinuing,
+                onPressed: (_selectedTeam == null ||
+                        _appliedChallengeCode == null ||
+                        _isLoadingUserTeam ||
+                        _hasUserTeamLoadError ||
+                        _userTeam == null ||
+                        _isContinuing)
                     ? null
-                    : () async {
-                        // Server-side FairPlay is authoritative, but show quick user feedback if ineligible
-                        if (!ChallengeTeamService.isFairPlayEligible(_selectedTeam)) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
-                                backgroundColor: VSPColors.error,
-                              ),
-                            );
-                          }
-                          return;
-                        }
-
-                        final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                        final uid = auth.currentUser?.uid;
-                        if (uid != null) {
-                          final team = await TeamRepository().getUserTeam(uid);
-                          if (team != null) {
-                            if (!ChallengeTeamService.isFairPlayEligible(team)) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
-                                    backgroundColor: VSPColors.error,
-                                  ),
-                                );
-                              }
-                              return;
-                            }
-                            if (context.mounted) {
-                              context.read<BookingProvider>().updateDraft(
-                                    opponentTeamId: _selectedTeam!.id,
-                                    opponentTeamName: _selectedTeam!.name,
-                                    playerTeamId: team.id,
-                                    playerTeamName: team.name,
-                                    challengeCode: _appliedChallengeCode,
-                                  );
-                            }
-                          }
-                        } else if (context.mounted) {
-                          context.read<BookingProvider>().updateDraft(
-                                opponentTeamId: _selectedTeam!.id,
-                                opponentTeamName: _selectedTeam!.name,
-                                challengeCode: _appliedChallengeCode,
-                              );
-                        }
-
-                        if (!context.mounted) return;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookingConfirmationScreen(
-                              stadium: widget.stadium,
-                              bookingType: widget.bookingType,
-                              opponentTeam: _selectedTeam,
-                            ),
-                          ),
-                        );
-                      },
+                    : _continueWithChallenge,
               ),
             ),
           ),
@@ -718,6 +933,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       isSelected: true,
       hasChampion: hasChampion,
       isLoadingH2H: _isLoadingH2H,
+      hasH2HError: _hasH2HError,
       h2hStats: _h2hStats,
       onTap: () {},
     );

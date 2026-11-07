@@ -30,10 +30,7 @@ class NotificationRepository {
         .limit(limit)
         .map((list) => list
             .map((data) => AppNotification.fromFirestore(_mapToCamelCase(data), data['id'].toString()))
-            .toList())
-        .handleError((e) {
-          debugPrint('Handled realtime error in getUserNotifications: $e');
-        });
+            .toList());
   }
 
   Future<void> sendNotification(String userId, AppNotification notification) async {
@@ -49,43 +46,71 @@ class NotificationRepository {
         'metadata': notification.metadata,
       });
     } catch (e) {
-      debugPrint('Error sending notification: ');
+      debugPrint('Error sending notification: $e');
     }
   }
 
-  Future<void> markNotificationAsRead(String userId, String notificationId) async {
+  Future<bool> restoreNotification(String userId, AppNotification notification) async {
     try {
-      await _supabase
+      final inserted = await _supabase.from('notifications').insert({
+        'user_id': userId,
+        'title': notification.title,
+        'body': notification.body,
+        'type': notification.type,
+        'is_read': notification.isRead,
+        // Preserve the original timestamp when Undo restores a dismissed item.
+        'created_at': notification.createdAt.toUtc().toIso8601String(),
+        'booking_id': (notification.bookingId != null && notification.bookingId!.trim().isNotEmpty) ? notification.bookingId : null,
+        'metadata': notification.metadata,
+      }).select('id');
+      return inserted.isNotEmpty;
+    } catch (e) {
+      debugPrint('Error restoring notification: $e');
+      return false;
+    }
+  }
+
+  Future<bool> markNotificationAsRead(String userId, String notificationId) async {
+    try {
+      final updated = await _supabase
           .from('notifications')
           .update({'is_read': true})
           .eq('id', notificationId)
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .select('id');
+      return updated.isNotEmpty;
     } catch (e) {
-      debugPrint('Error marking notification as read: ');
+      debugPrint('Error marking notification as read: $e');
+      return false;
     }
   }
 
-  Future<void> markAllAsRead(String userId) async {
+  Future<bool> markAllAsRead(String userId) async {
     try {
       await _supabase
           .from('notifications')
           .update({'is_read': true})
           .eq('user_id', userId)
           .eq('is_read', false);
+      return true;
     } catch (e) {
-      debugPrint('Error marking all as read: ');
+      debugPrint('Error marking all notifications as read: $e');
+      return false;
     }
   }
 
-  Future<void> deleteNotification(String userId, String notificationId) async {
+  Future<bool> deleteNotification(String userId, String notificationId) async {
     try {
-      await _supabase
+      final deleted = await _supabase
           .from('notifications')
           .delete()
           .eq('id', notificationId)
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .select('id');
+      return deleted.isNotEmpty;
     } catch (e) {
-      debugPrint('Error deleting notification: ');
+      debugPrint('Error deleting notification: $e');
+      return false;
     }
   }
 

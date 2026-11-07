@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -62,7 +64,7 @@ class StadiumBottomBookingBar extends StatelessWidget {
                       ),
                     ),
                     AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
+                      duration: VSPDSMotion.standard,
                       child: hasDeposit
                           ? Row(
                               key: const ValueKey('deposit'),
@@ -98,7 +100,14 @@ class StadiumBottomBookingBar extends StatelessWidget {
                 Expanded(
                   child: PrimaryButton(
                     text: isArabic ? 'احجز الآن' : 'Book Now',
-                    onPressed: () => BookingTypeModal.show(context, stadium),
+                    onPressed: () {
+                      unawaited(
+                        AnalyticsService.logBookingStarted(
+                          venueId: stadium.id,
+                        ),
+                      );
+                      BookingTypeModal.show(context, stadium);
+                    },
                   ),
                 ),
               ],

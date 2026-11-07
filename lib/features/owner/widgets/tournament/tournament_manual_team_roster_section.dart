@@ -35,7 +35,7 @@ class TournamentManualTeamRosterSection extends StatelessWidget {
             Text(
               isArabic ? 'كشف أسماء اللاعبين (من 5 إلى 12):' : 'Roster (5 to 12 players):',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),
@@ -72,7 +72,7 @@ class TournamentManualTeamRosterSection extends StatelessWidget {
                 onPressed: onAddPlayer,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.accent,
-                  foregroundColor: Colors.black,
+                  foregroundColor: VSPColors.black,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
@@ -100,7 +100,7 @@ class TournamentManualTeamRosterSection extends StatelessWidget {
                   backgroundColor: VSPColors.surfaceAlt,
                   label: Text(
                     name,
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    style: const TextStyle(color: VSPColors.white, fontSize: 12),
                   ),
                   deleteIcon: const Icon(Iconsax.close_circle_copy, size: 14, color: VSPColors.error),
                   onDeleted: () => onRemovePlayer(name),

@@ -26,12 +26,14 @@ class PlayerBookingCard extends StatelessWidget {
   final Booking booking;
   final bool isHistory;
   final String? myTeamId;
+  final String? myCaptainTeamId;
 
   const PlayerBookingCard({
     super.key,
     required this.booking,
     required this.isHistory,
     this.myTeamId,
+    this.myCaptainTeamId,
   });
 
   String _getLocalizedBookingType(BuildContext context, BookingType type) {
@@ -56,7 +58,7 @@ class PlayerBookingCard extends StatelessWidget {
     return Text(
       text,
       style: TextStyle(
-        color: color ?? Colors.white.withValues(alpha: 0.9),
+        color: color ?? VSPColors.white.withValues(alpha: 0.9),
         fontSize: 11,
         fontWeight: FontWeight.bold,
         letterSpacing: 0.5,
@@ -71,11 +73,14 @@ class PlayerBookingCard extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
+            color: VSPColors.white.withValues(alpha: 0.5),
             fontSize: 10,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: VSPSpacing.xs),
         Directionality(
@@ -88,6 +93,9 @@ class PlayerBookingCard extends StatelessWidget {
                   color: VSPColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ),
       ],
@@ -173,7 +181,7 @@ class PlayerBookingCard extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(VSPRadius.card),
         onTap: () => _openDetails(context),
@@ -260,27 +268,55 @@ class PlayerBookingCard extends StatelessWidget {
                     ),
                   ),
                   if (booking.status == BookingStatus.cancelled) ...[
-                    ChallengeResultActions.buildStatusBadge(isArabic ? 'ملغي' : 'Cancelled', VSPColors.error),
-                  ] else if (booking.status == BookingStatus.pending && !booking.isPaid) ...[
-                    ChallengeResultActions.buildStatusBadge(isArabic ? 'بانتظار السداد' : 'Pending Payment', VSPColors.warning),
-                  ] else if (!isHistory) ...[
-                    ChallengeResultActions.buildStatusBadge(l10n.confirmed, VSPColors.accent),
+                    ChallengeResultActions.buildStatusBadge(
+                      isArabic ? 'ملغي' : 'Cancelled',
+                      VSPColors.error,
+                    ),
+                  ] else if (booking.status == BookingStatus.expired) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      isArabic ? 'انتهت مهلة الدفع' : 'Payment expired',
+                      VSPColors.error,
+                    ),
+                  ] else if (booking.status == BookingStatus.pending) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      booking.isPaid
+                          ? (isArabic ? 'قيد تأكيد الدفع' : 'Payment verification')
+                          : (isArabic ? 'بانتظار السداد' : 'Pending payment'),
+                      VSPColors.warning,
+                    ),
+                  ] else if (!isHistory &&
+                      (booking.status == BookingStatus.confirmed ||
+                          booking.status == BookingStatus.upcoming)) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      l10n.confirmed,
+                      VSPColors.accent,
+                    ),
+                  ] else if (booking.status == BookingStatus.noShow) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      isArabic ? 'عدم حضور' : 'No-show',
+                      VSPColors.error,
+                    ),
+                  ] else if (booking.endTime.isAfter(DateTime.now())) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      l10n.inProgress,
+                      VSPColors.accent,
+                    ),
+                  ] else if (booking.bookingType == BookingType.challenge) ...[
+                    Builder(
+                      builder: (ctx) {
+                        if (myTeamId == null) return const SizedBox.shrink();
+                        return ChallengeResultActions.buildChallengeStatusBadge(
+                          context,
+                          booking: booking,
+                          myTeamId: myTeamId,
+                        );
+                      },
+                    ),
                   ] else ...[
-                    if (booking.endTime.isAfter(DateTime.now()))
-                      ChallengeResultActions.buildStatusBadge(l10n.inProgress, VSPColors.accent)
-                    else if (booking.bookingType == BookingType.challenge) ...[
-                      Builder(
-                        builder: (ctx) {
-                          final badge = ChallengeResultActions.buildChallengeStatusBadge(context, booking: booking, myTeamId: myTeamId);
-                          if (badge is SizedBox) {
-                            return ChallengeResultActions.buildStatusBadge(l10n.completed, VSPColors.textSecondary);
-                          }
-                          return badge;
-                        },
-                      ),
-                    ] else ...[
-                      ChallengeResultActions.buildStatusBadge(l10n.completed, VSPColors.textSecondary),
-                    ],
+                    ChallengeResultActions.buildStatusBadge(
+                      l10n.completed,
+                      VSPColors.textSecondary,
+                    ),
                   ],
                 ],
               ),
@@ -294,13 +330,44 @@ class PlayerBookingCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildInfoColumn(context, l10n.date, _formatDate(context, booking.startTime)),
-                    Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                    _buildInfoColumn(context, l10n.time, _formatTimeRange(context, booking.startTime, booking.endTime), isTime: true),
-                    Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: _buildInfoColumn(context, l10n.price, '${booking.totalPrice.toInt()} ${l10n.egCurrency}'),
+                    Expanded(
+                      child: _buildInfoColumn(
+                        context,
+                        l10n.date,
+                        _formatDate(context, booking.startTime),
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: VSPColors.divider.withValues(alpha: 0.1),
+                    ),
+                    Expanded(
+                      child: _buildInfoColumn(
+                        context,
+                        l10n.time,
+                        _formatTimeRange(
+                          context,
+                          booking.startTime,
+                          booking.endTime,
+                        ),
+                        isTime: true,
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: VSPColors.divider.withValues(alpha: 0.1),
+                    ),
+                    Expanded(
+                      child: Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: _buildInfoColumn(
+                          context,
+                          l10n.price,
+                          '${booking.totalPrice.toInt()} ${l10n.egCurrency}',
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -327,11 +394,9 @@ class PlayerBookingCard extends StatelessWidget {
               return const SizedBox.shrink();
             }
 
-            final bool hasRealRefund = booking.paymentStatus == 'refunded' &&
-                ((booking.refundTransactionId != null &&
-                        booking.refundTransactionId!.isNotEmpty) ||
-                    (booking.refundAmount != null &&
-                        booking.refundAmount! > 0));
+            // A server-confirmed refunded status is authoritative even if the
+            // amount/reference has not propagated to this read yet.
+            final bool hasRealRefund = booking.paymentStatus == 'refunded';
 
             final bool isRefundPending = !hasRealRefund &&
                 booking.paymentStatus == 'refund_pending';
@@ -361,10 +426,7 @@ class PlayerBookingCard extends StatelessWidget {
                       'refund_payment_method':
                           booking.refundPaymentMethod ?? booking.paymentMethod,
                       'payment_method': booking.paymentMethod,
-                      'refund_amount': booking.refundAmount ??
-                          (booking.depositPaid > 0
-                              ? booking.depositPaid
-                              : booking.totalPrice),
+                      'refund_amount': booking.refundAmount,
                     }),
                   ),
                 ),
@@ -421,7 +483,7 @@ class PlayerBookingCard extends StatelessWidget {
             VSPAnimatedButton(
               text: isArabic ? 'لوحة المواجهة والنتائج الحية' : 'Live Matchup Dashboard',
               color: VSPColors.accent,
-              textColor: Colors.black,
+              textColor: VSPColors.black,
               onPressed: () {
                 Navigator.push(
                   context,
@@ -436,35 +498,36 @@ class PlayerBookingCard extends StatelessWidget {
             const SizedBox(height: VSPSpacing.md),
             Row(
               children: [
-                Expanded(
-                  child: Builder(
-                    builder: (btnCtx) {
-                      final now = DateTime.now();
-                      final deadline = booking.startTime.subtract(const Duration(hours: 6));
-                      final isWithinGrace = now.difference(booking.createdAt).inMinutes <= 20 && !now.isAfter(booking.startTime);
-                      final bool canCancel = now.isBefore(deadline) || isWithinGrace;
-                      final bool bookingStarted = now.isAfter(booking.startTime);
-                      final String lockedLabel = bookingStarted
-                          ? (isArabic ? 'بدأ الحجز' : 'Booking started')
-                          : (isArabic ? 'لا يمكن الإلغاء (أقل من 6 ساعات)' : 'Cannot cancel (< 6 hrs left)');
-                      return Tooltip(
-                        message: canCancel ? '' : lockedLabel,
-                        child: VSPAnimatedButton(
-                          text: l10n.cancel,
-                          color: canCancel ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.4),
-                          textColor: canCancel ? VSPColors.error : VSPColors.textSecondary.withValues(alpha: 0.5),
-                          onPressed: canCancel ? () => _showCancelDialog(context) : null,
-                        ),
-                      );
-                    },
+                if (booking.status != BookingStatus.cancelled)
+                  Expanded(
+                    child: Builder(
+                      builder: (btnCtx) {
+                        final now = DateTime.now();
+                        final deadline = booking.startTime.subtract(const Duration(hours: 6));
+                        final isWithinGrace = now.difference(booking.createdAt).inMinutes <= 20 && !now.isAfter(booking.startTime);
+                        final bool canCancel = now.isBefore(deadline) || isWithinGrace;
+                        final bool bookingStarted = now.isAfter(booking.startTime);
+                        final String lockedLabel = bookingStarted
+                            ? (isArabic ? 'بدأ الحجز' : 'Booking started')
+                            : (isArabic ? 'لا يمكن الإلغاء (أقل من 6 ساعات)' : 'Cannot cancel (< 6 hrs left)');
+                        return Tooltip(
+                          message: canCancel ? '' : lockedLabel,
+                          child: VSPAnimatedButton(
+                            text: l10n.cancel,
+                            color: canCancel ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.4),
+                            textColor: canCancel ? VSPColors.error : VSPColors.textSecondary.withValues(alpha: 0.5),
+                            onPressed: canCancel ? () => _showCancelDialog(context) : null,
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
                 if (booking.bookingType == BookingType.openJoin && booking.isPrivate) ...[
                 Expanded(
                   child: VSPAnimatedButton(
                     text: isArabic ? 'مشاركة' : 'Share',
                     color: VSPColors.accent,
-                    textColor: Colors.black,
+                    textColor: VSPColors.black,
                     onPressed: () => SharingService.shareMatch(
                       bookingId: booking.id,
                       teamName: booking.playerTeamName ?? (isArabic ? 'فريقي' : 'My Team'),
@@ -487,9 +550,10 @@ class PlayerBookingCard extends StatelessWidget {
           if (isHistory &&
               booking.bookingType == BookingType.challenge &&
               booking.opponentTeamId != null &&
+              myCaptainTeamId != null &&
               booking.endTime.isBefore(DateTime.now())) ...[
             const SizedBox(height: VSPSpacing.md),
-            ChallengeResultActions(booking: booking, myTeamId: myTeamId),
+            ChallengeResultActions(booking: booking, myTeamId: myCaptainTeamId),
           ],
         ],
       ),
@@ -546,7 +610,7 @@ class PlayerBookingCard extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            isArabic ? 'جاري الاسترداد البنكي...' : 'Bank refund processing...',
+            isArabic ? 'جاري معالجة الاسترداد...' : 'Refund processing...',
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,

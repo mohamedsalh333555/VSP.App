@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +11,10 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/sharing_service.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/repositories/report_repository.dart';
 import '../../../core/repositories/chat_repository.dart';
 import '../../../core/utils/vsp_match_invite_formatter.dart';
@@ -31,12 +34,14 @@ class MatchDetailsScreen extends StatefulWidget {
 
 class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  bool _isLoading = true;
+ bool _hasLoadError = false;
  Booking? _booking;
  Stadium? _stadium;
  bool _isJoining = false;
   bool _isActionProcessing = false;
+  bool _isReportingOwnerIssue = false;
   final Map<String, UserModel> _joinedUserProfiles = {};
-  late final Stream<Booking?> _bookingStream;
+  late Stream<Booking?> _bookingStream;
 
   Future<void> _loadJoinedUsers(List<String> userIds) async {
     if (userIds.isEmpty) return;
@@ -57,12 +62,17 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  @override
  void initState() {
  super.initState();
+ unawaited(AnalyticsService.logMatchViewed(matchId: widget.bookingId));
  _bookingStream = MatchRepository().streamPublicMatchDetails(widget.bookingId);
     _fetchMatchDetails();
  }
 
  Future<void> _fetchMatchDetails() async {
- setState(() => _isLoading = true);
+ if (!mounted) return;
+ setState(() {
+   _isLoading = true;
+   _hasLoadError = false;
+ });
  try {
  final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
 
@@ -75,11 +85,18 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
           _loadJoinedUsers(booking.joinedUserIds);
         }
  }
- } catch (e) {
+ } catch (e, stackTrace) {
  debugPrint('Error fetching match details: $e');
+ debugPrintStack(stackTrace: stackTrace);
+ if (mounted) setState(() => _hasLoadError = true);
  } finally {
  if (mounted) setState(() => _isLoading = false);
  }
+ }
+
+ void _retryMatchDetails() {
+   _bookingStream = MatchRepository().streamPublicMatchDetails(widget.bookingId);
+   _fetchMatchDetails();
  }
 
  Future<void> _onJoin() async {
@@ -95,12 +112,18 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _isActionProcessing = true;
  });
  if (_booking?.isOpenJoin == true) {
+   if (mounted) {
+     setState(() {
+       _isJoining = false;
+       _isActionProcessing = false;
+     });
+   }
    VSPFeedback.showInfo(context, Localizations.localeOf(context).languageCode == 'ar' ? 'هذه تجميعية خاصة. استخدم رابط الدعوة للانضمام.' : 'This is a private collective match. Use the invitation link to join.');
    return;
  }
 
  final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
- final success = await bookingProvider.joinPublicMatch(widget.bookingId, auth.currentUser!.uid);
+ final success = await bookingProvider.joinPublicMatch(widget.bookingId, auth.currentUser!.id);
  
  if (mounted) {
  setState(() {
@@ -108,6 +131,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _isActionProcessing = false;
  });
  if (success) {
+ unawaited(AnalyticsService.logMatchJoined(widget.bookingId, 'public_match'));
  VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.matchJoinSuccess);
  _fetchMatchDetails();
  } else {
@@ -137,7 +161,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  } else {
  VSPFeedback.showError(
  context,
- errorMsg.isNotEmpty ? errorMsg : (isArabic ? 'فشل الانضمام للمباراة' : 'Failed to join match'),
+ isArabic ? 'تعذر الانضمام للمباراة. حاول مرة أخرى.' : 'Could not join the match. Please try again.',
  );
  }
  }
@@ -147,7 +171,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  Future<void> _openOwnerChat() async {
    final booking = _booking;
    final auth = Provider.of<AuthProvider>(context, listen: false);
-   final currentUserId = auth.currentUser?.uid;
+   final currentUserId = auth.currentUser?.id;
    final ownerId = booking?.ownerId;
    if (booking == null || currentUserId == null || ownerId == null || ownerId.isEmpty) {
      VSPFeedback.showError(
@@ -193,6 +217,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
 
  Future<void> _reportOwnerIssue() async {
+   if (_isReportingOwnerIssue) return;
    final booking = _booking;
    final ownerId = booking?.ownerId;
    if (booking == null || ownerId == null || ownerId.isEmpty) return;
@@ -203,12 +228,14 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
    final submitted = await showDialog<bool>(
      context: context,
+     useSafeArea: true,
      builder: (dlgCtx) => AlertDialog(
+       scrollable: true,
        backgroundColor: VSPColors.surface,
        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
        title: Text(
          ar ? 'إبلاغ عن مشكلة بالملعب/المالك' : 'Report Stadium/Owner Issue',
-         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+         style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
        ),
        content: Column(
          mainAxisSize: MainAxisSize.min,
@@ -245,7 +272,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
            onPressed: () => Navigator.pop(dlgCtx, reasonController.text.trim().isNotEmpty),
            style: ElevatedButton.styleFrom(
              backgroundColor: VSPColors.error,
-             foregroundColor: Colors.white,
+             foregroundColor: VSPColors.white,
            ),
            child: Text(ar ? 'إرسال البلاغ' : 'Submit Report'),
          ),
@@ -260,27 +287,42 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
    if (submitted != true || reason.isEmpty || !mounted) return;
 
-   final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+   final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
    if (currentUserId == null) return;
 
-   final ok = await ReportRepository().reportEntity(
-     reporterId: currentUserId,
-     targetId: ownerId,
-     targetType: 'user',
-     reason: reason,
-     details: details.isEmpty ? null : details,
-     contextType: 'booking',
-     contextId: booking.id,
-     bookingId: booking.id,
-   );
+   if (!mounted) return;
+   setState(() => _isReportingOwnerIssue = true);
+   var ok = false;
+   try {
+     ok = await ReportRepository().reportEntity(
+       reporterId: currentUserId,
+       targetId: ownerId,
+       targetType: 'user',
+       reason: reason,
+       details: details.isEmpty ? null : details,
+       contextType: 'booking',
+       contextId: booking.id,
+       bookingId: booking.id,
+     );
+   } catch (error, stackTrace) {
+     debugPrint('Error submitting booking owner report: $error');
+     debugPrintStack(stackTrace: stackTrace);
+   } finally {
+     if (mounted) setState(() => _isReportingOwnerIssue = false);
+   }
 
    if (mounted) {
-     VSPFeedback.showSuccess(
-       context,
-       ok
-           ? (ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.')
-           : (ar ? 'تعذر إرسال البلاغ.' : 'Could not submit report.'),
-     );
+     if (ok) {
+       VSPFeedback.showSuccess(
+         context,
+         ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.',
+       );
+     } else {
+       VSPFeedback.showError(
+         context,
+         ar ? 'تعذر إرسال البلاغ. حاول مرة أخرى.' : 'Could not submit the report. Please try again.',
+       );
+     }
    }
  }
 
@@ -292,6 +334,13 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  return;
  }
 
+ final reporterId = auth.currentUser?.id;
+ if (reporterId == null) {
+   VSPFeedback.showError(context, AppLocalizations.of(context)!.loginToJoinError);
+   return;
+ }
+ bool isSubmittingReport = false;
+ final pageContext = context;
  String selectedReason = 'Spam';
  final Map<String, String> reasons = {
  'Spam': AppLocalizations.of(context)!.reportReasonSpam,
@@ -303,10 +352,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
  showDialog(
  context: context,
+ useSafeArea: true,
  builder: (context) => StatefulBuilder(
  builder: (context, setDialogState) => AlertDialog(
+ scrollable: true,
  backgroundColor: VSPColors.surface,
- title: Text(AppLocalizations.of(context)!.reportMatch, style: const TextStyle(color: Colors.white)),
+ title: Text(AppLocalizations.of(context)!.reportMatch, style: const TextStyle(color: VSPColors.white)),
  content: Column(
  mainAxisSize: MainAxisSize.min,
  children: [
@@ -321,7 +372,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  isExpanded: true,
  items: reasons.entries.map((entry) => DropdownMenuItem(
  value: entry.key,
- child: Text(entry.value, style: const TextStyle(color: Colors.white)),
+ child: Text(entry.value, style: const TextStyle(color: VSPColors.white)),
  )).toList(),
  onChanged: (val) {
  if (val != null) setDialogState(() => selectedReason = val);
@@ -339,7 +390,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  height: 48,
  color: VSPColors.surfaceAlt,
  textColor: VSPColors.textPrimary,
- onPressed: () => Navigator.pop(context),
+ onPressed: isSubmittingReport ? null : () => Navigator.pop(context),
  ),
  ),
  const SizedBox(width: VSPSpacing.md),
@@ -347,24 +398,35 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  child: PrimaryButton(
  text: AppLocalizations.of(context)!.report,
  height: 48,
+ isLoading: isSubmittingReport,
  color: VSPColors.error,
- textColor: Colors.white,
- onPressed: () async {
- final success = await ReportRepository().reportEntity(
- reporterId: auth.currentUser!.uid,
- targetId: widget.bookingId,
- targetType: 'match',
- reason: selectedReason,
- contextType: 'match',
- contextId: widget.bookingId,
- bookingId: widget.bookingId,
- );
- if (!context.mounted) return;
- Navigator.pop(context);
- if (success) {
- VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.reportSubmitted);
- } else {
- VSPFeedback.showError(context, AppLocalizations.of(context)!.reportFailed);
+ textColor: VSPColors.white,
+ onPressed: isSubmittingReport ? null : () async {
+ setDialogState(() => isSubmittingReport = true);
+ try {
+   final success = await ReportRepository().reportEntity(
+     reporterId: reporterId,
+     targetId: widget.bookingId,
+     targetType: 'match',
+     reason: selectedReason,
+     contextType: 'match',
+     contextId: widget.bookingId,
+     bookingId: widget.bookingId,
+   );
+   if (!context.mounted) return;
+   Navigator.pop(context);
+   if (!pageContext.mounted) return;
+   if (success) {
+     VSPFeedback.showSuccess(pageContext, AppLocalizations.of(pageContext)!.reportSubmitted);
+   } else {
+     VSPFeedback.showError(pageContext, AppLocalizations.of(pageContext)!.reportFailed);
+   }
+ } catch (_) {
+   if (!context.mounted) return;
+   setDialogState(() => isSubmittingReport = false);
+   if (pageContext.mounted) {
+     VSPFeedback.showError(pageContext, AppLocalizations.of(pageContext)!.reportFailed);
+   }
  }
  },
  ),
@@ -379,12 +441,13 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
  Future<void> _onLeaveMatch() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final currentUserId = auth.currentUser?.uid;
+    final currentUserId = auth.currentUser?.id;
     if (currentUserId == null || _isActionProcessing) return;
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final confirm = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -394,7 +457,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
             const SizedBox(width: 8),
             Text(
               isArabic ? 'مغادرة المباراة' : 'Leave Match',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
         ),
@@ -412,7 +475,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.error,
-              foregroundColor: Colors.white,
+              foregroundColor: VSPColors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -447,7 +510,10 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isActionProcessing = false);
-        VSPFeedback.showError(context, '$e');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر مغادرة المباراة. حاول مرة أخرى.' : 'Could not leave the match. Please try again.',
+        );
       }
     }
   }
@@ -480,7 +546,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
  @override
  Widget build(BuildContext context) {
- final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+ final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
  return StreamBuilder<Booking?>(
@@ -497,28 +563,52 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
 
  if (_isLoading) {
- return const VSPScaffold(
+ return VSPScaffold(
+   backgroundColor: VSPColors.background,
+   body: SafeArea(
+     child: VSPStateView(
+       state: VSPUiState.loading,
+       title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل تفاصيل المباراة' : 'Loading match details',
+       message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث بيانات الحجز واللاعبين.' : 'Fetching booking and player details.',
+     ),
+   ),
+ );
+ }
+
+ if (_booking == null && _hasLoadError) {
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
- body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+ appBar: AppBar(backgroundColor: VSPColors.transparent),
+ body: SafeArea(
+   child: VSPErrorState(
+     customMessage: isAr
+         ? 'تعذر تحميل تفاصيل المباراة. تحقق من الاتصال ثم أعد المحاولة.'
+         : 'Could not load match details. Check your connection and try again.',
+     retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
+     onRetry: _retryMatchDetails,
+   ),
+ ),
  );
  }
 
  if (_booking == null) {
  return VSPScaffold(
  backgroundColor: VSPColors.background,
- appBar: AppBar(backgroundColor: Colors.transparent),
- body: Center(
+ appBar: AppBar(backgroundColor: VSPColors.transparent),
+ body: SafeArea(
+   child: Center(
  child: Column(
  mainAxisAlignment: MainAxisAlignment.center,
  children: [
  const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 48),
  const SizedBox(height: 16),
- Text(AppLocalizations.of(context)!.matchNotFound, style: const TextStyle(color: Colors.white)),
+ Text(AppLocalizations.of(context)!.matchNotFound, style: const TextStyle(color: VSPColors.white)),
  TextButton(
  onPressed: () => Navigator.pop(context),
  child: Text(AppLocalizations.of(context)!.goBack, style: const TextStyle(color: VSPColors.accent)),
  )
  ],
+ ),
  ),
  ),
  );
@@ -580,7 +670,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  actions: [
  if (_booking?.isOpenJoin != true || isHost)
  IconButton(
- icon: const Icon(Iconsax.share_copy, color: Colors.white),
+ icon: const Icon(Iconsax.share_copy, color: VSPColors.white),
  onPressed: () async {
  if (_booking == null) return;
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
@@ -635,6 +725,38 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  : Container(color: VSPColors.surface),
  ),
  ),
+ if (snapshot.hasError && _booking != null)
+   SliverToBoxAdapter(
+     child: Padding(
+       padding: const EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.sm, VSPSpacing.md, 0),
+       child: Container(
+         padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+         decoration: BoxDecoration(
+           color: VSPColors.warning.withValues(alpha: 0.10),
+           borderRadius: BorderRadius.circular(VSPRadius.md),
+           border: Border.all(color: VSPColors.warning.withValues(alpha: 0.30)),
+         ),
+         child: Row(
+           children: [
+             const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+             const SizedBox(width: VSPSpacing.sm),
+             Expanded(
+               child: Text(
+                 isAr
+                     ? 'توقفت التحديثات المباشرة للمباراة. قد تكون البيانات المعروضة قديمة.'
+                     : 'Live match updates paused. Displayed details may be out of date.',
+                 style: const TextStyle(color: VSPColors.warning, fontSize: 11.5),
+               ),
+             ),
+             TextButton(
+               onPressed: _retryMatchDetails,
+               child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+             ),
+           ],
+         ),
+       ),
+     ),
+   ),
  SliverToBoxAdapter(
  child: Padding(
  padding: const EdgeInsets.all(VSPSpacing.lg),
@@ -705,7 +827,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                const SizedBox(height: 8),
                Text(
                  _booking!.playerTeamName ?? (isAr ? 'فريقنا' : 'Our Team'),
-                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                 style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                  textAlign: TextAlign.center,
                  maxLines: 1,
                  overflow: TextOverflow.ellipsis,
@@ -740,7 +862,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                const SizedBox(height: 8),
                Text(
                  _booking!.opponentTeamName ?? (isAr ? 'الخصم' : 'Opponent'),
-                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                 style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                  textAlign: TextAlign.center,
                  maxLines: 1,
                  overflow: TextOverflow.ellipsis,
@@ -769,7 +891,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  : 'Invite Friends via WhatsApp Group ',
  height: 48,
  color: VSPColors.whatsApp,
- textColor: Colors.white,
+ textColor: VSPColors.white,
  onPressed: () async {
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
  final msg = VSPMatchInviteFormatter.buildInviteMessage(
@@ -856,7 +978,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                         ),
                         title: Text(
                           displayName,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w600),
                         ),
                         subtitle: user?.position != null
                             ? Text(user!.position!, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12))
@@ -986,7 +1108,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  crossAxisAlignment: CrossAxisAlignment.start,
  children: [
  Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
- Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+ Text(value, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
  ],
  ),
  ],

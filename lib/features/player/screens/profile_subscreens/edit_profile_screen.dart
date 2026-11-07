@@ -80,8 +80,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  // 1. Upload compressed new image if selected
  if (_newProfileImage != null) {
  final compressed = await StorageService().compressImage(_newProfileImage!);
- await auth.updateProfilePhoto(compressed ?? _newProfileImage!);
- // AuthProvider already handles the Firestore update for the photo
+ final photoSaved = await auth.updateProfilePhoto(compressed ?? _newProfileImage!);
+ if (!photoSaved) {
+   if (mounted) {
+     setState(() => _isLoading = false);
+     VSPFeedback.showError(
+       context,
+       AppLocalizations.of(context)!.profileUpdateFailed,
+     );
+   }
+   return;
+ }
  }
 
  // 2. Update other profile data
@@ -107,7 +116,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  } catch (e) {
  if (mounted) {
  setState(() => _isLoading = false);
- VSPFeedback.showError(context, AppLocalizations.of(context)!.errorOccurred(e.toString()));
+ VSPFeedback.showError(context, AppLocalizations.of(context)!.profileUpdateFailed);
  }
  }
  }
@@ -119,7 +128,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  elevation: 0,
  leading: const VSPBackButton(),
  title: Text(
@@ -128,7 +137,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ),
  centerTitle: true,
  ),
- body: SafeArea(
+ body: SafeArea(top: false, bottom: false,
  child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
  padding: EdgeInsets.only(
  left: VSPSpacing.lg,
@@ -147,7 +156,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  GestureDetector(
  onTap: _pickImage,
  child: Stack(
- alignment: Alignment.bottomRight,
+ alignment: AlignmentDirectional.bottomEnd,
  children: [
  Container(
  width: 100,
@@ -179,7 +188,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  shape: BoxShape.circle,
  border: Border.all(color: VSPColors.background, width: 3),
  ),
- child: const Icon(Iconsax.image_copy, size: 16, color: Colors.black),
+ child: const Icon(Iconsax.image_copy, size: 16, color: VSPColors.black),
  ),
  ],
  ),
@@ -247,7 +256,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  final label = isAr ? '${pos.code} - ${pos.nameAr}' : '${pos.code} - ${pos.nameEn}';
  return DropdownMenuItem<String>(
  value: pos.code,
- child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+ child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white)),
  );
  }).toList(),
  onChanged: (String? newValue) {
@@ -327,7 +336,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  onPressed: () => _showDeleteAccountDialog(context),
  style: TextButton.styleFrom(
  backgroundColor: VSPColors.error,
- foregroundColor: Colors.white,
+ foregroundColor: VSPColors.white,
  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
  ),
@@ -353,9 +362,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
  showDialog(
  context: context,
+ useSafeArea: true,
  builder: (context) => StatefulBuilder(
  builder: (context, setDialogState) {
  return AlertDialog(
+ scrollable: true,
  backgroundColor: VSPColors.surface,
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
  title: Text(
@@ -403,8 +414,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  );
  } else {
  setDialogState(() => _isDeleting = false);
- VSPFeedback.showError(context, authProvider.errorMessage ?? (isArabic ? "فشل حذف الحساب" : "Failed to delete account"));
- Navigator.pop(context);
+ VSPFeedback.showError(context, isArabic ? "تعذر حذف الحساب. حاول مرة أخرى." : "Could not delete the account. Please try again.");
  }
  },
  ),

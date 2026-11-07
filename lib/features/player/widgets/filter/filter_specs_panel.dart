@@ -20,7 +20,7 @@ class FilterSpecsPanel extends StatelessWidget {
       children: [
         Text(
           isArabic ? 'سعة الملعب' : 'Pitch Capacity',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -42,7 +42,7 @@ class FilterSpecsPanel extends StatelessWidget {
               checkmarkColor: VSPColors.accent,
               side: BorderSide(color: isSelected ? VSPColors.accent : VSPColors.divider),
               labelStyle: TextStyle(
-                color: isSelected ? VSPColors.accent : Colors.white,
+                color: isSelected ? VSPColors.accent : VSPColors.white,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 fontSize: 12,
               ),

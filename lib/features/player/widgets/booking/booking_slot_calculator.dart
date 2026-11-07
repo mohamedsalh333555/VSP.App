@@ -7,6 +7,21 @@ class BookingSlotCalculator {
     return AppDateFormatter.parseTimeToMinutes(timeStr);
   }
 
+  static bool _isValidTime(String value) {
+    final match = RegExp(
+      r'^\s*(\d{1,2})(?::(\d{1,2}))?\s*(AM|PM|ص|م|مساءً|صباحاً)?\s*$',
+      caseSensitive: false,
+    ).firstMatch(value);
+    if (match == null) return false;
+    final hour = int.tryParse(match.group(1) ?? '');
+    final minute = int.tryParse(match.group(2) ?? '0');
+    if (hour == null || minute == null || minute < 0 || minute > 59) {
+      return false;
+    }
+    final hasPeriod = match.group(3) != null;
+    return hasPeriod ? hour >= 1 && hour <= 12 : hour >= 0 && hour <= 23;
+  }
+
   static String _formatMinutesToTime(int totalMinutes, bool isArabic) {
     return AppDateFormatter.formatMinutesToTime(totalMinutes, isArabic);
   }
@@ -28,6 +43,9 @@ class BookingSlotCalculator {
       if (endStr.isEmpty) endStr = stadium.closingTime;
       if (startStr.isEmpty) startStr = '04:00 PM';
       if (endStr.isEmpty) endStr = '03:00 AM';
+      if (!_isValidTime(startStr) || !_isValidTime(endStr)) {
+        return const <TimeSlotItem>[];
+      }
 
       int startMinutes = _parseTimeToMinutes(startStr);
       int endMinutes = _parseTimeToMinutes(endStr);
@@ -45,28 +63,48 @@ class BookingSlotCalculator {
         return min;
       }
 
-      int? bStart;
-      int? bEnd;
-      if (features is Map && features['breakTime'] != null) {
-        final s = features['breakTime']['start']?.toString() ?? '';
-        final e = features['breakTime']['end']?.toString() ?? '';
-        if (s.isNotEmpty && e.isNotEmpty) {
-          bStart = getCumulativeMinutes(s);
-          bEnd = getCumulativeMinutes(e);
+      final breakIntervals = <List<int>>[];
+      if (features is Map && features['breakTimes'] is List) {
+        for (final item in features['breakTimes'] as List) {
+          if (item is! Map) continue;
+          final startText = item['start']?.toString() ?? '';
+          final endText = item['end']?.toString() ?? '';
+          if (!_isValidTime(startText) || !_isValidTime(endText)) {
+            return const <TimeSlotItem>[];
+          }
+          final start = getCumulativeMinutes(startText);
+          final end = getCumulativeMinutes(endText);
+          if (start >= 0 && end > start) {
+            breakIntervals.add([start, end]);
+          }
+        }
+      }
+
+      // Backward compatibility for stadium records saved with the legacy single-break shape.
+      if (breakIntervals.isEmpty && features is Map && features['breakTime'] is Map) {
+        final legacyBreak = features['breakTime'] as Map;
+        final startText = legacyBreak['start']?.toString() ?? '';
+        final endText = legacyBreak['end']?.toString() ?? '';
+        if (!_isValidTime(startText) || !_isValidTime(endText)) {
+          return const <TimeSlotItem>[];
+        }
+        final start = getCumulativeMinutes(startText);
+        final end = getCumulativeMinutes(endText);
+        if (start >= 0 && end > start) {
+          breakIntervals.add([start, end]);
         }
       }
 
       final List<TimeSlotItem> slots = [];
-      for (int m = startMinutes; m < endMinutes; m += 30) {
+      for (int m = startMinutes; m + 30 <= endMinutes; m += 30) {
         final slotStart = m;
         final slotEnd = m + 30;
 
-        // Skip slot if it overlaps with stadium break shift
-        if (bStart != null && bEnd != null && bStart != -1 && bEnd != -1) {
-          if (slotStart < bEnd && slotEnd > bStart) {
-            continue;
-          }
-        }
+        // Exclude every 30-minute slot that overlaps any configured stadium break.
+        final overlapsBreak = breakIntervals.any(
+          (interval) => slotStart < interval[1] && slotEnd > interval[0],
+        );
+        if (overlapsBreak) continue;
 
         final startTimeFormatted = _formatMinutesToTime(slotStart % (24 * 60), isArabic);
         final endTimeFormatted = _formatMinutesToTime(slotEnd % (24 * 60), isArabic);
@@ -94,12 +132,22 @@ class BookingSlotCalculator {
     required DateTime selectedDate,
   }) {
     int startMin = _parseTimeToMinutes(slotKey);
-    String openStr = stadium.openingTime;
-    String closeStr = stadium.closingTime;
+    String openStr = '';
+    String closeStr = '';
     final features = stadium.features;
-    if ((openStr.isEmpty || closeStr.isEmpty) && features is Map && features['workingHours'] != null) {
-      openStr = openStr.isNotEmpty ? openStr : (features['workingHours']['start'] ?? '');
-      closeStr = closeStr.isNotEmpty ? closeStr : (features['workingHours']['end'] ?? '');
+    if (features is Map && features['workingHours'] is Map) {
+      openStr = features['workingHours']['start']?.toString() ?? '';
+      closeStr = features['workingHours']['end']?.toString() ?? '';
+    }
+    if (openStr.isEmpty) openStr = stadium.openingTime;
+    if (closeStr.isEmpty) closeStr = stadium.closingTime;
+    // Keep the fallback hours identical to generateDynamicTimeSlots().
+    // Otherwise overnight slots generated from the fallback schedule (e.g.
+    // 12:00 AM–3:00 AM) are incorrectly assigned to the selected calendar day.
+    if (openStr.isEmpty) openStr = '04:00 PM';
+    if (closeStr.isEmpty) closeStr = '03:00 AM';
+    if (!_isValidTime(openStr) || !_isValidTime(closeStr)) {
+      throw FormatException('Invalid stadium working hours');
     }
     int openMin = _parseTimeToMinutes(openStr);
     int closeMin = _parseTimeToMinutes(closeStr);

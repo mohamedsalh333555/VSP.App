@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 class VSPIconBadge extends StatelessWidget {
   final IconData icon;
@@ -14,8 +14,8 @@ class VSPIconBadge extends StatelessWidget {
     super.key,
     required this.icon,
     required this.color,
-    this.size = 40.0,
-    this.iconSize = 20.0,
+    this.size = VSPDSizes.avatarSm,
+    this.iconSize = VSPDSizes.iconMd,
     this.backgroundColor,
     this.hasBorder = false,
     this.borderColor,
@@ -29,11 +29,11 @@ class VSPIconBadge extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: backgroundColor ?? VSPColors.iconBadgeBg,
+        color: backgroundColor ?? VSPDSSemanticColors.iconBadge,
         shape: BoxShape.circle,
         border: hasBorder
             ? Border.all(
-                color: borderColor ?? color.withValues(alpha: 0.25),
+                color: borderColor ?? color.withValues(alpha: VSPDSOpacity.border),
                 width: 1.0,
               )
             : null,

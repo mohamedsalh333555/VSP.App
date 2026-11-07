@@ -12,7 +12,7 @@ class InputLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -60,7 +60,7 @@ class PillTextField extends StatelessWidget {
         textDirection: isNumberOrPhone ? TextDirection.ltr : null,
         inputFormatters: inputFormatters,
         style: TextStyle(
-          color: enabled ? Colors.white : VSPColors.textSecondary,
+          color: enabled ? VSPColors.white : VSPColors.textSecondary,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -109,15 +109,21 @@ class PlayerCounterField extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const Icon(Iconsax.user_tag_copy, color: VSPColors.accent, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                isArabic ? "إجمالي اللاعبين:" : "Total Players:",
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-              ),
-            ],
+          Expanded(
+            child: Row(
+              children: [
+                const Icon(Iconsax.user_tag_copy, color: VSPColors.accent, size: 18),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    isArabic ? "إجمالي اللاعبين:" : "Total Players:",
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
           Row(
             children: [

@@ -30,7 +30,9 @@ class TeamDialogs {
 
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(
@@ -62,7 +64,7 @@ class TeamDialogs {
                   text: isArabic ? 'تأكيد المغادرة' : 'Confirm Leave',
                   height: 48,
                   color: VSPColors.error,
-                  textColor: Colors.white,
+                  textColor: VSPColors.white,
                   onPressed: () async {
                     Navigator.pop(ctx);
                     onSavingStarted();
@@ -84,7 +86,7 @@ class TeamDialogs {
                         SnackBar(content: Text(displayMsg), backgroundColor: VSPColors.error),
                       );
                     } finally {
-                      onSavingFinished();
+                      if (context.mounted) onSavingFinished();
                     }
                   },
                 ),
@@ -106,7 +108,9 @@ class TeamDialogs {
 
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(l10n.deleteTeam, style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
@@ -142,6 +146,17 @@ class TeamDialogs {
                         );
                         if (!context.mounted) return;
                         Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isArabic
+                                  ? 'تعذر حذف الفريق. حاول مرة أخرى.'
+                                  : 'Could not delete the team. Please try again.',
+                            ),
+                            backgroundColor: VSPColors.error,
+                          ),
+                        );
                       }
                     } catch (e) {
                       if (!context.mounted) return;

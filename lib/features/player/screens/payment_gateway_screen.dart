@@ -15,6 +15,7 @@ import '../../../core/repositories/booking/booking_domain_rules.dart';
 import '../services/payment_checkout_coordinator.dart';
 import '../services/payment_checkout_service.dart';
 import '../../../core/services/paymob_service.dart';
+import '../../../core/services/remote_config_service.dart';
 import '../../../core/repositories/league_repository.dart';
 import '../widgets/payment/payment_background_glow.dart';
 import '../widgets/payment/payment_breakdown_card.dart';
@@ -62,19 +63,52 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   BuildContext? _verificationModalContext;
   final String _selectedMethod = 'card';
   PaymobFeePolicy? _feePolicy;
+  bool _isFeePolicyLoading = true;
+  String? _paymentUserId;
+  bool _hasAccountChanged = false;
+  bool _isOnlinePaymentUnavailable = false;
+  int _feePolicyRequestGeneration = 0;
 
   @override
   void initState() {
     super.initState();
+    _paymentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    _isOnlinePaymentUnavailable = !Provider.of<RemoteConfigService>(
+      context,
+      listen: false,
+    ).isFeatureEnabled('online_payment_enabled', defaultValue: true);
+    if (_isOnlinePaymentUnavailable) return;
+
     _startCountdownTimer();
     _loadFeePolicy();
     _createPendingBooking();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentUserId = context.watch<AuthProvider>().currentUser?.id;
+    if (currentUserId != _paymentUserId && !_hasAccountChanged) {
+      _hasAccountChanged = true;
+      _coordinator.cancelAllTimers();
+      _closeVerificationModalIfShowing();
+    }
+  }
+
   Future<void> _loadFeePolicy() async {
+    final requestGeneration = ++_feePolicyRequestGeneration;
+    if (mounted) {
+      setState(() {
+        _isFeePolicyLoading = true;
+        _feePolicy = null;
+      });
+    }
     final policy = await PaymobService.fetchFeePolicy();
-    if (!mounted) return;
-    setState(() => _feePolicy = policy);
+    if (!mounted || requestGeneration != _feePolicyRequestGeneration) return;
+    setState(() {
+      _feePolicy = policy;
+      _isFeePolicyLoading = false;
+    });
   }
 
   void _startCountdownTimer() {
@@ -84,9 +118,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         if (mounted) setState(() => _remainingSeconds = remaining);
       },
       onExpired: () async {
-        if (!_paymentCompleted && _booking != null && mounted) {
+        if (!_paymentCompleted && _booking != null && mounted && !_hasAccountChanged &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          final userId = authProvider.currentUser?.uid;
+          final userId = authProvider.currentUser?.id;
           if (widget.isTournamentPayment) {
             await _coordinator.releaseBookingSafely(
               isTournamentPayment: true,
@@ -103,7 +138,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               stadiumId: widget.bookingDraft.stadiumId,
             );
           }
-          if (mounted) {
+          if (mounted && !_hasAccountChanged &&
+              Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             VSPFeedback.showError(
               context,
@@ -128,7 +164,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     if (!mounted) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-    final userId = authProvider.currentUser?.uid;
+    final userId = _paymentUserId;
+    if (userId == null || authProvider.currentUser?.id != userId || _hasAccountChanged) {
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -143,7 +182,19 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         createBooking: bookingProvider.createBooking,
       );
 
-      if (!mounted) return;
+      if (!mounted ||
+          _hasAccountChanged ||
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) {
+        // The pending lock was created for the checkout's original account.
+        // Do not leave it reserved when that checkout is no longer active.
+        if (booking != null) {
+          await _coordinator.releaseBookingSafely(
+            isTournamentPayment: false,
+            booking: booking,
+          );
+        }
+        return;
+      }
       setState(() {
         _booking = booking;
         _isLoading = false;
@@ -152,17 +203,24 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         _initBookingRealtimeListener(booking.id);
       } else if (!widget.isTournamentPayment) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        final errorMsg = bookingProvider.errorMessage ??
-            (isArabic ? 'تعذر إنشاء الحجز في قاعدة البيانات' : 'Failed to create booking in database');
-        VSPFeedback.showError(context, errorMsg);
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر تأكيد الحجز من الخادم. ارجع وحاول مرة أخرى.'
+              : 'The server could not confirm the booking. Go back and retry.',
+        );
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && !_hasAccountChanged &&
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        debugPrint('Payment gateway booking initialization failed: $e');
         VSPFeedback.showError(
           context,
-          isArabic ? 'تعذر بدء عملية الحجز: $e' : 'Failed to initialize booking: $e',
+          isArabic
+              ? 'تعذر بدء عملية الحجز. تحقق من الاتصال وحاول مرة أخرى.'
+              : 'Could not start booking checkout. Check your connection and retry.',
         );
         Navigator.pop(context);
       }
@@ -173,6 +231,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _coordinator.listenToBookingStatus(
       bookingId: bookingId,
       onStatusUpdated: (bookingData) async {
+        if (!mounted || _hasAccountChanged ||
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+          return;
+        }
         final status = bookingData['status'] as String?;
         final paymentStatus = bookingData['payment_status'] as String?;
 
@@ -181,7 +243,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           if (mounted) {
             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
             final updatedBooking = await bookingProvider.getBookingById(bookingId);
-            if (updatedBooking != null && mounted) {
+            if (updatedBooking != null && mounted && !_hasAccountChanged &&
+                Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
               _paymentCompleted = true;
               _closeVerificationModalIfShowing();
               Navigator.pushReplacement(
@@ -203,7 +266,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       bookingId: bookingId,
       fetchBooking: (id) => Provider.of<BookingProvider>(context, listen: false).getBookingById(id),
       onConfirmed: (booking) {
-        if (mounted && !_paymentCompleted) {
+        if (mounted && !_hasAccountChanged && !_paymentCompleted &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           _paymentCompleted = true;
           _closeVerificationModalIfShowing();
           HapticFeedback.heavyImpact();
@@ -219,7 +283,35 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Future<void> _startPaymobCheckout() async {
+    final onlinePaymentEnabled = Provider.of<RemoteConfigService>(
+      context,
+      listen: false,
+    ).isFeatureEnabled('online_payment_enabled', defaultValue: true);
+    if (!onlinePaymentEnabled) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'الدفع الإلكتروني غير متاح حالياً. حاول مرة أخرى لاحقاً.'
+            : 'Online payment is currently unavailable. Please try again later.',
+      );
+      return;
+    }
+    if (_paymentUserId == null || _hasAccountChanged ||
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+      return;
+    }
     if (_booking == null && !widget.isTournamentPayment) return;
+    if (_isFeePolicyLoading || _feePolicy?.isValidForElectronicCheckout != true) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من رسوم الدفع. أعد تحميل تفاصيل الرسوم قبل المتابعة.'
+            : 'Payment fees could not be verified. Reload the fee details before continuing.',
+      );
+      return;
+    }
     if (_isLoading || _isAwaitingWebhook) return;
     setState(() {
       _isLoading = true;
@@ -229,7 +321,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _coordinator.startWebhookTimeout(
       timeout: const Duration(minutes: 5),
       onTimeout: () {
-        if (mounted && _isAwaitingWebhook && !_paymentCompleted) {
+        if (mounted && !_hasAccountChanged &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId &&
+            _isAwaitingWebhook && !_paymentCompleted) {
           if (_isVerificationModalShowing) {
             debugPrint('Webhook timeout elapsed but verification modal is still showing.');
             return;
@@ -244,16 +338,30 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.currentUser;
+    if (user?.id != _paymentUserId || _hasAccountChanged) {
+      if (mounted) setState(() { _isLoading = false; _isAwaitingWebhook = false; });
+      return;
+    }
     final userName = auth.userModel?.name ?? 'Player';
     final userPhone = auth.userModel?.phone ?? '';
     final userEmail = user?.email ?? 'player@vsp.app';
 
+    final bookingNeedsDeposit = _booking?.needsDeposit ?? widget.bookingDraft.needsDeposit;
+    final bookingDepositAmount = _booking?.depositAmount ?? widget.bookingDraft.depositPaid;
+    final paymentDraft = _booking == null
+        ? widget.bookingDraft
+        : widget.bookingDraft.copyWith(
+            totalPrice: _booking!.totalPrice,
+            needsDeposit: !widget.forceFullPayment && _booking!.needsDeposit,
+            depositPaid: widget.forceFullPayment ? 0 : _booking!.depositAmount,
+          );
     final isFullPayment = widget.forceFullPayment ||
-        !widget.bookingDraft.needsDeposit ||
-        widget.bookingDraft.depositPaid <= 0;
+        widget.isTournamentPayment ||
+        !bookingNeedsDeposit ||
+        bookingDepositAmount <= 0;
 
     final paymobUrl = await PaymentCheckoutService.requestPaymobCheckoutUrl(
-      draft: widget.bookingDraft,
+      draft: paymentDraft,
       selectedMethod: _selectedMethod,
       isTournamentPayment: widget.isTournamentPayment,
       bookingId: _booking?.id ?? widget.existingBookingId,
@@ -263,7 +371,11 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       isFullPayment: isFullPayment,
     );
 
-    final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
+    if (!mounted || _hasAccountChanged ||
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+      return;
+    }
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (paymobUrl != null && paymobUrl.isNotEmpty) {
       try {
@@ -280,7 +392,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           ),
         );
 
-        if (mounted && (isPaidSuccess == true)) {
+        if (mounted && !_hasAccountChanged &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId &&
+            (isPaidSuccess == true)) {
           if (widget.isTournamentPayment) {
             final orderReference = widget.existingBookingId;
             if (orderReference == null || orderReference.isEmpty) {
@@ -318,7 +432,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 };
               },
               onPaid: (_) {
-                if (!mounted || _paymentCompleted) return;
+                if (!mounted || _hasAccountChanged || _paymentCompleted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+                  return;
+                }
                 _paymentCompleted = true;
                 _coordinator.cancelAllTimers();
                 Navigator.pop(context, true);
@@ -327,7 +444,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _coordinator.startWebhookTimeout(
               timeout: const Duration(seconds: 90),
               onTimeout: () {
-                if (!mounted || _paymentCompleted) return;
+                if (!mounted || _hasAccountChanged || _paymentCompleted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+                  return;
+                }
                 _coordinator.cancelAllTimers();
                 setState(() {
                   _isAwaitingWebhook = false;
@@ -354,7 +474,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _showVerificationModal(bookingId, isArabic);
             _startFallbackPollingTimer(bookingId);
           }
-        } else if (mounted && !_paymentCompleted) {
+        } else if (mounted && !_hasAccountChanged && !_paymentCompleted &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           _startCountdownTimer();
           setState(() {
             _isAwaitingWebhook = false;
@@ -369,7 +490,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         }
       } catch (e) {
         debugPrint('Paymob Launch notice: $e');
-        if (mounted) {
+        if (mounted && !_hasAccountChanged &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           if (!_paymentCompleted) _startCountdownTimer();
           setState(() {
             _isAwaitingWebhook = false;
@@ -403,7 +525,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
     if (!widget.isTournamentPayment && mounted) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final userId = authProvider.currentUser?.uid;
+      final userId = authProvider.currentUser?.id;
       if (userId != null && mounted) {
         Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
       }
@@ -426,8 +548,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _isVerificationModalShowing = true;
     showDialog(
       context: context,
+      useSafeArea: true,
       barrierDismissible: false,
-      barrierColor: Colors.black.withValues(alpha: 0.85),
+      barrierColor: VSPColors.black.withValues(alpha: 0.85),
       builder: (modalCtx) {
         _verificationModalContext = modalCtx;
         return PaymentVerificationModal(
@@ -449,15 +572,12 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   void _closeVerificationModalIfShowing() {
-    if (_isVerificationModalShowing) {
-      _isVerificationModalShowing = false;
-      if (_verificationModalContext != null && _verificationModalContext!.mounted) {
-        Navigator.of(_verificationModalContext!).pop();
-        _verificationModalContext = null;
-      } else if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
+    if (!_isVerificationModalShowing) return;
+    _isVerificationModalShowing = false;
+    if (_verificationModalContext != null && _verificationModalContext!.mounted) {
+      Navigator.of(_verificationModalContext!).pop();
     }
+    _verificationModalContext = null;
   }
 
   AppBar _buildAppBar(BuildContext context, AppLocalizations l10n, bool isArabic, bool isChampionship) {
@@ -484,13 +604,137 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final currentUserId = context.read<AuthProvider>().currentUser?.id;
+    if (_paymentUserId == null || _hasAccountChanged || currentUserId != _paymentUserId) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isArabic
+                        ? 'تغيّر الحساب أثناء عملية الدفع. أوقفنا المتابعة لحماية الحجز.'
+                        : 'The account changed during checkout. Payment has been paused to protect the booking.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textPrimary),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(isArabic ? 'رجوع' : 'Go back'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_isOnlinePaymentUnavailable) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 32),
+                  const SizedBox(height: VSPSpacing.md),
+                  Text(
+                    isArabic
+                        ? 'الدفع الإلكتروني غير متاح حالياً. لم يتم إنشاء حجز مؤقت أو حجز الموعد.'
+                        : 'Online payment is currently unavailable. No pending booking or time slot has been created.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textPrimary, height: 1.4),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(isArabic ? 'رجوع' : 'Go back'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (!widget.isTournamentPayment && _booking == null) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isLoading) ...[
+                    const CircularProgressIndicator(color: VSPColors.accent),
+                    const SizedBox(height: VSPSpacing.md),
+                    Text(
+                      isArabic
+                          ? 'جارٍ تأكيد الحجز والسعر من الخادم...'
+                          : 'Confirming the booking and price with the server...',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: VSPColors.textSecondary),
+                    ),
+                  ] else ...[
+                    Text(
+                      isArabic
+                          ? 'لم يتم تأكيد الحجز. ارجع وحاول مرة أخرى.'
+                          : 'The booking was not confirmed. Go back and try again.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: VSPColors.textPrimary),
+                    ),
+                    const SizedBox(height: VSPSpacing.md),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(isArabic ? 'رجوع' : 'Go back'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final isOnlinePaymentEnabled = context
+        .watch<RemoteConfigService>()
+        .isFeatureEnabled('online_payment_enabled', defaultValue: true);
     final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:') || widget.bookingDraft.stadiumName.contains('دوري:');
     final effectiveForceFullPayment = widget.forceFullPayment;
-    final hasDeposit = !effectiveForceFullPayment && widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
-    final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
-    final double? totalWithFees = _feePolicy?.total(amountToPay);
+    final effectiveDraft = _booking == null
+        ? widget.bookingDraft
+        : widget.bookingDraft.copyWith(
+            totalPrice: _booking!.totalPrice,
+            needsDeposit: !widget.forceFullPayment && _booking!.needsDeposit,
+            depositPaid: widget.forceFullPayment ? 0 : _booking!.depositAmount,
+          );
+    final bookingNeedsDeposit = _booking?.needsDeposit ?? widget.bookingDraft.needsDeposit;
+    final bookingDepositAmount = _booking?.depositAmount ?? widget.bookingDraft.depositPaid;
+    final hasDeposit = !effectiveForceFullPayment &&
+        !widget.isTournamentPayment &&
+        bookingNeedsDeposit &&
+        bookingDepositAmount > 0;
+    final amountToPay = hasDeposit
+        ? bookingDepositAmount
+        : (_booking?.totalPrice ?? widget.bookingDraft.totalPrice);
+    final double? totalWithFees = _feePolicy?.isValidForElectronicCheckout == true
+        ? _feePolicy!.total(amountToPay)
+        : null;
 
     return PopScope(
       canPop: false,
@@ -523,11 +767,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                     ),
                     const SizedBox(height: 16),
                     PaymentBreakdownCard(
-                      bookingDraft: widget.bookingDraft,
+                      bookingDraft: effectiveDraft,
                       isChampionship: isChampionship,
                       hasDeposit: hasDeposit,
                       amountToPay: amountToPay,
                       isArabic: isArabic,
+                      feePolicy: _feePolicy,
+                      isFeePolicyLoading: _isFeePolicyLoading,
+                      onRetryFeePolicy: _loadFeePolicy,
                     ),
                     const SizedBox(height: VSPSpacing.md),
                     Container(
@@ -579,11 +826,39 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       ),
                     ),
                     const SizedBox(height: VSPSpacing.lg),
+                    if (!isOnlinePaymentEnabled) ...[
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+                        padding: const EdgeInsets.all(VSPSpacing.md),
+                        decoration: BoxDecoration(
+                          color: VSPColors.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(
+                            color: VSPColors.warning.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          isArabic
+                              ? 'الدفع الإلكتروني متوقف حالياً. لم يتم إرسال طلب دفع جديد.'
+                              : 'Online payment is currently disabled. No new payment request can be started.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: VSPColors.warning,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
                     PaymentSecurityFooter(
                       isLoading: _isLoading,
                       isAwaitingWebhook: _isAwaitingWebhook,
                       isArabic: isArabic,
-                      canProceed: !(_booking == null && !widget.isTournamentPayment),
+                      canProceed: isOnlinePaymentEnabled &&
+                          !(_booking == null && !widget.isTournamentPayment) &&
+                          !_isFeePolicyLoading &&
+                          _feePolicy?.isValidForElectronicCheckout == true,
                       totalAmount: totalWithFees,
                       onProceed: _startPaymobCheckout,
                     ),

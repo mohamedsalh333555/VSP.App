@@ -75,7 +75,7 @@ class ChampionshipRulesTab extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 8),
           Text(

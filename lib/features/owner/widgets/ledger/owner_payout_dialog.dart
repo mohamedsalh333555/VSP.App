@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/owner_repository.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/app_error_handler.dart';
 import '../../screens/owner_account_management_screen.dart';
 
 /// Modal dialogs for requesting digital balance payouts and settlements.
@@ -32,12 +34,14 @@ class OwnerPayoutDialog {
     if (!hasPayoutMethod) {
       showDialog(
         context: context,
+        useSafeArea: true,
         builder: (ctx) => AlertDialog(
+          scrollable: true,
           backgroundColor: VSPColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           title: Text(
             isAr ? 'وسيلة التحصيل غير مسجلة' : 'Payout Method Required',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
           ),
           content: Text(
             isAr
@@ -48,6 +52,7 @@ class OwnerPayoutDialog {
           actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(64, 48), tapTargetSize: MaterialTapTargetSize.padded),
               onPressed: () => Navigator.pop(ctx),
               child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
             ),
@@ -60,8 +65,10 @@ class OwnerPayoutDialog {
                 );
               },
               style: ElevatedButton.styleFrom(
+                minimumSize: const Size(64, 48),
+                tapTargetSize: MaterialTapTargetSize.padded,
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
               ),
               child: Text(
@@ -100,6 +107,7 @@ class OwnerPayoutDialog {
 
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => _PayoutDialogContent(
         digitalBalance: digitalBalance,
         isAr: isAr,
@@ -124,10 +132,14 @@ class OwnerPayoutDialog {
                     : 'Payout settlement request of ${amount.toStringAsFixed(0)} EGP submitted successfully.',
               );
             } else {
-              VSPFeedback.showError(
-                context,
-                res['error']?.toString() ?? (isAr ? 'فشل إرسال طلب التسوية' : 'Failed to submit request'),
-              );
+              final error = res['error']?.toString() ?? 'payout_request_failed';
+              VSPLogger.w('Owner payout request rejected: $error');
+              final message = error.toLowerCase().contains('not authenticated')
+                  ? (isAr
+                      ? 'انتهت الجلسة. سجّل الدخول مرة أخرى ثم حاول.'
+                      : 'Your session has expired. Sign in again and retry.')
+                  : AppErrorHandler.formatError(error, isArabic: isAr);
+              VSPFeedback.showError(context, message);
             }
           }
         },
@@ -195,34 +207,44 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
     );
 
     return AlertDialog(
+      scrollable: true,
       backgroundColor: VSPColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
       title: Text(
         widget.isAr ? 'طلب تسوية وسحب الرصيد' : 'Request Payout Settlement',
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
       ),
-      content: SingleChildScrollView(
-        child: Column(
+      content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  widget.isAr ? 'الرصيد المتاح للسحب:' : 'Available Balance:',
-                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                Expanded(
+                  child: Text(
+                    widget.isAr ? 'الرصيد المتاح للسحب:' : 'Available Balance:',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
                 ),
-                Text(
-                  '${widget.digitalBalance.toStringAsFixed(0)} ${widget.isAr ? "ج.م" : "EGP"}',
-                  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '${widget.digitalBalance.toStringAsFixed(0)} ${widget.isAr ? "ج.م" : "EGP"}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
               widget.isAr ? 'المبلغ المطلوب سحبه:' : 'Payout Amount:',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: VSPColors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             TextField(
@@ -230,7 +252,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
               onChanged: _validateAmount,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
               decoration: InputDecoration(
                 filled: true,
                 fillColor: VSPColors.inputFill,
@@ -243,23 +265,46 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
               ),
             ),
             const SizedBox(height: 6),
-            Align(
-              alignment: widget.isAr ? Alignment.centerLeft : Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {
-                  _amountController.text = widget.digitalBalance.toStringAsFixed(0);
-                  _validateAmount(_amountController.text);
-                },
-                child: Text(
-                  widget.isAr ? 'سحب كامل الرصيد (${widget.digitalBalance.toInt()} ج.م)' : 'Withdraw Full Balance (${widget.digitalBalance.toInt()} EGP)',
-                  style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+            SizedBox(
+              height: VSPSize.touchTarget,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Semantics(
+                  button: true,
+                  label: widget.isAr
+                      ? 'سحب كامل الرصيد'
+                      : 'Withdraw full balance',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    onTap: () {
+                      _amountController.text =
+                          widget.digitalBalance.toStringAsFixed(0);
+                      _validateAmount(_amountController.text);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: VSPSpacing.xs,
+                        vertical: VSPSpacing.sm,
+                      ),
+                      child: Text(
+                        widget.isAr
+                            ? 'سحب كامل الرصيد (${widget.digitalBalance.toInt()} ج.م)'
+                            : 'Withdraw Full Balance (${widget.digitalBalance.toInt()} EGP)',
+                        style: const TextStyle(
+                          color: VSPColors.accent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 14),
             Text(
               widget.isAr ? 'جهة التحويل المطلوبة:' : 'Transfer Destination:',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: VSPColors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             ...widget.destinations.map((dest) {
@@ -273,7 +318,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                     color: isSelected ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.inputFill,
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
                     border: Border.all(
-                      color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.08),
+                      color: isSelected ? VSPColors.accent : VSPColors.white08,
                       width: isSelected ? 1.5 : 1.0,
                     ),
                   ),
@@ -292,7 +337,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                             Text(
                               dest['title']!,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : VSPColors.textSecondary,
+                                color: isSelected ? VSPColors.white : VSPColors.textSecondary,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 fontSize: 12,
                               ),
@@ -300,7 +345,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                             Text(
                               dest['value']!,
                               style: TextStyle(
-                                color: isSelected ? VSPColors.accent : Colors.white70,
+                                color: isSelected ? VSPColors.accent : VSPColors.white70,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
@@ -322,46 +367,82 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
             ),
           ],
         ),
-      ),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       actions: [
-        Row(
-          children: [
-            Expanded(
-              child: TextButton(
-                onPressed: _isSubmitting ? null : widget.onCancel,
-                child: Text(widget.isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+        LayoutBuilder(
+          builder: (_, constraints) {
+            final cancelButton = TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(64, 48), tapTargetSize: MaterialTapTargetSize.padded),
+              onPressed: _isSubmitting ? null : widget.onCancel,
+              child: Text(
+                widget.isAr ? 'إلغاء' : 'Cancel',
+                style: const TextStyle(color: VSPColors.textSecondary),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: (_isSubmitting || _amountError != null)
-                    ? null
-                    : () async {
-                        final parsed = double.tryParse(_amountController.text.trim()) ?? 0.0;
-                        if (parsed <= 0 || parsed > widget.digitalBalance) {
-                          _validateAmount(_amountController.text);
-                          return;
-                        }
-                        setState(() => _isSubmitting = true);
-                        await widget.onSubmit(parsed, selectedDest['id']!, selectedDest['value']!);
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: VSPColors.accent,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
-                ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                      )
-                    : Text(widget.isAr ? 'تأكيد الإرسال' : 'Confirm Request', style: const TextStyle(fontWeight: FontWeight.bold)),
+            );
+            final submitButton = ElevatedButton(
+              onPressed: (_isSubmitting || _amountError != null)
+                  ? null
+                  : () async {
+                      final parsed = double.tryParse(_amountController.text.trim()) ?? 0.0;
+                      if (parsed <= 0 || parsed > widget.digitalBalance) {
+                        _validateAmount(_amountController.text);
+                        return;
+                      }
+                      setState(() => _isSubmitting = true);
+                      try {
+                        await widget.onSubmit(
+                          parsed,
+                          selectedDest['id']!,
+                          selectedDest['value']!,
+                        );
+                      } catch (e) {
+                        VSPLogger.w('Owner payout submission failed: $e');
+                        if (!context.mounted) return;
+                        setState(() => _isSubmitting = false);
+                        VSPFeedback.showError(
+                          context,
+                          widget.isAr
+                              ? 'تعذر إرسال طلب التسوية. تحقق من الاتصال وحاول مرة أخرى.'
+                              : 'Could not submit the payout request. Check your connection and try again.',
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.accent,
+                foregroundColor: VSPColors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
               ),
-            ),
-          ],
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
+                    )
+                  : Text(
+                      widget.isAr ? 'تأكيد الإرسال' : 'Confirm Request',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+            );
+
+            if (constraints.maxWidth < 360) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  cancelButton,
+                  const SizedBox(height: 8),
+                  submitButton,
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: cancelButton),
+                const SizedBox(width: 8),
+                Expanded(child: submitButton),
+              ],
+            );
+          },
         ),
       ],
     );

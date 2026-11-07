@@ -70,7 +70,7 @@ class _TournamentRegistrationSuccessScreenState
     // 2. أنيميشن نبض الكأس والتحقق
     _badgeAnimController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: VSPDSMotion.celebrationReveal,
     );
     _scaleAnimation = CurvedAnimation(
       parent: _badgeAnimController,
@@ -480,7 +480,7 @@ class _TournamentRegistrationSuccessScreenState
                               onPressed: _navigateToStandingsOrSchedule,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: VSPColors.accent,
-                                foregroundColor: Colors.black,
+                                foregroundColor: VSPColors.black,
                                 shape: const StadiumBorder(),
                                 elevation: 0,
                               ),

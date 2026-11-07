@@ -36,59 +36,64 @@ class BookingQueryCoordinator {
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) async {
-            final refreshed = await getUserBookingsDirectly(userId);
+            final refreshed = await getUserBookingsDirectlyStrict(userId);
             sink.add(refreshed);
           },
-        )
-        .handleError((error) {
-          VSPLogger.w('Handled realtime error in getUserBookings: $error');
-        });
+        );
   }
 
-  /// Direct REST query fetching user bookings.
+  /// Direct REST query fetching user bookings. This compatibility method
+  /// preserves the historical empty-list fallback for non-critical callers.
   Future<List<Booking>> getUserBookingsDirectly(String userId) async {
     try {
-      final bool isValidId = RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(userId);
-      if (!isValidId) return [];
-
-      final response = await _supabase
-          .from('bookings')
-          .select()
-          .or('user_id.eq.$userId,created_by_user_id.eq.$userId,joined_user_ids.cs.{"$userId"}')
-          .order('start_time', ascending: false)
-          .limit(100);
-
-      final lowerUserId = userId.trim().toLowerCase();
-      final bookings = (response as List)
-          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
-          .where((b) =>
-              b.createdByUserId.trim().toLowerCase() == lowerUserId ||
-              b.userId.trim().toLowerCase() == lowerUserId ||
-              b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId))
-          .toList();
-      VSPLogger.i('getUserBookingsDirectly returned ${bookings.length} bookings');
-      return bookings;
+      return await getUserBookingsDirectlyStrict(userId);
     } catch (e) {
       VSPLogger.e('Error in getUserBookingsDirectly: $e');
       return [];
     }
   }
 
+  /// Strict direct fetch for synchronization paths that must distinguish an
+  /// authoritative empty result from a failed request.
+  Future<List<Booking>> getUserBookingsDirectlyStrict(String userId) async {
+    if (userId.trim().isEmpty) return [];
+    final response = await _supabase
+        .from('bookings')
+        .select()
+        .or('user_id.eq.$userId,created_by_user_id.eq.$userId,joined_user_ids.cs.{"$userId"}')
+        .order('start_time', ascending: false)
+        .limit(100);
+    final lowerUserId = userId.trim().toLowerCase();
+    final bookings = (response as List)
+        .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+        .where((b) =>
+            b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+            b.userId.trim().toLowerCase() == lowerUserId ||
+            b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId))
+        .toList();
+    VSPLogger.i('getUserBookingsDirectlyStrict returned ${bookings.length} bookings');
+    return bookings;
+  }
+
   /// Direct REST query fetching owner stadium bookings.
   Future<List<Booking>> fetchOwnerBookingsDirectly(String ownerId, {List<String>? stadiumIds}) async {
     try {
-      final response = await (stadiumIds != null && stadiumIds.isNotEmpty
-          ? _supabase.from('bookings').select().inFilter('stadium_id', stadiumIds).order('start_time', ascending: false).limit(100)
-          : _supabase.from('bookings').select().eq('owner_id', ownerId).order('start_time', ascending: false).limit(100));
-      return (response as List)
-          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
-          .toList();
+      return await fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
     } catch (e) {
       VSPLogger.e('Error fetching owner bookings directly: $e');
       return [];
     }
   }
 
+  /// Strict owner fetch used by the booking sync coordinator.
+  Future<List<Booking>> fetchOwnerBookingsDirectlyStrict(String ownerId, {List<String>? stadiumIds}) async {
+    final response = await (stadiumIds != null && stadiumIds.isNotEmpty
+        ? _supabase.from('bookings').select().inFilter('stadium_id', stadiumIds).order('start_time', ascending: false).limit(100)
+        : _supabase.from('bookings').select().eq('owner_id', ownerId).order('start_time', ascending: false).limit(100));
+    return (response as List)
+        .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+        .toList();
+  }
   /// Real-time stream of stadium owner bookings.
   Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) async* {
     final lowerStadiumIds = stadiumIds?.map((id) => id.toLowerCase()).toList();
@@ -117,27 +122,26 @@ class BookingQueryCoordinator {
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) async {
-            final refreshed = await fetchOwnerBookingsDirectly(ownerId, stadiumIds: stadiumIds);
+            final refreshed = await fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
             sink.add(refreshed);
           },
-        )
-        .handleError((error) {
-          VSPLogger.w('Handled realtime error in getOwnerBookings: $error');
-        });
+        );
   }
 
   /// Fetches a single booking by ID.
+  Future<Booking?> getBookingByIdStrict(String bookingId) async {
+    final response = await _supabase
+        .from('bookings')
+        .select()
+        .eq('id', bookingId)
+        .maybeSingle();
+    if (response == null) return null;
+    return Booking.fromFirestore(response, response['id'].toString());
+  }
+
   Future<Booking?> getBookingById(String bookingId) async {
     try {
-      final response = await _supabase
-          .from('bookings')
-          .select()
-          .eq('id', bookingId)
-          .maybeSingle();
-      if (response != null) {
-        return Booking.fromFirestore(response, response['id'].toString());
-      }
-      return null;
+      return await getBookingByIdStrict(bookingId);
     } catch (e) {
       debugPrint('Error getting booking: $e');
       return null;

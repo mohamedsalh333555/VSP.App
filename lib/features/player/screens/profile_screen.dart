@@ -40,15 +40,35 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
  final GlobalKey _teamCardKey = GlobalKey();
  bool _isSharing = false;
+ Future<Team?>? _teamFuture;
+ String? _teamFutureUserId;
+
+ void _refreshTeam(String? userId) {
+  _teamFutureUserId = userId;
+  _teamFuture = userId == null
+      ? Future<Team?>.value(null)
+      : TeamRepository().getUserTeamStrict(userId);
+ }
 
  Future<void> _shareTeamCard(String teamName) async {
  setState(() => _isSharing = true);
  final l10n = AppLocalizations.of(context)!;
  try {
- RenderRepaintBoundary boundary = _teamCardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
- ui.Image image = await boundary.toImage(pixelRatio: 3.0); 
- ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
- Uint8List pngBytes = byteData!.buffer.asUint8List();
+ final renderObject = _teamCardKey.currentContext?.findRenderObject();
+ if (renderObject is! RenderRepaintBoundary) {
+   throw StateError('Team card is not ready to capture.');
+ }
+ final image = await renderObject.toImage(pixelRatio: 3.0);
+ late final Uint8List pngBytes;
+ try {
+   final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+   if (byteData == null) {
+     throw StateError('Team card image encoding returned no data.');
+   }
+   pngBytes = byteData.buffer.asUint8List();
+ } finally {
+   image.dispose();
+ }
 
  final xFile = XFile.fromData(pngBytes, mimeType: 'image/png', name: 'vsp_team_card.png');
  
@@ -67,9 +87,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
  Future<void> _openMyTeam() async {
   final auth = context.read<AuthProvider>();
-  final uid = auth.currentUser?.uid;
+  final uid = auth.currentUser?.id;
   if (uid == null) return;
-  final team = await TeamRepository().getUserTeam(uid);
+  Team? team;
+  try {
+    team = await TeamRepository().getUserTeamStrict(uid);
+  } catch (_) {
+    if (mounted) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من عضويتك في الفريق. حاول مرة أخرى.'
+            : 'Could not verify your team membership. Please try again.',
+      );
+    }
+    return;
+  }
   if (!mounted) return;
   if (team != null) {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
@@ -78,11 +112,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => const CreateTeamSheet(),
     );
   }
-  if (mounted) setState(() {});
+  if (mounted) {
+    _refreshTeam(uid);
+    setState(() {});
+  }
  }
 
  void _showLocationPicker(BuildContext context, AuthProvider auth) {
@@ -100,6 +137,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  builder: (sheetContext) {
  return Container(
+ constraints: BoxConstraints(
+   maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.85,
+ ),
  padding: const EdgeInsets.all(16),
  child: Column(
  mainAxisSize: MainAxisSize.min,
@@ -138,20 +178,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
  title: Text(
  displayGovName,
  style: TextStyle(
- color: isSelected ? VSPColors.accent : Colors.white,
+ color: isSelected ? VSPColors.accent : VSPColors.white,
  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
  ),
  ),
  trailing: isSelected ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null,
  onTap: () async {
- await auth.updateProfile({'governorate': gov});
- if (context.mounted) {
- context.read<StadiumProvider>().applyGovernorateFilter(gov);
- Navigator.pop(sheetContext);
- VSPFeedback.showSuccess(
- context,
- isArabic ? 'تم تغيير موقعك إلى $displayGovName بنجاح ' : 'Location changed to $gov successfully ',
- );
+ try {
+   await auth.updateProfile({'governorate': gov});
+   if (!context.mounted || !sheetContext.mounted) return;
+   context.read<StadiumProvider>().applyGovernorateFilter(gov);
+   Navigator.pop(sheetContext);
+   VSPFeedback.showSuccess(
+     context,
+     isArabic
+         ? 'تم تغيير موقعك إلى $displayGovName بنجاح'
+         : 'Location changed to $gov successfully',
+   );
+ } catch (_) {
+   if (!context.mounted) return;
+   VSPFeedback.showError(
+     context,
+     isArabic
+         ? 'تعذر تحديث المحافظة. حاول مرة أخرى.'
+         : 'Could not update your governorate. Please try again.',
+   );
  }
  },
  );
@@ -170,14 +221,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final l10n = AppLocalizations.of(context)!;
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  final auth = context.watch<AuthProvider>();
+ final currentUserId = auth.currentUser?.id;
+ if (_teamFutureUserId != currentUserId) {
+   _refreshTeam(currentUserId);
+ }
  final String? userProfileUrl = auth.userModel?.profileImageUrl;
  final String userName = auth.userModel?.name ?? l10n.player;
  final String userPosition = auth.userModel?.position?.trim() ?? '';
 
+ Widget buildProfileAvatar({
+   required double size,
+   required Color borderColor,
+   required double iconSize,
+ }) {
+   final hasProfileImage = userProfileUrl != null && userProfileUrl.trim().isNotEmpty;
+   return Container(
+     width: size,
+     height: size,
+     decoration: BoxDecoration(
+       shape: BoxShape.circle,
+       border: Border.all(color: borderColor, width: 1.5),
+     ),
+     clipBehavior: Clip.antiAlias,
+     child: hasProfileImage
+         ? CachedNetworkImage(
+             imageUrl: userProfileUrl,
+             width: size,
+             height: size,
+             fit: BoxFit.cover,
+             placeholder: (_, __) => Icon(
+               Iconsax.user_copy,
+               color: VSPColors.textSecondary,
+               size: iconSize,
+             ),
+             errorWidget: (_, __, ___) => Icon(
+               Iconsax.user_copy,
+               color: VSPColors.textSecondary,
+               size: iconSize,
+             ),
+           )
+         : Icon(
+             Iconsax.user_copy,
+             color: VSPColors.textSecondary,
+             size: iconSize,
+           ),
+   );
+ }
+
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  elevation: 0,
  centerTitle: true,
  automaticallyImplyLeading: false,
@@ -198,17 +292,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
  children: [
  // 1. Team Card Section
  FutureBuilder<Team?>(
- future: auth.currentUser == null
- ? Future.value(null)
- : TeamRepository().getUserTeam(auth.currentUser!.uid),
+ key: ValueKey(currentUserId),
+ future: _teamFuture,
  builder: (context, teamSnapshot) {
- if (teamSnapshot.connectionState == ConnectionState.waiting) {
- return const Center(
- child: Padding(
- padding: EdgeInsets.all(40),
- child: CircularProgressIndicator(color: VSPColors.accent),
- ),
+ if (teamSnapshot.connectionState == ConnectionState.waiting && !teamSnapshot.hasData) {
+ return VSPStateView(
+ state: VSPUiState.loading,
+ title: isArabic ? 'جارٍ تحميل الفريق' : 'Loading team',
+ message: isArabic
+ ? 'نتحقق من بيانات فريقك.'
+ : 'Checking your team details.',
  );
+}
+
+ if (teamSnapshot.hasError) {
+   return VSPStateView(
+     state: VSPUiState.error,
+     title: isArabic ? 'تعذر تحميل بيانات الفريق' : 'Could not load team details',
+     message: isArabic
+         ? 'بيانات الفريق لم تتأكد. أعد المحاولة بدل عرض حالة فريق فارغة.'
+         : 'Team data could not be verified. Retry instead of showing a false no-team state.',
+     onRetry: () => setState(() => _refreshTeam(currentUserId)),
+   );
  }
 
  final team = teamSnapshot.data;
@@ -227,23 +332,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  child: Row(
  children: [
- Container(
- width: 42,
- height: 42,
- decoration: BoxDecoration(
- shape: BoxShape.circle,
- border: Border.all(color: VSPColors.accent, width: 1.5),
- image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
- ? DecorationImage(
- image: CachedNetworkImageProvider(userProfileUrl),
- fit: BoxFit.cover,
- )
- : null,
- ),
- child: (userProfileUrl == null || userProfileUrl.isEmpty)
- ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 20)
- : null,
- ),
+ buildProfileAvatar(size: 42, borderColor: VSPColors.accent, iconSize: 20),
  const SizedBox(width: 12),
  Expanded(
  child: Column(
@@ -262,9 +351,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
  overflow: TextOverflow.ellipsis,
  ),
  ),
- if (auth.currentUser?.uid != null) ...[
+ if (auth.currentUser?.id != null) ...[
  const SizedBox(width: 8),
- Vsp1v1UserTrophyBadge(userId: auth.currentUser!.uid),
+ Vsp1v1UserTrophyBadge(userId: auth.currentUser!.id),
  ],
  ],
  ),
@@ -285,12 +374,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  RepaintBoundary(
  key: _teamCardKey,
- child: GestureDetector(
+ child: Material(
+ color: VSPColors.transparent,
+ borderRadius: BorderRadius.circular(VSPRadius.xl),
+ child: InkWell(
+ borderRadius: BorderRadius.circular(VSPRadius.xl),
  onTap: () async {
  await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
  if (mounted) setState(() {});
  },
  child: TeamCardHero(team: team),
+ ),
  ),
  ),
  const SizedBox(height: VSPSpacing.md),
@@ -332,23 +426,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  ),
  const SizedBox(height: VSPSpacing.md),
- Container(
- width: 90,
- height: 90,
- decoration: BoxDecoration(
- shape: BoxShape.circle,
- border: Border.all(color: VSPColors.textSecondary, width: 2),
- image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
- ? DecorationImage(
- image: CachedNetworkImageProvider(userProfileUrl),
- fit: BoxFit.cover,
- )
- : null,
- ),
- child: (userProfileUrl == null || userProfileUrl.isEmpty)
- ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 40)
- : null,
- ),
+ buildProfileAvatar(size: 90, borderColor: VSPColors.textSecondary, iconSize: 40),
  const SizedBox(height: VSPSpacing.sm),
  Row(
  mainAxisAlignment: MainAxisAlignment.center,
@@ -360,15 +438,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
  overflow: TextOverflow.ellipsis,
  ),
  ),
- if (auth.currentUser?.uid != null) ...[
+ if (auth.currentUser?.id != null) ...[
  const SizedBox(width: 8),
- Vsp1v1UserTrophyBadge(userId: auth.currentUser!.uid),
+ Vsp1v1UserTrophyBadge(userId: auth.currentUser!.id),
  ],
  ],
  ),
  Text(
- l10n.positionLabel(userPosition),
- style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.accent),
+ userPosition.isNotEmpty
+     ? l10n.positionLabel(userPosition)
+     : (isArabic ? 'المركز غير محدد' : 'Position not set'),
+ style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+   color: VSPColors.accent,
+ ),
  ),
  const SizedBox(height: VSPSpacing.lg),
  Text(
@@ -385,10 +467,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
    context: context,
    isScrollControlled: true,
    useSafeArea: true,
-   backgroundColor: Colors.transparent,
+   // Keep the in-progress team creation flow open; users can still cancel
+   // explicitly through the sheet's own Cancel / close controls.
+   isDismissible: false,
+   enableDrag: false,
+   backgroundColor: VSPColors.transparent,
    builder: (_) => const CreateTeamSheet(),
  );
- if (created == true && mounted) setState(() {});
+ if (created == true && mounted) {
+   _refreshTeam(currentUserId);
+   setState(() {});
+ }
  },
  ),
  ],
@@ -518,7 +607,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
  final confirmed = await showDialog<bool>(
  context: context,
+ useSafeArea: true,
  builder: (ctx) => AlertDialog(
+ scrollable: true,
  backgroundColor: VSPColors.surface,
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
  title: Row(
@@ -527,7 +618,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  const SizedBox(width: 8),
  Text(
  isAr ? 'تسجيل الخروج' : 'Sign Out',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+ style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
  ),
  ],
  ),
@@ -544,7 +635,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  onPressed: () => Navigator.pop(ctx, true),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.error,
- foregroundColor: Colors.white,
+ foregroundColor: VSPColors.white,
  ),
  child: Text(isAr ? 'تسجيل الخروج' : 'Log Out'),
  ),

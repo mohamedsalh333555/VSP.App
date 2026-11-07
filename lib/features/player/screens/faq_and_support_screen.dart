@@ -33,7 +33,9 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         if (mounted) {
           VSPFeedback.showError(
             context,
-            isArabic ? 'support_contact_not_configured' : 'support_contact_not_configured',
+            isArabic
+                ? 'رقم الدعم غير متاح حالياً. حاول مرة أخرى لاحقاً.'
+                : 'Support contact is not configured yet. Please try again later.',
           );
         }
         return;
@@ -54,7 +56,9 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         if (mounted) {
           VSPFeedback.showError(
             context,
-            isArabic ? 'support_contact_not_configured' : 'support_contact_not_configured',
+            isArabic
+                ? 'رقم الدعم غير متاح حالياً. حاول مرة أخرى لاحقاً.'
+                : 'Support contact is not configured yet. Please try again later.',
           );
         }
         return;
@@ -82,8 +86,10 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +111,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                       const SizedBox(width: 8),
                       Text(
                         isOwner ? l10n.supportOwnerDirectTitle : l10n.supportPlayerDirectTitle,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -116,14 +122,14 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () => SupportService().openSupport(context),
-                          icon: const Icon(Iconsax.messages_3_copy, size: 16, color: Colors.black),
+                          icon: const Icon(Iconsax.messages_3_copy, size: 16, color: VSPColors.black),
                           label: Text(
                             l10n.supportInAppButton,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: VSPColors.black),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: VSPColors.accent,
-                            foregroundColor: Colors.black,
+                            foregroundColor: VSPColors.black,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                             elevation: 0,
@@ -157,7 +163,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                                 fit: BoxFit.scaleDown,
                                 child: Text(
                                   l10n.supportCallButton,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ),
                             ),
@@ -175,7 +181,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
 
             Text(
               isOwner ? l10n.supportOwnerFaqHeading : l10n.supportPlayerFaqHeading,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.white, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: VSPSpacing.sm),
@@ -197,6 +203,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
 
             const SizedBox(height: VSPSpacing.xl),
           ],
+          ),
         ),
       ),
     );
@@ -211,7 +218,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: VSPColors.transparent),
         child: ExpansionTile(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
           collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -219,14 +226,14 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
           collapsedIconColor: VSPColors.textSecondary,
           title: Text(
             question,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
           ),
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(
                 answer,
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5),
               ),
             ),
           ],

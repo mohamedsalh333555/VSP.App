@@ -88,7 +88,7 @@ class FacilitiesGrid extends StatelessWidget {
                     child: Text(
                       f.label,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
                       ),
@@ -158,64 +158,132 @@ class StadiumInformationTab extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Iconsax.star_copy, color: VSPColors.accent, size: 14),
-                    const SizedBox(width: 5),
-                    Text(
-                      stadium.rating.toStringAsFixed(1),
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${stadium.reviewsCount})',
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                    ),
-                  ],
+                  children: stadium.reviewsCount > 0
+                      ? [
+                          const Icon(
+                            Iconsax.star_copy,
+                            color: VSPColors.accent,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            stadium.rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              color: VSPColors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '(${stadium.reviewsCount})',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ]
+                      : [
+                          const Icon(
+                            Iconsax.star_copy,
+                            color: VSPColors.textSecondary,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            isArabic ? 'لسه مفيش تقييمات' : 'No ratings yet',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: VSPSpacing.md),
 
-          // Location Badge: Guaranteed working maps launch
-          GestureDetector(
-            onTap: () async {
-              try {
-                final String query = (stadium.lat != null && stadium.lng != null)
-                    ? '${stadium.lat},${stadium.lng}'
-                    : Uri.encodeComponent('${stadium.name} ${stadium.location} ${stadium.governorate ?? ''}'.trim());
-                final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
-                await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
-              } catch (e) {
-                debugPrint('Error launching maps: $e');
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.xl),
-                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    EgyptGovernorates.formatSmartLocation(
-                      rawAddress: stadium.area.isNotEmpty
-                          ? stadium.area
-                          : (stadium.location.isNotEmpty ? stadium.location : stadium.address),
-                      administrativeArea: stadium.governorate,
+          // Location badge opens the stadium in the external maps app.
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: (MediaQuery.sizeOf(context).width - 64).clamp(0.0, double.infinity).toDouble(),
+            ),
+            child: Tooltip(
+              message: Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'فتح الموقع على الخريطة'
+                  : 'Open location in maps',
+              child: Material(
+                color: VSPColors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(VSPRadius.xl),
+                  onTap: () async {
+                    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                    try {
+                      final String query = (stadium.lat != null && stadium.lng != null)
+                          ? '${stadium.lat},${stadium.lng}'
+                          : Uri.encodeComponent('${stadium.name} ${stadium.location} ${stadium.governorate ?? ''}'.trim());
+                      final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+                      final launched = await launchUrl(
+                        googleMapsUrl,
+                        mode: LaunchMode.externalApplication,
+                      );
+                      if (!launched && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isArabic
+                                ? 'تعذر فتح تطبيق الخرائط.'
+                                : 'Could not open the maps app.'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint('Error launching maps: $e');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isArabic
+                                ? 'تعذر فتح الموقع. حاول مرة أخرى.'
+                                : 'Could not open this location. Please try again.'),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.xl),
+                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                     ),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: VSPColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            EgyptGovernorates.formatSmartLocation(
+                              rawAddress: stadium.area.isNotEmpty
+                                  ? stadium.area
+                                  : (stadium.location.isNotEmpty ? stadium.location : stadium.address),
+                              administrativeArea: stadium.governorate,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: VSPColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                          ),
                         ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -235,7 +303,7 @@ class StadiumInformationTab extends StatelessWidget {
               children: [
                 Text(
                   l10n.informationStadium,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.white),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -269,7 +337,7 @@ class StadiumInformationTab extends StatelessWidget {
                     Text(
                       isArabic ? 'المرافق والخدمات' : 'Amenities & Services',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
                       ),
@@ -317,7 +385,7 @@ class StadiumInformationTab extends StatelessWidget {
                               Text(
                                 isArabic ? 'تأجير كرة مباراة' : 'Match Ball Rental',
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: VSPColors.white,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),

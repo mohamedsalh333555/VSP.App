@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import '../../../../shared/widgets/vsp_error_state.dart';
 import '../../../owner/screens/tournament_brackets_screen.dart';
 import 'championship_standings_table.dart';
 
@@ -10,11 +11,15 @@ import 'championship_standings_table.dart';
 class ChampionshipMatchesTab extends StatelessWidget {
   final Championship championship;
   final Stream<List<TournamentMatch>> matchesStream;
+  final int refreshVersion;
+  final VoidCallback onRetry;
 
   const ChampionshipMatchesTab({
     super.key,
     required this.championship,
     required this.matchesStream,
+    required this.refreshVersion,
+    required this.onRetry,
   });
 
   @override
@@ -27,14 +32,18 @@ class ChampionshipMatchesTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Live Standings Table (For League & Group Systems)
-          ChampionshipStandingsSection(championship: championship),
+          ChampionshipStandingsSection(
+            championship: championship,
+            refreshVersion: refreshVersion,
+            onRetry: onRetry,
+          ),
 
           // Brackets Button
           PrimaryButton(
             text: isArabic ? 'عرض شجرة القرعة والمواجهات' : 'View Tournament Brackets',
             height: 48,
             color: VSPColors.accent,
-            textColor: Colors.black,
+            textColor: VSPColors.black,
             onPressed: () {
               Navigator.push(
                 context,
@@ -53,6 +62,24 @@ class ChampionshipMatchesTab extends StatelessWidget {
           StreamBuilder<List<TournamentMatch>>(
             stream: matchesStream,
             builder: (context, snapshot) {
+              if (snapshot.hasError &&
+                  (!snapshot.hasData || snapshot.data!.isEmpty)) {
+                return VSPErrorState(
+                  customMessage: isArabic
+                      ? 'تعذر تحميل مباريات البطولة. حاول مرة أخرى.'
+                      : 'Could not load tournament matches. Try again.',
+                  onRetry: onRetry,
+                  retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
+                );
+              }
+              if (!snapshot.hasData && !snapshot.hasError) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(VSPSpacing.xl),
+                    child: CircularProgressIndicator(color: VSPColors.accent),
+                  ),
+                );
+              }
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return Container(
                   width: double.infinity,
@@ -96,7 +123,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
                       Text(
                         isArabic ? 'لم يتم إعداد المباريات بعد' : 'No Matches Scheduled Yet',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: VSPColors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
                         ),
@@ -156,9 +183,50 @@ class ChampionshipMatchesTab extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (snapshot.hasError)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: VSPSpacing.md,
+                        vertical: VSPSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: VSPColors.warning.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(
+                          color: VSPColors.warning.withValues(alpha: 0.30),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: VSPColors.warning,
+                            size: 18,
+                          ),
+                          const SizedBox(width: VSPSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              isArabic
+                                  ? 'توقفت التحديثات المباشرة. البيانات المعروضة قد تكون قديمة.'
+                                  : 'Live updates paused. Displayed data may be out of date.',
+                              style: const TextStyle(
+                                color: VSPColors.warning,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: onRetry,
+                            child: Text(isArabic ? 'تحديث' : 'Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
                   Text(
                     isArabic ? 'المباريات والمواجهات' : 'Match Fixtures',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w900, fontSize: 15),
                   ),
                   const SizedBox(height: VSPSpacing.md),
                   ...sortedRounds.map((roundIdx) {
@@ -275,7 +343,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
                                           homeName.isNotEmpty ? homeName : (isArabic ? 'فريق 1' : 'Team 1'),
                                           textAlign: TextAlign.center,
                                           style: const TextStyle(
-                                            color: Colors.white,
+                                            color: VSPColors.white,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 13,
                                           ),
@@ -305,7 +373,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
                                           awayName.isNotEmpty ? awayName : (isArabic ? 'فريق 2' : 'Team 2'),
                                           textAlign: TextAlign.center,
                                           style: const TextStyle(
-                                            color: Colors.white,
+                                            color: VSPColors.white,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 13,
                                           ),

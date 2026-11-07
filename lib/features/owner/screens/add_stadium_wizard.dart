@@ -293,6 +293,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         images: _images,
         stadiumId: widget.stadiumId,
         uploadPhotoError: AppLocalizations.of(context)!.uploadPhotoError,
+        isArabic: isArabic,
       );
       if (error != null) {
         VSPFeedback.showError(context, error);
@@ -303,7 +304,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     }
 
     if (_currentStep < 2) {
-      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.nextPage(duration: VSPDSMotion.indicatorTransition, curve: Curves.easeInOut);
       setState(() => _currentStep++);
       if (widget.stadiumId == null) {
         StadiumWizardDraftService.saveStep(_uid, _currentStep);
@@ -313,7 +314,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   void _previousPage() async {
     if (_currentStep > 0) {
-      _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.previousPage(duration: VSPDSMotion.indicatorTransition, curve: Curves.easeInOut);
       setState(() => _currentStep--);
       if (widget.stadiumId == null) {
         StadiumWizardDraftService.saveStep(_uid, _currentStep);
@@ -411,7 +412,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         body: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.opaque,
-          child: SafeArea(
+          child: SafeArea(top: false,
             child: Column(
               children: [
                 const SizedBox(height: 10),

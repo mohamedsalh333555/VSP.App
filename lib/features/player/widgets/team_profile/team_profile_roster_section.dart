@@ -6,11 +6,15 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 class TeamProfileRosterSection extends StatelessWidget {
   final List<UserModel> members;
   final bool isLoading;
+  final bool hasError;
+  final VoidCallback? onRetry;
 
   const TeamProfileRosterSection({
     super.key,
     required this.members,
     required this.isLoading,
+    this.hasError = false,
+    this.onRetry,
   });
 
   @override
@@ -33,7 +37,23 @@ class TeamProfileRosterSection extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
                   ),
                 )
-              : members.isEmpty
+              : hasError
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          isArabic ? 'تعذر تحميل قائمة اللاعبين' : 'Could not load team roster',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                        ),
+                        if (onRetry != null)
+                          TextButton(
+                            onPressed: onRetry,
+                            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                          ),
+                      ],
+                    )
+                  : members.isEmpty
                   ? Center(
                       child: Text(
                         isArabic ? 'لا يوجد أعضاء مضافين حالياً' : 'No team members added yet',

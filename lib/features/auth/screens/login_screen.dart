@@ -87,11 +87,11 @@ class _LoginScreenState extends State<LoginScreen> {
  Widget build(BuildContext context) {
  return AnnotatedRegion<SystemUiOverlayStyle>(
  value: const SystemUiOverlayStyle(
- statusBarColor: Colors.transparent,
+ statusBarColor: VSPColors.transparent,
  statusBarIconBrightness: Brightness.light,
  systemNavigationBarColor: VSPColors.background,
  systemNavigationBarIconBrightness: Brightness.light,
- systemNavigationBarDividerColor: Colors.transparent,
+ systemNavigationBarDividerColor: VSPColors.transparent,
  ),
  child: VSPScaffold(
  backgroundColor: VSPColors.background,
@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
  ),
  child: BackdropFilter(
  filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
- child: Container(color: Colors.transparent),
+ child: Container(color: VSPColors.transparent),
  ),
  ),
  ),
@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
  left: 24.0, 
  right: 24.0, 
  top: 0, 
- bottom: MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 24,
+ bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
  ),
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
  
   const SizedBox(height: 12),
   Align(
-  alignment: Alignment.centerRight,
+  alignment: AlignmentDirectional.centerEnd,
   child: TextButton(
   onPressed: () => ForgotPasswordDialog.show(context),
   child: Text(

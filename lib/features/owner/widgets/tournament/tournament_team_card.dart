@@ -57,7 +57,7 @@ class TournamentTeamCard extends StatelessWidget {
               children: [
                 Text(
                   team.name,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -136,6 +136,7 @@ Future<void> showDeleteTeamConfirmationDialog(
 
   final confirm = await showDialog<bool>(
     context: context,
+    useSafeArea: true,
     builder: (ctx) => AlertDialog(
       backgroundColor: VSPColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -145,7 +146,7 @@ Future<void> showDeleteTeamConfirmationDialog(
           const SizedBox(width: 8),
           Text(
             isArabic ? 'إلغاء انضمام الفريق؟' : 'Remove Team?',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ],
       ),
@@ -167,7 +168,7 @@ Future<void> showDeleteTeamConfirmationDialog(
           onPressed: () => Navigator.pop(ctx, true),
           style: ElevatedButton.styleFrom(
             backgroundColor: VSPColors.error,
-            foregroundColor: Colors.white,
+            foregroundColor: VSPColors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
           ),
           child: Text(

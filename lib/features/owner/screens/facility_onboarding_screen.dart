@@ -12,6 +12,7 @@ import '../../../data/models.dart';
 import 'add_stadium_wizard.dart';
 import '../services/facility_onboarding_service.dart';
 import '../widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../shared/widgets/stadium_card.dart';
 
 class FacilityOnboardingScreen extends StatefulWidget {
@@ -32,6 +33,14 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     _cachedUid = uid;
     _stadiumsStream = StadiumRepository().getOwnerStadiums(uid);
     return _stadiumsStream!;
+  }
+
+  void _retryStadiums() {
+    final uid = _cachedUid;
+    if (uid == null || uid.isEmpty) return;
+    setState(() {
+      _stadiumsStream = StadiumRepository().getOwnerStadiums(uid);
+    });
   }
 
   /// يتحقق من الباقة ويفتح Wizard أو يعرض Bottom Sheet الترقية
@@ -88,10 +97,23 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
           stream: _getStadiumsStream(uid),
           builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
- return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+ return VSPStateView(
+   state: VSPUiState.loading,
+   title: isAr ? 'جارٍ تحميل ملاعبك' : 'Loading your stadiums',
+   message: isAr ? 'نحدّث قائمة الملاعب المرتبطة بحسابك.' : 'Fetching the stadiums linked to your account.',
+ );
  }
  if (snapshot.hasError) {
  VSPLogger.w('FacilityOnboardingScreen stream notice (gracefully handled): ${snapshot.error}');
+   if (snapshot.data == null || snapshot.data!.isEmpty) {
+     return VSPErrorState(
+       customMessage: isAr
+           ? 'تعذر تحميل ملاعبك الآن. تحقق من الاتصال ثم أعد المحاولة.'
+           : 'Could not load your stadiums. Check your connection and try again.',
+       retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
+       onRetry: _retryStadiums,
+     );
+   }
  }
  final stadiums = snapshot.data ?? [];
  final hasStadiums = stadiums.isNotEmpty;
@@ -127,7 +149,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  ),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
+ foregroundColor: VSPColors.black,
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  ),
@@ -141,7 +163,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () async {
-                  final uid = authProvider.currentUser?.uid ?? authProvider.userModel?.uid;
+                  final uid = authProvider.currentUser?.id ?? authProvider.userModel?.uid;
                   if (uid != null) {
                     await UserRepository().updateOnboardingConfirmed(uid, true);
                   }
@@ -178,6 +200,35 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.center,
  children: [
+ if (snapshot.hasError)
+   Container(
+     width: double.infinity,
+     margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+     padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+     decoration: BoxDecoration(
+       color: VSPColors.warning.withValues(alpha: 0.10),
+       borderRadius: BorderRadius.circular(VSPRadius.md),
+       border: Border.all(color: VSPColors.warning.withValues(alpha: 0.30)),
+     ),
+     child: Row(
+       children: [
+         const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+         const SizedBox(width: VSPSpacing.sm),
+         Expanded(
+           child: Text(
+             isAr
+                 ? 'تعذر تحديث قائمة الملاعب. نعرض آخر بيانات تم تحميلها.'
+                 : 'Could not refresh stadiums. Showing the last loaded data.',
+             style: const TextStyle(color: VSPColors.warning, fontSize: 11.5),
+           ),
+         ),
+         TextButton(
+           onPressed: _retryStadiums,
+           child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+         ),
+       ],
+     ),
+   ),
  const SizedBox(height: 16),
  Text(
  isAr ? 'ملاعبك المضافة' : 'Your Stadiums',
@@ -210,7 +261,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  Text(
  isAr ? 'تقدم إكتمال ملفك الرياضي' : 'Profile Completion',
  style: const TextStyle(
- color: Colors.white,
+ color: VSPColors.white,
  fontSize: 13,
  fontWeight: FontWeight.bold,
  ),
@@ -316,14 +367,14 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  child: ElevatedButton.icon(
  // Gate: Check subscription before allowing second stadium
  onPressed: () => _onAddAnotherStadium(context, stadiums, isAr),
- icon: const Icon(Iconsax.add_circle_copy, color: Colors.white),
+ icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.white),
  label: Text(
  isAr ? 'إضافة ملعب آخر' : 'Add another stadium',
  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
  ),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.surfaceAlt,
- foregroundColor: Colors.white,
+ foregroundColor: VSPColors.white,
  side: const BorderSide(color: VSPColors.divider),
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -336,7 +387,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  width: double.infinity, height: 56,
  child: ElevatedButton(
  onPressed: () async {
- final uid = authProvider.currentUser?.uid;
+ final uid = authProvider.currentUser?.id;
  final updatedAdditional =
  FacilityOnboardingService.buildOnboardingConfirmedPayload(
  authProvider.userModel?.additionalData,
@@ -354,7 +405,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  },
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
+ foregroundColor: VSPColors.black,
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  ),

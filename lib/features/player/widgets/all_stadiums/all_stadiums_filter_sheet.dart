@@ -67,7 +67,7 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
       label: Text(
         label,
         style: TextStyle(
-          color: isSelected ? Colors.black : Colors.white,
+          color: isSelected ? VSPColors.black : VSPColors.white,
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
@@ -93,7 +93,7 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
       label: Text(
         label,
         style: TextStyle(
-          color: isSelected ? Colors.black : Colors.white,
+          color: isSelected ? VSPColors.black : VSPColors.white,
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
@@ -115,11 +115,20 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: true,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-        child: SingleChildScrollView(
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    return AnimatedPadding(
+      duration: VSPDSMotion.navigationSwitch,
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: SafeArea(
+        bottom: true,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -128,9 +137,13 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                widget.isArabic ? 'تصفية وترتيب الملاعب' : 'Filter & Sort Stadiums',
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  widget.isArabic ? 'تصفية وترتيب الملاعب' : 'Filter & Sort Stadiums',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
               TextButton(
                 onPressed: () {
@@ -193,7 +206,7 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
               child: Text(
@@ -203,6 +216,8 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
             ),
           ),
         ],
+              ),
+            ),
           ),
         ),
       ),

@@ -11,10 +11,12 @@ class OwnerOnboardingExitDialog {
     final l10n = AppLocalizations.of(context)!;
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       barrierDismissible: false,
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
         child: AlertDialog(
+          scrollable: true,
           backgroundColor: VSPColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
           title: Text(
@@ -28,14 +30,16 @@ class OwnerOnboardingExitDialog {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
+              style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
               child: Text(l10n.continueRegistration, style: const TextStyle(color: VSPColors.accent)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.error,
-                foregroundColor: Colors.white,
+                foregroundColor: VSPColors.white,
                 elevation: 0,
+                minimumSize: const Size(0, 48),
               ),
               child: Text(l10n.cancelAndSignOut),
             ),

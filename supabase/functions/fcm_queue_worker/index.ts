@@ -34,7 +34,7 @@ serve(async (_req: Request) => {
       const payload = msg.message;
       try {
         // Forward message to FCM push Edge Function
-        await fetch(`${supabaseUrl}/functions/v1/fcm_push`, {
+        const pushResponse = await fetch(`${supabaseUrl}/functions/v1/fcm_push`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -43,11 +43,26 @@ serve(async (_req: Request) => {
           body: JSON.stringify(payload),
         });
 
-        // Archive / archive message from queue upon successful dispatch
-        await supabase.rpc("pgmq_archive", {
+        const pushResult = await pushResponse.json().catch(() => ({}));
+        if (!pushResponse.ok) {
+          // Leave failed messages unarchived. PGMQ makes them visible again
+          // after the visibility timeout so transient FCM failures can retry.
+          console.error(
+            `FCM dispatch failed for msg_id ${msg.msg_id} (HTTP ${pushResponse.status}):`,
+            pushResult,
+          );
+          continue;
+        }
+
+        // A 200 response is considered dispatched or intentionally skipped
+        // (for example, no device token). Archive only after that response.
+        const archiveResult = await supabase.rpc("pgmq_archive", {
           queue_name: "notifications_queue",
           msg_id: msg.msg_id,
         });
+        if (archiveResult.error) {
+          console.error(`Failed to archive msg_id ${msg.msg_id}:`, archiveResult.error);
+        }
       } catch (err) {
         console.error(`Failed to process msg_id ${msg.msg_id}:`, err);
       }

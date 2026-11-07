@@ -37,6 +37,8 @@ class OwnerDashboardController with ChangeNotifier {
   static const bool useRealData = true;
 
   OwnerDashboardState state;
+  int _loadRequestId = 0;
+  bool _isDisposed = false;
 
   OwnerDashboardController({
     required this.supabase,
@@ -47,6 +49,8 @@ class OwnerDashboardController with ChangeNotifier {
         );
 
   Future<void> loadDashboardData(DashboardFilter filter) async {
+    if (_isDisposed) return;
+    final requestId = ++_loadRequestId;
     state = state.copyWith(isLoading: true, error: null);
     notifyListeners();
 
@@ -72,6 +76,7 @@ class OwnerDashboardController with ChangeNotifier {
         'cash=${analytics.revenue.cash}, online=${analytics.revenue.online}',
       );
 
+      if (_isDisposed || requestId != _loadRequestId) return;
       state = state.copyWith(
         analytics: analytics,
         currentFilter: filter,
@@ -79,11 +84,19 @@ class OwnerDashboardController with ChangeNotifier {
       );
       notifyListeners();
     } catch (e) {
+      if (_isDisposed || requestId != _loadRequestId) return;
       state = state.copyWith(
         isLoading: false,
         error: 'تعذر تحميل البيانات، تحقق من الاتصال وحاول مجدداً',
       );
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _loadRequestId++;
+    super.dispose();
   }
 }

@@ -61,10 +61,11 @@ class RosterParserUtils {
  } catch (_) {}
 
  if (textToParse.trim().isEmpty && context.mounted) {
+ final controller = TextEditingController();
+ try {
  textToParse = await showDialog<String>(
  context: context,
  builder: (ctx) {
- final controller = TextEditingController();
  return AlertDialog(
  scrollable: true,
  backgroundColor: VSPColors.surface,
@@ -98,6 +99,9 @@ class RosterParserUtils {
  );
  },
  ) ?? '';
+ } finally {
+ controller.dispose();
+ }
  }
 
  return parseSquadText(textToParse);

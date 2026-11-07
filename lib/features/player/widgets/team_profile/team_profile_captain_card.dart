@@ -48,7 +48,7 @@ class TeamProfileCaptainCard extends StatelessWidget {
                   children: [
                     Text(
                       team.captainName,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 2),
                     Text(

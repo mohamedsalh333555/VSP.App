@@ -10,7 +10,11 @@ class SignupPasswordStrengthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final strength = SignupValidationService.calculatePasswordStrength(password);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final strength = SignupValidationService.calculatePasswordStrength(
+      password,
+      isArabic: isArabic,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,6 +42,8 @@ class SignupPasswordStrengthBar extends StatelessWidget {
         const SizedBox(height: 4),
         LinearProgressIndicator(
           value: strength.score,
+          semanticsLabel: strength.label,
+          semanticsValue: '${(strength.score * 100).toInt()}%',
           backgroundColor: VSPColors.surfaceAlt,
           valueColor: AlwaysStoppedAnimation<Color>(strength.color),
           borderRadius: BorderRadius.circular(VSPRadius.xs),

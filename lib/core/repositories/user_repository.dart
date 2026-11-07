@@ -22,20 +22,26 @@ class UserRepository {
 
   Future<UserModel?> getUserByPhone(String phone) async {
     try {
-      final cleanPhone = phone.trim();
-      if (cleanPhone.isEmpty) return null;
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('phone', cleanPhone)
-          .maybeSingle();
-
-      if (response == null) return null;
-      return UserModel.fromFirestore(response);
+      return await getUserByPhoneStrict(phone);
     } catch (e) {
       VSPLogger.e('Error getting user by phone', e);
       return null;
     }
+  }
+
+  /// Strict lookup for flows where "not registered" must be distinguished
+  /// from a failed phone search.
+  Future<UserModel?> getUserByPhoneStrict(String phone) async {
+    final cleanPhone = phone.trim();
+    if (cleanPhone.isEmpty) return null;
+    final response = await _supabase
+        .from('users')
+        .select()
+        .eq('phone', cleanPhone)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return UserModel.fromFirestore(response);
   }
 
   Future<Map<String, dynamic>?> getUserData(String uid) async {
@@ -53,20 +59,26 @@ class UserRepository {
   }
 
   Future<List<UserModel>> getUsersByIds(List<String> ids) async {
-    if (ids.isEmpty) return [];
     try {
-      final response = await _supabase
-          .from('user_public_profiles')
-          .select('id, name, profile_image_url, position')
-          .inFilter('id', ids);
-
-      return (response as List)
-          .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
-          .toList();
+      return await getUsersByIdsStrict(ids);
     } catch (e) {
       VSPLogger.e('Error getting users by IDs', e);
       return [];
     }
+  }
+
+  /// Strict profile lookup for UI that must distinguish an empty result from
+  /// a failed request.
+  Future<List<UserModel>> getUsersByIdsStrict(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final response = await _supabase
+        .from('user_public_profiles')
+        .select('id, name, profile_image_url, position')
+        .inFilter('id', ids);
+
+    return (response as List)
+        .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
+        .toList();
   }
 
   Map<String, dynamic> _convertToSnakeCase(Map<String, dynamic> map) {

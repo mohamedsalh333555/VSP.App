@@ -14,6 +14,7 @@ void showBookingCalendarModal({
   final l10n = AppLocalizations.of(context)!;
   showDialog(
     context: context,
+    useSafeArea: true,
     barrierColor: VSPColors.background.withValues(alpha: 0.8),
     builder: (context) {
       DateTime tempSelectedDate = initialDate;
@@ -23,21 +24,36 @@ void showBookingCalendarModal({
 
       return StatefulBuilder(
         builder: (context, setModalState) {
+          final mediaQuery = MediaQuery.of(context);
+          final isRtl = Directionality.of(context) == TextDirection.rtl;
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          final availableHeight = mediaQuery.size.height -
+              mediaQuery.viewInsets.vertical -
+              (VSPSpacing.xl * 2);
+
           return Dialog(
             backgroundColor: VSPColors.surface,
-            insetPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: VSPSpacing.md,
+              vertical: VSPSpacing.xl,
+            ),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-            child: Padding(
-              padding: const EdgeInsets.all(VSPSpacing.md),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: availableHeight.clamp(0.0, mediaQuery.size.height).toDouble(),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
+                        tooltip: isArabic ? 'الشهر السابق' : 'Previous month',
                         icon: Icon(
-                          Iconsax.arrow_left_2_copy,
+                          isRtl ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
                           color: currentMonth.isAfter(todayMonth)
                               ? VSPColors.textSecondary
                               : VSPColors.textSecondary.withValues(alpha: 0.25),
@@ -55,8 +71,9 @@ void showBookingCalendarModal({
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       IconButton(
+                        tooltip: isArabic ? 'الشهر التالي' : 'Next month',
                         icon: Icon(
-                          Iconsax.arrow_right_1_copy,
+                          isRtl ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                           color: currentMonth.isBefore(maxMonth)
                               ? VSPColors.textSecondary
                               : VSPColors.textSecondary.withValues(alpha: 0.25),
@@ -84,9 +101,14 @@ void showBookingCalendarModal({
                       children: [
                         const Icon(Iconsax.calendar_1_copy, color: VSPColors.accent, size: 18),
                         const SizedBox(width: 8),
-                        Text(
-                          '${Localizations.localeOf(context).languageCode == 'ar' ? 'تاريخ الحجز: ' : 'Booking Date: '}${DateFormat('EEEE, d MMMM yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate)}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        Expanded(
+                          child: Text(
+                            '${Localizations.localeOf(context).languageCode == 'ar' ? 'تاريخ الحجز: ' : 'Booking Date: '}${DateFormat('EEEE, d MMMM yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate)}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
                         ),
                       ],
                     ),
@@ -129,7 +151,7 @@ void showBookingCalendarModal({
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? VSPColors.accent
-                                  : (isPastDate ? VSPColors.surfaceAlt : Colors.transparent),
+                                  : (isPastDate ? VSPColors.surfaceAlt : VSPColors.transparent),
                               shape: BoxShape.circle,
                             ),
                             child: Text(
@@ -172,8 +194,9 @@ void showBookingCalendarModal({
                     ],
                   ),
                 ],
+                  ),
+                ),
               ),
-            ),
           );
         },
       );

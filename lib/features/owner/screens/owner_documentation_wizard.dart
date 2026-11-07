@@ -118,7 +118,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
       if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final uid = authProvider.currentUser?.uid;
+      final uid = authProvider.currentUser?.id;
       if (uid == null) {
         setState(() => _uploadingStatus[key] = false);
         VSPFeedback.showError(context, AppLocalizations.of(context)!.sessionExpiredError);
@@ -138,12 +138,12 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       });
 
       VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.docUploadedSuccess);
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _uploadingStatus[key] = false;
         });
-        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(e.toString()));
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(Localizations.localeOf(context).languageCode == 'ar' ? 'يرجى المحاولة مرة أخرى.' : 'Please try again.'));
       }
     }
   }
@@ -165,7 +165,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
       if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final uid = authProvider.currentUser?.uid;
+      final uid = authProvider.currentUser?.id;
       if (uid == null) {
         setState(() => _uploadingStatus[key] = false);
         VSPFeedback.showError(context, AppLocalizations.of(context)!.sessionExpiredError);
@@ -193,12 +193,12 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       });
 
       VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.docUploadedSuccess);
-    } catch (e) {
+    } catch (_) {
       if (mounted && context.mounted) {
         setState(() {
           _uploadingStatus[key] = false;
         });
-        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(e.toString()));
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(Localizations.localeOf(context).languageCode == 'ar' ? 'يرجى المحاولة مرة أخرى.' : 'Please try again.'));
       }
     }
   }
@@ -215,7 +215,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         return;
       }
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: VSPDSMotion.indicatorTransition,
         curve: Curves.easeInOut,
       );
       setState(() => _currentStep++);
@@ -230,7 +230,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         return;
       }
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: VSPDSMotion.indicatorTransition,
         curve: Curves.easeInOut,
       );
       setState(() => _currentStep++);
@@ -290,7 +290,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       if (mounted && context.mounted) {
         context.go('/owner');
       }
-    } catch (e) {
+    } catch (_) {
       if (!mounted || !context.mounted) return;
       setState(() => _isSaving = false);
       VSPFeedback.showError(
@@ -303,7 +303,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   void _previousPage() {
     if (_currentStep > 0) {
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
+        duration: VSPDSMotion.indicatorTransition,
         curve: Curves.easeInOut,
       );
       setState(() {
@@ -346,7 +346,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           ),
           centerTitle: true,
         ),
-        body: SafeArea(
+        body: SafeArea(top: false,
           child: Column(
             children: [
               const SizedBox(height: VSPSpacing.sm),

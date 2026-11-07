@@ -6,6 +6,7 @@ import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/team_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_error_state.dart';
@@ -77,15 +78,20 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return StreamBuilder<List<Team>>(
       stream: _stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل ترتيب الفرق' : 'Loading team rankings',
+            message: isArabic ? 'نحدّث نقاط الفرق ونتائجها.' : 'Fetching team points and results.',
+          );
         }
-        if (snapshot.hasError) {
+        if (snapshot.hasError &&
+            (!snapshot.hasData || snapshot.data!.isEmpty)) {
           return VSPErrorState(
-            customMessage: snapshot.error?.toString(),
             onRetry: _handleRetry,
           );
         }
@@ -106,6 +112,14 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
         }).toList();
 
         if (teams.isEmpty) {
+          if (snapshot.hasError) {
+            return Column(
+              children: [
+                _buildStaleDataWarning(context),
+                const Expanded(child: TeamsEmptyState()),
+              ],
+            );
+          }
           return const TeamsEmptyState();
         }
 
@@ -241,6 +255,15 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
           );
         }
 
+        if (snapshot.hasError) {
+          content = Column(
+            children: [
+              _buildStaleDataWarning(context),
+              Expanded(child: content),
+            ],
+          );
+        }
+
         if (myTeam != null && myTeamRank != null) {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           return Stack(
@@ -258,7 +281,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                     border: Border.all(color: VSPColors.accent, width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: VSPColors.black.withValues(alpha: 0.6),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
@@ -296,7 +319,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                             Text(
                               '${myTeam.name} • ${isArabic ? 'المركز #$myTeamRank' : 'Rank #$myTeamRank'}',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: VSPColors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -315,7 +338,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                         child: Text(
                           AppLocalizations.of(context)!.pointsCount(myTeam.points),
                           style: const TextStyle(
-                            color: Colors.black,
+                            color: VSPColors.black,
                             fontWeight: FontWeight.w900,
                             fontSize: 12,
                           ),
@@ -331,6 +354,40 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
 
         return content;
       },
+    );
+  }
+
+  Widget _buildStaleDataWarning(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'نعرض آخر بيانات متاحة؛ تعذر تحديث الترتيب اللحظي.'
+                  : 'Showing the latest available data; live ranking updates are unavailable.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _handleRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -422,7 +479,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                         child: Text(
                           Localizations.localeOf(context).languageCode == 'ar' ? 'فريقك' : 'Your Team',
                           style: const TextStyle(
-                            color: Colors.black,
+                            color: VSPColors.black,
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
                           ),

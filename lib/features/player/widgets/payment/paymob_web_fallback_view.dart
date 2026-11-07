@@ -27,7 +27,7 @@ class PaymobWebFallbackView extends StatelessWidget {
             const SizedBox(height: VSPSpacing.lg),
             Text(
               isArabic ? 'جاري فتح بوابة الدفع الآمنة...' : 'Opening secure payment gateway...',
-              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: VSPColors.white, fontSize: 18, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: VSPSpacing.md),
@@ -45,7 +45,7 @@ class PaymobWebFallbackView extends StatelessWidget {
               label: Text(isArabic ? 'إعادة فتح نافذة الدفع' : 'Re-open Payment Window'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),

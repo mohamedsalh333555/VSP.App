@@ -32,10 +32,13 @@ class BookingSlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    final slotWidget = GestureDetector(
-      onTap: (isBooked || isPast) ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+    final slotWidget = Material(
+      color: VSPColors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        onTap: (isBooked || isPast) ? null : onTap,
+        child: AnimatedContainer(
+        duration: VSPDSMotion.selection,
         alignment: Alignment.center,
         margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
         padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
@@ -44,13 +47,13 @@ class BookingSlotCard extends StatelessWidget {
               ? VSPColors.error.withValues(alpha: 0.08)
               : (isPast
                   ? VSPColors.surface.withValues(alpha: 0.3)
-                  : (isSelected ? VSPColors.accent.withValues(alpha: 0.18) : Colors.transparent)),
+                  : (isSelected ? VSPColors.accent.withValues(alpha: 0.18) : VSPColors.transparent)),
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
             color: isBooked
                 ? VSPColors.error.withValues(alpha: 0.3)
                 : (isPast
-                    ? Colors.transparent
+                    ? VSPColors.transparent
                     : (isSelected
                         ? VSPColors.accent
                         : (isNextAvailable ? VSPColors.accent.withValues(alpha: 0.5) : VSPColors.divider))),
@@ -169,6 +172,7 @@ class BookingSlotCard extends StatelessWidget {
               ),
             ],
           ],
+        ),
         ),
       ),
     );

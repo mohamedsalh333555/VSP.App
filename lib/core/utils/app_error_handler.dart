@@ -88,6 +88,34 @@ class AppErrorHandler {
           : 'Your subscription plan has expired. Please renew to continue.';
     }
 
+    // Owner Pro trial RPC returns these business codes; do not show a generic
+    // system error for an already-used trial or an invalid account state.
+    if (combined.contains('trial_already_used')) {
+      return isArabic
+          ? 'تم استخدام التجربة المجانية لهذا الحساب من قبل. يمكنك الاشتراك في Pro مباشرة.'
+          : 'The free trial has already been used. You can subscribe to Pro instead.';
+    }
+    if (combined.contains('subscription_already_active')) {
+      return isArabic
+          ? 'اشتراك Pro مفعل بالفعل على حسابك.'
+          : 'Your Pro subscription is already active.';
+    }
+    if (combined.contains('owner_only')) {
+      return isArabic
+          ? 'التجربة المجانية متاحة لحسابات أصحاب الملاعب فقط.'
+          : 'The free trial is only available to pitch owner accounts.';
+    }
+    if (combined.contains('authentication_required')) {
+      return isArabic
+          ? 'يرجى تسجيل الدخول مرة أخرى لتفعيل التجربة المجانية.'
+          : 'Please sign in again to activate your free trial.';
+    }
+    if (combined.contains('trial_configuration_missing')) {
+      return isArabic
+          ? 'التجربة المجانية غير متاحة مؤقتاً. يرجى التواصل مع الدعم.'
+          : 'The free trial is temporarily unavailable. Please contact support.';
+    }
+
     if (combined.contains('trial_start_failed')) {
       return isArabic
           ? 'تعذر تفعيل التجربة المجانية. ربما تم استخدامها من قبل.'

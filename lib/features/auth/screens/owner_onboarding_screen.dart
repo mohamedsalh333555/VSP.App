@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../../shared/widgets/vsp_terms_checkbox.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/services/analytics_service.dart';
 import '../services/signup_validation_service.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 import '../widgets/owner_onboarding/owner_onboarding_exit_dialog.dart';
@@ -40,12 +42,14 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(AnalyticsService.logOwnerRegistrationStarted());
     _phoneController.addListener(() => setState(() {}));
     _firstNameController.addListener(() => setState(() {}));
     _lastNameController.addListener(() => setState(() {}));
     Future.microtask(() => _fetchAutoLocation());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final displayName = auth.userModel?.name ?? auth.currentUser?.userMetadata?['name'] as String?;
       if (displayName != null && displayName.trim().isNotEmpty) {
@@ -58,10 +62,13 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   }
 
   Future<void> _fetchAutoLocation() async {
+    if (!mounted) return;
     setState(() => _isFetchingLocation = true);
     try {
       final result = await Provider.of<AuthProvider>(context, listen: false).determineGPSGovernorate(force: true);
-      if (result != null && EgyptGovernorates.allGovernorates.contains(result) && mounted) {
+      if (!mounted) return;
+
+      if (result != null && EgyptGovernorates.allGovernorates.contains(result)) {
         setState(() {
           _selectedGovernorate = result;
           _isLocationFallbackActive = false;
@@ -71,6 +78,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
         HapticFeedback.lightImpact();
       }
     } catch (_) {
+      if (!mounted) return;
       setState(() => _isLocationFallbackActive = true);
       HapticFeedback.lightImpact();
     } finally {
@@ -85,7 +93,8 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       minYear: 1940,
       maxYear: DateTime.now().year - 18,
     );
-    if (picked != null) setState(() => _dateOfBirth = picked);
+    if (!mounted || picked == null) return;
+    setState(() => _dateOfBirth = picked);
   }
 
   @override
@@ -138,6 +147,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       if (!mounted) return;
 
       if (success) {
+        unawaited(AnalyticsService.logOwnerRegistrationCompleted());
         HapticFeedback.lightImpact();
         if (mounted) {
           context.go('/facility-onboarding');

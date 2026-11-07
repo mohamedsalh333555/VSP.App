@@ -72,6 +72,7 @@ class StadiumWizardMediaCoordinator {
       'file': null,
       'url': null,
       'isUploading': true,
+      'isNewUpload': true,
       'progress': 10,
       'statusLabel': progressLabel,
     };
@@ -95,7 +96,7 @@ class StadiumWizardMediaCoordinator {
       ownerId: ownerId,
       onProgress: (progress) {
         imageEntry['progress'] = progress;
-        onStateChanged();
+        if (context.mounted) onStateChanged();
       },
     );
 
@@ -126,7 +127,9 @@ class StadiumWizardMediaCoordinator {
     required String? uid,
     required VoidCallback onStateChanged,
   }) async {
-    if (image['url'] != null) {
+    // Existing stadium images remain referenced by the persisted record until
+    // the edit is successfully saved; never delete them while the wizard is open.
+    if (image['url'] != null && image['isNewUpload'] == true) {
       await StadiumWizardImageService.deleteUploadedImage(image['url']!);
     }
     images.remove(image);

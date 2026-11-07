@@ -10,7 +10,11 @@ class BookingSheetWhatsAppUtils {
   const BookingSheetWhatsAppUtils._();
 
   /// Launches WhatsApp support chat to report player no-show or disputes.
-  static Future<void> launchWhatsAppSupport(Booking b, bool isArabic) async {
+  static Future<void> launchWhatsAppSupport(
+    Booking b,
+    bool isArabic, {
+    BuildContext? context,
+  }) async {
     final player = (b.playerTeamName != null && b.playerTeamName!.isNotEmpty)
         ? b.playerTeamName!
         : 'لاعب';
@@ -22,9 +26,28 @@ class BookingSheetWhatsAppUtils {
         : "Hi VSP Support, I would like to report the booking holder (no-show / dispute).\nBooking ID: $id\nPlayer Name: $player\nSlot: $dateStr • $timeStr";
     final url = 'https://wa.me/201100229462?text=${Uri.encodeComponent(msg)}';
     try {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && context != null && context.mounted) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر فتح واتساب الدعم. حاول مرة أخرى.'
+              : 'Could not open WhatsApp support. Please try again.',
+        );
+      }
     } catch (e) {
       debugPrint('Could not launch WhatsApp: $e');
+      if (context != null && context.mounted) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر فتح واتساب الدعم. حاول مرة أخرى.'
+              : 'Could not open WhatsApp support. Please try again.',
+        );
+      }
     }
   }
 

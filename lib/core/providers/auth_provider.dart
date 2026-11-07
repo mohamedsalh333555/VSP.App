@@ -38,7 +38,7 @@ class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _isInitializing = true;
   String? _errorMessage;
-  bool _isFetchingUser = false;
+  int _userFetchGeneration = 0;
   bool _dataFetchError = false;
   bool _isGhostUser = false;
   bool _preserveError = false;
@@ -116,6 +116,15 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return;
     }
+    if (user?.id != _supabaseUser?.id) {
+      // Invalidate any profile fetch started for the previous auth identity.
+      _userFetchGeneration++;
+      _c.realtime.stopRealtimeUserListener();
+      _userModel = null;
+      _form.userType = null;
+      _isGhostUser = false;
+      _dataFetchError = false;
+    }
     _supabaseUser = user;
     if (!_preserveError) {
       _errorMessage = null;
@@ -159,8 +168,13 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _fetchUserData(User user) async {
-    if (_isFetchingUser) return;
-    _isFetchingUser = true;
+    if (_userModel?.uid != user.id) {
+      _userModel = null;
+      _form.userType = null;
+      _isGhostUser = false;
+      _dataFetchError = false;
+    }
+    final requestGeneration = ++_userFetchGeneration;
     _isLoading = true;
     notifyListeners();
 
@@ -168,7 +182,14 @@ class AuthProvider with ChangeNotifier {
       user: user,
       currentUserType: _form.userType,
     );
-    _isFetchingUser = false;
+
+    // A slower response from a previous account must never replace the active
+    // account's profile or realtime subscriptions.
+    if (requestGeneration != _userFetchGeneration ||
+        _supabaseUser?.id != user.id) {
+      return;
+    }
+
     _isLoading = false;
     _isInitializing = false;
 
@@ -189,9 +210,14 @@ class AuthProvider with ChangeNotifier {
       _c.sessionSync.updateFcmToken(user.id);
       _c.realtime.startRealtimeUserListener(
         userId: user.id,
-        getUserModel: () => _userModel,
-        getFirebaseUser: () => _supabaseUser,
+        getUserModel: () =>
+            _supabaseUser?.id == user.id && _userModel?.uid == user.id
+                ? _userModel
+                : null,
+        getFirebaseUser: () =>
+            _supabaseUser?.id == user.id ? _supabaseUser : null,
         onUserUpdated: (newModel) {
+          if (_supabaseUser?.id != user.id || newModel.uid != user.id) return;
           _userModel = newModel;
           notifyListeners();
         },
@@ -202,14 +228,21 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> retryDataFetch() async {
-    if (_supabaseUser == null) return;
+    final user = _supabaseUser;
+    if (user == null) return;
+    final requestGeneration = ++_userFetchGeneration;
     _isLoading = true;
     _dataFetchError = false;
     notifyListeners();
 
-    final model = await _c.sessionSync.retryDataFetch(_supabaseUser!.id);
+    final model = await _c.sessionSync.retryDataFetch(user.id);
+    if (requestGeneration != _userFetchGeneration ||
+        _supabaseUser?.id != user.id) {
+      return;
+    }
+
     _isLoading = false;
-    if (model != null) {
+    if (model != null && model.uid == user.id) {
       _userModel = model;
       _dataFetchError = false;
     } else {
@@ -422,9 +455,9 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updateProfilePhoto(XFile file) async {
-    if (_supabaseUser == null) return;
-    await _runAuthAction(() async {
+  Future<bool> updateProfilePhoto(XFile file) async {
+    if (_supabaseUser == null) return false;
+    return _runAuthAction(() async {
       final res = await _c.profile.updateProfilePhoto(
         authUser: _supabaseUser,
         currentUserModel: _userModel,
