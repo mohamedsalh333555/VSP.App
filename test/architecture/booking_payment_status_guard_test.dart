@@ -11,6 +11,10 @@ void main() {
     expect(start, greaterThanOrEqualTo(0));
     expect(end, greaterThan(start));
     final update = source.substring(start, end);
+    expect(source, contains('final Set<String> _updatingPaymentIds = {};'));
+    expect(update, contains('if (!_updatingPaymentIds.add(bookingId)) return false;'));
+    expect(update, contains('_updatingPaymentIds.remove(bookingId)'));
+    expect(update, contains('finally {'));
     expect(update, contains('BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid)'));
     expect(update, contains('if (_currentBooking?.id == bookingId)'));
     expect(update, contains('BookingListModifier.updatePaymentStatus(current, bookingId, isPaid)'));
