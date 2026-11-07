@@ -50,14 +50,17 @@ class TeamProfileStatsGrid extends StatelessWidget {
         children: [
           Semantics(
             label: '$label: $value',
-            child: ExcludeSemantics(child: Text(
-            value,
-            style: const TextStyle(
-              color: VSPColors.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
+            child: ExcludeSemantics(
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: VSPColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
-          )),
+          ),
           const SizedBox(height: 4),
           Text(
             label,
