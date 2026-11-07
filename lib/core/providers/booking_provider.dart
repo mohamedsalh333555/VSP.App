@@ -30,6 +30,7 @@ class BookingProvider with ChangeNotifier {
   bool _hasMoreMatches = true;
   String? _errorMessage;
   final Set<String> _cancellingIds = {};
+  final Set<String> _updatingPaymentIds = {};
   int _draftRestoreGeneration = 0;
 
   // Getters - _userBookings is the Single Source of Truth (SSOT)
@@ -494,6 +495,8 @@ class BookingProvider with ChangeNotifier {
 
   /// Update payment status
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
+    // Serialize updates for one booking to avoid conflicting payment writes.
+    if (!_updatingPaymentIds.add(bookingId)) return false;
     _errorMessage = null;
     try {
       final success = await _repository.updatePaymentStatus(bookingId, isPaid);
@@ -518,6 +521,8 @@ class BookingProvider with ChangeNotifier {
       _errorMessage = 'تعذر تحديث حالة الدفع';
       notifyListeners();
       return false;
+    } finally {
+      _updatingPaymentIds.remove(bookingId);
     }
   }
 
