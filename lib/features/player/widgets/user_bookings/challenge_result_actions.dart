@@ -66,6 +66,7 @@ class ChallengeResultActions extends StatelessWidget {
           booking.pendingOutcome != null;
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final submittedByMe = submittedTeamId == currentTeamId;
+      final canSubmitNow = !booking.endTime.isAfter(VSPTimeService.now);
       return buildStatusBadge(
         !hasSubmissionDetails
             ? (isArabic ? 'جارٍ تحديث حالة النتيجة' : 'Syncing result status')
@@ -73,9 +74,13 @@ class ChallengeResultActions extends StatelessWidget {
                 ? (isArabic
                     ? 'في انتظار نتيجة الفريق الآخر'
                     : 'Waiting for the other team result')
-                : (isArabic
-                    ? 'الفريق الآخر سجّل نتيجته، سجّل نتيجتك'
-                    : 'Opponent submitted; record your result'),
+                : canSubmitNow
+                    ? (isArabic
+                        ? 'الفريق الآخر سجّل نتيجته، سجّل نتيجتك'
+                        : 'Opponent submitted; record your result')
+                    : (isArabic
+                        ? 'الفريق الآخر سجّل نتيجته، انتظر انتهاء المباراة'
+                        : 'Opponent submitted; wait until the match ends'),
         VSPColors.warning,
       );
     }
