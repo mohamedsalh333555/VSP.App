@@ -17,7 +17,8 @@ class TeamAchievementBadges extends StatelessWidget {
       label: isArabic
           ? '${summary.stadiumChampionships} بطولات ملاعب رسمية، ${summary.oneVsOneChampionPlayers} أبطال واحد ضد واحد'
           : '${summary.stadiumChampionships} verified stadium championships, ${summary.oneVsOneChampionPlayers} one versus one champion players',
-      child: LayoutBuilder(
+      child: ExcludeSemantics(
+        child: LayoutBuilder(
         builder: (context, constraints) => Wrap(
         spacing: 8,
         runSpacing: 8,
@@ -39,6 +40,7 @@ class TeamAchievementBadges extends StatelessWidget {
           ),
         ],
         ),
+        ),
       ),
     );
   }
@@ -52,7 +54,7 @@ class TeamAchievementBadges extends StatelessWidget {
     String suffix = '',
   }) {
     return Container(
-      constraints: BoxConstraints(maxWidth: maxWidth),
+      constraints: BoxConstraints(maxWidth: maxWidth.isFinite ? maxWidth : 320),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         color: VSPColors.surfaceAlt,
