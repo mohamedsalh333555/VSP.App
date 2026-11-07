@@ -69,12 +69,22 @@ class TeamRosterCoordinator {
     }).toList();
   }
 
+  /// Legacy roster entry point: invite the player rather than enrolling them
+  /// without consent. Membership is created only after recipient acceptance.
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) async {
-    final response = await _supabase.rpc('add_team_member_atomic', params: {'p_team_id': teamId, 'p_user_id': userId});
+    final response = await _supabase.rpc(
+      'invite_team_member',
+      params: {'p_team_id': teamId, 'p_user_id': userId},
+    );
     if (response is! Map || response['success'] != true) {
-      throw Exception(response is Map ? response['error'] ?? 'فشل إضافة اللاعب' : 'فشل إضافة اللاعب');
+      throw StateError(response is Map
+          ? (response['error']?.toString() ?? 'تعذر إرسال دعوة الفريق')
+          : 'تعذر إرسال دعوة الفريق');
     }
-    await sendJoinNotification(userId);
+    final invitationId = response['invitation_id']?.toString();
+    if (invitationId == null || invitationId.isEmpty || invitationId == 'null') {
+      throw StateError('Invitation succeeded without an invitation ID');
+    }
   }
 
   Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) async {
