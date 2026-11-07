@@ -55,6 +55,7 @@ class TeamProfileHeroHeader extends StatelessWidget {
           ),
           const SizedBox(height: VSPSpacing.xs),
           Container(
+            constraints: const BoxConstraints(maxWidth: 300),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
               color: VSPColors.accentSoft,
@@ -63,6 +64,9 @@ class TeamProfileHeroHeader extends StatelessWidget {
             ),
             child: Text(
               team.rankTitle,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
@@ -80,14 +84,14 @@ class TeamProfileHeroHeader extends StatelessWidget {
                 children: [
                   const Icon(Iconsax.crown_1_copy, color: VSPColors.warning, size: 13),
                   const SizedBox(width: 4),
-                  Text(
+                  Flexible(child: Text(
                     isArabic ? 'يضم بطل 1 ضد 1' : 'Includes a 1v1 champion',
                     style: const TextStyle(
                       color: VSPColors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
-                  ),
+                  )),
                 ],
               ),
             ),
