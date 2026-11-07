@@ -32,8 +32,10 @@ void main() {
     expect(pending, greaterThan(start));
     expect(confirmed, greaterThan(pending));
     final branch = source.substring(pending, confirmed);
-    expect(branch, contains('!submittedByMe && !booking.endTime.isAfter(VSPTimeService.now)'));
-    expect(branch.indexOf('!submittedByMe && !booking.endTime.isAfter(VSPTimeService.now)'),
+    expect(branch, contains('hasSubmissionDetails &&'));
+    expect(branch, contains('!submittedByMe &&'));
+    expect(branch, contains('!booking.endTime.isAfter(VSPTimeService.now)'));
+    expect(branch.indexOf('hasSubmissionDetails &&'),
         lessThan(branch.indexOf('_openResultModal(context, currentTeamId)')));
   });
 
