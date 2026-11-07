@@ -73,7 +73,7 @@ class AppDateFormatter {
     const persian = '۰۱۲۳۴۵۶۷۸۹';
     for (var i = 0; i < 10; i++) {
       clean = clean.replaceAll(eastern[i], i.toString());
-      clean = clean.replaceAll(persian[i], '$' + 'i');
+      clean = clean.replaceAll(persian[i], i.toString());
     }
     clean = clean.replaceAll('：', ':');
     final match = RegExp(
