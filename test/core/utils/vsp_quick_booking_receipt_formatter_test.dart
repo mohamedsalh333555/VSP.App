@@ -36,6 +36,17 @@ void main() {
     expect(text, isNot(contains('1000.00 EGP')));
   });
 
+  test('fully prepaid bookings never claim a cash collection', () {
+    final text = receipt(total: 250.75, deposit: 250.75, cash: true);
+    expect(text, contains('Paid in full online'));
+    expect(text, isNot(contains('Paid in full cash')));
+  });
+
+  test('zero-price bookings do not claim payment', () {
+    final text = receipt(total: 0, deposit: 0, cash: true);
+    expect(text, contains('No payment due'));
+  });
+
   test('cash-confirmed receipt separates paid deposit from cash remainder', () {
     final text = receipt(cash: true);
     expect(text, contains('Cash: 200.50 EGP'));
