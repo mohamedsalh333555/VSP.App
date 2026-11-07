@@ -3,13 +3,18 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../my_team/team_achievement_badges.dart';
+import '../my_team/team_achievement_summary.dart';
 
 class TeamProfileAchievementsSection extends StatelessWidget {
   final Team team;
+  /// Only provide verified results loaded from the authoritative data source.
+  final TeamAchievementSummary? verifiedSummary;
 
   const TeamProfileAchievementsSection({
     super.key,
     required this.team,
+    this.verifiedSummary,
   });
 
   @override
@@ -49,6 +54,10 @@ class TeamProfileAchievementsSection extends StatelessWidget {
               ),
           ],
         ),
+        if (verifiedSummary != null) ...[
+          const SizedBox(height: VSPSpacing.md),
+          TeamAchievementBadges(summary: verifiedSummary!),
+        ],
         const SizedBox(height: VSPSpacing.md),
         SizedBox(
           height: 110,
