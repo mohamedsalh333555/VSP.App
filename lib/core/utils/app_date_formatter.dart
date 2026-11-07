@@ -64,36 +64,47 @@ class AppDateFormatter {
   }
 
   /// Parse time strings like "04:00 PM" or "04:00 م" into total minutes from start of day (0 to 1439)
-  static int parseTimeToMinutes(String? timeStr) {
-    if (timeStr == null || timeStr.trim().isEmpty) return 0;
-    try {
-      final clean = timeStr.trim();
-      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م|مساءً|صباحاً)?', caseSensitive: false);
-      final normalized = clean.replaceAll('٠', '0').replaceAll('١', '1').replaceAll('٢', '2').replaceAll('٣', '3').replaceAll('٤', '4').replaceAll('٥', '5').replaceAll('٦', '6').replaceAll('٧', '7').replaceAll('٨', '8').replaceAll('٩', '9');
-      final match = timeRegex.firstMatch(normalized);
-      if (match == null) return 0;
-      int hour = int.parse(match.group(1)!);
-      int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
-      String? period = match.group(3)?.toUpperCase();
-      if ((period == 'PM' || period == 'م' || period == 'مساءً') && hour != 12) hour += 12;
-      if ((period == 'AM' || period == 'ص' || period == 'صباحاً') && hour == 12) hour = 0;
-      if (minute < 0 || minute > 59 || hour < 0 || hour > 23) return 0;
-      return hour * 60 + minute;
-    } catch (_) {
-      return 0;
+  /// Parse a full 12/24-hour time. Returns null for malformed input.
+  /// Midnight (00:00) is a valid zero, unlike a parse failure.
+  static int? tryParseTimeToMinutes(String? timeStr) {
+    if (timeStr == null || timeStr.trim().isEmpty) return null;
+    var clean = timeStr.trim();
+    const eastern = '٠١٢٣٤٥٦٧٨٩';
+    const persian = '۰۱۲۳۴۵۶۷۸۹';
+    for (var i = 0; i < 10; i++) {
+      clean = clean.replaceAll(eastern[i], i.toString());
+      clean = clean.replaceAll(persian[i], '$' + 'i');
     }
+    clean = clean.replaceAll('：', ':');
+    final match = RegExp(
+      r'^(\d{1,2})(?::(\d{1,2}))?\s*(AM|PM|ص|م|مساءً|صباحاً)?$',
+      caseSensitive: false,
+    ).firstMatch(clean);
+    if (match == null) return null;
+    var hour = int.parse(match.group(1)!);
+    final minute = int.tryParse(match.group(2) ?? '0');
+    if (minute == null || minute > 59) return null;
+    final period = match.group(3)?.toUpperCase();
+    if (period != null) {
+      if (hour < 1 || hour > 12) return null;
+      if (period == 'PM' || period == 'م' || period == 'مساءً') {
+        if (hour != 12) hour += 12;
+      } else if (hour == 12) {
+        hour = 0;
+      }
+    } else if (hour > 23) {
+      return null;
+    }
+    return hour * 60 + minute;
   }
 
-  /// Parse time strings into 24-hour hour integer (0 to 23)
-  static int parseTimeToHour(String? timeStr, {int defaultHour = 16}) {
-    if (timeStr == null || timeStr.trim().isEmpty) return defaultHour;
-    try {
-      final totalMin = parseTimeToMinutes(timeStr);
-      return totalMin ~/ 60;
-    } catch (_) {
-      return defaultHour;
-    }
-  }
+  /// Legacy callers expect midnight for invalid input.
+  static int parseTimeToMinutes(String? timeStr) =>
+      tryParseTimeToMinutes(timeStr) ?? 0;
+
+  /// Parse time into 24-hour hour; preserve defaultHour for invalid input.
+  static int parseTimeToHour(String? timeStr, {int defaultHour = 16}) =>
+      (tryParseTimeToMinutes(timeStr) ?? (defaultHour * 60)) ~/ 60;
 
   /// Format minutes into time string (12-hour format)
   static String formatMinutesToTime(int totalMinutes, bool isArabic) {
