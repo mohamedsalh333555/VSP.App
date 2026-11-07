@@ -153,7 +153,12 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     try {
       // Fetch the current roster from the membership source of truth, not
       // the potentially stale memberUids embedded in the public team card.
-      final currentIds = await TeamRepository().getTeamMemberUids(teamId);
+      final roster = await TeamRepository().getTeamMemberProfilesStrict(teamId);
+      final currentIds = roster
+          .map((row) => row['uid'] ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
       final memberIds = currentIds
           .where((id) => id.isNotEmpty && id != team.captainId)
           .toSet()
