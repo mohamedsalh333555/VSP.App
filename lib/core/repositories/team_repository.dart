@@ -270,8 +270,12 @@ class TeamRepository {
     if (_supabase.auth.currentUser == null) {
       throw StateError('Sign in before inviting a player');
     }
-    if (teamId.trim().isEmpty || userId.trim().isEmpty) {
-      throw ArgumentError('Team ID and player ID are required');
+    if (teamId.trim().isEmpty || userId.trim().isEmpty ||
+        teamId == 'null' || userId == 'null' || userId.startsWith('guest_')) {
+      throw ArgumentError('Valid team ID and registered player ID are required');
+    }
+    if (userId == _supabase.auth.currentUser!.id) {
+      throw ArgumentError('Captain cannot invite themselves');
     }
     final response = await _supabase.rpc(
       'invite_team_member',
