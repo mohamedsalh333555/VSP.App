@@ -313,7 +313,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             });
           }
 
-          if (mounted) {
+          if (mounted && opponentGeneration == _opponentRequestGeneration &&
+              _selectedTeam?.id == oppTeam.id &&
+              _challengeCodeController.text.trim().toUpperCase() == validatedCode) {
             VSPFeedback.showSuccess(
               context,
               isArabic
@@ -325,7 +327,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         }
       }
 
-      if (!mounted) return;
+      if (!mounted || opponentGeneration != _opponentRequestGeneration ||
+          _challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) return;
       setState(() => _isLookingUpCode = false);
       final err = res['error']?.toString() ?? '';
       String errorMsg;
