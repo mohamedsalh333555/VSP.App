@@ -20,10 +20,11 @@ class TeamProfileAchievementsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final badges = [
-      {'id': 'explorer', 'name': 'Explorer', 'icon': Iconsax.discover_copy, 'desc': 'Play against 5 different teams'},
-      {'id': 'gladiator', 'name': 'Gladiator', 'icon': Iconsax.security_safe_copy, 'desc': 'Played 10+ matches'},
-      {'id': 'streak_3', 'name': 'Streak 3', 'icon': Iconsax.flash_1_copy, 'desc': 'Won 3 matches in a row'},
+      {'id': 'explorer', 'name': isArabic ? 'المستكشف' : 'Explorer', 'icon': Iconsax.discover_copy, 'desc': 'Play against 5 different teams'},
+      {'id': 'gladiator', 'name': isArabic ? 'المحارب' : 'Gladiator', 'icon': Iconsax.security_safe_copy, 'desc': 'Played 10+ matches'},
+      {'id': 'streak_3', 'name': isArabic ? '3 انتصارات متتالية' : 'Streak 3', 'icon': Iconsax.flash_1_copy, 'desc': 'Won 3 matches in a row'},
     ];
 
     return Column(
@@ -93,6 +94,9 @@ class TeamProfileAchievementsSection extends StatelessWidget {
                   const SizedBox(height: VSPSpacing.sm),
                   Text(
                     badge['name'] as String,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       color: isUnlocked ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.4),
                       fontSize: 11,
