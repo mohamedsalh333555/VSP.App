@@ -293,6 +293,9 @@ class TeamRepository {
 
   /// Only the recipient can accept or decline a pending invitation.
   Future<void> respondToTeamInvitation(String invitationId, {required bool accept}) async {
+    if (_supabase.auth.currentUser == null) {
+      throw StateError('Sign in before responding to a team invitation');
+    }
     if (invitationId.trim().isEmpty || invitationId == 'null') {
       throw ArgumentError.value(invitationId, 'invitationId', 'A valid invitation ID is required');
     }
