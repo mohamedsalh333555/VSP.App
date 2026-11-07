@@ -32,16 +32,18 @@ class VSPQuickBookingReceiptFormatter {
  : '';
 
  String paymentStatus;
- if (isCashConfirmed) {
- if (safeDeposit > 0 && safeDeposit < safeTotal) {
+ if (safeTotal == 0) {
+ paymentStatus = isArabic ? 'لا توجد مبالغ مستحقة' : 'No payment due';
+ } else if (safeDeposit >= safeTotal) {
+ paymentStatus = isArabic ? 'مدفوع بالكامل إلكترونياً' : 'Paid in full online';
+ } else if (isCashConfirmed) {
+ if (safeDeposit > 0) {
  paymentStatus = isArabic
  ? 'مدفوع بالكامل (عربون: ${safeDeposit.toStringAsFixed(2)} ج.م + كاش: ${(safeTotal - safeDeposit).toStringAsFixed(2)} ج.م)'
  : 'Paid in full (Deposit: ${safeDeposit.toStringAsFixed(2)} EGP + Cash: ${(safeTotal - safeDeposit).toStringAsFixed(2)} EGP)';
  } else {
  paymentStatus = isArabic ? 'مدفوع بالكامل نقداً بالملعب' : 'Paid in full cash at pitch';
  }
- } else if (safeDeposit >= safeTotal && safeTotal > 0) {
- paymentStatus = isArabic ? 'مدفوع بالكامل إلكترونياً' : 'Paid in full online';
  } else if (safeDeposit > 0) {
  paymentStatus = isArabic
  ? 'عربون مسدد: ${safeDeposit.toStringAsFixed(2)} ج.م (المتبقي: ${remainingAmount.toStringAsFixed(2)} ج.م عند الحضور)'
