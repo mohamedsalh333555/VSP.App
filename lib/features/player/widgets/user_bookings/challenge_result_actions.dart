@@ -214,9 +214,13 @@ class ChallengeResultActions extends StatelessWidget {
                         ? (isArabic
                             ? 'تم تسجيل نتيجتك. في انتظار نتيجة الفريق المنافس.'
                             : 'Your result is recorded. Waiting for the opponent.')
-                        : (isArabic
-                            ? 'الفريق المنافس سجل: ${outcomeText(pending)}'
-                            : 'Opponent recorded: ${outcomeText(pending)}'),
+                        : (pending == null
+                            ? (isArabic
+                                ? 'في انتظار مزامنة نتيجة الفريق المنافس.'
+                                : 'Waiting for the opponent result to sync.')
+                            : (isArabic
+                                ? 'الفريق المنافس سجل: ${outcomeText(pending)}'
+                                : 'Opponent recorded: ${outcomeText(pending)}')),
                     style: const TextStyle(
                       color: VSPColors.textPrimary,
                       fontSize: 12.5,
