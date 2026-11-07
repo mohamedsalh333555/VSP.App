@@ -87,6 +87,16 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     }
   }
 
+  Future<void> _refreshTeamProfile() async {
+    final teamId = widget.team?.id ?? widget.teamId;
+    if (teamId == null) return;
+    await Future.wait<void>([
+      _loadMemberDetails(),
+      _loadHeadToHead(teamId),
+      _check1v1Champion(teamId),
+    ]);
+  }
+
   Future<void> _loadHeadToHead(String teamId) async {
     try {
       final records = await MatchupRepository().getAllHeadToHeadForTeam(teamId);
@@ -324,8 +334,10 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
         title: Text(isArabic ? 'ملف الفريق' : 'Team Profile', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
       ),
-      body: SafeArea(top: false, bottom: true, child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+      body: SafeArea(top: false, bottom: true, child: RefreshIndicator(
+        onRefresh: _refreshTeamProfile,
+        child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -412,7 +424,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             const SizedBox(height: 24),
           ],
         ),
-      )),
+      ))),
     );
   }
 }
