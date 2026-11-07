@@ -82,7 +82,7 @@ class TeamRosterCoordinator {
           : 'تعذر إرسال دعوة الفريق');
     }
     final invitationId = response['invitation_id']?.toString();
-    if (invitationId == null || invitationId.isEmpty || invitationId == 'null') {
+    if (invitationId == null || invitationId.trim().isEmpty || invitationId == 'null') {
       throw StateError('Invitation succeeded without an invitation ID');
     }
   }
