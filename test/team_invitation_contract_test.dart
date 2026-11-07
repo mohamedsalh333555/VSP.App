@@ -26,4 +26,24 @@ void main() {
     expect(migration, contains('ON CONFLICT (team_id, user_id) DO NOTHING'));
     expect(migration, contains('GRANT EXECUTE ON FUNCTION public.respond_team_membership_invitation'));
   });
+  test('invitation expiry and wrong-recipient guards are enforced by RPC', () {
+    final migration = File(
+      'supabase/migrations/20261106170000_team_membership_invitations.sql',
+    ).readAsStringSync();
+    expect(migration, contains("v_invite.expires_at <= now()"));
+    expect(migration, contains("v_invite.invited_user_id IS DISTINCT FROM auth.uid()"));
+    expect(migration, contains("status = 'pending' AND expires_at <= now()"));
+    expect(migration, contains("ON CONFLICT (team_id, invited_user_id) WHERE status = 'pending'"));
+  });
+
+  test('invitation acceptance has governorate and roster capacity guards', () {
+    final migration = File(
+      'supabase/migrations/20261106170000_team_membership_invitations.sql',
+    ).readAsStringSync();
+    expect(migration, contains("'TEAM_GOVERNORATE_MISMATCH'"));
+    expect(migration, contains("count(*) FROM public.team_members WHERE team_id = v_invite.team_id"));
+    expect(migration, contains("count(*) FROM public.team_members WHERE user_id = auth.uid()"));
+    expect(migration, contains("ON CONFLICT (team_id, user_id) DO NOTHING"));
+  });
+
 }
