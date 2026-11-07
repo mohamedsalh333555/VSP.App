@@ -114,13 +114,14 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   }
 
   Future<void> _loadTeamAndMembers() async {
+    final requestedTeamId = widget.teamId!;
     setState(() {
       _isLoadingTeam = true;
       _hasTeamLoadError = false;
     });
     try {
-      final t = await TeamRepository().getTeamStrict(widget.teamId!);
-      if (mounted && (widget.team?.id ?? widget.teamId) == t?.id) {
+      final t = await TeamRepository().getTeamStrict(requestedTeamId);
+      if (mounted && (widget.team?.id ?? widget.teamId) == requestedTeamId) {
         setState(() {
           _fetchedTeam = t;
           _isLoadingTeam = false;
@@ -132,7 +133,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       }
     } catch (e) {
       debugPrint('Error loading team: $e');
-      if (mounted) {
+      if (mounted && (widget.team?.id ?? widget.teamId) == requestedTeamId) {
         setState(() {
           _isLoadingTeam = false;
           _hasTeamLoadError = true;
