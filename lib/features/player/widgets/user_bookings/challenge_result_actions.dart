@@ -62,8 +62,8 @@ class ChallengeResultActions extends StatelessWidget {
     if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
       return buildStatusBadge(
         Localizations.localeOf(context).languageCode == 'ar'
-            ? 'في انتظار تطابق النتيجة'
-            : 'Waiting for matching result',
+            ? 'في انتظار نتيجة الفريق الآخر'
+            : 'Waiting for the other team result',
         VSPColors.warning,
       );
     }
