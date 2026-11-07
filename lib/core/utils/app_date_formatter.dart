@@ -83,7 +83,7 @@ class AppDateFormatter {
     if (match == null) return null;
     var hour = int.parse(match.group(1)!);
     final minute = int.tryParse(match.group(2) ?? '0');
-    if (minute == null || minute > 59) return null;
+    if (minute == null || minute < 0 || minute > 59) return null;
     final period = match.group(3)?.toUpperCase();
     if (period != null) {
       if (hour < 1 || hour > 12) return null;
@@ -108,8 +108,9 @@ class AppDateFormatter {
 
   /// Format minutes into time string (12-hour format)
   static String formatMinutesToTime(int totalMinutes, bool isArabic) {
-    int hour = (totalMinutes ~/ 60) % 24;
-    int minute = totalMinutes % 60;
+    final normalizedMinutes = totalMinutes % (24 * 60);
+    int hour = normalizedMinutes ~/ 60;
+    int minute = normalizedMinutes % 60;
     final period = isArabic
         ? (hour >= 12 ? 'م' : 'ص')
         : (hour >= 12 ? 'PM' : 'AM');
@@ -121,11 +122,10 @@ class AppDateFormatter {
 
   /// Short format for time ranges (e.g. "4:00 PM - 5:00 PM" -> "4 PM - 5 PM")
   static String formatTimeShort(String timeRange) {
-    final parts = timeRange.split(' - ');
+    final parts = timeRange.split(RegExp(r'\s+-\s+'));
     if (parts.length == 2) {
-      final start = parts[0].replaceAll(':00', '');
-      final end = parts[1].replaceAll(':00', '');
-      return '$start - $end';
+      String shorten(String part) => part.trim().replaceFirst(RegExp(r':00(?=\s|$)'), '');
+      return '${shorten(parts[0])} - ${shorten(parts[1])}';
     }
     return timeRange;
   }
@@ -138,6 +138,9 @@ class AppDateFormatter {
   /// Calculates the business operational date for bookings.
   /// Times between 12:00 AM and [shiftStartHour] (default 6:00 AM) belong to the previous day's operational shift.
   static DateTime getOperationalDate(DateTime dateTime, {int shiftStartHour = 6}) {
+    if (shiftStartHour < 0 || shiftStartHour > 23) {
+      throw RangeError.range(shiftStartHour, 0, 23, 'shiftStartHour');
+    }
     final local = dateTime.toLocal();
     if (local.hour < shiftStartHour) {
       final prev = local.subtract(const Duration(days: 1));
