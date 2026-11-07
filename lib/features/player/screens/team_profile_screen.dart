@@ -173,7 +173,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
           ..clear()
           ..addAll(members);
         _isLoadingMembers = false;
-        _hasMemberLoadError = members.length < memberIds.length;
+        _hasMemberLoadError = members.map((member) => member.id).toSet().length < memberIds.length;
       });
     } catch (e) {
       debugPrint('Error loading team members: $e');
