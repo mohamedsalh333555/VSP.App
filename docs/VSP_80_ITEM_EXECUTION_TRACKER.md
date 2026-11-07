@@ -128,6 +128,25 @@
 - [ ] **79** Cross-account privacy tests
 - [ ] **80** Security regression tests and advisor review
 
+## Item 33 — team invitations: verified source-level subtask ledger (2026-11-07)
+
+The following is a **source-inspection ledger**, not an E2E pass. Count these subtasks separately from the 80-item completion counter.
+
+- [x] Reuse the existing `team_membership_invitations` schema and remove the empty duplicate `team_invitations` system from staging.
+- [x] Wire team invitation creation to `invite_team_member` in `TeamRepository`.
+- [x] Wire acceptance/rejection to `respond_team_membership_invitation` in `TeamRepository`.
+- [x] Implement repository query for recipient's pending, unexpired invitations.
+- [x] Verify staging authenticated SELECT/EXECUTE grants and anon RPC denial.
+- [x] Fail visibly if invitation team-name lookup errors or returns missing team identity (commits `f5121ec`, `a0e5028`).
+- [ ] Verify recipient inbox is reachable in the running Flutter UI.
+- [ ] Run real authenticated two-account invitation-send test.
+- [ ] Run real authenticated accept test and confirm membership appears exactly once.
+- [ ] Run real authenticated reject test and confirm no membership added.
+- [ ] Run expired, wrong-recipient, unauthorized-captain and cross-governorate tests.
+- [ ] Pass Flutter CI, device E2E, and update the 24-journey report.
+
+**Subtasks: 6 source/schema checks implemented or verified; 6 validation tasks pending. Item 33 remains open (0/80 fully complete).** These checks do not prove live user flows.
+
 ## Related issues
 - #35 implementation PR
 - #37 database audit
