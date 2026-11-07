@@ -192,6 +192,8 @@ class ChallengeResultActions extends StatelessWidget {
       final submittedByMe =
           booking.resultSubmittedByTeamId == currentTeamId;
       final pending = booking.pendingOutcome;
+      final hasSubmissionDetails =
+          booking.resultSubmittedByTeamId?.isNotEmpty == true && pending != null;
 
       String outcomeText(MatchOutcome? outcome) {
         if (outcome == MatchOutcome.draw) {
@@ -235,8 +237,12 @@ class ChallengeResultActions extends StatelessWidget {
                 const SizedBox(width: VSPSpacing.sm),
                 Expanded(
                   child: Text(
-                    submittedByMe
+                    !hasSubmissionDetails
                         ? (isArabic
+                            ? 'جارٍ تحديث حالة النتيجة'
+                            : 'Syncing result status')
+                        : submittedByMe
+                            ? (isArabic
                             ? 'تم تسجيل نتيجتك. في انتظار نتيجة الفريق المنافس.'
                             : 'Your result is recorded. Waiting for the opponent.')
                         : (pending == null
@@ -255,7 +261,9 @@ class ChallengeResultActions extends StatelessWidget {
                 ),
               ],
             ),
-            if (!submittedByMe && !booking.endTime.isAfter(VSPTimeService.now)) ...[
+            if (hasSubmissionDetails &&
+                !submittedByMe &&
+                !booking.endTime.isAfter(VSPTimeService.now)) ...[
               const SizedBox(height: VSPSpacing.xs),
               Text(
                 isArabic
