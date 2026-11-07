@@ -78,7 +78,9 @@ class TeamProfileRosterSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: VSPColors.divider),
       ),
-      child: Row(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 240),
+        child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           CircleAvatar(
@@ -92,11 +94,16 @@ class TeamProfileRosterSection extends StatelessWidget {
                 : null,
           ),
           const SizedBox(width: 6),
-          Text(
-            user.name ?? 'Player',
-            style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
+          Flexible(
+            child: Text(
+              (user.name?.trim().isNotEmpty ?? false) ? user.name!.trim() : 'Player',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
+        ),
       ),
     );
   }
