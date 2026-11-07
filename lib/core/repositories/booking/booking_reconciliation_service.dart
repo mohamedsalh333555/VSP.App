@@ -62,8 +62,8 @@ class BookingReconciliationService {
               'p_outcome': outcome.name,
             });
 
-      if (result is Map && result['success'] == false) {
-        if (result['error'] == 'RESULT_DISPUTED') {
+      if (result is! Map || result['success'] != true) {
+        if (result is Map && result['error'] == 'RESULT_DISPUTED') {
           if (rating != null && rating > 0) {
             await _submitRating(
               booking: booking,
@@ -74,7 +74,9 @@ class BookingReconciliationService {
           }
           return false;
         }
-        throw Exception(result['error']?.toString() ?? 'RESULT_SUBMISSION_FAILED');
+        throw Exception(result is Map
+            ? (result['error']?.toString() ?? 'RESULT_SUBMISSION_FAILED')
+            : 'INVALID_RESULT_RESPONSE');
       }
 
       if (rating != null && rating > 0) {
