@@ -64,14 +64,18 @@ class ChallengeResultActions extends StatelessWidget {
       final hasSubmissionDetails = submittedTeamId != null &&
           submittedTeamId.isNotEmpty &&
           booking.pendingOutcome != null;
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      final submittedByMe = submittedTeamId == currentTeamId;
       return buildStatusBadge(
-        hasSubmissionDetails
-            ? (Localizations.localeOf(context).languageCode == 'ar'
-                ? 'في انتظار نتيجة الفريق الآخر'
-                : 'Waiting for the other team result')
-            : (Localizations.localeOf(context).languageCode == 'ar'
-                ? 'جارٍ تحديث حالة النتيجة'
-                : 'Syncing result status'),
+        !hasSubmissionDetails
+            ? (isArabic ? 'جارٍ تحديث حالة النتيجة' : 'Syncing result status')
+            : submittedByMe
+                ? (isArabic
+                    ? 'في انتظار نتيجة الفريق الآخر'
+                    : 'Waiting for the other team result')
+                : (isArabic
+                    ? 'الفريق الآخر سجّل نتيجته، سجّل نتيجتك'
+                    : 'Opponent submitted; record your result'),
         VSPColors.warning,
       );
     }
