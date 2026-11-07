@@ -392,6 +392,19 @@ class TeamRepository {
   if (response is Map && response['success'] == true) return true;
   throw Exception(response is Map ? response['error'] ?? 'فشل حذف الفريق' : 'فشل حذف الفريق');
  }
+ /// Strict variant: network and authorization errors must not be treated
+ /// as a verified absence of champions.
+ Future<bool> has1v1ChampionStrict(String teamId) async {
+   final response = await _supabase.rpc(
+     'check_team_has_1v1_champion',
+     params: {'p_team_id': teamId},
+   );
+   if (response is! bool) {
+     throw StateError('Invalid 1v1 champion verification response');
+   }
+   return response;
+ }
+
  Future<bool> has1v1Champion(String teamId) async {
  try {
  final response = await _supabase.rpc(
