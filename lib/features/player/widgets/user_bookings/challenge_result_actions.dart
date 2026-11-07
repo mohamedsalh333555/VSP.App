@@ -118,7 +118,6 @@ class ChallengeResultActions extends StatelessWidget {
   }
 
   Widget _openResultModal(BuildContext context, String teamId) {
-    final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return VSPAnimatedButton(
@@ -151,14 +150,9 @@ class ChallengeResultActions extends StatelessWidget {
                       ? 'تم تسجيل نتيجتك. لن تُعتمد المباراة إلا عند تطابق النتيجتين.'
                       : 'Your result was recorded. The match is finalized only when both results match.',
                 );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(provider.errorMessage ?? l10n.resultFailed),
-                    backgroundColor: VSPColors.error,
-                  ),
-                );
               }
+              // MatchResultModal owns failure feedback. Showing another
+              // snackbar here would duplicate the same error for the user.
               return success;
             },
           ),
