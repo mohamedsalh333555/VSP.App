@@ -64,14 +64,12 @@ class BookingReconciliationService {
 
       if (result is! Map || result['success'] != true) {
         if (result is Map && result['error'] == 'RESULT_DISPUTED') {
-          if (rating != null && rating > 0) {
-            await _submitRating(
-              booking: booking,
-              userId: user.id,
-              rating: rating,
-              review: review ?? '',
-            );
-          }
+          await _submitRatingBestEffort(
+            booking: booking,
+            userId: user.id,
+            rating: rating,
+            review: review,
+          );
           return false;
         }
         throw Exception(result is Map
@@ -79,19 +77,38 @@ class BookingReconciliationService {
             : 'INVALID_RESULT_RESPONSE');
       }
 
-      if (rating != null && rating > 0) {
-        await _submitRating(
-          booking: booking,
-          userId: user.id,
-          rating: rating,
-          review: review ?? '',
-        );
-      }
+      // The match result is already committed by the atomic RPC.
+      // A separate review failure must not make the UI suggest resubmission.
+      await _submitRatingBestEffort(
+        booking: booking,
+        userId: user.id,
+        rating: rating,
+        review: review,
+      );
 
       return true;
     } catch (e) {
       debugPrint('Error submitting match result: $e');
       return false;
+    }
+  }
+
+  Future<void> _submitRatingBestEffort({
+    required Booking booking,
+    required String userId,
+    required double? rating,
+    required String? review,
+  }) async {
+    if (rating == null || rating <= 0) return;
+    try {
+      await _submitRating(
+        booking: booking,
+        userId: userId,
+        rating: rating,
+        review: review ?? '',
+      );
+    } catch (error) {
+      debugPrint('Stadium review failed after result submission: $error');
     }
   }
 
@@ -109,8 +126,10 @@ class BookingReconciliationService {
       'p_rating': rating.toInt(),
       'p_comment': review,
     });
-    if (result is Map && result['success'] == false) {
-      throw Exception(result['error']?.toString() ?? 'REVIEW_SUBMISSION_FAILED');
+    if (result is! Map || result['success'] != true) {
+      throw Exception(result is Map
+          ? (result['error']?.toString() ?? 'REVIEW_SUBMISSION_FAILED')
+          : 'INVALID_REVIEW_RESPONSE');
     }
   }
 
