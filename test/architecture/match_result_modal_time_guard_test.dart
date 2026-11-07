@@ -3,6 +3,19 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('result dialog disables submit button before match end', () {
+    final source = File(
+      'lib/features/player/widgets/match_result_modal.dart',
+    ).readAsStringSync();
+    final button = source.substring(
+      source.indexOf("text: isArabic ? 'إرسال النتيجة'"),
+      source.indexOf('bool get _isParticipatingTeam'),
+    );
+    expect(button, contains('widget.booking.endTime.isAfter(VSPTimeService.now)'));
+    expect(button, contains('!_isParticipatingTeam'));
+    expect(button, contains(': _handleSubmit'));
+  });
+
   test('result dialog checks match end time before submitting', () {
     final source = File(
       'lib/features/player/widgets/match_result_modal.dart',
