@@ -38,15 +38,16 @@ class CreateTeamMembersSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
           children: [
             Directionality(
               textDirection: TextDirection.ltr,
               child: Text(
                 isArabic
-                    ? 'الكابتن: 1 | دعوات مقترحة: $registeredCount | أسماء مسودة: $draftCount (الحد 12)'
-                    : 'Captain: 1 | Invite candidates: $registeredCount | Draft names: $draftCount (max 12)',
+                    ? '${members.length + 1}/12 | مسجل: $registeredCount | مسودة: $draftCount'
+                    : '${members.length + 1}/12 | Registered: $registeredCount | Draft: $draftCount',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: VSPColors.textSecondary,
                     ),
