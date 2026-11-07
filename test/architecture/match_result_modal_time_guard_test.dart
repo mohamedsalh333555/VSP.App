@@ -13,6 +13,7 @@ void main() {
     );
     expect(button, contains('widget.booking.endTime.isAfter(VSPTimeService.now)'));
     expect(button, contains('!_isParticipatingTeam'));
+    expect(button, contains('widget.booking.matchResultStatus == MatchResultStatus.confirmed'));
     expect(button, contains(': _handleSubmit'));
   });
 
@@ -26,6 +27,7 @@ void main() {
     expect(end, greaterThan(start));
     final submit = source.substring(start, end);
     expect(submit, contains('widget.booking.endTime.isAfter(VSPTimeService.now)'));
+    expect(submit, contains('widget.booking.matchResultStatus == MatchResultStatus.confirmed'));
     expect(submit, contains('يمكن تسجيل النتيجة بعد انتهاء المباراة.'));
     expect(submit, contains('You can submit the result after the match ends.'));
     expect(submit.indexOf('widget.booking.endTime.isAfter(VSPTimeService.now)'),
