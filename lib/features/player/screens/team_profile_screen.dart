@@ -90,7 +90,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   Future<void> _loadHeadToHead(String teamId) async {
     try {
       final records = await MatchupRepository().getAllHeadToHeadForTeam(teamId);
-      if (mounted) {
+      if (mounted && (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _headToHeadRecords = records;
         });
@@ -103,7 +103,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   Future<void> _check1v1Champion(String teamId) async {
     try {
       final hasChamp = await TeamRepository().has1v1Champion(teamId);
-      if (mounted) {
+      if (mounted && (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _has1v1Champion = hasChamp;
         });
@@ -120,7 +120,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     });
     try {
       final t = await TeamRepository().getTeamStrict(widget.teamId!);
-      if (mounted) {
+      if (mounted && (widget.team?.id ?? widget.teamId) == t?.id) {
         setState(() {
           _fetchedTeam = t;
           _isLoadingTeam = false;
