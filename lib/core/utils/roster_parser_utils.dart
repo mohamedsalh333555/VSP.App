@@ -17,7 +17,7 @@ class RosterParserUtils {
  final List<String> result = [];
 
  // Prefix stripping regexes
- final numberingRegex = RegExp(r'^\s*(?:\(?[0-9٠-٩۰-۹]+\)?[.\-/)]?|[•*+#\[\]-])\s*');
+ final numberingRegex = RegExp(r'^\s*(?:\(?[0-9٠-٩۰-۹]+\)?[.\-/)]?\s+|\(?[0-9٠-٩۰-۹]+\)?[.\-/)]\s*|[•*+#\[\]-]\s*)');
  final captainPrefixRegex = RegExp(r'^(?:كابتن|اللاعب\s*:?|لاعب\s*:?)\s*', caseSensitive: false);
 
  for (var line in lines) {
@@ -39,6 +39,8 @@ class RosterParserUtils {
  // 4. Clean duplicate spaces inside name
  clean = clean.replaceAll(RegExp(r'\s+'), ' ');
 
+ // Never import pure numbering or emoji as a player name.
+ if (!RegExp(r'[\p{L}]', unicode: true).hasMatch(clean)) continue;
  if (clean.length >= 2 && !namesSet.contains(clean.toLowerCase())) {
  namesSet.add(clean.toLowerCase());
  result.add(clean);
