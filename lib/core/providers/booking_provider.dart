@@ -443,21 +443,21 @@ class BookingProvider with ChangeNotifier {
         review: review,
       );
 
-      if (success) {
-        // The result RPC has committed. Refresh cached booking state without
-        // turning a subsequent read failure into a failed result submission.
-        try {
-          final updated = await _repository.getBookingByIdStrict(bookingId);
-          if (updated != null) {
-            BookingListModifier.updateBooking(_userBookings, updated);
-            if (_currentBooking?.id == bookingId) {
-              _currentBooking = updated;
-            }
+      // A disputed submission may also change the server-side booking state
+      // even when the RPC reports no finalized result. Refresh on both paths.
+      // A read failure must never change the original submission outcome.
+      try {
+        final updated = await _repository.getBookingByIdStrict(bookingId);
+        if (updated != null) {
+          BookingListModifier.updateBooking(_userBookings, updated);
+          if (_currentBooking?.id == bookingId) {
+            _currentBooking = updated;
           }
-        } catch (refreshError) {
-          debugPrint('Match result saved but booking refresh failed: $refreshError');
         }
-      } else {
+      } catch (refreshError) {
+        debugPrint('Match result booking refresh failed: $refreshError');
+      }
+      if (!success) {
         _errorMessage = 'Failed to submit result or results do not match.';
       }
       notifyListeners();
