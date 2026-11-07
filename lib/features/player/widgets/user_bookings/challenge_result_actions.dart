@@ -235,7 +235,7 @@ class ChallengeResultActions extends StatelessWidget {
                 ),
               ],
             ),
-            if (!submittedByMe) ...[
+            if (!submittedByMe && !booking.endTime.isAfter(VSPTimeService.now)) ...[
               const SizedBox(height: VSPSpacing.xs),
               Text(
                 isArabic
