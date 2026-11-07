@@ -2,9 +2,18 @@
 
 > Baseline established 2026-11-07. This is a **new verification baseline**: previously delivered code is not counted as complete until evidence and current tests are linked. Existing work must be reused, not duplicated.
 
-> Scope: branch `uxlp-44-implementation`, staging first. Do not merge main or deploy/alter production without explicit specific approval. Preserve data and stadium-subscription business model (no per-booking commission).
+> Scope: branch `uxlp-44-implementation`, staging first. The owner explicitly authorized merging to `main` on 2026-11-07, **conditional on technical correctness**; merge only after current CI, Android E2E, conflict resolution and release checks pass. Production database changes require separate verified deployment plan and backups. Preserve data and stadium-subscription business model (no per-booking commission).
 
 **Verified complete: 0 / 80. Remaining: 80 / 80.**
+
+## Current execution priorities and blockers (2026-11-07)
+
+- **P0 release gate:** #57 Flutter CI, #58 Android E2E, #56 E2E matrix and PR #35 merge conflicts. At the latest check, Flutter Analyze and architecture regression passed, but Flutter tests and Android onboarding/login smoke were still `in_progress`; **no merge is justified yet**. Branch comparison `main...uxlp-44-implementation`: diverged, 2874 commits ahead, 2 behind; inspect conflicts and latest results before merge.
+- **P0 financial/security:** #26–31 bookings/payments and #76–80 RLS/RPC security. Four views hardened on staging; nine privileged RPC caller guards fixed, but real JWT positive and cross-account tests outstanding. No production schema changes yet.
+- **P1 unblock user journeys:** #34 challenge accept/reject lifecycle, #33 team invite accept/reject, #25 subscription entitlements, #23 owner booking management, #42 admin result approval. Existing E2E report confirms challenge and team invitation journeys failed, and Paymob sandbox remains a blocker.
+- **P1 account and stadium:** #11, #19–22, #24; owner registration and stadium listing partially exercised; email verification and full device flows blocked.
+- **P2 growth and UI:** #01–10, #50–55, notifications #45–49, competitions #38–44. Reuse existing implementation and avoid duplicating work.
+- **Evidence:** `docs/E2E_24_JOURNEYS_EXECUTION.md`, `docs/security/STAGING_1V1_ADMIN_GUARDS_2026-11-07.md`, PR #35 and issues #37/#38. The 24 journeys baseline is 4 passed / 3 failed / 14 blocked / 3 not run, and is not a release pass.
 
 ## Completion criteria
 - Code or schema changes reviewed and tested, with commit/CI/test evidence and relevant staging behavior verified.
