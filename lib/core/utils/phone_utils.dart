@@ -30,7 +30,7 @@ class PhoneUtils {
 
   /// Converts a phone number to international E.164 format (e.g. +201012345678)
   static String toE164(String phone, {String defaultCountryCode = '20'}) {
-    final cleaned = phone.replaceAll(RegExp(r'\D'), '');
+    final cleaned = _convertEasternToWesternDigits(phone).replaceAll(RegExp(r'\D'), '');
     if (cleaned.isEmpty) return '';
 
     if (cleaned.startsWith('00$defaultCountryCode')) {
