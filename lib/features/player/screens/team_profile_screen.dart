@@ -28,7 +28,7 @@ class TeamProfileScreen extends StatefulWidget {
     super.key,
     this.team,
     this.teamId,
-  });
+  }) : assert(team != null || (teamId != null && teamId != ''));
 
   @override
   State<TeamProfileScreen> createState() => _TeamProfileScreenState();
@@ -71,7 +71,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     super.didUpdateWidget(oldWidget);
     final previousId = oldWidget.team?.id ?? oldWidget.teamId;
     final currentId = widget.team?.id ?? widget.teamId;
-    if (previousId == currentId) return;
+    if (previousId == currentId && oldWidget.team == widget.team) return;
     _rosterRequestVersion++;
     _headToHeadRequestVersion++;
     _championRequestVersion++;
@@ -149,6 +149,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
 
   Future<void> _loadTeamAndMembers() async {
     final requestedTeamId = widget.teamId!;
+    if (!mounted) return;
     setState(() {
       _isLoadingTeam = true;
       _hasTeamLoadError = false;
@@ -194,8 +195,9 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
           .where((id) => id.isNotEmpty)
           .toSet()
           .toList();
+      final captainId = team.captainId;
       final memberIds = currentIds
-          .where((id) => id.isNotEmpty && id != team.captainId)
+          .where((id) => id.isNotEmpty && id != captainId)
           .toSet()
           .toList();
       final members = memberIds.isEmpty
