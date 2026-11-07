@@ -33,7 +33,9 @@ class PhoneUtils {
     final cleaned = phone.replaceAll(RegExp(r'\D'), '');
     if (cleaned.isEmpty) return '';
 
-    if (cleaned.startsWith(defaultCountryCode)) {
+    if (cleaned.startsWith('00$defaultCountryCode')) {
+      return '+${cleaned.substring(2)}';
+    } else if (cleaned.startsWith(defaultCountryCode)) {
       return '+$cleaned';
     } else if (cleaned.startsWith('0')) {
       return '+$defaultCountryCode${cleaned.substring(1)}';
