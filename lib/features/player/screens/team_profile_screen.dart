@@ -50,6 +50,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   int _rosterRequestVersion = 0;
   int _headToHeadRequestVersion = 0;
   int _championRequestVersion = 0;
+  int _teamRequestVersion = 0;
 
   Team get team => widget.team ?? _fetchedTeam!;
 
@@ -75,6 +76,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     final currentId = widget.team?.id ?? widget.teamId;
     if (previousId == currentId && oldWidget.team == widget.team) return;
     _rosterRequestVersion++;
+    _teamRequestVersion++;
     _headToHeadRequestVersion++;
     _championRequestVersion++;
     _teamMembers.clear();
@@ -163,6 +165,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
 
   Future<void> _loadTeamAndMembers() async {
     final requestedTeamId = widget.teamId!;
+    final requestVersion = ++_teamRequestVersion;
     if (!mounted) return;
     setState(() {
       _isLoadingTeam = true;
@@ -170,7 +173,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     });
     try {
       final t = await TeamRepository().getTeamStrict(requestedTeamId);
-      if (mounted && (widget.team?.id ?? widget.teamId) == requestedTeamId) {
+      if (mounted && requestVersion == _teamRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == requestedTeamId) {
         setState(() {
           _fetchedTeam = t;
           _isLoadingTeam = false;
