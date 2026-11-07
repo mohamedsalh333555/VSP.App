@@ -17,36 +17,42 @@ class TeamAchievementBadges extends StatelessWidget {
       label: isArabic
           ? '${summary.stadiumChampionships} بطولات ملاعب رسمية، ${summary.oneVsOneChampionPlayers} أبطال واحد ضد واحد'
           : '${summary.stadiumChampionships} verified stadium championships, ${summary.oneVsOneChampionPlayers} one versus one champion players',
-      child: Wrap(
+      child: LayoutBuilder(
+        builder: (context, constraints) => Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
           _badge(
             context,
+            maxWidth: constraints.maxWidth,
             icon: Iconsax.cup_copy,
             count: summary.stadiumChampionships,
             label: isArabic ? 'بطولات الملاعب' : 'Stadium titles',
           ),
           _badge(
             context,
+            maxWidth: constraints.maxWidth,
             icon: Iconsax.medal_copy,
             count: summary.oneVsOneChampionPlayers,
             label: isArabic ? 'أبطال 1 ضد 1' : '1v1 champions',
             suffix: '×',
           ),
         ],
+        ),
       ),
     );
   }
 
   Widget _badge(
     BuildContext context, {
+    required double maxWidth,
     required IconData icon,
     required int count,
     required String label,
     String suffix = '',
   }) {
     return Container(
+      constraints: BoxConstraints(maxWidth: maxWidth),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         color: VSPColors.surfaceAlt,
@@ -60,7 +66,14 @@ class TeamAchievementBadges extends StatelessWidget {
           const SizedBox(width: 6),
           Text('$count$suffix', style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(width: 6),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ),
         ],
       ),
     );
