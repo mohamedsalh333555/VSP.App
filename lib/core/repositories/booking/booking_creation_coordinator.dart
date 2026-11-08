@@ -112,7 +112,9 @@ class BookingCreationCoordinator {
       }
 
       if (rpcResult is Map && rpcResult['success'] == false) {
-        final err = rpcResult['error']?.toString() ?? '';
+        // Atomic RPCs return either `code` or legacy `error`.
+        // Use both so the user sees the correct conflict/challenge error.
+        final err = (rpcResult['code'] ?? rpcResult['error'])?.toString() ?? '';
         if (err == 'CHALLENGE_CODE_INVALID_OR_USED') {
           throw Exception('كود التحدي غير صالح أو تم استخدامه من قبل.');
         } else if (err == 'CALLER_NOT_A_CAPTAIN') {
@@ -147,7 +149,12 @@ class BookingCreationCoordinator {
         throw Exception(errorMessage);
       }
 
-      final bookingId = (rpcResult is Map) ? rpcResult['booking_id']?.toString() : null;
+      // Never treat an explicitly unsuccessful or malformed RPC response as
+      // a booking, even when it accidentally includes an identifier.
+      if (rpcResult is! Map || rpcResult['success'] != true) {
+        throw Exception('تعذر تأكيد الحجز من الخادم. يرجى المحاولة لاحقاً.');
+      }
+      final bookingId = rpcResult['booking_id']?.toString();
       if (bookingId == null || bookingId.trim().isEmpty || bookingId == 'null') {
         throw Exception('فشل تسجيل الحجز في قاعدة البيانات.');
       }
