@@ -131,7 +131,11 @@ class BookingSlotCalculator {
     required Stadium stadium,
     required DateTime selectedDate,
   }) {
-    int startMin = _parseTimeToMinutes(slotKey);
+    final parsedSlot = AppDateFormatter.tryParseTimeToMinutes(slotKey);
+    if (parsedSlot == null) {
+      throw FormatException('Invalid booking slot time');
+    }
+    final startMin = parsedSlot;
     String openStr = '';
     String closeStr = '';
     final features = stadium.features;
