@@ -361,7 +361,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         !bookingNeedsDeposit ||
         bookingDepositAmount <= 0;
 
-    final paymobUrl = await PaymentCheckoutService.requestPaymobCheckoutUrl(
+    String? paymobUrl;
+    try {
+      paymobUrl = await PaymentCheckoutService.requestPaymobCheckoutUrl(
       draft: paymentDraft,
       selectedMethod: _selectedMethod,
       isTournamentPayment: widget.isTournamentPayment,
@@ -371,6 +373,25 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       userPhone: userPhone,
       isFullPayment: isFullPayment,
     );
+
+    } catch (error) {
+      debugPrint('Paymob checkout initialization failed: $error');
+      if (!mounted || _hasAccountChanged ||
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+        return;
+      }
+      _coordinator.cancelWebhookTimeout();
+      setState(() {
+        _isLoading = false;
+        _isAwaitingWebhook = false;
+      });
+      final kind = PaymentFailureClassifier.classify(message: error.toString());
+      VSPFeedback.showError(
+        context,
+        kind.userMessage(arabic: Localizations.localeOf(context).languageCode == 'ar'),
+      );
+      return;
+    }
 
     if (!mounted || _hasAccountChanged ||
         Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
