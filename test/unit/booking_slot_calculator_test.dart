@@ -92,7 +92,8 @@ void main() {
     });
 
     test('calculateNewSelectedSlots handles single selection and toggle-off', () {
-      final date = DateTime(2026, 9, 15);
+      // Selection rejects past slots; use a future date for this toggle test.
+      final date = DateTime(2030, 9, 15);
       final slots = <TimeSlotItem>[
         TimeSlotItem(startTime: '04:00 PM', endTime: '04:30 PM', key: '16:00:00', startMinutes: 960),
         TimeSlotItem(startTime: '04:30 PM', endTime: '05:00 PM', key: '16:30:00', startMinutes: 990),
