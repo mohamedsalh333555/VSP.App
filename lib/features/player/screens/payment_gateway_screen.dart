@@ -423,7 +423,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => PaymobWebViewScreen(
-              initialUrl: paymobUrl,
+              initialUrl: paymobUrl!,
               title: isArabic ? 'بوابة الدفع الإلكتروني' : 'Secure Online Payment',
               bookingId: _booking?.id,
             ),
