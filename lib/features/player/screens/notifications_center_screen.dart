@@ -366,7 +366,8 @@ class _NotificationCard extends StatelessWidget {
                       height: 44,
                       onPressed: () {
                         _markAsReadBeforeNavigation(context).then((_) {
-                          if (context.mounted) {
+                          if (context.mounted &&
+                              context.read<AuthProvider>().currentUser?.id == userId) {
                             NotificationUiHelper.navigateToBooking(context, notification.bookingId!);
                           }
                         });
@@ -388,7 +389,9 @@ class _NotificationCard extends StatelessWidget {
       userId,
       notification.id,
     );
-    if (!context.mounted || marked) return;
+    if (!context.mounted ||
+        context.read<AuthProvider>().currentUser?.id != userId ||
+        marked) return;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -408,7 +411,8 @@ class _NotificationCard extends StatelessWidget {
         userId,
         notification.id,
       );
-      if (!context.mounted) return;
+      if (!context.mounted ||
+          context.read<AuthProvider>().currentUser?.id != userId) return;
       if (!marked) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -424,6 +428,9 @@ class _NotificationCard extends StatelessWidget {
       }
     }
 
+    // Even an already-read item can be tapped during an account switch.
+    if (!context.mounted ||
+        context.read<AuthProvider>().currentUser?.id != userId) return;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final type = notification.type.toLowerCase();
     final bookingId = notification.bookingId;
