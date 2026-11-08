@@ -5,7 +5,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **30 documented as completed; 590 not yet accepted**. This is NOT a claim that all 597 are untouched.
+- Current inventory: **32 documented as completed; 588 not yet accepted**. This is NOT a claim that all 597 are untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
@@ -23,7 +23,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 | 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
 | 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
 
-**Current audited counter: 30 / 620 completed, 590 remaining.** Tasks 26.07, 27.01, 27.02, 28.01, 28.02, 29.01 and 30.01 are marked delivered; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
+**Current audited counter: 32 / 620 completed, 588 remaining.** Tasks 26.07, 27.01, 27.02, 28.01, 28.02, 29.01, 30.01, 31.01 and 34.01 are marked delivered; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
 
 ## Existing implementation evidence — not yet full-task completion
 
@@ -128,6 +128,16 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `07032bb`: task checklist updated.
 
 **Accounting:** 1 scoped documentation task closed, **30/620 completed, 590 remaining**. Payment webhook runtime and retry behavior, integration tests and server deployments are unverified. No database schema, permissions, payment transaction logic or main branch changed.
+
+## Batch — checkout failure UX, challenge states, refund rules
+
+- Payment gateway screen now uses `PaymentFailureKind` bilingual, reconciliation-safe messages for unknown WebView outcomes and gateway unavailability, and classifies Paymob launch exceptions (`46ac5d4` plus preceding screen commit). **29.02 in progress** until all payment failure surfaces and user journeys are checked.
+- `89f1a8c`: source-contract test for payment failure messages (written, not executed).
+- `9e4f0e6`: [34.01 challenge status inventory](VSP_CHALLENGE_STATUS_INVENTORY_34_01.md) from checked-in SQL constraint, distinguishing challenge, booking, invitation and result states. **34.01 closed**.
+- `27dc7b9`: [31.01 refund rules](VSP_REFUND_RULES_31_01.md) from the server Edge Function: 6-hour cutoff, 20-minute grace, ownership, atomic refund claim, pending/manual-review/duplicate handling. **31.01 closed**.
+- `1e6f25e`, `e17c701`: task checklist updates.
+
+**Accounting:** 2 scoped documentation tasks closed, **32/620 completed, 588 remaining**. Client code not live-verified; no schema, payment gateway transaction logic, permissions or main branch changed.
 
 ## Next execution queue
 
