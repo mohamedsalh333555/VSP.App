@@ -28,7 +28,15 @@ class VSPPositionSelector extends StatelessWidget {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
     return LayoutBuilder(
-      builder: (context, constraints) => Wrap(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        final useTwoColumns = availableWidth.isFinite && availableWidth >= 240;
+        final itemWidth = !availableWidth.isFinite
+            ? 160.0
+            : useTwoColumns
+                ? (availableWidth - VSPDSSpacing.xxs) / 2
+                : availableWidth;
+        return Wrap(
       spacing: VSPDSSpacing.xxs,
       runSpacing: VSPDSSpacing.xxs,
       children: positions.map((pos) {
@@ -37,9 +45,7 @@ class VSPPositionSelector extends StatelessWidget {
         final isSelected = selectedPosition == code;
 
         return SizedBox(
-          width: constraints.maxWidth.isFinite
-              ? (constraints.maxWidth - VSPDSSpacing.xxs) / 2
-              : 160,
+          width: itemWidth,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.xxs),
             child: AnimatedContainer(
@@ -110,7 +116,8 @@ class VSPPositionSelector extends StatelessWidget {
           ),
         );
       }).toList(),
-      ),
+        );
+      },
     );
   }
 }
