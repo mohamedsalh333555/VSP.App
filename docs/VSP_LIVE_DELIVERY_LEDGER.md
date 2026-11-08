@@ -311,6 +311,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - The restored-draft deposit overflow fix `be7c9ea` and regression `6e8f129` remain committed.
 - Full suite on latest commit requires fresh CI. **Count stays 58/620 complete, 562 pending**, pending end-to-end task acceptance; no production schema/payment or main merge.
 
+## Restored booking capacity validation — 2026-11-08
+
+- `4dc2207`: `BookingDraft.fromMap` rejects invalid player/team capacity (nonpositive players per team, nonpositive field capacity, negative current players, or current players exceeding field capacity). The checks mirror existing draft validation before restored data can proceed toward checkout.
+- `d4d25e4`: unit regression tests cover four invalid count/capacity cases and valid restoration.
+- Latest [Flutter CI 42516946511](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42516946511) was pending at inspection. No claim of passing tests on these commits yet.
+- **58/620 completed, 562 remaining**. Booking lifecycle end-to-end tasks remain open. No main merge or production database/payment changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
