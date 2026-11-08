@@ -198,7 +198,7 @@ class BookingMapper {
           data['resultSubmittedByTeamId'] ??
           data['result_submitted_by_team_id'],
       matchResultStatus: MatchResultStatus.values.firstWhere(
-        (e) => e.name == matchResultStatusVal,
+        (e) => e.name == matchResultStatusVal?.toString().trim(),
         orElse: () => MatchResultStatus.noResult,
       ),
       pendingOutcome: pendingOutcomeVal != null
