@@ -202,12 +202,16 @@ class BookingSlotCalculator {
       throw FormatException('Booking slot outside stadium operating hours');
     }
 
-    DateTime date = selectedDate;
-    final bool isOvernightShift = (closeMin <= openMin && openMin > 0);
-    if (isOvernightShift && startMin < openMin) {
-      date = date.add(const Duration(days: 1));
-    }
-    return DateTime(date.year, date.month, date.day, startMin ~/ 60, startMin % 60);
+    // Construct the next *calendar* day rather than adding 24 elapsed hours:
+    // Egypt daylight-saving transitions can make a local day 23 or 25 hours.
+    final nextDay = overnight && startMin < openMin ? 1 : 0;
+    return DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day + nextDay,
+      startMin ~/ 60,
+      startMin % 60,
+    );
   }
 
   static bool isSlotBooked({
