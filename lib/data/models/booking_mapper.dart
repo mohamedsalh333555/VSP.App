@@ -22,6 +22,15 @@ class BookingMapper {
     return fallback;
   }
 
+  static MatchOutcome? _parseMatchOutcome(dynamic value) {
+    final normalized = value?.toString().trim();
+    for (final outcome in MatchOutcome.values) {
+      if (outcome.name == normalized) return outcome;
+    }
+    VSPLogger.w('BookingMapper: unknown match outcome "$value"; ignoring invalid value.');
+    return null;
+  }
+
   /// Deserializes database record map into a strongly typed Booking object.
   static Booking fromFirestore(Map<String, dynamic> data, String id) {
     final startTimeVal = data['startTime'] ?? data['start_time'];
@@ -187,10 +196,10 @@ class BookingMapper {
         orElse: () => MatchResultStatus.noResult,
       ),
       pendingOutcome: pendingOutcomeVal != null
-          ? MatchOutcome.values.firstWhere((e) => e.name == pendingOutcomeVal)
+          ? _parseMatchOutcome(pendingOutcomeVal)
           : null,
       finalOutcome: finalOutcomeVal != null
-          ? MatchOutcome.values.firstWhere((e) => e.name == finalOutcomeVal)
+          ? _parseMatchOutcome(finalOutcomeVal)
           : null,
       requiresAdminIntervention:
           data['requiresAdminIntervention'] ??
