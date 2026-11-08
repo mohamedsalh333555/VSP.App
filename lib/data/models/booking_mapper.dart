@@ -182,12 +182,11 @@ class BookingMapper {
         if (matched.isNotEmpty) {
           return matched.first;
         }
-        // [H-06]: Unknown status logged with telemetry and safely defaulted to pending.
-        VSPLogger.w(
-          '[H-06] BookingMapper: Booking "$id" has unknown status "$statusVal". '
-          'Defaulting to BookingStatus.pending per Stage 11 state consistency invariant.',
+        // An unknown server state must not be represented as an unpaid draft:
+        // that could expose retry/cancellation actions for a paid reservation.
+        throw FormatException(
+          'Booking "$id" has unsupported status: $statusVal',
         );
-        return BookingStatus.pending;
       }(),
       createdByUserId:
           data['createdByUserId'] ??
