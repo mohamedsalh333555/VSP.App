@@ -67,7 +67,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _isLoading = false;
       return;
     }
-    final prefs = await SharedPreferences.getInstance();
+    SharedPreferences prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      // Storage may be unavailable on the device; keep safe defaults
+      // and let the user reopen settings later rather than spin forever.
+      if (!mounted || _settingsUserId != userId) return;
+      setState(() => _isLoading = false);
+      return;
+    }
     // A slow read for the previous account must not overwrite the next
     // account's settings after logout or account switching.
     if (!mounted || _settingsUserId != userId) return;
@@ -90,10 +99,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _saveSetting(String key, bool value) async {
     final userId = _settingsUserId;
     if (userId == null || userId.isEmpty) return;
-    final prefs = await SharedPreferences.getInstance();
-    // Do not persist a delayed toggle under a different account.
-    if (!mounted || _settingsUserId != userId) return;
-    await prefs.setBool(_prefKey(userId, key), value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Do not persist a delayed toggle under a different account.
+      if (!mounted || _settingsUserId != userId) return;
+      final saved = await prefs.setBool(_prefKey(userId, key), value);
+      if (!saved && mounted && _settingsUserId == userId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? 'تعذر حفظ تفضيل الإشعارات.'
+                : 'Could not save notification preference.',
+          )),
+        );
+      }
+    } catch (_) {
+      if (!mounted || _settingsUserId != userId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'تعذر حفظ تفضيل الإشعارات.'
+              : 'Could not save notification preference.',
+        )),
+      );
+    }
   }
 
   @override
