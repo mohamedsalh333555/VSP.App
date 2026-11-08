@@ -235,20 +235,31 @@ class AuthProvider with ChangeNotifier {
     _dataFetchError = false;
     notifyListeners();
 
-    final model = await _c.sessionSync.retryDataFetch(user.id);
-    if (requestGeneration != _userFetchGeneration ||
-        _supabaseUser?.id != user.id) {
-      return;
-    }
+    try {
+      final model = await _c.sessionSync.retryDataFetch(user.id);
+      if (requestGeneration != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return;
+      }
 
-    _isLoading = false;
-    if (model != null && model.uid == user.id) {
-      _userModel = model;
-      _dataFetchError = false;
-    } else {
-      _dataFetchError = true;
+      _isLoading = false;
+      if (model != null && model.uid == user.id) {
+        _userModel = model;
+        _dataFetchError = false;
+      } else {
+        _dataFetchError = true;
+      }
+      notifyListeners();
+    } catch (_) {
+      // Only the active request may change the visible loading/error state.
+      if (requestGeneration == _userFetchGeneration &&
+          _supabaseUser?.id == user.id) {
+        _isLoading = false;
+        _dataFetchError = true;
+        notifyListeners();
+      }
+      rethrow;
     }
-    notifyListeners();
   }
 
   void setUserType(String type) {
