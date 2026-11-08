@@ -272,6 +272,14 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `45be581` briefly changed notification mark-all return semantics; `3889a5e` restored correct idempotent behavior for an empty inbox before the final verified closure. This was not counted as a completed subtask.
 - **Progress: 55/620 completed, 565 remaining.** The successful run predates the subsequent notification and documentation commits; new code still requires a fresh green run. No production schema, RLS, payments, or main merge.
 
+## Verified Android smoke closure — 2026-11-08
+
+- Latest validated branch commit `df76e5e`: [Flutter CI 42489433328](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42489433328) **success** and [Android E2E Smoke 42489433379](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42489433379) **success**.
+- `docs/VSP_ANDROID_E2E_SMOKE_VERIFICATION_58.md` (`5cdf59a`) inventories actual assertions, repeatable Android emulator setup and run/job evidence. `5eecc96` closes **58.01, 58.02, 58.07**.
+- Important limitation: Android smoke covers **welcome, language toggle, onboarding Skip and login form navigation**, **not** successful login, booking, payments, team challenges, or invitation acceptance. 58.03–58.06 and 58.08 remain open.
+- Attempted read of GitHub main branch protection returned **403 Resource not accessible by integration**. Thus 57.07 remains open; do not assume CI is required for merging.
+- **Progress: 58/620 completed, 562 remaining.** New commits after `df76e5e` need fresh green CI before release readiness. No main merge or production database/payment change.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
