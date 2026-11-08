@@ -99,16 +99,13 @@ class NotificationRepository {
   Future<bool> markAllAsRead(String userId) async {
     if (userId.trim().isEmpty) return false;
     try {
-      // A successful query is not evidence that any row was changed.
-      // Returning false for an empty update lets the caller avoid showing a
-      // misleading "marked as read" success message.
-      final updated = await _supabase
+      // Mark-all is idempotent: zero unread rows is already the desired state.
+      await _supabase
           .from('notifications')
           .update({'is_read': true})
           .eq('user_id', userId)
-          .eq('is_read', false)
-          .select('id');
-      return updated.isNotEmpty;
+          .eq('is_read', false);
+      return true;
     } catch (e) {
       debugPrint('Error marking all notifications as read: $e');
       return false;
