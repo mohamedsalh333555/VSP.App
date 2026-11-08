@@ -5,7 +5,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **48 documented as completed; 572 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
+- Current inventory: **49 documented as completed; 571 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
@@ -23,7 +23,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 | 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
 | 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
 
-**Current audited counter: 48 / 620 completed, 572 remaining.** Source-audited inventory/decision tasks 67.01, 67.03, 67.05, 71.01 and 72.01 are now closed in addition to the previously accepted 38; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
+**Current audited counter: 49 / 620 completed, 571 remaining.** Source-audited inventory/decision tasks 67.01, 67.03, 67.05, 71.01 and 72.01 are now closed in addition to the previously accepted 38; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
 
 ## Existing implementation evidence — not yet full-task completion
 
@@ -226,6 +226,17 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `bf0a7b8`: [matchup fee RPC dependencies and no-fee product decision](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md); closes **72.02 and 72.06**. No deployed RPC or financial changes.
 - `5d51a08`: update canonical task breakdown.
 - **Accounting: 2 source-scoped tasks closed; 48/620 completed, 572 remaining.** Multiple real client fixes and regression tests committed. Tests not executed (Flutter/Dart unavailable in this execution environment); no staging/production DB changes or main merge.
+
+## Batch — notification account-safe routing and storage resilience; position registry inventory
+
+- `2826a1d`: block stale-account navigation and feedback after notification read updates; challenge details action also verifies current user before routing.
+- `f6ab703`: source regression tests for account-safe notification taps.
+- `299e01b`: recover notification settings screen from unavailable SharedPreferences and surface save failures rather than spinning indefinitely or silently claiming persistence.
+- `dc8435e`, `22ce5ce`: lifecycle contract adjustment and storage failure regression tests.
+- `f8b31ac`: [13.01 sport position registry inventory](VSP_PLAYER_POSITIONS_INVENTORY_13_01.md), documenting supported codes/defaults and canonical selector.
+- `b1ae5eb`: close **13.01** in canonical checklist.
+- `c5cd2e2`: unit tests for position registry/defaults, written but not executed.
+- **Accounting: 1 source-inventory task closed; 49/620 completed, 571 remaining.** Real notification fixes and tests committed; tests not executed. No live Supabase schema, RLS, payments or main branch changes.
 
 ## Next execution queue
 
