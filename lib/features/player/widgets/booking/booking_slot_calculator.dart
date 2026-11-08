@@ -305,13 +305,12 @@ class BookingSlotCalculator {
         tempRange.add(checkItem.key);
       }
 
-      if (hasInvalidSlot) {
-        selectedTimeSlots.clear();
-        selectedTimeSlots.add(slotKey);
-      } else {
+      if (!hasInvalidSlot) {
         selectedTimeSlots.clear();
         selectedTimeSlots.addAll(tempRange);
       }
+      // Preserve the previous valid selection when a range crosses a booked,
+      // expired, unavailable or non-contiguous slot.
     } else {
       selectedTimeSlots.clear();
       selectedTimeSlots.add(slotKey);
