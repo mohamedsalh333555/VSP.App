@@ -41,6 +41,11 @@ class BookingSlotCalculator {
       if (endMinutes <= startMinutes) {
         endMinutes += 24 * 60;
       }
+      // Avoid a 24-hour schedule producing a repeated midnight key. A slot
+      // key is a clock time and cannot identify two different calendar days.
+      if (endMinutes - startMinutes > 24 * 60) {
+        return const <TimeSlotItem>[];
+      }
 
       int getCumulativeMinutes(String timeStr) {
         if (timeStr.trim().isEmpty) return -1;
