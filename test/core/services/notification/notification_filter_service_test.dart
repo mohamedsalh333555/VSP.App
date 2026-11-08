@@ -44,6 +44,45 @@ void main() {
       expect(await NotificationFilterService.shouldShowNotification('booking_confirmed', prefs: prefs), isTrue);
     });
 
+    test('deep links accept legacy snake-case IDs and trim whitespace', () {
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({'booking_id': '  b-123  '}),
+        '/match/b-123',
+      );
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({'team_id': 't_456'}),
+        '/team/t_456',
+      );
+    });
+
+    test('deep links reject route injection, empty IDs and malformed types', () {
+      for (final unsafe in <dynamic>[
+        '../admin',
+        '/admin',
+        'a/b',
+        'a%2Fb',
+        'id?next=admin',
+        'id#fragment',
+        'a b',
+        '  ',
+        'x' * 129,
+        123,
+      ]) {
+        expect(
+          NotificationFilterService.resolveDeepLinkRoute({'bookingId': unsafe}),
+          '/notifications',
+          reason: 'Unsafe booking ID: $unsafe',
+        );
+      }
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({
+          'bookingId': '../admin',
+          'team_id': 'safe_team',
+        }),
+        '/team/safe_team',
+      );
+    });
+
     test('resolveDeepLinkRoute returns booking, team, or notification center route', () {
       expect(
         NotificationFilterService.resolveDeepLinkRoute({'bookingId': 'b-123'}),
