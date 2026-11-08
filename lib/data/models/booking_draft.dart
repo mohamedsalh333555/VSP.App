@@ -182,6 +182,16 @@ class BookingDraft {
     );
   }
 
+  /// Use this at submission boundaries to reject invalid drafts before
+  /// serialization. The server must still enforce its own invariants.
+  Map<String, dynamic> toValidatedMap() {
+    final errors = validate();
+    if (errors.isNotEmpty) {
+      throw FormatException('Invalid booking draft: ${errors.join(', ')}');
+    }
+    return toMap();
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'stadiumId': stadiumId,
