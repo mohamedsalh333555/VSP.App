@@ -5,7 +5,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **45 documented as completed; 575 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
+- Current inventory: **46 documented as completed; 574 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
@@ -23,7 +23,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 | 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
 | 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
 
-**Current audited counter: 45 / 620 completed, 575 remaining.** Source-audited inventory/decision tasks 67.01, 67.03, 67.05, 71.01 and 72.01 are now closed in addition to the previously accepted 38; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
+**Current audited counter: 46 / 620 completed, 574 remaining.** Source-audited inventory/decision tasks 67.01, 67.03, 67.05, 71.01 and 72.01 are now closed in addition to the previously accepted 38; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
 
 ## Existing implementation evidence — not yet full-task completion
 
@@ -201,6 +201,18 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `6f7bcce`: source inventory of `vsp_1v1_tournament_players` and locked legacy `challenge_results`; close **69.01** only. 70.01 remains open because legacy primary key and references were not confirmed.
 - `6be9e46`: update canonical checklist.
 - **Accounting:** 2 source-scoped documentation tasks closed, **45/620 completed, 575 remaining**. Tests not executed; no database migration, RLS change, fee change or main merge.
+
+## Batch — notification legacy stability, lifecycle, recipient guards and delivery key
+
+- `b839022`: `AppNotification.fromFirestore` accepts direct snake-case legacy records, parses read flags safely and uses stable epoch fallback for malformed or missing dates rather than crashing a notification list.
+- `5a37993`: three additional unit cases for snake-case, malformed and missing timestamps (not run).
+- `82c9542`: prevent `setState` after disposal while loading notification preferences.
+- `146c02c`: source-level lifecycle regression test (not run).
+- `92761e9`: reject blank user ID and notification ID before send, restore, mark-read, mark-all or delete Supabase writes.
+- `a6db524`: source-level identity guard regression test (not run).
+- `17eebe2`: [48.01 notification dedup key](VSP_NOTIFICATION_DELIVERY_DEDUP_KEY_48_01.md) specifies logical notification ID and per-channel/device delivery identity; does not claim server dedup implemented.
+- `6da6c42`: close **48.01** in task breakdown.
+- **Accounting: 1 scoped specification task closed; 46/620 complete, 574 remaining.** Three functional client fixes and three test updates, tests not run; no production schema, RLS, FCM queue or main merge.
 
 ## Next execution queue
 
