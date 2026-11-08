@@ -863,11 +863,11 @@
 ### 72 — matchup_extra_team_fee migration sequence (7)
 
 - [x] 72.01 — حصر migrations رسوم الفريق الإضافي — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
-- [ ] 72.02 — تحديد الاعتماديات
+- [x] 72.02 — تحديد الاعتماديات — [اعتماديات وحد الفرق](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md)، commit `bf0a7b8`
 - [ ] 72.03 — مراجعة ترتيب التنفيذ
 - [ ] 72.04 — اختبار إعادة البناء
 - [ ] 72.05 — معالجة التباين
-- [ ] 72.06 — توثيق القرار
+- [x] 72.06 — توثيق القرار — [اعتماديات وحد الفرق](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md)، commit `bf0a7b8`
 - [ ] 72.07 — اختبار rollback آمن لترتيب migrations الخاص بالرسوم
 
 ### 73 — Leaked password protection (6)
