@@ -234,14 +234,21 @@ class BookingDraft {
 
   factory BookingDraft.fromMap(Map<String, dynamic> map) {
     BookingType parsedType = BookingType.personal;
-    final rawType = map['bookingType']?.toString();
+    final rawType = map['bookingType'] ?? map['booking_type'];
     if (rawType != null) {
-      for (final val in BookingType.values) {
-        if (val.name == rawType || val.toString() == rawType) {
-          parsedType = val;
+      final normalized = rawType.toString().toLowerCase()
+          .replaceAll('bookingtype.', '')
+          .replaceAll('_', '')
+          .replaceAll('-', '')
+          .replaceAll(' ', '');
+      for (final value in BookingType.values) {
+        if (value.name.toLowerCase() == normalized) {
+          parsedType = value;
           break;
         }
       }
+      if (normalized == 'openjoinmatch') parsedType = BookingType.openJoin;
+      if (normalized == 'challengematch') parsedType = BookingType.challenge;
     }
 
     // A restored draft must never silently become a booking for "now".
