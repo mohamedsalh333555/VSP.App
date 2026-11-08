@@ -23,24 +23,31 @@ class AppNotification {
  AppNotification.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
 
  factory AppNotification.fromFirestore(Map<String, dynamic> data, String id) {
- return AppNotification(
- id: id,
- title: data['title'] ?? '',
- // Historical notifications used `message` instead of `body`.
- // Preserve the displayed text without mutating the database.
- body: (data['body']?.toString().trim().isNotEmpty == true
-     ? data['body']
-     : data['message'])?.toString() ?? '',
- type: data['type'] ?? 'info',
- isRead: data['isRead'] ?? false,
- createdAt: data['createdAt'] != null 
- ? (data['createdAt'] is DateTime 
- ? data['createdAt'] 
- : DateTime.parse(data['createdAt'].toString()))
- : DateTime.now(),
- bookingId: data['bookingId'],
- metadata: data['metadata'] is Map<String, dynamic> ? Map<String, dynamic>.from(data['metadata']) : null,
- );
+   final rawDate = data['createdAt'] ?? data['created_at'];
+   final parsedDate = rawDate is DateTime
+       ? rawDate
+       : DateTime.tryParse(rawDate?.toString() ?? '');
+   final rawRead = data['isRead'] ?? data['is_read'];
+   final read = rawRead == true ||
+       rawRead == 1 ||
+       rawRead?.toString().toLowerCase() == 'true';
+   final rawMetadata = data['metadata'];
+   return AppNotification(
+     id: id,
+     title: data['title']?.toString() ?? '',
+     // Historical notifications used message instead of body.
+     body: (data['body']?.toString().trim().isNotEmpty == true
+         ? data['body']
+         : data['message'])?.toString() ?? '',
+     type: data['type']?.toString() ?? 'info',
+     isRead: read,
+     // Malformed legacy timestamps must not crash the whole notification list.
+     createdAt: parsedDate ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+     bookingId: (data['bookingId'] ?? data['booking_id'])?.toString(),
+     metadata: rawMetadata is Map
+         ? Map<String, dynamic>.from(rawMetadata)
+         : null,
+   );
  }
 
  Map<String, dynamic> toMap() => toFirestore();
