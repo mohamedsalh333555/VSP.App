@@ -172,7 +172,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       _hasTeamLoadError = false;
     });
     try {
-      final t = await TeamRepository().getTeamStrict(requestedTeamId);
+      final t = await TeamRepository().getTeamStrict(requestedTeamId)
+          .timeout(const Duration(seconds: 20));
       if (mounted && requestVersion == _teamRequestVersion &&
           (widget.team?.id ?? widget.teamId) == requestedTeamId) {
         setState(() {
@@ -186,7 +187,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       }
     } catch (e) {
       debugPrint('Error loading team: $e');
-      if (mounted && (widget.team?.id ?? widget.teamId) == requestedTeamId) {
+      if (mounted && requestVersion == _teamRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == requestedTeamId) {
         setState(() {
           _isLoadingTeam = false;
           _hasTeamLoadError = true;
@@ -207,7 +209,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     try {
       // Fetch the current roster from the membership source of truth, not
       // the potentially stale memberUids embedded in the public team card.
-      final roster = await TeamRepository().getTeamMemberProfilesStrict(teamId);
+      final roster = await TeamRepository().getTeamMemberProfilesStrict(teamId)
+          .timeout(const Duration(seconds: 20));
       final currentIds = roster
           .map((row) => row['uid'] ?? '')
           .where((id) => id.isNotEmpty)
@@ -220,7 +223,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
           .toList();
       final members = memberIds.isEmpty
           ? <UserModel>[]
-          : await UserRepository().getUsersByIdsStrict(memberIds);
+          : await UserRepository().getUsersByIdsStrict(memberIds)
+               .timeout(const Duration(seconds: 20));
       if (!mounted || requestVersion != _rosterRequestVersion ||
           (widget.team?.id ?? widget.teamId) != teamId) return;
       setState(() {
