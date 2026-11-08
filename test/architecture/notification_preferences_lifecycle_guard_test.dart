@@ -11,7 +11,7 @@ void main() {
       'await SharedPreferences.getInstance()', load,
     );
     final mounted = source.indexOf('if (!mounted || _settingsUserId != userId) return;', awaitPrefs);
-    final update = source.indexOf('setState(() {', awaitPrefs);
+    final update = source.indexOf('setState(() {', mounted);
     expect(load, greaterThanOrEqualTo(0));
     expect(mounted, greaterThan(awaitPrefs));
     expect(update, greaterThan(mounted));
