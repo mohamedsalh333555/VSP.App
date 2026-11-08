@@ -191,6 +191,18 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
      ? null
      : () async {
          HapticFeedback.lightImpact();
+         if (auth.currentUser == null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+               content: Text(
+                 isAr
+                     ? 'انتهت جلسة الحساب. سجّل الدخول ثم حاول مجددًا.'
+                     : 'Your session has ended. Sign in and try again.',
+               ),
+             ),
+           );
+           return;
+         }
          try {
            await auth.retryDataFetch();
            if (!context.mounted) return;
