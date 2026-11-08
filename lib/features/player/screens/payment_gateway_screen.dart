@@ -503,6 +503,11 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _isAwaitingWebhook = false;
             _isLoading = false;
           });
+          // Continue checking server state after the WebView closes:
+          // a successful charge may have completed without a browser result.
+          if (_booking != null) {
+            _startFallbackPollingTimer(_booking!.id);
+          }
           // A closed or failed WebView is not proof that the gateway
           // declined the charge. Keep the outcome uncertain until the
           // server confirms it, and avoid prompting an immediate re-charge.
@@ -522,6 +527,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           });
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           final kind = PaymentFailureClassifier.classify(message: e.toString());
+          if (_booking != null && kind.requiresStatusReconciliation) {
+            _startFallbackPollingTimer(_booking!.id);
+          }
           // A transport error after opening Paymob may mean the charge was
           // processed; always reconcile uncertain results on the server.
           VSPFeedback.showError(context, kind.userMessage(arabic: isArabic));
