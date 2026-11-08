@@ -207,6 +207,29 @@ class BookingSlotCalculator {
     final isAlreadySelected = selectedTimeSlots.contains(slotKey);
     final idxTapped = timeSlots.indexWhere((s) => s.key == slotKey);
 
+    // A new selection must never bypass the same availability checks used
+    // when extending a multi-slot booking.
+    if (!isAlreadySelected && idxTapped >= 0) {
+      try {
+        final tappedTime = getSlotDateTime(
+          slotKey: slotKey,
+          stadium: stadium,
+          selectedDate: selectedDate,
+        );
+        if (tappedTime.isBefore(DateTime.now()) ||
+            isSlotBooked(
+              slotKey: slotKey,
+              stadium: stadium,
+              selectedDate: selectedDate,
+              existingBookings: existingBookings,
+            )) {
+          return selectedTimeSlots;
+        }
+      } on FormatException {
+        return selectedTimeSlots;
+      }
+    }
+
     if (isAlreadySelected) {
       final tappedIdx = selectedTimeSlots.indexOf(slotKey);
       if (selectedTimeSlots.length <= 1) {
