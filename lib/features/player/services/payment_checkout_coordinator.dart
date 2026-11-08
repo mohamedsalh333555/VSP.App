@@ -219,8 +219,14 @@ class PaymentCheckoutCoordinator {
   }) async {
     if (isTournamentPayment) return null;
     if (existingBooking != null) return existingBooking;
-    if (existingBookingId != null) {
-      return await fetchBookingById(existingBookingId);
+    if (existingBookingId != null && existingBookingId.trim().isNotEmpty) {
+      // An explicit resume ID must not silently create a second booking if
+      // the original cannot be fetched (e.g. network outage or stale link).
+      final restored = await fetchBookingById(existingBookingId);
+      if (restored == null) {
+        throw StateError('Unable to resume the existing payment booking');
+      }
+      return restored;
     }
     if (userId != null && userId.trim().isNotEmpty) {
       // Never remove a previous pending booking before verifying the
