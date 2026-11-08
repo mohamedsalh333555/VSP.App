@@ -490,30 +490,52 @@ class AuthProvider with ChangeNotifier {
   Future<bool> completeOwnerRegistration({
     required String verificationStatus,
   }) async {
-    final model = await _c.account.completeOwnerRegistration(
-      authUser: _supabaseUser,
-      currentUserModel: _userModel,
-      verificationStatus: verificationStatus,
-    );
-    if (model != null) {
-      _userModel = model;
-      notifyListeners();
-      return true;
+    final user = _supabaseUser;
+    if (user == null) return false;
+    final generation = _userFetchGeneration;
+    try {
+      final model = await _c.account.completeOwnerRegistration(
+        authUser: user,
+        currentUserModel: _userModel,
+        verificationStatus: verificationStatus,
+      ).timeout(const Duration(seconds: 25));
+      if (generation != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return false;
+      }
+      if (model != null && model.uid == user.id) {
+        _userModel = model;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
     }
-    return false;
   }
 
   Future<void> toggleFavoriteStadium(String stadiumId) async {
-    if (_userModel == null) return;
-    final updated = await _c.profile.toggleFavoriteStadium(
-      authUser: _supabaseUser,
-      currentUserModel: _userModel,
-      userType: _form.userType,
-      stadiumId: stadiumId,
-    );
-    if (updated != null) {
-      _userModel = updated;
-      notifyListeners();
+    final user = _supabaseUser;
+    final model = _userModel;
+    if (user == null || model == null || stadiumId.trim().isEmpty) return;
+    final generation = _userFetchGeneration;
+    try {
+      final updated = await _c.profile.toggleFavoriteStadium(
+        authUser: user,
+        currentUserModel: model,
+        userType: _form.userType,
+        stadiumId: stadiumId,
+      ).timeout(const Duration(seconds: 25));
+      if (generation != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return;
+      }
+      if (updated != null && updated.uid == user.id) {
+        _userModel = updated;
+        notifyListeners();
+      }
+    } catch (_) {
+      // Preserve the previous favorite state; the caller can retry.
     }
   }
 
