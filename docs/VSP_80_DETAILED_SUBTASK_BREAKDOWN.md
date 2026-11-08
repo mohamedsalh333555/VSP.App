@@ -814,9 +814,9 @@
 
 - [x] 67.01 — حصر حقول body وmessage — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
 - [ ] 67.02 — تتبع المستهلكين
-- [ ] 67.03 — تحديد الحقل المرجعي
+- [x] 67.03 — تحديد الحقل المرجعي — [قرار التوافق](VSP_NOTIFICATION_FIELD_CANONICAL_AND_COMPATIBILITY_67.md)، commit `7bab47a`
 - [ ] 67.04 — اختبار القوالب القديمة
-- [ ] 67.05 — خطة التوافق
+- [x] 67.05 — خطة التوافق — [قرار التوافق](VSP_NOTIFICATION_FIELD_CANONICAL_AND_COMPATIBILITY_67.md)، commit `7bab47a`
 - [ ] 67.06 — توثيق القرار
 - [ ] 67.07 — اختبار عرض الإشعارات القديمة بعد اختيار الحقل المعتمد
 
