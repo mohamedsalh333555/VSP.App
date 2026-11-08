@@ -36,6 +36,8 @@ void main() {
         currency: 'EGP',
         depositPaid: 50.0,
         isDepositPaid: true,
+        isPaid: true,
+        needsDeposit: true,
         currentPlayers: 4,
         playersPerTeam: 5,
         totalFieldCapacity: 10,
@@ -48,6 +50,8 @@ void main() {
       expect(map['bookingType'], equals('openJoin'));
       expect(map['rentBall'], isTrue);
       expect(map['deposit_paid'], equals(50.0));
+      expect(map['isPaid'], isTrue);
+      expect(map['needs_deposit'], isTrue);
 
       final revived = BookingDraft.fromMap(map);
       expect(revived.stadiumId, equals(draft.stadiumId));
@@ -55,6 +59,8 @@ void main() {
       expect(revived.bookingType, equals(BookingType.openJoin));
       expect(revived.rentBall, isTrue);
       expect(revived.depositPaid, equals(50.0));
+      expect(revived.isPaid, isTrue);
+      expect(revived.needsDeposit, isTrue);
       expect(revived.maxPlayers, equals(10));
     });
 
