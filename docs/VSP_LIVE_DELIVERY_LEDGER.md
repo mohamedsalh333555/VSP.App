@@ -280,6 +280,14 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Attempted read of GitHub main branch protection returned **403 Resource not accessible by integration**. Thus 57.07 remains open; do not assume CI is required for merging.
 - **Progress: 58/620 completed, 562 remaining.** New commits after `df76e5e` need fresh green CI before release readiness. No main merge or production database/payment change.
 
+## Notification deep-link hardening batch — 2026-11-08
+
+- `02bb992`: `NotificationFilterService.resolveDeepLinkRoute` now accepts legacy snake-case booking/team identifiers and rejects malformed IDs, route traversal, encoded slashes, queries/fragments, control characters, overlong IDs and non-string values; invalid payloads fall back to the notification inbox or a valid team route.
+- `021e348`: unit tests for legacy IDs and hostile payloads. `157aa69`: clarify route-validation documentation.
+- Prior branch commit `2c310b3` passed [Flutter CI 42512915158](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42512915158) and [Android E2E Smoke 42512915102](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42512915102).
+- Fresh [Flutter CI 42514888405](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42514888405) and [Android smoke 42514888523](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42514888523) were **pending** at record time. Do not claim tests passed on new code until completed.
+- No checklist closure in this batch yet: 07.07 requires end-to-end auth/role navigation verification, not merely ID sanitization. **58/620 completed, 562 remaining**. No main merge or production schema/payment changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
