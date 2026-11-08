@@ -7,6 +7,7 @@ void main() {
   testWidgets('shows Arabic team achievements and zero states', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       locale: Locale('ar'),
+      supportedLocales: [Locale('ar'), Locale('en')],
       home: Scaffold(
         body: TeamAchievementBadges(
           summary: TeamAchievementSummary(
