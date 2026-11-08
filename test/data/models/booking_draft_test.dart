@@ -99,6 +99,36 @@ void main() {
       expect(BookingDraft.fromMap(draft.toMap()).depositPaid, 25.0);
     });
 
+    test('restored draft rejects impossible player capacities', () {
+      final draft = BookingDraft(
+        stadiumId: 'std-1',
+        stadiumName: 'Pitch',
+        ownerId: 'owner-1',
+        startTime: DateTime.utc(2030, 12, 10, 18),
+        endTime: DateTime.utc(2030, 12, 10, 19),
+        bookingType: BookingType.openJoin,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 100,
+        playersPerTeam: 5,
+        totalFieldCapacity: 10,
+        currentPlayers: 2,
+      );
+      for (final invalid in <Map<String, dynamic>>[
+        {'players_per_team': 0},
+        {'total_field_capacity': 0},
+        {'currentPlayers': -1},
+        {'currentPlayers': 11},
+      ]) {
+        expect(
+          () => BookingDraft.fromMap({...draft.toMap(), ...invalid}),
+          throwsFormatException,
+          reason: 'Invalid restored capacity: $invalid',
+        );
+      }
+      expect(BookingDraft.fromMap(draft.toMap()).currentPlayers, 2);
+    });
+
     test('BookingDraft copyWith updates specific fields', () {
       final now = DateTime(2026, 9, 9, 20, 0);
       final draft = BookingDraft(
