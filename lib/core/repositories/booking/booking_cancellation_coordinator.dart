@@ -60,7 +60,7 @@ class BookingCancellationCoordinator {
           if (manualResult is! Map || manualResult['success'] != true) {
             throw Exception(sanitizeCancellationError(
               null,
-              manualResult['message']?.toString(),
+              manualResult is Map ? manualResult['message']?.toString() : null,
             ));
           }
         } catch (e) {
@@ -116,7 +116,9 @@ class BookingCancellationCoordinator {
               'p_reason': 'User requested cancellation from app',
             });
             if (rpcRes is! Map || rpcRes['success'] != true) {
-              throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
+              throw Exception(sanitizeCancellationError(
+                null, rpcRes is Map ? rpcRes['message']?.toString() : null,
+              ));
             }
           }
         } else {
@@ -126,7 +128,9 @@ class BookingCancellationCoordinator {
             'p_reason': 'User requested cancellation from app',
           });
           if (rpcRes is! Map || rpcRes['success'] != true) {
-            throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
+            throw Exception(sanitizeCancellationError(
+                null, rpcRes is Map ? rpcRes['message']?.toString() : null,
+              ));
           }
         }
       }
