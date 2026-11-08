@@ -10,6 +10,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/payment_failure_classifier.dart';
 import '../../../data/models.dart';
 import '../../../core/repositories/booking/booking_domain_rules.dart';
 import '../services/payment_checkout_coordinator.dart';
@@ -481,11 +482,12 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _isAwaitingWebhook = false;
             _isLoading = false;
           });
+          // A closed or failed WebView is not proof that the gateway
+          // declined the charge. Keep the outcome uncertain until the
+          // server confirms it, and avoid prompting an immediate re-charge.
           VSPFeedback.showError(
             context,
-            isArabic
-                ? 'لم تكتمل عملية الدفع. يمكنك إعادة المحاولة في أي وقت.'
-                : 'Payment was not completed. You can try again anytime.',
+            PaymentFailureKind.unknown.userMessage(arabic: isArabic),
           );
         }
       } catch (e) {
@@ -505,13 +507,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           _isAwaitingWebhook = false;
           _isLoading = false;
         });
-        final l10n = AppLocalizations.of(context);
         VSPFeedback.showError(
           context,
-          l10n?.paymentGatewayUnavailable ??
-              (isArabic
-                  ? 'عذراً، تعذر الاتصال ببوابة الدفع حالياً. يرجى المحاولة مرة أخرى لاحقاً.'
-                  : 'Failed to connect to payment gateway. Please try again later.'),
+          PaymentFailureKind.providerUnavailable.userMessage(arabic: isArabic),
         );
       }
     }
