@@ -285,6 +285,9 @@ class BookingSlotCalculator {
         return <String>[];
       }
       // Keep selected slots in schedule order before applying edge-removal.
+      selectedTimeSlots.removeWhere(
+        (key) => !timeSlots.any((slot) => slot.key == key),
+      );
       selectedTimeSlots.sort((a, b) {
         final aIndex = timeSlots.indexWhere((slot) => slot.key == a);
         final bIndex = timeSlots.indexWhere((slot) => slot.key == b);
