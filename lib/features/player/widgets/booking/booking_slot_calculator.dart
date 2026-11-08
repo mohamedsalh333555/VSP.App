@@ -7,20 +7,8 @@ class BookingSlotCalculator {
     return AppDateFormatter.parseTimeToMinutes(timeStr);
   }
 
-  static bool _isValidTime(String value) {
-    final match = RegExp(
-      r'^\s*(\d{1,2})(?::(\d{1,2}))?\s*(AM|PM|ص|م|مساءً|صباحاً)?\s*$',
-      caseSensitive: false,
-    ).firstMatch(value);
-    if (match == null) return false;
-    final hour = int.tryParse(match.group(1) ?? '');
-    final minute = int.tryParse(match.group(2) ?? '0');
-    if (hour == null || minute == null || minute < 0 || minute > 59) {
-      return false;
-    }
-    final hasPeriod = match.group(3) != null;
-    return hasPeriod ? hour >= 1 && hour <= 12 : hour >= 0 && hour <= 23;
-  }
+  static bool _isValidTime(String value) =>
+      AppDateFormatter.tryParseTimeToMinutes(value) != null;
 
   static String _formatMinutesToTime(int totalMinutes, bool isArabic) {
     return AppDateFormatter.formatMinutesToTime(totalMinutes, isArabic);
@@ -68,7 +56,7 @@ class BookingSlotCalculator {
       final breakIntervals = <List<int>>[];
       if (features is Map && features['breakTimes'] is List) {
         for (final item in features['breakTimes'] as List) {
-          if (item is! Map) continue;
+          if (item is! Map) return const <TimeSlotItem>[];
           final startText = item['start']?.toString() ?? '';
           final endText = item['end']?.toString() ?? '';
           if (!_isValidTime(startText) || !_isValidTime(endText)) {
@@ -77,9 +65,9 @@ class BookingSlotCalculator {
           final start = getCumulativeMinutes(startText);
           final end = getCumulativeMinutes(endText);
           if (start < startMinutes || end > endMinutes || end <= start) {
-          return const <TimeSlotItem>[];
-        }
-        breakIntervals.add([start, end]);
+            return const <TimeSlotItem>[];
+          }
+          breakIntervals.add([start, end]);
         }
       }
 
@@ -97,6 +85,14 @@ class BookingSlotCalculator {
           return const <TimeSlotItem>[];
         }
         breakIntervals.add([start, end]);
+      }
+
+      // Treat overlapping closures as invalid schedule data, not partial availability.
+      breakIntervals.sort((a, b) => a[0].compareTo(b[0]));
+      for (var i = 1; i < breakIntervals.length; i++) {
+        if (breakIntervals[i][0] < breakIntervals[i - 1][1]) {
+          return const <TimeSlotItem>[];
+        }
       }
 
       final List<TimeSlotItem> slots = [];
