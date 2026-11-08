@@ -48,7 +48,7 @@ class AppNotification {
      metadata: rawMetadata is Map
          ? <String, dynamic>{
              for (final entry in rawMetadata.entries)
-               if (entry.key is String) entry.key as String: entry.value,
+               if (entry.key is String) (entry.key as String): entry.value,
            }
          : null,
    );
