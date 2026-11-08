@@ -304,6 +304,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - The prior `679c7cf` Flutter CI [42515913921](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515913921) and Android smoke [42515913915](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515913915) were still in progress at inspection. The new Flutter CI [42516555825](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42516555825) was pending. Do not mark tests green without completion.
 - **Progress unchanged: 58/620 completed, 562 remaining.** This is a targeted safety fix within broader booking/payment acceptance tasks, not a closed full journey. No main merge or production schema/payment changes.
 
+## Stage 11 booking-status regression repair — 2026-11-08
+
+- Inspected failed Flutter CI [42515913921](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515913921): **1010 passed, 1 failed, 10 skipped**. Analyzer and architecture gate passed; the only failed test was `test/stage11_state_consistency_test.dart` expecting unknown server status to silently become `pending`.
+- `56b984e` updates that legacy test to require `FormatException`, consistent with the safer `BookingMapper` behavior introduced by `8684b9d`. It does **not** revert unknown statuses to pending.
+- The restored-draft deposit overflow fix `be7c9ea` and regression `6e8f129` remain committed.
+- Full suite on latest commit requires fresh CI. **Count stays 58/620 complete, 562 pending**, pending end-to-end task acceptance; no production schema/payment or main merge.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
