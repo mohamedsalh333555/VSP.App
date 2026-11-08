@@ -297,6 +297,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Previous [Android smoke 42514922345](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42514922345) **succeeded** on `b4f7f03`; Flutter CI for that earlier commit was still in progress at inspection. New [Flutter CI 42515885719](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515885719) was pending at inspection.
 - This is a code-hardening batch, not closure of the complete 27.x or 07.x user-journey tasks. **Count remains 58/620 completed, 562 remaining** until full acceptance criteria are met. No main merge or production DB/payment modifications.
 
+## Restored booking draft financial validation — 2026-11-08
+
+- `be7c9ea`: `BookingDraft.fromMap` rejects restored deposits greater than the total price, matching `BookingDraft.validate` and preventing an inconsistent draft from reaching checkout.
+- `6e8f129`: regression test verifies an overlarge restored deposit throws `FormatException` and a valid saved draft round-trips.
+- The prior `679c7cf` Flutter CI [42515913921](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515913921) and Android smoke [42515913915](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515913915) were still in progress at inspection. The new Flutter CI [42516555825](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42516555825) was pending. Do not mark tests green without completion.
+- **Progress unchanged: 58/620 completed, 562 remaining.** This is a targeted safety fix within broader booking/payment acceptance tasks, not a closed full journey. No main merge or production schema/payment changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
