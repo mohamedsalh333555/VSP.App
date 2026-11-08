@@ -206,7 +206,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
              );
            }
          } catch (e) {
-           debugPrint('Offline retry failed: $e');
+           debugPrint('Offline retry failed; user can retry safely.');
            if (!context.mounted) return;
            ScaffoldMessenger.of(context).showSnackBar(
              SnackBar(
