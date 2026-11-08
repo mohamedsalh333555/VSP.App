@@ -297,6 +297,11 @@ class BookingDraft {
     final parsedDeposit = parseAmount(
       map['deposit_paid'] ?? map['depositPaid'], 0, 'depositPaid',
     );
+    // A restored draft must obey the same financial invariant as a newly
+    // constructed draft. Never resume checkout with an excessive deposit.
+    if (parsedDeposit > parsedTotalPrice) {
+      throw const FormatException('Booking draft deposit exceeds total price');
+    }
 
     int parseCount(dynamic value, int fallback) {
       if (value is int) return value;
