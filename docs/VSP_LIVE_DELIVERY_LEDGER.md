@@ -148,6 +148,12 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 
 **Task accounting:** no complete 29.02/29.05/29.08 task closure yet; **32/620 completed, 588 remaining**. These are real checkout-path fixes but full payment failure journeys, safe retry and server-side reconciliation still need verification. No production schema, gateway transaction logic, permissions or main merge.
 
+## Batch — uncertain Paymob outcome recharge guard
+
+- `baa6d1f`: payment screen refuses a second Paymob checkout while the first gateway outcome is uncertain. The guard is set on WebView dismissal, reconciliation-required launch errors and webhook wait timeout; no server transaction or payment state is altered.
+- `f855297`: architecture regression test asserts the uncertainty guard precedes checkout URL creation (written, not run).
+- **Accounting:** no full 29.03/29.04 task closure; 32/620 complete, 588 remain. This is a client-side defense in depth only, not a substitute for backend idempotency or live double-charge verification. No schema, payments backend or permissions modified.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
