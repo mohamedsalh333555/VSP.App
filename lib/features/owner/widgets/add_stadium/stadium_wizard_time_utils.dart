@@ -6,13 +6,16 @@ import '../../../../core/utils/app_date_formatter.dart';
 class StadiumWizardTimeUtils {
   static TimeOfDay? parseTime(String? timeStr) {
     if (timeStr == null || timeStr.trim().isEmpty) return null;
-    try {
-      final totalMin = AppDateFormatter.parseTimeToMinutes(timeStr);
-      return TimeOfDay(hour: (totalMin ~/ 60) % 24, minute: totalMin % 60);
-    } catch (e, stack) {
-      VSPLogger.e('Error parsing time string in AddStadiumWizard', e, stack);
+    final match = RegExp(r'^(\d{1,2}):(\d{2})(?::\d{2})?$')
+        .firstMatch(timeStr.trim());
+    if (match == null) return null;
+    final hour = int.tryParse(match.group(1)!);
+    final minute = int.tryParse(match.group(2)!);
+    if (hour == null || minute == null ||
+        hour < 0 || hour > 23 || minute < 0 || minute > 59) {
       return null;
     }
+    return TimeOfDay(hour: hour, minute: minute);
   }
 
   static String formatTime(TimeOfDay? time, String defaultTime24) {
