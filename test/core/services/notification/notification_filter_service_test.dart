@@ -55,6 +55,23 @@ void main() {
       );
     });
 
+    test('malformed modern ID does not hide a valid legacy ID', () {
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({
+          'bookingId': '../admin',
+          'booking_id': 'valid-booking',
+        }),
+        '/match/valid-booking',
+      );
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({
+          'teamId': 42,
+          'team_id': 'valid-team',
+        }),
+        '/team/valid-team',
+      );
+    });
+
     test('deep links reject route injection, empty IDs and malformed types', () {
       for (final unsafe in <dynamic>[
         '../admin',
