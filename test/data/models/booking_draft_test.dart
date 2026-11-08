@@ -133,6 +133,39 @@ void main() {
       expect(BookingDraft.fromMap(draft.toMap()).currentPlayers, 2);
     });
 
+    test('restored draft rejects missing or malformed venue identities', () {
+      final base = BookingDraft(
+        stadiumId: 'std-1',
+        stadiumName: 'Pitch',
+        ownerId: 'owner-1',
+        startTime: DateTime.utc(2030, 12, 10, 18),
+        endTime: DateTime.utc(2030, 12, 10, 19),
+        bookingType: BookingType.personal,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 100,
+      ).toMap();
+      for (final invalid in <Map<String, dynamic>>[
+        {'stadiumId': ''},
+        {'stadiumId': '  '},
+        {'stadiumId': 123},
+        {'ownerId': ''},
+        {'ownerId': '  '},
+        {'ownerId': 123},
+      ]) {
+        expect(() => BookingDraft.fromMap({...base, ...invalid}),
+            throwsFormatException, reason: '$invalid');
+      }
+      final legacy = {...base}
+        ..remove('stadiumId')
+        ..remove('ownerId')
+        ..['stadium_id'] = ' legacy-venue '
+        ..['owner_id'] = ' legacy-owner ';
+      final restored = BookingDraft.fromMap(legacy);
+      expect(restored.stadiumId, 'legacy-venue');
+      expect(restored.ownerId, 'legacy-owner');
+    });
+
     test('BookingDraft copyWith updates specific fields', () {
       final now = DateTime(2026, 9, 9, 20, 0);
       final draft = BookingDraft(

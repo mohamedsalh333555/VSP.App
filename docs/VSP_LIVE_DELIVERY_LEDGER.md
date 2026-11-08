@@ -324,6 +324,12 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Previous branch baseline **58/620 complete, 562 remaining**. This hardening does not close full booking journey acceptance; CI must pass on the atomic commit before counting any additional task.
 - No main merge or production schema/payment change.
 
+## Restored booking identity validation — 2026-11-08
+
+- Following verified green [Flutter CI 42517061137](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42517061137) and [Android smoke 42517061154](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42517061154) on `285d8bf`, hardened `BookingDraft.fromMap` to reject missing/blank/non-string venue and owner identifiers. Supports legacy `stadium_id`/`owner_id`, trims valid IDs and runs the shared draft validation on the restored object.
+- Regression tests cover six invalid identities and valid snake-case restoration. These tests need fresh CI on the new commit.
+- No complete booking E2E task is closed by these guards: **58/620 completed, 562 remaining**. No production DB/payment or main changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.

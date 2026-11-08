@@ -335,12 +335,17 @@ class BookingDraft {
         currentPlayers < 0 || currentPlayers > tfc) {
       throw const FormatException('Booking draft has invalid player capacity');
     }
-
-    return BookingDraft(
-      stadiumId: map['stadiumId']?.toString() ?? '',
-      stadiumName: map['stadiumName']?.toString() ?? '',
+    final stadiumId = map['stadiumId'] ?? map['stadium_id'];
+    final ownerId = map['ownerId'] ?? map['owner_id'];
+    if (stadiumId is! String || stadiumId.trim().isEmpty ||
+        ownerId is! String || ownerId.trim().isEmpty) {
+      throw const FormatException('Booking draft is missing stadium or owner identity');
+    }
+    final restored = BookingDraft(
+      stadiumId: stadiumId.trim(),
+      stadiumName: (map['stadiumName'] ?? map['stadium_name'])?.toString() ?? '',
       stadiumImageUrl: map['stadiumImageUrl']?.toString() ?? '',
-      ownerId: map['ownerId']?.toString() ?? '',
+      ownerId: ownerId.trim(),
       startTime: parsedStart,
       endTime: parsedEnd,
       bookingType: parsedType,
@@ -374,5 +379,10 @@ class BookingDraft {
       challengeCode: map['challengeCode']?.toString(),
       idempotencyKey: map['idempotencyKey']?.toString(),
     );
+    final errors = restored.validate();
+    if (errors.isNotEmpty) {
+      throw FormatException('Invalid restored booking draft: ${errors.join(', ')}');
+    }
+    return restored;
   }
 }
