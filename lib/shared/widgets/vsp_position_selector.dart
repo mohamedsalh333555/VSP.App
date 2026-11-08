@@ -58,7 +58,7 @@ class VSPPositionSelector extends StatelessWidget {
                 selected: isSelected,
                 label: label,
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  if (!reduceMotion) HapticFeedback.selectionClick();
                   onPositionSelected(code);
                 },
                 child: Material(
@@ -66,7 +66,7 @@ class VSPPositionSelector extends StatelessWidget {
                   child: InkWell(
                   excludeFromSemantics: true,
                   onTap: () {
-                    HapticFeedback.selectionClick();
+                    if (!reduceMotion) HapticFeedback.selectionClick();
                     onPositionSelected(code);
                   },
                   borderRadius: BorderRadius.circular(VSPDSRadius.md),
