@@ -442,19 +442,37 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> updateProfile(Map<String, dynamic> data) async {
-    if (_supabaseUser == null) return false;
+    final user = _supabaseUser;
+    if (user == null) return false;
+    final requestGeneration = ++_userFetchGeneration;
     _isLoading = true;
     notifyListeners();
-    final updated = await _c.profile.updateProfile(
-      authUser: _supabaseUser,
-      currentUserModel: _userModel,
-      userType: _form.userType,
-      data: data,
-    );
-    if (updated != null) _userModel = updated;
-    _isLoading = false;
-    notifyListeners();
-    return updated != null;
+    try {
+      final updated = await _c.profile.updateProfile(
+        authUser: user,
+        currentUserModel: _userModel,
+        userType: _form.userType,
+        data: data,
+      ).timeout(const Duration(seconds: 25));
+      // An older profile write must never overwrite a newer session.
+      if (requestGeneration != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return false;
+      }
+      if (updated != null && updated.uid == user.id) {
+        _userModel = updated;
+      }
+      return updated != null && updated.uid == user.id;
+    } catch (_) {
+      // Keep the existing profile if the server rejects or times out.
+      return false;
+    } finally {
+      if (requestGeneration == _userFetchGeneration &&
+          _supabaseUser?.id == user.id) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    }
   }
 
   Future<bool> completeOwnerRegistration({
