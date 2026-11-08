@@ -207,11 +207,13 @@ class BookingMapper {
           data['requiresAdminIntervention'] ??
           data['requires_admin_intervention'] ??
           false,
-      currentPlayers: (parsedBookingType == BookingType.challenge)
+      currentPlayers: (parsedBookingType == BookingType.challenge ||
+              parsedBookingType == BookingType.team)
           ? 0
           : _parseInt(data['currentPlayers'] ?? data['current_players'], 1),
       playersPerTeam: ppt,
-      totalFieldCapacity: (parsedBookingType == BookingType.challenge)
+      totalFieldCapacity: (parsedBookingType == BookingType.challenge ||
+              parsedBookingType == BookingType.team)
           ? 0
           : tfc,
       manualPlayerCount: (parsedBookingType == BookingType.openJoin)
