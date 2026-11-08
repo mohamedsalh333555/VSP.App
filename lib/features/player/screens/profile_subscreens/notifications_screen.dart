@@ -41,6 +41,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _generalNotifications = prefs.getBool('notif_general') ?? true;
       _soundAlerts = prefs.getBool('notif_sound') ?? true;
