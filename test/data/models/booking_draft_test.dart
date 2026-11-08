@@ -81,6 +81,24 @@ void main() {
       expect(() => BookingDraft.fromMap(saved), throwsFormatException);
     });
 
+    test('restored deposit greater than total is rejected before checkout', () {
+      final draft = BookingDraft(
+        stadiumId: 'std-1',
+        stadiumName: 'Pitch',
+        ownerId: 'owner-1',
+        startTime: DateTime.utc(2030, 12, 10, 18),
+        endTime: DateTime.utc(2030, 12, 10, 19),
+        bookingType: BookingType.personal,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 100.0,
+        depositPaid: 25.0,
+      );
+      final saved = draft.toMap()..['deposit_paid'] = 150.0;
+      expect(() => BookingDraft.fromMap(saved), throwsFormatException);
+      expect(BookingDraft.fromMap(draft.toMap()).depositPaid, 25.0);
+    });
+
     test('BookingDraft copyWith updates specific fields', () {
       final now = DateTime(2026, 9, 9, 20, 0);
       final draft = BookingDraft(
