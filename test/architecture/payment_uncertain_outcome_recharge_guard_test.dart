@@ -2,6 +2,20 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('uncertain payment cannot release booking or cancel order', () {
+    final source = File(
+      'lib/features/player/screens/payment_gateway_screen.dart',
+    ).readAsStringSync();
+    final cancel = source.indexOf('Future<void> _onCancelAndReleaseBooking(');
+    final guard = source.indexOf(
+      'if (_paymentOutcomeUncertain || _isAwaitingWebhook)', cancel,
+    );
+    final release = source.indexOf('await _coordinator.releaseBookingSafely(', cancel);
+    expect(cancel, greaterThanOrEqualTo(0));
+    expect(guard, greaterThan(cancel));
+    expect(release, greaterThan(guard));
+  });
+
   test('uncertain Paymob outcomes cannot immediately initiate another charge', () {
     final source = File(
       'lib/features/player/screens/payment_gateway_screen.dart',
