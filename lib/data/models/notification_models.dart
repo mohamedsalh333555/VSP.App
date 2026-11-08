@@ -26,7 +26,11 @@ class AppNotification {
  return AppNotification(
  id: id,
  title: data['title'] ?? '',
- body: data['body'] ?? '',
+ // Historical notifications used `message` instead of `body`.
+ // Preserve the displayed text without mutating the database.
+ body: (data['body']?.toString().trim().isNotEmpty == true
+     ? data['body']
+     : data['message'])?.toString() ?? '',
  type: data['type'] ?? 'info',
  isRead: data['isRead'] ?? false,
  createdAt: data['createdAt'] != null 
