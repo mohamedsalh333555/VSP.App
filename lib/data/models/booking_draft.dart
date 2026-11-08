@@ -264,11 +264,24 @@ class BookingDraft {
         ? rawDeposit.toDouble()
         : (double.tryParse(rawDeposit.toString()) ?? 0.0);
 
-    final int ppt = map['players_per_team'] ?? map['playersPerTeam'] ?? 5;
-    final int tfc = map['total_field_capacity'] ??
-        map['totalFieldCapacity'] ??
-        map['max_players'] ??
-        (ppt * 2);
+    int parseCount(dynamic value, int fallback) {
+      if (value is int) return value;
+      if (value is num) {
+        final number = value.toDouble();
+        return number.isFinite ? number.toInt() : fallback;
+      }
+      return int.tryParse(value?.toString().trim() ?? '') ?? fallback;
+    }
+
+    final int ppt = parseCount(
+      map['players_per_team'] ?? map['playersPerTeam'], 5,
+    );
+    final int tfc = parseCount(
+      map['total_field_capacity'] ??
+          map['totalFieldCapacity'] ??
+          map['max_players'],
+      ppt * 2,
+    );
 
     return BookingDraft(
       stadiumId: map['stadiumId']?.toString() ?? '',
@@ -292,9 +305,7 @@ class BookingDraft {
       currency: map['currency']?.toString() ?? 'EGP',
       paymentMethod: map['paymentMethod']?.toString(),
       paymentTransactionId: map['paymentTransactionId']?.toString(),
-      currentPlayers: map['currentPlayers'] is int
-          ? map['currentPlayers']
-          : (int.tryParse(map['currentPlayers']?.toString() ?? '') ?? 1),
+      currentPlayers: parseCount(map['currentPlayers'], 1),
       playersPerTeam: ppt,
       totalFieldCapacity: tfc,
       playerPhone: map['playerPhone']?.toString(),
