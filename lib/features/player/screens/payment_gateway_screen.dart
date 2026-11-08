@@ -566,6 +566,20 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Future<void> _onCancelAndReleaseBooking(BuildContext dialogCtx) async {
+    // Do not release a reservation or cancel a tournament order while an
+    // electronic payment may already have succeeded at the gateway.
+    // The server must reconcile this outcome before any financial action.
+    if (_paymentOutcomeUncertain || _isAwaitingWebhook) {
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          PaymentFailureKind.unknown.userMessage(
+            arabic: Localizations.localeOf(context).languageCode == 'ar',
+          ),
+        );
+      }
+      return;
+    }
     await _coordinator.releaseBookingSafely(
       isTournamentPayment: widget.isTournamentPayment,
       booking: _booking,
