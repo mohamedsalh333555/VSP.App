@@ -77,7 +77,7 @@ class AppDateFormatter {
     }
     clean = clean.replaceAll('：', ':');
     final match = RegExp(
-      r'^(\d{1,2})(?::(\d{1,2})(?::([0-5]\d))?)?\s*(AM|PM|ص|م|مساءً|صباحاً)?,
+      r'^(\d{1,2})(?::(\d{1,2})(?::([0-5]\d))?)?\s*(AM|PM|ص|م|مساءً|صباحاً)?
       caseSensitive: false,
     ).firstMatch(clean);
     if (match == null) return null;
@@ -149,14 +149,14 @@ class AppDateFormatter {
     return DateTime(local.year, local.month, local.day);
   }
 }
-,
+
       caseSensitive: false,
     ).firstMatch(clean);
     if (match == null) return null;
     var hour = int.parse(match.group(1)!);
     final minute = int.tryParse(match.group(2) ?? '0');
     if (minute == null || minute < 0 || minute > 59) return null;
-    final period = match.group(3)?.toUpperCase();
+    final period = match.group(4)?.toUpperCase();
     if (period != null) {
       if (hour < 1 || hour > 12) return null;
       if (period == 'PM' || period == 'م' || period == 'مساءً') {
