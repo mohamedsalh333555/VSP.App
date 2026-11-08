@@ -16,12 +16,32 @@ void main() {
         ),
       ),
     ));
+    final firstWidth = tester.getSize(find.text('Goalkeeper')).width;
+    expect(firstWidth, greaterThan(0));
     expect(find.text('Goalkeeper'), findsOneWidget);
     expect(find.text('Defender'), findsOneWidget);
     expect(find.text('Midfielder'), findsOneWidget);
     expect(find.text('Forward'), findsOneWidget);
     await tester.tap(find.text('Goalkeeper'));
     expect(selected, 'GK');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('very narrow selector uses a single column', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 140,
+          child: VSPPositionSelector(
+            selectedPosition: 'GK',
+            onPositionSelected: (_) {},
+          ),
+        ),
+      ),
+    ));
+    final goalkeeper = tester.getTopLeft(find.text('Goalkeeper'));
+    final defender = tester.getTopLeft(find.text('Defender'));
+    expect(defender.dy, greaterThan(goalkeeper.dy));
     expect(tester.takeException(), isNull);
   });
 
