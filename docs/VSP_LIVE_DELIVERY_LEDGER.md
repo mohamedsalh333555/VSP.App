@@ -253,6 +253,17 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `7a26e96`: suppress selector haptic feedback when the platform requests reduced motion, in addition to the prior zero-duration animations.
 - **Accounting:** no full subtask closed in this batch: **49/620 completed, 571 remaining**. Source code and tests committed; runtime layout/accessibility tests remain unexecuted. No live database, payment, permissions or main changes.
 
+## CI validation and repair — 2026-11-08
+
+- First full Flutter CI run: **1003 passed, 2 failed, 10 skipped**. Analyzer was initially blocked by duplicated trailing code in `app_date_formatter.dart`, a nullable Paymob WebView URL, missing required fields in a booking draft test, and an unused import; repaired in `0d59dab`, `4cab911`, `47f8641`, `434c4e3`.
+- After these fixes, **Flutter analyze** and **architecture regression gate** passed. Full suite exposed two failing tests: Arabic team achievement badge fixture and past-date slot selection fixture.
+- `4be4e6e`: slot toggle test now uses future date, retaining the production guard against booking in the past.
+- `a6c492a`: declares Arabic as supported in achievement widget test; still insufficient because the Flutter localization delegates were absent.
+- `fc345aa`: adds Material, Cupertino, and Widgets localization delegates to the Arabic badge test fixture.
+- Android E2E Smoke **passed** on `4be4e6e` (run `42485905095`). This is automated smoke coverage, not proof of live end-to-end payments or device acceptance.
+- The newest Flutter CI for `fc345aa` (run `42486761911`) was pending when this record was written. Do **not** mark full test suite passed until its result is confirmed.
+- **Accounting unchanged: 49/620 completed, 571 remaining.** Fixes are committed; final verification pending. No main merge, production database, RLS, or payment changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
