@@ -229,7 +229,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
           ..clear()
           ..addAll(members);
         _isLoadingMembers = false;
-        final returnedIds = members.map((member) => member.id).toSet();
+        final returnedIds = members.map((member) => member.uid).toSet();
         _hasMemberLoadError = !returnedIds.containsAll(memberIds);
       });
     } catch (e) {
