@@ -41,4 +41,14 @@ void main() {
     expect(PaymentFailureClassifier.classify(code: 'duplicate').requiresStatusReconciliation,
         isTrue);
   });
+  test('every payment failure has safe Arabic and English feedback', () {
+    for (final kind in PaymentFailureKind.values) {
+      final arabic = kind.userMessage();
+      final english = kind.userMessage(arabic: false);
+      expect(arabic, isNotEmpty);
+      expect(english, isNotEmpty);
+      expect(arabic, isNot(equals(english)));
+    }
+  });
+
 }
