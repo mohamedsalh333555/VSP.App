@@ -72,8 +72,7 @@ class NotificationFilterService {
     }
   }
 
-  /// Determines the deep-link route for a given notification payload.
-  /// Returns a route string like `/match/123`, `/team/456`, or `/notifications`.
+  /// Validates a route segment from untrusted notification metadata.
   static String? _safeRouteId(dynamic value) {
     if (value is! String) return null;
     final id = value.trim();
@@ -87,6 +86,7 @@ class NotificationFilterService {
     return id;
   }
 
+  /// Resolves a safe match/team route or falls back to the inbox.
   static String resolveDeepLinkRoute(Map<String, dynamic> data) {
     final bookingId = _safeRouteId(data['bookingId'] ?? data['booking_id']);
     final teamId = _safeRouteId(data['teamId'] ?? data['team_id']);
