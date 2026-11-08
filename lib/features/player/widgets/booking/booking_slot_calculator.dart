@@ -93,7 +93,9 @@ class BookingSlotCalculator {
       }
 
       // Backward compatibility for stadium records saved with the legacy single-break shape.
-      if (breakIntervals.isEmpty && features is Map && features['breakTime'] is Map) {
+      if (features is Map &&
+          !features.containsKey('breakTimes') &&
+          features['breakTime'] is Map) {
         final legacyBreak = features['breakTime'] as Map;
         final startText = legacyBreak['start']?.toString() ?? '';
         final endText = legacyBreak['end']?.toString() ?? '';
@@ -109,8 +111,8 @@ class BookingSlotCalculator {
       }
 
       // An explicitly supplied legacy closure must have the expected shape.
-      if (breakIntervals.isEmpty &&
-          features is Map &&
+      if (features is Map &&
+          !features.containsKey('breakTimes') &&
           features.containsKey('breakTime') &&
           features['breakTime'] != null &&
           features['breakTime'] is! Map) {
