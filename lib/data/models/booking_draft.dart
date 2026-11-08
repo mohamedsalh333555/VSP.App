@@ -244,25 +244,44 @@ class BookingDraft {
       }
     }
 
-    DateTime parsedStart = DateTime.now();
-    if (map['startTime'] != null) {
-      parsedStart = DateTime.tryParse(map['startTime'].toString()) ?? DateTime.now();
+    // A restored draft must never silently become a booking for "now".
+    // Missing or malformed timestamps require the user to select a slot again.
+    DateTime parseRequiredTime(String key) {
+      final value = map[key];
+      if (value is DateTime) return value;
+      if (value == null) {
+        throw FormatException('Booking draft is missing $key');
+      }
+      final parsed = DateTime.tryParse(value.toString());
+      if (parsed == null) {
+        throw FormatException('Booking draft has invalid $key');
+      }
+      return parsed;
     }
 
-    DateTime parsedEnd = parsedStart.add(const Duration(hours: 1));
-    if (map['endTime'] != null) {
-      parsedEnd = DateTime.tryParse(map['endTime'].toString()) ?? parsedEnd;
+    final parsedStart = parseRequiredTime('startTime');
+    final parsedEnd = parseRequiredTime('endTime');
+    if (!parsedEnd.isAfter(parsedStart)) {
+      throw const FormatException('Booking draft has an invalid time range');
     }
 
-    final rawTotalPrice = map['totalPrice'] ?? 0.0;
-    final double parsedTotalPrice = (rawTotalPrice is num)
-        ? rawTotalPrice.toDouble()
-        : (double.tryParse(rawTotalPrice.toString()) ?? 0.0);
+    double parseAmount(dynamic value, double fallback, String field) {
+      if (value == null) return fallback;
+      final amount = value is num
+          ? value.toDouble()
+          : double.tryParse(value.toString().trim());
+      if (amount == null || !amount.isFinite || amount < 0) {
+        throw FormatException('Booking draft has invalid $field');
+      }
+      return amount;
+    }
 
-    final rawDeposit = map['deposit_paid'] ?? map['depositPaid'] ?? 0.0;
-    final double parsedDeposit = (rawDeposit is num)
-        ? rawDeposit.toDouble()
-        : (double.tryParse(rawDeposit.toString()) ?? 0.0);
+    final parsedTotalPrice = parseAmount(
+      map['totalPrice'], 0, 'totalPrice',
+    );
+    final parsedDeposit = parseAmount(
+      map['deposit_paid'] ?? map['depositPaid'], 0, 'depositPaid',
+    );
 
     int parseCount(dynamic value, int fallback) {
       if (value is int) return value;
