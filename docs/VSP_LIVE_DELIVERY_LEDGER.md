@@ -5,7 +5,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **36 documented as completed; 584 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
+- Current inventory: **37 documented as completed; 583 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
@@ -23,7 +23,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 | 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
 | 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
 
-**Current audited counter: 36 / 620 completed, 584 remaining.** Tasks 26.07, 27.01, 27.02, 28.01, 28.02, 29.01, 30.01, 31.01, 34.01 and 61.01–64.01 are marked delivered; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
+**Current audited counter: 37 / 620 completed, 583 remaining.** Tasks 26.07, 27.01, 27.02, 28.01, 28.02, 29.01, 30.01, 31.01, 34.01, 37.01 and 61.01–64.01 are marked delivered; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
 
 ## Existing implementation evidence — not yet full-task completion
 
@@ -168,6 +168,12 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `e2cddaf`: [source-grounded inventory](VSP_LEGACY_FINANCIAL_FIELD_INVENTORY_61_64.md) of championship winner aliases, booking payment-state fields, Paymob transaction/order aliases, and payment method/source mapping, with source references and explicit risks.
 - `b815cd3`: close inventory-only subtasks **61.01, 62.01, 63.01, 64.01** in the canonical breakdown.
 - **Accounting: 4 scoped documentation tasks closed, 36/620 completed, 584 remaining.** No DB queries, data migration, payment or permissions modifications. The rest of 61–64 remain open.
+
+## Batch — challenge points formula
+
+- `c5c0438`: [37.01 challenge points formula](VSP_CHALLENGE_POINTS_FORMULA_37_01.md) documented from the actual trigger: win=3, draw=1, loss=0, confirmed challenge result only, with `elo_processed` one-time guard and limitations.
+- `30029aa`: close 37.01 in the task breakdown.
+- **Accounting: 1 additional source documentation subtask closed; 37/620 complete, 583 remaining.** No runtime match result recalculation or database deployment.
 
 ## Next execution queue
 
