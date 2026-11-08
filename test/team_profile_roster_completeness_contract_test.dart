@@ -9,9 +9,10 @@ void main() {
     ).readAsStringSync();
     expect(
       source,
-      contains('_hasMemberLoadError = members.length < memberIds.length;'),
+      contains('_hasMemberLoadError = !returnedIds.containsAll(memberIds);'),
     );
     expect(source, contains('getUsersByIdsStrict(memberIds)'));
+    expect(source, contains('members.map((member) => member.uid).toSet()'));
     expect(source, contains('_hasMemberLoadError = false;'));
   });
 }
