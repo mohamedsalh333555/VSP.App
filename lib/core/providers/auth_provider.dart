@@ -540,18 +540,36 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> updateProfilePhoto(XFile file) async {
-    if (_supabaseUser == null) return false;
-    return _runAuthAction(() async {
+    final user = _supabaseUser;
+    if (user == null) return false;
+    final generation = ++_userFetchGeneration;
+    _isLoading = true;
+    notifyListeners();
+    try {
       final res = await _c.profile.updateProfilePhoto(
-        authUser: _supabaseUser,
+        authUser: user,
         currentUserModel: _userModel,
         file: file,
-      );
-      if (res.success && res.updatedModel != null) {
-        _userModel = res.updatedModel;
+      ).timeout(const Duration(seconds: 40));
+      if (generation != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return false;
       }
-      return (success: res.success, error: res.error);
-    });
+      if (res.success && res.updatedModel != null &&
+          res.updatedModel!.uid == user.id) {
+        _userModel = res.updatedModel;
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    } finally {
+      if (generation == _userFetchGeneration &&
+          _supabaseUser?.id == user.id) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    }
   }
 
   Future<bool> completeSocialRegistration({
