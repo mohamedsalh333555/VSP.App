@@ -41,6 +41,33 @@ void main() {
       );
     });
 
+    test('unknown booking status is rejected rather than becoming pending', () {
+      final corrupted = {...sampleMap, 'status': 'paid_under_review'};
+      expect(
+        () => BookingMapper.fromFirestore(corrupted, 'booking_999'),
+        throwsFormatException,
+      );
+    });
+
+    test('legacy upcoming status maps to canonical confirmed', () {
+      final legacy = {...sampleMap, 'status': 'upcoming'};
+      expect(
+        BookingMapper.fromFirestore(legacy, 'booking_999').status,
+        BookingStatus.confirmed,
+      );
+    });
+
+    test('malformed booking time interval is rejected', () {
+      final invalid = {
+        ...sampleMap,
+        'end_time': sampleMap['start_time'],
+      };
+      expect(
+        () => BookingMapper.fromFirestore(invalid, 'booking_999'),
+        throwsFormatException,
+      );
+    });
+
     test('legacy enum-qualified booking type is restored', () {
       final legacy = {...sampleMap, 'booking_type': 'BookingType.open_join'};
       final booking = BookingMapper.fromFirestore(legacy, 'booking_999');
