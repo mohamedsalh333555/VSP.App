@@ -122,7 +122,11 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         if (mounted) setState(() => _remainingSeconds = remaining);
       },
       onExpired: () async {
-        if (!_paymentCompleted && _booking != null && mounted && !_hasAccountChanged &&
+        // Never clean up a pending reservation while Paymob may be
+        // processing a charge or while server reconciliation is unresolved.
+        if (!_paymentCompleted && !_paymentOutcomeUncertain &&
+            !_isAwaitingWebhook && _booking != null && mounted &&
+            !_hasAccountChanged &&
             Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
           final userId = authProvider.currentUser?.id;
