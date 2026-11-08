@@ -222,7 +222,13 @@ class PaymentCheckoutCoordinator {
     if (existingBookingId != null) {
       return await fetchBookingById(existingBookingId);
     }
-    if (userId != null) {
+    if (userId != null && userId.trim().isNotEmpty) {
+      // Never remove a previous pending booking before verifying the
+      // replacement draft. Server-side checks still govern the new booking.
+      final errors = bookingDraft.validate();
+      if (errors.isNotEmpty) {
+        throw FormatException('Invalid checkout booking draft: ${errors.join(', ')}');
+      }
       await cleanupStaleBookings(
         isTournamentPayment: isTournamentPayment,
         userId: userId,
