@@ -64,6 +64,20 @@ void main() {
       expect(revived.maxPlayers, equals(10));
     });
 
+    test('unknown restored booking type is rejected, not silently personal', () {
+      final draft = BookingDraft(
+        stadiumId: 'std-1',
+        stadiumName: 'Pitch',
+        ownerId: 'owner-1',
+        startTime: DateTime.utc(2026, 12, 10, 18),
+        endTime: DateTime.utc(2026, 12, 10, 19),
+        bookingType: BookingType.challenge,
+      );
+      final saved = draft.toMap();
+      saved['bookingType'] = 'unexpected_new_challenge';
+      expect(() => BookingDraft.fromMap(saved), throwsFormatException);
+    });
+
     test('BookingDraft copyWith updates specific fields', () {
       final now = DateTime(2026, 9, 9, 20, 0);
       final draft = BookingDraft(
