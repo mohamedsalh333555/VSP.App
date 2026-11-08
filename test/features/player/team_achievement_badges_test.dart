@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/my_team/team_achievement_badges.dart';
 import 'package:vsp_application/features/player/widgets/my_team/team_achievement_summary.dart';
@@ -8,6 +9,11 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       locale: Locale('ar'),
       supportedLocales: [Locale('ar'), Locale('en')],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
       home: Scaffold(
         body: TeamAchievementBadges(
           summary: TeamAchievementSummary(
