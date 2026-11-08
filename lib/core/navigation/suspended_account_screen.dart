@@ -93,7 +93,7 @@ class SuspendedAccountScreen extends StatelessWidget {
  : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
  await VSPLauncherUtils.openWhatsApp(context, phone: supportNumber, message: message);
  } catch (e) {
- debugPrint('Could not launch WhatsApp support: $e');
+ debugPrint('Could not launch WhatsApp support.');
  if (!context.mounted) return;
  ScaffoldMessenger.of(context).showSnackBar(
  SnackBar(
@@ -122,7 +122,7 @@ class SuspendedAccountScreen extends StatelessWidget {
  try {
  await auth.signOut();
  } catch (e) {
- debugPrint('Could not sign out suspended account: $e');
+ debugPrint('Could not sign out suspended account.');
  if (!context.mounted) return;
  ScaffoldMessenger.of(context).showSnackBar(
  SnackBar(
