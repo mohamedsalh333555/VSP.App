@@ -25,17 +25,25 @@ class VSPPositionSelector extends StatelessWidget {
       'label': isAr ? pos.nameAr : pos.nameEn,
     }).toList();
 
-    return Row(
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) => Wrap(
+      spacing: VSPDSSpacing.xxs,
+      runSpacing: VSPDSSpacing.xxs,
       children: positions.map((pos) {
         final code = pos['code'] as String;
         final label = pos['label'] as String;
         final isSelected = selectedPosition == code;
 
-        return Expanded(
+        return SizedBox(
+          width: constraints.maxWidth.isFinite
+              ? (constraints.maxWidth - VSPDSSpacing.xxs) / 2
+              : 160,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.xxs),
             child: AnimatedContainer(
-              duration: VSPDSMotion.fast,
+              duration: reduceMotion ? Duration.zero : VSPDSMotion.fast,
               curve: Curves.easeOutCubic,
               child: Semantics(
                 button: true,
@@ -102,6 +110,7 @@ class VSPPositionSelector extends StatelessWidget {
           ),
         );
       }).toList(),
+      ),
     );
   }
 }
