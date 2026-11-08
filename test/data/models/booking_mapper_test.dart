@@ -33,6 +33,20 @@ void main() {
       expect(booking.rentBall, isTrue);
     });
 
+    test('unknown server booking type is rejected rather than downgraded', () {
+      final corrupted = {...sampleMap, 'booking_type': 'new_challenge_format'};
+      expect(
+        () => BookingMapper.fromFirestore(corrupted, 'booking_999'),
+        throwsFormatException,
+      );
+    });
+
+    test('legacy enum-qualified booking type is restored', () {
+      final legacy = {...sampleMap, 'booking_type': 'BookingType.open_join'};
+      final booking = BookingMapper.fromFirestore(legacy, 'booking_999');
+      expect(booking.bookingType, BookingType.openJoin);
+    });
+
     test('Booking.fromFirestore and booking.toFirestore round-trip preserves core fields', () {
       final booking = Booking.fromFirestore(sampleMap, 'booking_999');
       final outputMap = booking.toFirestore();
