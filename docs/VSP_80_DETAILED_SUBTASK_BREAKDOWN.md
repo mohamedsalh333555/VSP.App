@@ -817,7 +817,7 @@
 - [x] 67.03 — تحديد الحقل المرجعي — [قرار التوافق](VSP_NOTIFICATION_FIELD_CANONICAL_AND_COMPATIBILITY_67.md)، commit `7bab47a`
 - [ ] 67.04 — اختبار القوالب القديمة
 - [x] 67.05 — خطة التوافق — [قرار التوافق](VSP_NOTIFICATION_FIELD_CANONICAL_AND_COMPATIBILITY_67.md)، commit `7bab47a`
-- [ ] 67.06 — توثيق القرار
+- [x] 67.06 — توثيق القرار — [تقرير المصدر](VSP_NOTIFICATION_CONSUMERS_AND_DECISION_67.md)، commit `bc6350b`
 - [ ] 67.07 — اختبار عرض الإشعارات القديمة بعد اختيار الحقل المعتمد
 
 ### 68 — Legacy user cash-debt fields (7)
@@ -832,7 +832,7 @@
 
 ### 69 — Legacy 1v1 players table (7)
 
-- [ ] 69.01 — جرد جدول لاعبي 1v1 القديم
+- [x] 69.01 — جرد جدول لاعبي 1v1 القديم — [تقرير المصدر](VSP_LEGACY_1V1_AND_CHALLENGE_RESULT_INVENTORY.md)، commit `6f7bcce`
 - [ ] 69.02 — تحديد علاقاته
 - [ ] 69.03 — مقارنته بالنظام الحالي
 - [ ] 69.04 — مراجعة البيانات
