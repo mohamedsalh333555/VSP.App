@@ -322,6 +322,12 @@ class BookingDraft {
       ppt * 2,
     );
 
+    final currentPlayers = parseCount(map['currentPlayers'], 1);
+    if (ppt <= 0 || tfc <= 0 ||
+        currentPlayers < 0 || currentPlayers > tfc) {
+      throw const FormatException('Booking draft has invalid player capacity');
+    }
+
     return BookingDraft(
       stadiumId: map['stadiumId']?.toString() ?? '',
       stadiumName: map['stadiumName']?.toString() ?? '',
@@ -344,7 +350,7 @@ class BookingDraft {
       currency: map['currency']?.toString() ?? 'EGP',
       paymentMethod: map['paymentMethod']?.toString(),
       paymentTransactionId: map['paymentTransactionId']?.toString(),
-      currentPlayers: parseCount(map['currentPlayers'], 1),
+      currentPlayers: currentPlayers,
       playersPerTeam: ppt,
       totalFieldCapacity: tfc,
       playerPhone: map['playerPhone']?.toString(),
