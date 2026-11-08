@@ -189,9 +189,23 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  isLoading: auth.isLoading,
  onPressed: auth.isLoading
      ? null
-     : () {
+     : () async {
          HapticFeedback.lightImpact();
-         auth.retryDataFetch();
+         try {
+           await auth.retryDataFetch();
+         } catch (e) {
+           debugPrint('Offline retry failed: $e');
+           if (!context.mounted) return;
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+               content: Text(
+                 isAr
+                     ? 'تعذرت إعادة الاتصال. حاول مرة أخرى.'
+                     : 'Could not reconnect. Please try again.',
+               ),
+             ),
+           );
+         }
        },
  ),
  ],
