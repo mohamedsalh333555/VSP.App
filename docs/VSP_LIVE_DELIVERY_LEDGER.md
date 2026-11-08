@@ -41,6 +41,16 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 | Duplicate/trailing formatter source | `6336135` | CODE_CHANGED; compile not yet checked |
 | Owner split-shift schedule input parsing | `04c7935` | CODE_CHANGED; UI acceptance pending |
 
+## Batch — 2026-11-08: booking deserialization
+
+| Candidate task | State | Implementation evidence | Remaining acceptance |
+|---|---|---|---|
+| 27.04 | IN_PROGRESS | Canonical upcoming normalization `f5bea6e`, tolerant result-state parsing `d9aef63` | Compare all server status writers/readers; verify client/server state parity |
+| 36.01–36.07 | IN_PROGRESS (partial) | Unknown match outcomes no longer throw in booking mapper `1847042` | End-to-end result lifecycle, deduplication and timing still required |
+| 34.01–34.13 | IN_PROGRESS (partial) | Challenge opponent metadata retained for normalized and legacy types `de074bf`, `626cd64` | Challenge invitation lifecycle and server checks remain open |
+
+**Batch accounting:** 5 source commits, 0 fully closed subtasks. No additional scope items; all changes map to existing baseline categories. Current audited count remains **25 completed / 595 remaining / 620 total**. Flutter compilation and integration checks pending.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
