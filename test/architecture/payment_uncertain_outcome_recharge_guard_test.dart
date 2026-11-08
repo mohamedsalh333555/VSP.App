@@ -2,6 +2,22 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('checkout expiry does not clean up while a payment is unresolved', () {
+    final source = File(
+      'lib/features/player/screens/payment_gateway_screen.dart',
+    ).readAsStringSync();
+    final expiry = source.indexOf('onExpired: () async {');
+    final guard = source.indexOf(
+      '!_paymentCompleted && !_paymentOutcomeUncertain', expiry,
+    );
+    final awaiting = source.indexOf('!_isAwaitingWebhook && _booking != null', guard);
+    final cleanup = source.indexOf('cleanupStaleBookings(', expiry);
+    expect(expiry, greaterThanOrEqualTo(0));
+    expect(guard, greaterThan(expiry));
+    expect(awaiting, greaterThan(guard));
+    expect(cleanup, greaterThan(awaiting));
+  });
+
   test('uncertain payment cannot release booking or cancel order', () {
     final source = File(
       'lib/features/player/screens/payment_gateway_screen.dart',
