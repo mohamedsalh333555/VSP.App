@@ -127,10 +127,12 @@ class BookingMapper {
           data['playerTeamLogoUrl'] ?? data['player_team_logo_url'],
       hostName: data['hostName'] ?? data['host_name'],
       hostAvatarUrl: data['hostAvatarUrl'] ?? data['host_avatar_url'],
-      opponentTeamId: (bookingTypeVal == 'challenge')
+      opponentTeamId: (parsedBookingType == BookingType.challenge ||
+              parsedBookingType == BookingType.team)
           ? (data['opponentTeamId'] ?? data['opponent_team_id'])
           : null,
-      opponentTeamName: (bookingTypeVal == 'challenge')
+      opponentTeamName: (parsedBookingType == BookingType.challenge ||
+              parsedBookingType == BookingType.team)
           ? (data['opponentTeamName'] ?? data['opponent_team_name'])
           : null,
       opponentTeamLogoUrl:
