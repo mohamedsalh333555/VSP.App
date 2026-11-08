@@ -165,6 +165,12 @@ class BookingSlotCalculator {
     String openStr = '';
     String closeStr = '';
     final features = stadium.features;
+    if (features is Map &&
+        features.containsKey('workingHours') &&
+        features['workingHours'] != null &&
+        features['workingHours'] is! Map) {
+      throw FormatException('Invalid stadium working hours');
+    }
     if (features is Map && features['workingHours'] is Map) {
       openStr = features['workingHours']['start']?.toString() ?? '';
       closeStr = features['workingHours']['end']?.toString() ?? '';
