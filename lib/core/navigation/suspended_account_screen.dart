@@ -89,10 +89,26 @@ class SuspendedAccountScreen extends StatelessWidget {
  try {
  final settings = await AppSettingsRepository().getSettings();
  if (!context.mounted) return;
- final supportNumber = settings.whatsappNumber.isNotEmpty
- ? settings.whatsappNumber
- : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
- await VSPLauncherUtils.openWhatsApp(context, phone: supportNumber, message: message);
+ final supportNumber = settings.whatsappNumber.trim().isNotEmpty
+ ? settings.whatsappNumber.trim()
+ : settings.supportPhone.trim();
+ if (supportNumber.isEmpty) {
+   ScaffoldMessenger.of(context).showSnackBar(
+     SnackBar(
+       content: Text(
+         isAr
+             ? 'بيانات التواصل مع الدعم غير متاحة حاليًا.'
+             : 'Support contact details are currently unavailable.',
+       ),
+     ),
+   );
+   return;
+ }
+ await VSPLauncherUtils.openWhatsApp(
+   context,
+   phone: supportNumber,
+   message: message,
+ );
  } catch (e) {
  debugPrint('Could not launch WhatsApp support.');
  if (!context.mounted) return;
