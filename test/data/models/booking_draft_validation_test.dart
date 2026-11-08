@@ -86,4 +86,18 @@ void main() {
     expect(restored.currentPlayers, 2);
   });
 
+  test('restored drafts normalize legacy booking type names', () {
+    final valid = draft().toMap();
+    expect(
+      BookingDraft.fromMap({...valid, 'booking_type': 'open-join-match'}
+          ..remove('bookingType')).bookingType,
+      BookingType.openJoin,
+    );
+    expect(
+      BookingDraft.fromMap({...valid, 'bookingType': 'BookingType.challenge'})
+          .bookingType,
+      BookingType.challenge,
+    );
+  });
+
 }
