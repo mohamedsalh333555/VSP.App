@@ -281,8 +281,8 @@ class BookingSlotCalculator {
 
     if (isAlreadySelected) {
       if (idxTapped == -1) {
-        selectedTimeSlots.remove(slotKey);
-        return selectedTimeSlots;
+        // The schedule was refreshed; a stale selection cannot be booked.
+        return <String>[];
       }
       // Keep selected slots in schedule order before applying edge-removal.
       selectedTimeSlots.sort((a, b) {
