@@ -25,7 +25,9 @@ class StadiumWizardTimeUtils {
     required List<Map<String, TimeOfDay?>> breakTimes,
   }) {
     if (!isSplitShift) return true;
-    if (startTime == null || endTime == null) return false;
+    if (startTime == null || endTime == null || breakTimes.isEmpty) {
+      return false;
+    }
 
     int t(TimeOfDay time) => time.hour * 60 + time.minute;
     final start = t(startTime);
