@@ -55,6 +55,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   final PaymentCheckoutCoordinator _coordinator = PaymentCheckoutCoordinator();
   bool _isLoading = false;
   bool _isAwaitingWebhook = false;
+  // An uncertain gateway outcome must not permit a second charge attempt.
+  // Re-enter checkout only after obtaining a fresh authoritative server state.
+  bool _paymentOutcomeUncertain = false;
   Booking? _booking;
   /// [H-08]: Uses canonical pending expiry policy from BookingDomainRules.
   /// Client-side countdown only — server is the authoritative enforcer.
@@ -313,6 +316,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       );
       return;
     }
+    if (_paymentOutcomeUncertain) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        PaymentFailureKind.unknown.userMessage(arabic: isArabic),
+      );
+      return;
+    }
     if (_isLoading || _isAwaitingWebhook) return;
     setState(() {
       _isLoading = true;
@@ -329,6 +340,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             debugPrint('Webhook timeout elapsed but verification modal is still showing.');
             return;
           }
+          _paymentOutcomeUncertain = true;
           setState(() {
             _isAwaitingWebhook = false;
             _isLoading = false;
@@ -503,6 +515,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _isAwaitingWebhook = false;
             _isLoading = false;
           });
+          _paymentOutcomeUncertain = true;
           // Continue checking server state after the WebView closes:
           // a successful charge may have completed without a browser result.
           if (_booking != null) {
@@ -527,6 +540,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           });
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           final kind = PaymentFailureClassifier.classify(message: e.toString());
+          if (kind.requiresStatusReconciliation) {
+            _paymentOutcomeUncertain = true;
+          }
           if (_booking != null && kind.requiresStatusReconciliation) {
             _startFallbackPollingTimer(_booking!.id);
           }
