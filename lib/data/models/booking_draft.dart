@@ -243,14 +243,20 @@ class BookingDraft {
           .replaceAll('_', '')
           .replaceAll('-', '')
           .replaceAll(' ', '');
-      for (final value in BookingType.values) {
-        if (value.name.toLowerCase() == normalized) {
-          parsedType = value;
-          break;
-        }
+      final matches = BookingType.values.where(
+        (value) => value.name.toLowerCase() == normalized,
+      );
+      if (matches.isNotEmpty) {
+        parsedType = matches.first;
+      } else if (normalized == 'openjoinmatch') {
+        parsedType = BookingType.openJoin;
+      } else if (normalized == 'challengematch') {
+        parsedType = BookingType.challenge;
+      } else {
+        // Never turn an unrecognized challenge/team booking into a personal
+        // booking when restoring a saved draft.
+        throw FormatException('Unknown booking type: $rawType');
       }
-      if (normalized == 'openjoinmatch') parsedType = BookingType.openJoin;
-      if (normalized == 'challengematch') parsedType = BookingType.challenge;
     }
 
     // A restored draft must never silently become a booking for "now".
