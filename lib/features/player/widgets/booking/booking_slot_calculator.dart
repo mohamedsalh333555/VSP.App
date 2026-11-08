@@ -76,9 +76,10 @@ class BookingSlotCalculator {
           }
           final start = getCumulativeMinutes(startText);
           final end = getCumulativeMinutes(endText);
-          if (start >= 0 && end > start) {
-            breakIntervals.add([start, end]);
-          }
+          if (start < startMinutes || end > endMinutes || end <= start) {
+          return const <TimeSlotItem>[];
+        }
+        breakIntervals.add([start, end]);
         }
       }
 
@@ -92,9 +93,10 @@ class BookingSlotCalculator {
         }
         final start = getCumulativeMinutes(startText);
         final end = getCumulativeMinutes(endText);
-        if (start >= 0 && end > start) {
-          breakIntervals.add([start, end]);
+        if (start < startMinutes || end > endMinutes || end <= start) {
+          return const <TimeSlotItem>[];
         }
+        breakIntervals.add([start, end]);
       }
 
       final List<TimeSlotItem> slots = [];
