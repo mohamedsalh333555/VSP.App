@@ -44,6 +44,11 @@ void main() {
     expect(notification.body, '100');
     expect(notification.isRead, isTrue);
   });
+  test('legacy string numeric read flags are parsed safely', () {
+    expect(AppNotification.fromMap({'id': 'read', 'is_read': ' 1 '}).isRead, isTrue);
+    expect(AppNotification.fromMap({'id': 'unread', 'is_read': '0'}).isRead, isFalse);
+    expect(AppNotification.fromMap({'id': 'unknown', 'is_read': 'maybe'}).isRead, isFalse);
+  });
   test('reads legacy message when body is absent', () {
     final notification = AppNotification.fromMap({
       'id': 'legacy-1', 'title': 'Match', 'message': 'Old message',
