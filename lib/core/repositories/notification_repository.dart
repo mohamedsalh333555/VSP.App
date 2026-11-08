@@ -36,6 +36,7 @@ class NotificationRepository {
   }
 
   Future<void> sendNotification(String userId, AppNotification notification) async {
+    if (userId.trim().isEmpty) return;
     try {
       await _supabase.from('notifications').insert({
         'user_id': userId,
@@ -53,6 +54,7 @@ class NotificationRepository {
   }
 
   Future<bool> restoreNotification(String userId, AppNotification notification) async {
+    if (userId.trim().isEmpty) return false;
     try {
       final inserted = await _supabase.from('notifications').insert({
         'user_id': userId,
@@ -73,6 +75,7 @@ class NotificationRepository {
   }
 
   Future<bool> markNotificationAsRead(String userId, String notificationId) async {
+    if (userId.trim().isEmpty || notificationId.trim().isEmpty) return false;
     try {
       final updated = await _supabase
           .from('notifications')
@@ -88,6 +91,7 @@ class NotificationRepository {
   }
 
   Future<bool> markAllAsRead(String userId) async {
+    if (userId.trim().isEmpty) return false;
     try {
       await _supabase
           .from('notifications')
@@ -102,6 +106,7 @@ class NotificationRepository {
   }
 
   Future<bool> deleteNotification(String userId, String notificationId) async {
+    if (userId.trim().isEmpty || notificationId.trim().isEmpty) return false;
     try {
       final deleted = await _supabase
           .from('notifications')
