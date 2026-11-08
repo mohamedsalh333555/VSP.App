@@ -5,7 +5,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **29 documented as completed; 591 not yet accepted**. This is NOT a claim that all 597 are untouched.
+- Current inventory: **30 documented as completed; 590 not yet accepted**. This is NOT a claim that all 597 are untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
@@ -23,7 +23,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 | 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
 | 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
 
-**Current audited counter: 29 / 620 completed, 591 remaining.** Tasks 26.07, 27.01, 27.02, 28.01, 28.02 and 29.01 are marked delivered; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
+**Current audited counter: 30 / 620 completed, 590 remaining.** Tasks 26.07, 27.01, 27.02, 28.01, 28.02, 29.01 and 30.01 are marked delivered; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
 
 ## Existing implementation evidence — not yet full-task completion
 
@@ -118,6 +118,16 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `e86323a`: checklist updated.
 
 **Accounting: 1 scoped documentation subtask closed; 29/620 completed, 591 remaining.** Other booking concurrency, retry, cancellation and payment subtasks stay open. No production DB schema, payment transaction implementation or permissions changed. Flutter analyze/tests and live concurrency validation deferred.
+
+## Batch — RPC response integrity, safe checkout resume, payment authority
+
+- `16e7d2b`: booking creation reads both `code` and legacy `error` from RPC failures, and rejects malformed or explicitly unsuccessful responses before using `booking_id`.
+- `f088b34`: checkout fails closed when an explicit existing booking ID cannot be resumed, instead of silently creating a replacement.
+- `b8c00f5`: architecture tests for RPC failure and resume guards (written, not executed).
+- `41a4552`: [30.01 server payment authority](VSP_PAYMENT_SERVER_SOURCE_OF_TRUTH_30_01.md) documented; browser redirects are not financial proof; webhook, order, and booking reconciliation follow server state. **30.01 closed**.
+- `07032bb`: task checklist updated.
+
+**Accounting:** 1 scoped documentation task closed, **30/620 completed, 590 remaining**. Payment webhook runtime and retry behavior, integration tests and server deployments are unverified. No database schema, permissions, payment transaction logic or main branch changed.
 
 ## Next execution queue
 
