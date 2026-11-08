@@ -35,8 +35,12 @@ class BookingSlotCalculator {
       }
       if (startStr.isEmpty) startStr = stadium.openingTime;
       if (endStr.isEmpty) endStr = stadium.closingTime;
-      if (startStr.isEmpty) startStr = '04:00 PM';
-      if (endStr.isEmpty) endStr = '03:00 AM';
+      if (startStr.isEmpty && endStr.isEmpty) {
+        startStr = '04:00 PM';
+        endStr = '03:00 AM';
+      } else if (startStr.isEmpty || endStr.isEmpty) {
+        return const <TimeSlotItem>[];
+      }
       if (!_isValidTime(startStr) || !_isValidTime(endStr)) {
         return const <TimeSlotItem>[];
       }
