@@ -5,7 +5,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **46 documented as completed; 574 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
+- Current inventory: **48 documented as completed; 572 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
@@ -23,7 +23,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 | 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
 | 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
 
-**Current audited counter: 46 / 620 completed, 574 remaining.** Source-audited inventory/decision tasks 67.01, 67.03, 67.05, 71.01 and 72.01 are now closed in addition to the previously accepted 38; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
+**Current audited counter: 48 / 620 completed, 572 remaining.** Source-audited inventory/decision tasks 67.01, 67.03, 67.05, 71.01 and 72.01 are now closed in addition to the previously accepted 38; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
 
 ## Existing implementation evidence — not yet full-task completion
 
@@ -213,6 +213,19 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `17eebe2`: [48.01 notification dedup key](VSP_NOTIFICATION_DELIVERY_DEDUP_KEY_48_01.md) specifies logical notification ID and per-channel/device delivery identity; does not claim server dedup implemented.
 - `6da6c42`: close **48.01** in task breakdown.
 - **Accounting: 1 scoped specification task closed; 46/620 complete, 574 remaining.** Three functional client fixes and three test updates, tests not run; no production schema, RLS, FCM queue or main merge.
+
+## Batch — notification account isolation, safe streams and matchup dependencies
+
+- `c203dfb`: return empty notifications/zero unread count without opening Supabase stream for missing user IDs; clamp inbox stream page size to 1–200.
+- `e6a5917`: actual async unit tests for blank identity streams and mutation guards, designed to run without initializing Supabase.
+- `39246af`, `ee90bcb`: tolerate non-string legacy notification metadata keys without breaking the inbox.
+- `1a12d64`: model unit tests for malformed metadata and mixed-type legacy fields.
+- `34f06ff`, `5d40ed4`: scope notification preference keys to authenticated user; reset on logout; prevent stale async reads/writes and avoid synchronous setState during dependency change. **Intentional behavior change:** old global preferences are not imported across accounts, preventing cross-account leakage on shared devices.
+- `5c99b4d`, `d29ec5e`, `5a73d1c`: lifecycle and account-isolation source regression tests.
+- `2218756`, `62ef516`: keep mark-all request feedback scoped to initiating account, with source regression test.
+- `bf0a7b8`: [matchup fee RPC dependencies and no-fee product decision](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md); closes **72.02 and 72.06**. No deployed RPC or financial changes.
+- `5d51a08`: update canonical task breakdown.
+- **Accounting: 2 source-scoped tasks closed; 48/620 completed, 572 remaining.** Multiple real client fixes and regression tests committed. Tests not executed (Flutter/Dart unavailable in this execution environment); no staging/production DB changes or main merge.
 
 ## Next execution queue
 
