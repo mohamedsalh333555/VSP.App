@@ -382,16 +382,29 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await AuthSignOutHandler.performSignOut(
-      user: _supabaseUser,
-      userModelUid: _userModel?.uid,
-      authService: _authService,
-      notificationService: _c.sessionSync.notificationService,
-      onClearRealtime: _c.realtime.stopRealtimeUserListener,
-    );
-    // Invalidate outstanding profile/retry requests before clearing the session.
-    // Otherwise a late response could restore a signed-out user's profile.
-    ++_userFetchGeneration;
+    final signingOutUser = _supabaseUser;
+    final signingOutUid = _userModel?.uid;
+    // Invalidate any in-flight profile/retry request *before* awaiting logout.
+    // A late response must not repopulate the previous account's state.
+    final signOutGeneration = ++_userFetchGeneration;
+    try {
+      await AuthSignOutHandler.performSignOut(
+        user: signingOutUser,
+        userModelUid: signingOutUid,
+        authService: _authService,
+        notificationService: _c.sessionSync.notificationService,
+        onClearRealtime: _c.realtime.stopRealtimeUserListener,
+      );
+    } catch (_) {
+      // The provider still holds the session if logout fails. Future profile
+      // requests use a newer generation; the UI may offer retry.
+      rethrow;
+    }
+    // Do not clear a newer session established while sign-out was in flight.
+    if (signOutGeneration != _userFetchGeneration ||
+        _supabaseUser?.id != signingOutUser?.id) {
+      return;
+    }
     _supabaseUser = null;
     _userModel = null;
     _form.userType = null;
