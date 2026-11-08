@@ -12,7 +12,9 @@ class NotificationRepository {
   Map<String, dynamic> _mapToCamelCase(Map<String, dynamic> data) {
     return {
       'title': data['title'],
+      // Preserve legacy rows that only stored the notification text in message.
       'body': data['body'],
+      'message': data['message'],
       'type': data['type'],
       'isRead': data['is_read'], 
       'createdAt': data['created_at'], 
