@@ -77,7 +77,7 @@ class AppDateFormatter {
     }
     clean = clean.replaceAll('：', ':');
     final match = RegExp(
-      r'^(\d{1,2})(?::(\d{1,2})(?::([0-5]\d))?)?\s*(AM|PM|ص|م|مساءً|صباحاً)?
+      r'^(\d{1,2})(?::(\d{1,2})(?::([0-5]\d))?)?\s*(AM|PM|ص|م|مساءً|صباحاً)?$',
       caseSensitive: false,
     ).firstMatch(clean);
     if (match == null) return null;
