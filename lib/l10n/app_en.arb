@@ -1181,5 +1181,12 @@
   "skipButton": "Skip",
   "updateRequired": "Update Required",
   "updateAvailableMessage": "A new version of VSP is available with improved performance and new features.",
-  "updateNow": "Update Now"
+  "updateNow": "Update Now",
+ "sessionExpiredSignInAgain": "Your session expired. Please sign in again.",
+ "captainGovernorateRequired": "Set the captain's governorate before creating a team.",
+ "teamLogoUploadFailed": "The team logo could not be uploaded. Check your connection and try again.",
+ "teamCreationFailedRetry": "Team creation failed. Please try again.",
+ "teamNameExampleHint": "e.g. Star Team",
+ "teamBioLabel": "Team bio",
+ "teamBioHint": "Write a short description of the team and its playing style..."
 }
