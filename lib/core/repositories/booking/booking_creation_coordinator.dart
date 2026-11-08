@@ -49,6 +49,17 @@ class BookingCreationCoordinator {
     required Future<Booking?> Function(String) getBookingById,
   }) async {
     try {
+      // Reject invalid drafts before either atomic RPC. Server-side validation
+      // remains authoritative for prices, permissions and slot conflicts.
+      final validationErrors = draft.validate();
+      if (validationErrors.isNotEmpty) {
+        throw FormatException(
+          'Invalid booking draft: ${validationErrors.join(', ')}',
+        );
+      }
+      if (userId.trim().isEmpty) {
+        throw const FormatException('Missing booking user ID');
+      }
       // The server calculates payment fees from the authoritative payment transaction.
       const double platformFee = 0.0;
       final dynamic rpcResult;
