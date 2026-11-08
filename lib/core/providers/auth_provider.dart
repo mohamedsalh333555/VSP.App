@@ -236,7 +236,9 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final model = await _c.sessionSync.retryDataFetch(user.id);
+      final model = await _c.sessionSync.retryDataFetch(user.id).timeout(
+        const Duration(seconds: 20),
+      );
       if (requestGeneration != _userFetchGeneration ||
           _supabaseUser?.id != user.id) {
         return;
