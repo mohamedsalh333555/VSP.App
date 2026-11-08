@@ -5,7 +5,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **38 documented as completed; 582 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
+- Current inventory: **43 documented as completed; 577 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
@@ -23,7 +23,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 | 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
 | 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
 
-**Current audited counter: 38 / 620 completed, 582 remaining.** Tasks 26.07, 27.01, 27.02, 28.01, 28.02, 29.01, 30.01, 31.01, 34.01, 37.01, 61.01–64.01 and 62.02 are marked delivered; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
+**Current audited counter: 43 / 620 completed, 577 remaining.** Source-audited inventory/decision tasks 67.01, 67.03, 67.05, 71.01 and 72.01 are now closed in addition to the previously accepted 38; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
 
 ## Existing implementation evidence — not yet full-task completion
 
@@ -183,6 +183,15 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `24476dc`: [62.02 payment-state semantics](VSP_PAYMENT_STATE_SEMANTICS_62_02.md) documents existing server trigger precedence, refund preservation, client fallback and booking/payment matrix.
 - `61f76f1`: close **62.02** in canonical breakdown.
 - **Accounting: 1 documentation subtask closed; 38/620 complete, 582 remain.** Client mapper changed, not server finance logic. Tests not run; no production schema, permission or main changes.
+
+## Batch — notification compatibility and migration collision audit
+
+- `7c06e0a`: notification model reads legacy `message` when canonical `body` is absent/blank; new writes remain `body`.
+- `5be5b84`: three tests for canonical precedence and historical message fallback (written, not run).
+- `d96c4f4`: [migration collision and notification inventory](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md) identifies 7 timestamp-collision groups, including conflicting sixth-team fee/no-fee RPC definitions; closes 67.01, 71.01, 72.01.
+- `7bab47a`: [canonical notification field and compatibility plan](VSP_NOTIFICATION_FIELD_CANONICAL_AND_COMPATIBILITY_67.md) closes 67.03 and 67.05.
+- `00720f3`, `b3f99f5`: update canonical checklist.
+- **Accounting:** 5 source-inventory/decision tasks closed, **43/620 complete, 577 remaining**. The two incompatible matchup fee migrations are **not** applied; live schema, migration runner order and tests remain unverified. No schema, fee, permissions or main branch changes.
 
 ## Next execution queue
 
