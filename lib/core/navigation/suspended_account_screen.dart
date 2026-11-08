@@ -80,10 +80,11 @@ class SuspendedAccountScreen extends StatelessWidget {
  elevation: 0,
  ),
  onPressed: () async {
- final user = auth.userModel;
+ // Do not prefill the user's phone number, UID or name into a
+ // third-party messaging app. Support can request details after consent.
  final message = isAr
- ? 'مرحباً فريق دعم VSP \nأريد الاستفسار بخصوص تعليق حسابي.\nالاسم: ${user?.name ?? "غير متوفر"}\nمعرف الحساب (UID): ${user?.uid ?? auth.currentUser?.id ?? "N/A"}\nرقم الهاتف: ${user?.phone ?? "N/A"}'
- : 'Hi VSP Support \nI would like to inquire about my suspended account.\nName: ${user?.name ?? "N/A"}\nUID: ${user?.uid ?? auth.currentUser?.id ?? "N/A"}\nPhone: ${user?.phone ?? "N/A"}';
+ ? 'مرحباً فريق دعم VSP، أريد الاستفسار عن تعليق حسابي.'
+ : 'Hello VSP Support, I would like help with my suspended account.';
 
  try {
  final settings = await AppSettingsRepository().getSettings();
