@@ -61,8 +61,12 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              final success = await NotificationRepository().markAllAsRead(_userId);
-              if (!context.mounted || success) return;
+              final requestUserId = _userId;
+              if (requestUserId.isEmpty) return;
+              final success = await NotificationRepository().markAllAsRead(requestUserId);
+              // An old account's failed request must not show feedback in a
+              // newly signed-in account's notification center.
+              if (!context.mounted || _userId != requestUserId || success) return;
               final isArabic = Localizations.localeOf(context).languageCode == 'ar';
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
