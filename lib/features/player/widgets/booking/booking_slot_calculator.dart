@@ -236,6 +236,10 @@ class BookingSlotCalculator {
     }
 
     if (isAlreadySelected) {
+      if (idxTapped == -1) {
+        selectedTimeSlots.remove(slotKey);
+        return selectedTimeSlots;
+      }
       // Keep selected slots in schedule order before applying edge-removal.
       selectedTimeSlots.sort((a, b) {
         final aIndex = timeSlots.indexWhere((slot) => slot.key == a);
