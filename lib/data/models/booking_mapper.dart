@@ -23,8 +23,11 @@ class BookingMapper {
 
   static int _parseInt(dynamic val, [int fallback = 0]) {
     if (val == null) return fallback;
-    if (val is num) return val.toInt();
-    if (val is String) return int.tryParse(val) ?? fallback;
+    if (val is num) {
+      final parsed = val.toDouble();
+      return parsed.isFinite ? parsed.toInt() : fallback;
+    }
+    if (val is String) return int.tryParse(val.trim()) ?? fallback;
     return fallback;
   }
 
