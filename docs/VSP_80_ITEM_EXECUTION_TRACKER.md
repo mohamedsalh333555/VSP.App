@@ -6,6 +6,19 @@
 
 **Verified complete: 0 / 80. Remaining: 80 / 80.**
 
+## 2026-11-08 — Recent code changes awaiting verification
+
+Four source commits have been pushed to `uxlp-44-implementation`. They are **not** counted as completed subtasks until their relevant acceptance tests pass:
+
+| Commit | Area | Change | Verification still required |
+|---|---|---|---|
+| `b4aad737` | Offline screen | Stop icon pulse for reduced-motion preference | Flutter widget test and Android reduced-motion check |
+| `56a4cc49` | Offline screen | Skip entrance scaling for reduced-motion preference | Flutter widget test and Android reduced-motion check |
+| `3182b24b` | Suspended account | Localized feedback when support launch fails | Failure-path widget test |
+| `a82abbcd` | Suspended account | Localized feedback when sign-out fails | Failure-path widget test |
+
+**Counting rule:** these commits do not represent four closed subtasks. Keep the 82-item/620-subtask detailed inventory separate from this 80-item release verification tracker. Do not reduce either remaining count without linking the corresponding acceptance evidence.
+
 ## Current execution priorities and blockers (2026-11-07)
 
 - **P0 release gate:** #57 Flutter CI, #58 Android E2E, #56 E2E matrix and PR #35 merge conflicts. At the latest check, Flutter Analyze and architecture regression passed, but Flutter tests and Android onboarding/login smoke were still `in_progress`; **no merge is justified yet**. Branch comparison `main...uxlp-44-implementation`: diverged, 2874 commits ahead, 2 behind; inspect conflicts and latest results before merge.
