@@ -53,4 +53,37 @@ void main() {
     expect(draft().toValidatedMap()['stadiumId'], 'stadium');
   });
 
+  test('restored drafts reject missing or malformed times', () {
+    final valid = draft().toMap();
+    expect(() => BookingDraft.fromMap({...valid}..remove('startTime')),
+        throwsFormatException);
+    expect(() => BookingDraft.fromMap({...valid, 'endTime': 'not-a-date'}),
+        throwsFormatException);
+    expect(() => BookingDraft.fromMap({
+      ...valid,
+      'endTime': valid['startTime'],
+    }), throwsFormatException);
+  });
+
+  test('restored drafts reject corrupt payment amounts', () {
+    final valid = draft().toMap();
+    expect(() => BookingDraft.fromMap({...valid, 'totalPrice': 'NaN'}),
+        throwsFormatException);
+    expect(() => BookingDraft.fromMap({...valid, 'deposit_paid': -1}),
+        throwsFormatException);
+  });
+
+  test('restored drafts accept legacy string player counts', () {
+    final valid = draft().toMap();
+    final restored = BookingDraft.fromMap({
+      ...valid,
+      'players_per_team': '5',
+      'total_field_capacity': '10',
+      'currentPlayers': '2',
+    });
+    expect(restored.playersPerTeam, 5);
+    expect(restored.totalFieldCapacity, 10);
+    expect(restored.currentPlayers, 2);
+  });
+
 }
