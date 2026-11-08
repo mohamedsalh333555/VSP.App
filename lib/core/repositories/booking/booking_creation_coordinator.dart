@@ -105,6 +105,9 @@ class BookingCreationCoordinator {
               : 1,
 
           'p_total_capacity': draft.totalFieldCapacity,
+          // Preserve a stable draft key across retries when provided.
+          // The server rechecks key ownership after acquiring its slot lock.
+          'p_idempotency_key': draft.idempotencyKey ?? const Uuid().v4(),
         });
       }
 
