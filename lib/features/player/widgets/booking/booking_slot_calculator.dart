@@ -56,7 +56,9 @@ class BookingSlotCalculator {
 
       int getCumulativeMinutes(String timeStr) {
         if (timeStr.trim().isEmpty) return -1;
-        int min = _parseTimeToMinutes(timeStr);
+        final parsed = AppDateFormatter.tryParseTimeToMinutes(timeStr);
+        if (parsed == null) return -1;
+        int min = parsed;
         if (min < startMinutes) {
           min += 24 * 60;
         }
