@@ -59,6 +59,7 @@ class BookingMapper {
               ?.toString()
               .toLowerCase()
               .replaceAll('_', '')
+              .replaceAll('-', '')
               .replaceAll(' ', '') ??
           '';
       if (val == 'openjoin' || val == 'openjoinmatch') {
