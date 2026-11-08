@@ -86,7 +86,12 @@ class BookingMapper {
       if (val == 'maintenance') {
         return BookingType.maintenance;
       }
-      return BookingType.personal;
+      if (val == '' || val == 'personal' || val == 'bookingtype.personal') {
+        return BookingType.personal;
+      }
+      // Unknown types must not silently become personal reservations: doing
+      // so can misrepresent team/challenge bookings and their permissions.
+      throw FormatException('Booking "$id" has unsupported booking_type: $bookingTypeVal');
     }();
 
     // [H-06]: Required DB fields — missing values must cause a parse failure,
