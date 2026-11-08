@@ -23,6 +23,12 @@ class BookingSlotCalculator {
       String startStr = '';
       String endStr = '';
 
+      if (features is Map &&
+          features.containsKey('workingHours') &&
+          features['workingHours'] != null &&
+          features['workingHours'] is! Map) {
+        return const <TimeSlotItem>[];
+      }
       if (features is Map && features['workingHours'] is Map) {
         startStr = features['workingHours']['start']?.toString() ?? '';
         endStr = features['workingHours']['end']?.toString() ?? '';
