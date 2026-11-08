@@ -812,7 +812,7 @@
 
 ### 67 — Notification body/message (7)
 
-- [ ] 67.01 — حصر حقول body وmessage
+- [x] 67.01 — حصر حقول body وmessage — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
 - [ ] 67.02 — تتبع المستهلكين
 - [ ] 67.03 — تحديد الحقل المرجعي
 - [ ] 67.04 — اختبار القوالب القديمة
@@ -852,7 +852,7 @@
 
 ### 71 — Duplicate-named migration versions (7)
 
-- [ ] 71.01 — حصر نسخ migrations المتشابهة
+- [x] 71.01 — حصر نسخ migrations المتشابهة — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
 - [ ] 71.02 — مقارنة المحتوى
 - [ ] 71.03 — تحديد ترتيب التنفيذ
 - [ ] 71.04 — التحقق من بيئة staging
@@ -862,7 +862,7 @@
 
 ### 72 — matchup_extra_team_fee migration sequence (7)
 
-- [ ] 72.01 — حصر migrations رسوم الفريق الإضافي
+- [x] 72.01 — حصر migrations رسوم الفريق الإضافي — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
 - [ ] 72.02 — تحديد الاعتماديات
 - [ ] 72.03 — مراجعة ترتيب التنفيذ
 - [ ] 72.04 — اختبار إعادة البناء
