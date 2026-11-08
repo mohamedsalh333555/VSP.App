@@ -8,7 +8,7 @@ void main() {
 
   test('preferences are scoped by current user, never global legacy keys', () {
     expect(source, contains("String _prefKey(String userId, String key)"));
-    expect(source, contains("'vsp_user_${userId}_$key'"));
+    expect(source, contains(r"'vsp_user_${userId}_$key'"));
     expect(source, contains('prefs.getBool(_prefKey(userId, key))'));
     expect(source, contains('prefs.setBool(_prefKey(userId, key), value)'));
     expect(source, isNot(contains("prefs.getBool('notif_general')")));
