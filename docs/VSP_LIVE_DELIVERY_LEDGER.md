@@ -264,6 +264,14 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - The newest Flutter CI for `fc345aa` (run `42486761911`) was pending when this record was written. Do **not** mark full test suite passed until its result is confirmed.
 - **Accounting unchanged: 49/620 completed, 571 remaining.** Fixes are committed; final verification pending. No main merge, production database, RLS, or payment changes.
 
+## Verified CI closure — 2026-11-08
+
+- GitHub Flutter CI [run 42486800643](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42486800643) succeeded: analyzer, architecture regression (53 tests passed), and full Flutter suite (**1005 passed, 10 skipped**). Android E2E Smoke [run 42486800662](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42486800662) also succeeded on the same commit.
+- `docs/VSP_FLUTTER_CI_VERIFICATION_57.md` (`ea07921`) captures the run IDs, job evidence, failure/fix commits and verification limits.
+- `67a98fb` closes **57.01–57.06**, six subtasks with direct passing CI evidence. **57.07 remains open** pending verification of enforced branch protection.
+- `45be581` briefly changed notification mark-all return semantics; `3889a5e` restored correct idempotent behavior for an empty inbox before the final verified closure. This was not counted as a completed subtask.
+- **Progress: 55/620 completed, 565 remaining.** The successful run predates the subsequent notification and documentation commits; new code still requires a fresh green run. No production schema, RLS, payments, or main merge.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
