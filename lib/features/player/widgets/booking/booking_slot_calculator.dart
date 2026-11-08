@@ -153,8 +153,16 @@ class BookingSlotCalculator {
     if (!_isValidTime(openStr) || !_isValidTime(closeStr)) {
       throw FormatException('Invalid stadium working hours');
     }
-    int openMin = _parseTimeToMinutes(openStr);
-    int closeMin = _parseTimeToMinutes(closeStr);
+    final openMin = _parseTimeToMinutes(openStr);
+    final closeMin = _parseTimeToMinutes(closeStr);
+    final overnight = closeMin <= openMin;
+    final normalizedSlot = overnight && startMin < openMin
+        ? startMin + 24 * 60
+        : startMin;
+    final normalizedClose = overnight ? closeMin + 24 * 60 : closeMin;
+    if (normalizedSlot < openMin || normalizedSlot >= normalizedClose) {
+      throw FormatException('Booking slot outside stadium operating hours');
+    }
 
     DateTime date = selectedDate;
     final bool isOvernightShift = (closeMin <= openMin && openMin > 0);
