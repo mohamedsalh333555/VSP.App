@@ -316,8 +316,8 @@ class BookingSlotCalculator {
       final first = selectedTimeSlots.first;
       final idxFirst = timeSlots.indexWhere((s) => s.key == first);
       if (idxFirst == -1) {
-        // The previously selected time is no longer offered. Replace it only
-        // with the tapped slot, which has already passed availability checks.
+        // A refreshed schedule invalidates the old selection. The tapped slot
+        // has already been checked for booking conflicts and past dates.
         return <String>[slotKey];
       }
 
