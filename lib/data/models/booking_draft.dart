@@ -44,6 +44,24 @@ class BookingDraft {
   final String? challengeCode;
   final String? idempotencyKey;
 
+  /// Local draft validation. Server must independently validate prices,
+  /// availability, identity and booking permissions before persisting.
+  List<String> validate() {
+    final errors = <String>[];
+    if (stadiumId.trim().isEmpty) errors.add('stadiumId');
+    if (ownerId.trim().isEmpty) errors.add('ownerId');
+    if (!endTime.isAfter(startTime)) errors.add('timeRange');
+    if (!totalPrice.isFinite || totalPrice < 0) errors.add('totalPrice');
+    if (!depositPaid.isFinite || depositPaid < 0) errors.add('depositPaid');
+    if (depositPaid > totalPrice) errors.add('depositExceedsTotal');
+    if (playersPerTeam <= 0) errors.add('playersPerTeam');
+    if (totalFieldCapacity <= 0) errors.add('totalFieldCapacity');
+    if (currentPlayers < 0 || currentPlayers > totalFieldCapacity) {
+      errors.add('currentPlayers');
+    }
+    return errors;
+  }
+
   // Backward compatibility getter
   int get maxPlayers => totalFieldCapacity;
 
