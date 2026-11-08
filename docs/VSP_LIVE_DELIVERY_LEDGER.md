@@ -154,6 +154,15 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `f855297`: architecture regression test asserts the uncertainty guard precedes checkout URL creation (written, not run).
 - **Accounting:** no full 29.03/29.04 task closure; 32/620 complete, 588 remain. This is a client-side defense in depth only, not a substitute for backend idempotency or live double-charge verification. No schema, payments backend or permissions modified.
 
+## Batch — draft round-trip correctness and payment cleanup safety
+
+- `23989eb`, `af65837`: preserve `isPaid` and `needsDeposit` through `BookingDraft.toMap/fromMap` and extend round-trip unit test. Draft fields are client serialization only, not server payment authority.
+- `74cbcb6`, `62c7309`: reject unknown restored booking types rather than silently converting a challenge/team reservation into a personal booking; add regression test.
+- `c46848b`, `5bcf78d`: prevent user-triggered cancellation/lock release while an electronic payment is awaiting or has an uncertain result, with source-contract test.
+- `fe1c075`, `84b0cad`: prevent client checkout-expiry cleanup while Paymob processing/reconciliation is unresolved, with source-contract test.
+
+**Accounting:** 0 newly accepted full subtasks; **32/620 complete, 588 remaining**. Eight commits of functional changes and test assertions; Flutter tests and end-to-end payment checks were not executed. Client safety improvements do not prove double-charge prevention on the backend. No production schema, payment transaction processing, role permissions or main branch modified.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
