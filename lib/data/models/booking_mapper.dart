@@ -67,6 +67,7 @@ class BookingMapper {
           bookingTypeVal
               ?.toString()
               .toLowerCase()
+              .replaceAll('bookingtype.', '')
               .replaceAll('_', '')
               .replaceAll('-', '')
               .replaceAll(' ', '') ??
@@ -86,7 +87,7 @@ class BookingMapper {
       if (val == 'maintenance') {
         return BookingType.maintenance;
       }
-      if (val == '' || val == 'personal' || val == 'bookingtype.personal') {
+      if (val == '' || val == 'personal') {
         return BookingType.personal;
       }
       // Unknown types must not silently become personal reservations: doing
