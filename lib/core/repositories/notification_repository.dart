@@ -24,12 +24,18 @@ class NotificationRepository {
   }
 
   Stream<List<AppNotification>> getUserNotifications(String userId, {int limit = 50}) {
+    // Do not subscribe to a shared table while auth is still initializing
+    // or after logout. A blank identity is never a valid notification scope.
+    if (userId.trim().isEmpty) {
+      return Stream.value(<AppNotification>[]);
+    }
+    final safeLimit = limit.clamp(1, 200).toInt();
     return _supabase
         .from('notifications')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .order('created_at', ascending: false)
-        .limit(limit)
+        .limit(safeLimit)
         .map((list) => list
             .map((data) => AppNotification.fromFirestore(_mapToCamelCase(data), data['id'].toString()))
             .toList());
@@ -122,6 +128,7 @@ class NotificationRepository {
   }
 
   Stream<int> getUnreadNotificationCount(String userId) {
+    if (userId.trim().isEmpty) return Stream.value(0);
     return _supabase
         .from('notifications')
         .stream(primaryKey: ['id'])
