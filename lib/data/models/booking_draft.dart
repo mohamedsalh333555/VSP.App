@@ -221,9 +221,11 @@ class BookingDraft {
       'max_players': totalFieldCapacity, // backward compatibility key
       'playerPhone': playerPhone,
       'notes': notes,
+      'isPaid': isPaid,
       'deposit_paid': depositPaid,
       'is_deposit_paid': isDepositPaid,
       'payment_status': paymentStatus,
+      'needs_deposit': needsDeposit,
       'instapay': instapay,
       'vodafoneCash': vodafoneCash,
       'binanceId': binanceId,
