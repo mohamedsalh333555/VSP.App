@@ -281,20 +281,24 @@ class BookingSlotCalculator {
           }
         }
         final checkItem = timeSlots[i];
-        final slotDateTime = getSlotDateTime(
-          slotKey: checkItem.key,
-          stadium: stadium,
-          selectedDate: selectedDate,
-        );
-        final isPast = slotDateTime.isBefore(DateTime.now());
-        final isBooked = isSlotBooked(
-          slotKey: checkItem.key,
-          stadium: stadium,
-          selectedDate: selectedDate,
-          existingBookings: existingBookings,
-        );
-
-        if (isPast || isBooked) {
+        try {
+          final slotDateTime = getSlotDateTime(
+            slotKey: checkItem.key,
+            stadium: stadium,
+            selectedDate: selectedDate,
+          );
+          final isPast = slotDateTime.isBefore(DateTime.now());
+          final isBooked = isSlotBooked(
+            slotKey: checkItem.key,
+            stadium: stadium,
+            selectedDate: selectedDate,
+            existingBookings: existingBookings,
+          );
+          if (isPast || isBooked) {
+            hasInvalidSlot = true;
+            break;
+          }
+        } on FormatException {
           hasInvalidSlot = true;
           break;
         }
