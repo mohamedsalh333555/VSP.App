@@ -37,22 +37,32 @@ class StadiumWizardTimeUtils {
     int t(TimeOfDay time) => time.hour * 60 + time.minute;
     final start = t(startTime);
     final end = t(endTime);
-    int normEnd = (end <= start) ? end + (24 * 60) : end;
+    final overnight = end <= start;
+    final normalizedEnd = overnight ? end + 24 * 60 : end;
+    final intervals = <({int start, int end})>[];
 
-    for (var breakEntry in breakTimes) {
-      final bStart = breakEntry['start'];
-      final bEnd = breakEntry['end'];
-      if (bStart == null || bEnd == null) continue;
+    for (final breakEntry in breakTimes) {
+      final breakStart = breakEntry['start'];
+      final breakEnd = breakEntry['end'];
+      // An incomplete closure must not silently become a bookable interval.
+      if (breakStart == null || breakEnd == null) return false;
 
-      final btStart = t(bStart);
-      final btEnd = t(bEnd);
+      var normalizedStart = t(breakStart);
+      var normalizedBreakEnd = t(breakEnd);
+      if (overnight && normalizedStart < start) normalizedStart += 24 * 60;
+      if (overnight && normalizedBreakEnd < start) normalizedBreakEnd += 24 * 60;
 
-      int normBStart = (btStart < start && end <= start) ? btStart + (24 * 60) : btStart;
-      int normBEnd = (btEnd < start && end <= start) ? btEnd + (24 * 60) : btEnd;
-
-      if (!(normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd)) {
+      if (normalizedStart < start ||
+          normalizedBreakEnd > normalizedEnd ||
+          normalizedStart >= normalizedBreakEnd) {
         return false;
       }
+      intervals.add((start: normalizedStart, end: normalizedBreakEnd));
+    }
+
+    intervals.sort((a, b) => a.start.compareTo(b.start));
+    for (var i = 1; i < intervals.length; i++) {
+      if (intervals[i].start < intervals[i - 1].end) return false;
     }
     return true;
   }
