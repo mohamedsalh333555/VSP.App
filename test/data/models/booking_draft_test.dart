@@ -119,6 +119,10 @@ void main() {
         {'total_field_capacity': 0},
         {'currentPlayers': -1},
         {'currentPlayers': 11},
+        {'currentPlayers': 2.5},
+        {'currentPlayers': 'not-a-number'},
+        {'players_per_team': double.nan},
+        {'total_field_capacity': double.infinity},
       ]) {
         expect(
           () => BookingDraft.fromMap({...draft.toMap(), ...invalid}),

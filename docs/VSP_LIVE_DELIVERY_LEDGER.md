@@ -318,6 +318,12 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Latest [Flutter CI 42516946511](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42516946511) was pending at inspection. No claim of passing tests on these commits yet.
 - **58/620 completed, 562 remaining**. Booking lifecycle end-to-end tasks remain open. No main merge or production database/payment changes.
 
+## Strict restored booking count parsing — 2026-11-08
+
+- Atomic code/test/ledger batch: `BookingDraft.fromMap` rejects fractional, non-finite and malformed player counts instead of silently truncating or defaulting; null/missing values retain the historical fallback. Added regression fixtures for fractional current players, malformed string, NaN and Infinity alongside existing negative/overflow cases.
+- Previous branch baseline **58/620 complete, 562 remaining**. This hardening does not close full booking journey acceptance; CI must pass on the atomic commit before counting any additional task.
+- No main merge or production schema/payment change.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.

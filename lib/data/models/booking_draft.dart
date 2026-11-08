@@ -303,26 +303,34 @@ class BookingDraft {
       throw const FormatException('Booking draft deposit exceeds total price');
     }
 
-    int parseCount(dynamic value, int fallback) {
+    int parseCount(dynamic value, int fallback, String field) {
+      if (value == null) return fallback;
       if (value is int) return value;
       if (value is num) {
         final number = value.toDouble();
-        return number.isFinite ? number.toInt() : fallback;
+        if (number.isFinite && number == number.truncateToDouble()) {
+          return number.toInt();
+        }
+      } else if (value is String) {
+        final parsed = int.tryParse(value.trim());
+        if (parsed != null) return parsed;
       }
-      return int.tryParse(value?.toString().trim() ?? '') ?? fallback;
+      // Do not silently round 5.5 players to 5 or replace malformed saved
+      // counts with defaults. The user must correct the corrupted draft.
+      throw FormatException('Booking draft has invalid $field');
     }
 
     final int ppt = parseCount(
-      map['players_per_team'] ?? map['playersPerTeam'], 5,
+      map['players_per_team'] ?? map['playersPerTeam'], 5, 'playersPerTeam',
     );
     final int tfc = parseCount(
       map['total_field_capacity'] ??
           map['totalFieldCapacity'] ??
           map['max_players'],
-      ppt * 2,
+      ppt * 2, 'totalFieldCapacity',
     );
 
-    final currentPlayers = parseCount(map['currentPlayers'], 1);
+    final currentPlayers = parseCount(map['currentPlayers'], 1, 'currentPlayers');
     if (ppt <= 0 || tfc <= 0 ||
         currentPlayers < 0 || currentPlayers > tfc) {
       throw const FormatException('Booking draft has invalid player capacity');
