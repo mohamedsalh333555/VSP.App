@@ -1,7 +1,12 @@
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/utils/vsp_quick_booking_receipt_formatter.dart';
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('en');
+    await initializeDateFormatting('ar');
+  });
   final start = DateTime(2026, 11, 7, 18);
   final end = DateTime(2026, 11, 7, 19);
 
