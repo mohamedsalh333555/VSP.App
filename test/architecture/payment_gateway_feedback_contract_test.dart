@@ -10,6 +10,8 @@ void main() {
     expect(source, contains('PaymentFailureKind.unknown.userMessage(arabic: isArabic)'));
     expect(source, contains('PaymentFailureKind.providerUnavailable.userMessage(arabic: isArabic)'));
     expect(source, contains('payment_failure_classifier.dart'));
+    expect(source, contains('_startFallbackPollingTimer(_booking!.id);'));
+    expect(source, contains('kind.requiresStatusReconciliation'));
     expect(source, isNot(contains('Payment was not completed. You can try again anytime.')));
   });
 }
