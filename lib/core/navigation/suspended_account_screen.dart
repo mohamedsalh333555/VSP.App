@@ -114,7 +114,21 @@ class SuspendedAccountScreen extends StatelessWidget {
  const SizedBox(height: VSPSpacing.md),
  TextButton(
  onPressed: () async {
+ try {
  await auth.signOut();
+ } catch (e) {
+ debugPrint('Could not sign out suspended account: $e');
+ if (!context.mounted) return;
+ ScaffoldMessenger.of(context).showSnackBar(
+ SnackBar(
+ content: Text(
+ isAr
+ ? 'تعذر تسجيل الخروج. يرجى المحاولة مرة أخرى.'
+ : 'Unable to sign out. Please try again.',
+ ),
+ ),
+ );
+ }
  },
  style: TextButton.styleFrom(
  foregroundColor: VSPColors.textSecondary,
