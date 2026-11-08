@@ -178,10 +178,22 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _c.sessionSync.fetchUserData(
-      user: user,
-      currentUserType: _form.userType,
-    );
+    late final dynamic result;
+    try {
+      result = await _c.sessionSync.fetchUserData(
+        user: user,
+        currentUserType: _form.userType,
+      ).timeout(const Duration(seconds: 25));
+    } catch (_) {
+      if (requestGeneration == _userFetchGeneration &&
+          _supabaseUser?.id == user.id) {
+        _isLoading = false;
+        _isInitializing = false;
+        _dataFetchError = true;
+        notifyListeners();
+      }
+      return;
+    }
 
     // A slower response from a previous account must never replace the active
     // account's profile or realtime subscriptions.
