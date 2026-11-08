@@ -160,7 +160,7 @@ class BookingSlotCalculator {
         ? startMin + 24 * 60
         : startMin;
     final normalizedClose = overnight ? closeMin + 24 * 60 : closeMin;
-    if (normalizedSlot < openMin || normalizedSlot >= normalizedClose) {
+    if (normalizedSlot < openMin || normalizedSlot + 30 > normalizedClose) {
       throw FormatException('Booking slot outside stadium operating hours');
     }
 
