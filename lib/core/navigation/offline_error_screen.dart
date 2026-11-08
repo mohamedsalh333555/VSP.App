@@ -137,10 +137,14 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  )
  ],
  ),
+ child: Semantics(
+ label: isAr ? 'لا يوجد اتصال بالشبكة' : 'Network disconnected',
+ image: true,
  child: const Icon(
  Iconsax.wifi_square_copy,
  color: VSPColors.accent,
  size: 48,
+ ),
  ),
  ),
  );
