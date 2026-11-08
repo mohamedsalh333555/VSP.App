@@ -156,8 +156,6 @@ class BookingSlotCalculator {
     final bool isOvernightShift = (closeMin <= openMin && openMin > 0);
     if (isOvernightShift && startMin < openMin) {
       date = date.add(const Duration(days: 1));
-    } else if (!isOvernightShift && openMin > 12 * 60 && startMin < openMin) {
-      date = date.add(const Duration(days: 1));
     }
     return DateTime(date.year, date.month, date.day, startMin ~/ 60, startMin % 60);
   }
