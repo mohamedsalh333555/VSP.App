@@ -89,6 +89,15 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 
 **Task accounting:** 3 commits, **0 newly closed subtasks**, **27/620 completed; 593 remaining**. These changes advance booking input robustness but not full 26/28 lifecycle acceptance. No production schema, permissions or payment writes modified.
 
+## Batch — restored booking draft integrity (2026-11-08)
+
+- `19d767b`: `BookingDraft.fromMap` now rejects missing, malformed, or inverted start/end times instead of inventing `DateTime.now()` and a one-hour slot; rejects invalid/non-finite/negative persisted amounts.
+- `8c287df`: regression tests for missing/corrupt dates, amounts and legacy player-count strings (written, not executed).
+- `95d0884`: restored booking types support snake_case, hyphenated and enum-qualified historical values.
+- `9d70a98`: tests for legacy booking type restoration (written, not executed).
+
+**Scope note:** this batch improves restored draft integrity, not server-side booking enforcement, payment reconciliation, or release verification. **0 full tasks closed; 27/620 complete, 593 remain.** Flutter test/analyze deferred per project instruction.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
