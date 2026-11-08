@@ -74,18 +74,25 @@ class NotificationFilterService {
 
   /// Determines the deep-link route for a given notification payload.
   /// Returns a route string like `/match/123`, `/team/456`, or `/notifications`.
+  static String? _safeRouteId(dynamic value) {
+    if (value is! String) return null;
+    final id = value.trim();
+    // IDs are single path segments, never routes or arbitrary user content.
+    // Reject slash, percent-encoded slashes, query/fragment delimiters and
+    // control characters instead of letting notification payloads redirect.
+    if (id.isEmpty || id.length > 128 ||
+        !RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(id)) {
+      return null;
+    }
+    return id;
+  }
+
   static String resolveDeepLinkRoute(Map<String, dynamic> data) {
-    final String? bookingId = data['bookingId']?.toString();
-    final String? teamId = data['teamId']?.toString();
+    final bookingId = _safeRouteId(data['bookingId'] ?? data['booking_id']);
+    final teamId = _safeRouteId(data['teamId'] ?? data['team_id']);
 
-    if (bookingId != null && bookingId.isNotEmpty) {
-      return '/match/$bookingId';
-    }
-
-    if (teamId != null && teamId.isNotEmpty) {
-      return '/team/$teamId';
-    }
-
+    if (bookingId != null) return '/match/$bookingId';
+    if (teamId != null) return '/team/$teamId';
     return '/notifications';
   }
 }
