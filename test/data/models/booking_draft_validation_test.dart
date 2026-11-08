@@ -48,4 +48,9 @@ void main() {
     expect(draft(players: -1).validate(), contains('currentPlayers'));
     expect(draft(players: 11).validate(), contains('currentPlayers'));
   });
+  test('checked serializer refuses invalid draft', () {
+    expect(() => draft(price: -1).toValidatedMap(), throwsFormatException);
+    expect(draft().toValidatedMap()['stadiumId'], 'stadium');
+  });
+
 }
