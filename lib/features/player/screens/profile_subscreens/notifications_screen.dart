@@ -52,19 +52,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _loadSettings(String userId) async {
     if (userId.isEmpty) {
       if (!mounted || _settingsUserId != userId) return;
-      setState(() {
-        _generalNotifications = true;
-        _soundAlerts = true;
-        _chatNotifications = true;
-        _ownerNewBookings = true;
-        _ownerPayouts = true;
-        _ownerDailySchedule = true;
-        _playerBookingConfirmations = true;
-        _playerTeamTransfers = true;
-        _playerMatchReminders = true;
-        _playerChallengeResults = true;
-        _isLoading = false;
-      });
+      // didChangeDependencies already triggers a build. Do not call setState
+      // synchronously from that lifecycle when the account signs out.
+      _generalNotifications = true;
+      _soundAlerts = true;
+      _chatNotifications = true;
+      _ownerNewBookings = true;
+      _ownerPayouts = true;
+      _ownerDailySchedule = true;
+      _playerBookingConfirmations = true;
+      _playerTeamTransfers = true;
+      _playerMatchReminders = true;
+      _playerChallengeResults = true;
+      _isLoading = false;
       return;
     }
     final prefs = await SharedPreferences.getInstance();
