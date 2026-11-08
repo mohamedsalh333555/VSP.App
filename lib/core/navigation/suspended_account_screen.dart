@@ -30,15 +30,20 @@ class SuspendedAccountScreen extends StatelessWidget {
  shape: BoxShape.circle,
  border: Border.all(color: VSPColors.error.withValues(alpha: 0.2)),
  ),
+ child: Semantics(
+ label: isAr ? 'الحساب معلّق' : 'Account suspended',
+ image: true,
  child: const Icon(
  Iconsax.close_circle_copy,
  color: VSPColors.error,
  size: 56,
  ),
  ),
+ ),
  const SizedBox(height: VSPSpacing.xl),
  Text(
  isAr ? 'تم تعليق الحساب' : 'Account Suspended',
+ textAlign: TextAlign.center,
  style: const TextStyle(
  color: VSPColors.error,
  fontSize: 22,
