@@ -72,6 +72,9 @@ void main() {
         startTime: DateTime.utc(2026, 12, 10, 18),
         endTime: DateTime.utc(2026, 12, 10, 19),
         bookingType: BookingType.challenge,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 100.0,
       );
       final saved = draft.toMap();
       saved['bookingType'] = 'unexpected_new_challenge';
