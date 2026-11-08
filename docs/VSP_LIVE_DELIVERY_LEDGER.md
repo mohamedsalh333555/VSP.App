@@ -288,6 +288,15 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Fresh [Flutter CI 42514888405](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42514888405) and [Android smoke 42514888523](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42514888523) were **pending** at record time. Do not claim tests passed on new code until completed.
 - No checklist closure in this batch yet: 07.07 requires end-to-end auth/role navigation verification, not merely ID sanitization. **58/620 completed, 562 remaining**. No main merge or production schema/payment changes.
 
+## Booking-state and notification payload safety — 2026-11-08
+
+- `8684b9d`: booking mapper now rejects unknown server booking statuses with `FormatException`, rather than treating them as `pending` and potentially displaying unsafe payment/retry actions. Existing `upcoming` alias remains mapped to confirmed.
+- `742201d`: regression tests cover unknown status, `upcoming` compatibility and invalid time ranges.
+- `415ce10`: notification deep-link resolver validates camelCase and snake_case IDs separately; malformed modern value can no longer mask a valid legacy value.
+- `0be9b2b`: tests for malformed-modern/valid-legacy fallback.
+- Previous [Android smoke 42514922345](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42514922345) **succeeded** on `b4f7f03`; Flutter CI for that earlier commit was still in progress at inspection. New [Flutter CI 42515885719](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515885719) was pending at inspection.
+- This is a code-hardening batch, not closure of the complete 27.x or 07.x user-journey tasks. **Count remains 58/620 completed, 562 remaining** until full acceptance criteria are met. No main merge or production DB/payment modifications.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
