@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/services/logger_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 
