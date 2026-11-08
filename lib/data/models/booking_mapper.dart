@@ -102,6 +102,18 @@ class BookingMapper {
       );
     }
 
+    final parsedStartTime = startTimeVal is DateTime
+        ? startTimeVal.toLocal()
+        : DateTime.parse(startTimeVal.toString()).toLocal();
+    final parsedEndTime = endTimeVal is DateTime
+        ? endTimeVal.toLocal()
+        : DateTime.parse(endTimeVal.toString()).toLocal();
+    if (!parsedEndTime.isAfter(parsedStartTime)) {
+      throw FormatException(
+        'Booking "$id" has an invalid time range: end_time must be after start_time.',
+      );
+    }
+
     return Booking(
       id: id,
       stadiumId: data['stadiumId'] ?? data['stadium_id'] ?? '',
@@ -109,12 +121,8 @@ class BookingMapper {
       stadiumImageUrl:
           data['stadiumImageUrl'] ?? data['stadium_image_url'] ?? '',
       ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
-      startTime: startTimeVal is DateTime
-          ? startTimeVal.toLocal()
-          : DateTime.parse(startTimeVal.toString()).toLocal(),
-      endTime: endTimeVal is DateTime
-          ? endTimeVal.toLocal()
-          : DateTime.parse(endTimeVal.toString()).toLocal(),
+      startTime: parsedStartTime,
+      endTime: parsedEndTime,
       operationalDate: opDateVal != null
           ? (opDateVal is DateTime
                 ? opDateVal
