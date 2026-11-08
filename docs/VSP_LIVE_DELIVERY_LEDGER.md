@@ -51,6 +51,17 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 
 **Batch accounting:** 5 source commits, 0 fully closed subtasks. No additional scope items; all changes map to existing baseline categories. Current audited count remains **25 completed / 595 remaining / 620 total**. Flutter compilation and integration checks pending.
 
+## Batch — booking data integrity (current turn)
+
+Five code commits in `lib/data/models/booking_mapper.dart`:
+- `b41a971`: reject bookings whose end time is not after start time.
+- `31f1d42`: normalize hyphenated booking type aliases.
+- `4c8744d`: normalize operational date objects to calendar-day values.
+- `711d5ab`: reject NaN/infinite monetary values while deserializing.
+- `13cee29`: reject non-finite numeric counters and trim numeric strings.
+
+**Progress classification:** these are implementation improvements to booking integrity and legacy data handling, **not** five fully completed baseline subtasks. Tasks 27.04, 28.01, and 62 remain in progress or open until their full acceptance scope is satisfied. No new tasks added. Counter remains **25/620 complete, 595 remaining**. Flutter analyze and end-to-end acceptance deferred.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
