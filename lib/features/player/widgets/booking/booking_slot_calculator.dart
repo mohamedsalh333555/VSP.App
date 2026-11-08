@@ -92,6 +92,15 @@ class BookingSlotCalculator {
         breakIntervals.add([start, end]);
       }
 
+      // An explicitly supplied legacy closure must have the expected shape.
+      if (breakIntervals.isEmpty &&
+          features is Map &&
+          features.containsKey('breakTime') &&
+          features['breakTime'] != null &&
+          features['breakTime'] is! Map) {
+        return const <TimeSlotItem>[];
+      }
+
       // Treat overlapping closures as invalid schedule data, not partial availability.
       breakIntervals.sort((a, b) => a[0].compareTo(b[0]));
       for (var i = 1; i < breakIntervals.length; i++) {
