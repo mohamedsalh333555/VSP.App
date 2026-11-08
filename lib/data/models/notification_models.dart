@@ -28,9 +28,11 @@ class AppNotification {
        ? rawDate
        : DateTime.tryParse(rawDate?.toString() ?? '');
    final rawRead = data['isRead'] ?? data['is_read'];
+   final normalizedRead = rawRead?.toString().trim().toLowerCase();
    final read = rawRead == true ||
        rawRead == 1 ||
-       rawRead?.toString().toLowerCase() == 'true';
+       normalizedRead == 'true' ||
+       normalizedRead == '1';
    final rawMetadata = data['metadata'];
    return AppNotification(
      id: id,
