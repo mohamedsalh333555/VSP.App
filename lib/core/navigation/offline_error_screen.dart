@@ -193,6 +193,18 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
          HapticFeedback.lightImpact();
          try {
            await auth.retryDataFetch();
+           if (!context.mounted) return;
+           if (auth.hasDataFetchError) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               SnackBar(
+                 content: Text(
+                   isAr
+                       ? 'الاتصال لم يكتمل. تحقق من الشبكة وحاول مجددًا.'
+                       : 'Connection not restored. Check your network and retry.',
+                 ),
+               ),
+             );
+           }
          } catch (e) {
            debugPrint('Offline retry failed: $e');
            if (!context.mounted) return;
