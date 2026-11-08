@@ -44,8 +44,12 @@ class AppNotification {
      // Malformed legacy timestamps must not crash the whole notification list.
      createdAt: parsedDate ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
      bookingId: (data['bookingId'] ?? data['booking_id'])?.toString(),
+     // Ignore malformed metadata keys rather than dropping the whole inbox.
      metadata: rawMetadata is Map
-         ? Map<String, dynamic>.from(rawMetadata)
+         ? <String, dynamic>{
+             for (final entry in rawMetadata.entries)
+               if (entry.key is String) entry.key as String: entry.value,
+           }
          : null,
    );
  }
