@@ -145,8 +145,12 @@ class BookingMapper {
       paymentTransactionId:
           data['paymentTransactionId'] ?? data['payment_transaction_id'],
       status: () {
-        if (statusVal == 'upcoming') return BookingStatus.confirmed;
-        final normalizedStatus = statusVal?.toString().toLowerCase().trim().replaceAll('-', '_');
+        final normalizedStatus = statusVal
+            ?.toString()
+            .toLowerCase()
+            .trim()
+            .replaceAll('-', '_');
+        if (normalizedStatus == 'upcoming') return BookingStatus.confirmed;
         if (normalizedStatus == 'no_show' || normalizedStatus == 'noshow') {
           return BookingStatus.noShow;
         }
