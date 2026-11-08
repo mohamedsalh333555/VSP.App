@@ -27,6 +27,23 @@ void main() {
     expect(notification.createdAt.millisecondsSinceEpoch, 0);
     expect(notification.isRead, isFalse);
   });
+  test('malformed metadata keys do not break the notification inbox', () {
+    final notification = AppNotification.fromMap({
+      'id': 'metadata-1',
+      'metadata': {1: 'bad key', 'booking_id': 'b-1'},
+    });
+    expect(notification.metadata, {'booking_id': 'b-1'});
+  });
+  test('legacy string fields and boolean read flag remain usable', () {
+    final notification = AppNotification.fromMap({
+      'id': 'types-1', 'title': 123, 'type': 42,
+      'body': 100, 'isRead': 1, 'createdAt': now,
+    });
+    expect(notification.title, '123');
+    expect(notification.type, '42');
+    expect(notification.body, '100');
+    expect(notification.isRead, isTrue);
+  });
   test('reads legacy message when body is absent', () {
     final notification = AppNotification.fromMap({
       'id': 'legacy-1', 'title': 'Match', 'message': 'Old message',
