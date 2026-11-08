@@ -59,6 +59,12 @@ class BookingSlotCalculator {
       }
 
       final breakIntervals = <List<int>>[];
+      if (features is Map &&
+          features.containsKey('breakTimes') &&
+          features['breakTimes'] != null &&
+          features['breakTimes'] is! List) {
+        return const <TimeSlotItem>[];
+      }
       if (features is Map && features['breakTimes'] is List) {
         for (final item in features['breakTimes'] as List) {
           if (item is! Map) return const <TimeSlotItem>[];
