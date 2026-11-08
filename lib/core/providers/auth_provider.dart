@@ -389,9 +389,15 @@ class AuthProvider with ChangeNotifier {
       notificationService: _c.sessionSync.notificationService,
       onClearRealtime: _c.realtime.stopRealtimeUserListener,
     );
+    // Invalidate outstanding profile/retry requests before clearing the session.
+    // Otherwise a late response could restore a signed-out user's profile.
+    ++_userFetchGeneration;
     _supabaseUser = null;
     _userModel = null;
     _form.userType = null;
+    _isGhostUser = false;
+    _isLoading = false;
+    _isInitializing = false;
     _dataFetchError = false;
     _errorMessage = null;
     reset();
