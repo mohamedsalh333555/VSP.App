@@ -88,8 +88,10 @@ class NotificationFilterService {
 
   /// Resolves a safe match/team route or falls back to the inbox.
   static String resolveDeepLinkRoute(Map<String, dynamic> data) {
-    final bookingId = _safeRouteId(data['bookingId'] ?? data['booking_id']);
-    final teamId = _safeRouteId(data['teamId'] ?? data['team_id']);
+    final bookingId = _safeRouteId(data['bookingId']) ??
+        _safeRouteId(data['booking_id']);
+    final teamId = _safeRouteId(data['teamId']) ??
+        _safeRouteId(data['team_id']);
 
     if (bookingId != null) return '/match/$bookingId';
     if (teamId != null) return '/team/$teamId';
