@@ -257,6 +257,7 @@ class BookingSlotCalculator {
         } else if (tappedIdx == selectedTimeSlots.length - 1) {
           selectedTimeSlots.removeLast();
         } else {
+          // Tapping a middle slot shortens the range from that slot onward.
           selectedTimeSlots.removeRange(tappedIdx, selectedTimeSlots.length);
         }
       }
@@ -322,6 +323,7 @@ class BookingSlotCalculator {
       // Preserve the previous valid selection when a range crosses a booked,
       // expired, unavailable or non-contiguous slot.
     } else {
+      // When an existing range is selected, a new tap starts a fresh range.
       selectedTimeSlots.clear();
       selectedTimeSlots.add(slotKey);
     }
