@@ -6,7 +6,7 @@ permissions:
 
 concurrency:
   group: android-e2e-smoke-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
   public-auth-smoke:
     name: Android public/auth journey smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v4
