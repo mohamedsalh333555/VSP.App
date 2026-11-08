@@ -238,6 +238,14 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `c5cd2e2`: unit tests for position registry/defaults, written but not executed.
 - **Accounting: 1 source-inventory task closed; 49/620 completed, 571 remaining.** Real notification fixes and tests committed; tests not executed. No live Supabase schema, RLS, payments or main branch changes.
 
+## Batch — responsive position selector and legacy notification read flags
+
+- `6c481be`: `VSPPositionSelector` now wraps options in a two-column adaptive layout rather than forcing all positions into a single row; honors `MediaQuery.disableAnimationsOf(context)` by disabling selection animation.
+- `a106546`: widget tests for 220px width selection and reduced motion (written, not executed).
+- `054aac8`: notification model now accepts trimmed legacy `is_read='1'` string as read, while `'0'` and unknown values remain unread.
+- `4eb26f2`: tests for legacy string read flags (written, not executed).
+- **Accounting:** no full subtasks accepted in this batch: **49/620 completed, 571 remaining**. These are partial implementation of responsive/accessibility and legacy data quality scopes. No production schema, payments, permissions or main changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
