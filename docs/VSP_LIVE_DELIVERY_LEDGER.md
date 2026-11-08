@@ -246,6 +246,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `4eb26f2`: tests for legacy string read flags (written, not executed).
 - **Accounting:** no full subtasks accepted in this batch: **49/620 completed, 571 remaining**. These are partial implementation of responsive/accessibility and legacy data quality scopes. No production schema, payments, permissions or main changes.
 
+## Batch — extra-narrow position selection and accessibility
+
+- `5a9506a`: position selector now uses a single column below 240 logical pixels and two columns at wider finite widths, instead of forcing cramped 2-column cells on very narrow devices.
+- `72bbaad`: widget regression case for a 140px position selector (written, not run).
+- `7a26e96`: suppress selector haptic feedback when the platform requests reduced motion, in addition to the prior zero-duration animations.
+- **Accounting:** no full subtask closed in this batch: **49/620 completed, 571 remaining**. Source code and tests committed; runtime layout/accessibility tests remain unexecuted. No live database, payment, permissions or main changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
