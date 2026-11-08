@@ -499,6 +499,11 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _isAwaitingWebhook = false;
             _isLoading = false;
           });
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          final kind = PaymentFailureClassifier.classify(message: e.toString());
+          // A transport error after opening Paymob may mean the charge was
+          // processed; always reconcile uncertain results on the server.
+          VSPFeedback.showError(context, kind.userMessage(arabic: isArabic));
         }
       }
     } else {
