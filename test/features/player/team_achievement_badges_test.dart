@@ -16,10 +16,7 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('بطولات الملاعب'), findsOneWidget);
-    expect(find.text('أبطال 1 ضد 1'), findsOneWidget);
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('0×'), findsOneWidget);
+    expect(find.bySemanticsLabel('0 بطولات ملاعب رسمية، 0 أبطال واحد ضد واحد'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -41,10 +38,7 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('Stadium titles'), findsOneWidget);
-    expect(find.text('1v1 champions'), findsOneWidget);
-    expect(find.text('3'), findsOneWidget);
-    expect(find.text('2×'), findsOneWidget);
+    expect(find.bySemanticsLabel('3 verified stadium championships, 2 one versus one champion players'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
