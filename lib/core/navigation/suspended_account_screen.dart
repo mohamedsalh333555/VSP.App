@@ -89,6 +89,16 @@ class SuspendedAccountScreen extends StatelessWidget {
  await VSPLauncherUtils.openWhatsApp(context, phone: supportNumber, message: message);
  } catch (e) {
  debugPrint('Could not launch WhatsApp support: $e');
+ if (!context.mounted) return;
+ ScaffoldMessenger.of(context).showSnackBar(
+ SnackBar(
+ content: Text(
+ isAr
+ ? 'تعذر فتح الدعم الآن. يرجى المحاولة مرة أخرى.'
+ : 'Unable to open support right now. Please try again.',
+ ),
+ ),
+ );
  }
  },
  icon: const Icon(Iconsax.headphones_copy, color: VSPColors.background),
