@@ -10,8 +10,14 @@ class BookingMapper {
 
   static double _parseDouble(dynamic val, [double fallback = 0.0]) {
     if (val == null) return fallback;
-    if (val is num) return val.toDouble();
-    if (val is String) return double.tryParse(val) ?? fallback;
+    if (val is num) {
+      final parsed = val.toDouble();
+      return parsed.isFinite ? parsed : fallback;
+    }
+    if (val is String) {
+      final parsed = double.tryParse(val.trim());
+      return parsed != null && parsed.isFinite ? parsed : fallback;
+    }
     return fallback;
   }
 
