@@ -126,7 +126,7 @@ class BookingMapper {
       endTime: parsedEndTime,
       operationalDate: opDateVal != null
           ? (opDateVal is DateTime
-                ? opDateVal
+                ? DateTime(opDateVal.year, opDateVal.month, opDateVal.day)
                 : DateTime.tryParse(opDateVal.toString()))
           : null,
       bookingType: parsedBookingType,
