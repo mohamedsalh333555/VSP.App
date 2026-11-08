@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vsp_app/data/models/booking_enums.dart';
+import 'package:vsp_application/data/models/booking_enums.dart';
 
 void main() {
   group('BookingStatus lifecycle contract', () {
