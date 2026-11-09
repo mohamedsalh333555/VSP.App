@@ -201,7 +201,9 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         actions: [
           if (_activeUserTeamScope != null)
             IconButton(
-              tooltip: 'Team invitations',
+              tooltip: Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'دعوات الفرق'
+                  : 'Team invitations',
               icon: const Icon(Iconsax.sms_copy, color: VSPColors.accent),
               onPressed: () => showModalBottomSheet<void>(
                 context: context,
@@ -273,7 +275,9 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                 ],
                 selectedIndex: _selectedMainTab,
                 onSelected: (index) {
-                  HapticFeedback.selectionClick();
+                  if (!MediaQuery.disableAnimationsOf(context)) {
+                    HapticFeedback.selectionClick();
+                  }
                   setState(() => _selectedMainTab = index);
                 },
                 textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 14),
