@@ -7,6 +7,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import 'add_stadium_wizard.dart';
@@ -25,6 +26,8 @@ class FacilityOnboardingScreen extends StatefulWidget {
 class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
   Stream<List<Stadium>>? _stadiumsStream;
   String? _cachedUid;
+  bool _isCompletingLater = false;
+  bool _isContinuingToDocuments = false;
 
   Stream<List<Stadium>> _getStadiumsStream(String uid) {
     if (_stadiumsStream != null && _cachedUid == uid) {
@@ -67,6 +70,74 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
 
     if (!context.mounted) return;
     await FacilityUpgradeBottomSheet.show(context, isAr: isAr, user: user);
+  }
+
+  Future<void> _completeOnboardingLater(
+    AuthProvider authProvider,
+    bool isAr,
+  ) async {
+    if (_isCompletingLater) return;
+    final uid = authProvider.currentUser?.id ?? authProvider.userModel?.uid;
+    if (uid == null || uid.isEmpty) {
+      VSPFeedback.showError(
+        context,
+        isAr ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Your sign-in session ended. Please sign in again.',
+      );
+      return;
+    }
+
+    setState(() => _isCompletingLater = true);
+    try {
+      await UserRepository().updateOnboardingConfirmed(uid, true);
+      await authProvider.updateProfile({'is_onboarding_confirmed': true});
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      context.go('/owner');
+    } catch (_) {
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isAr ? 'تعذر حفظ اختيارك الآن. حاول مرة أخرى.' : 'Could not save your choice. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCompletingLater = false);
+    }
+  }
+
+  Future<void> _continueToDocuments(
+    AuthProvider authProvider,
+    bool isAr,
+  ) async {
+    if (_isContinuingToDocuments) return;
+    final uid = authProvider.currentUser?.id ?? authProvider.userModel?.uid;
+    if (uid == null || uid.isEmpty) {
+      VSPFeedback.showError(
+        context,
+        isAr ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Your sign-in session ended. Please sign in again.',
+      );
+      return;
+    }
+
+    setState(() => _isContinuingToDocuments = true);
+    try {
+      final updatedAdditional =
+          FacilityOnboardingService.buildOnboardingConfirmedPayload(
+        authProvider.userModel?.additionalData,
+      );
+      await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
+      await authProvider.updateProfile({'additionalData': updatedAdditional});
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      context.go('/documentation');
+    } catch (_) {
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isAr ? 'تعذر حفظ التقدم الآن. حاول مرة أخرى.' : 'Could not save your progress. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isContinuingToDocuments = false);
+    }
   }
 
   double _calculateOnboardingProgress(Stadium? stadium) {
@@ -162,18 +233,9 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () async {
-                  final uid = authProvider.currentUser?.id ?? authProvider.userModel?.uid;
-                  if (uid != null) {
-                    await UserRepository().updateOnboardingConfirmed(uid, true);
-                  }
-                  await authProvider.updateProfile({
-                    'is_onboarding_confirmed': true,
-                  });
-                  if (context.mounted) {
-                    context.go('/owner');
-                  }
-                },
+                onPressed: _isCompletingLater
+                    ? null
+                    : () => _completeOnboardingLater(authProvider, isAr),
                 child: Text(
                   isAr ? 'هضيف الملعب بعدين' : "I'll add stadium later",
                   style: const TextStyle(
@@ -298,8 +360,8 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  const SizedBox(height: 8),
  Text(
  isAr
- ? 'أحسنت! قطعنا $progressPct% من الإعداد. تابع رفع الوثائق لتصل لـ 100% وتفعل شارة المالك الموثوق '
- : '$progressPct% complete! Finish uploading documents to reach 100% and earn your Verified Badge ',
+ ? 'اكتمل $progressPct% من بيانات ملعبك. تابع رفع الوثائق المطلوبة لإرسالها للمراجعة.'
+ : '$progressPct% of your stadium profile is complete. Upload the required documents to submit them for review.',
  style: const TextStyle(
  color: VSPColors.textSecondary,
  fontSize: 11,
@@ -386,23 +448,9 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  SizedBox(
  width: double.infinity, height: 56,
  child: ElevatedButton(
- onPressed: () async {
- final uid = authProvider.currentUser?.id;
- final updatedAdditional =
- FacilityOnboardingService.buildOnboardingConfirmedPayload(
- authProvider.userModel?.additionalData,
- );
- if (uid != null) {
- await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
- }
- await authProvider.updateProfile({
- 'additionalData': updatedAdditional,
- });
- if (!context.mounted) return;
- // FIX: Use GoRouter instead of Navigator.push to keep
- // redirect logic consistent and avoid broken GoRouter state
- context.go('/documentation');
- },
+ onPressed: _isContinuingToDocuments
+     ? null
+     : () => _continueToDocuments(authProvider, isAr),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.accent,
  foregroundColor: VSPColors.black,
