@@ -147,6 +147,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       if (!mounted) return;
 
       if (success) {
+        unawaited(AnalyticsService.logSignupCompleted(role: 'owner'));
         unawaited(AnalyticsService.logOwnerRegistrationCompleted());
         HapticFeedback.lightImpact();
         if (mounted) {
