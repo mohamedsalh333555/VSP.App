@@ -61,36 +61,17 @@ class StadiumWizardValidator {
           : 'Please select working hours (start and end)';
     }
 
-    // ── Split-Shift Validation (Strictly Optional) ──
-    if (isSplitShift) {
-      // Break times are optional: if empty or unconfigured, we do not block the user.
-      for (var i = 0; i < breakTimes.length; i++) {
-        final bStart = breakTimes[i]['start'];
-        final bEnd = breakTimes[i]['end'];
-
-        // If times are null/incomplete, treat as optional and ignore without blocking
-        if (bStart == null || bEnd == null) {
-          continue;
-        }
-
-        int t(TimeOfDay time) => time.hour * 60 + time.minute;
-        final start = t(startTime);
-        final end = t(endTime);
-        final bStartMin = t(bStart);
-        final bEndMin = t(bEnd);
-
-        int normEnd = (end <= start) ? end + (24 * 60) : end;
-        int normBStart = (bStartMin < start && end <= start) ? bStartMin + (24 * 60) : bStartMin;
-        int normBEnd = (bEndMin < start && end <= start) ? bEndMin + (24 * 60) : bEndMin;
-
-        bool isBreakInHours = normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd;
-
-        if (!isBreakInHours) {
-          return isArabic
-              ? 'فترة الراحة ${i + 1} يجب أن تكون داخل مواعيد العمل الرسمية (${StadiumWizardTimeUtils.formatTime(startTime, '')} - ${StadiumWizardTimeUtils.formatTime(endTime, '')}).'
-              : 'Break ${i + 1} must be within opening hours (${StadiumWizardTimeUtils.formatTime(startTime, '')} - ${StadiumWizardTimeUtils.formatTime(endTime, '')}).';
-        }
-      }
+    // A split shift means at least one complete closure interval. Never
+    // ignore a half-configured break and accidentally expose it as bookable.
+    if (!StadiumWizardTimeUtils.isSplitShiftValid(
+      startTime: startTime,
+      endTime: endTime,
+      isSplitShift: isSplitShift,
+      breakTimes: breakTimes,
+    )) {
+      return isArabic
+          ? 'أكمل فترات التوقف وتأكد أنها داخل مواعيد العمل ولا تتداخل.'
+          : 'Complete every break and keep intervals inside operating hours without overlap.';
     }
 
     return null;
