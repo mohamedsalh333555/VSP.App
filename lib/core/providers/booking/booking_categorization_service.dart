@@ -28,57 +28,84 @@ class CategorizedOwnerBookings {
 class BookingCategorizationService {
   const BookingCategorizationService._();
 
+  static bool _isConfirmedLifecycleStatus(BookingStatus status) =>
+      status == BookingStatus.confirmed || status == BookingStatus.upcoming;
+
   /// Categorizes player bookings into upcoming, pending (recent grace period), and history.
+  ///
+  /// Returned lists are deterministic: the next actionable booking appears
+  /// first, while history is newest first. The input list is never mutated.
   static CategorizedUserBookings categorizeUserBookings({
     required List<Booking> bookings,
     required DateTime now,
   }) {
     final upcoming = bookings
-        .where((b) =>
-            b.status == BookingStatus.confirmed &&
-            b.endTime.isAfter(now))
-        .toList();
+        .where(
+          (b) =>
+              _isConfirmedLifecycleStatus(b.status) &&
+              b.endTime.isAfter(now),
+        )
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
     final tenMinutesAgo = now.subtract(const Duration(minutes: 10));
     final pending = bookings.where((b) {
       final isFuture = b.endTime.isAfter(now);
       final hasConfirmedSameSlot = upcoming.any(
         (u) =>
-            u.status == BookingStatus.confirmed &&
+            _isConfirmedLifecycleStatus(u.status) &&
             u.stadiumId == b.stadiumId &&
-            u.startTime == b.startTime,
+            u.startTime.isAtSameMomentAs(b.startTime),
       );
       if (hasConfirmedSameSlot || !isFuture) return false;
       if (b.status != BookingStatus.pending) return false;
-      // Cash bookings remain pending until owner confirms/collects
+      // Cash bookings remain pending until owner confirms/collects.
       if (b.isCash) return true;
-      // Online unpaid checkouts have 10-minute payment grace period
+      // Online unpaid checkouts have a 10-minute payment grace period.
       final isRecent = b.createdAt.isAfter(tenMinutesAgo);
       return !b.isPaid && isRecent;
-    }).toList();
+    }).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
     final history = bookings.where((b) {
-      if (b.status == BookingStatus.completed || b.status == BookingStatus.noShow) return true;
-      if (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)) return true;
-      if (b.status == BookingStatus.pending && b.endTime.isBefore(now)) return true;
+      if (b.status == BookingStatus.completed ||
+          b.status == BookingStatus.noShow ||
+          b.status == BookingStatus.expired) {
+        return true;
+      }
+      if (_isConfirmedLifecycleStatus(b.status) &&
+          !b.endTime.isAfter(now)) {
+        return true;
+      }
+      if (b.status == BookingStatus.pending && !b.endTime.isAfter(now)) {
+        return true;
+      }
       if (b.status == BookingStatus.cancelled) {
-        // Exclude abandoned checkouts where no money was ever paid
-        final bool isAbandonedCheckout =
+        // Exclude abandoned checkouts where no money was ever paid.
+        final isAbandonedCheckout =
             b.cancellationReason == 'Cancelled by user during payment checkout' ||
-            (b.cancellationReason?.toLowerCase().contains('checkout') ?? false);
-        final bool hasPaidMoney = b.depositPaid > 0 ||
+                (b.cancellationReason
+                        ?.toLowerCase()
+                        .contains('checkout') ??
+                    false);
+        final hasPaidMoney = b.depositPaid > 0 ||
             b.isDepositPaid ||
             b.isPaid ||
             b.paymentStatus == 'paid' ||
             b.paymentStatus == 'refunded' ||
             b.paymentStatus == 'refund_pending';
         if (isAbandonedCheckout && !hasPaidMoney) {
-          return false; // Do not show fake abandoned drafts in player history
+          return false;
         }
         return true;
       }
       return false;
-    }).toList();
+    }).toList()
+      ..sort((a, b) {
+        final byEnd = b.endTime.compareTo(a.endTime);
+        if (byEnd != 0) return byEnd;
+        return b.createdAt.compareTo(a.createdAt);
+      });
 
     return CategorizedUserBookings(
       upcoming: upcoming,
@@ -93,15 +120,30 @@ class BookingCategorizationService {
     required DateTime now,
   }) {
     final upcoming = bookings
-        .where((b) => (b.status == BookingStatus.confirmed || (b.status == BookingStatus.pending && b.isCash)) && b.endTime.isAfter(now))
-        .toList();
+        .where(
+          (b) =>
+              (_isConfirmedLifecycleStatus(b.status) ||
+                  (b.status == BookingStatus.pending && b.isCash)) &&
+              b.endTime.isAfter(now),
+        )
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
     final history = bookings
-        .where((b) =>
-            b.status == BookingStatus.completed ||
-            b.status == BookingStatus.cancelled ||
-            b.endTime.isBefore(now))
-        .toList();
+        .where(
+          (b) =>
+              b.status == BookingStatus.completed ||
+              b.status == BookingStatus.cancelled ||
+              b.status == BookingStatus.noShow ||
+              b.status == BookingStatus.expired ||
+              !b.endTime.isAfter(now),
+        )
+        .toList()
+      ..sort((a, b) {
+        final byEnd = b.endTime.compareTo(a.endTime);
+        if (byEnd != 0) return byEnd;
+        return b.createdAt.compareTo(a.createdAt);
+      });
 
     return CategorizedOwnerBookings(
       upcoming: upcoming,
@@ -116,15 +158,22 @@ class BookingCategorizationService {
     required Set<String> cancellingIds,
   }) {
     final result = List<Booking>.from(incomingBookings);
-    final manualBookings = currentBookings.where((b) =>
-        b.paymentTransactionId?.startsWith('MANUAL') == true &&
-        b.status != BookingStatus.cancelled &&
-        !cancellingIds.contains(b.id)).toList();
+    final manualBookings = currentBookings
+        .where(
+          (b) =>
+              b.paymentTransactionId?.startsWith('MANUAL') == true &&
+              b.status != BookingStatus.cancelled &&
+              !cancellingIds.contains(b.id),
+        )
+        .toList();
 
     for (final mb in manualBookings) {
-      if (!result.any((b) =>
-          b.id == mb.id ||
-          (b.startTime.isAtSameMomentAs(mb.startTime) && b.stadiumId == mb.stadiumId))) {
+      if (!result.any(
+        (b) =>
+            b.id == mb.id ||
+            (b.startTime.isAtSameMomentAs(mb.startTime) &&
+                b.stadiumId == mb.stadiumId),
+      )) {
         result.add(mb);
       }
     }
