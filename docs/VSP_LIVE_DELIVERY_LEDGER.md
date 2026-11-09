@@ -494,3 +494,11 @@ These changes are **CODE_DONE / Pending Verification** under the owner's deferre
 - Mapping: booking history/pending states and owner manual-booking integrity (Tasks 16 / 26 / 27); these are **partial fixes / IN_PROGRESS**, not newly closed baseline subtasks.
 - Verification pending: Flutter analyze/tests, duplicate/replay scenarios, checkout grace periods, cancellation/refund cases, owner and player acceptance, server-side concurrency. No claim of authoritative double-booking prevention.
 - Accounting: **72 VERIFIED / 620 total / 548 not accepted**. Nine source fixes since handoff, with seven additional commits including this ledger update. No release verification was performed.
+
+
+## Booking history visibility fixes — 2026-11-10
+
+- `4ceb2c3`: unpaid online pending checkouts beyond the 10-minute grace period are retained in booking history instead of vanishing from active and historical lists.
+- `d512830`: pending checkouts displaced by a distinct confirmed overlapping booking are shown in history, not lost from both pending and history.
+- Mapped to **16.02 booking status buckets** and **16.05 cancelled/abandoned booking behavior**, both **IN_PROGRESS** until all acceptance criteria, source synchronization and user journeys are verified.
+- Code changed, tests and runtime verification deferred. **Verified 72/620; remaining 548**. No server-side availability guarantee claimed.
