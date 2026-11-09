@@ -7,9 +7,10 @@ class NotificationFilterService {
 
   /// Maps notification [type] to the corresponding SharedPreferences toggle key.
   static String? getPrefKeyForType(String? type, {bool isOwner = false}) {
-    if (type == null) return null;
+    final normalizedType = type?.trim().toLowerCase();
+    if (normalizedType == null || normalizedType.isEmpty) return null;
     if (isOwner) {
-      switch (type) {
+      switch (normalizedType) {
         case 'chat':
           return 'notif_chat';
         case 'booking_new':
@@ -27,7 +28,7 @@ class NotificationFilterService {
       }
     }
 
-    switch (type) {
+    switch (normalizedType) {
       case 'chat':
         return 'notif_chat';
       case 'booking_new':

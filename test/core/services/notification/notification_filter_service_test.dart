@@ -21,6 +21,13 @@ void main() {
       expect(NotificationFilterService.getPrefKeyForType(null), isNull);
     });
 
+    test('notification category lookup handles case and surrounding spaces', () {
+      expect(NotificationFilterService.getPrefKeyForType('  CHAT  '), 'notif_chat');
+      expect(NotificationFilterService.getPrefKeyForType(' BOOKING_NEW ', isOwner: true),
+          'notif_owner_new_bookings');
+      expect(NotificationFilterService.getPrefKeyForType('  '), isNull);
+    });
+
     test('shouldShowNotification respects general master toggle', () async {
       SharedPreferences.setMockInitialValues({
         'notif_general': false,

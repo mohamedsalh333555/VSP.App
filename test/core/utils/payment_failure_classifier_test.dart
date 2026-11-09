@@ -35,6 +35,21 @@ void main() {
         PaymentFailureKind.providerUnavailable);
   });
 
+  test('HTTP 408 and 504 are uncertain timeouts, not generic provider errors', () {
+    for (final status in [408, 504]) {
+      final kind = PaymentFailureClassifier.classify(httpStatus: status);
+      expect(kind, PaymentFailureKind.timeout);
+      expect(kind.requiresStatusReconciliation, isTrue);
+    }
+  });
+
+  test('HTTP 409 conflict and transport status zero require reconciliation', () {
+    expect(PaymentFailureClassifier.classify(httpStatus: 409),
+        PaymentFailureKind.duplicate);
+    expect(PaymentFailureClassifier.classify(httpStatus: 0),
+        PaymentFailureKind.network);
+  });
+
   test('unknown and duplicate outcomes require reconciliation', () {
     expect(PaymentFailureClassifier.classify().requiresStatusReconciliation,
         isTrue);

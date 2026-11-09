@@ -330,6 +330,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Regression tests cover six invalid identities and valid snake-case restoration. These tests need fresh CI on the new commit.
 - No complete booking E2E task is closed by these guards: **58/620 completed, 562 remaining**. No production DB/payment or main changes.
 
+## Payment HTTP ambiguity and notification type compatibility — 2026-11-09
+
+- Prior Flutter CI [42520206334](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42520206334) and Android smoke [42520206344](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42520206344) both succeeded on `72b8996`.
+- Classify HTTP 408/504 as uncertain payment timeouts, 409 as potential duplicate/idempotency conflict, and transport status 0 as network uncertainty. These classifications require server reconciliation before any charge retry; regression tests added.
+- Normalize notification type case and surrounding whitespace for preference filtering (player and owner) and cover this with regression tests. Unknown types still retain existing behavior.
+- **58/620 completed, 562 remaining** until broader journeys are verified. No production schema, payment service, or main merge. Fresh CI needed.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.

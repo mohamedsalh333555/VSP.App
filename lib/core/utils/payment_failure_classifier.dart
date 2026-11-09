@@ -88,10 +88,12 @@ class PaymentFailureClassifier {
     if (_contains(value, ['cancelled', 'canceled', 'user_cancel', 'إلغاء', 'الغاء'])) {
       return PaymentFailureKind.cancelled;
     }
-    if (_contains(value, ['timeout', 'timed out', 'deadline', 'مهلة'])) {
+    if (httpStatus == 408 || httpStatus == 504 ||
+        _contains(value, ['timeout', 'timed out', 'deadline', 'مهلة'])) {
       return PaymentFailureKind.timeout;
     }
-    if (_contains(value, ['duplicate', 'already processed', 'idempotency'])) {
+    if (httpStatus == 409 ||
+        _contains(value, ['duplicate', 'already processed', 'idempotency'])) {
       return PaymentFailureKind.duplicate;
     }
     if (_contains(value, ['3ds', '3d secure', 'otp', 'authentication', 'unauthorized']) ||
@@ -109,7 +111,8 @@ class PaymentFailureClassifier {
         _contains(value, ['unavailable', 'service down', 'rate limit'])) {
       return PaymentFailureKind.providerUnavailable;
     }
-    if (_contains(value, ['network', 'socket', 'connection', 'offline', 'dns', 'انترنت'])) {
+    if (httpStatus == 0 ||
+        _contains(value, ['network', 'socket', 'connection', 'offline', 'dns', 'انترنت'])) {
       return PaymentFailureKind.network;
     }
     return PaymentFailureKind.unknown;
