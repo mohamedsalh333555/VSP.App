@@ -462,3 +462,15 @@ These changes are **CODE_DONE / Pending Verification** under the deferred-test i
 5. 56–60 — consolidated tests, security, release verification **at the end**.
 
 Do not use the old `80-item` release tracker as the denominator for the 82-item/620-subtask inventory.
+
+
+## Owner onboarding and stadium submission hardening — 2026-11-09
+
+These changes are **CODE_DONE / Pending Verification** under the owner's deferred-test instruction.
+
+- `314b04b`, `5e84166`: stadium create/update now rejects stale-account submissions, malformed/non-finite commercial values, invalid coordinate pairs, excessive deposits, invalid ball pricing, missing create images and duplicate/blank media URLs instead of silently substituting zero/default values.
+- `4386fbc`: owner onboarding normalizes and validates Egyptian mobile numbers, prevents duplicate submission and rejects navigation if the signed-in account changes during the async completion.
+- `ad73563`: facility onboarding completion/document actions are single-flight and retryable; failures no longer navigate as success. Copy now says documents are sent for review and does not promise a verified badge before an authoritative approval.
+- `3bb68b7`, `490d40e`, `da74333`: legacy stadium records are parsed defensively, corrupt closure/image fields are ignored, edit ownership is retained and checked before data is exposed in the edit form, and duplicate saves are blocked. Repository/RLS checks remain authoritative.
+- Candidate mapping: **19.01–19.05, 20.01–20.07 and 21.01–21.08 are CODE_DONE/IN_PROGRESS** pending deferred regression, two-account authorization, storage and device verification. This does not close subscription purchase or admin approval journeys.
+- **Verified progress remains 72/620; 548 remaining.** No production Supabase/schema/RLS, payment backend, price, plan, `main` merge or APK action.
