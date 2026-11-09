@@ -390,6 +390,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Updated widget fixture to supply `AuthProvider`, preserving production role-aware filtering instead of weakening it. Android E2E Smoke on commit `256f0e4` succeeded (runs `42674989320`, `42674997334`).
 - Await fresh CI on this commit before declaring regression resolved. **58/620 verified, 562 remaining**. No main merge or production database changes.
 
+## Notification private-booking access guard — 2026-11-09
+
+- Both notification chat and booking navigation now require the signed-in account to be the booking owner, creator, or joined player before opening booking-related screens. The chat flow also rechecks account identity after async chat creation to prevent cross-account navigation after sign-out/switch.
+- Added participant/stranger/null-user regression test for the pure access helper. This is a client guard only; RLS remains the authoritative security boundary.
+- Prior CI on `256f0e4` isolated one foreground notification widget fixture failure (1026 passed/1 failed/10 skipped), with Android smoke success. Follow-up `d647703` CI still running at inspection.
+- **58/620 verified, 562 remaining**; no main merge or production DB/payment changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.

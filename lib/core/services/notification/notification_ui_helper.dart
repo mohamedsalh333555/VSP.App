@@ -89,6 +89,15 @@ class NotificationUiHelper {
     }
   }
 
+  /// A notification payload is not authorization to open a private booking.
+  /// This client-side check complements (and never replaces) database RLS.
+  static bool canOpenBookingForUser(Booking booking, String? userId) {
+    if (userId == null || userId.trim().isEmpty) return false;
+    return booking.ownerId == userId ||
+        booking.createdByUserId == userId ||
+        booking.joinedUserIds.contains(userId);
+  }
+
   /// Navigates to the chat screen for a given booking ID.
   static Future<void> navigateToChat(BuildContext context, String bookingId, {BookingRepository? repository}) async {
     try {
@@ -98,7 +107,7 @@ class NotificationUiHelper {
 
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final userId = auth.currentUser?.id;
-      if (userId == null) return;
+      if (!canOpenBookingForUser(booking, userId)) return;
 
       final otherUserId = <String>[
         booking.ownerId,
@@ -127,6 +136,11 @@ class NotificationUiHelper {
       );
 
       if (!context.mounted) return;
+      // Recheck the active account after the network call: the user may have
+      // signed out or switched accounts while the chat was being created.
+      if (Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) {
+        return;
+      }
       final conversationId = chat['id']?.toString();
       if (conversationId == null || conversationId.isEmpty) return;
 
@@ -152,6 +166,8 @@ class NotificationUiHelper {
       final booking = await repo.getBookingById(bookingId);
       if (booking != null && context.mounted) {
         final auth = Provider.of<AuthProvider>(context, listen: false);
+        final userId = auth.currentUser?.id;
+        if (!canOpenBookingForUser(booking, userId)) return;
         if (auth.isOwner) {
           Navigator.push(
             context,

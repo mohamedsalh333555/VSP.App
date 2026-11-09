@@ -63,6 +63,24 @@ void main() {
       expect(find.text('Test Notification Body Content'), findsOneWidget);
     });
 
+    test('notification booking access requires an actual participant', () {
+      final booking = Booking(
+        id: 'booking-1',
+        stadiumId: 'stadium-1',
+        ownerId: 'owner-1',
+        createdByUserId: 'player-1',
+        joinedUserIds: const ['player-2'],
+        startTime: DateTime.utc(2030, 12, 10, 18),
+        endTime: DateTime.utc(2030, 12, 10, 19),
+        bookingType: BookingType.personal,
+      );
+      expect(NotificationUiHelper.canOpenBookingForUser(booking, 'owner-1'), isTrue);
+      expect(NotificationUiHelper.canOpenBookingForUser(booking, 'player-1'), isTrue);
+      expect(NotificationUiHelper.canOpenBookingForUser(booking, 'player-2'), isTrue);
+      expect(NotificationUiHelper.canOpenBookingForUser(booking, 'stranger'), isFalse);
+      expect(NotificationUiHelper.canOpenBookingForUser(booking, null), isFalse);
+    });
+
     testWidgets('navigateToChat and navigateToBooking gracefully handle null bookings', (tester) async {
       final mockRepo = MockBookingRepo(returnBooking: null);
 
