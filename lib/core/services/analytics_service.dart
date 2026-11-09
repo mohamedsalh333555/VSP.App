@@ -117,9 +117,13 @@ class AnalyticsService {
         dedupeKey: 'booking_started:$venueId',
       );
 
-  static Future<void> logBookingCompleted({required String paymentMethod}) =>
-      logEvent(
+  static Future<void> logBookingCompleted({
+    required String bookingId,
+    required String paymentMethod,
+  }) =>
+      logOncePerSession(
         name: 'booking_completed',
+        dedupeKey: 'booking_completed:$bookingId',
         parameters: {'payment_method': paymentMethod},
       );
 
