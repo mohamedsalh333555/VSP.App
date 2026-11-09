@@ -410,6 +410,20 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - **Progress: 72/620 verified, 548 remaining.** No production database, RLS, payment backend, pricing, `main` merge or APK build.
 
 
+
+## Deferred-verification implementation batch — 2026-11-09
+
+Owner instruction: continue implementation and defer consolidated tests. The following changes are **CODE_DONE / Pending Verification** and do not increase the verified counter.
+
+- `86f1f52`: booking categorization now preserves both `confirmed` and `upcoming` lifecycle states, includes expired/no-show history, orders future bookings chronologically and history newest-first without mutating input.
+- `09a8e6a`: player bookings now labels the pending section explicitly instead of mixing pending cards between upcoming and history.
+- `daefffa`, `398e0d6`: booking details now shows the reference, total, payment method, honest payment state, amount paid, remaining balance and cancellation reason from the existing booking record. It does not infer a successful payment from checkout initiation.
+- `4bf31c2`, `1131de9`: invalid operating-hours data no longer appears as a legitimate empty schedule; the owner sees a retryable bilingual configuration error while genuine no-hours days keep the empty state.
+- `a9aa62a`: team match-history load failures no longer masquerade as “no previous matches”; loading and retry states are explicit.
+- Candidate mapping: **03.02–03.05, 16.02–16.04, 16.06, 22.01, 22.04 and 22.07 remain IN_PROGRESS/CODE_DONE** until their complete acceptance scope and deferred regression/device checks are performed.
+- **Verified progress remains 72/620; 548 remaining.** No production Supabase/schema/RLS, payment backend, pricing, permissions, `main` merge or APK action.
+
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
