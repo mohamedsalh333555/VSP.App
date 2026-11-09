@@ -59,15 +59,77 @@ class StadiumWizardSubmitService {
 
     try {
       final uploadedUrls = images
-          .where((img) => img['url'] != null)
-          .map((img) => img['url'] as String)
-          .toList();
+          .map((img) => img['url'])
+          .whereType<String>()
+          .map((url) => url.trim())
+          .where((url) => url.isNotEmpty)
+          .toSet()
+          .toList(growable: false);
       final user = auth.currentUser;
 
       if (user == null) {
         VSPFeedback.showError(
           context,
           isArabic ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Authentication lost. Please login again.',
+        );
+        return false;
+      }
+
+      if (uid != null && uid.isNotEmpty && uid != user.uid) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تغيّر الحساب أثناء إعداد الملعب. أعد فتح النموذج من الحساب الحالي.'
+              : 'The account changed while this stadium was being prepared. Reopen the form from the current account.',
+        );
+        return false;
+      }
+
+      final pricePerHour = double.tryParse(priceText.trim());
+      final capacity = int.tryParse(capacityText.trim());
+      final depositAmount =
+          requireDeposit ? double.tryParse(depositText.trim()) : 0.0;
+      final ballPrice = hasBall ? double.tryParse(ballPriceText.trim()) : 0.0;
+      final hasValidCoordinates =
+          (latitude == null && longitude == null) ||
+          (latitude != null &&
+              longitude != null &&
+              latitude.isFinite &&
+              longitude.isFinite &&
+              latitude >= -90 &&
+              latitude <= 90 &&
+              longitude >= -180 &&
+              longitude <= 180);
+      final hasValidCommercialValues =
+          pricePerHour != null &&
+          pricePerHour.isFinite &&
+          pricePerHour >= 0 &&
+          capacity != null &&
+          capacity > 0 &&
+          depositAmount != null &&
+          depositAmount.isFinite &&
+          depositAmount >= 0 &&
+          (!requireDeposit || depositAmount <= pricePerHour * 0.5) &&
+          ballPrice != null &&
+          ballPrice.isFinite &&
+          (!hasBall || ballPrice >= 5);
+
+      if (!hasValidCommercialValues || !hasValidCoordinates) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'راجع السعر والسعة والعربون وسعر الكرة والموقع قبل الحفظ.'
+              : 'Review the price, capacity, deposit, ball price, and location before saving.',
+        );
+        return false;
+      }
+
+      if (stadiumId == null && uploadedUrls.isEmpty) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'أضف صورة واحدة على الأقل للملعب قبل الإرسال.'
+              : 'Add at least one stadium image before submitting.',
         );
         return false;
       }
@@ -84,7 +146,7 @@ class StadiumWizardSubmitService {
         length: length,
         width: width,
         hasBall: hasBall,
-        ballPrice: double.tryParse(ballPriceText) ?? 0.0,
+        ballPrice: ballPrice,
         startTime: startTime,
         endTime: endTime,
         isSplitShift: isSplitShift,
@@ -97,10 +159,10 @@ class StadiumWizardSubmitService {
           name: name,
           location: location,
           governorate: governorate,
-          pricePerHour: double.tryParse(priceText.trim()) ?? 0.0,
-          capacity: int.tryParse(capacityText.trim()) ?? 5,
+          pricePerHour: pricePerHour,
+          capacity: capacity,
           requireDeposit: requireDeposit,
-          depositAmount: double.tryParse(depositText.trim()) ?? 0.0,
+          depositAmount: depositAmount,
           uploadedUrls: uploadedUrls,
           notes: notes,
           features: stadiumFeatures,
@@ -115,9 +177,9 @@ class StadiumWizardSubmitService {
           name: name.trim(),
           location: location.trim(),
           governorate: governorate,
-          pricePerHour: double.tryParse(priceText.trim()) ?? 0.0,
-          seatsCapacity: int.tryParse(capacityText.trim()) ?? 5,
-          depositAmount: requireDeposit ? (double.tryParse(depositText.trim()) ?? 0.0) : 0.0,
+          pricePerHour: pricePerHour,
+          seatsCapacity: capacity,
+          depositAmount: depositAmount,
           needsDeposit: requireDeposit,
           imageUrl: uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
           images: uploadedUrls,
