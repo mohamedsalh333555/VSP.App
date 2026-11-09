@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 
@@ -35,6 +37,12 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  @override
  void initState() {
  super.initState();
+ unawaited(
+   AnalyticsService.logBookingCompleted(
+     bookingId: widget.booking.id,
+     paymentMethod: widget.booking.paymentMethod,
+   ),
+ );
 
  // 1. Setup Confetti
  _confettiController = ConfettiController(duration: const Duration(seconds: 3));
