@@ -8,6 +8,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/providers/booking_provider.dart';
+import '../../../core/services/active_team_service.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -104,7 +105,11 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       return;
     }
     try {
-      final team = await TeamRepository().getUserTeamStrict(uid);
+      final teams = await TeamRepository().getUserTeamsStrict(uid);
+      final team = await ActiveTeamService.resolve(
+        userId: uid,
+        teams: teams,
+      );
       if (!mounted ||
           generation != _teamRequestGeneration ||
           context.read<app_auth.AuthProvider>().currentUser?.id != uid) {
@@ -171,7 +176,11 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     final opponentGeneration = _opponentRequestGeneration;
     setState(() => _isContinuing = true);
     try {
-      final team = await TeamRepository().getUserTeamStrict(uid);
+      final teams = await TeamRepository().getUserTeamsStrict(uid);
+      final team = await ActiveTeamService.resolve(
+        userId: uid,
+        teams: teams,
+      );
       if (!mounted) return;
       if (context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
       // The async team check must not finalize a different opponent or code.
