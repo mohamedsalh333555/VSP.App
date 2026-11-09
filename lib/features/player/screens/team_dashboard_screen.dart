@@ -207,7 +207,10 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                 context: context,
                 isScrollControlled: true,
                 useSafeArea: true,
-                builder: (_) => TeamInvitationsSheet(userId: _activeUserTeamScope!),
+                builder: (_) => TeamInvitationsSheet(
+                  userId: _activeUserTeamScope!,
+                  onMembershipChanged: _fetchUserTeam,
+                ),
               ),
             ),
           if (_userTeam != null)
