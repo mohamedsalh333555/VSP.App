@@ -168,7 +168,12 @@ class OwnerScheduleSlotsBuilder {
         safeguard++;
       }
     } catch (_) {
-      slots.clear();
+      // Do not let an invalid operating-hours configuration masquerade as a
+      // legitimate day with no working hours. The screen converts this
+      // sentinel into a retryable configuration error state.
+      return <Map<String, dynamic>>[
+        <String, dynamic>{'type': 'configuration_error'},
+      ];
     }
     return slots;
   }
