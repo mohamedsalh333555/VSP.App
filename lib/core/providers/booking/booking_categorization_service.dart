@@ -81,6 +81,15 @@ class BookingCategorizationService {
         return true;
       }
       if (b.status == BookingStatus.pending) {
+        // A pending checkout displaced by a confirmed booking is historical,
+        // even if its own checkout grace period has not elapsed.
+        final displaced = upcoming.any(
+          (u) => u.id != b.id &&
+              u.stadiumId == b.stadiumId &&
+              u.startTime.isBefore(b.endTime) &&
+              u.endTime.isAfter(b.startTime),
+        );
+        if (displaced) return true;
         // Expired payment grace periods should not remain in the active list.
         // Keep these records in history rather than making them disappear.
         if (!b.endTime.isAfter(now)) return true;
