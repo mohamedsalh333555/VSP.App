@@ -69,7 +69,9 @@ class NotificationFilterService {
 
       return preferences.getBool(key) ?? true;
     } catch (_) {
-      return true;
+      // A storage failure must not bypass an explicit opt-out. When we
+      // cannot read preferences, avoid displaying an unsolicited alert.
+      return false;
     }
   }
 

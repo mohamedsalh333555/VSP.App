@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../ui/tokens/vsp_tokens.dart';
 import '../logger_service.dart';
+import 'notification_filter_service.dart';
 import '../../repositories/booking_repository.dart';
 import '../../repositories/chat_repository.dart';
 import '../../../features/owner/screens/owner_bookings_screen.dart';
@@ -34,13 +35,18 @@ class NotificationUiHelper {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final soundEnabled = prefs.getBool('notif_sound') ?? true;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final shouldShow = await NotificationFilterService.shouldShowNotification(
+        message.data['type']?.toString(),
+        prefs: prefs,
+        isOwner: auth.isOwner,
+      );
+      if (!context.mounted || !shouldShow) return;
 
+      final soundEnabled = prefs.getBool('notif_sound') ?? true;
       if (soundEnabled) {
         HapticFeedback.heavyImpact();
       }
-
-      if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

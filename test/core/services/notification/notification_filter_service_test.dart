@@ -51,6 +51,21 @@ void main() {
       expect(await NotificationFilterService.shouldShowNotification('booking_confirmed', prefs: prefs), isTrue);
     });
 
+    test('notification preferences respect owner-specific opt-out', () async {
+      SharedPreferences.setMockInitialValues({
+        'notif_general': true,
+        'notif_owner_new_bookings': false,
+        'notif_cash_bookings': true,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      expect(await NotificationFilterService.shouldShowNotification(
+        'BOOKING_NEW', prefs: prefs, isOwner: true,
+      ), isFalse);
+      expect(await NotificationFilterService.shouldShowNotification(
+        'BOOKING_NEW', prefs: prefs,
+      ), isTrue);
+    });
+
     test('deep links accept legacy snake-case IDs and trim whitespace', () {
       expect(
         NotificationFilterService.resolveDeepLinkRoute({'booking_id': '  b-123  '}),

@@ -370,6 +370,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - This is a build-blocking source fix; **do not count new tasks closed** before fresh CI is green. Existing queue backlog remains **58/620 complete, 562 remaining**.
 - No production database or payment changes; no merge to main.
 
+## Foreground notification preference enforcement — 2026-11-09
+
+- `NotificationUiHelper.showInAppAlert` now checks the shared master/category notification preferences for the signed-in user's owner/player role before haptics and foreground banners. An opted-out owner will not receive a foreground booking alert merely because a push arrived.
+- On preference-storage failure the pure filter now fails closed (returns false), instead of bypassing opt-outs; tests cover distinct owner/player booking settings.
+- This is a client-side foreground UX safeguard; it does not implement push delivery opt-out or server consent logs. No task is closed until end-to-end acceptance. **58/620 complete, 562 remaining**.
+- Prior GitHub Actions for `fa86b7c` show failed Android runs with zero jobs exposed and pending Flutter runs; investigate runner/workflow status separately. No production DB/payment changes or main merge.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
