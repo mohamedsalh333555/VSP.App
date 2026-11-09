@@ -46,6 +46,54 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
     }
   }
 
+  String _paymentMethodLabel(BuildContext context) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    switch (booking.paymentMethod.trim().toLowerCase()) {
+      case 'cash':
+        return ar ? 'نقدًا في الملعب' : 'Cash at the stadium';
+      case 'card':
+      case 'paymob':
+      case 'online':
+        return ar ? 'دفع إلكتروني' : 'Online payment';
+      case 'wallet':
+      case 'mobile_wallet':
+        return ar ? 'محفظة إلكترونية' : 'Mobile wallet';
+      default:
+        return ar ? 'غير محددة' : 'Not specified';
+    }
+  }
+
+  String _paymentStatusLabel(BuildContext context) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    switch (booking.paymentStatus.trim().toLowerCase()) {
+      case 'paid':
+        return ar ? 'مدفوع بالكامل' : 'Paid in full';
+      case 'partially_paid':
+      case 'deposit_paid':
+        return ar ? 'تم دفع العربون' : 'Deposit paid';
+      case 'refund_pending':
+        return ar ? 'الاسترداد قيد المراجعة' : 'Refund pending';
+      case 'refunded':
+        return ar ? 'تم الاسترداد' : 'Refunded';
+      case 'failed':
+        return ar ? 'فشل الدفع' : 'Payment failed';
+      case 'pending':
+      case 'unpaid':
+      case '':
+        if (booking.isPaid) {
+          return ar ? 'مدفوع' : 'Paid';
+        }
+        return booking.isCash
+            ? (ar ? 'الدفع في الملعب' : 'Pay at the stadium')
+            : (ar ? 'غير مدفوع' : 'Unpaid');
+      default:
+        return ar ? 'بانتظار التحقق' : 'Awaiting verification';
+    }
+  }
+
+  String _money(double value) =>
+      '${value.toStringAsFixed(2)} ${booking.currency}';
+
   Future<void> _reportOwnerIssue(BuildContext context) async {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final reasonController = TextEditingController();
@@ -173,10 +221,65 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
               const SizedBox(height: VSPSpacing.xs),
               Text(_type(context), style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
               const SizedBox(height: VSPSpacing.md),
-              _row(Iconsax.calendar_1_copy, ar ? 'التاريخ' : 'Date', booking.formattedDate),
-              _row(Iconsax.clock_copy, ar ? 'الوقت' : 'Time', booking.formattedTimeRange),
-              _row(Iconsax.wallet_1_copy, ar ? 'الإجمالي' : 'Total', '${booking.totalPrice.toInt()} ${booking.currency}'),
-              _row(Iconsax.info_circle_copy, ar ? 'الحالة' : 'Status', _statusLabel(context)),
+              _row(
+                Iconsax.hashtag_copy,
+                ar ? 'مرجع الحجز' : 'Booking reference',
+                booking.id,
+              ),
+              _row(
+                Iconsax.calendar_1_copy,
+                ar ? 'التاريخ' : 'Date',
+                booking.formattedDate,
+              ),
+              _row(
+                Iconsax.clock_copy,
+                ar ? 'الوقت' : 'Time',
+                booking.formattedTimeRange,
+              ),
+              _row(
+                Iconsax.wallet_1_copy,
+                ar ? 'الإجمالي' : 'Total',
+                _money(booking.totalPrice),
+              ),
+              _row(
+                Iconsax.card_copy,
+                ar ? 'طريقة الدفع' : 'Payment method',
+                _paymentMethodLabel(context),
+              ),
+              _row(
+                Iconsax.tick_circle_copy,
+                ar ? 'حالة الدفع' : 'Payment status',
+                _paymentStatusLabel(context),
+              ),
+              if (booking.depositPaid > 0)
+                _row(
+                  Iconsax.money_recive_copy,
+                  ar ? 'المبلغ المسدد' : 'Amount paid',
+                  _money(
+                    booking.depositPaid > booking.totalPrice
+                        ? booking.totalPrice
+                        : booking.depositPaid,
+                  ),
+                ),
+              if (!booking.isPaid &&
+                  booking.totalPrice > booking.depositPaid)
+                _row(
+                  Iconsax.money_send_copy,
+                  ar ? 'المتبقي' : 'Remaining',
+                  _money(booking.totalPrice - booking.depositPaid),
+                ),
+              _row(
+                Iconsax.info_circle_copy,
+                ar ? 'حالة الحجز' : 'Booking status',
+                _statusLabel(context),
+              ),
+              if (booking.status == BookingStatus.cancelled &&
+                  booking.cancellationReason?.trim().isNotEmpty == true)
+                _row(
+                  Iconsax.close_circle_copy,
+                  ar ? 'سبب الإلغاء' : 'Cancellation reason',
+                  booking.cancellationReason!.trim(),
+                ),
             ]),
           ),
           const SizedBox(height: VSPSpacing.md),
