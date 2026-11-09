@@ -6,13 +6,13 @@ import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:vsp_application/core/utils/vsp_feedback.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../data/models.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/sharing_service.dart';
+import '../../../core/services/active_team_service.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../../core/services/support_service.dart';
 import '../../../shared/widgets/public_match_card.dart';
@@ -99,18 +99,10 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
     }
     try {
       final teams = await TeamRepository().getUserTeamsStrict(userId);
-      final preferences = await SharedPreferences.getInstance();
-      final storedTeamId = preferences.getString('active_team_$userId');
-      Team? activeTeam;
-      if (teams.isNotEmpty) {
-        activeTeam = teams.first;
-        for (final candidate in teams) {
-          if (candidate.id == storedTeamId) {
-            activeTeam = candidate;
-            break;
-          }
-        }
-      }
+      final activeTeam = await ActiveTeamService.resolve(
+        userId: userId,
+        teams: teams,
+      );
 
       if (!mounted ||
           generation != _userTeamRequestGeneration ||
@@ -125,9 +117,6 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       });
 
       if (activeTeam != null) {
-        if (storedTeamId != activeTeam.id) {
-          await preferences.setString('active_team_$userId', activeTeam.id);
-        }
         await _loadActiveLeagueForTeam(activeTeam, userId, generation);
       }
     } catch (e) {
@@ -182,13 +171,17 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       _userTeam = selectedTeam;
       _selectedMainTab = 0;
     });
-    final preferences = await SharedPreferences.getInstance();
+    final saved = await ActiveTeamService.select(
+      userId: userId,
+      teamId: selectedTeam.id,
+      verifiedTeams: _userTeams,
+    );
     if (!mounted ||
+        !saved ||
         context.read<app_auth.AuthProvider>().currentUser?.id != userId ||
         _userTeam?.id != selectedTeam.id) {
       return;
     }
-    await preferences.setString('active_team_$userId', selectedTeam.id);
     await _loadActiveLeagueForTeam(selectedTeam, userId, generation);
   }
 
