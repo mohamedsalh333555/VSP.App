@@ -484,3 +484,13 @@ These changes are **CODE_DONE / Pending Verification** under the owner's deferre
 - `5bfcc9c`, `4595ece`: detect overlapping distinct active booking IDs in a displayed half-hour slot and fail closed; tolerate duplicate rows for the same booking ID.
 - These are client-side schedule presentation safeguards only, not authoritative double-booking prevention. Server exclusion constraints, transactional booking paths, timezone handling, staging/device acceptance and CI still require verification.
 - All six commits are **CODE_DONE / Pending Verification**. **Verified progress remains 72/620; 548 remaining**. No production schema/RLS/payment/pricing changes, main merge or APK.
+
+
+## Booking list categorization and manual synchronization — 2026-11-10
+
+- `41b4be6`: player pending-checkout categorization suppresses pending bookings whose **full time interval** overlaps another confirmed/upcoming booking for the same stadium; previously only identical start times were compared.
+- `fe9851f`: manual-booking merge preserves distinct booking IDs even when start times coincide, avoiding silent data loss in owner display; backend overlap resolution remains separate.
+- `94e442e`: local expired manual bookings are not resurrected after synchronization.
+- Mapping: booking history/pending states and owner manual-booking integrity (Tasks 16 / 26 / 27); these are **partial fixes / IN_PROGRESS**, not newly closed baseline subtasks.
+- Verification pending: Flutter analyze/tests, duplicate/replay scenarios, checkout grace periods, cancellation/refund cases, owner and player acceptance, server-side concurrency. No claim of authoritative double-booking prevention.
+- Accounting: **72 VERIFIED / 620 total / 548 not accepted**. Nine source fixes since handoff, with seven additional commits including this ledger update. No release verification was performed.
