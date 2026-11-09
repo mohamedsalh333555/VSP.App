@@ -7,6 +7,7 @@ import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/core/services/notification/notification_ui_helper.dart';
 import 'package:vsp_application/core/repositories/booking_repository.dart';
 import 'package:vsp_application/data/models.dart';
+import '../../../helpers/test_owner_auth_provider.dart';
 
 class MockBookingRepo implements BookingRepository {
   final Booking? returnBooking;
@@ -30,7 +31,7 @@ void main() {
     testWidgets('showInAppAlert renders floating SnackBar with message details', (tester) async {
       await tester.pumpWidget(
         Provider<AuthProvider>.value(
-          value: AuthProvider(),
+          value: TestOwnerAuthProvider(),
           child: MaterialApp(
           home: Scaffold(
             body: Builder(
