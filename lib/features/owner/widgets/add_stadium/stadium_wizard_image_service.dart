@@ -86,6 +86,38 @@ class StadiumWizardImageService {
     required void Function(int progress) onProgress,
     required String ownerId,
   }) async {
+    const maxImageBytes = 10 * 1024 * 1024;
+    const allowedMimeTypes = <String>{
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    };
+    const allowedExtensions = <String>{'jpg', 'jpeg', 'png', 'webp'};
+
+    final fileName = xFile.name.toLowerCase().trim();
+    final extension = fileName.contains('.')
+        ? fileName.split('.').last
+        : '';
+    final mimeType = xFile.mimeType?.toLowerCase().trim();
+    final hasAllowedType = mimeType?.isNotEmpty == true
+        ? allowedMimeTypes.contains(mimeType)
+        : allowedExtensions.contains(extension);
+    final fileLength = await xFile.length();
+    if (!hasAllowedType ||
+        fileLength <= 0 ||
+        fileLength > maxImageBytes) {
+      debugPrint(
+        'Rejected stadium image before upload: '
+        'type=${mimeType ?? extension}, bytes=$fileLength',
+      );
+      return null;
+    }
+
+    final storageExtension = switch (extension) {
+      'png' => 'png',
+      'webp' => 'webp',
+      _ => 'jpg',
+    };
     final imageFile = File(xFile.path);
     Timer? progressTimer;
 
@@ -103,7 +135,7 @@ class StadiumWizardImageService {
       final url = await _storageService.uploadFile(
         file: xFile,
         bucket: 'stadium-images',
-        path: '$ownerId/stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.jpg',
+        path: '$ownerId/stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.$storageExtension',
       );
       progressTimer.cancel();
 
