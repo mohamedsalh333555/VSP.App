@@ -147,11 +147,14 @@ class OwnerScheduleSlotsBuilder {
               bookingEnd.isAfter(slotTime) &&
               bookingStart.isBefore(slotEnd);
         }).toList();
-        if (matchingBookings.length > 1) {
+        // The same booking may be repeated by a paginated or merged source.
+        // Only distinct booking IDs represent a genuine overlap conflict.
+        final distinctBookingIds = matchingBookings.map((b) => b.id).toSet();
+        if (distinctBookingIds.length > 1) {
           throw const FormatException('Overlapping active bookings');
         }
         final Booking? booking =
-            matchingBookings.isEmpty ? null : matchingBookings.single;
+            matchingBookings.isEmpty ? null : matchingBookings.first;
         if (isBreak) {
           slots.add({
             'time': timeStr,
