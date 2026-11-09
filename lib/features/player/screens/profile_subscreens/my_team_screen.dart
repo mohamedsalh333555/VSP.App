@@ -8,6 +8,7 @@ import '../../../../core/models/user_model.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/team_repository.dart';
 import '../../../../core/repositories/user_repository.dart';
+import '../../../../core/services/active_team_service.dart';
 import '../../../../core/services/image_pick_service.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../core/services/sharing_service.dart';
@@ -174,9 +175,13 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     }
 
     try {
-      // Strict lookup preserves the distinction between a verified no-team state
-      // and a membership/query failure that needs recovery.
-      final team = await TeamRepository().getUserTeamStrict(uid);
+      // Resolve the account-scoped active team from verified memberships
+      // instead of relying on unordered database rows.
+      final teams = await TeamRepository().getUserTeamsStrict(uid);
+      final team = await ActiveTeamService.resolve(
+        userId: uid,
+        teams: teams,
+      );
       if (!_isCurrentTeamRequest(generation, uid)) return;
 
       if (team == null) {
