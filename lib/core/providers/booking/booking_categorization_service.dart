@@ -166,6 +166,7 @@ class BookingCategorizationService {
           (b) =>
               b.paymentTransactionId?.startsWith('MANUAL') == true &&
               b.status != BookingStatus.cancelled &&
+              b.status != BookingStatus.expired &&
               !cancellingIds.contains(b.id),
         )
         .toList();
