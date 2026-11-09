@@ -57,15 +57,22 @@ class OwnerScheduleSlotsBuilder {
 
       if (features is Map && features['breakTimes'] is List) {
         for (final item in features['breakTimes'] as List) {
-          if (item is! Map) continue;
+          if (item is! Map) {
+            throw const FormatException('Invalid closure interval');
+          }
           final startText = item['start']?.toString() ?? '';
           final endText = item['end']?.toString() ?? '';
-          if (startText.isEmpty || endText.isEmpty) continue;
+          if (startText.isEmpty || endText.isEmpty) {
+            throw const FormatException('Incomplete closure interval');
+          }
           final breakStart = toOperationalMinutes(startText);
           final breakEnd = toOperationalMinutes(endText);
-          if (breakEnd > breakStart) {
-            breakIntervals.add([breakStart, breakEnd]);
+          if (breakEnd <= breakStart ||
+              breakStart < startMinutes ||
+              breakEnd > endMinutes) {
+            throw const FormatException('Closure outside operating hours');
           }
+          breakIntervals.add([breakStart, breakEnd]);
         }
       }
 
@@ -76,9 +83,22 @@ class OwnerScheduleSlotsBuilder {
         if (startText.isNotEmpty && endText.isNotEmpty) {
           final breakStart = toOperationalMinutes(startText);
           final breakEnd = toOperationalMinutes(endText);
-          if (breakEnd > breakStart) {
-            breakIntervals.add([breakStart, breakEnd]);
+          if (breakEnd <= breakStart ||
+              breakStart < startMinutes ||
+              breakEnd > endMinutes) {
+            throw const FormatException('Invalid legacy closure interval');
           }
+          breakIntervals.add([breakStart, breakEnd]);
+        } else {
+          throw const FormatException('Incomplete legacy closure interval');
+        }
+      }
+
+      // Invalid or overlapping closures must not turn into bookable time.
+      breakIntervals.sort((a, b) => a[0].compareTo(b[0]));
+      for (var i = 1; i < breakIntervals.length; i++) {
+        if (breakIntervals[i][0] < breakIntervals[i - 1][1]) {
+          throw const FormatException('Overlapping closure intervals');
         }
       }
 
