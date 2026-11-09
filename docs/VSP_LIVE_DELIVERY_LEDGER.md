@@ -364,6 +364,12 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Restored booking drafts now preserve only trimmed, nonempty safe replay/idempotency keys (up to 128 characters), rejecting malformed and non-string keys; regression tests cover valid and invalid keys.
 - Prior Flutter/Android runs on `f427bbe` still pending at inspection. **58/620 complete, 562 remaining**, no full payment/booking E2E task closed. No production DB/payment changes or main merge.
 
+## Critical build repair — 2026-11-09
+
+- Detected a malformed, duplicated tail in `lib/data/models/booking_draft.dart` introduced during replay-key validation: truncated regular expression and duplicate closing blocks. Rebuilt the factory tail as a single valid Dart expression, preserving safe replay-key checks and shared validation.
+- This is a build-blocking source fix; **do not count new tasks closed** before fresh CI is green. Existing queue backlog remains **58/620 complete, 562 remaining**.
+- No production database or payment changes; no merge to main.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.

@@ -384,17 +384,8 @@ class BookingDraft {
         final value = map['idempotencyKey'] ?? map['idempotency_key'];
         if (value == null) return null;
         if (value is! String || value.trim().isEmpty ||
-            value.length > 128 ||
-            !RegExp(r'^[a-zA-Z0-9_-]+
-    );
-    final errors = restored.validate();
-    if (errors.isNotEmpty) {
-      throw FormatException('Invalid restored booking draft: ${errors.join(', ')}');
-    }
-    return restored;
-  }
-}
-).hasMatch(value.trim())) {
+            value.trim().length > 128 ||
+            !RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(value.trim())) {
           throw const FormatException('Booking draft has invalid idempotency key');
         }
         return value.trim();
