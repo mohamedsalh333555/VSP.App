@@ -253,7 +253,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
               ),
               if (booking.depositPaid > 0)
                 _row(
-                  Iconsax.money_recive_copy,
+                  Iconsax.money_copy,
                   ar ? 'المبلغ المسدد' : 'Amount paid',
                   _money(
                     booking.depositPaid > booking.totalPrice
@@ -264,7 +264,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
               if (!booking.isPaid &&
                   booking.totalPrice > booking.depositPaid)
                 _row(
-                  Iconsax.money_send_copy,
+                  Iconsax.money_copy,
                   ar ? 'المتبقي' : 'Remaining',
                   _money(booking.totalPrice - booking.depositPaid),
                 ),
