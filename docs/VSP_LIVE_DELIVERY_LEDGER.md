@@ -441,6 +441,17 @@ Owner authorized continuous execution; consolidated tests remain deferred. These
 - **Verified progress remains 72/620; 548 remaining.** No production schema/RLS/payment/pricing change, no `main` merge and no APK action.
 
 
+
+## Venue schedule and media hardening — 2026-11-09
+
+These changes are **CODE_DONE / Pending Verification** under the deferred-test instruction.
+
+- `601ee50`: enabling split-shift hours now requires complete, non-overlapping closure intervals inside the operating window; half-configured breaks can no longer silently become bookable.
+- `727c2ca`, `bb74a33`: stadium media uploads reject empty, oversized (>10 MiB) and non-JPEG/PNG/WebP files before storage upload, preserve a matching safe extension and contain validation/read failures.
+- Candidate mapping: **20.02, 20.05, 20.07, 22.01, 22.02, 22.04 and 22.06 are CODE_DONE/IN_PROGRESS** pending deferred storage, widget, regression and real-device verification.
+- **Verified progress remains 72/620; 548 remaining.** This is client defense in depth; Storage policies remain authoritative and were not changed.
+
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
