@@ -231,6 +231,34 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
             dayBookings: dayBookings,
             context: context,
           );
+          final hasScheduleConfigurationError = rawSlots.length == 1 &&
+              rawSlots.first['type'] == 'configuration_error';
+
+          if (hasScheduleConfigurationError) {
+            return Column(
+              children: [
+                OwnerBookingsFilterBar(
+                  stadiums: stadiums,
+                  selectedStadium: selectedStadium,
+                  baseDate: baseDate,
+                  selectedDayIndex: _selectedDayIndex,
+                  onStadiumChanged: (stadium) =>
+                      setState(() => _selectedStadium = stadium),
+                  onSelectDate: () => _selectDate(context, baseDate),
+                  onDaySelected: (dayIdx) =>
+                      setState(() => _selectedDayIndex = dayIdx),
+                ),
+                Expanded(
+                  child: VSPErrorState(
+                    customMessage: isArabic
+                        ? 'تعذر قراءة مواعيد عمل الملعب. راجع أوقات الفتح والإغلاق وفترات التوقف ثم حاول مرة أخرى.'
+                        : 'The stadium operating hours could not be read. Review opening, closing, and break times, then retry.',
+                    onRetry: () => setState(() {}),
+                  ),
+                ),
+              ],
+            );
+          }
 
           if (rawSlots.isEmpty) {
             return Column(
