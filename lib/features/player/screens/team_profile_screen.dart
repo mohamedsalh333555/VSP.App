@@ -46,6 +46,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   bool _championVerificationFailed = false;
   bool _isCheckingChampion = true;
   List<Map<String, dynamic>> _headToHeadRecords = [];
+  bool _isLoadingHeadToHead = true;
+  bool _hasHeadToHeadLoadError = false;
   bool _isGeneratingCode = false;
   int _rosterRequestVersion = 0;
   int _headToHeadRequestVersion = 0;
@@ -87,6 +89,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     _isLoadingTeam = widget.team == null && widget.teamId != null;
     _hasTeamLoadError = false;
     _headToHeadRecords = [];
+    _isLoadingHeadToHead = true;
+    _hasHeadToHeadLoadError = false;
     _has1v1Champion = false;
     _championVerificationFailed = false;
     _isCheckingChampion = true;
@@ -125,16 +129,33 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
 
   Future<void> _loadHeadToHead(String teamId) async {
     final requestVersion = ++_headToHeadRequestVersion;
+    if (mounted) {
+      setState(() {
+        _isLoadingHeadToHead = true;
+        _hasHeadToHeadLoadError = false;
+      });
+    }
     try {
       final records = await MatchupRepository().getAllHeadToHeadForTeam(teamId);
-      if (mounted && requestVersion == _headToHeadRequestVersion &&
+      if (mounted &&
+          requestVersion == _headToHeadRequestVersion &&
           (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _headToHeadRecords = records;
+          _isLoadingHeadToHead = false;
+          _hasHeadToHeadLoadError = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading head to head: $e');
+      if (mounted &&
+          requestVersion == _headToHeadRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
+        setState(() {
+          _isLoadingHeadToHead = false;
+          _hasHeadToHeadLoadError = true;
+        });
+      }
     }
   }
 
@@ -469,6 +490,46 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
               TeamProfileHeadToHeadSection(
                 team: team,
                 headToHeadRecords: _headToHeadRecords,
+              ),
+            ] else if (_isLoadingHeadToHead) ...[
+              const SizedBox(height: 32),
+              VSPStateView(
+                state: VSPUiState.loading,
+                title: isArabic
+                    ? 'جارٍ تحميل سجل المواجهات'
+                    : 'Loading match history',
+                message: isArabic
+                    ? 'نحدّث نتائج الفريق السابقة.'
+                    : 'Updating the team’s previous results.',
+              ),
+            ] else if (_hasHeadToHeadLoadError) ...[
+              const SizedBox(height: 32),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.card),
+                  border: Border.all(color: VSPColors.divider),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      isArabic
+                          ? 'تعذر تحميل سجل المواجهات. لا يتم عرض السجل كأنه فارغ.'
+                          : 'Match history could not be loaded. It is not being shown as empty.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: VSPColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: VSPSpacing.sm),
+                    TextButton(
+                      onPressed: () => _loadHeadToHead(team.id),
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ),
               ),
             ],
 
