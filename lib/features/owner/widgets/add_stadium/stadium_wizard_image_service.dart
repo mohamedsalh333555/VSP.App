@@ -93,36 +93,34 @@ class StadiumWizardImageService {
       'image/webp',
     };
     const allowedExtensions = <String>{'jpg', 'jpeg', 'png', 'webp'};
-
-    final fileName = xFile.name.toLowerCase().trim();
-    final extension = fileName.contains('.')
-        ? fileName.split('.').last
-        : '';
-    final mimeType = xFile.mimeType?.toLowerCase().trim();
-    final hasAllowedType = mimeType?.isNotEmpty == true
-        ? allowedMimeTypes.contains(mimeType)
-        : allowedExtensions.contains(extension);
-    final fileLength = await xFile.length();
-    if (!hasAllowedType ||
-        fileLength <= 0 ||
-        fileLength > maxImageBytes) {
-      debugPrint(
-        'Rejected stadium image before upload: '
-        'type=${mimeType ?? extension}, bytes=$fileLength',
-      );
-      return null;
-    }
-
-    final storageExtension = switch (extension) {
-      'png' => 'png',
-      'webp' => 'webp',
-      _ => 'jpg',
-    };
-    final imageFile = File(xFile.path);
     Timer? progressTimer;
 
     try {
-      int currentProgress = 10;
+      final fileName = xFile.name.toLowerCase().trim();
+      final extension =
+          fileName.contains('.') ? fileName.split('.').last : '';
+      final mimeType = xFile.mimeType?.toLowerCase().trim();
+      final hasAllowedType = mimeType?.isNotEmpty == true
+          ? allowedMimeTypes.contains(mimeType)
+          : allowedExtensions.contains(extension);
+      final fileLength = await xFile.length();
+      if (!hasAllowedType ||
+          fileLength <= 0 ||
+          fileLength > maxImageBytes) {
+        debugPrint(
+          'Rejected stadium image before upload: '
+          'type=${mimeType ?? extension}, bytes=$fileLength',
+        );
+        return null;
+      }
+
+      final storageExtension = switch (extension) {
+        'png' => 'png',
+        'webp' => 'webp',
+        _ => 'jpg',
+      };
+      final imageFile = File(xFile.path);
+      var currentProgress = 10;
       progressTimer = Timer.periodic(const Duration(milliseconds: 150), (t) {
         if (currentProgress < 90) {
           currentProgress += 10;
@@ -135,7 +133,8 @@ class StadiumWizardImageService {
       final url = await _storageService.uploadFile(
         file: xFile,
         bucket: 'stadium-images',
-        path: '$ownerId/stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.$storageExtension',
+        path:
+            '$ownerId/stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.$storageExtension',
       );
       progressTimer.cancel();
 
@@ -143,12 +142,13 @@ class StadiumWizardImageService {
         return null;
       }
 
-      // Cleanup cached file from local temp folder after upload
       try {
         if (await imageFile.exists()) {
           await imageFile.delete();
         }
-      } catch (_) {}
+      } catch (_) {
+        // Cache cleanup failure does not invalidate a confirmed upload.
+      }
 
       return url;
     } catch (e) {
