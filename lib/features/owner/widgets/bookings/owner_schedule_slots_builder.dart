@@ -129,7 +129,11 @@ class OwnerScheduleSlotsBuilder {
 
         final booking = dayBookings.cast<Booking?>().firstWhere(
           (b) {
-            if (b == null) return false;
+            if (b == null ||
+                b.status == BookingStatus.cancelled ||
+                b.status == BookingStatus.expired) {
+              return false;
+            }
             // Compare actual date-time intervals, not just wall-clock minutes:
             // a booking at the same hour on another day must not occupy this slot.
             final bookingStart = b.startTime.toLocal();
