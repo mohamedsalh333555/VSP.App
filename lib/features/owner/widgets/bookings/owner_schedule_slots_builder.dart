@@ -55,6 +55,11 @@ class OwnerScheduleSlotsBuilder {
             : minutes;
       }
 
+      if (features is Map && features.containsKey('breakTimes') &&
+          features['breakTimes'] != null &&
+          features['breakTimes'] is! List) {
+        throw const FormatException('Invalid closure list');
+      }
       if (features is Map && features['breakTimes'] is List) {
         for (final item in features['breakTimes'] as List) {
           if (item is! Map) {
