@@ -1,11 +1,11 @@
 # VSP — Live delivery ledger
 
-Updated 2026-11-08. This ledger is the source of truth for **execution progress**, distinct from final release verification.
+Updated 2026-11-09. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **49 documented as completed; 571 not yet accepted**. This is NOT a claim that all 588 remaining tasks are untouched.
+- Current inventory: **72 verified; 548 not yet accepted**. This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
@@ -23,7 +23,7 @@ Updated 2026-11-08. This ledger is the source of truth for **execution progress*
 | 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
 | 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
 
-**Current audited counter: 49 / 620 completed, 571 remaining.** Source-audited inventory/decision tasks 67.01, 67.03, 67.05, 71.01 and 72.01 are now closed in addition to the previously accepted 38; original 23 baseline completions unchanged. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
+**Current audited counter: 72 / 620 completed, 548 remaining.** Phase 10 closes 14 analytics/instrumentation subtasks on current-head CI evidence; historical closures remain recorded below. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
 
 ## Existing implementation evidence — not yet full-task completion
 
@@ -396,6 +396,19 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Added participant/stranger/null-user regression test for the pure access helper. This is a client guard only; RLS remains the authoritative security boundary.
 - Prior CI on `256f0e4` isolated one foreground notification widget fixture failure (1026 passed/1 failed/10 skipped), with Android smoke success. Follow-up `d647703` CI still running at inspection.
 - **58/620 verified, 562 remaining**; no main merge or production DB/payment changes.
+
+
+## Phase 10 conversion analytics verification — 2026-11-09
+
+- Current source commit `4a2893e9` passed Flutter CI [run 42685956248](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42685956248): analyzer, 56 architecture tests, and the full suite (**1033 passed, 10 skipped**). Duplicate current-head Flutter run `42685967807` also completed successfully.
+- Android public/auth smoke [run 42685967573](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42685967573) passed on the same commit. It validates startup/onboarding/login navigation only, not booking/payment completion.
+- Repaired the foreground notification widget fixture with `ChangeNotifierProvider<AuthProvider>`; production preference enforcement was not weakened.
+- Added the canonical 13-event `VSPAnalyticsEvents` dictionary, privacy filtering, session dedupe, successful player/owner signup, confirmed booking completion and the existing venue/match/team/subscription funnel hooks.
+- Automated contracts verify exact event names, Firebase-safe schema, property privacy, journey-boundary placement, absence of booking completion from pre-success confirmation, and absence of paid subscription activation from checkout initiation.
+- Updated `CONVERSION_ANALYTICS.md`, Phase 10 status/report and experiment baseline. No conversion uplift, D7/D30 retention or revenue change is claimed without real consented data.
+- Closed **50.01, 50.02, 50.03, 50.06, 51.01, 51.02, 51.03, 52.02, 52.07, 55.01, 55.02, 55.03, 55.04 and 55.07**.
+- **Progress: 72/620 verified, 548 remaining.** No production database, RLS, payment backend, pricing, `main` merge or APK build.
+
 
 ## Next execution queue
 
