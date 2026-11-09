@@ -143,6 +143,21 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       repository: _databaseService,
     );
     if (loaded != null && mounted) {
+      final currentUid = _uid;
+      if (currentUid == null ||
+          currentUid.isEmpty ||
+          loaded.ownerId.isEmpty ||
+          loaded.ownerId != currentUid) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'لا تملك صلاحية تعديل هذا الملعب.'
+              : 'You do not have permission to edit this stadium.',
+        );
+        Navigator.pop(context);
+        return;
+      }
       setState(() {
         _c.populateFromLoaded(loaded);
         _f.populateFromLoaded(loaded);
@@ -328,6 +343,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Future<void> _saveStadium() async {
+    if (_isSaving) return;
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
     setState(() => _isSaving = true);
     try {
