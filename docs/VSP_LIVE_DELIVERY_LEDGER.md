@@ -474,3 +474,13 @@ These changes are **CODE_DONE / Pending Verification** under the owner's deferre
 - `3bb68b7`, `490d40e`, `da74333`: legacy stadium records are parsed defensively, corrupt closure/image fields are ignored, edit ownership is retained and checked before data is exposed in the edit form, and duplicate saves are blocked. Repository/RLS checks remain authoritative.
 - Candidate mapping: **19.01–19.05, 20.01–20.07 and 21.01–21.08 are CODE_DONE/IN_PROGRESS** pending deferred regression, two-account authorization, storage and device verification. This does not close subscription purchase or admin approval journeys.
 - **Verified progress remains 72/620; 548 remaining.** No production Supabase/schema/RLS, payment backend, price, plan, `main` merge or APK action.
+
+
+## Owner schedule defensive rendering batch — 2026-11-10
+
+- `0656e1e`: match owner calendar bookings by actual local date-time overlap, preventing same-clock-time bookings on unrelated days from occupying slots.
+- `a5e5db3`, `4741df9`: reject malformed, incomplete, out-of-hours and overlapping closure intervals; use the existing retryable configuration-error sentinel rather than displaying those intervals as free.
+- `6910bee`: do not mark cancelled/expired bookings as occupying owner-calendar slots.
+- `5bfcc9c`, `4595ece`: detect overlapping distinct active booking IDs in a displayed half-hour slot and fail closed; tolerate duplicate rows for the same booking ID.
+- These are client-side schedule presentation safeguards only, not authoritative double-booking prevention. Server exclusion constraints, transactional booking paths, timezone handling, staging/device acceptance and CI still require verification.
+- All six commits are **CODE_DONE / Pending Verification**. **Verified progress remains 72/620; 548 remaining**. No production schema/RLS/payment/pricing changes, main merge or APK.
