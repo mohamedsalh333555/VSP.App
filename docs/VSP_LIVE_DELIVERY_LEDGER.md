@@ -358,6 +358,12 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - The previous branch commit `6675e75` had pending CI at inspection. This change needs its own full CI before any task closure.
 - **58/620 completed, 562 remaining**; no main merge, production database or payment-provider changes.
 
+## Server error payment precedence and draft replay-key validation — 2026-11-09
+
+- Explicit HTTP 500/502/503/429 gateway failures override misleading "cancelled" message text, requiring authoritative server reconciliation before retry; regression coverage added.
+- Restored booking drafts now preserve only trimmed, nonempty safe replay/idempotency keys (up to 128 characters), rejecting malformed and non-string keys; regression tests cover valid and invalid keys.
+- Prior Flutter/Android runs on `f427bbe` still pending at inspection. **58/620 complete, 562 remaining**, no full payment/booking E2E task closed. No production DB/payment changes or main merge.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.

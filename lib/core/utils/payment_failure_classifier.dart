@@ -96,6 +96,14 @@ class PaymentFailureClassifier {
     if (httpStatus == 0) {
       return PaymentFailureKind.network;
     }
+    // A gateway's server error is never an authoritative user cancellation.
+    // Even if the message says "cancelled", reconcile the transaction first.
+    if (httpStatus != null && httpStatus >= 500) {
+      return PaymentFailureKind.providerUnavailable;
+    }
+    if (httpStatus == 429) {
+      return PaymentFailureKind.providerUnavailable;
+    }
     if (_contains(value, ['cancelled', 'canceled', 'user_cancel', 'إلغاء', 'الغاء'])) {
       return PaymentFailureKind.cancelled;
     }

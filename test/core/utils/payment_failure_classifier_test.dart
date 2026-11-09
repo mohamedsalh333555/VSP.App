@@ -61,6 +61,19 @@ void main() {
         PaymentFailureKind.cancelled);
   });
 
+  test('gateway server errors override contradictory cancellation text', () {
+    for (final status in [500, 502, 503]) {
+      final kind = PaymentFailureClassifier.classify(
+        httpStatus: status, message: 'user cancelled',
+      );
+      expect(kind, PaymentFailureKind.providerUnavailable);
+      expect(kind.requiresStatusReconciliation, isTrue);
+    }
+    expect(PaymentFailureClassifier.classify(
+      httpStatus: 429, message: 'cancelled',
+    ), PaymentFailureKind.providerUnavailable);
+  });
+
   test('unknown and duplicate outcomes require reconciliation', () {
     expect(PaymentFailureClassifier.classify().requiresStatusReconciliation,
         isTrue);

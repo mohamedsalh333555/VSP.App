@@ -236,6 +236,36 @@ void main() {
       expect(() => BookingDraft.fromMap(legacy), throwsFormatException);
     });
 
+    test('restored idempotency key is preserved only when safe', () {
+      final original = BookingDraft(
+        stadiumId: 'std-1',
+        stadiumName: 'Pitch',
+        ownerId: 'owner-1',
+        startTime: DateTime.utc(2030, 12, 10, 18),
+        endTime: DateTime.utc(2030, 12, 10, 19),
+        bookingType: BookingType.personal,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 100,
+        idempotencyKey: 'stable_key-1',
+      );
+      final base = original.toMap();
+      expect(BookingDraft.fromMap(base).idempotencyKey, 'stable_key-1');
+      for (final invalid in <dynamic>[
+        '',
+        '  ',
+        'a/b',
+        'x' * 129,
+        123,
+      ]) {
+        expect(() => BookingDraft.fromMap({...base, 'idempotencyKey': invalid}),
+            throwsFormatException, reason: '$invalid');
+      }
+      expect(BookingDraft.fromMap({
+        ...base, 'idempotencyKey': '  stable_key-1  ',
+      }).idempotencyKey, 'stable_key-1');
+    });
+
     test('BookingDraft copyWith updates specific fields', () {
       final now = DateTime(2026, 9, 9, 20, 0);
       final draft = BookingDraft(
