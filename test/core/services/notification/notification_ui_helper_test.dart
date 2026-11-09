@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/core/services/notification/notification_ui_helper.dart';
 import 'package:vsp_application/core/repositories/booking_repository.dart';
 import 'package:vsp_application/data/models.dart';
@@ -27,7 +29,9 @@ void main() {
   group('NotificationUiHelper Tests', () {
     testWidgets('showInAppAlert renders floating SnackBar with message details', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        Provider<AuthProvider>.value(
+          value: AuthProvider(),
+          child: MaterialApp(
           home: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(
@@ -46,6 +50,7 @@ void main() {
                 child: const Text('Trigger Alert'),
               ),
             ),
+          ),
           ),
         ),
       );

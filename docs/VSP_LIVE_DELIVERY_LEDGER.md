@@ -384,6 +384,12 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Added regression coverage for type aliases. **58/620 verified, 562 remaining**. Pending CI, not an end-to-end notification delivery completion.
 - No production database/payment changes or main merge.
 
+## Notification foreground widget regression repair — 2026-11-09
+
+- GitHub Flutter CI run `42674989384` analyzed and passed architecture gate but failed 1 of 1027 executed tests (1026 passed, 10 skipped). The failing `notification_ui_helper_test.dart` widget lacked the `AuthProvider` dependency now required by foreground preference checks.
+- Updated widget fixture to supply `AuthProvider`, preserving production role-aware filtering instead of weakening it. Android E2E Smoke on commit `256f0e4` succeeded (runs `42674989320`, `42674997334`).
+- Await fresh CI on this commit before declaring regression resolved. **58/620 verified, 562 remaining**. No main merge or production database changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
