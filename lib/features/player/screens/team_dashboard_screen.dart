@@ -236,7 +236,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: DropdownButtonFormField<String>(
-                  initialValue: _userTeam?.id,
+                  value: _userTeam?.id,
                   decoration: InputDecoration(
                     labelText:
                         Localizations.localeOf(context).languageCode == 'ar'
