@@ -28,6 +28,18 @@ void main() {
       expect(NotificationFilterService.getPrefKeyForType('  '), isNull);
     });
 
+    test('legacy notification type spelling maps to the same preferences', () {
+      expect(NotificationFilterService.getPrefKeyForType('BOOKING-REMINDER'),
+          'notif_cash_bookings');
+      expect(NotificationFilterService.getPrefKeyForType(
+        'booking reminder', isOwner: true,
+      ), 'notif_owner_new_bookings');
+      expect(NotificationFilterService.getPrefKeyForType('MATCH START REMINDER'),
+          'notif_match_reminders');
+      expect(NotificationFilterService.getPrefKeyForType('challenge-result'),
+          'notif_challenge_results');
+    });
+
     test('shouldShowNotification respects general master toggle', () async {
       SharedPreferences.setMockInitialValues({
         'notif_general': false,

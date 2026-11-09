@@ -7,7 +7,10 @@ class NotificationFilterService {
 
   /// Maps notification [type] to the corresponding SharedPreferences toggle key.
   static String? getPrefKeyForType(String? type, {bool isOwner = false}) {
-    final normalizedType = type?.trim().toLowerCase();
+    // Older push producers may use uppercase, kebab-case or spaces.
+    // Normalize these to the same user-visible preference category.
+    final normalizedType = type?.trim().toLowerCase()
+        .replaceAll('-', '_').replaceAll(' ', '_');
     if (normalizedType == null || normalizedType.isEmpty) return null;
     if (isOwner) {
       switch (normalizedType) {
@@ -16,6 +19,7 @@ class NotificationFilterService {
         case 'booking_new':
         case 'booking_confirmed':
         case 'booking_cancelled':
+        case 'booking_reminder':
           return 'notif_owner_new_bookings';
         case 'payout':
         case 'debt_warning':
@@ -34,17 +38,20 @@ class NotificationFilterService {
       case 'booking_new':
       case 'booking_confirmed':
       case 'booking_cancelled':
+      case 'booking_reminder':
         return 'notif_cash_bookings';
       case 'team_transfer':
       case 'team_invite':
       case 'info':
         return 'notif_team_transfers';
       case 'match_reminder':
+      case 'match_start_reminder':
         return 'notif_match_reminders';
       case 'challenge':
       case 'challenge_confirmed':
       case 'challenge_accepted':
       case 'challenge_declined':
+      case 'challenge_result':
         return 'notif_challenge_results';
       case 'join_request_declined':
         return 'notif_match_reminders';

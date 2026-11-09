@@ -377,6 +377,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - This is a client-side foreground UX safeguard; it does not implement push delivery opt-out or server consent logs. No task is closed until end-to-end acceptance. **58/620 complete, 562 remaining**.
 - Prior GitHub Actions for `fa86b7c` show failed Android runs with zero jobs exposed and pending Flutter runs; investigate runner/workflow status separately. No production DB/payment changes or main merge.
 
+## Notification legacy categories and active-chat foreground routing — 2026-11-09
+
+- Added normalized legacy notification type aliases for booking reminders, match-start reminders and challenge results. Owner and player category opt-outs apply consistently regardless of casing, dashes or spaces.
+- Fixed foreground suppression so opening one chat no longer hides all incoming chat alerts: only an alert for the active booking chat is suppressed; other chats still obey preferences.
+- Added regression coverage for type aliases. **58/620 verified, 562 remaining**. Pending CI, not an end-to-end notification delivery completion.
+- No production database/payment changes or main merge.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.

@@ -28,8 +28,11 @@ class NotificationUiHelper {
     if (context == null) return;
 
     final String? notifBookingId = message.data['bookingId'] ?? message.data['booking_id'];
+    // Only suppress an alert for the conversation currently visible.
+    // A different chat must still be allowed through the user's preferences.
     if (ChatScreen.activeBookingId != null &&
-        (notifBookingId == ChatScreen.activeBookingId || message.data['type'] == 'chat')) {
+        notifBookingId == ChatScreen.activeBookingId &&
+        message.data['type']?.toString().trim().toLowerCase() == 'chat') {
       return;
     }
 
