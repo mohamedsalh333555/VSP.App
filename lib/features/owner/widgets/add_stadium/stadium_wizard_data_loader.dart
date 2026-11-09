@@ -61,6 +61,27 @@ class StadiumLoadedData {
 class StadiumWizardDataLoader {
   const StadiumWizardDataLoader._();
 
+  static Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
+    return <String, dynamic>{};
+  }
+
+  static double _asDouble(dynamic value, [double fallback = 0]) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString().trim() ?? '') ?? fallback;
+  }
+
+  static bool _asBool(dynamic value, [bool fallback = false]) {
+    if (value is bool) return value;
+    final normalized = value?.toString().trim().toLowerCase();
+    if (normalized == 'true' || normalized == '1') return true;
+    if (normalized == 'false' || normalized == '0') return false;
+    return fallback;
+  }
+
   /// Loads stadium record by ID and parses working hours, break times, features, and images.
   static Future<StadiumLoadedData?> load(
     String stadiumId, {
@@ -70,51 +91,64 @@ class StadiumWizardDataLoader {
       final data = await repository.getStadiumSnapshot(stadiumId);
       if (data == null) return null;
 
-      final depositVal = data['deposit_amount'] ?? data['depositAmount'] ?? 0.0;
-      final bool reqDeposit = data['needs_deposit'] ?? data['needsDeposit'] ?? (depositVal > 0.0);
+      final depositVal =
+          _asDouble(data['deposit_amount'] ?? data['depositAmount']);
+      final reqDeposit = _asBool(
+        data['needs_deposit'] ?? data['needsDeposit'],
+        depositVal > 0,
+      );
 
-      final features = data['features'] as Map<String, dynamic>? ?? {};
-      final workingHours = features['workingHours'] as Map<String, dynamic>?;
+      final features = _asMap(data['features']);
+      final workingHours = _asMap(features['workingHours']);
 
       TimeOfDay? start;
       TimeOfDay? end;
-      if (workingHours != null) {
+      if (workingHours.isNotEmpty) {
         start = StadiumWizardTimeUtils.parseTime(workingHours['start']);
         end = StadiumWizardTimeUtils.parseTime(workingHours['end']);
       }
 
       final List<Map<String, TimeOfDay?>> breaks = [];
-      if (features['breakTimes'] != null) {
-        final list = features['breakTimes'] as List;
-        for (var item in list) {
-          if (item is Map) {
-            breaks.add({
-              'start': StadiumWizardTimeUtils.parseTime(item['start']?.toString()),
-              'end': StadiumWizardTimeUtils.parseTime(item['end']?.toString()),
-            });
+      final rawBreaks = features['breakTimes'];
+      if (rawBreaks is List) {
+        for (final item in rawBreaks) {
+          final parsed = _asMap(item);
+          if (parsed.isEmpty) continue;
+          final breakStart =
+              StadiumWizardTimeUtils.parseTime(parsed['start']?.toString());
+          final breakEnd =
+              StadiumWizardTimeUtils.parseTime(parsed['end']?.toString());
+          if (breakStart != null && breakEnd != null) {
+            breaks.add({'start': breakStart, 'end': breakEnd});
           }
         }
       }
-      if (breaks.isEmpty && features['breakTime'] != null) {
-        final breakTime = features['breakTime'] as Map<String, dynamic>;
-        breaks.add({
-          'start': StadiumWizardTimeUtils.parseTime(breakTime['start']?.toString()),
-          'end': StadiumWizardTimeUtils.parseTime(breakTime['end']?.toString()),
-        });
+      if (breaks.isEmpty) {
+        final breakTime = _asMap(features['breakTime']);
+        if (breakTime.isNotEmpty) {
+          final breakStart =
+              StadiumWizardTimeUtils.parseTime(breakTime['start']?.toString());
+          final breakEnd =
+              StadiumWizardTimeUtils.parseTime(breakTime['end']?.toString());
+          if (breakStart != null && breakEnd != null) {
+            breaks.add({'start': breakStart, 'end': breakEnd});
+          }
+        }
       }
 
       final allImages = <String>[];
       if (data['images'] is List) {
         for (var img in (data['images'] as List)) {
-          if (img != null && img.toString().isNotEmpty) {
-            allImages.add(img.toString());
+          final url = img?.toString().trim() ?? '';
+          if (url.isNotEmpty && url.toLowerCase() != 'null' && !allImages.contains(url)) {
+            allImages.add(url);
           }
         }
       }
       if (features['allImages'] is List) {
         for (var img in (features['allImages'] as List)) {
-          final str = img.toString();
-          if (str.isNotEmpty && !allImages.contains(str)) {
+          final str = img?.toString().trim() ?? '';
+          if (str.isNotEmpty && str.toLowerCase() != 'null' && !allImages.contains(str)) {
             allImages.add(str);
           }
         }
@@ -158,7 +192,7 @@ class StadiumWizardDataLoader {
         ballPrice: (features['ballPrice'] ?? 0).toString(),
         startTime: start,
         endTime: end,
-        isSplitShift: features['isSplitShift'] ?? false,
+        isSplitShift: _asBool(features['isSplitShift']) && breaks.isNotEmpty,
         breakTimes: breaks,
         images: parsedImages,
         notes: data['notes'] ?? '',
