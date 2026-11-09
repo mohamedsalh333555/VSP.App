@@ -132,23 +132,26 @@ class OwnerScheduleSlotsBuilder {
 
         final slotTime = DateTime(slotDate.year, slotDate.month, slotDate.day, currentH, currentM);
 
-        final booking = dayBookings.cast<Booking?>().firstWhere(
-          (b) {
-            if (b == null ||
-                b.status == BookingStatus.cancelled ||
-                b.status == BookingStatus.expired) {
-              return false;
-            }
-            // Compare actual date-time intervals, not just wall-clock minutes:
-            // a booking at the same hour on another day must not occupy this slot.
-            final bookingStart = b.startTime.toLocal();
-            final bookingEnd = b.endTime.toLocal();
-            final slotEnd = slotTime.add(const Duration(minutes: 30));
-            return bookingEnd.isAfter(slotTime) &&
-                bookingStart.isBefore(slotEnd);
-          },
-          orElse: () => null,
-        );
+        // An invalid interval must not mask a valid booking in the same slot.
+        // Multiple active bookings for one slot indicate a conflict rather
+        // than a legitimately free interval.
+        final slotEnd = slotTime.add(const Duration(minutes: 30));
+        final matchingBookings = dayBookings.where((b) {
+          if (b.status == BookingStatus.cancelled ||
+              b.status == BookingStatus.expired) {
+            return false;
+          }
+          final bookingStart = b.startTime.toLocal();
+          final bookingEnd = b.endTime.toLocal();
+          return bookingEnd.isAfter(bookingStart) &&
+              bookingEnd.isAfter(slotTime) &&
+              bookingStart.isBefore(slotEnd);
+        }).toList();
+        if (matchingBookings.length > 1) {
+          throw const FormatException('Overlapping active bookings');
+        }
+        final Booking? booking =
+            matchingBookings.isEmpty ? null : matchingBookings.single;
         if (isBreak) {
           slots.add({
             'time': timeStr,
