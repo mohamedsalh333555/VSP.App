@@ -166,6 +166,76 @@ void main() {
       expect(restored.ownerId, 'legacy-owner');
     });
 
+    test('legacy snake-case booking draft fields restore without losing checkout identity', () {
+      final original = BookingDraft(
+        stadiumId: 'std-1',
+        stadiumName: 'Pitch',
+        ownerId: 'owner-1',
+        startTime: DateTime.utc(2030, 12, 10, 18),
+        endTime: DateTime.utc(2030, 12, 10, 19),
+        bookingType: BookingType.challenge,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 150,
+        depositPaid: 50,
+        currentPlayers: 3,
+        playerTeamId: 'team-1',
+        opponentTeamId: 'team-2',
+        isPaid: true,
+        paymentMethod: 'card',
+        paymentTransactionId: 'txn-1',
+        idempotencyKey: 'stable-key',
+      );
+      final legacy = Map<String, dynamic>.from(original.toMap());
+      for (final names in <List<String>>[
+        ['startTime', 'start_time'],
+        ['endTime', 'end_time'],
+        ['totalPrice', 'total_price'],
+        ['currentPlayers', 'current_players'],
+        ['isPaid', 'is_paid'],
+        ['paymentMethod', 'payment_method'],
+        ['paymentTransactionId', 'payment_transaction_id'],
+        ['playerTeamId', 'player_team_id'],
+        ['opponentTeamId', 'opponent_team_id'],
+        ['idempotencyKey', 'idempotency_key'],
+      ]) {
+        legacy[names[1]] = legacy.remove(names[0]);
+      }
+      final restored = BookingDraft.fromMap(legacy);
+      expect(restored.startTime, original.startTime);
+      expect(restored.endTime, original.endTime);
+      expect(restored.totalPrice, 150);
+      expect(restored.currentPlayers, 3);
+      expect(restored.isPaid, isTrue);
+      expect(restored.paymentMethod, 'card');
+      expect(restored.paymentTransactionId, 'txn-1');
+      expect(restored.playerTeamId, 'team-1');
+      expect(restored.opponentTeamId, 'team-2');
+      expect(restored.idempotencyKey, 'stable-key');
+    });
+
+    test('malformed legacy time and price cannot resume checkout', () {
+      final base = BookingDraft(
+        stadiumId: 'std-1',
+        stadiumName: 'Pitch',
+        ownerId: 'owner-1',
+        startTime: DateTime.utc(2030, 12, 10, 18),
+        endTime: DateTime.utc(2030, 12, 10, 19),
+        bookingType: BookingType.personal,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 150,
+      ).toMap();
+      final legacy = Map<String, dynamic>.from(base)
+        ..remove('startTime')
+        ..remove('totalPrice')
+        ..['start_time'] = 'invalid'
+        ..['total_price'] = -20;
+      expect(() => BookingDraft.fromMap(legacy), throwsFormatException);
+      legacy['start_time'] = DateTime.utc(2030, 12, 10, 18).toIso8601String();
+      expect(() => BookingDraft.fromMap(legacy), throwsFormatException);
+    });
+
     test('BookingDraft copyWith updates specific fields', () {
       final now = DateTime(2026, 9, 9, 20, 0);
       final draft = BookingDraft(

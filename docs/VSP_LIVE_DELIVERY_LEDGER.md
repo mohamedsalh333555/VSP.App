@@ -351,6 +351,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Previous commit `4bd521a` has workflow-level failures with **zero jobs returned** for [Flutter CI 42673052963](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42673052963) and [Android 42673045331](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42673045331), while other attempts were still running when checked. Do not misstate this as a test assertion failure or as passing.
 - **58/620 complete, 562 remaining**. These are partial booking and notification hardening, not full E2E task closure; no production schema/payment or main merge.
 
+## Legacy booking draft field compatibility — 2026-11-09
+
+- Restored draft parser now accepts legacy snake-case time, total price, player count, paid flag, payment method/transaction, team/opponent IDs and idempotency key, while retaining strict validation. This prevents an older saved draft from losing payment correlation or replay identity.
+- Added round-trip test for ten legacy field aliases and negative tests for invalid legacy time/price.
+- The previous branch commit `6675e75` had pending CI at inspection. This change needs its own full CI before any task closure.
+- **58/620 completed, 562 remaining**; no main merge, production database or payment-provider changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
