@@ -6,6 +6,7 @@ import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:vsp_application/core/utils/vsp_feedback.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/match_repository.dart';
@@ -30,6 +31,7 @@ class TeamDashboardScreen extends StatefulWidget {
 
 class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Team? _userTeam;
+  List<Team> _userTeams = <Team>[];
   bool _isLoadingUserTeam = true;
   bool _hasUserTeamLoadError = false;
   String? _activeUserTeamScope;
@@ -81,6 +83,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       if (mounted) {
         setState(() {
           _userTeam = null;
+          _userTeams = <Team>[];
           _isLoadingUserTeam = false;
           _hasUserTeamLoadError = false;
         });
@@ -95,40 +98,40 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       });
     }
     try {
-      final team = await TeamRepository().getUserTeamStrict(userId);
+      final teams = await TeamRepository().getUserTeamsStrict(userId);
+      final preferences = await SharedPreferences.getInstance();
+      final storedTeamId = preferences.getString('active_team_$userId');
+      Team? activeTeam;
+      if (teams.isNotEmpty) {
+        activeTeam = teams.first;
+        for (final candidate in teams) {
+          if (candidate.id == storedTeamId) {
+            activeTeam = candidate;
+            break;
+          }
+        }
+      }
+
       if (!mounted ||
           generation != _userTeamRequestGeneration ||
           context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
         return;
       }
       setState(() {
-        _userTeam = team;
+        _userTeams = teams;
+        _userTeam = activeTeam;
         _isLoadingUserTeam = false;
         _hasUserTeamLoadError = false;
       });
-      if (team != null) {
-        try {
-          final activeLeague = await TeamLeagueRepository().getTeamActiveLeagueStrict(team.id);
-          if (mounted &&
-              generation == _userTeamRequestGeneration &&
-              context.read<app_auth.AuthProvider>().currentUser?.id == userId &&
-              activeLeague != null &&
-              (activeLeague.status == 'ongoing' || activeLeague.status == 'open')) {
-            setState(() => _selectedMainTab = 1);
-          }
-        } catch (e) {
-          debugPrint('Error loading active team league: $e');
-          if (mounted &&
-              generation == _userTeamRequestGeneration &&
-              context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
-            // Surface the league tab's strict retry state rather than silently
-            // leaving the user on a tab that implies no active league.
-            setState(() => _selectedMainTab = 1);
-          }
+
+      if (activeTeam != null) {
+        if (storedTeamId != activeTeam.id) {
+          await preferences.setString('active_team_$userId', activeTeam.id);
         }
+        await _loadActiveLeagueForTeam(activeTeam, userId, generation);
       }
     } catch (e) {
-      debugPrint('Error loading user team: $e');
+      debugPrint('Error loading user teams: $e');
       if (mounted &&
           generation == _userTeamRequestGeneration &&
           context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
@@ -138,6 +141,55 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         });
       }
     }
+  }
+
+  Future<void> _loadActiveLeagueForTeam(
+    Team team,
+    String userId,
+    int generation,
+  ) async {
+    try {
+      final activeLeague =
+          await TeamLeagueRepository().getTeamActiveLeagueStrict(team.id);
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId &&
+          _userTeam?.id == team.id &&
+          activeLeague != null &&
+          (activeLeague.status == 'ongoing' ||
+              activeLeague.status == 'open')) {
+        setState(() => _selectedMainTab = 1);
+      }
+    } catch (e) {
+      debugPrint('Error loading active team league: $e');
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId &&
+          _userTeam?.id == team.id) {
+        setState(() => _selectedMainTab = 1);
+      }
+    }
+  }
+
+  Future<void> _selectActiveTeam(Team selectedTeam) async {
+    final userId = context.read<app_auth.AuthProvider>().currentUser?.id;
+    if (userId == null ||
+        !_userTeams.any((team) => team.id == selectedTeam.id)) {
+      return;
+    }
+    final generation = ++_userTeamRequestGeneration;
+    setState(() {
+      _userTeam = selectedTeam;
+      _selectedMainTab = 0;
+    });
+    final preferences = await SharedPreferences.getInstance();
+    if (!mounted ||
+        context.read<app_auth.AuthProvider>().currentUser?.id != userId ||
+        _userTeam?.id != selectedTeam.id) {
+      return;
+    }
+    await preferences.setString('active_team_$userId', selectedTeam.id);
+    await _loadActiveLeagueForTeam(selectedTeam, userId, generation);
   }
 
   @override
@@ -182,6 +234,39 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         bottom: false,
         child: Column(
           children: [
+            if (_userTeams.length > 1)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: DropdownButtonFormField<String>(
+                  initialValue: _userTeam?.id,
+                  decoration: InputDecoration(
+                    labelText:
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'الفريق النشط'
+                            : 'Active team',
+                    prefixIcon: const Icon(Iconsax.people_copy),
+                  ),
+                  items: _userTeams
+                      .map(
+                        (team) => DropdownMenuItem<String>(
+                          value: team.id,
+                          child: Text(
+                            team.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (teamId) {
+                    if (teamId == null) return;
+                    final selected = _userTeams.firstWhere(
+                      (team) => team.id == teamId,
+                    );
+                    _selectActiveTeam(selected);
+                  },
+                ),
+              ),
+
             // Pill Switcher: [ تجميع ] [ دوري ] مطابقة 100% لشاشة الأبطال بدون إيموجي
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
