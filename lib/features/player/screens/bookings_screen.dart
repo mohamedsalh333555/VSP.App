@@ -273,14 +273,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 final upcomingCount = data.upcoming.length;
                 final historyCount = data.history.length;
                 final hasUpcoming = upcomingCount > 0;
+                final hasPending = pendingCount > 0;
                 final hasHistory = historyCount > 0;
                 final hasSyncError = data.error != null || _hasTeamContextError;
 
                 return ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: VSPDSScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPDSSpacing.sm),
-                  itemCount: (hasSyncError ? 1 : 0) + pendingCount +
+                  padding: VSPDSScrollPadding.forList(
+                    context,
+                    hasFloatingNavBar: true,
+                    top: VSPDSSpacing.sm,
+                  ),
+                  itemCount: (hasSyncError ? 1 : 0) +
                       (hasUpcoming ? 1 + upcomingCount : 0) +
+                      (hasPending ? 1 + pendingCount : 0) +
                       (hasHistory ? 1 + historyCount : 0),
                   itemBuilder: (context, index) {
                     if (hasSyncError && index == 0) {
@@ -308,7 +314,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           child: Padding(
                             padding: EdgeInsets.only(
                               bottom: cursor == upcomingCount - 1 &&
-                                      (pendingCount > 0 || hasHistory)
+                                      (hasPending || hasHistory)
                                   ? VSPDSSpacing.md
                                   : VSPDSSpacing.sm,
                             ),
@@ -326,16 +332,35 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       cursor -= upcomingCount;
                     }
 
-                    if (cursor < pendingCount) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: VSPDSSpacing.sm),
-                        child: PendingBookingCard(
-                          pendingBooking: data.pending[cursor],
-                          isArabic: isArabic,
-                        ),
-                      );
+                    if (hasPending) {
+                      if (cursor == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: VSPDSSpacing.sm,
+                          ),
+                          child: Text(
+                            isArabic ? 'قيد الانتظار' : 'Pending',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        );
+                      }
+                      cursor -= 1;
+
+                      if (cursor < pendingCount) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: cursor == pendingCount - 1 && hasHistory
+                                ? VSPDSSpacing.md
+                                : VSPDSSpacing.sm,
+                          ),
+                          child: PendingBookingCard(
+                            pendingBooking: data.pending[cursor],
+                            isArabic: isArabic,
+                          ),
+                        );
+                      }
+                      cursor -= pendingCount;
                     }
-                    cursor -= pendingCount;
 
                     if (hasHistory) {
                       if (cursor == 0) {
