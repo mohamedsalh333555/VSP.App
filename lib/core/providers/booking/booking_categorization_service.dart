@@ -80,8 +80,14 @@ class BookingCategorizationService {
           !b.endTime.isAfter(now)) {
         return true;
       }
-      if (b.status == BookingStatus.pending && !b.endTime.isAfter(now)) {
-        return true;
+      if (b.status == BookingStatus.pending) {
+        // Expired payment grace periods should not remain in the active list.
+        // Keep these records in history rather than making them disappear.
+        if (!b.endTime.isAfter(now)) return true;
+        if (!b.isCash && !b.isPaid &&
+            !b.createdAt.isAfter(tenMinutesAgo)) {
+          return true;
+        }
       }
       if (b.status == BookingStatus.cancelled) {
         // Exclude abandoned checkouts where no money was ever paid.
