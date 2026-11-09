@@ -110,18 +110,13 @@ class OwnerScheduleSlotsBuilder {
         final booking = dayBookings.cast<Booking?>().firstWhere(
           (b) {
             if (b == null) return false;
-            final bStart = b.startTime.toLocal();
-            final bEnd = b.endTime.toLocal();
-            final bStartMin = bStart.hour * 60 + bStart.minute;
-            int bEndMin = bEnd.hour * 60 + bEnd.minute;
-            // Normalize for overnight bookings (crossing midnight)
-            if (bEndMin <= bStartMin) bEndMin += 1440;
-            // Normalize currentSlotMin for post-midnight slots
-            int normalizedSlotMin = currentSlotMin;
-            if (normalizedSlotMin < bStartMin && bEndMin > 1440) {
-              normalizedSlotMin += 1440;
-            }
-            return normalizedSlotMin >= bStartMin && normalizedSlotMin < bEndMin;
+            // Compare actual date-time intervals, not just wall-clock minutes:
+            // a booking at the same hour on another day must not occupy this slot.
+            final bookingStart = b.startTime.toLocal();
+            final bookingEnd = b.endTime.toLocal();
+            final slotEnd = slotTime.add(const Duration(minutes: 30));
+            return bookingEnd.isAfter(slotTime) &&
+                bookingStart.isBefore(slotEnd);
           },
           orElse: () => null,
         );
