@@ -434,9 +434,10 @@ Owner authorized continuous execution; consolidated tests remain deferred. These
 - `3a75cd7`: invitation responses are scoped to the active account across async gaps; stale-account success/error feedback is suppressed and expired/already-handled failures are explained honestly.
 - `88c3aed`, `12f8ea6`: a successful invitation acceptance refreshes the parent membership/team state without misreporting a subsequent view-refresh failure as an acceptance failure.
 - `886d3eb`: repository exposes every verified team membership in deterministic order rather than relying on unordered “first row” selection.
-- `d37350c`, `84877ad`: centralized account-scoped active-team preference and added a selector when a player belongs to multiple teams.
+- `d37350c`, `84877ad`, `c8bca9f`: centralized account-scoped active-team preference and added a Flutter-3.32-compatible selector when a player belongs to multiple teams.
 - `2b10dfc`: team management honors the selected active team.
 - `bc6391b`: challenge creation and its final verification resolve the same selected active team from current verified memberships.
+- `4d70f91`: localized the invitation action tooltip and suppresses tab haptics when reduced motion is requested.
 - Candidate mapping: **17.01–17.05, 17.08 and 18.01–18.06 are CODE_DONE/IN_PROGRESS** pending the deferred regression, two-account staging and device checks. Server RLS/RPCs remain authoritative.
 - **Verified progress remains 72/620; 548 remaining.** No production schema/RLS/payment/pricing change, no `main` merge and no APK action.
 
