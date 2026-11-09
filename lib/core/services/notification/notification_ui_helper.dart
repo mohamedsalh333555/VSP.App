@@ -35,6 +35,7 @@ class NotificationUiHelper {
 
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (!context.mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final shouldShow = await NotificationFilterService.shouldShowNotification(
         message.data['type']?.toString(),
