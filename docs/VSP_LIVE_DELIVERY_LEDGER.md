@@ -426,6 +426,21 @@ Owner instruction: continue implementation and defer consolidated tests. The fol
 - **Verified progress remains 72/620; 548 remaining.** No production Supabase/schema/RLS, payment backend, pricing, permissions, `main` merge or APK action.
 
 
+
+## Team invitations and active-team implementation — 2026-11-09
+
+Owner authorized continuous execution; consolidated tests remain deferred. These changes are **CODE_DONE / Pending Verification** and do not change the verified counter.
+
+- `3a75cd7`: invitation responses are scoped to the active account across async gaps; stale-account success/error feedback is suppressed and expired/already-handled failures are explained honestly.
+- `88c3aed`, `12f8ea6`: a successful invitation acceptance refreshes the parent membership/team state without misreporting a subsequent view-refresh failure as an acceptance failure.
+- `886d3eb`: repository exposes every verified team membership in deterministic order rather than relying on unordered “first row” selection.
+- `d37350c`, `84877ad`: centralized account-scoped active-team preference and added a selector when a player belongs to multiple teams.
+- `2b10dfc`: team management honors the selected active team.
+- `bc6391b`: challenge creation and its final verification resolve the same selected active team from current verified memberships.
+- Candidate mapping: **17.01–17.05, 17.08 and 18.01–18.06 are CODE_DONE/IN_PROGRESS** pending the deferred regression, two-account staging and device checks. Server RLS/RPCs remain authoritative.
+- **Verified progress remains 72/620; 548 remaining.** No production schema/RLS/payment/pricing change, no `main` merge and no APK action.
+
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
