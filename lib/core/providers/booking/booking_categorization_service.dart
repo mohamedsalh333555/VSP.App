@@ -51,11 +51,14 @@ class BookingCategorizationService {
     final tenMinutesAgo = now.subtract(const Duration(minutes: 10));
     final pending = bookings.where((b) {
       final isFuture = b.endTime.isAfter(now);
+      // A confirmed booking can overlap a pending checkout without sharing
+      // its exact start time. Ignore the same booking ID when lists are merged.
       final hasConfirmedSameSlot = upcoming.any(
         (u) =>
-            _isConfirmedLifecycleStatus(u.status) &&
+            u.id != b.id &&
             u.stadiumId == b.stadiumId &&
-            u.startTime.isAtSameMomentAs(b.startTime),
+            u.startTime.isBefore(b.endTime) &&
+            u.endTime.isAfter(b.startTime),
       );
       if (hasConfirmedSameSlot || !isFuture) return false;
       if (b.status != BookingStatus.pending) return false;
