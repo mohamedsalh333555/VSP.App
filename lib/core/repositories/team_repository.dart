@@ -103,6 +103,26 @@ class TeamRepository {
        .toSet();
  }
 
+ /// Returns every team the user currently belongs to.
+ ///
+ /// Team ordering is deterministic so callers can persist an explicit active
+ /// team without relying on PostgREST row order.
+ Future<List<Team>> getUserTeamsStrict(String userId) async {
+   final teamIds = (await getUserTeamIdsStrict(userId)).toList()..sort();
+   if (teamIds.isEmpty) return <Team>[];
+
+   final teams = <Team>[];
+   for (final teamId in teamIds) {
+     final team = await getTeamStrict(teamId);
+     if (team != null) teams.add(team);
+   }
+   teams.sort((a, b) {
+     final byName = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+     return byName != 0 ? byName : a.id.compareTo(b.id);
+   });
+   return teams;
+ }
+
  Future<Team?> getUserTeam(String userId) async {
    try {
      return await getUserTeamStrict(userId);
