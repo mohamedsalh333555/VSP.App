@@ -483,6 +483,41 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
 
             // 5. Achievements
             TeamProfileAchievementsSection(team: team),
+            if (_championVerificationFailed) ...[
+              const SizedBox(height: VSPSpacing.sm),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.card),
+                  border: Border.all(color: VSPColors.divider),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: VSPColors.textSecondary,
+                    ),
+                    const SizedBox(width: VSPSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        isArabic
+                            ? 'تعذر التحقق من شارة بطل 1 ضد 1؛ لم يتم افتراض عدم وجود إنجاز.'
+                            : 'The 1v1 champion badge could not be verified; no absence was assumed.',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _check1v1Champion(team.id),
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             // 6. Head to Head History
             if (_headToHeadRecords.isNotEmpty) ...[
