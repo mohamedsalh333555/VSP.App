@@ -171,12 +171,10 @@ class BookingCategorizationService {
         .toList();
 
     for (final mb in manualBookings) {
-      if (!result.any(
-        (b) =>
-            b.id == mb.id ||
-            (b.startTime.isAtSameMomentAs(mb.startTime) &&
-                b.stadiumId == mb.stadiumId),
-      )) {
+      // The backend may return the same manual booking after synchronization.
+      // Do not hide a distinct manual booking merely because its start time
+      // matches another booking; overlapping records need explicit resolution.
+      if (!result.any((b) => b.id == mb.id)) {
         result.add(mb);
       }
     }
