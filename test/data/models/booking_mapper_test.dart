@@ -33,6 +33,28 @@ void main() {
       expect(booking.rentBall, isTrue);
     });
 
+    test('rejects corrupt server-side price and deposit instead of treating them as zero', () {
+      for (final values in <Map<String, dynamic>>[
+        {'total_price': -1},
+        {'total_price': double.nan},
+        {'total_price': 'invalid'},
+        {'deposit_paid': -1},
+        {'deposit_paid': double.infinity},
+        {'deposit_paid': 'bad'},
+        {'total_price': 100, 'deposit_paid': 101},
+      ]) {
+        expect(
+          () => BookingMapper.fromFirestore({...sampleMap, ...values}, 'booking_999'),
+          throwsFormatException,
+          reason: '$values',
+        );
+      }
+      expect(
+        BookingMapper.fromFirestore({...sampleMap, 'deposit_paid': '25.5'}, 'booking_999').depositPaid,
+        25.5,
+      );
+    });
+
     test('unknown server booking type is rejected rather than downgraded', () {
       final corrupted = {...sampleMap, 'booking_type': 'new_challenge_format'};
       expect(

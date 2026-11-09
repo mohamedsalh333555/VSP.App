@@ -94,6 +94,9 @@ class NotificationFilterService {
     final teamId = _safeRouteId(data['teamId']) ??
         _safeRouteId(data['team_id']);
 
+    // Never accept a raw path from notification metadata. Only validated IDs
+    // can select a destination; actual account authorization is checked by
+    // the destination screen.
     if (bookingId != null) return '/match/$bookingId';
     if (teamId != null) return '/team/$teamId';
     return '/notifications';

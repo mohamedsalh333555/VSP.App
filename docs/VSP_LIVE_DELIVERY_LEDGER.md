@@ -344,6 +344,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - `BookingMapper` normalizes enum status comparisons across casing/underscores and tests uppercase confirmed and no-show, while continuing to reject unknown statuses.
 - These are incremental regression fixes, not full payment reconciliation or booking state E2E completion: **58/620 complete, 562 remaining** until broader acceptance. CI pending for new commit; no main merge or production changes.
 
+## Booking financial map integrity and notification route regression — 2026-11-09
+
+- Server booking mapping now rejects malformed, negative, non-finite total price/deposit and deposit larger than total rather than silently substituting zero; valid numeric strings and null legacy amounts remain supported. Regression fixtures cover seven corrupt variants and a valid decimal deposit.
+- Added regression checks that malicious legacy notification route IDs cannot override safe modern IDs, plus explicit documentation of destination authorization responsibility.
+- Previous commit `4bd521a` has workflow-level failures with **zero jobs returned** for [Flutter CI 42673052963](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42673052963) and [Android 42673045331](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42673045331), while other attempts were still running when checked. Do not misstate this as a test assertion failure or as passing.
+- **58/620 complete, 562 remaining**. These are partial booking and notification hardening, not full E2E task closure; no production schema/payment or main merge.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.

@@ -107,6 +107,17 @@ void main() {
       );
     });
 
+    test('unsafe legacy IDs do not override safe modern IDs', () {
+      expect(NotificationFilterService.resolveDeepLinkRoute({
+        'bookingId': 'valid_booking',
+        'booking_id': '../admin',
+      }), '/match/valid_booking');
+      expect(NotificationFilterService.resolveDeepLinkRoute({
+        'teamId': 'safe-team',
+        'team_id': 'bad?redirect',
+      }), '/team/safe-team');
+    });
+
     test('resolveDeepLinkRoute returns booking, team, or notification center route', () {
       expect(
         NotificationFilterService.resolveDeepLinkRoute({'bookingId': 'b-123'}),

@@ -62,6 +62,29 @@ class BookingMapper {
         data['max_players'],
         ppt * 2);
 
+    // Financial values are server-owned. Corrupt non-finite/negative values
+    // must not be shown as a zero-cost or unpaid booking.
+    double parseRequiredNonnegativeAmount(dynamic value, String field) {
+      if (value == null) return 0;
+      final parsed = value is num
+          ? value.toDouble()
+          : double.tryParse(value.toString().trim());
+      if (parsed == null || !parsed.isFinite || parsed < 0) {
+        throw FormatException('Booking "$id" has invalid $field');
+      }
+      return parsed;
+    }
+
+    final totalPrice = parseRequiredNonnegativeAmount(
+      data['totalPrice'] ?? data['total_price'], 'total_price',
+    );
+    final depositPaid = parseRequiredNonnegativeAmount(
+      data['deposit_paid'] ?? data['depositPaid'], 'deposit_paid',
+    );
+    if (depositPaid > totalPrice) {
+      throw FormatException('Booking "$id" deposit exceeds total price');
+    }
+
     final BookingType parsedBookingType = () {
       final val =
           bookingTypeVal
@@ -163,7 +186,7 @@ class BookingMapper {
           data['opponentTeamLogoUrl'] ?? data['opponent_team_logo_url'],
       isPrivate: data['isPrivate'] ?? data['is_private'] ?? false,
       rentBall: data['rentBall'] ?? data['rent_ball'] ?? false,
-      totalPrice: _parseDouble(data['totalPrice'] ?? data['total_price'], 0.0),
+      totalPrice: totalPrice,
       currency: data['currency'] ?? 'EGP',
       paymentMethod: data['paymentMethod'] ?? data['payment_method'] ?? 'card',
       paymentTransactionId:
@@ -272,8 +295,7 @@ class BookingMapper {
       cancellationReason:
           (data['cancellation_reason'] ?? data['cancellationReason'])
               ?.toString(),
-      depositPaid: _parseDouble(
-          data['deposit_paid'] ?? data['depositPaid'], 0.0),
+      depositPaid: depositPaid,
       isDepositPaid: data['is_deposit_paid'] ?? data['isDepositPaid'] ?? false,
       needsDeposit: data['needs_deposit'] ?? data['needsDeposit'] ?? false,
       depositAmount: _parseDouble(
