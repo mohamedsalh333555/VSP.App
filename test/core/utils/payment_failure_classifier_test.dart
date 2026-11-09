@@ -50,6 +50,17 @@ void main() {
         PaymentFailureKind.network);
   });
 
+  test('explicit ambiguous HTTP status takes precedence over cancellation text', () {
+    expect(PaymentFailureClassifier.classify(httpStatus: 504, message: 'cancelled'),
+        PaymentFailureKind.timeout);
+    expect(PaymentFailureClassifier.classify(httpStatus: 409, message: 'cancelled'),
+        PaymentFailureKind.duplicate);
+    expect(PaymentFailureClassifier.classify(httpStatus: 0, message: 'cancelled'),
+        PaymentFailureKind.network);
+    expect(PaymentFailureClassifier.classify(code: 'USER_CANCELLED'),
+        PaymentFailureKind.cancelled);
+  });
+
   test('unknown and duplicate outcomes require reconciliation', () {
     expect(PaymentFailureClassifier.classify().requiresStatusReconciliation,
         isTrue);

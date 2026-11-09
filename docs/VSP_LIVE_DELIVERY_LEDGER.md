@@ -337,6 +337,13 @@ Task 29.01 marked code-complete with eight typed failure categories, classificat
 - Normalize notification type case and surrounding whitespace for preference filtering (player and owner) and cover this with regression tests. Unknown types still retain existing behavior.
 - **58/620 completed, 562 remaining** until broader journeys are verified. No production schema, payment service, or main merge. Fresh CI needed.
 
+## Payment timeout precedence and booking-status casing — 2026-11-09
+
+- Verified Flutter CI [42669581542](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42669581542) and Android smoke [42669581673](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42669581673) succeeded on `95ce6b5`.
+- Explicit ambiguous HTTP transport statuses 504/408/409/0 now override contradictory gateway message text (e.g., "cancelled"), preventing false safe-retry decisions; tests cover precedence.
+- `BookingMapper` normalizes enum status comparisons across casing/underscores and tests uppercase confirmed and no-show, while continuing to reject unknown statuses.
+- These are incremental regression fixes, not full payment reconciliation or booking state E2E completion: **58/620 complete, 562 remaining** until broader acceptance. CI pending for new commit; no main merge or production changes.
+
 ## Next execution queue
 
 1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.

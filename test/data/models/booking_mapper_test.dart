@@ -49,6 +49,15 @@ void main() {
       );
     });
 
+    test('server status is normalized for casing and underscores', () {
+      final upper = {...sampleMap, 'status': ' CONFIRMED '};
+      expect(BookingMapper.fromFirestore(upper, 'booking_999').status,
+          BookingStatus.confirmed);
+      final noShow = {...sampleMap, 'status': 'NO_SHOW'};
+      expect(BookingMapper.fromFirestore(noShow, 'booking_999').status,
+          BookingStatus.noShow);
+    });
+
     test('legacy upcoming status maps to canonical confirmed', () {
       final legacy = {...sampleMap, 'status': 'upcoming'};
       expect(

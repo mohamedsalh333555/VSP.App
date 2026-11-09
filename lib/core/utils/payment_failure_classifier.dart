@@ -85,15 +85,24 @@ class PaymentFailureClassifier {
     int? httpStatus,
   }) {
     final value = '${code ?? ''} ${message ?? ''}'.toLowerCase();
+    // Explicit transport outcomes override ambiguous gateway message text.
+    // A 504 response mentioning "cancelled" is NOT proof the user cancelled.
+    if (httpStatus == 408 || httpStatus == 504) {
+      return PaymentFailureKind.timeout;
+    }
+    if (httpStatus == 409) {
+      return PaymentFailureKind.duplicate;
+    }
+    if (httpStatus == 0) {
+      return PaymentFailureKind.network;
+    }
     if (_contains(value, ['cancelled', 'canceled', 'user_cancel', 'إلغاء', 'الغاء'])) {
       return PaymentFailureKind.cancelled;
     }
-    if (httpStatus == 408 || httpStatus == 504 ||
-        _contains(value, ['timeout', 'timed out', 'deadline', 'مهلة'])) {
+    if (_contains(value, ['timeout', 'timed out', 'deadline', 'مهلة'])) {
       return PaymentFailureKind.timeout;
     }
-    if (httpStatus == 409 ||
-        _contains(value, ['duplicate', 'already processed', 'idempotency'])) {
+    if (_contains(value, ['duplicate', 'already processed', 'idempotency'])) {
       return PaymentFailureKind.duplicate;
     }
     if (_contains(value, ['3ds', '3d secure', 'otp', 'authentication', 'unauthorized']) ||
@@ -111,8 +120,7 @@ class PaymentFailureClassifier {
         _contains(value, ['unavailable', 'service down', 'rate limit'])) {
       return PaymentFailureKind.providerUnavailable;
     }
-    if (httpStatus == 0 ||
-        _contains(value, ['network', 'socket', 'connection', 'offline', 'dns', 'انترنت'])) {
+    if (_contains(value, ['network', 'socket', 'connection', 'offline', 'dns', 'انترنت'])) {
       return PaymentFailureKind.network;
     }
     return PaymentFailureKind.unknown;

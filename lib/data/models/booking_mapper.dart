@@ -178,7 +178,12 @@ class BookingMapper {
         if (normalizedStatus == 'no_show' || normalizedStatus == 'noshow') {
           return BookingStatus.noShow;
         }
-        final matched = BookingStatus.values.where((e) => e.name == normalizedStatus);
+        // The enum is camelCase (noShow) while server status can be
+        // snake_case. Normalize both sides without altering the wire value.
+        final matched = BookingStatus.values.where(
+          (e) => e.name.toLowerCase().replaceAll('_', '') ==
+              normalizedStatus?.replaceAll('_', ''),
+        );
         if (matched.isNotEmpty) {
           return matched.first;
         }
