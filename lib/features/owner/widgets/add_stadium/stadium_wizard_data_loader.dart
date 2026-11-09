@@ -4,6 +4,7 @@ import 'stadium_wizard_time_utils.dart';
 
 /// Data transfer object representing all populated fields loaded from an existing stadium snapshot.
 class StadiumLoadedData {
+  final String ownerId;
   final String name;
   final String location;
   final String price;
@@ -30,6 +31,7 @@ class StadiumLoadedData {
   final String notes;
 
   const StadiumLoadedData({
+    required this.ownerId,
     required this.name,
     required this.location,
     required this.price,
@@ -172,6 +174,7 @@ class StadiumWizardDataLoader {
       }
 
       return StadiumLoadedData(
+        ownerId: (data['owner_id'] ?? data['ownerId'] ?? '').toString().trim(),
         name: data['name'] ?? '',
         location: data['location'] ?? '',
         price: (data['price_per_hour'] ?? data['pricePerHour'] ?? 0).toString(),
