@@ -32,4 +32,38 @@ void main() {
       expect(() => safe['role'] = 'player', throwsUnsupportedError);
     });
   });
+
+  group('Phase 10 conversion event schema', () {
+    test('keeps the documented funnel event names stable and Firebase-safe', () {
+      const expected = <String>{
+        'app_opened',
+        'onboarding_started',
+        'signup_completed',
+        'venue_viewed',
+        'booking_started',
+        'booking_completed',
+        'match_viewed',
+        'match_joined',
+        'team_created',
+        'owner_registration_started',
+        'owner_registration_completed',
+        'subscription_viewed',
+        'subscription_activated',
+      };
+
+      expect(VSPAnalyticsEvents.conversionFunnel, expected);
+      for (final eventName in VSPAnalyticsEvents.conversionFunnel) {
+        expect(
+          eventName,
+          matches(RegExp(r'^[a-z][a-z0-9_]{0,39}$')),
+          reason: 'Invalid analytics event name: $eventName',
+        );
+      }
+    });
+
+    test('does not accidentally duplicate a conversion event name', () {
+      final events = VSPAnalyticsEvents.conversionFunnel.toList();
+      expect(events.toSet().length, events.length);
+    });
+  });
 }
