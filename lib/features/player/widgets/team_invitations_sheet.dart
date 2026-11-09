@@ -6,9 +6,14 @@ import '../../../core/repositories/team_repository.dart';
 
 /// Player-owned inbox: invitations do not become memberships until accepted.
 class TeamInvitationsSheet extends StatefulWidget {
-  const TeamInvitationsSheet({super.key, required this.userId});
+  const TeamInvitationsSheet({
+    super.key,
+    required this.userId,
+    this.onMembershipChanged,
+  });
 
   final String userId;
+  final Future<void> Function()? onMembershipChanged;
 
   @override
   State<TeamInvitationsSheet> createState() => _TeamInvitationsSheetState();
@@ -70,6 +75,19 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
         return;
       }
       setState(_refresh);
+      if (accept && widget.onMembershipChanged != null) {
+        try {
+          await widget.onMembershipChanged!();
+        } catch (_) {
+          // The invitation response already succeeded. A parent refresh
+          // failure must not be reported as a failed acceptance.
+        }
+        if (!mounted ||
+            requestUserId != widget.userId ||
+            !_isCurrentAccount) {
+          return;
+        }
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
