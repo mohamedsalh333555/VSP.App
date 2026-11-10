@@ -5,6 +5,7 @@ import '../../../../core/repositories/league/team_league_repository.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 class TeamLeagueGatheringCard extends StatelessWidget {
   final TeamLeagueData league;
@@ -27,7 +28,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final feeText = entryFee == null
         ? (isArabic ? 'راجع الرسوم داخل التطبيق' : 'Check the current fee in the app')
-        : entryFee!.toStringAsFixed(0);
+        : VSPMoneyFormatter.amount(entryFee!);
     final joined = league.teams.length;
     final total = league.maxTeams;
     final progress = total > 0 ? (joined / total).clamp(0.0, 1.0) : 0.0;
