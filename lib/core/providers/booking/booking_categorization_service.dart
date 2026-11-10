@@ -86,16 +86,9 @@ class BookingCategorizationService {
         return true;
       }
       if (b.status == BookingStatus.pending) {
-        // Paid pending bookings must remain visible for reconciliation even
-        // after the online checkout grace period. Do not mark them as expired
-        // merely because the browser returned without a confirmed status.
-        if (b.isPaid || b.isDepositPaid || b.depositPaid > 0 ||
-            b.paymentStatus == 'paid' ||
-            b.paymentStatus == 'refund_pending') {
-          return !b.endTime.isAfter(now);
-        }
-        // A pending checkout displaced by a confirmed booking is historical,
-        // even if its own checkout grace period has not elapsed.
+        // A pending checkout displaced by a distinct confirmed booking
+        // belongs in history even if money was already collected: retain the
+        // record so reconciliation/refund actions can find it.
         final displaced = upcoming.any(
           (u) => u.id != b.id &&
               u.stadiumId == b.stadiumId &&
@@ -103,6 +96,13 @@ class BookingCategorizationService {
               u.endTime.isAfter(b.startTime),
         );
         if (displaced) return true;
+        // Paid pending bookings remain actionable until the booking ends;
+        // then history retains them for reconciliation.
+        if (b.isPaid || b.isDepositPaid || b.depositPaid > 0 ||
+            b.paymentStatus == 'paid' ||
+            b.paymentStatus == 'refund_pending') {
+          return !b.endTime.isAfter(now);
+        }
         // Expired payment grace periods should not remain in the active list.
         // Keep these records in history rather than making them disappear.
         if (!b.endTime.isAfter(now)) return true;
