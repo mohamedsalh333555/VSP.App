@@ -16,6 +16,7 @@ import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/vsp_ui.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../data/models.dart';
 
 // ignore_for_file: prefer_interpolation_to_compose_strings
@@ -519,7 +520,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
           const SizedBox(height: 14),
           _infoRow(Iconsax.calendar_1_copy, ar ? 'التاريخ' : 'Date', booking.formattedDate),
           _infoRow(Iconsax.clock_copy, ar ? 'الوقت' : 'Time', booking.formattedTimeRange),
-          _infoRow(Iconsax.money_copy, ar ? 'إجمالي الحجز' : 'Total booking', booking.totalPrice.toInt().toString() + (ar ? ' ج.م' : ' EGP')),
+          _infoRow(Iconsax.money_copy, ar ? 'إجمالي الحجز' : 'Total booking', VSPMoneyFormatter.amount(booking.totalPrice) + (ar ? ' ج.م' : ' EGP')),
           _infoRow(Iconsax.card_copy, ar ? 'الدفع' : 'Payment', booking.paymentMethod.toLowerCase() == 'cash' ? (ar ? 'كاش — على المنظم' : 'Cash — host pays') : (ar ? 'أونلاين — على المنظم' : 'Online — host pays')),
           _infoRow(Iconsax.location_copy, ar ? 'موقع الملعب' : 'Stadium location', _stadium?.location ?? booking.stadiumName),
           if (_stadium?.googleMapsUrl?.isNotEmpty == true) OutlinedButton.icon(onPressed: _openLocation, icon: const Icon(Iconsax.routing_2_copy, size: 18), label: Text(ar ? 'فتح موقع الملعب' : 'Open stadium location'), style: OutlinedButton.styleFrom(foregroundColor: VSPColors.accent, side: BorderSide(color: VSPColors.accent.withValues(alpha: .45)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)))),
