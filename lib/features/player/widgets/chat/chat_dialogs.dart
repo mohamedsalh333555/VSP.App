@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/report_repository.dart';
 import '../../../../core/repositories/chat_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -87,7 +89,9 @@ class ChatDialogs {
                 bookingId: bookingId,
                 conversationId: conversationId,
               );
-              if (context.mounted) {
+              if (context.mounted &&
+                  context.read<AuthProvider>().currentUser?.id ==
+                      currentUserId) {
                 success
                     ? VSPFeedback.showSuccess(context, ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'The report was submitted for administrative review.')
                     : VSPFeedback.showError(context, ar ? 'تعذر إرسال البلاغ.' : 'Could not submit the report.');
