@@ -6,10 +6,9 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Keep the running validation job alive while fixes are pushed to the branch.
-  # Superseded runs are useful for comparing regressions and must not be
-  # cancelled before their analyze/test evidence is published.
-  cancel-in-progress: false
+  # Only the newest branch state is actionable. Cancelling superseded runs
+  # avoids exhausting hosted-runner quotas while a fix series is being pushed.
+  cancel-in-progress: true
 
 on:
   workflow_dispatch:
