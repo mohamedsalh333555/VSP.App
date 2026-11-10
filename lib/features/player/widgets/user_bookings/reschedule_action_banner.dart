@@ -56,6 +56,15 @@ class _RescheduleActionBannerState extends State<RescheduleActionBanner> {
                 ? 'عذراً، الموعد المقترح لم يعد متاحاً. حجزك الأصلي ما زال كما هو.'
                 : 'The proposed slot is no longer available. Your original booking is unchanged.',
           );
+        } else {
+          VSPFeedback.showError(
+            context,
+            isArabic
+                ? (Provider.of<BookingProvider>(context, listen: false)
+                        .errorMessage ??
+                    'تعذر رفض الموعد المقترح حالياً.')
+                : 'Could not decline the proposed time right now.',
+          );
         }
       }
     } catch (e) {
