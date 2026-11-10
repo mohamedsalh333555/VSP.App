@@ -6,6 +6,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/services/support_service.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../core/repositories/chat_repository.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/widgets/shimmer_image.dart';
@@ -365,7 +366,7 @@ class PlayerBookingCard extends StatelessWidget {
                         child: _buildInfoColumn(
                           context,
                           l10n.price,
-                          '${booking.totalPrice.toInt()} ${l10n.egCurrency}',
+                          '${VSPMoneyFormatter.amount(booking.totalPrice)} ${l10n.egCurrency}',
                         ),
                       ),
                     ),
