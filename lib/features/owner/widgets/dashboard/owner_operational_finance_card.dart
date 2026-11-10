@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 /// Owner home finance panel.
 ///
@@ -109,7 +110,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                collectedTotal.toStringAsFixed(0),
+                VSPMoneyFormatter.amount(collectedTotal),
                 style: const TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -197,7 +198,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        balanceVerified ? '${availableBalance.toStringAsFixed(0)} $currency' : (isArabic ? 'غير متاح' : 'Unavailable'),
+                        balanceVerified
+                            ? '${VSPMoneyFormatter.amount(availableBalance)} $currency'
+                            : (isArabic ? 'غير متاح' : 'Unavailable'),
                         style: const TextStyle(
                           color: VSPColors.textPrimary,
                           fontSize: 17,
@@ -265,8 +268,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               isArabic
-                  ? 'الحجوزات القادمة المؤكدة: ${upcomingValue.toStringAsFixed(0)} $currency'
-                  : 'Upcoming confirmed bookings: ${upcomingValue.toStringAsFixed(0)} $currency',
+                  ? 'الحجوزات القادمة المؤكدة: ${VSPMoneyFormatter.amount(upcomingValue)} $currency'
+                  : 'Upcoming confirmed bookings: ${VSPMoneyFormatter.amount(upcomingValue)} $currency',
               style: const TextStyle(
                 color: VSPColors.textSecondary,
                 fontSize: 10.5,
@@ -319,7 +322,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${dueTotal.toStringAsFixed(0)} $currency',
+                '${VSPMoneyFormatter.amount(dueTotal)} $currency',
                 style: TextStyle(
                   color: hasDueMoney ? VSPColors.warning : VSPColors.textSecondary,
                   fontSize: 13,
@@ -356,8 +359,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             const SizedBox(height: 9),
             Text(
               isArabic
-                  ? 'أونلاين متحصل لكن غير متاح للسحب بعد: ${onlineHeld.toStringAsFixed(0)} $currency'
-                  : 'Online collected but not withdrawable yet: ${onlineHeld.toStringAsFixed(0)} $currency',
+                  ? 'أونلاين متحصل لكن غير متاح للسحب بعد: ${VSPMoneyFormatter.amount(onlineHeld)} $currency'
+                  : 'Online collected but not withdrawable yet: ${VSPMoneyFormatter.amount(onlineHeld)} $currency',
               style: const TextStyle(
                 color: VSPColors.textSecondary,
                 fontSize: 10.5,
@@ -578,7 +581,7 @@ class _MoneySplit extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${value.toStringAsFixed(0)} $currency',
+            '${VSPMoneyFormatter.amount(value)} $currency',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
