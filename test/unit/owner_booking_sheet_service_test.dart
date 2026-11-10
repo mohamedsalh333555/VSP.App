@@ -185,6 +185,16 @@ void main() {
       );
 
       expect(maxMins, 60);
+
+      final otherStadiumMax =
+          OwnerBookingSheetService.calculateMaxAvailableMinutes(
+        stadium: overnightStadium,
+        slotTime: DateTime(2026, 9, 10, 23, 30),
+        existingBookings: [
+          nextBooking.copyWith(stadiumId: 'another_stadium'),
+        ],
+      );
+      expect(otherStadiumMax, 210);
     });
 
     test('checkBreakOverlap detects an overnight closure after midnight', () {
@@ -277,6 +287,16 @@ void main() {
           startTime: DateTime(2026, 9, 10, 19, 15),
           endTime: DateTime(2026, 9, 10, 19, 45),
           bookings: [existingBooking, cancelledBooking],
+        ),
+        isFalse,
+      );
+
+      // Expired holds no longer occupy the interval.
+      expect(
+        OwnerBookingSheetService.checkBookingsOverlap(
+          startTime: DateTime(2026, 9, 10, 18, 15),
+          endTime: DateTime(2026, 9, 10, 18, 45),
+          bookings: [existingBooking.copyWith(status: BookingStatus.expired)],
         ),
         isFalse,
       );
