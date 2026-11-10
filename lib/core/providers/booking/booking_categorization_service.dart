@@ -64,6 +64,11 @@ class BookingCategorizationService {
       if (b.status != BookingStatus.pending) return false;
       // Cash bookings remain pending until owner confirms/collects.
       if (b.isCash) return true;
+      // A payment awaiting server reconciliation must remain actionable
+      // instead of disappearing when the checkout grace period expires.
+      if (b.isPaid || b.isDepositPaid || b.depositPaid > 0 ||
+          b.paymentStatus == 'paid' ||
+          b.paymentStatus == 'refund_pending') return true;
       // Online unpaid checkouts have a 10-minute payment grace period.
       final isRecent = b.createdAt.isAfter(tenMinutesAgo);
       return !b.isPaid && isRecent;
