@@ -33,12 +33,14 @@ class BookingCategorizationService {
 
   /// A pending booking with money collected must stay visible while the
   /// server resolves its status; a checkout timeout is not proof of failure.
-  static bool _needsPaymentReconciliation(Booking booking) =>
-      booking.isPaid ||
-      booking.isDepositPaid ||
-      booking.depositPaid > 0 ||
-      booking.paymentStatus == 'paid' ||
-      booking.paymentStatus == 'refund_pending';
+  static bool _needsPaymentReconciliation(Booking booking) {
+    final paymentState = booking.paymentStatus?.trim().toLowerCase();
+    return booking.isPaid ||
+        booking.isDepositPaid ||
+        booking.depositPaid > 0 ||
+        paymentState == 'paid' ||
+        paymentState == 'refund_pending';
+  }
 
   /// Categorizes player bookings into upcoming, pending (recent grace period), and history.
   ///
