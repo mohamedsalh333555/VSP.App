@@ -31,6 +31,8 @@ class BookingProvider with ChangeNotifier {
   String? _errorMessage;
   final Set<String> _cancellingIds = {};
   final Set<String> _updatingPaymentIds = {};
+  final Set<String> _rescheduleRequestIds = {};
+  final Set<String> _rescheduleResponseIds = {};
   int _draftRestoreGeneration = 0;
 
   // Getters - _userBookings is the Single Source of Truth (SSOT)
@@ -368,13 +370,27 @@ class BookingProvider with ChangeNotifier {
     required DateTime newStartTime,
     required DateTime newEndTime,
   }) async {
-    final success = await _repository.requestReschedule(
-      bookingId: bookingId,
-      newStartTime: newStartTime,
-      newEndTime: newEndTime,
-    );
-    if (success) notifyListeners();
-    return success;
+    if (_rescheduleRequestIds.contains(bookingId)) return false;
+    _rescheduleRequestIds.add(bookingId);
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final success = await _repository.requestReschedule(
+        bookingId: bookingId,
+        newStartTime: newStartTime,
+        newEndTime: newEndTime,
+      );
+      if (!success) {
+        _errorMessage = 'تعذر إرسال اقتراح الموعد الجديد حالياً.';
+      }
+      return success;
+    } catch (_) {
+      _errorMessage = 'تعذر إرسال اقتراح الموعد الجديد حالياً.';
+      return false;
+    } finally {
+      _rescheduleRequestIds.remove(bookingId);
+      notifyListeners();
+    }
   }
 
   /// Respond to rescheduling request (Player)
@@ -382,12 +398,28 @@ class BookingProvider with ChangeNotifier {
     required String bookingId,
     required bool accept,
   }) async {
-    final success = await _repository.respondToReschedule(
-      bookingId: bookingId,
-      accept: accept,
-    );
-    if (success) notifyListeners();
-    return success;
+    if (_rescheduleResponseIds.contains(bookingId)) return false;
+    _rescheduleResponseIds.add(bookingId);
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final success = await _repository.respondToReschedule(
+        bookingId: bookingId,
+        accept: accept,
+      );
+      if (!success && !accept) {
+        _errorMessage = 'تعذر رفض الموعد المقترح حالياً.';
+      }
+      return success;
+    } catch (_) {
+      _errorMessage = accept
+          ? 'تعذر قبول الموعد المقترح حالياً.'
+          : 'تعذر رفض الموعد المقترح حالياً.';
+      return false;
+    } finally {
+      _rescheduleResponseIds.remove(bookingId);
+      notifyListeners();
+    }
   }
 
   /// Request emergency stadium closure (Owner - 1 per 30 days)
