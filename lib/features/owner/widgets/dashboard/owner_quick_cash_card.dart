@@ -7,6 +7,7 @@ import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../core/utils/vsp_launcher_utils.dart';
 import '../../../../core/utils/vsp_quick_booking_receipt_formatter.dart';
 import '../../../../data/models.dart';
@@ -271,8 +272,8 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                     const SizedBox(height: 2),
                     Text(
                       widget.isArabic
-                          ? 'متبقي للتحصيل: ${totalRemainingCash.toInt()} ج.م'
-                          : 'Pending collection: ${totalRemainingCash.toInt()} EGP',
+                          ? 'متبقي للتحصيل: ${VSPMoneyFormatter.amount(totalRemainingCash)} ج.م'
+                          : 'Pending collection: ${VSPMoneyFormatter.amount(totalRemainingCash)} EGP',
                       style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
                     ),
                   ],
@@ -341,7 +342,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                 ),
               ),
               Text(
-                '${cashRemaining.toInt()} ${widget.isArabic ? "ج.م" : "EGP"}',
+                '${VSPMoneyFormatter.amount(cashRemaining)} ${widget.isArabic ? "ج.م" : "EGP"}',
                 style: const TextStyle(color: VSPColors.white, fontSize: 13, fontWeight: FontWeight.w800),
               ),
             ],
@@ -349,7 +350,9 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
           if (deposit > 0) ...[
             const SizedBox(height: 4),
             Text(
-              widget.isArabic ? 'عربون مدفوع إلكترونياً: ${deposit.toInt()} ج.م' : 'Online deposit paid: ${deposit.toInt()} EGP',
+              widget.isArabic
+                  ? 'عربون مدفوع إلكترونياً: ${VSPMoneyFormatter.amount(deposit)} ج.م'
+                  : 'Online deposit paid: ${VSPMoneyFormatter.amount(deposit)} EGP',
               style: TextStyle(color: VSPColors.white50, fontSize: 10.5),
             ),
           ],
