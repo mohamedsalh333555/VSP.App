@@ -11,6 +11,7 @@ import '../../core/repositories/match_repository.dart';
 import '../../core/services/sharing_service.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/utils/vsp_feedback.dart';
+import '../../core/utils/vsp_money_formatter.dart';
 import '../../core/services/logger_service.dart';
 import '../../data/models.dart';
 import 'match_card/manage_participants_modal.dart';
@@ -453,7 +454,7 @@ void _manageParticipants(BuildContext context) {
    Iconsax.wallet_1_copy,
    booking.isOpenJoin ? (isArabic ? 'إجمالي الحجز' : 'TOTAL') : (isArabic ? 'رسوم الفرد' : 'PER PLAYER'),
    booking.isOpenJoin
-       ? booking.totalPrice.toInt().toString() + ' ' + AppLocalizations.of(context)!.egCurrency
+       ? VSPMoneyFormatter.amount(booking.totalPrice) + ' ' + AppLocalizations.of(context)!.egCurrency
        : entryFee + ' ' + AppLocalizations.of(context)!.egCurrency,
  ),
  ],
