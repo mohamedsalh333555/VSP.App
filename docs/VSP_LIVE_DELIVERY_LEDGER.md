@@ -1,6 +1,6 @@
 # VSP — Live delivery ledger
 
-Updated 2026-11-09. This ledger is the source of truth for **execution progress**, distinct from final release verification.
+Updated 2026-11-10. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
 ## Fixed scope and accounting
 
@@ -568,3 +568,16 @@ This batch is **CODE_DONE / Pending Verification**.
 - `9007dce`, `619f403`, `d23586c`: architecture contracts guard single-flight actions, sanitized failures and mutation-before-enrichment ordering. They were written/updated but not run.
 - Candidate mapping: **07 group booking, 13 booking management, 19 pickup matches, 20 notifications, 22 operating hours and 26 overlap prevention are CODE_DONE/IN_PROGRESS** pending consolidated Flutter, integration, two-account, staging and device verification.
 - **Verified progress remains 72/620; 548 not accepted.** No production Supabase/schema/RLS/payment/pricing change, `main` merge, final tests or APK.
+
+
+## Current-head CI remediation and verification — 2026-11-10
+
+- Fixed unsupported chained filters on Supabase stream builders and restored the required stadium-owner test scope so the branch analyzes on Flutter 3.32.8.
+- Booking categorization now keeps paid, deposit-paid and refund-in-progress pending records visible beyond the unpaid checkout grace period for both players and owners. Old unpaid online checkouts age into history; ended records remain historical.
+- Empty stadium-break placeholder rows remain optional, while half-configured, out-of-hours, inverted or overlapping intervals fail validation.
+- Replaced a formatting-sensitive team-invitation source assertion with a whitespace-tolerant contract without weakening the behavioral checks.
+- Bounded Flutter test concurrency to two workers after a hosted runner exhausted its thread quota, and enabled cancellation of superseded branch validations.
+- Flutter CI [run 42825931860](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42825931860) passed analyzer, architecture regression gate and the full suite: **1057 passed, 10 explicitly skipped**. Coverage artifact ID: `13769697204`.
+- Android public/auth staging smoke [run 42824370641](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42824370641) passed onboarding/login on the same application-code checkpoint before test/workflow-only follow-ups.
+- The green regression run verifies the committed automated contracts but does not replace two-account staging, real-device, Paymob sandbox, email inbox, FCM delivery or production-policy checks. **Verified progress remains 72/620; 548 not accepted** until each subtask's complete acceptance scope is evidenced.
+- No production database/RLS/payment/pricing change, `main` merge or APK build.
