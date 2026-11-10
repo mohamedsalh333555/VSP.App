@@ -163,13 +163,18 @@ class PlayerBookingCard extends StatelessWidget {
         contextId: booking.id,
       );
       final chatId = chat['id']?.toString();
-      if (chatId == null || !context.mounted) return;
+      if (!context.mounted ||
+          auth.currentUser?.id != me ||
+          chatId == null ||
+          chatId.isEmpty) {
+        return;
+      }
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ChatScreen(booking: booking, conversationId: chatId, otherUserId: other)),
       );
     } catch (_) {
-      if (context.mounted) {
+      if (context.mounted && auth.currentUser?.id == me) {
         final ar = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(context, ar ? 'تعذر فتح المحادثة.' : 'Could not open the chat.');
       }
