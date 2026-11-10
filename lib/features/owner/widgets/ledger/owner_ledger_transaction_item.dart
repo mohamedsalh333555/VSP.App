@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 /// Single transaction item row in owner financial ledger.
 class OwnerLedgerTransactionItem extends StatelessWidget {
@@ -32,19 +33,19 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
       amountText = isAr ? '+3 نقاط' : '+3 pts';
     } else if (type == 'payout_disbursed' || type == 'payout') {
       title = isAr ? 'سحب إلكتروني مكتمل' : 'Online Withdrawal Completed';
-      amountText = '-${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
+      amountText = '-${VSPMoneyFormatter.amount(amount)} ${isAr ? "ج.م" : "EGP"}';
     } else if (type == 'payout_pending') {
       title = isAr ? 'طلب سحب قيد المراجعة' : 'Withdrawal Pending';
-      amountText = '-${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
+      amountText = '-${VSPMoneyFormatter.amount(amount)} ${isAr ? "ج.م" : "EGP"}';
     } else if (type == 'payout_rejected') {
       title = isAr ? 'طلب سحب مرفوض (مسترد)' : 'Withdrawal Rejected (Restored)';
-      amountText = '${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
+      amountText = '${VSPMoneyFormatter.amount(amount)} ${isAr ? "ج.م" : "EGP"}';
     } else if (type == 'digital' || type == 'online' || method == 'paymob') {
       title = isAr ? 'تحصيل إلكتروني آمن' : 'Digital Online Payment';
-      amountText = '+${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
+      amountText = '+${VSPMoneyFormatter.amount(amount)} ${isAr ? "ج.م" : "EGP"}';
     } else {
       title = isAr ? 'عملية مالية' : 'Financial Transaction';
-      amountText = '${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
+      amountText = '${VSPMoneyFormatter.amount(amount)} ${isAr ? "ج.م" : "EGP"}';
     }
 
     final locale = isAr ? 'ar' : 'en';
