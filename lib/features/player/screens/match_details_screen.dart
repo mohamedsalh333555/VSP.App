@@ -522,9 +522,14 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
     setState(() => _isActionProcessing = true);
     try {
+      final bookingProvider =
+          Provider.of<BookingProvider>(context, listen: false);
       final success = _booking?.isOpenJoin == true
          ? await MatchRepository().leavePrivateCollectiveMatch(widget.bookingId, currentUserId)
-         : await MatchRepository().leavePublicMatch(widget.bookingId, currentUserId);
+         : await bookingProvider.leavePublicMatch(
+             widget.bookingId,
+             currentUserId,
+           );
       if (mounted) {
         setState(() => _isActionProcessing = false);
         if (auth.currentUser?.id != currentUserId) return;
@@ -535,9 +540,20 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
           );
           _fetchMatchDetails();
         } else {
+          final errorCode = bookingProvider.errorMessage;
           VSPFeedback.showError(
             context,
-            isArabic ? 'تعذر مغادرة المباراة، يرجى المحاولة مرة أخرى' : 'Failed to leave match',
+            errorCode == 'host_cannot_leave'
+                ? (isArabic
+                    ? 'مضيف المباراة لا يمكنه المغادرة؛ يمكنك إلغاء الحجز بدلاً من ذلك.'
+                    : 'The match host cannot leave; cancel the booking instead.')
+                : errorCode == 'leave_blocked'
+                    ? (isArabic
+                        ? 'لا يمكن مغادرة مباراة منتهية أو ملغاة.'
+                        : 'A finished or cancelled match cannot be left.')
+                    : (isArabic
+                        ? 'تعذر مغادرة المباراة، يرجى المحاولة مرة أخرى'
+                        : 'Failed to leave match'),
           );
         }
       }
