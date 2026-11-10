@@ -526,8 +526,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             children: [
               Text(
                 isArabic
-                    ? '${_planNumber(plan, 'monthly_price')} جنيه'
-                    : '${_planNumber(plan, 'monthly_price')} EGP',
+                    ? '${_formatAmount(_planAmount(plan, 'monthly_price'))} جنيه'
+                    : '${_formatAmount(_planAmount(plan, 'monthly_price'))} EGP',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontSize: 30,
