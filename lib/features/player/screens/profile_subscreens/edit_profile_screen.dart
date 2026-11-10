@@ -52,72 +52,107 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  }
 
  Future<void> _pickImage() async {
+ if (_isLoading) return;
  final image = await ImagePickService.pick(
  context,
  aspectRatio: CropAspectRatioPreset.square,
  );
  if (image != null && mounted) {
- final compressed = await StorageService().compressImage(image);
- setState(() => _newProfileImage = compressed ?? image);
+ setState(() => _newProfileImage = image);
  }
  }
 
  Future<void> _saveChanges() async {
  // Validation
  final name = _nameController.text.trim();
- final phone = _phoneController.text.trim();
+ final normalizedPhone = PhoneUtils.normalize(_phoneController.text.trim());
+ final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
- if (name.isEmpty) {
+ if (name.length < 2 || name.length > 80) {
  VSPFeedback.showError(context, AppLocalizations.of(context)!.nameEmptyError);
  return;
+ }
+ if (normalizedPhone == null ||
+     normalizedPhone.length != 11 ||
+     !normalizedPhone.startsWith('01')) {
+ VSPFeedback.showError(
+ context,
+ isArabic ? 'اكتب رقم موبايل مصري صحيح.' : 'Enter a valid Egyptian mobile number.',
+ );
+ return;
+ }
+
+ final auth = Provider.of<AuthProvider>(context, listen: false);
+ final submittingUserId = auth.userModel?.uid ?? auth.currentUser?.id;
+ if (submittingUserId == null || submittingUserId.isEmpty) {
+ VSPFeedback.showError(
+ context,
+ isArabic ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Your session ended. Please sign in again.',
+ );
+ return;
+ }
+ if (auth.isPlayer) {
+ final validPositions = SportPositionsRegistry.getPositionsForSport(_selectedSport)
+     .map((position) => position.code)
+     .toSet();
+ if (_selectedPosition == null || !validPositions.contains(_selectedPosition)) {
+ VSPFeedback.showError(
+ context,
+ isArabic ? 'اختار مركز لعب صحيح قبل الحفظ.' : 'Choose a valid playing position before saving.',
+ );
+ return;
+ }
  }
 
  setState(() => _isLoading = true);
 
- final auth = Provider.of<AuthProvider>(context, listen: false);
-
  try {
- // 1. Upload compressed new image if selected
- if (_newProfileImage != null) {
- final compressed = await StorageService().compressImage(_newProfileImage!);
- final photoSaved = await auth.updateProfilePhoto(compressed ?? _newProfileImage!);
- if (!photoSaved) {
-   if (mounted) {
-     setState(() => _isLoading = false);
-     VSPFeedback.showError(
-       context,
-       AppLocalizations.of(context)!.profileUpdateFailed,
-     );
-   }
-   return;
- }
- }
-
- // 2. Update other profile data
+ // Save the text fields first. If the subsequent optional image upload fails,
+ // keep the selected image for an explicit retry and report the partial save.
  final Map<String, dynamic> updateData = {
  'name': name,
- 'phone': PhoneUtils.normalize(phone),
+ 'phone': normalizedPhone,
  };
  if (auth.isPlayer && _selectedPosition != null) {
  updateData['position'] = _selectedPosition;
  }
 
  final success = await auth.updateProfile(updateData);
+ if (!mounted ||
+     (auth.userModel?.uid ?? auth.currentUser?.id) != submittingUserId) {
+ return;
+ }
+ if (!success) {
+ VSPFeedback.showError(context, AppLocalizations.of(context)!.profileUpdateFailed);
+ return;
+ }
 
- if (mounted) {
- setState(() => _isLoading = false);
- if (success) {
+ if (_newProfileImage != null) {
+ final compressed = await StorageService().compressImage(_newProfileImage!);
+ final photoSaved = await auth.updateProfilePhoto(compressed ?? _newProfileImage!);
+ if (!mounted ||
+     (auth.userModel?.uid ?? auth.currentUser?.id) != submittingUserId) {
+ return;
+ }
+ if (!photoSaved) {
+ VSPFeedback.showError(
+ context,
+ isArabic
+     ? 'تم حفظ بياناتك، لكن تعذر رفع الصورة. جرّب رفع الصورة مرة أخرى.'
+     : 'Your details were saved, but the photo upload failed. Try the photo again.',
+ );
+ return;
+ }
+ }
+
  VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.profileUpdatedSuccess);
  Navigator.pop(context); // Go back to profile screen
- } else {
- VSPFeedback.showError(context, AppLocalizations.of(context)!.profileUpdateFailed);
- }
- }
  } catch (e) {
  if (mounted) {
- setState(() => _isLoading = false);
  VSPFeedback.showError(context, AppLocalizations.of(context)!.profileUpdateFailed);
  }
+ } finally {
+ if (mounted) setState(() => _isLoading = false);
  }
  }
 
