@@ -529,3 +529,17 @@ These changes are **CODE_DONE / Pending Verification**. Consolidated tests remai
 - `1f118fd`, `e79f45e`, `00a74a7`: owner venue, booking, financial and transaction reads are scoped to the active account; transaction realtime now includes an explicit `user_id` filter; cash/manual booking and maintenance mutations reject cross-account owner IDs and malformed values before RPC invocation. RLS/RPC authorization remains authoritative.
 - Candidate mapping: **14.08, 20.04, 20.06, 21.04–21.05, 53.02, 77.03–77.04, 77.07, 77.11 and 79.02–79.05 are CODE_DONE/IN_PROGRESS** pending deferred Flutter, two-account, staging database, advisor and migration verification.
 - **Verified progress remains 72/620; 548 not accepted.** No production migration was applied, no payment/pricing policy changed, no `main` merge and no APK action.
+
+
+## All-620 directive: team discovery and player profile batch — 2026-11-10
+
+Owner directive is now explicit: implement **all 620 subtasks without exception**; only consolidated verification and APK remain deferred.
+
+- `67361a7`, `c7f635c`: team ranking podium and list entries expose accessible navigation to the existing public team profile.
+- `b9f6196`: team discovery now supports team/governorate/captain search and correctly treats “All sports” as an inclusive filter instead of returning no teams.
+- `5de1f9c`: player profile saves validate Egyptian mobile numbers, name bounds and sport-position values, bind async completion to the active account, compress once, and report partial image failure honestly.
+- `1bee1dd`, `cb0bd49`, `2ee54b8`: profile photo replacement persists the new URL before deleting the old object, removes an orphaned new upload if database persistence fails, and preserves the selected image extension.
+- `c330241`: governorate changes only show success and change discovery filters after confirmed profile persistence on the same active account.
+- `e1f4b43`: execution policy updated so future batches cannot misread deferred tests as deferred implementation.
+- Mapping: **12.01–12.06, 13.02, 13.05–13.06 and 15.01–15.05 are IMPLEMENTED_PENDING_VERIFICATION / IN_PROGRESS**. Device upload rollback, concurrent-device conflict, private-team visibility and regression acceptance remain in the final verification queue.
+- **Verified remains 72/620. Implementation continues across all 548 unaccepted subtasks; this is not a scope reduction.** No `main` merge, APK build or production database action.
