@@ -7,6 +7,7 @@ import '../../../../core/repositories/league/team_league_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../screens/booking_confirmation_screen.dart';
 import '../../screens/payment_gateway_screen.dart';
@@ -471,8 +472,8 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   const SizedBox(height: 4),
                   Text(
                     isArabic
-                        ? 'رسوم مشاركة الفريق: ${feePerTeam.toStringAsFixed(0)} جنيه للفريق الواحد'
-                        : 'Team entry fee: ${feePerTeam.toStringAsFixed(0)} EGP per team',
+                        ? 'رسوم مشاركة الفريق: ${VSPMoneyFormatter.amount(feePerTeam)} جنيه للفريق الواحد'
+                        : 'Team entry fee: ${VSPMoneyFormatter.amount(feePerTeam)} EGP per team',
                     style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
@@ -481,9 +482,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   _buildPaymentOptionCard(
                     title: isArabic ? 'ادفع لفريقك' : 'Pay for your team',
                     subtitle: isArabic
-                        ? '${feePerTeam.toStringAsFixed(0)} جنيه — رسوم مشاركة فريقك'
-                        : '${feePerTeam.toStringAsFixed(0)} EGP — your team entry fee',
-                    costText: '${totalForTeam.toStringAsFixed(0)} ${isArabic ? 'جنيه' : 'EGP'}',
+                        ? '${VSPMoneyFormatter.amount(feePerTeam)} جنيه — رسوم مشاركة فريقك'
+                        : '${VSPMoneyFormatter.amount(feePerTeam)} EGP — your team entry fee',
+                    costText: '${VSPMoneyFormatter.amount(totalForTeam)} ${isArabic ? 'جنيه' : 'EGP'}',
                     isSelected: selectedPayOption == 'my_team',
                     onTap: () => setPSheetState(() => selectedPayOption = 'my_team'),
                   ),
@@ -493,9 +494,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   _buildPaymentOptionCard(
                     title: isArabic ? 'ادفع للدوري كله' : 'Pay for the entire league',
                     subtitle: isArabic
-                        ? 'ادفع رسوم جميع الفرق ($maxTeams فرق × ${feePerTeam.toStringAsFixed(0)} جنيه)'
-                        : 'Pay for all teams ($maxTeams × ${feePerTeam.toStringAsFixed(0)} EGP)',
-                    costText: '${totalForAll.toStringAsFixed(0)} ${isArabic ? 'جنيه' : 'EGP'}',
+                        ? 'ادفع رسوم جميع الفرق ($maxTeams فرق × ${VSPMoneyFormatter.amount(feePerTeam)} جنيه)'
+                        : 'Pay for all teams ($maxTeams × ${VSPMoneyFormatter.amount(feePerTeam)} EGP)',
+                    costText: '${VSPMoneyFormatter.amount(totalForAll)} ${isArabic ? 'جنيه' : 'EGP'}',
                     isSelected: selectedPayOption == 'all',
                     onTap: () => setPSheetState(() => selectedPayOption = 'all'),
                   ),
@@ -505,9 +506,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   _buildPaymentOptionCard(
                     title: isArabic ? 'ادفع لعدد محدد من الفرق' : 'Pay for a selected number of teams',
                     subtitle: isArabic
-                        ? '$customPaidCount فرق × ${feePerTeam.toStringAsFixed(0)} جنيه = ${totalForCustom.toStringAsFixed(0)} جنيه'
-                        : '$customPaidCount teams × ${feePerTeam.toStringAsFixed(0)} EGP = ${totalForCustom.toStringAsFixed(0)} EGP',
-                    costText: '${totalForCustom.toStringAsFixed(0)} ${isArabic ? 'جنيه' : 'EGP'}',
+                        ? '$customPaidCount فرق × ${VSPMoneyFormatter.amount(feePerTeam)} جنيه = ${VSPMoneyFormatter.amount(totalForCustom)} جنيه'
+                        : '$customPaidCount teams × ${VSPMoneyFormatter.amount(feePerTeam)} EGP = ${VSPMoneyFormatter.amount(totalForCustom)} EGP',
+                    costText: '${VSPMoneyFormatter.amount(totalForCustom)} ${isArabic ? 'جنيه' : 'EGP'}',
                     isSelected: selectedPayOption == 'custom',
                     onTap: () => setPSheetState(() => selectedPayOption = 'custom'),
                   ),
@@ -594,10 +595,10 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black))
                         : Text(
                             selectedPayOption == 'my_team'
-                                ? (isArabic ? 'ادفع ${totalForTeam.toStringAsFixed(0)} جنيه' : 'Pay ${totalForTeam.toStringAsFixed(0)} EGP')
+                                ? (isArabic ? 'ادفع ${VSPMoneyFormatter.amount(totalForTeam)} جنيه' : 'Pay ${VSPMoneyFormatter.amount(totalForTeam)} EGP')
                                 : selectedPayOption == 'all'
-                                    ? (isArabic ? 'ادفع ${totalForAll.toStringAsFixed(0)} جنيه' : 'Pay ${totalForAll.toStringAsFixed(0)} EGP')
-                                    : (isArabic ? 'ادفع ${totalForCustom.toStringAsFixed(0)} جنيه' : 'Pay ${totalForCustom.toStringAsFixed(0)} EGP'),
+                                    ? (isArabic ? 'ادفع ${VSPMoneyFormatter.amount(totalForAll)} جنيه' : 'Pay ${VSPMoneyFormatter.amount(totalForAll)} EGP')
+                                    : (isArabic ? 'ادفع ${VSPMoneyFormatter.amount(totalForCustom)} جنيه' : 'Pay ${VSPMoneyFormatter.amount(totalForCustom)} EGP'),
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                           ),
                   ),
@@ -706,8 +707,8 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 const SizedBox(height: 12),
                 Text(
                   isArabic
-                      ? 'رسوم مشاركة الفريق: ${_configuredFee.toStringAsFixed(0)} جنيه للفريق الواحد'
-                      : 'Team entry fee: ${_configuredFee.toStringAsFixed(0)} EGP per team',
+                      ? 'رسوم مشاركة الفريق: ${VSPMoneyFormatter.amount(_configuredFee)} جنيه للفريق الواحد'
+                      : 'Team entry fee: ${VSPMoneyFormatter.amount(_configuredFee)} EGP per team',
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
@@ -854,8 +855,8 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                       ),
                       subtitle: Text(
                         isArabic
-                            ? '${stadium.governorate} • ${stadium.basePrice.toStringAsFixed(0)} ج.م/ساعة'
-                            : '${stadium.governorate} • ${stadium.basePrice.toStringAsFixed(0)} EGP/hour',
+                            ? '${stadium.governorate} • ${VSPMoneyFormatter.amount(stadium.basePrice)} ج.م/ساعة'
+                            : '${stadium.governorate} • ${VSPMoneyFormatter.amount(stadium.basePrice)} EGP/hour',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                       trailing: const Icon(Iconsax.arrow_left_2_copy, color: VSPColors.accent, size: 18),
