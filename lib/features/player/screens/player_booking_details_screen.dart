@@ -146,7 +146,8 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
       contextId: booking.id,
       bookingId: booking.id,
     );
-    if (context.mounted) {
+    if (context.mounted &&
+        context.read<AuthProvider>().currentUser?.id == uid) {
       if (ok) {
         VSPFeedback.showSuccess(
           context,
@@ -182,12 +183,17 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
         contextId: booking.id,
       );
       final chatId = chat['id']?.toString();
-      if (chatId == null || !context.mounted) return;
+      if (!context.mounted ||
+          auth.currentUser?.id != me ||
+          chatId == null ||
+          chatId.isEmpty) {
+        return;
+      }
       Navigator.push(context, MaterialPageRoute(
         builder: (_) => ChatScreen(booking: booking, conversationId: chatId, otherUserId: other),
       ));
     } catch (_) {
-      if (context.mounted) {
+      if (context.mounted && auth.currentUser?.id == me) {
         VSPFeedback.showError(context, Localizations.localeOf(context).languageCode == 'ar'
             ? 'تعذر فتح المحادثة.'
             : 'Could not open the chat.');
