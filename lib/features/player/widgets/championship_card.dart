@@ -4,6 +4,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_countdown_timer.dart';
 import '../screens/championship_details_screen.dart';
@@ -179,14 +180,14 @@ class ChampionshipCard extends StatelessWidget {
                         Iconsax.cup_copy,
                         isArabic ? 'الجائزة' : 'PRIZE',
                         championship.grandPrize > 0
-                            ? "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"
+                            ? "${VSPMoneyFormatter.amount(championship.grandPrize)} ${AppLocalizations.of(context)!.egCurrency}"
                             : (isArabic ? "كأس وميداليات" : "Cup & Medals"));
                   }),
                   _buildDivider(),
                   Builder(builder: (context) {
                     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                     return _buildCompactInfo(Iconsax.card_copy, isArabic ? 'الاشتراك' : 'FEE',
-                        "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}");
+                        "${VSPMoneyFormatter.amount(championship.entryFee)} ${AppLocalizations.of(context)!.egCurrency}");
                   }),
                 ],
               ),
