@@ -531,81 +531,12 @@ These changes are **CODE_DONE / Pending Verification**. Consolidated tests remai
 - **Verified progress remains 72/620; 548 not accepted.** No production migration was applied, no payment/pricing policy changed, no `main` merge and no APK action.
 
 
-## All-620 directive: team discovery and player profile batch — 2026-11-10
+## Exact financial presentation and truthful rescheduling — 2026-11-10
 
-Owner directive is now explicit: implement **all 620 subtasks without exception**; only consolidated verification and APK remain deferred.
+These changes are **CODE_DONE / Pending Verification**. They correct client presentation and do not alter prices, calculations, gateway behavior, refunds, subscription rules or the database.
 
-- `67361a7`, `c7f635c`: team ranking podium and list entries expose accessible navigation to the existing public team profile.
-- `b9f6196`: team discovery now supports team/governorate/captain search and correctly treats “All sports” as an inclusive filter instead of returning no teams.
-- `5de1f9c`: player profile saves validate Egyptian mobile numbers, name bounds and sport-position values, bind async completion to the active account, compress once, and report partial image failure honestly.
-- `1bee1dd`, `cb0bd49`, `2ee54b8`: profile photo replacement persists the new URL before deleting the old object, removes an orphaned new upload if database persistence fails, and preserves the selected image extension.
-- `c330241`: governorate changes only show success and change discovery filters after confirmed profile persistence on the same active account.
-- `e1f4b43`: execution policy updated so future batches cannot misread deferred tests as deferred implementation.
-- Mapping: **12.01–12.06, 13.02, 13.05–13.06 and 15.01–15.05 are IMPLEMENTED_PENDING_VERIFICATION / IN_PROGRESS**. Device upload rollback, concurrent-device conflict, private-team visibility and regression acceptance remain in the final verification queue.
-- **Verified remains 72/620. Implementation continues across all 548 unaccepted subtasks; this is not a scope reduction.** No `main` merge, APK build or production database action.
-
-
-## Authentication, discovery, active-team and stadium-media continuation — 2026-11-10
-
-All changes below are **IMPLEMENTED_PENDING_VERIFICATION** under the all-620 directive. Final consolidated tests and APK remain deferred; implementation does not stop.
-
-- `1cd86f5`, `aff19c2`, `6fd779f`: password recovery always returns a non-enumerating response, login submissions are normalized/validated and single-flight, and a new password is accepted only for the same active recovery session without trimming intentional password characters.
-- `97dc812`, `0d59ca8`: team discovery propagates query failures instead of presenting a false empty ranking, while stadium search uses a 400 ms debounce to reduce redundant API requests.
-- `a449a5a`, `b6f24a7`, `03a2824`: invitation actions unlock correctly after the first accept/decline; stale active-team preferences are removed when the last membership disappears; failed active-team persistence rolls the UI back with an honest error.
-- `1cc17ce`, `acb1be1`, `c6d368e`, `ff451a9`, `582e3b5`, `8526246`: existing stadium images are deleted only after a successful record update, new-upload deletion failures do not silently drop the UI reference, completed uploads are cleaned up if the wizard closes mid-request, and create/edit submissions retain at least one gallery image.
-- `d161800`, `31ddb0d`: affected widget/validator tests were updated for the new media-cleanup contract; execution is intentionally not run yet.
-- Mapping: **11.02–11.03, 11.06, 11.08, 14.03, 15.01–15.02, 17.02–17.05, 18.02–18.06 and 20.02–20.07 are IMPLEMENTED_PENDING_VERIFICATION / IN_PROGRESS**. This does not claim journey acceptance before the final verification gate.
-- **Verified remains 72/620; 548 not yet accepted.** The remaining number is an acceptance counter, not permission to omit implementation. No production Supabase/schema/RLS, payment, pricing, `main` merge or APK action.
-
-
-## Post-Work handoff: paid pending booking visibility — 2026-11-10
-
-After reading Work's latest authentication, discovery, team and stadium-media batches, regular ChatGPT continued a distinct booking-history path without redoing those areas.
-
-- `be06f42`, `92f5064`, `ed941a3`, `4e42fc3`: keep pending bookings with collected payment/deposit or pending refund in the actionable pending bucket while their booking interval is current; move them to history after the interval; always retain a displaced paid booking in history for reconciliation rather than silently losing it.
-- Mapping: **16.02** booking status categorization, **16.05** cancelled/displaced booking visibility, **29.05** payment-state recovery; **IN_PROGRESS / Pending Verification**, not fully accepted.
-- Need tests for paid pending, refunded, displaced paid, expiry boundary and server reconciliation; no payment state is written by these changes.
-- Official counter unchanged: **72 VERIFIED / 620 total / 548 unaccepted**. No production schema/RLS/payment, main merge or APK action.
-
-
-## Owner/player pending-payment parity — 2026-11-10
-
-- `ca4b332`: owner upcoming bookings now retain pending reservations with confirmed payment/deposit or refund pending, not only pending cash reservations. Extracted shared `_needsPaymentReconciliation` predicate.
-- `a99abca`: unpaid player checkout grace logic uses the same reconciliation predicate, avoiding different classification for deposit-paid versus fully-paid records.
-- Candidate mapping: **16.02**, **23.01**, **27.04**, **29.05**. These are partial implementation improvements, not full task closures.
-- Deferred acceptance: owner/player lists with paid pending, cash pending, partial deposit, cancelled, expired, overlapping bookings, server payment-state reconciliation, Flutter analyze and integration tests.
-- **72 VERIFIED / 620 baseline / 548 not yet accepted**. No production DB/payment/RLS, main merge or APK.
-
-
-## Booking classification consistency continuation — 2026-11-10
-
-- `57a49c0`: removed redundant pending-payment predicate and reused the same reconciliation condition in player history and active buckets; unpaid checkout grace behavior remains distinct from paid-pending reconciliation.
-- `25e441a`: normalize persisted payment-status strings (trim/case) before interpreting paid/refund-pending values, so legacy casing does not hide a booking.
-- Mapping: **16.02**, **27.04**, **29.05** remain IN_PROGRESS / pending consolidated verification; these commits do not close full acceptance subtasks.
-- **72 VERIFIED / 620 total / 548 unaccepted**. Flutter analyze/tests, device journeys and payment-server reconciliation deferred; no production DB, payment writes, main merge or APK.
-
-
-## Owner unpaid-checkout grace and cancelled payment records — 2026-11-10
-
-- `75f2961`, `b54777b`: owner list now includes unpaid online pending checkouts during the 10-minute payment grace period, archives them after grace, and keeps cash or paid/deposit pending bookings active until booking end. This aligns owner visibility with the player-side checkout lifecycle.
-- `75afc2b`: cancelled checkout history uses the same normalized payment predicate and preserves already-refunded transactions rather than hiding them as unpaid abandonment.
-- `03ec2ef`: documents the owner classification contract in source.
-- Candidate mapping: **16.02, 16.05, 23.01, 27.04, 29.05** are **CODE_DONE partial / Pending Verification**. Still require model-level unit tests, payment reconciliation, boundary conditions and E2E.
-- **Official count: 72 VERIFIED / 620 total / 548 unaccepted**; no production schema/payment writes, main merge, or APK.
-
-
-## Booking categorization regression coverage — 2026-11-10
-
-- `571100d`, `f05ebb6`: added **13 Flutter unit test cases** at `test/core/providers/booking/booking_categorization_service_test.dart` covering player and owner unpaid checkout grace, exact ten-minute boundary, paid/deposit/refund pending reconciliation, end-time history, same-stadium overlap, cross-stadium isolation, cancelled refunded checkout visibility, deterministic sorting/input immutability, and manual booking ID merge/cancel exclusions.
-- This is **test implementation only**; the tests have **not been executed**. Candidate mappings: **16.02, 16.05, 16.06, 23.01, 27.04, 29.05, 57.02**. They remain pending verification; no assertion that test results passed.
-- **72 VERIFIED / 620 total / 548 unaccepted**. No production DB/payment writes, main merge or APK.
-
-
-## Exact booking-money presentation continuation — 2026-11-10
-
-- `b03f735`, `c830047`: added a shared finite-value money formatter and source tests so decimals are preserved while unnecessary trailing zeros are removed.
-- `12ce079`, `f010406`, `c630aa7`, `850fdfb`, `f7a4804`, `e4dc4c2`, `4ed7de7`: player match details, booking success, collective invitations, result confirmation, booking cards, payment choice and bottom summary no longer truncate monetary decimals.
-- `6ac8680`, `0112bc8`, `ad991fc`, `1988c3f`, `4abd12a`, `f511db4`, `b354b29`, `d2f77d5`, `d25bc30`: public-match cards, payment breakdowns, owner sheets, quick booking, transactional notifications, receipts and cancellation/cash-confirmation copy use the same exact amount representation.
-- `350a3e8`: prepared active-team persistence coverage for verified selection, unauthorized selection rejection and stale-selection cleanup. Tests remain deferred, not claimed passed.
-- Mapping: **10.04, 16.03, 21.04–21.07, 27.02–27.04, 45.01–45.04 and Phase 10 UX-02/UX-03 are IMPLEMENTED_PENDING_VERIFICATION / IN_PROGRESS**. No payment calculation, gateway transaction, price, fee, refund or subscription rule was changed; this batch fixes presentation consistency only.
-- **Verified remains 72/620; 548 not yet accepted.** Final regression/device checks remain deferred; implementation continues.
+- Added the shared `VSPMoneyFormatter` contract and replaced integer truncation across player booking/payment summaries, owner booking cards, quick/manual booking forms, cash collection, owner ledger/payouts, operational dashboards, transactional notifications, WhatsApp receipts, cancellations and tournament/league entry and prize surfaces. Finite values retain up to two decimal places with trailing zeros removed; invalid non-finite values render as unavailable rather than a misleading amount.
+- Added focused formatter tests, but they remain unexecuted under the owner's consolidated-test deferral.
+- `97106fe`: corrected reschedule copy to match the authoritative RPC state machine. Declining a proposed time keeps the original booking; it does **not** cancel the booking or promise a full refund. Slot-conflict copy now states that the original booking remains unchanged, and async feedback is bound to the initiating account.
+- Candidate mapping: booking price clarity, owner financial visibility, cancellation/refund transparency, tournament pricing, Phase 10 truthful scarcity/trust and rescheduling lifecycle tasks are **CODE_DONE/IN_PROGRESS** pending consolidated Flutter, widget, two-account, sandbox-payment and end-to-end verification.
+- **Verified progress remains 72/620; 548 not accepted.** No production Supabase/schema/RLS/payment mutation, `main` merge, final test run or APK action.
