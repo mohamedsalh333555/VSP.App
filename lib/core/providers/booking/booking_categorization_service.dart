@@ -31,17 +31,6 @@ class BookingCategorizationService {
   static bool _isConfirmedLifecycleStatus(BookingStatus status) =>
       status == BookingStatus.confirmed || status == BookingStatus.upcoming;
 
-  /// A pending booking with money collected must stay visible while the
-  /// server resolves its status; a checkout timeout is not proof of failure.
-  static bool _needsPaymentReconciliation(Booking booking) {
-    final paymentState = booking.paymentStatus?.trim().toLowerCase();
-    return booking.isPaid ||
-        booking.isDepositPaid ||
-        booking.depositPaid > 0 ||
-        paymentState == 'paid' ||
-        paymentState == 'refund_pending';
-  }
-
   /// Categorizes player bookings into upcoming, pending (recent grace period), and history.
   ///
   /// Returned lists are deterministic: the next actionable booking appears
@@ -75,12 +64,9 @@ class BookingCategorizationService {
       if (b.status != BookingStatus.pending) return false;
       // Cash bookings remain pending until owner confirms/collects.
       if (b.isCash) return true;
-      // A payment awaiting server reconciliation must remain actionable
-      // instead of disappearing when the checkout grace period expires.
-      if (_needsPaymentReconciliation(b)) return true;
       // Online unpaid checkouts have a 10-minute payment grace period.
       final isRecent = b.createdAt.isAfter(tenMinutesAgo);
-      return isRecent;
+      return !b.isPaid && isRecent;
     }).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
@@ -95,9 +81,8 @@ class BookingCategorizationService {
         return true;
       }
       if (b.status == BookingStatus.pending) {
-        // A pending checkout displaced by a distinct confirmed booking
-        // belongs in history even if money was already collected: retain the
-        // record so reconciliation/refund actions can find it.
+        // A pending checkout displaced by a confirmed booking is historical,
+        // even if its own checkout grace period has not elapsed.
         final displaced = upcoming.any(
           (u) => u.id != b.id &&
               u.stadiumId == b.stadiumId &&
@@ -105,15 +90,10 @@ class BookingCategorizationService {
               u.endTime.isAfter(b.startTime),
         );
         if (displaced) return true;
-        // Paid pending bookings remain actionable until the booking ends;
-        // then history retains them for reconciliation.
-        if (_needsPaymentReconciliation(b)) {
-          return !b.endTime.isAfter(now);
-        }
         // Expired payment grace periods should not remain in the active list.
         // Keep these records in history rather than making them disappear.
         if (!b.endTime.isAfter(now)) return true;
-        if (!b.isCash && !_needsPaymentReconciliation(b) &&
+        if (!b.isCash && !b.isPaid &&
             !b.createdAt.isAfter(tenMinutesAgo)) {
           return true;
         }
@@ -126,8 +106,12 @@ class BookingCategorizationService {
                         ?.toLowerCase()
                         .contains('checkout') ??
                     false);
-        final hasPaidMoney = _needsPaymentReconciliation(b) ||
-            b.paymentStatus?.trim().toLowerCase() == 'refunded';
+        final hasPaidMoney = b.depositPaid > 0 ||
+            b.isDepositPaid ||
+            b.isPaid ||
+            b.paymentStatus == 'paid' ||
+            b.paymentStatus == 'refunded' ||
+            b.paymentStatus == 'refund_pending';
         if (isAbandonedCheckout && !hasPaidMoney) {
           return false;
         }
@@ -149,10 +133,6 @@ class BookingCategorizationService {
   }
 
   /// Categorizes owner bookings into upcoming and historical lists.
-  ///
-  /// An unpaid online checkout is actionable only during its ten-minute
-  /// grace period; afterward it stays visible in history. Cash and paid
-  /// pending bookings remain actionable until their booked end time.
   static CategorizedOwnerBookings categorizeOwnerBookings({
     required List<Booking> bookings,
     required DateTime now,
@@ -161,12 +141,7 @@ class BookingCategorizationService {
         .where(
           (b) =>
               (_isConfirmedLifecycleStatus(b.status) ||
-                  (b.status == BookingStatus.pending &&
-                      (b.isCash ||
-                          _needsPaymentReconciliation(b) ||
-                          b.createdAt.isAfter(
-                            now.subtract(const Duration(minutes: 10)),
-                          )))) &&
+                  (b.status == BookingStatus.pending && b.isCash)) &&
               b.endTime.isAfter(now),
         )
         .toList()
@@ -179,13 +154,7 @@ class BookingCategorizationService {
               b.status == BookingStatus.cancelled ||
               b.status == BookingStatus.noShow ||
               b.status == BookingStatus.expired ||
-              !b.endTime.isAfter(now) ||
-              (b.status == BookingStatus.pending &&
-                  !b.isCash &&
-                  !_needsPaymentReconciliation(b) &&
-                  !b.createdAt.isAfter(
-                    now.subtract(const Duration(minutes: 10)),
-                  )),
+              !b.endTime.isAfter(now),
         )
         .toList()
       ..sort((a, b) {
@@ -237,8 +206,14 @@ class BookingCategorizationService {
       return 'match_is_full';
     } else if (errorStr.contains('already_joined')) {
       return 'already_joined';
+    } else if (errorStr.contains('HOST_CANNOT_LEAVE') ||
+        errorStr.contains('لا يمكن لمضيف المباراة المغادرة')) {
+      return 'host_cannot_leave';
+    } else if (errorStr.contains('LEAVE_BLOCKED') ||
+        errorStr.contains('لا يمكن مغادرة مباراة منتهية')) {
+      return 'leave_blocked';
     } else {
-      return errorStr.replaceAll('Exception: ', '');
+      return 'match_action_failed';
     }
   }
 }
