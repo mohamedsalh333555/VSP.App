@@ -67,4 +67,46 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.containsKey('active_team_user-1'), isFalse);
   });
+
+  test('switches teams without leaking the selection to another account',
+      () async {
+    final first = _team('team-a', 'A');
+    final second = _team('team-b', 'B');
+    final memberships = <Team>[first, second];
+
+    expect(
+      await ActiveTeamService.select(
+        userId: 'user-1',
+        teamId: first.id,
+        verifiedTeams: memberships,
+      ),
+      isTrue,
+    );
+    expect(
+      await ActiveTeamService.select(
+        userId: 'user-1',
+        teamId: second.id,
+        verifiedTeams: memberships,
+      ),
+      isTrue,
+    );
+
+    expect(
+      (await ActiveTeamService.resolve(
+        userId: 'user-1',
+        teams: memberships,
+      ))
+          ?.id,
+      second.id,
+    );
+    expect(
+      (await ActiveTeamService.resolve(
+        userId: 'user-2',
+        teams: memberships,
+      ))
+          ?.id,
+      first.id,
+      reason: 'A different account must not inherit user-1 selection.',
+    );
+  });
 }
