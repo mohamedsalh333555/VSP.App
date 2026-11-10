@@ -542,3 +542,16 @@ These changes are **CODE_DONE / Pending Verification**. They correct client pres
 - `6957d55`, `9a34dc6`, `6a24d8f`: owner reschedule requests and player responses are single-flight per booking, contain thrown repository failures, and present retryable feedback without stale success claims.
 - Candidate mapping: booking price clarity, owner financial visibility, cancellation/refund transparency, tournament pricing, Phase 10 truthful scarcity/trust and rescheduling lifecycle tasks are **CODE_DONE/IN_PROGRESS** pending consolidated Flutter, widget, two-account, sandbox-payment and end-to-end verification.
 - **Verified progress remains 72/620; 548 not accepted.** No production Supabase/schema/RLS/payment mutation, `main` merge, final test run or APK action.
+
+
+## Availability, account-scope and reporting safeguards — 2026-11-10
+
+This batch is **CODE_DONE / Pending Verification** under the consolidated-test deferral.
+
+- `13318e4`, `6dd0ee7`: stadium-slot RPC failures are no longer converted into an empty schedule. Initial failures reach the retryable error UI; later polling failures retain the last verified snapshot. The pre-submit availability check therefore fails closed instead of treating a network error as proof that a slot is free.
+- `214cc38`, `237ea19`, `291a7e1`: booking chat, match chat, public-match join/leave and booking/match report results are bound to the account that initiated the async action. Switching accounts while a request is in flight suppresses stale navigation and feedback.
+- `b494407`, `87dece8`, `0e6e910`, `2c1dd81`: report submissions require the active authenticated reporter, supported target types and bounded reason/details, redact backend errors, and suppress duplicate in-flight submissions. The server `create_report_atomic` participant checks remain authoritative.
+- `70095b6` through `fbe29c6`: remaining high-impact player price surfaces for ball rental, championship cards/details, Book Tonight, team-league payment choices, checkout totals and stadium add-ons now use the shared exact-money formatter instead of integer truncation.
+- Added architecture contracts for availability fail-closed behavior and report client guards. They were updated but not executed.
+- Candidate mapping: **03 error/retry states, 06/13 booking lifecycle, 16 history/visibility, 20 communication/content safety, 26 double-booking defense, 30–31 payment/refund clarity, 53 privacy and Phase 10 truthful price/trust tasks are CODE_DONE/IN_PROGRESS** pending consolidated tests and end-to-end acceptance.
+- **Verified progress remains 72/620; 548 not accepted.** No production database, RLS, payment, pricing or permission change; no `main` merge, final test execution or APK build.
