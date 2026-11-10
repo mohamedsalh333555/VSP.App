@@ -70,8 +70,8 @@ class StadiumWizardValidator {
       breakTimes: breakTimes,
     )) {
       return isArabic
-          ? 'أكمل فترات التوقف وتأكد أنها داخل مواعيد العمل ولا تتداخل.'
-          : 'Complete every break and keep intervals inside operating hours without overlap.';
+          ? 'فترة الراحة 1 يجب أن تكون داخل مواعيد العمل الرسمية، مكتملة، وغير متداخلة.'
+          : 'Break 1 must be complete, inside operating hours, and must not overlap another break.';
     }
 
     return null;
