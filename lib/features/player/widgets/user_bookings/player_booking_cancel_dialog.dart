@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -52,7 +53,7 @@ class PlayerBookingCancelDialog {
     final amountFormatted = !hasPaidAmount
         ? (isArabic ? 'لا يوجد مبلغ مدفوع' : 'No amount paid')
         : (amountConfirmed
-            ? '${refundInfo.refundAmount.toStringAsFixed(0)} ${isArabic ? 'جنيه' : l10n.egCurrency}'
+            ? '${VSPMoneyFormatter.amount(refundInfo.refundAmount)} ${isArabic ? 'جنيه' : l10n.egCurrency}'
             : (isArabic ? 'سيتم التأكيد بعد الإلغاء' : 'Confirmed after cancellation'));
 
     return showDialog<void>(
