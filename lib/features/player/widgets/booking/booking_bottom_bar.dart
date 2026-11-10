@@ -218,7 +218,9 @@ class BookingBottomBar extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isArabic ? 'إيجار كرة / ${ballPrice.toInt()} ج.م' : 'Ball / ${ballPrice.toInt()} EGP',
+                            isArabic
+                                ? 'إيجار كرة / ${VSPMoneyFormatter.amount(ballPrice)} ج.م'
+                                : 'Ball / ${VSPMoneyFormatter.amount(ballPrice)} EGP',
                             style: TextStyle(
                               color: isBallRented ? VSPColors.white : VSPColors.textPrimary,
                               fontSize: 15,
