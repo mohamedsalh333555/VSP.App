@@ -41,6 +41,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
   bool get wantKeepAlive => true;
 
   late Stream<List<Team>> _stream;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -115,21 +116,35 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                   EgyptGovernorates.resolveGoogleName(team.governorate) ==
                       EgyptGovernorates.resolveGoogleName(widget.selectedLocation));
 
-          final matchesSport = team.sportType.toLowerCase() == widget.selectedSport.toLowerCase();
+          final selectedSport = widget.selectedSport.trim().toLowerCase();
+          final matchesSport = selectedSport == 'all' ||
+              selectedSport == 'الكل' ||
+              team.sportType.toLowerCase() == selectedSport;
+          final normalizedQuery = _searchQuery.trim().toLowerCase();
+          final matchesSearch = normalizedQuery.isEmpty ||
+              team.name.toLowerCase().contains(normalizedQuery) ||
+              team.governorate.toLowerCase().contains(normalizedQuery) ||
+              team.captainName.toLowerCase().contains(normalizedQuery);
 
-          return matchesLocation && matchesSport;
+          return matchesLocation && matchesSport && matchesSearch;
         }).toList();
 
         if (teams.isEmpty) {
           if (snapshot.hasError) {
             return Column(
               children: [
+                _buildTeamSearchField(context),
                 _buildStaleDataWarning(context),
                 const Expanded(child: TeamsEmptyState()),
               ],
             );
           }
-          return const TeamsEmptyState();
+          return Column(
+            children: [
+              _buildTeamSearchField(context),
+              const Expanded(child: TeamsEmptyState()),
+            ],
+          );
         }
 
         // Sort by points desc
@@ -276,6 +291,13 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
           );
         }
 
+        content = Column(
+          children: [
+            _buildTeamSearchField(context),
+            Expanded(child: content),
+          ],
+        );
+
         if (myTeam != null && myTeamRank != null) {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           return Stack(
@@ -366,6 +388,23 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
 
         return content;
       },
+    );
+  }
+
+  Widget _buildTeamSearchField(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: TextField(
+        textInputAction: TextInputAction.search,
+        onChanged: (value) => setState(() => _searchQuery = value),
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Iconsax.search_normal_1_copy),
+          hintText: isArabic
+              ? 'ابحث باسم الفريق أو المحافظة أو الكابتن'
+              : 'Search team, governorate, or captain',
+        ),
+      ),
     );
   }
 
