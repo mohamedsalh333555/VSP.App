@@ -9,6 +9,7 @@ import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../data/models.dart';
 import '../../../l10n/app_localizations.dart';
 import 'booking_sheet/booking_sheet_actions.dart';
@@ -618,7 +619,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                               ),
                               Text(
-                                '${booking.depositPaid.toInt()} ج.م',
+                                '${VSPMoneyFormatter.amount(booking.depositPaid)} ج.م',
                                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
                               ),
                             ],
@@ -636,7 +637,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                               Text(
                                 (booking.isPaid || booking.paymentStatus == 'paid')
                                     ? (isArabic ? '0 ج.م (تم التحصيل)' : '0 EGP (Collected)')
-                                    : '${(booking.totalPrice - booking.depositPaid).toInt()} ج.م',
+                                    : '${VSPMoneyFormatter.amount(booking.totalPrice - booking.depositPaid)} ج.م',
                                 style: TextStyle(
                                   color: (booking.isPaid || booking.paymentStatus == 'paid')
                                       ? VSPColors.success
