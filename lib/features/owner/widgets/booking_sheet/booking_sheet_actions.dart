@@ -192,10 +192,13 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                   }
                   if (context.mounted) Navigator.pop(context);
                 } else {
+                  final provider =
+                      Provider.of<BookingProvider>(context, listen: false);
                   VSPFeedback.showError(
                     context,
                     isArabic
-                        ? 'تعذر إرسال اقتراح الموعد الجديد. حاول مرة أخرى.'
+                        ? (provider.errorMessage ??
+                            'تعذر إرسال اقتراح الموعد الجديد. حاول مرة أخرى.')
                         : 'Could not send the reschedule proposal. Please try again.',
                   );
                 }
