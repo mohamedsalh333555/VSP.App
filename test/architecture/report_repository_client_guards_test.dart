@@ -13,6 +13,8 @@ void main() {
     expect(source, contains('cleanReason.length > 200'));
     expect(source, contains('(cleanDetails?.length ?? 0) > 2000'));
     expect(source, contains("{'user', 'booking', 'match'}"));
+    expect(source, contains('_inFlightReportKeys.add(requestKey)'));
+    expect(source, contains('_inFlightReportKeys.remove(requestKey)'));
     expect(source, isNot(contains("VSPLogger.e('Error reporting entity on Supabase', e)")));
   });
 }
