@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/logger_service.dart';
 
 class ReportRepository {
+  static final Set<String> _inFlightReportKeys = <String>{};
   final SupabaseClient _supabase;
 
   ReportRepository({SupabaseClient? client})
@@ -32,6 +33,14 @@ class ReportRepository {
         (cleanDetails?.length ?? 0) > 2000) {
       return false;
     }
+    final requestKey = <String>[
+      currentUserId,
+      cleanTargetType,
+      cleanTargetId,
+      bookingId?.trim() ?? contextId?.trim() ?? '',
+      cleanReason,
+    ].join('|');
+    if (!_inFlightReportKeys.add(requestKey)) return false;
     try {
       await _supabase.rpc('create_report_atomic', params: {
         'p_target_type': cleanTargetType,
@@ -47,6 +56,8 @@ class ReportRepository {
     } catch (e) {
       VSPLogger.e('Report submission failed');
       return false;
+    } finally {
+      _inFlightReportKeys.remove(requestKey);
     }
   }
 
