@@ -566,3 +566,12 @@ After reading Work's latest authentication, discovery, team and stadium-media ba
 - Mapping: **16.02** booking status categorization, **16.05** cancelled/displaced booking visibility, **29.05** payment-state recovery; **IN_PROGRESS / Pending Verification**, not fully accepted.
 - Need tests for paid pending, refunded, displaced paid, expiry boundary and server reconciliation; no payment state is written by these changes.
 - Official counter unchanged: **72 VERIFIED / 620 total / 548 unaccepted**. No production schema/RLS/payment, main merge or APK action.
+
+
+## Owner/player pending-payment parity — 2026-11-10
+
+- `ca4b332`: owner upcoming bookings now retain pending reservations with confirmed payment/deposit or refund pending, not only pending cash reservations. Extracted shared `_needsPaymentReconciliation` predicate.
+- `a99abca`: unpaid player checkout grace logic uses the same reconciliation predicate, avoiding different classification for deposit-paid versus fully-paid records.
+- Candidate mapping: **16.02**, **23.01**, **27.04**, **29.05**. These are partial implementation improvements, not full task closures.
+- Deferred acceptance: owner/player lists with paid pending, cash pending, partial deposit, cancelled, expired, overlapping bookings, server payment-state reconciliation, Flutter analyze and integration tests.
+- **72 VERIFIED / 620 baseline / 548 not yet accepted**. No production DB/payment/RLS, main merge or APK.
