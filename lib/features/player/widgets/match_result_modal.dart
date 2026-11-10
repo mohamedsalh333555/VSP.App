@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/services/vsp_time_service.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
+import 'package:vsp_application/core/utils/vsp_money_formatter.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
 
 class MatchResultModal extends StatefulWidget {
@@ -124,7 +125,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  const SizedBox(width: 8),
  Expanded(child: _buildDetailItem(isArabic ? 'الملعب' : 'Stadium', widget.booking.stadiumName)),
  const SizedBox(width: 8),
- Expanded(child: _buildDetailItem(isArabic ? 'السعر' : 'Price', '${widget.booking.totalPrice.toInt()} ${widget.booking.currency}')),
+ Expanded(child: _buildDetailItem(isArabic ? 'السعر' : 'Price', '${VSPMoneyFormatter.amount(widget.booking.totalPrice)} ${widget.booking.currency}')),
  ],
  ),
  ],
