@@ -555,3 +555,16 @@ This batch is **CODE_DONE / Pending Verification** under the consolidated-test d
 - Added architecture contracts for availability fail-closed behavior and report client guards. They were updated but not executed.
 - Candidate mapping: **03 error/retry states, 06/13 booking lifecycle, 16 history/visibility, 20 communication/content safety, 26 double-booking defense, 30–31 payment/refund clarity, 53 privacy and Phase 10 truthful price/trust tasks are CODE_DONE/IN_PROGRESS** pending consolidated tests and end-to-end acceptance.
 - **Verified progress remains 72/620; 548 not accepted.** No production database, RLS, payment, pricing or permission change; no `main` merge, final test execution or APK build.
+
+
+## Overnight scheduling and public-match action integrity — 2026-11-10
+
+This batch is **CODE_DONE / Pending Verification**.
+
+- `eafe8ea`, `bc35553`, `457aed6`, `ab9bd11`: owner manual-booking checks now compare real local intervals across midnight, detect overnight closures after midnight, include next-day bookings in duration/overlap checks, ignore expired holds and scope conflicts to the selected stadium.
+- `9408408`, `aea5486`: added regression scenarios for overnight closing times, after-midnight bookings, overnight breaks, unrelated stadium bookings and expired holds. Tests remain deferred and unexecuted.
+- `340ce10`, `48e4fca`, `487b893`, `be94aca`: public-match join/leave errors are reduced to stable safe codes, raw backend errors are not exposed, duplicate in-flight join/leave actions are suppressed, and public leave uses the guarded provider with actionable host/ended-state copy.
+- `a67f423`, `1f30925`: successful atomic join, leave and participant-removal mutations are no longer reported as failures merely because optional public-feed enrichment or notification delivery failed afterward. Secondary notification work is best effort and cannot reverse the authoritative action result.
+- `9007dce`, `619f403`, `d23586c`: architecture contracts guard single-flight actions, sanitized failures and mutation-before-enrichment ordering. They were written/updated but not run.
+- Candidate mapping: **07 group booking, 13 booking management, 19 pickup matches, 20 notifications, 22 operating hours and 26 overlap prevention are CODE_DONE/IN_PROGRESS** pending consolidated Flutter, integration, two-account, staging and device verification.
+- **Verified progress remains 72/620; 548 not accepted.** No production Supabase/schema/RLS/payment/pricing change, `main` merge, final tests or APK.
