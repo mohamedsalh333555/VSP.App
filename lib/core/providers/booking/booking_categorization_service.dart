@@ -31,6 +31,22 @@ class BookingCategorizationService {
   static bool _isConfirmedLifecycleStatus(BookingStatus status) =>
       status == BookingStatus.confirmed || status == BookingStatus.upcoming;
 
+  static bool _hasPaymentProgress(Booking booking) {
+    const activePaymentStates = {
+      'partially_paid',
+      'fully_paid',
+      'refund_pending',
+      'refund_failed',
+      'refunded',
+    };
+    return booking.isPaid ||
+        booking.isDepositPaid ||
+        booking.depositPaid > 0 ||
+        activePaymentStates.contains(
+          booking.effectivePaymentState.toLowerCase().trim(),
+        );
+  }
+
   /// Categorizes player bookings into upcoming, pending (recent grace period), and history.
   ///
   /// Returned lists are deterministic: the next actionable booking appears
@@ -64,9 +80,12 @@ class BookingCategorizationService {
       if (b.status != BookingStatus.pending) return false;
       // Cash bookings remain pending until owner confirms/collects.
       if (b.isCash) return true;
+      // A booking with captured money or an in-flight refund must remain
+      // visible until its lifecycle is resolved, even after checkout grace.
+      if (_hasPaymentProgress(b)) return true;
       // Online unpaid checkouts have a 10-minute payment grace period.
       final isRecent = b.createdAt.isAfter(tenMinutesAgo);
-      return !b.isPaid && isRecent;
+      return isRecent;
     }).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
@@ -93,7 +112,7 @@ class BookingCategorizationService {
         // Expired payment grace periods should not remain in the active list.
         // Keep these records in history rather than making them disappear.
         if (!b.endTime.isAfter(now)) return true;
-        if (!b.isCash && !b.isPaid &&
+        if (!b.isCash && !_hasPaymentProgress(b) &&
             !b.createdAt.isAfter(tenMinutesAgo)) {
           return true;
         }
@@ -106,12 +125,7 @@ class BookingCategorizationService {
                         ?.toLowerCase()
                         .contains('checkout') ??
                     false);
-        final hasPaidMoney = b.depositPaid > 0 ||
-            b.isDepositPaid ||
-            b.isPaid ||
-            b.paymentStatus == 'paid' ||
-            b.paymentStatus == 'refunded' ||
-            b.paymentStatus == 'refund_pending';
+        final hasPaidMoney = _hasPaymentProgress(b);
         if (isAbandonedCheckout && !hasPaidMoney) {
           return false;
         }
@@ -137,25 +151,33 @@ class BookingCategorizationService {
     required List<Booking> bookings,
     required DateTime now,
   }) {
+    final tenMinutesAgo = now.subtract(const Duration(minutes: 10));
     final upcoming = bookings
-        .where(
-          (b) =>
-              (_isConfirmedLifecycleStatus(b.status) ||
-                  (b.status == BookingStatus.pending && b.isCash)) &&
-              b.endTime.isAfter(now),
-        )
+        .where((b) {
+          if (!b.endTime.isAfter(now)) return false;
+          if (_isConfirmedLifecycleStatus(b.status)) return true;
+          if (b.status != BookingStatus.pending) return false;
+          return b.isCash ||
+              _hasPaymentProgress(b) ||
+              b.createdAt.isAfter(tenMinutesAgo);
+        })
         .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
     final history = bookings
-        .where(
-          (b) =>
-              b.status == BookingStatus.completed ||
+        .where((b) {
+          if (b.status == BookingStatus.completed ||
               b.status == BookingStatus.cancelled ||
               b.status == BookingStatus.noShow ||
               b.status == BookingStatus.expired ||
-              !b.endTime.isAfter(now),
-        )
+              !b.endTime.isAfter(now)) {
+            return true;
+          }
+          return b.status == BookingStatus.pending &&
+              !b.isCash &&
+              !_hasPaymentProgress(b) &&
+              !b.createdAt.isAfter(tenMinutesAgo);
+        })
         .toList()
       ..sort((a, b) {
         final byEnd = b.endTime.compareTo(a.endTime);
