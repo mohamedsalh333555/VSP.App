@@ -74,7 +74,13 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
           !_isCurrentAccount) {
         return;
       }
-      setState(_refresh);
+      // Clear the row lock before advancing the request generation. Otherwise
+      // the finally block belongs to the previous generation and every other
+      // invitation remains disabled after the first successful response.
+      setState(() {
+        _busyId = null;
+        _refresh();
+      });
       if (accept && widget.onMembershipChanged != null) {
         try {
           await widget.onMembershipChanged!();
