@@ -81,6 +81,14 @@ class BookingCategorizationService {
         return true;
       }
       if (b.status == BookingStatus.pending) {
+        // Paid pending bookings must remain visible for reconciliation even
+        // after the online checkout grace period. Do not mark them as expired
+        // merely because the browser returned without a confirmed status.
+        if (b.isPaid || b.isDepositPaid || b.depositPaid > 0 ||
+            b.paymentStatus == 'paid' ||
+            b.paymentStatus == 'refund_pending') {
+          return false;
+        }
         // A pending checkout displaced by a confirmed booking is historical,
         // even if its own checkout grace period has not elapsed.
         final displaced = upcoming.any(
