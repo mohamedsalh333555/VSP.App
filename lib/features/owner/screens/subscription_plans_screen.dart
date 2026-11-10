@@ -103,7 +103,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       'excel_reports': ['تقارير Excel', 'Excel reports'],
       'search_priority_boost': ['أولوية الظهور في البحث', 'Priority search visibility'],
       'whatsapp_confirmation': ['تأكيدات عبر واتساب', 'WhatsApp confirmations'],
-      'atomic_booking': ['تأكيد حجوزات ذري', 'Atomic booking confirmation'],
+      'atomic_booking': ['تأكيد الحجز مع منع التعارض', 'Conflict-safe booking confirmation'],
     };
     for (final entry in featureCopy.entries) {
       if (features[entry.key] == true) {
@@ -252,8 +252,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     Expanded(
                       child: Text(
                         isArabic
-                            ? 'ابدأ مجانًا، وادفع عندما تحتاج مزايا أكثر أو عدد ملاعب أكبر.'
-                            : 'Start for free, and upgrade when you need more features or stadiums.',
+                            ? 'ابدأ مجانًا، وطوّر إدارة ملعبك بالاشتراك عند الحاجة — من غير عمولة على كل حجز.'
+                            : 'Start free, then upgrade your venue management when needed — with no per-booking commission.',
                         style: const TextStyle(
                           color: VSPColors.textPrimary,
                           fontSize: 13,
