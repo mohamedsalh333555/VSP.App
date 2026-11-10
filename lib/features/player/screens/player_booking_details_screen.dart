@@ -113,9 +113,22 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
             ),
             const SizedBox(height: VSPSpacing.md),
-            TextField(controller: reasonController, decoration: InputDecoration(hintText: ar ? 'سبب البلاغ' : 'Reason')),
+            TextField(
+              controller: reasonController,
+              maxLength: 200,
+              decoration: InputDecoration(hintText: ar ? 'سبب البلاغ' : 'Reason'),
+            ),
             const SizedBox(height: VSPSpacing.sm),
-            TextField(controller: detailsController, maxLines: 3, decoration: InputDecoration(hintText: ar ? 'تفاصيل إضافية (اختياري)' : 'Additional details (optional)')),
+            TextField(
+              controller: detailsController,
+              maxLines: 3,
+              maxLength: 2000,
+              decoration: InputDecoration(
+                hintText: ar
+                    ? 'تفاصيل إضافية (اختياري)'
+                    : 'Additional details (optional)',
+              ),
+            ),
           ],
         ),
         actions: [
