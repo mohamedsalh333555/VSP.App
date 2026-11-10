@@ -80,6 +80,15 @@ void main() {
       );
       expect(msg, equals(custom));
     });
+
+    test('does not expose internal database details', () {
+      final msg = BookingCancellationCoordinator.sanitizeCancellationError(
+        null,
+        'PostgrestException: relation private_bookings does not exist',
+      );
+      expect(msg, contains('تعذر إلغاء الحجز'));
+      expect(msg, isNot(contains('private_bookings')));
+    });
   });
 
   group('BookingProvider Cancellation Error Handling', () {
