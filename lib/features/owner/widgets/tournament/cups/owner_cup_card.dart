@@ -4,6 +4,7 @@ import '../../../../../core/services/sharing_service.dart';
 import '../../../../../core/ui/components/vsp_card.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../../core/utils/app_date_formatter.dart';
+import '../../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../../data/models.dart';
 import '../../../screens/owner_tournament_dashboard_screen.dart';
 
@@ -127,13 +128,13 @@ class OwnerCupCard extends StatelessWidget {
                 _buildInfoColumn(
                   context,
                   isArabic ? 'رسوم الدخول' : 'ENTRY FEE',
-                  '${tournament.entryFee.toInt()} ${isArabic ? "ج.م" : "EGP"}',
+                  '${VSPMoneyFormatter.amount(tournament.entryFee)} ${isArabic ? "ج.م" : "EGP"}',
                 ),
                 _buildInfoColumn(
                   context,
                   isArabic ? 'الجائزة الكبرى' : 'GRAND PRIZE',
                   tournament.grandPrize > 0
-                      ? '${tournament.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}'
+                      ? '${VSPMoneyFormatter.amount(tournament.grandPrize)} ${isArabic ? "ج.م" : "EGP"}'
                       : (isArabic ? 'كأس وميداليات' : 'Cup & Medals'),
                 ),
               ],
