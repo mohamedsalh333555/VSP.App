@@ -128,7 +128,7 @@ class StadiumWizardValidator {
     required String uploadPhotoError,
     required bool isArabic,
   }) {
-    if (images.isEmpty && stadiumId == null) {
+    if (images.isEmpty) {
       return uploadPhotoError;
     }
     if (images.any((img) => img['isUploading'] == true)) {
