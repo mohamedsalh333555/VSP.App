@@ -60,7 +60,7 @@ class OwnerBookingSheetService {
         continue;
       }
       if (b.status == BookingStatus.cancelled) continue;
-      
+
       if (b.status == BookingStatus.expired) continue;
 
       final bStartLocal = b.startTime.toLocal();
