@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -411,7 +412,9 @@ class StadiumInformationTab extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            isArabic ? '+${stadium.ballPrice.toInt()} ج.م' : '+${stadium.ballPrice.toInt()} EGP',
+                            isArabic
+                                ? '+${VSPMoneyFormatter.amount(stadium.ballPrice)} ج.م'
+                                : '+${VSPMoneyFormatter.amount(stadium.ballPrice)} EGP',
                             style: const TextStyle(
                               color: VSPColors.accent,
                               fontWeight: FontWeight.w900,
