@@ -18,6 +18,7 @@ import '../../../core/services/analytics_service.dart';
 import '../../../core/repositories/report_repository.dart';
 import '../../../core/repositories/chat_repository.dart';
 import '../../../core/utils/vsp_match_invite_formatter.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../core/models/user_model.dart';
@@ -879,7 +880,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  const SizedBox(height: VSPSpacing.sm),
  _buildDetailRow(Iconsax.calendar_1_copy, AppLocalizations.of(context)!.date, _booking!.formattedDate),
  const SizedBox(height: VSPSpacing.sm),
- _buildDetailRow(Iconsax.money_copy, AppLocalizations.of(context)!.price, '${_booking!.totalPrice.toInt()} EGP'),
+ _buildDetailRow(Iconsax.money_copy, AppLocalizations.of(context)!.price, '${VSPMoneyFormatter.amount(_booking!.totalPrice)} EGP'),
  const SizedBox(height: VSPSpacing.md),
  
  // Private collective invitations use the dedicated VSP invite sheet.
