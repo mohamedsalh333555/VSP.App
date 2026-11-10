@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 
 class QuickBookingPaymentSection extends StatelessWidget {
@@ -90,7 +91,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(VSPRadius.full),
                 ),
                 child: Text(
-                  '${isAr ? "الإجمالي" : "Total"}: ${totalPrice.toInt()} ${isAr ? "ج.م" : "EGP"}',
+                  '${isAr ? "الإجمالي" : "Total"}: ${VSPMoneyFormatter.amount(totalPrice)} ${isAr ? "ج.م" : "EGP"}',
                   style: const TextStyle(
                     color: VSPColors.accent,
                     fontWeight: FontWeight.w900,
@@ -125,7 +126,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
                 ),
                 if (deposit > 0 && deposit < totalPrice)
                   _buildQuickAmountChip(
-                    label: isAr ? '${deposit.toInt()} ج.م (عربون)' : '${deposit.toInt()} EGP (Deposit)',
+                    label: isAr ? '${VSPMoneyFormatter.amount(deposit)} ج.م (عربون)' : '${VSPMoneyFormatter.amount(deposit)} EGP (Deposit)',
                     amount: deposit,
                     isSelected: currentPaidAmount == deposit,
                   ),
@@ -136,7 +137,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
                     isSelected: currentPaidAmount == halfAmount,
                   ),
                 _buildQuickAmountChip(
-                  label: '${isAr ? "دفع كامل" : "Full"}: ${totalPrice.toInt()} ${isAr ? "ج" : ""}',
+                  label: '${isAr ? "دفع كامل" : "Full"}: ${VSPMoneyFormatter.amount(totalPrice)} ${isAr ? "ج" : ""}',
                   amount: totalPrice,
                   isSelected: currentPaidAmount == totalPrice,
                 ),
@@ -190,15 +191,15 @@ class QuickBookingPaymentSection extends StatelessWidget {
                 child: Text(
                   isFullyPaid
                       ? (isAr
-                          ? 'تم دفع الحجز بالكامل مسبقاً (${totalPrice.toInt()} ج.م)'
-                          : 'Fully Paid in Advance (${totalPrice.toInt()} EGP)')
+                          ? 'تم دفع الحجز بالكامل مسبقاً (${VSPMoneyFormatter.amount(totalPrice)} ج.م)'
+                          : 'Fully Paid in Advance (${VSPMoneyFormatter.amount(totalPrice)} EGP)')
                       : (isPartiallyPaid
                           ? (isAr
                               ? 'عربون مسدد: ${currentPaidAmount.toInt()} ج.م • المتبقي عند الحضور: ${remainingBalance.toInt()} ج.م'
                               : 'Deposit: ${currentPaidAmount.toInt()} EGP • Remaining: ${remainingBalance.toInt()} EGP')
                           : (isAr
-                              ? 'حجز كاش مؤكد • التحصيل بالكامل عند الحضور (${totalPrice.toInt()} ج.م)'
-                              : 'Cash Booking • Collect ${totalPrice.toInt()} EGP on arrival')),
+                              ? 'حجز كاش مؤكد • التحصيل بالكامل عند الحضور (${VSPMoneyFormatter.amount(totalPrice)} ج.م)'
+                              : 'Cash Booking • Collect ${VSPMoneyFormatter.amount(totalPrice)} EGP on arrival')),
                   style: TextStyle(
                     color: isFullyPaid
                         ? VSPColors.accent
