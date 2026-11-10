@@ -1,5 +1,13 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## Current continuation — 2026-11-11
+
+Implementation `00b530fcf5de6ed44324c36f0e623dc572ba7e18`: seven concrete corrections in owner payment verification/correlation/CAPTCHA/inquiry, explicit account deletion confirmation, sensitive auth/deletion logging and malformed-request handling. See [batch evidence](security/STORE_COMPLIANCE_BATCH_01_2026-11-11.md) for exact scope, files, tests, deployment and remaining gates. This is a partial SEC-01/03/04/06/08/10 continuation, not new duplicate Phase 8 scope.
+
+39 isolated real-handler/payment tests passed locally and in Owner checkout security CI run 42922218192. Staging `get_owner_web_checkout_status` v4 and `create_owner_web_checkout` v3 are ACTIVE with JWT verification retained; deployed handler readback matches source. Both reject absent/invalid tokens with 401; expected CORS preflights return 200. Valid-account deployed authorization and Paymob sandbox/signed webhook checks remain open. No production or main changes. This does not mark account deletion, subscriptions or store readiness complete.
+
+Final checkpoint at `daae560e`: Flutter CI 42924535090 SUCCESS (**1088 passed, 10 skipped**, including all 26 deletion tests); Owner checkout security 42924534900 SUCCESS (**39 passed**); Android E2E Smoke 42924534915 SUCCESS. Test-fixture/assertion corrections and earlier failures are documented in the linked batch report. No full 24-journey or store-readiness pass implied.
+
 Last checkpoint: 2026-11-05. Branch: `uxlp-44-implementation`. **Do not merge into main without owner approval.**
 
 ## Scope and evidence standard

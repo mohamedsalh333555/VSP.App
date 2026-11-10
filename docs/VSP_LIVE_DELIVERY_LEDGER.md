@@ -2,6 +2,15 @@
 
 Updated 2026-11-10. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Unified plan, first security implementation batch
+
+- Code commit: `00b530fcf5de6ed44324c36f0e623dc572ba7e18`; [seven concrete corrections and evidence](security/STORE_COMPLIANCE_BATCH_01_2026-11-11.md). No new full baseline-subtask closure: **76 historical accepted / 544 not fully accepted / 620 total**. This batch is code execution, not seven documentation closures.
+- Existing task contributions: 25.03/25.06 and 30.03/30.05/30.07/30.08, 79/80; SEC-01/03/04/06/08/10 and INT-03/REL-03. They remain IN_PROGRESS until their complete scope, including real staging identities/provider sandbox, is proven.
+- **Final checks SUCCESS at `daae560e`**: Flutter CI 42924535090 — 1088 passed, 10 skipped, including all 26 deletion tests; Owner checkout security 42924534900 — 39 isolated request/payment tests; Android E2E Smoke 42924534915. Isolated tests use mocked DB/provider transport, not real payments or real JWT identities. Initial failed test fixtures/assertions and their fixes are retained in the linked report.
+- Staging checkout/status functions updated with verify_jwt=true; source readback matches; four actual no-auth/invalid-token requests rejected 401 and two CORS preflights passed. Webhook source change was not deployed; no live signed callback acceptance claimed.
+- No production, prices, subscription model, migration or main merge changed. APK/iOS archive not built. Full CODE_DONE/BLOCKED counts still require row-by-row reconciliation; no guessed totals.
+- Added and ran read-only `python3 scripts/verify_task_accounting.py`: 620 unique IDs, 82 parents, 76 accepted historical checklist entries, 544 not accepted, zero ID/counter errors. It does not certify the evidence behind historical acceptance or close any task automatically.
+
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
