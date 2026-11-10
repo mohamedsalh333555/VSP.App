@@ -33,6 +33,8 @@ class BookingProvider with ChangeNotifier {
   final Set<String> _updatingPaymentIds = {};
   final Set<String> _rescheduleRequestIds = {};
   final Set<String> _rescheduleResponseIds = {};
+  final Set<String> _joiningMatchKeys = {};
+  final Set<String> _leavingMatchKeys = {};
   int _draftRestoreGeneration = 0;
 
   // Getters - _userBookings is the Single Source of Truth (SSOT)
@@ -456,7 +458,7 @@ class BookingProvider with ChangeNotifier {
       _publicMatches = await _matchCoordinator.fetchPublicMatches();
       _hasMoreMatches = false;
     } catch (e) {
-      _errorMessage = 'Failed to fetch public matches: $e';
+      _errorMessage = 'تعذر تحميل المباريات حالياً.';
     } finally {
       _isLoadingPublicMatches = false;
       notifyListeners();
@@ -465,19 +467,38 @@ class BookingProvider with ChangeNotifier {
 
   /// Join a public match
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
+    final actionKey = '$bookingId|$userId';
+    if (!_joiningMatchKeys.add(actionKey)) return false;
     _errorMessage = null;
-    final res = await _matchCoordinator.joinPublicMatch(bookingId: bookingId, userId: userId);
-    _errorMessage = res.error;
-    notifyListeners();
-    return res.success;
+    try {
+      final res = await _matchCoordinator.joinPublicMatch(
+        bookingId: bookingId,
+        userId: userId,
+      );
+      _errorMessage = res.error;
+      return res.success;
+    } finally {
+      _joiningMatchKeys.remove(actionKey);
+      notifyListeners();
+    }
   }
 
   /// Leave a public match
   Future<bool> leavePublicMatch(String bookingId, String userId) async {
-    final res = await _matchCoordinator.leavePublicMatch(bookingId: bookingId, userId: userId);
-    _errorMessage = res.error;
-    notifyListeners();
-    return res.success;
+    final actionKey = '$bookingId|$userId';
+    if (!_leavingMatchKeys.add(actionKey)) return false;
+    _errorMessage = null;
+    try {
+      final res = await _matchCoordinator.leavePublicMatch(
+        bookingId: bookingId,
+        userId: userId,
+      );
+      _errorMessage = res.error;
+      return res.success;
+    } finally {
+      _leavingMatchKeys.remove(actionKey);
+      notifyListeners();
+    }
   }
 
   /// Submit match result for Challenge bookings
