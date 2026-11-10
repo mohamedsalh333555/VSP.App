@@ -375,37 +375,44 @@ class MatchRepository {
 
  Future<bool> removeParticipantFromPublicMatch(String bookingId, String userId) async {
  try {
- final doc = await _supabase
- .from('booking_public_feed')
- .select('id, stadium_name')
- .eq('id', bookingId)
- .maybeSingle();
-
- final stadiumName = doc?['stadium_name'] ?? 'Match';
-
  // PostgreSQL Atomic RPC
  await _supabase.rpc('remove_public_match_participant_atomic', params: {
  'p_booking_id': bookingId,
  'p_user_id': userId,
  });
-
- await _notificationRepo.sendNotification(
- userId,
- AppNotification(
- id: '',
- title: 'Match Participation Cancelled ',
- body: 'The host has removed you from the match at $stadiumName.',
- type: 'info',
- createdAt: DateTime.now(),
- bookingId: bookingId,
- ),
- );
-
- return true;
  } catch (e) {
  VSPLogger.e('Error removing participant from public match', e);
  return false;
  }
+
+ var stadiumName = 'Match';
+ try {
+   final doc = await _supabase
+       .from('booking_public_feed')
+       .select('stadium_name')
+       .eq('id', bookingId)
+       .maybeSingle();
+   stadiumName = doc?['stadium_name']?.toString() ?? 'Match';
+ } catch (_) {
+   VSPLogger.w('Participant removed; notification enrichment unavailable');
+ }
+
+ try {
+   await _notificationRepo.sendNotification(
+     userId,
+     AppNotification(
+       id: '',
+       title: 'Match Participation Cancelled',
+       body: 'The host has removed you from the match at $stadiumName.',
+       type: 'info',
+       createdAt: DateTime.now(),
+       bookingId: bookingId,
+     ),
+   );
+ } catch (_) {
+   VSPLogger.w('Participant removed; notification delivery unavailable');
+ }
+ return true;
  }
 
  Future<bool> leavePrivateCollectiveMatch(String bookingId, String userId) async {
