@@ -31,6 +31,13 @@ class OwnerSubscriptionRepository {
   Future<Map<String, dynamic>> createProOrder({
     required String billingPeriod,
   }) async {
+    if (billingPeriod != 'monthly' && billingPeriod != 'annual') {
+      throw ArgumentError.value(
+        billingPeriod,
+        'billingPeriod',
+        'Only monthly or annual billing is supported.',
+      );
+    }
     final result = await _supabase.rpc(
       'create_owner_subscription_order',
       params: {
@@ -49,10 +56,14 @@ class OwnerSubscriptionRepository {
       body: {'subscription_order_id': subscriptionOrderId},
     );
     final data = Map<String, dynamic>.from(response.data as Map);
-    final checkoutUrl = data['checkout_url']?.toString();
-    if (checkoutUrl == null || checkoutUrl.isEmpty) {
-      throw StateError('checkout_url_missing');
+    final checkoutUrl = data['checkout_url']?.toString().trim();
+    final checkoutUri =
+        checkoutUrl == null ? null : Uri.tryParse(checkoutUrl);
+    if (checkoutUri == null ||
+        checkoutUri.scheme != 'https' ||
+        checkoutUri.host.isEmpty) {
+      throw StateError('checkout_url_missing_or_unsafe');
     }
-    return checkoutUrl;
+    return checkoutUri.toString();
   }
 }
