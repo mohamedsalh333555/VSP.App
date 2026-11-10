@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
@@ -37,6 +39,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
   String _selectedGovernorate = 'All';
   String _selectedFloorType = 'All';
   StadiumSortOption _sortOption = StadiumSortOption.featured;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -58,8 +61,18 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _scheduleSearch(String value) {
+    _searchDebounce?.cancel();
+    setState(() => _searchQuery = value);
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted || value != _searchController.text) return;
+      _applyServerFilters(context.read<StadiumProvider>());
+    });
   }
 
   List<Stadium> _filterAndSortStadiums(List<Stadium> allStadiums) => allStadiums;
@@ -395,17 +408,19 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val;
-                  });
+                  _scheduleSearch(val);
                 },
-                onSubmitted: (_) => _applyServerFilters(context.read<StadiumProvider>()),
+                onSubmitted: (_) {
+                  _searchDebounce?.cancel();
+                  _applyServerFilters(context.read<StadiumProvider>());
+                },
               ),
             ),
             if (_searchController.text.isNotEmpty)
               IconButton(
                 icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
                 onPressed: () {
+                  _searchDebounce?.cancel();
                   setState(() {
                     _searchController.clear();
                     _searchQuery = '';
