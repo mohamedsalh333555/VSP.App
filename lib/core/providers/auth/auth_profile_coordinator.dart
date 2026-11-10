@@ -38,6 +38,7 @@ class AuthProfileCoordinator {
       file: file,
     );
     if (res.success && res.imageUrl != null) {
+      final oldImageUrl = currentUserModel?.profileImageUrl;
       UserModel? updated = currentUserModel?.copyWith(profileImageUrl: res.imageUrl);
       final updateRes = await _profileService.updateProfile(
         authUser: authUser,
@@ -46,6 +47,9 @@ class AuthProfileCoordinator {
         data: {'profileImageUrl': res.imageUrl},
       );
       if (!updateRes.success) {
+        // The database still points to the old image. Remove the newly
+        // uploaded orphan and preserve the currently visible profile photo.
+        await _profileService.deleteProfilePhoto(res.imageUrl!);
         return (
           success: false,
           error: updateRes.error ?? 'Failed to save profile image URL',
@@ -54,6 +58,13 @@ class AuthProfileCoordinator {
       }
       if (updateRes.updatedModel != null) {
         updated = updateRes.updatedModel;
+      }
+      if (oldImageUrl != null &&
+          oldImageUrl.isNotEmpty &&
+          oldImageUrl != res.imageUrl) {
+        // URL persistence succeeded, so the previous object is now safe to
+        // remove. Cleanup failure must not roll back the saved profile.
+        await _profileService.deleteProfilePhoto(oldImageUrl);
       }
       return (success: true, error: null, updatedModel: updated);
     }
