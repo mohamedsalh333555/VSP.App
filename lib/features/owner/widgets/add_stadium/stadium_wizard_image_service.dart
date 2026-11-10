@@ -158,11 +158,13 @@ class StadiumWizardImageService {
     }
   }
 
-  static Future<void> deleteUploadedImage(String url) async {
+  static Future<bool> deleteUploadedImage(String url) async {
     try {
       await _storageService.deleteFile(url);
+      return true;
     } catch (e) {
       debugPrint('Error deleting uploaded image: $e');
+      return false;
     }
   }
 }
