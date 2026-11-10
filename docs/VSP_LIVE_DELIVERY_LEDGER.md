@@ -583,3 +583,12 @@ After reading Work's latest authentication, discovery, team and stadium-media ba
 - `25e441a`: normalize persisted payment-status strings (trim/case) before interpreting paid/refund-pending values, so legacy casing does not hide a booking.
 - Mapping: **16.02**, **27.04**, **29.05** remain IN_PROGRESS / pending consolidated verification; these commits do not close full acceptance subtasks.
 - **72 VERIFIED / 620 total / 548 unaccepted**. Flutter analyze/tests, device journeys and payment-server reconciliation deferred; no production DB, payment writes, main merge or APK.
+
+
+## Owner unpaid-checkout grace and cancelled payment records — 2026-11-10
+
+- `75f2961`, `b54777b`: owner list now includes unpaid online pending checkouts during the 10-minute payment grace period, archives them after grace, and keeps cash or paid/deposit pending bookings active until booking end. This aligns owner visibility with the player-side checkout lifecycle.
+- `75afc2b`: cancelled checkout history uses the same normalized payment predicate and preserves already-refunded transactions rather than hiding them as unpaid abandonment.
+- `03ec2ef`: documents the owner classification contract in source.
+- Candidate mapping: **16.02, 16.05, 23.01, 27.04, 29.05** are **CODE_DONE partial / Pending Verification**. Still require model-level unit tests, payment reconciliation, boundary conditions and E2E.
+- **Official count: 72 VERIFIED / 620 total / 548 unaccepted**; no production schema/payment writes, main merge, or APK.
