@@ -6,6 +6,7 @@ import '../../../../core/repositories/owner_repository.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../core/utils/app_error_handler.dart';
 import '../../screens/owner_account_management_screen.dart';
 
@@ -128,8 +129,8 @@ class OwnerPayoutDialog {
               VSPFeedback.showSuccess(
                 context,
                 isAr
-                    ? 'تم إرسال طلب تسوية بمبلغ ${amount.toStringAsFixed(0)} ج.م للإدارة بنجاح.\nسيتم إشعارك فور إتمام التحويل.'
-                    : 'Payout settlement request of ${amount.toStringAsFixed(0)} EGP submitted successfully.',
+                    ? 'تم إرسال طلب تسوية بمبلغ ${VSPMoneyFormatter.amount(amount)} ج.م للإدارة بنجاح.\nسيتم إشعارك فور إتمام التحويل.'
+                    : 'Payout settlement request of ${VSPMoneyFormatter.amount(amount)} EGP submitted successfully.',
               );
             } else {
               final error = res['error']?.toString() ?? 'payout_request_failed';
@@ -176,7 +177,9 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
   @override
   void initState() {
     super.initState();
-    _amountController = TextEditingController(text: widget.digitalBalance.toStringAsFixed(0));
+    _amountController = TextEditingController(
+      text: VSPMoneyFormatter.amount(widget.digitalBalance),
+    );
     _selectedMethodId = widget.destinations.first['id']!;
   }
 
@@ -232,7 +235,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    '${widget.digitalBalance.toStringAsFixed(0)} ${widget.isAr ? "ج.م" : "EGP"}',
+                    '${VSPMoneyFormatter.amount(widget.digitalBalance)} ${widget.isAr ? "ج.م" : "EGP"}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.end,
@@ -278,7 +281,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
                     onTap: () {
                       _amountController.text =
-                          widget.digitalBalance.toStringAsFixed(0);
+                          VSPMoneyFormatter.amount(widget.digitalBalance);
                       _validateAmount(_amountController.text);
                     },
                     child: Padding(
@@ -288,8 +291,8 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                       ),
                       child: Text(
                         widget.isAr
-                            ? 'سحب كامل الرصيد (${widget.digitalBalance.toInt()} ج.م)'
-                            : 'Withdraw Full Balance (${widget.digitalBalance.toInt()} EGP)',
+                            ? 'سحب كامل الرصيد (${VSPMoneyFormatter.amount(widget.digitalBalance)} ج.م)'
+                            : 'Withdraw Full Balance (${VSPMoneyFormatter.amount(widget.digitalBalance)} EGP)',
                         style: const TextStyle(
                           color: VSPColors.accent,
                           fontSize: 11,
