@@ -11,6 +11,7 @@ import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_error_state.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../screens/team_profile_screen.dart';
 import 'champion_podium_components.dart';
 import 'champion_empty_state.dart';
 
@@ -73,6 +74,14 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
       _initStream();
     });
     widget.onRetry();
+  }
+
+  void _openTeamProfile(BuildContext context, Team team) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TeamProfileScreen(team: team),
+      ),
+    );
   }
 
   @override
@@ -186,6 +195,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                             borderColor: VSPColors.medalSilver,
                             bgColor: VSPColors.surface,
                             isMyTeam: isUserTeam(top3[1]),
+                            onTap: () => _openTeamProfile(context, top3[1]),
                           ),
                         ),
                       ),
@@ -204,6 +214,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                             bgColor: VSPColors.surfaceAlt,
                             isCenter: true,
                             isMyTeam: isUserTeam(top3[0]),
+                            onTap: () => _openTeamProfile(context, top3[0]),
                           ),
                         ),
                       ),
@@ -221,6 +232,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                             borderColor: VSPColors.medalBronze,
                             bgColor: VSPColors.surface,
                             isMyTeam: isUserTeam(top3[2]),
+                            onTap: () => _openTeamProfile(context, top3[2]),
                           ),
                         ),
                       ),
@@ -395,9 +407,18 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
     final initialLetter =
         team.name.trim().isNotEmpty ? team.name.trim().split(' ').last.substring(0, 1).toUpperCase() : 'T';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Semantics(
+      button: true,
+      label: isArabic
+          ? 'فتح تفاصيل فريق ${team.name}'
+          : 'Open ${team.name} team details',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _openTeamProfile(context, team),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
         color: isMyTeam ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: isMyTeam
@@ -413,7 +434,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
               ]
             : null,
       ),
-      child: Row(
+          child: Row(
         children: [
           // Rank Number
           SizedBox(
@@ -542,6 +563,8 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }
