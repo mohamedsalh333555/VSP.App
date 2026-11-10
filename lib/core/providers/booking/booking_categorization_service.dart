@@ -78,7 +78,7 @@ class BookingCategorizationService {
       if (_needsPaymentReconciliation(b)) return true;
       // Online unpaid checkouts have a 10-minute payment grace period.
       final isRecent = b.createdAt.isAfter(tenMinutesAgo);
-      return !b.isPaid && isRecent;
+      return !_needsPaymentReconciliation(b) && isRecent;
     }).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
