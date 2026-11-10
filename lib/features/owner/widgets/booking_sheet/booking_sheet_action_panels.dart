@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -66,11 +67,11 @@ class BookingSheetPastPanel extends StatelessWidget {
 
     final String cashBtnText = isHybrid
         ? (isArabic
-            ? 'تأكيد استلام المتبقي (${remainingCash.toInt()} ج.م) كاش '
-            : 'Confirm Remaining (${remainingCash.toInt()} EGP) Cash ')
+            ? 'تأكيد استلام المتبقي (${VSPMoneyFormatter.amount(remainingCash)} ج.م) كاش '
+            : 'Confirm Remaining (${VSPMoneyFormatter.amount(remainingCash)} EGP) Cash ')
         : (isArabic
-            ? 'تأكيد استلام كامل المبلغ (${booking.totalPrice.toInt()} ج.م) كاش '
-            : 'Confirm Full Cash (${booking.totalPrice.toInt()} EGP) ');
+            ? 'تأكيد استلام كامل المبلغ (${VSPMoneyFormatter.amount(booking.totalPrice)} ج.م) كاش '
+            : 'Confirm Full Cash (${VSPMoneyFormatter.amount(booking.totalPrice)} EGP) ');
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -200,11 +201,11 @@ class BookingSheetCashPanel extends StatelessWidget {
     final isHybrid = booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice;
     final String cashBtnText = isHybrid
         ? (isArabic
-            ? 'تأكيد استلام المتبقي (${remainingCash.toInt()} ج.م) كاش بالملعب '
-            : 'Confirm Remaining (${remainingCash.toInt()} EGP) Cash at Pitch ')
+            ? 'تأكيد استلام المتبقي (${VSPMoneyFormatter.amount(remainingCash)} ج.م) كاش بالملعب '
+            : 'Confirm Remaining (${VSPMoneyFormatter.amount(remainingCash)} EGP) Cash at Pitch ')
         : (isArabic
-            ? 'تأكيد استلام كامل المبلغ (${booking.totalPrice.toInt()} ج.م) كاش بالملعب '
-            : 'Confirm Full Cash (${booking.totalPrice.toInt()} EGP) at Pitch ');
+            ? 'تأكيد استلام كامل المبلغ (${VSPMoneyFormatter.amount(booking.totalPrice)} ج.م) كاش بالملعب '
+            : 'Confirm Full Cash (${VSPMoneyFormatter.amount(booking.totalPrice)} EGP) at Pitch ');
 
     return Column(
       mainAxisSize: MainAxisSize.min,
