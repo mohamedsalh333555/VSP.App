@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_launcher_utils.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import 'champion_screen.dart';
 import 'player_home_screen.dart';
 
@@ -771,7 +772,7 @@ class _TournamentRegistrationSuccessScreenState
             _buildDetailRow(
               icon: Iconsax.moneys_copy,
               label: 'مجموع الجوائز:',
-              value: '${_prizePool.toStringAsFixed(0)} ج.م',
+              value: '${VSPMoneyFormatter.amount(_prizePool)} ج.م',
               valueColor: VSPColors.medalGold,
               isBold: true,
             ),
@@ -782,7 +783,7 @@ class _TournamentRegistrationSuccessScreenState
           _buildDetailRow(
             icon: Iconsax.card_pos_copy,
             label: 'رسوم الاشتراك المسددة:',
-            value: '${_entryFee.toStringAsFixed(0)} ج.م (باي موب)',
+            value: '${VSPMoneyFormatter.amount(_entryFee)} ج.م (باي موب)',
           ),
           const SizedBox(height: 12),
 
