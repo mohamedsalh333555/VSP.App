@@ -67,8 +67,11 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         if (plan['code'] == 'basic') freePlan = plan;
         if (plan['code'] == 'pro') proPlan = plan;
       }
-      if (freePlan == null || proPlan == null) {
-        throw StateError('subscription_plan_missing');
+      if (freePlan == null ||
+          proPlan == null ||
+          !_isValidPlan(freePlan) ||
+          !_isValidPlan(proPlan)) {
+        throw StateError('subscription_plan_missing_or_invalid');
       }
       if (!mounted || requestGeneration != _plansRequestGeneration) return;
       setState(() {
@@ -114,6 +117,38 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       labels.add(isArabic ? 'دعم فني قياسي' : 'Standard support');
     }
     return labels;
+  }
+
+  bool _isValidPlan(Map<String, dynamic> plan) {
+    final monthly = _planAmount(plan, 'monthly_price');
+    final yearly = _planAmount(plan, 'yearly_price');
+    final trialDays = _planNumber(plan, 'trial_days', fallback: -1);
+    final maxStadiums = _planNumber(plan, 'max_stadiums', fallback: -1);
+    return monthly.isFinite &&
+        yearly.isFinite &&
+        monthly >= 0 &&
+        yearly >= 0 &&
+        trialDays >= 0 &&
+        maxStadiums > 0 &&
+        plan['features'] is Map;
+  }
+
+  double _planAmount(
+    Map<String, dynamic> plan,
+    String key, {
+    double fallback = double.nan,
+  }) {
+    final value = plan[key];
+    return value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString().trim() ?? '') ?? fallback;
+  }
+
+  String _formatAmount(double value) {
+    if (!value.isFinite || value < 0) return '—';
+    return value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(2);
   }
 
   String _planDescription(Map<String, dynamic> plan, bool isArabic) {
@@ -344,8 +379,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             children: [
               Text(
                 isArabic
-                    ? '${_planNumber(plan, 'monthly_price')} جنيه'
-                    : '${_planNumber(plan, 'monthly_price')} EGP',
+                    ? '${_formatAmount(_planAmount(plan, 'monthly_price'))} جنيه'
+                    : '${_formatAmount(_planAmount(plan, 'monthly_price'))} EGP',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontSize: 28,
@@ -427,8 +462,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     bool isTrialActive,
     Map<String, dynamic> plan,
   ) {
-    final monthlyPrice = _planNumber(plan, 'monthly_price');
-    final annualPrice = _planNumber(plan, 'yearly_price');
+    final monthlyPrice = _planAmount(plan, 'monthly_price');
+    final annualPrice = _planAmount(plan, 'yearly_price');
     final annualSavings = monthlyPrice * 12 - annualPrice;
     return Container(
       width: double.infinity,
@@ -613,8 +648,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       )
                     : Text(
                         isArabic
-                            ? 'اشترك الآن (${_planNumber(plan, 'monthly_price')} جنيه / شهر)'
-                            : 'Subscribe Now (${_planNumber(plan, 'monthly_price')} EGP/mo)',
+                            ? 'اشترك الآن (${_formatAmount(_planAmount(plan, 'monthly_price'))} جنيه / شهر)'
+                            : 'Subscribe Now (${_formatAmount(_planAmount(plan, 'monthly_price'))} EGP/mo)',
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 13,
@@ -642,8 +677,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                     : Text(
                     isArabic
-                        ? 'اشتراك سنوي • $annualPrice جنيه'
-                        : 'Annual subscription • $annualPrice EGP',
+                        ? 'اشتراك سنوي • ${_formatAmount(annualPrice)} جنيه'
+                        : 'Annual subscription • ${_formatAmount(annualPrice)} EGP',
                     style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                   ),
                 ),
@@ -653,8 +688,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 Center(
                   child: Text(
                     isArabic
-                        ? 'وفّر $annualSavings جنيه مقارنة بالدفع الشهري'
-                        : 'Save $annualSavings EGP compared with monthly billing',
+                        ? 'وفّر ${_formatAmount(annualSavings)} جنيه مقارنة بالدفع الشهري'
+                        : 'Save ${_formatAmount(annualSavings)} EGP compared with monthly billing',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: VSPColors.accent,
