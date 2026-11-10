@@ -14,6 +14,8 @@ class StadiumRepository {
         .from('stadiums')
         .stream(primaryKey: ['id'])
         .eq('is_deleted_by_owner', false)
+        .eq('is_verified', true)
+        .eq('is_blocked', false)
         .limit(limit)
         .map((list) => list
             .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
@@ -553,8 +555,12 @@ class StadiumRepository {
       });
       final List<dynamic> list = response as List? ?? [];
       return list
-          .map((data) => Stadium.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
-          .toList();
+          .map((data) => Stadium.fromFirestore(
+                data as Map<String, dynamic>,
+                data['id'].toString(),
+              ))
+          .where((stadium) => stadium.isVerified && !stadium.isBlocked)
+          .toList(growable: false);
     } catch (e) {
       VSPLogger.e('FAILED TO FETCH NEARBY STADIUMS', e);
       rethrow;
