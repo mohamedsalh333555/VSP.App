@@ -446,6 +446,9 @@ class StadiumRepository {
         .from('stadiums')
         .stream(primaryKey: ['id'])
         .eq('id', stadiumId)
+        .eq('is_deleted_by_owner', false)
+        .eq('is_verified', true)
+        .eq('is_blocked', false)
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) => sink.addError(StateError('stadium_stream_timeout')),
