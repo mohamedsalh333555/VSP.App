@@ -1,6 +1,6 @@
 # Phase 10 Delivery Report
 
-Status: **IN PROGRESS — NOT A COMPLETION DECLARATION** · Updated 2026-11-09
+Status: **IN PROGRESS — NOT A COMPLETION DECLARATION** · Updated 2026-11-10
 
 ## Implemented
 
@@ -15,7 +15,7 @@ Status: **IN PROGRESS — NOT A COMPLETION DECLARATION** · Updated 2026-11-09
 
 ## Tested
 
-The new contracts are committed and awaiting current-head Flutter CI. The most recent pre-batch run isolated a single notification widget fixture failure, which was repaired without weakening production filtering. Do not treat committed tests as passing until the current-head run completes.
+Current-head Flutter CI [run 42825931860](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42825931860) passed analyzer, the architecture gate and the full suite (**1057 passed, 10 explicitly skipped**). Android public/auth staging smoke [run 42824370641](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42824370641) passed onboarding/login on the same application-code checkpoint before test/workflow-only follow-ups. These results verify the automated contracts; they do not prove conversion uplift, Firebase dashboard delivery, two-account authorization, payments, or all 24 end-to-end journeys.
 
 ## Measured
 
