@@ -251,6 +251,9 @@ class BookingQueryCoordinator {
 
   /// Direct REST query fetching only non-sensitive booking slot data.
   Future<List<Booking>> fetchStadiumBookingsDirectly(String stadiumId, DateTime date) async {
+    if (stadiumId.trim().isEmpty) {
+      throw ArgumentError.value(stadiumId, 'stadiumId', 'Stadium ID is required');
+    }
     try {
       final startOfDay = DateTime(date.year, date.month, date.day);
       final endOfDay = startOfDay.add(const Duration(days: 2));
@@ -266,16 +269,30 @@ class BookingQueryCoordinator {
               ))
           .toList();
     } catch (e) {
-      VSPLogger.w('fetchStadiumBookingsDirectly notice: $e');
-      return [];
+      VSPLogger.w('fetchStadiumBookingsDirectly failed');
+      rethrow;
     }
   }
 
-  /// Polls the scoped stadium-slot RPC so public users never receive private booking fields.
+  /// Polls the scoped stadium-slot RPC so public users never receive private
+  /// booking fields. A failed read is never converted to an authoritative
+  /// empty schedule: the UI either retains the last verified snapshot or
+  /// receives an error on the initial load.
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) async* {
+    List<Booking>? lastVerified;
     while (true) {
-      final refreshed = await fetchStadiumBookingsDirectly(stadiumId, date);
-      yield refreshed;
+      try {
+        final refreshed = await fetchStadiumBookingsDirectly(stadiumId, date);
+        lastVerified = refreshed;
+        yield refreshed;
+      } catch (e, stack) {
+        if (lastVerified == null) {
+          Error.throwWithStackTrace(e, stack);
+        }
+        VSPLogger.w(
+          'Availability refresh failed; retaining the last verified snapshot',
+        );
+      }
       await Future<void>.delayed(const Duration(seconds: 10));
     }
   }
