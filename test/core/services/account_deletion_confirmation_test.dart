@@ -37,6 +37,7 @@ void main() {
             jsonEncode(rpcResponse),
             rpcStatus,
             headers: {'content-type': 'application/json'},
+            request: request,
           );
         }
         if (failBookingLookup) {
@@ -48,7 +49,7 @@ void main() {
         );
         return http.Response('[]', 200, headers: {
           'content-type': 'application/json',
-        });
+        }, request: request);
       }),
     );
     addTearDown(client.dispose);

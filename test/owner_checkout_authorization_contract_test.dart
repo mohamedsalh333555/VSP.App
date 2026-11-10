@@ -21,7 +21,7 @@ void main() {
     expect(source, contains('if (!isAdmin && !isOrderOwner)'));
     expect(source, isNot(contains('owner_id,checkout_email,status')));
     expect(source, contains('FORBIDDEN_NOT_ORDER_OWNER'));
-    expect(source, contains('sb.auth.getUser(token)'));
+    expect(source, matches(RegExp(r'sb\.auth\.getUser\(\s*token\s*,?\s*\)')));
   });
 
   test('SEC-06: deployed checkout entrypoints use request-tested handlers', () {
