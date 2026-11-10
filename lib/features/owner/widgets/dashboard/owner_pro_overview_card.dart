@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/owner_financial_calculator.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import 'owner_time_period_dropdown.dart';
 
 /// كارت النظرة العامة للتحليلات للباقة الاحترافية (Pro Overview Analytics)
@@ -59,7 +60,7 @@ class OwnerProOverviewCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                metrics.totalPipeline.toStringAsFixed(0),
+                VSPMoneyFormatter.amount(metrics.totalPipeline),
                 style: const TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.w900,
@@ -99,7 +100,7 @@ class OwnerProOverviewCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${metrics.pitchCashRevenue.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
+                        '${VSPMoneyFormatter.amount(metrics.pitchCashRevenue)} ${isArabic ? "ج.م" : "EGP"}',
                         style: const TextStyle(color: VSPColors.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -124,7 +125,7 @@ class OwnerProOverviewCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${metrics.digitalVspBalance.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
+                        '${VSPMoneyFormatter.amount(metrics.digitalVspBalance)} ${isArabic ? "ج.م" : "EGP"}',
                         style: const TextStyle(color: VSPColors.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                     ],
