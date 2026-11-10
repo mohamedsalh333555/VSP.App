@@ -592,3 +592,10 @@ After reading Work's latest authentication, discovery, team and stadium-media ba
 - `03ec2ef`: documents the owner classification contract in source.
 - Candidate mapping: **16.02, 16.05, 23.01, 27.04, 29.05** are **CODE_DONE partial / Pending Verification**. Still require model-level unit tests, payment reconciliation, boundary conditions and E2E.
 - **Official count: 72 VERIFIED / 620 total / 548 unaccepted**; no production schema/payment writes, main merge, or APK.
+
+
+## Booking categorization regression coverage — 2026-11-10
+
+- `571100d`, `f05ebb6`: added **13 Flutter unit test cases** at `test/core/providers/booking/booking_categorization_service_test.dart` covering player and owner unpaid checkout grace, exact ten-minute boundary, paid/deposit/refund pending reconciliation, end-time history, same-stadium overlap, cross-stadium isolation, cancelled refunded checkout visibility, deterministic sorting/input immutability, and manual booking ID merge/cancel exclusions.
+- This is **test implementation only**; the tests have **not been executed**. Candidate mappings: **16.02, 16.05, 16.06, 23.01, 27.04, 29.05, 57.02**. They remain pending verification; no assertion that test results passed.
+- **72 VERIFIED / 620 total / 548 unaccepted**. No production DB/payment writes, main merge or APK.
