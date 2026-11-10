@@ -140,9 +140,34 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
         // not only with the route's original widget argument.
         final displayImages = _collectDisplayImages(stadium);
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        final hasStreamIssue = snapshot.hasError ||
-            (snapshot.hasData && snapshot.data!.isEmpty) ||
-            parseFailed;
+        final isUnavailable = !widget.stadium.isVerified ||
+            (snapshot.hasData && snapshot.data!.isEmpty);
+        final hasStreamIssue = snapshot.hasError || parseFailed;
+
+        if (isUnavailable) {
+          return VSPScaffold(
+            backgroundColor: VSPColors.background,
+            appBar: AppBar(
+              backgroundColor: VSPColors.background,
+              elevation: 0,
+              leading: const BackButton(color: VSPColors.textPrimary),
+            ),
+            body: SafeArea(
+              child: VSPStateView(
+                state: VSPUiState.error,
+                title: isArabic
+                    ? 'الملعب غير متاح حاليًا'
+                    : 'Pitch currently unavailable',
+                message: isArabic
+                    ? 'قد يكون الملعب قيد المراجعة أو متوقفًا عن استقبال الحجوزات.'
+                    : 'The pitch may be under review or unavailable for bookings.',
+                onRetry: widget.stadium.isVerified
+                    ? () => setState(_subscribeToStadium)
+                    : null,
+              ),
+            ),
+          );
+        }
 
         return VSPScaffold(
           backgroundColor: VSPColors.background,
