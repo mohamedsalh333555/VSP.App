@@ -177,7 +177,7 @@ void main() {
       expect(validStep1, isNull);
     });
 
-    test('validateStep2 checks empty images for new stadium', () {
+    test('validateStep2 requires an image for create and edit', () {
       final noImages = StadiumWizardValidator.validateStep2(
         images: [],
         stadiumId: null,
@@ -185,6 +185,14 @@ void main() {
         uploadPhotoError: 'Upload a photo',
       );
       expect(noImages, equals('Upload a photo'));
+
+      final noImagesOnEdit = StadiumWizardValidator.validateStep2(
+        images: [],
+        stadiumId: '123',
+        isArabic: false,
+        uploadPhotoError: 'Upload a photo',
+      );
+      expect(noImagesOnEdit, equals('Upload a photo'));
 
       final uploadingImages = StadiumWizardValidator.validateStep2(
         images: [
