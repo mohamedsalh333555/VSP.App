@@ -8,11 +8,27 @@ class OwnerRepository {
 
   OwnerRepository({SupabaseClient? client}) : _client = client;
 
+  String? _authenticatedOwnerId([String? requestedOwnerId]) {
+    final currentUserId = _supabase.auth.currentUser?.id;
+    if (currentUserId == null || currentUserId.isEmpty) return null;
+    final requested = requestedOwnerId?.trim();
+    if (requested != null &&
+        requested.isNotEmpty &&
+        requested != currentUserId) {
+      return null;
+    }
+    return currentUserId;
+  }
+
  Stream<List<Booking>> getOwnerBookings(String ownerId) {
+ final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+ if (authenticatedOwnerId == null) {
+ return Stream.error(StateError('owner_identity_mismatch'));
+ }
  return _supabase
  .from('bookings')
  .stream(primaryKey: ['id'])
- .eq('owner_id', ownerId)
+ .eq('owner_id', authenticatedOwnerId)
  .timeout(
  const Duration(seconds: 10),
  onTimeout: (sink) => sink.add([]),
@@ -30,6 +46,10 @@ class OwnerRepository {
  }
 
  Stream<List<Stadium>> getOwnerStadiums(String ownerId) {
+ final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+ if (authenticatedOwnerId == null) {
+ return Stream.error(StateError('owner_identity_mismatch'));
+ }
  return _supabase
  .from('stadiums')
  .stream(primaryKey: ['id'])
@@ -49,8 +69,12 @@ class OwnerRepository {
   /// جلب الملخص المالي المحاسبي الشامل للمالك من الخادم (Zero-Trust Accounting)
   Future<Map<String, dynamic>> getOwnerFinancialSummary(String ownerId) async {
     try {
+      final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+      if (authenticatedOwnerId == null) {
+        return {'success': false, 'error': 'owner_identity_mismatch'};
+      }
       final res = await _supabase.rpc('get_owner_financial_summary', params: {
-        'p_owner_id': ownerId,
+        'p_owner_id': authenticatedOwnerId,
       });
       if (res is Map) {
         return Map<String, dynamic>.from(res);
@@ -84,6 +108,8 @@ class OwnerRepository {
 
  Future<double> calculateBookedHours(String ownerId) async {
  try {
+ final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+ if (authenticatedOwnerId == null) return 0.0;
  final response = await _supabase
  .from('bookings')
  .select('start_time, end_time, status')
@@ -109,6 +135,7 @@ class OwnerRepository {
  return _supabase
  .from('transactions')
  .stream(primaryKey: ['id'])
+ .eq('user_id', uid)
  .timeout(
  const Duration(seconds: 10),
  onTimeout: (sink) => sink.add([]),
