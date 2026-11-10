@@ -222,6 +222,14 @@ void main() {
         ),
         contains('Booking duration overlaps'),
       );
+
+      final unknown = OwnerBookingSheetService.formatBookingErrorMessage(
+        'PostgrestException: relation private_table missing at 10.0.0.8',
+        isArabic: false,
+      );
+      expect(unknown, contains('Could not save the booking'));
+      expect(unknown, isNot(contains('private_table')));
+      expect(unknown, isNot(contains('10.0.0.8')));
     });
 
     test('buildManualBookingDraft constructs valid manual draft', () {
