@@ -48,6 +48,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   // Media, Geocoding, and UI states
   final List<Map<String, dynamic>> _images = [];
+  final Set<String> _removedExistingImageUrls = <String>{};
   final bool _isUploading = false;
   bool _isLocationLoading = false;
   bool _isSaving = false;
@@ -377,6 +378,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         isSplitShift: _isSplitShift,
         breakTimes: _breakTimes,
         images: _images,
+        removedExistingImageUrls: _removedExistingImageUrls,
         latitude: _latitude,
         longitude: _longitude,
         uid: _uid,
@@ -451,6 +453,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                     isSplitShiftValid: _isSplitShiftValid,
                     isLocationLoading: _isLocationLoading,
                     images: _images,
+                    removedExistingImageUrls: _removedExistingImageUrls,
                     isUploading: _isUploading,
                     isSaving: _isSaving,
                     onSelectSport: (val) => setState(() => _f.selectedSportType = val),
