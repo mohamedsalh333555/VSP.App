@@ -149,6 +149,10 @@ class BookingCategorizationService {
   }
 
   /// Categorizes owner bookings into upcoming and historical lists.
+  ///
+  /// An unpaid online checkout is actionable only during its ten-minute
+  /// grace period; afterward it stays visible in history. Cash and paid
+  /// pending bookings remain actionable until their booked end time.
   static CategorizedOwnerBookings categorizeOwnerBookings({
     required List<Booking> bookings,
     required DateTime now,
