@@ -4,6 +4,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_launcher_utils.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 
 /// جدول حجوزات اليوم الموحد
@@ -177,7 +178,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                '${b.totalPrice > 0 ? b.totalPrice.toStringAsFixed(0) : b.depositPaid.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
+                                '${VSPMoneyFormatter.amount(b.totalPrice > 0 ? b.totalPrice : b.depositPaid)} ${isArabic ? "ج.م" : "EGP"}',
                                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
                               ),
                               const SizedBox(width: 6),
