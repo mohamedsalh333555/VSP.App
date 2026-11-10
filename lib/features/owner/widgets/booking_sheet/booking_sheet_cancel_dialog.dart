@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 enum ManualBookingCancelDecision {
   refund,
@@ -77,8 +78,8 @@ class BookingSheetCancelDialog {
           children: [
             Text(
               isArabic
-                  ? 'هذا الحجز مسجل به عربون مقبوض بقيمة (${depositAmount.toInt()} ج.م).\nحدد الإجراء لتسوية حساب الدرج والدفتر بدقة:'
-                  : 'This booking has a deposit of (${depositAmount.toInt()} EGP).\nChoose how to reconcile this in your ledger:',
+                  ? 'هذا الحجز مسجل به عربون مقبوض بقيمة (${VSPMoneyFormatter.amount(depositAmount)} ج.م).\nحدد الإجراء لتسوية حساب الدرج والدفتر بدقة:'
+                  : 'This booking has a deposit of (${VSPMoneyFormatter.amount(depositAmount)} EGP).\nChoose how to reconcile this in your ledger:',
               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.4),
             ),
             const SizedBox(height: 16),
@@ -108,7 +109,7 @@ class BookingSheetCancelDialog {
                           const SizedBox(height: 2),
                           Text(
                             isArabic
-                                ? 'تسجيل استرداد وخصم ${depositAmount.toInt()} ج.م من الدفتر'
+                                ? 'تسجيل استرداد وخصم ${VSPMoneyFormatter.amount(depositAmount)} ج.م من الدفتر'
                                 : 'Deducts deposit from daily cash ledger',
                             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                           ),
