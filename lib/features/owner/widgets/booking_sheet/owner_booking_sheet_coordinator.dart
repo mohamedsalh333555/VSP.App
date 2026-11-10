@@ -5,6 +5,7 @@ import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/repositories/owner_repository.dart';
 import '../../../../core/services/notification_handler.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'booking_sheet_cancel_dialog.dart';
@@ -235,7 +236,7 @@ class OwnerBookingSheetCoordinator {
             context,
             refund
                 ? (isArabic
-                    ? 'تم إلغاء الحجز ورد العربون (${booking.depositPaid.toInt()} ج.م) وتسجيل الاسترداد في الدفتر.'
+                    ? 'تم إلغاء الحجز ورد العربون (${VSPMoneyFormatter.amount(booking.depositPaid)} ج.م) وتسجيل الاسترداد في الدفتر.'
                     : 'Booking cancelled & deposit refund recorded.')
                 : (isArabic
                     ? 'تم إلغاء الحجز وتثبيت العربون كشرط جزائي لصالحك.'
