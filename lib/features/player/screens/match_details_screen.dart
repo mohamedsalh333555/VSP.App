@@ -107,6 +107,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  VSPFeedback.showError(context, AppLocalizations.of(context)!.loginToJoinError);
  return;
  }
+ final initiatingUserId = auth.currentUser?.id;
+ if (initiatingUserId == null) return;
 
  setState(() {
  _isJoining = true;
@@ -124,13 +126,17 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
 
  final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
- final success = await bookingProvider.joinPublicMatch(widget.bookingId, auth.currentUser!.id);
+ final success = await bookingProvider.joinPublicMatch(
+   widget.bookingId,
+   initiatingUserId,
+ );
  
  if (mounted) {
  setState(() {
  _isJoining = false;
  _isActionProcessing = false;
  });
+ if (auth.currentUser?.id != initiatingUserId) return;
  if (success) {
  unawaited(AnalyticsService.logMatchJoined(widget.bookingId, 'public_match'));
  VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.matchJoinSuccess);
@@ -191,7 +197,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
        contextId: booking.id,
      );
      final conversationId = chat['id']?.toString();
-     if (!mounted || conversationId == null || conversationId.isEmpty) return;
+     if (!mounted ||
+         auth.currentUser?.id != currentUserId ||
+         conversationId == null ||
+         conversationId.isEmpty) {
+       return;
+     }
      Navigator.push(
        context,
        MaterialPageRoute(
@@ -206,7 +217,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
        ),
      );
    } catch (_) {
-     if (mounted) {
+     if (mounted && auth.currentUser?.id == currentUserId) {
        VSPFeedback.showError(
          context,
          Localizations.localeOf(context).languageCode == 'ar'
@@ -312,7 +323,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
      if (mounted) setState(() => _isReportingOwnerIssue = false);
    }
 
-   if (mounted) {
+   if (mounted &&
+       Provider.of<AuthProvider>(context, listen: false).currentUser?.id ==
+           currentUserId) {
      if (ok) {
        VSPFeedback.showSuccess(
          context,
@@ -414,16 +427,29 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
      contextId: widget.bookingId,
      bookingId: widget.bookingId,
    );
-   if (!context.mounted) return;
+   if (!context.mounted ||
+       !pageContext.mounted ||
+       Provider.of<AuthProvider>(pageContext, listen: false)
+               .currentUser
+               ?.id !=
+           reporterId) {
+     return;
+   }
    Navigator.pop(context);
-   if (!pageContext.mounted) return;
    if (success) {
      VSPFeedback.showSuccess(pageContext, AppLocalizations.of(pageContext)!.reportSubmitted);
    } else {
      VSPFeedback.showError(pageContext, AppLocalizations.of(pageContext)!.reportFailed);
    }
  } catch (_) {
-   if (!context.mounted) return;
+   if (!context.mounted ||
+       !pageContext.mounted ||
+       Provider.of<AuthProvider>(pageContext, listen: false)
+               .currentUser
+               ?.id !=
+           reporterId) {
+     return;
+   }
    setDialogState(() => isSubmittingReport = false);
    if (pageContext.mounted) {
      VSPFeedback.showError(pageContext, AppLocalizations.of(pageContext)!.reportFailed);
@@ -486,7 +512,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true ||
+        !mounted ||
+        auth.currentUser?.id != currentUserId) {
+      return;
+    }
 
     setState(() => _isActionProcessing = true);
     try {
@@ -495,6 +525,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
          : await MatchRepository().leavePublicMatch(widget.bookingId, currentUserId);
       if (mounted) {
         setState(() => _isActionProcessing = false);
+        if (auth.currentUser?.id != currentUserId) return;
         if (success) {
           VSPFeedback.showSuccess(
             context,
@@ -511,6 +542,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isActionProcessing = false);
+        if (auth.currentUser?.id != currentUserId) return;
         VSPFeedback.showError(
           context,
           isArabic ? 'تعذر مغادرة المباراة. حاول مرة أخرى.' : 'Could not leave the match. Please try again.',
