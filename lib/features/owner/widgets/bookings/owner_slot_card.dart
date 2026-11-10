@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -232,11 +233,11 @@ class OwnerSlotCard extends StatelessWidget {
                       } else if (isPartiallyPaid) {
                         badgeLabel = isCompleted
                             ? (isAr
-                                ? 'متبقي للتحصيل ${remaining.toStringAsFixed(0)} ج.م'
-                                : 'Past due ${remaining.toStringAsFixed(0)} EGP')
+                                ? 'متبقي للتحصيل ${VSPMoneyFormatter.amount(remaining)} ج.م'
+                                : 'Past due ${VSPMoneyFormatter.amount(remaining)} EGP')
                             : (isAr
-                                ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م'
-                                : 'Rem. ${remaining.toStringAsFixed(0)} EGP');
+                                ? 'متبقي ${VSPMoneyFormatter.amount(remaining)} ج.م'
+                                : 'Rem. ${VSPMoneyFormatter.amount(remaining)} EGP');
                         badgeColor = isCompleted ? VSPColors.warning : VSPColors.info;
                       } else if (isCompleted) {
                         badgeLabel = isAr ? 'تحصيل متأخر' : 'Collection overdue';
@@ -278,7 +279,7 @@ class OwnerSlotCard extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                '${cardPrice.toInt()} ${isAr ? "ج.م" : "EGP"}',
+                '${VSPMoneyFormatter.amount(cardPrice)} ${isAr ? "ج.م" : "EGP"}',
                 style: const TextStyle(
                   color: VSPColors.accent,
                   fontWeight: FontWeight.bold,
