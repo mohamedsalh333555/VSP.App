@@ -92,7 +92,7 @@ class BookingCategorizationService {
         if (b.isPaid || b.isDepositPaid || b.depositPaid > 0 ||
             b.paymentStatus == 'paid' ||
             b.paymentStatus == 'refund_pending') {
-          return false;
+          return !b.endTime.isAfter(now);
         }
         // A pending checkout displaced by a confirmed booking is historical,
         // even if its own checkout grace period has not elapsed.
