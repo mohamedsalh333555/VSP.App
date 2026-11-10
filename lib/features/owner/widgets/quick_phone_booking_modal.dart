@@ -9,6 +9,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
 import 'quick_booking/quick_booking_customer_fields.dart';
@@ -137,7 +138,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
 
   void _setPaidAmount(double amount) {
     HapticFeedback.selectionClick();
-    _paidAmountController.text = amount == amount.toInt() ? '${amount.toInt()}' : '$amount';
+    _paidAmountController.text = VSPMoneyFormatter.amount(amount);
   }
 
   Future<void> _handleQuickBooking() async {
@@ -170,7 +171,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
       VSPFeedback.showError(
         context,
         isAr
-            ? 'المبلغ المقبوض (${paidAmount.toInt()} ج.م) لا يمكن أن يتجاوز إجمالي سعر الحجز (${totalPrice.toInt()} ج.م)'
+            ? 'المبلغ المقبوض (${VSPMoneyFormatter.amount(paidAmount)} ج.م) لا يمكن أن يتجاوز إجمالي سعر الحجز (${VSPMoneyFormatter.amount(totalPrice)} ج.م)'
             : 'Collected amount cannot exceed total booking price',
       );
       return;
