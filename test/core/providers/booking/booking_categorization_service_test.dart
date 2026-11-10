@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vsp_app/core/providers/booking/booking_categorization_service.dart';
-import 'package:vsp_app/data/models.dart';
+import 'package:vsp_application/core/providers/booking/booking_categorization_service.dart';
+import 'package:vsp_application/data/models.dart';
 
 void main() {
   final now = DateTime.utc(2026, 11, 10, 12);
