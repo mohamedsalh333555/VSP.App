@@ -15,6 +15,7 @@ import 'chat_screen.dart';
 import 'player_home_screen.dart';
 import 'bookings_screen.dart';
 import '../../../core/utils/vsp_match_invite_formatter.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
  final Booking booking;
@@ -107,8 +108,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
      : (isArabic ? 'دفع إلكتروني كامل' : 'Full Online Payment');
 
  final formattedPriceAndPayment = isArabic
- ? '${widget.booking.totalPrice.toInt()} ج.م • $paymentMethodText'
- : '${widget.booking.totalPrice.toInt()} EGP • $paymentMethodText';
+ ? '${VSPMoneyFormatter.amount(widget.booking.totalPrice)} ج.م • $paymentMethodText'
+ : '${VSPMoneyFormatter.amount(widget.booking.totalPrice)} EGP • $paymentMethodText';
 
  return PopScope(
  canPop: false,
@@ -228,7 +229,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  _buildDetailRow(
  Iconsax.card_pos_copy, 
  isArabic ? 'العربون المدفوع أونلاين' : 'Online Deposit Paid', 
- isArabic ? '${widget.booking.depositPaid.toInt()} ج.م ' : '${widget.booking.depositPaid.toInt()} EGP ',
+ isArabic ? '${VSPMoneyFormatter.amount(widget.booking.depositPaid)} ج.م ' : '${VSPMoneyFormatter.amount(widget.booking.depositPaid)} EGP ',
  ),
  if (widget.booking.totalPrice > widget.booking.depositPaid) ...[
  const Divider(color: VSPColors.divider, height: 16),
@@ -236,8 +237,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Iconsax.money_send_copy, 
  isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch', 
  isArabic 
- ? '${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} ج.م ' 
- : '${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} EGP ',
+ ? '${VSPMoneyFormatter.amount(widget.booking.totalPrice - widget.booking.depositPaid)} ج.م '
+ : '${VSPMoneyFormatter.amount(widget.booking.totalPrice - widget.booking.depositPaid)} EGP ',
  ),
  const Divider(color: VSPColors.divider, height: 16),
  Container(
@@ -255,8 +256,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Expanded(
  child: Text(
  isArabic
- ? 'تنبيه: تم سداد العربون فقط. يرجى سداد المبلغ المتبقي (${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} ج.م) نقداً عند شباك الملعب.'
- : 'Notice: Deposit only paid. Please pay the remaining balance (${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} EGP) in cash at the pitch.',
+ ? 'تنبيه: تم سداد العربون فقط. يرجى سداد المبلغ المتبقي (${VSPMoneyFormatter.amount(widget.booking.totalPrice - widget.booking.depositPaid)} ج.م) نقداً عند شباك الملعب.'
+ : 'Notice: Deposit only paid. Please pay the remaining balance (${VSPMoneyFormatter.amount(widget.booking.totalPrice - widget.booking.depositPaid)} EGP) in cash at the pitch.',
  style: const TextStyle(color: VSPColors.accent, fontSize: 11.5, fontWeight: FontWeight.bold),
  ),
  ),
@@ -281,8 +282,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Expanded(
  child: Text(
  isArabic
- ? 'تنبيه: يلزم سداد كامل المبلغ (${widget.booking.totalPrice.toInt()} ج.م) نقداً عند شباك الملعب قبل النزول.'
- : 'Notice: Full payment (${widget.booking.totalPrice.toInt()} EGP) must be paid in cash at the pitch before the match.',
+ ? 'تنبيه: يلزم سداد كامل المبلغ (${VSPMoneyFormatter.amount(widget.booking.totalPrice)} ج.م) نقداً عند شباك الملعب قبل النزول.'
+ : 'Notice: Full payment (${VSPMoneyFormatter.amount(widget.booking.totalPrice)} EGP) must be paid in cash at the pitch before the match.',
  style: const TextStyle(color: VSPColors.warning, fontSize: 11.5, fontWeight: FontWeight.bold),
  ),
  ),
