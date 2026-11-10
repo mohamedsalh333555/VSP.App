@@ -543,3 +543,16 @@ Owner directive is now explicit: implement **all 620 subtasks without exception*
 - `e1f4b43`: execution policy updated so future batches cannot misread deferred tests as deferred implementation.
 - Mapping: **12.01–12.06, 13.02, 13.05–13.06 and 15.01–15.05 are IMPLEMENTED_PENDING_VERIFICATION / IN_PROGRESS**. Device upload rollback, concurrent-device conflict, private-team visibility and regression acceptance remain in the final verification queue.
 - **Verified remains 72/620. Implementation continues across all 548 unaccepted subtasks; this is not a scope reduction.** No `main` merge, APK build or production database action.
+
+
+## Authentication, discovery, active-team and stadium-media continuation — 2026-11-10
+
+All changes below are **IMPLEMENTED_PENDING_VERIFICATION** under the all-620 directive. Final consolidated tests and APK remain deferred; implementation does not stop.
+
+- `1cd86f5`, `aff19c2`, `6fd779f`: password recovery always returns a non-enumerating response, login submissions are normalized/validated and single-flight, and a new password is accepted only for the same active recovery session without trimming intentional password characters.
+- `97dc812`, `0d59ca8`: team discovery propagates query failures instead of presenting a false empty ranking, while stadium search uses a 400 ms debounce to reduce redundant API requests.
+- `a449a5a`, `b6f24a7`, `03a2824`: invitation actions unlock correctly after the first accept/decline; stale active-team preferences are removed when the last membership disappears; failed active-team persistence rolls the UI back with an honest error.
+- `1cc17ce`, `acb1be1`, `c6d368e`, `ff451a9`, `582e3b5`, `8526246`: existing stadium images are deleted only after a successful record update, new-upload deletion failures do not silently drop the UI reference, completed uploads are cleaned up if the wizard closes mid-request, and create/edit submissions retain at least one gallery image.
+- `d161800`, `31ddb0d`: affected widget/validator tests were updated for the new media-cleanup contract; execution is intentionally not run yet.
+- Mapping: **11.02–11.03, 11.06, 11.08, 14.03, 15.01–15.02, 17.02–17.05, 18.02–18.06 and 20.02–20.07 are IMPLEMENTED_PENDING_VERIFICATION / IN_PROGRESS**. This does not claim journey acceptance before the final verification gate.
+- **Verified remains 72/620; 548 not yet accepted.** The remaining number is an acceptance counter, not permission to omit implementation. No production Supabase/schema/RLS, payment, pricing, `main` merge or APK action.
