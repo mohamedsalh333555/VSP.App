@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 
@@ -81,7 +82,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
                             const SizedBox(width: 8),
                             Flexible(
                               child: Text(
-                                '${prizeAmount.toInt()} ${isAr ? "ج.م" : "EGP"}',
+                                '${VSPMoneyFormatter.amount(prizeAmount)} ${isAr ? "ج.م" : "EGP"}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.end,
