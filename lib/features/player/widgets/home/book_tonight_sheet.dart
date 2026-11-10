@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/ui/vsp_ui.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../screens/booking_confirmation_screen.dart';
@@ -255,7 +256,7 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
                     ),
                   ),
                   Text(
-                    '${std.basePrice.toInt()} ${isArabic ? 'ج.م' : 'EGP'} / ${isArabic ? 'ساعة' : 'hr'}',
+                    '${VSPMoneyFormatter.amount(std.basePrice)} ${isArabic ? 'ج.م' : 'EGP'} / ${isArabic ? 'ساعة' : 'hr'}',
                     style: const TextStyle(
                       color: VSPColors.accent,
                       fontSize: 13,
