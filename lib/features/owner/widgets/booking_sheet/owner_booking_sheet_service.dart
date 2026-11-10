@@ -55,6 +55,10 @@ class OwnerBookingSheetService {
     // 3. Existing active bookings constraint
     for (final b in existingBookings) {
       if (currentBookingId != null && b.id == currentBookingId) continue;
+      if (b.stadiumId.trim().toLowerCase() !=
+          stadium.id.trim().toLowerCase()) {
+        continue;
+      }
       if (b.status == BookingStatus.cancelled) continue;
       
       if (b.status == BookingStatus.expired) continue;
@@ -132,7 +136,10 @@ class OwnerBookingSheetService {
   }) {
     for (final b in bookings) {
       if (ignoreBookingId != null && b.id == ignoreBookingId) continue;
-      if (b.status == BookingStatus.cancelled) continue;
+      if (b.status == BookingStatus.cancelled ||
+          b.status == BookingStatus.expired) {
+        continue;
+      }
 
       final bStartLocal = b.startTime.toLocal();
       final bEndLocal = b.endTime.toLocal();
