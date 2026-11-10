@@ -707,14 +707,29 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   }
 
   Future<void> _startOwnerTrial(BuildContext context, bool isArabic) async {
+    if (_isPaying) return;
     final auth = context.read<AuthProvider>();
+    final submittingUserId = auth.currentUser?.id;
+    if (submittingUserId == null || submittingUserId.isEmpty) {
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.'
+            : 'Your sign-in session ended. Please sign in again.',
+      );
+      return;
+    }
     setState(() { _isPaying = true; _pendingAction = 'trial'; });
     try {
       final data = await _subscriptionRepository.startProTrial();
       if (data['success'] != true) {
         throw Exception(data['error']?.toString() ?? 'trial_start_failed');
       }
+      if (auth.currentUser?.id != submittingUserId) {
+        throw StateError('account_changed_during_trial_activation');
+      }
       await auth.refreshProfile();
+      if (auth.currentUser?.id != submittingUserId) return;
       if (mounted) setState(() => _trialState = 'active');
       if (context.mounted) {
         VSPFeedback.showSuccess(
@@ -739,6 +754,18 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     String billingPeriod,
     bool isArabic,
   ) async {
+    if (_isPaying) return;
+    final auth = context.read<AuthProvider>();
+    final submittingUserId = auth.currentUser?.id;
+    if (submittingUserId == null || submittingUserId.isEmpty) {
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.'
+            : 'Your sign-in session ended. Please sign in again.',
+      );
+      return;
+    }
     setState(() { _isPaying = true; _pendingAction = billingPeriod; });
     try {
       final orderData = await _subscriptionRepository.createProOrder(
@@ -747,10 +774,16 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       if (orderData['success'] != true || orderData['order_id'] == null) {
         throw Exception(orderData['message'] ?? 'subscription_order_failed');
       }
+      if (auth.currentUser?.id != submittingUserId) {
+        throw StateError('account_changed_during_subscription_checkout');
+      }
 
       final checkoutUrl = await _subscriptionRepository.createPaymobCheckout(
         subscriptionOrderId: orderData['order_id'].toString(),
       );
+      if (auth.currentUser?.id != submittingUserId) {
+        throw StateError('account_changed_during_subscription_checkout');
+      }
 
       final launched = await launchUrl(
         Uri.parse(checkoutUrl),
