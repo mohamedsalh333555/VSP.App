@@ -126,12 +126,8 @@ class BookingCategorizationService {
                         ?.toLowerCase()
                         .contains('checkout') ??
                     false);
-        final hasPaidMoney = b.depositPaid > 0 ||
-            b.isDepositPaid ||
-            b.isPaid ||
-            b.paymentStatus == 'paid' ||
-            b.paymentStatus == 'refunded' ||
-            b.paymentStatus == 'refund_pending';
+        final hasPaidMoney = _needsPaymentReconciliation(b) ||
+            b.paymentStatus?.trim().toLowerCase() == 'refunded';
         if (isAbandonedCheckout && !hasPaidMoney) {
           return false;
         }
