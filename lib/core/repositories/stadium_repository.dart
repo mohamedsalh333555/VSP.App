@@ -466,9 +466,23 @@ class StadiumRepository {
           onTimeout: (sink) => sink.addError(StateError('stadium_reviews_stream_timeout')),
         )
         .map((list) {
-          final sorted = List<Map<String, dynamic>>.from(list);
-          sorted.sort((a, b) => DateTime.parse(b['created_at'].toString())
-              .compareTo(DateTime.parse(a['created_at'].toString())));
+          final sorted = List<Map<String, dynamic>>.from(list)
+              .where((review) {
+                final rating = review['rating'];
+                return rating is num &&
+                    rating.isFinite &&
+                    rating >= 1 &&
+                    rating <= 5;
+              })
+              .toList(growable: false);
+          DateTime parsedCreatedAt(Map<String, dynamic> review) {
+            return DateTime.tryParse(review['created_at']?.toString() ?? '') ??
+                DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+          }
+
+          sorted.sort(
+            (a, b) => parsedCreatedAt(b).compareTo(parsedCreatedAt(a)),
+          );
           return sorted;
         });
   }
