@@ -5,7 +5,7 @@ Updated 2026-11-10. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **72 verified; 548 not yet accepted**. This is not a claim that every remaining task is untouched.
+- Current inventory: **76 verified; 544 not yet accepted**. This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
@@ -22,8 +22,12 @@ Updated 2026-11-10. This ledger is the source of truth for **execution progress*
 | 28.01 | VERIFIED (documentation deliverable) | [Booking creation lifecycle](VSP_BOOKING_CREATION_LIFECYCLE_28_01.md), commit `0ec3794` | Lifecycle stages, statuses and follow-on gates defined; runtime enforcement remains separate |
 | 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
 | 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
+| 16.02 | VERIFIED | Categorization tests, CI `42825931860` | Pending/upcoming/history, grace boundary, payment progress, overlap displacement and ordering |
+| 16.03 | VERIFIED | Player details widget test `d18af67`, CI `42827626171` | Booking reference, exact total/deposit/remainder, payment/refund state and Arabic cancellation reason |
+| 16.04 | VERIFIED | Realtime lifecycle tests, CI `42825931860` | Initial load, updates, cancellation, reconnect retention and transport-error preservation |
+| 16.05 | VERIFIED | Categorization/cancellation tests, CI `42825931860` | Abandoned unpaid checkout hidden; refunded cancellation retained in history |
 
-**Current audited counter: 72 / 620 completed, 548 remaining.** Phase 10 closes 14 analytics/instrumentation subtasks on current-head CI evidence; historical closures remain recorded below. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
+**Current audited counter: 76 / 620 completed, 544 remaining.** Phase 10 closes 14 analytics/instrumentation subtasks; booking-history tasks 16.02–16.05 add four current-head verified closures. Historical closures remain recorded below. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
 
 ## Existing implementation evidence — not yet full-task completion
 
@@ -577,7 +581,7 @@ This batch is **CODE_DONE / Pending Verification**.
 - Empty stadium-break placeholder rows remain optional, while half-configured, out-of-hours, inverted or overlapping intervals fail validation.
 - Replaced a formatting-sensitive team-invitation source assertion with a whitespace-tolerant contract without weakening the behavioral checks.
 - Bounded Flutter test concurrency to two workers after a hosted runner exhausted its thread quota, and enabled cancellation of superseded branch validations.
-- Flutter CI [run 42825931860](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42825931860) passed analyzer, architecture regression gate and the full suite: **1057 passed, 10 explicitly skipped**. Coverage artifact ID: `13769697204`.
-- Android public/auth staging smoke [run 42824370641](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42824370641) passed onboarding/login on the same application-code checkpoint before test/workflow-only follow-ups.
+- Flutter CI [run 42827626171](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42827626171) passed analyzer, architecture regression gate and the full suite: **1059 passed, 10 explicitly skipped**.
+- Android public/auth staging smoke [run 42827626122](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42827626122) passed onboarding/login on the same head.
 - The green regression run verifies the committed automated contracts but does not replace two-account staging, real-device, Paymob sandbox, email inbox, FCM delivery or production-policy checks. **Verified progress remains 72/620; 548 not accepted** until each subtask's complete acceptance scope is evidenced.
 - No production database/RLS/payment/pricing change, `main` merge or APK build.
