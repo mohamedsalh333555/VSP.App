@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 class CheckoutFinancialCard extends StatelessWidget {
   final double entryFee;
@@ -122,7 +123,13 @@ class CheckoutFinancialCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(isArabic ? 'رسوم اشتراك البطولة:' : 'Tournament entry fee:', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
-              Text('${entryFee.toInt()} $currencyLabel', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
+              Text(
+                '${VSPMoneyFormatter.amount(entryFee)} $currencyLabel',
+                style: const TextStyle(
+                  color: VSPColors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
