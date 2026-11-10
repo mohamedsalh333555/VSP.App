@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../core/utils/phone_utils.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 
 /// Utilities for launching WhatsApp support and generating official digital booking receipts.
@@ -80,18 +81,18 @@ class BookingSheetWhatsAppUtils {
     final String paymentLines = isArabic
         ? (isPaidInFull
             ? (depositPaid > 0
-                ? '*العربون المسدد إلكترونياً:* ${depositPaid.toInt()} ج.م\n*المسدد كاش بالملعب:* ${cashCollected.toInt()} ج.م\n*حالة الحساب:* خالص بالكامل (0 ج.م متبقي) ✅'
-                : '*المسدد كاش بالملعب:* ${totalPrice.toInt()} ج.م\n*حالة الحساب:* خالص بالكامل (0 ج.م متبقي) ✅')
+                ? '*العربون المسدد إلكترونياً:* ${VSPMoneyFormatter.amount(depositPaid)} ج.م\n*المسدد كاش بالملعب:* ${VSPMoneyFormatter.amount(cashCollected)} ج.م\n*حالة الحساب:* خالص بالكامل (0 ج.م متبقي) ✅'
+                : '*المسدد كاش بالملعب:* ${VSPMoneyFormatter.amount(totalPrice)} ج.م\n*حالة الحساب:* خالص بالكامل (0 ج.م متبقي) ✅')
             : (depositPaid > 0
-                ? '*العربون المسدد:* ${depositPaid.toInt()} ج.م\n*المتبقي للتحصيل بالملعب:* ${remainingCash.toInt()} ج.م ⏳'
-                : '*المطلوب تحصيله كاش بالملعب:* ${totalPrice.toInt()} ج.م ⏳'))
+                ? '*العربون المسدد:* ${VSPMoneyFormatter.amount(depositPaid)} ج.م\n*المتبقي للتحصيل بالملعب:* ${VSPMoneyFormatter.amount(remainingCash)} ج.م ⏳'
+                : '*المطلوب تحصيله كاش بالملعب:* ${VSPMoneyFormatter.amount(totalPrice)} ج.م ⏳'))
         : (isPaidInFull
             ? (depositPaid > 0
-                ? '*Online Deposit:* ${depositPaid.toInt()} EGP\n*Cash Paid at Pitch:* ${cashCollected.toInt()} EGP\n*Status:* Paid in Full (0 EGP due) ✅'
-                : '*Cash Paid at Pitch:* ${totalPrice.toInt()} EGP\n*Status:* Paid in Full (0 EGP due) ✅')
+                ? '*Online Deposit:* ${VSPMoneyFormatter.amount(depositPaid)} EGP\n*Cash Paid at Pitch:* ${VSPMoneyFormatter.amount(cashCollected)} EGP\n*Status:* Paid in Full (0 EGP due) ✅'
+                : '*Cash Paid at Pitch:* ${VSPMoneyFormatter.amount(totalPrice)} EGP\n*Status:* Paid in Full (0 EGP due) ✅')
             : (depositPaid > 0
-                ? '*Deposit Paid:* ${depositPaid.toInt()} EGP\n*Remaining Cash Due:* ${remainingCash.toInt()} EGP ⏳'
-                : '*Cash Due at Pitch:* ${totalPrice.toInt()} EGP ⏳'));
+                ? '*Deposit Paid:* ${VSPMoneyFormatter.amount(depositPaid)} EGP\n*Remaining Cash Due:* ${VSPMoneyFormatter.amount(remainingCash)} EGP ⏳'
+                : '*Cash Due at Pitch:* ${VSPMoneyFormatter.amount(totalPrice)} EGP ⏳'));
 
     final String receiptText = isArabic
         ? '''
@@ -102,7 +103,7 @@ class BookingSheetWhatsAppUtils {
 *الملعب:* $stadiumName
 *التاريخ:* $dateStr
 *التوقيت:* من $startTimeStr إلى $endTimeStr
-*إجمالي المبلغ:* ${totalPrice.toInt()} ج.م
+*إجمالي المبلغ:* ${VSPMoneyFormatter.amount(totalPrice)} ج.م
 $paymentLines
 ═════════════════════════
 *موقع الملعب على الخريطة:*
@@ -118,7 +119,7 @@ https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}
 *Stadium:* $stadiumName
 *Date:* $dateStr
 *Time:* $startTimeStr - $endTimeStr
-*Total Price:* ${totalPrice.toInt()} EGP
+*Total Price:* ${VSPMoneyFormatter.amount(totalPrice)} EGP
 $paymentLines
 ═════════════════════════
 *Location:*
@@ -147,8 +148,8 @@ Enjoy your match.
     final isManual = b.paymentTransactionId?.startsWith('MANUAL') == true;
     final message = isManual
         ? (isArabic
-            ? '*تفاصيل الحجز*\nاسم العميل: $customerName\nالملعب: $stadiumName\nالتاريخ: $dateStr\nالتوقيت: من $startTimeStr إلى $endTimeStr\nقيمة الحجز: ${totalPrice.toInt()} ج.م'
-            : '*Booking Details*\nCustomer: $customerName\nStadium: $stadiumName\nDate: $dateStr\nTime: $startTimeStr - $endTimeStr\nBooking Price: ${totalPrice.toInt()} EGP')
+            ? '*تفاصيل الحجز*\nاسم العميل: $customerName\nالملعب: $stadiumName\nالتاريخ: $dateStr\nالتوقيت: من $startTimeStr إلى $endTimeStr\nقيمة الحجز: ${VSPMoneyFormatter.amount(totalPrice)} ج.م'
+            : '*Booking Details*\nCustomer: $customerName\nStadium: $stadiumName\nDate: $dateStr\nTime: $startTimeStr - $endTimeStr\nBooking Price: ${VSPMoneyFormatter.amount(totalPrice)} EGP')
         : receiptText;
 
     final whatsappUrl =
