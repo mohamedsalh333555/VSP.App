@@ -261,6 +261,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
            const SizedBox(height: VSPSpacing.md),
            TextField(
              controller: reasonController,
+             maxLength: 200,
              decoration: InputDecoration(
                hintText: ar ? 'سبب البلاغ' : 'Reason',
              ),
@@ -269,6 +270,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
            TextField(
              controller: detailsController,
              maxLines: 3,
+             maxLength: 2000,
              decoration: InputDecoration(
                hintText: ar ? 'تفاصيل إضافية (اختياري)' : 'Additional details (optional)',
              ),
