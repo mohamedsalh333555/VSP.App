@@ -36,6 +36,7 @@ void main() {
             isSplitShiftValid: true,
             isLocationLoading: false,
             images: const [],
+            removedExistingImageUrls: <String>{},
             isUploading: false,
             isSaving: false,
             onSelectSport: (_) {},
