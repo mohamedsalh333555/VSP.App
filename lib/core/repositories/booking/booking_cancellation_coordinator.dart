@@ -27,7 +27,20 @@ class BookingCancellationCoordinator {
       return 'هذا الحجز ملغي بالفعل مسبقاً.';
     }
     if (serverMsg != null && serverMsg.trim().isNotEmpty) {
-      return serverMsg.trim();
+      final clean = serverMsg.trim();
+      final lower = clean.toLowerCase();
+      final exposesInternals = [
+        'postgrest',
+        'sqlstate',
+        'relation ',
+        'schema ',
+        'column ',
+        'constraint ',
+        'function ',
+        'stack trace',
+        'exception:',
+      ].any(lower.contains);
+      if (!exposesInternals && clean.length <= 180) return clean;
     }
     return 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
   }
