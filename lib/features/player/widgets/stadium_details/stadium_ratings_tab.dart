@@ -114,7 +114,9 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                       TextField(
                         controller: commentController,
                         style: const TextStyle(color: VSPColors.white, fontSize: 14),
-                        maxLines: 3,
+                        minLines: 3,
+                        maxLines: 5,
+                        maxLength: 500,
                         decoration: InputDecoration(
                           hintText: isArabic
                               ? 'اكتب انطباعك عن جودة الملعب والإضاءة والمعاملة...'
@@ -133,6 +135,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                         text: isArabic ? 'إرسال التقييم ' : 'Submit Review',
                         isLoading: isSubmitting,
                         onPressed: () async {
+                          if (isSubmitting) return;
                           final comment = commentController.text.trim();
                           // Guard: at least 1 star must be selected
                           if (selectedRating == 0) {
@@ -160,6 +163,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                                 (isArabic ? 'لاعب VSP' : 'VSP Player');
                             final userAvatar = userModel?.profileImageUrl ?? '';
 
+                            final submittingUserId = userId;
                             await StadiumRepository().submitStadiumReviewAtomic(
                               stadiumId: widget.stadium.id,
                               userId: userId,
@@ -169,6 +173,11 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                               comment: comment,
                             );
 
+                            if ((auth.userModel?.uid ?? auth.currentUser?.id) !=
+                                submittingUserId) {
+                              if (sheetCtx.mounted) Navigator.pop(sheetCtx);
+                              return;
+                            }
                             if (sheetCtx.mounted) Navigator.pop(sheetCtx);
                             if (context.mounted) {
                               VSPFeedback.showSuccess(
