@@ -152,8 +152,11 @@ void main() {
         now: now,
       );
 
-      expect(categorized.upcoming.length, 1);
-      expect(categorized.upcoming.first.id, 'b_future');
+      expect(categorized.upcoming.length, 2);
+      expect(
+        categorized.upcoming.map((booking) => booking.id),
+        containsAll(['b_future', 'b_pending']),
+      );
       expect(categorized.history.length, 1);
       expect(categorized.history.first.id, 'b_past');
     });
