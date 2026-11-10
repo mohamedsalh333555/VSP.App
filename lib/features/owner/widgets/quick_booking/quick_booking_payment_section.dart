@@ -132,7 +132,9 @@ class QuickBookingPaymentSection extends StatelessWidget {
                   ),
                 if (halfAmount > 0 && halfAmount != deposit && halfAmount < totalPrice)
                   _buildQuickAmountChip(
-                    label: isAr ? '${halfAmount.toInt()} ج.م (نصف المبلغ)' : '${halfAmount.toInt()} EGP (Half)',
+                    label: isAr
+                        ? '${VSPMoneyFormatter.amount(halfAmount)} ج.م (نصف المبلغ)'
+                        : '${VSPMoneyFormatter.amount(halfAmount)} EGP (Half)',
                     amount: halfAmount,
                     isSelected: currentPaidAmount == halfAmount,
                   ),
@@ -195,8 +197,8 @@ class QuickBookingPaymentSection extends StatelessWidget {
                           : 'Fully Paid in Advance (${VSPMoneyFormatter.amount(totalPrice)} EGP)')
                       : (isPartiallyPaid
                           ? (isAr
-                              ? 'عربون مسدد: ${currentPaidAmount.toInt()} ج.م • المتبقي عند الحضور: ${remainingBalance.toInt()} ج.م'
-                              : 'Deposit: ${currentPaidAmount.toInt()} EGP • Remaining: ${remainingBalance.toInt()} EGP')
+                              ? 'عربون مسدد: ${VSPMoneyFormatter.amount(currentPaidAmount)} ج.م • المتبقي عند الحضور: ${VSPMoneyFormatter.amount(remainingBalance)} ج.م'
+                              : 'Deposit: ${VSPMoneyFormatter.amount(currentPaidAmount)} EGP • Remaining: ${VSPMoneyFormatter.amount(remainingBalance)} EGP')
                           : (isAr
                               ? 'حجز كاش مؤكد • التحصيل بالكامل عند الحضور (${VSPMoneyFormatter.amount(totalPrice)} ج.م)'
                               : 'Cash Booking • Collect ${VSPMoneyFormatter.amount(totalPrice)} EGP on arrival')),
