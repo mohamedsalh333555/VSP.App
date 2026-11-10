@@ -408,8 +408,16 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  itemBuilder: (context, index) {
  return StadiumCard(
  stadium: stadiums[index],
- isOwnerView: false,
+ isOwnerView: true,
  onTap: () {
+ Navigator.push(
+ context,
+ MaterialPageRoute(
+ builder: (_) => AddStadiumWizard(stadiumId: stadiums[index].id),
+ ),
+ );
+ },
+ onEditTap: () {
  Navigator.push(
  context,
  MaterialPageRoute(
