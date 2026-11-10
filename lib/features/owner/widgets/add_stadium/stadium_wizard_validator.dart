@@ -61,8 +61,8 @@ class StadiumWizardValidator {
           : 'Please select working hours (start and end)';
     }
 
-    // A split shift means at least one complete closure interval. Never
-    // ignore a half-configured break and accidentally expose it as bookable.
+    // Empty break rows are optional UI placeholders. Once either endpoint is
+    // entered, the closure interval must be complete and safe.
     if (!StadiumWizardTimeUtils.isSplitShiftValid(
       startTime: startTime,
       endTime: endTime,
