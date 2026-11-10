@@ -59,6 +59,7 @@ class ChampionPodiumItem extends StatelessWidget {
   final bool isCenter;
   final String? pointsLabel;
   final bool isMyTeam;
+  final VoidCallback? onTap;
 
   const ChampionPodiumItem({
     super.key,
@@ -72,6 +73,7 @@ class ChampionPodiumItem extends StatelessWidget {
     this.isCenter = false,
     this.pointsLabel,
     this.isMyTeam = false,
+    this.onTap,
   });
 
   @override
@@ -83,10 +85,18 @@ class ChampionPodiumItem extends StatelessWidget {
     final ptsText = pointsLabel ?? AppLocalizations.of(context)!.pts;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Container(
-      height: height,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: BoxDecoration(
+    return Semantics(
+      button: onTap != null,
+      label: onTap == null
+          ? null
+          : (isArabic ? 'فتح تفاصيل فريق $name' : 'Open $name team details'),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(
@@ -107,7 +117,7 @@ class ChampionPodiumItem extends StatelessWidget {
               ]
             : const [VSPShadow.subtle],
       ),
-      child: Column(
+          child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Top Crown / Medal Icon & Optional My Team Badge
@@ -205,6 +215,8 @@ class ChampionPodiumItem extends StatelessWidget {
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }
