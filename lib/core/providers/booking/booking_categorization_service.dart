@@ -78,7 +78,7 @@ class BookingCategorizationService {
       if (_needsPaymentReconciliation(b)) return true;
       // Online unpaid checkouts have a 10-minute payment grace period.
       final isRecent = b.createdAt.isAfter(tenMinutesAgo);
-      return !_needsPaymentReconciliation(b) && isRecent;
+      return isRecent;
     }).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
@@ -105,15 +105,13 @@ class BookingCategorizationService {
         if (displaced) return true;
         // Paid pending bookings remain actionable until the booking ends;
         // then history retains them for reconciliation.
-        if (b.isPaid || b.isDepositPaid || b.depositPaid > 0 ||
-            b.paymentStatus == 'paid' ||
-            b.paymentStatus == 'refund_pending') {
+        if (_needsPaymentReconciliation(b)) {
           return !b.endTime.isAfter(now);
         }
         // Expired payment grace periods should not remain in the active list.
         // Keep these records in history rather than making them disappear.
         if (!b.endTime.isAfter(now)) return true;
-        if (!b.isCash && !b.isPaid &&
+        if (!b.isCash && !_needsPaymentReconciliation(b) &&
             !b.createdAt.isAfter(tenMinutesAgo)) {
           return true;
         }
