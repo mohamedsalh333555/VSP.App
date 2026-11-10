@@ -15,16 +15,26 @@ class ActiveTeamService {
     required String userId,
     required List<Team> teams,
   }) async {
-    if (userId.trim().isEmpty || teams.isEmpty) return null;
-    final preferences = await SharedPreferences.getInstance();
-    final selectedId = preferences.getString(_key(userId));
-    for (final team in teams) {
-      if (team.id == selectedId) return team;
-    }
+    if (userId.trim().isEmpty) return null;
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      if (teams.isEmpty) {
+        // A deleted/left last team must not remain selected for this account.
+        await preferences.remove(_key(userId));
+        return null;
+      }
+      final selectedId = preferences.getString(_key(userId));
+      for (final team in teams) {
+        if (team.id == selectedId) return team;
+      }
 
-    final fallback = teams.first;
-    await preferences.setString(_key(userId), fallback.id);
-    return fallback;
+      final fallback = teams.first;
+      await preferences.setString(_key(userId), fallback.id);
+      return fallback;
+    } catch (_) {
+      // Local preference storage must not hide server-verified memberships.
+      return teams.isEmpty ? null : teams.first;
+    }
   }
 
   static Future<bool> select({
@@ -34,13 +44,21 @@ class ActiveTeamService {
   }) async {
     if (userId.trim().isEmpty || teamId.trim().isEmpty) return false;
     if (!verifiedTeams.any((team) => team.id == teamId)) return false;
-    final preferences = await SharedPreferences.getInstance();
-    return preferences.setString(_key(userId), teamId);
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      return preferences.setString(_key(userId), teamId);
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<void> clearForUser(String userId) async {
     if (userId.trim().isEmpty) return;
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.remove(_key(userId));
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.remove(_key(userId));
+    } catch (_) {
+      // Best-effort cleanup only; membership remains server-authoritative.
+    }
   }
 }
