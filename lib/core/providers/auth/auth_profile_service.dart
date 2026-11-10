@@ -156,14 +156,12 @@ class AuthProfileService {
 
     try {
       final uid = authUser.id;
-      final oldUrl = currentUserModel?.profileImageUrl;
 
       // Upload the selected file on every platform. Never substitute a stock image
       // for the user's actual profile photo.
       final String? url = await _storage.uploadProfilePicture(
         file: file,
         userId: uid,
-        oldImageUrl: oldUrl,
       );
       if (url == null) throw 'Upload returned null';
 
@@ -171,6 +169,10 @@ class AuthProfileService {
     } catch (e) {
       return (success: false, imageUrl: null, error: 'Failed to upload profile image: $e');
     }
+  }
+
+  Future<bool> deleteProfilePhoto(String url) {
+    return _storage.deleteFile(url);
   }
 
   /// Toggles favorite stadium id in user profile.
