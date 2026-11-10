@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 /// الشريط السفلي المتكامل لشاشة الحجز (الخيارات الإضافية، السعر الإجمالي، وزر التأكيد)
 class BookingBottomBar extends StatelessWidget {
@@ -281,7 +282,7 @@ class BookingBottomBar extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '${totalPrice.toInt()} ${isArabic ? "ج.م" : "EGP"}',
+                        '${VSPMoneyFormatter.amount(totalPrice)} ${isArabic ? "ج.م" : "EGP"}',
                         style: TextStyle(
                           color: isSlotSelected ? VSPColors.accent : VSPColors.textPrimary,
                           fontSize: 22,
@@ -298,7 +299,7 @@ class BookingBottomBar extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            isArabic ? 'عربون ${depositAmount.toInt()}' : 'Dep ${depositAmount.toInt()}',
+                            isArabic ? 'عربون ${VSPMoneyFormatter.amount(depositAmount)}' : 'Dep ${VSPMoneyFormatter.amount(depositAmount)}',
                             style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold).merge(VSPTypography.numericStyle),
                           ),
                         ),
