@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -25,6 +26,9 @@ class _RescheduleActionBannerState extends State<RescheduleActionBanner> {
 
   Future<void> _respond(bool accept) async {
     if (_isLoading) return;
+    final initiatingUserId =
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    if (initiatingUserId == null) return;
     setState(() => _isLoading = true);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     try {
@@ -32,27 +36,33 @@ class _RescheduleActionBannerState extends State<RescheduleActionBanner> {
         bookingId: widget.booking.id,
         accept: accept,
       );
-      if (mounted) {
-        setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      if (Provider.of<AuthProvider>(context, listen: false).currentUser?.id ==
+          initiatingUserId) {
         if (success) {
           VSPFeedback.showSuccess(
             context,
             accept
                 ? (isArabic ? 'تمت الموافقة وتعديل توقيت الحجز بنجاح ' : 'Reschedule accepted successfully ')
-                : (isArabic ? 'تم رفض الموعد وإلغاء الحجز وإعادة المبلغ 100% ' : 'Reschedule rejected & 100% refunded '),
+                : (isArabic
+                    ? 'تم رفض الموعد المقترح، وحجزك الأصلي ما زال كما هو.'
+                    : 'Proposed time declined. Your original booking is unchanged.'),
           );
         } else if (accept) {
           VSPFeedback.showError(
             context,
             isArabic
-                ? 'عذراً، هذا الموعد المقترح تم حجزه للاعب آخر أثناء الانتظار. تم إلغاء الحجز وإعادة أموالك بالكامل.'
-                : 'Sorry, this slot was taken by another player in the meantime. Booking cancelled & fully refunded.',
+                ? 'عذراً، الموعد المقترح لم يعد متاحاً. حجزك الأصلي ما زال كما هو.'
+                : 'The proposed slot is no longer available. Your original booking is unchanged.',
           );
         }
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      if (Provider.of<AuthProvider>(context, listen: false).currentUser?.id ==
+          initiatingUserId) {
         VSPFeedback.showError(context, isArabic ? 'حدث خطأ أثناء معالجة الطلب' : 'Failed to respond to reschedule');
       }
     }
@@ -116,7 +126,7 @@ class _RescheduleActionBannerState extends State<RescheduleActionBanner> {
                     style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: VSPColors.white),
                     onPressed: () => _respond(false),
                     child: Text(
-                      isArabic ? ' رفض واسترداد كامل' : ' Reject & Refund',
+                      isArabic ? 'رفض الموعد المقترح' : 'Decline New Time',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
                     ),
                   ),
