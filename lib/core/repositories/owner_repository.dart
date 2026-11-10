@@ -270,11 +270,22 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     required double totalPrice,
     double? collectedAmount,
   }) async {
+    final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+    final collected = collectedAmount ?? totalPrice;
+    if (authenticatedOwnerId == null ||
+        bookingId.trim().isEmpty ||
+        !totalPrice.isFinite ||
+        totalPrice <= 0 ||
+        !collected.isFinite ||
+        collected <= 0 ||
+        collected > totalPrice) {
+      throw ArgumentError('invalid_cash_booking_confirmation');
+    }
     return _supabase.rpc('confirm_cash_booking_atomic', params: {
-      'p_booking_id': bookingId,
-      'p_owner_id': ownerId,
+      'p_booking_id': bookingId.trim(),
+      'p_owner_id': authenticatedOwnerId,
       'p_total_price': totalPrice,
-      'p_collected_amount': collectedAmount ?? totalPrice,
+      'p_collected_amount': collected,
     });
   }
 
@@ -309,9 +320,15 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     required DateTime endTime,
     String reason = 'صيانة دورية',
   }) async {
+    final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+    if (authenticatedOwnerId == null ||
+        stadiumId.trim().isEmpty ||
+        !endTime.isAfter(startTime)) {
+      throw ArgumentError('invalid_maintenance_slot');
+    }
     return _supabase.rpc('owner_lock_slot_atomic', params: {
-      'p_owner_id': ownerId,
-      'p_stadium_id': stadiumId,
+      'p_owner_id': authenticatedOwnerId,
+      'p_stadium_id': stadiumId.trim(),
       'p_start_time': startTime.toUtc().toIso8601String(),
       'p_end_time': endTime.toUtc().toIso8601String(),
       'p_reason': reason,
@@ -331,9 +348,22 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     required double collectedAmount,
     required int playerCount,
   }) async {
+    final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+    if (authenticatedOwnerId == null ||
+        stadiumId.trim().isEmpty ||
+        customerName.trim().isEmpty ||
+        !endTime.isAfter(startTime) ||
+        !totalPrice.isFinite ||
+        totalPrice < 0 ||
+        !collectedAmount.isFinite ||
+        collectedAmount < 0 ||
+        collectedAmount > totalPrice ||
+        playerCount <= 0) {
+      throw ArgumentError('invalid_manual_booking');
+    }
     return _supabase.rpc('owner_create_manual_booking_atomic', params: {
-      'p_owner_id': ownerId,
-      'p_stadium_id': stadiumId,
+      'p_owner_id': authenticatedOwnerId,
+      'p_stadium_id': stadiumId.trim(),
       'p_start_time': startTime.toUtc().toIso8601String(),
       'p_end_time': endTime.toUtc().toIso8601String(),
       'p_customer_name': customerName,
@@ -384,9 +414,13 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     required String ownerId,
     required bool refundDeposit,
   }) async {
+    final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+    if (authenticatedOwnerId == null || bookingId.trim().isEmpty) {
+      throw ArgumentError('invalid_manual_booking_cancellation');
+    }
     return _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
-      'p_booking_id': bookingId,
-      'p_owner_id': ownerId,
+      'p_booking_id': bookingId.trim(),
+      'p_owner_id': authenticatedOwnerId,
       'p_refund_deposit': refundDeposit,
     });
   }
