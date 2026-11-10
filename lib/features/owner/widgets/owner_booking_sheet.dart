@@ -70,7 +70,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       initialAmount = booking.depositPaid > 0 ? booking.depositPaid : (booking.isPaid ? booking.totalPrice : 0.0);
     }
     _collectedAmountController = TextEditingController(
-      text: initialAmount == 0.0 ? '' : initialAmount.toStringAsFixed(0),
+      text: initialAmount == 0.0
+          ? ''
+          : VSPMoneyFormatter.amount(initialAmount),
     );
 
     if (widget.isEdit && booking != null) {
