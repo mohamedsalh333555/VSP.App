@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 /// Renders the 5-minute atomic hold countdown banner and the large checkout amount header card.
 class PaymentCountdownHeader extends StatelessWidget {
@@ -33,9 +34,7 @@ class PaymentCountdownHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasVerifiedTotal = totalAmountWithFees != null;
     final double displayAmount = totalAmountWithFees ?? amountToPay;
-    final String formattedAmount = (displayAmount % 1 == 0)
-        ? displayAmount.toInt().toString()
-        : displayAmount.toStringAsFixed(1);
+    final String formattedAmount = VSPMoneyFormatter.amount(displayAmount);
 
     return Column(
       children: [
