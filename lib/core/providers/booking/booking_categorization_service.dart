@@ -161,7 +161,12 @@ class BookingCategorizationService {
         .where(
           (b) =>
               (_isConfirmedLifecycleStatus(b.status) ||
-                  b.status == BookingStatus.pending) &&
+                  (b.status == BookingStatus.pending &&
+                      (b.isCash ||
+                          _needsPaymentReconciliation(b) ||
+                          b.createdAt.isAfter(
+                            now.subtract(const Duration(minutes: 10)),
+                          )))) &&
               b.endTime.isAfter(now),
         )
         .toList()
@@ -174,7 +179,13 @@ class BookingCategorizationService {
               b.status == BookingStatus.cancelled ||
               b.status == BookingStatus.noShow ||
               b.status == BookingStatus.expired ||
-              !b.endTime.isAfter(now),
+              !b.endTime.isAfter(now) ||
+              (b.status == BookingStatus.pending &&
+                  !b.isCash &&
+                  !_needsPaymentReconciliation(b) &&
+                  !b.createdAt.isAfter(
+                    now.subtract(const Duration(minutes: 10)),
+                  )),
         )
         .toList()
       ..sort((a, b) {
