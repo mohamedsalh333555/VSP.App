@@ -502,3 +502,16 @@ These changes are **CODE_DONE / Pending Verification** under the owner's deferre
 - `d512830`: pending checkouts displaced by a distinct confirmed overlapping booking are shown in history, not lost from both pending and history.
 - Mapped to **16.02 booking status buckets** and **16.05 cancelled/abandoned booking behavior**, both **IN_PROGRESS** until all acceptance criteria, source synchronization and user journeys are verified.
 - Code changed, tests and runtime verification deferred. **Verified 72/620; remaining 548**. No server-side availability guarantee claimed.
+
+
+## Truthful owner subscription presentation and checkout guards — 2026-11-10
+
+These changes are **CODE_DONE / Pending Verification** under the deferred-test instruction.
+
+- `7d827dc`, `1cbbe8f`: removed a hard-coded 1000 EGP price, the unmeasured “double your profits” promise, and hard-coded Pro stadium/benefit claims from teaser and upgrade surfaces. Owners are sent to the live plan view for current prices, limits, features and renewal choices.
+- `8569557`, `5b37ba7`: live plan records are rejected when prices, trial duration, stadium limits or feature data are malformed; decimal monetary values are preserved instead of silently rounded.
+- `71b1d25`: subscription order billing periods are restricted to monthly/annual and checkout URLs must be valid HTTPS before external launch.
+- `d54b6c8`: trial activation and checkout creation are single-flight and bound to the active authenticated owner across async boundaries.
+- `d9a3b1b`: clarified the verified subscription model (no per-booking commission) and replaced internal “atomic” terminology with understandable conflict-safe booking copy.
+- Candidate mapping: **24.01–24.08 and Phase 10 UX-06/UX-07 are CODE_DONE/IN_PROGRESS** pending deferred widget, two-account, sandbox checkout and renewal/cancellation-source verification. No conversion or revenue uplift is claimed.
+- **Verified progress remains 72/620; 548 remaining.** No production pricing, payment backend, Supabase schema/RLS, `main` merge or APK action.
