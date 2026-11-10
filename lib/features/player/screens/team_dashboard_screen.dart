@@ -166,6 +166,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         !_userTeams.any((team) => team.id == selectedTeam.id)) {
       return;
     }
+    final previousTeam = _userTeam;
     final generation = ++_userTeamRequestGeneration;
     setState(() {
       _userTeam = selectedTeam;
@@ -177,9 +178,19 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       verifiedTeams: _userTeams,
     );
     if (!mounted ||
-        !saved ||
         context.read<app_auth.AuthProvider>().currentUser?.id != userId ||
         _userTeam?.id != selectedTeam.id) {
+      return;
+    }
+    if (!saved) {
+      setState(() => _userTeam = previousTeam);
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر حفظ الفريق النشط. حاول مرة تانية.'
+            : 'Could not save the active team. Please try again.',
+      );
       return;
     }
     await _loadActiveLeagueForTeam(selectedTeam, userId, generation);
