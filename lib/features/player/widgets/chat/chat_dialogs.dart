@@ -42,6 +42,7 @@ class ChatDialogs {
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
+              maxLength: 200,
               style: const TextStyle(color: VSPColors.white),
               decoration: InputDecoration(
                 hintText: ar ? 'سبب الإبلاغ' : 'Reason for report',
@@ -52,6 +53,7 @@ class ChatDialogs {
             TextField(
               controller: detailsController,
               maxLines: 2,
+              maxLength: 2000,
               style: const TextStyle(color: VSPColors.white),
               decoration: InputDecoration(
                 hintText: ar ? 'تفاصيل إضافية (اختياري)' : 'Additional details (optional)',
