@@ -515,3 +515,17 @@ These changes are **CODE_DONE / Pending Verification** under the deferred-test i
 - `d9a3b1b`: clarified the verified subscription model (no per-booking commission) and replaced internal “atomic” terminology with understandable conflict-safe booking copy.
 - Candidate mapping: **24.01–24.08 and Phase 10 UX-06/UX-07 are CODE_DONE/IN_PROGRESS** pending deferred widget, two-account, sandbox checkout and renewal/cancellation-source verification. No conversion or revenue uplift is claimed.
 - **Verified progress remains 72/620; 548 remaining.** No production pricing, payment backend, Supabase schema/RLS, `main` merge or APK action.
+
+
+## Public venue trust, review identity and owner data isolation — 2026-11-10
+
+These changes are **CODE_DONE / Pending Verification**. Consolidated tests remain deferred.
+
+- `78195f4`, `803cb8d`, `c75d466`: all public stadium list, nearby and detail-stream paths now exclude deleted, blocked and unverified stadiums; a removed/unpublished record can no longer remain visible through stale detail fallback.
+- `2864f72`: facility onboarding renders stadiums in owner mode so review state and edit controls are not confused with player favorites.
+- `19e4a41`, `ff8cb75`, `c4ce3e9`: reviews are limited to authenticated 1–5 star submissions with bounded comments, duplicate actions are suppressed, account-switch success feedback is contained, and malformed stored ratings/timestamps are not presented as social proof.
+- `94693ac`: prepared migration `20261110010000_bind_stadium_reviews_to_auth_user.sql` to bind the privileged review RPC to `auth.uid()`, require a completed booking, revoke default/public execution and grant only authenticated execution. **Migration is committed but not applied to production and not database-verified.**
+- `c4adee3`, `1aa537b`: venue, hourly and deposit amounts preserve decimal values; absence of a deposit no longer falsely claims that cash payment is available.
+- `1f118fd`, `e79f45e`, `00a74a7`: owner venue, booking, financial and transaction reads are scoped to the active account; transaction realtime now includes an explicit `user_id` filter; cash/manual booking and maintenance mutations reject cross-account owner IDs and malformed values before RPC invocation. RLS/RPC authorization remains authoritative.
+- Candidate mapping: **14.08, 20.04, 20.06, 21.04–21.05, 53.02, 77.03–77.04, 77.07, 77.11 and 79.02–79.05 are CODE_DONE/IN_PROGRESS** pending deferred Flutter, two-account, staging database, advisor and migration verification.
+- **Verified progress remains 72/620; 548 not accepted.** No production migration was applied, no payment/pricing policy changed, no `main` merge and no APK action.
