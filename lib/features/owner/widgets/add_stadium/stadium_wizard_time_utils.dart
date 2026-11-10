@@ -24,9 +24,14 @@ class StadiumWizardTimeUtils {
     required List<Map<String, TimeOfDay?>> breakTimes,
   }) {
     if (!isSplitShift) return true;
-    if (startTime == null || endTime == null || breakTimes.isEmpty) {
-      return false;
-    }
+    if (startTime == null || endTime == null) return false;
+
+    // The form keeps an empty row as a UI placeholder. Treat rows where both
+    // values are empty as absent; a half-filled interval remains invalid.
+    final configuredBreaks = breakTimes
+        .where((entry) => entry['start'] != null || entry['end'] != null)
+        .toList();
+    if (configuredBreaks.isEmpty) return true;
 
     int t(TimeOfDay time) => time.hour * 60 + time.minute;
     final start = t(startTime);
@@ -35,7 +40,7 @@ class StadiumWizardTimeUtils {
     final normalizedEnd = overnight ? end + 24 * 60 : end;
     final intervals = <({int start, int end})>[];
 
-    for (final breakEntry in breakTimes) {
+    for (final breakEntry in configuredBreaks) {
       final breakStart = breakEntry['start'];
       final breakEnd = breakEntry['end'];
       // An incomplete closure must not silently become a bookable interval.
