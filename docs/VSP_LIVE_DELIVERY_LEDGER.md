@@ -556,3 +556,13 @@ All changes below are **IMPLEMENTED_PENDING_VERIFICATION** under the all-620 dir
 - `d161800`, `31ddb0d`: affected widget/validator tests were updated for the new media-cleanup contract; execution is intentionally not run yet.
 - Mapping: **11.02–11.03, 11.06, 11.08, 14.03, 15.01–15.02, 17.02–17.05, 18.02–18.06 and 20.02–20.07 are IMPLEMENTED_PENDING_VERIFICATION / IN_PROGRESS**. This does not claim journey acceptance before the final verification gate.
 - **Verified remains 72/620; 548 not yet accepted.** The remaining number is an acceptance counter, not permission to omit implementation. No production Supabase/schema/RLS, payment, pricing, `main` merge or APK action.
+
+
+## Post-Work handoff: paid pending booking visibility — 2026-11-10
+
+After reading Work's latest authentication, discovery, team and stadium-media batches, regular ChatGPT continued a distinct booking-history path without redoing those areas.
+
+- `be06f42`, `92f5064`, `ed941a3`, `4e42fc3`: keep pending bookings with collected payment/deposit or pending refund in the actionable pending bucket while their booking interval is current; move them to history after the interval; always retain a displaced paid booking in history for reconciliation rather than silently losing it.
+- Mapping: **16.02** booking status categorization, **16.05** cancelled/displaced booking visibility, **29.05** payment-state recovery; **IN_PROGRESS / Pending Verification**, not fully accepted.
+- Need tests for paid pending, refunded, displaced paid, expiry boundary and server reconciliation; no payment state is written by these changes.
+- Official counter unchanged: **72 VERIFIED / 620 total / 548 unaccepted**. No production schema/RLS/payment, main merge or APK action.
