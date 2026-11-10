@@ -76,18 +76,17 @@ class ForgotPasswordDialog {
                                 }
                                 setDialogState(() => isLoading = true);
                                 final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                                final success = await authProvider.resetPassword(email);
+                                await authProvider.resetPassword(email);
                                 if (!dialogContext.mounted) return;
                                 Navigator.pop(dialogContext);
                                 if (context.mounted) {
-                                  if (success) {
-                                    VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.resetPasswordSuccess);
-                                  } else {
-                                    VSPFeedback.showError(
-                                      context,
-                                      authProvider.errorMessage ?? AppLocalizations.of(context)!.resetPasswordError,
-                                    );
-                                  }
+                                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                                  VSPFeedback.showSuccess(
+                                    context,
+                                    isArabic
+                                        ? 'لو البريد مسجل عندنا، هتوصلك رسالة استعادة خلال دقائق.'
+                                        : 'If the email is registered, a recovery message will arrive shortly.',
+                                  );
                                 }
                               },
                         style: ElevatedButton.styleFrom(
