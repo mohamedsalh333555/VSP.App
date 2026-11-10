@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/services/paymob_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 
 /// Card showing the full transparent financial breakdown, stadium timing details, and service fees.
@@ -93,7 +94,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                 : (hasDeposit
                     ? (isArabic ? 'عربون حجز الملعب' : 'Stadium Deposit')
                     : (isArabic ? 'إجمالي سعر حجز الملعب' : 'Stadium Total Price')),
-            value: '${amountToPay.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
+            value: '${VSPMoneyFormatter.amount(amountToPay)} ${isArabic ? 'ج.م' : 'EGP'}',
             isBold: false,
           ),
           const SizedBox(height: 6),
@@ -114,7 +115,7 @@ class PaymentBreakdownCard extends StatelessWidget {
             const SizedBox(height: 6),
             _buildFeeRow(
               label: isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
-              value: '${(bookingDraft.totalPrice - amountToPay).toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
+              value: '${VSPMoneyFormatter.amount(bookingDraft.totalPrice - amountToPay)} ${isArabic ? 'ج.م' : 'EGP'}',
             ),
           ],
         ],
