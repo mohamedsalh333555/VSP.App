@@ -50,6 +50,7 @@ void main() {
     test('populateFromLoaded correctly assigns loaded stadium record', () {
       final controllers = StadiumWizardControllers();
       const loaded = StadiumLoadedData(
+        ownerId: 'owner_test_1',
         name: 'Anfield',
         location: 'Liverpool',
         price: '300',
