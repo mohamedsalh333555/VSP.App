@@ -161,8 +161,7 @@ class BookingCategorizationService {
         .where(
           (b) =>
               (_isConfirmedLifecycleStatus(b.status) ||
-                  (b.status == BookingStatus.pending &&
-                      (b.isCash || _needsPaymentReconciliation(b)))) &&
+                  b.status == BookingStatus.pending) &&
               b.endTime.isAfter(now),
         )
         .toList()
