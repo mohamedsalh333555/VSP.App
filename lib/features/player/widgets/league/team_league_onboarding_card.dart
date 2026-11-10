@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../shared/widgets/primary_button.dart';
 
 class TeamLeagueOnboardingCard extends StatelessWidget {
@@ -102,8 +103,8 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           _buildFeatureRow(
             icon: Iconsax.wallet_copy,
             title: isArabic
-                ? 'رسوم مشاركة الفريق: ${entryFee.toStringAsFixed(0)} جنيه'
-                : 'Team entry fee: ${entryFee.toStringAsFixed(0)} EGP',
+                ? 'رسوم مشاركة الفريق: ${VSPMoneyFormatter.amount(entryFee)} جنيه'
+                : 'Team entry fee: ${VSPMoneyFormatter.amount(entryFee)} EGP',
             subtitle: isArabic
                 ? 'رسوم مشاركة الفريق الواحد'
                 : 'Entry fee per team',
