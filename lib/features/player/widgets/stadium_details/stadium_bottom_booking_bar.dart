@@ -17,6 +17,13 @@ class StadiumBottomBookingBar extends StatelessWidget {
     required this.stadium,
   });
 
+  String _formatAmount(double value) {
+    if (!value.isFinite || value < 0) return '—';
+    return value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(2);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -52,7 +59,7 @@ class StadiumBottomBookingBar extends StatelessWidget {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: '${stadium.basePrice.toStringAsFixed(0)} ',
+                              text: '${_formatAmount(stadium.basePrice)} ',
                               style: Theme.of(context).textTheme.displayLarge,
                             ),
                             TextSpan(
@@ -72,7 +79,7 @@ class StadiumBottomBookingBar extends StatelessWidget {
                                 const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 11),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '${isArabic ? 'عربون: ' : 'Deposit: '}${stadium.depositAmount.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
+                                  '${isArabic ? 'عربون: ' : 'Deposit: '}${_formatAmount(stadium.depositAmount)} ${isArabic ? 'ج.م' : 'EGP'}',
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                         color: VSPColors.accent,
                                         fontSize: 10,
@@ -85,7 +92,7 @@ class StadiumBottomBookingBar extends StatelessWidget {
                               key: const ValueKey('cash'),
                               children: [
                                 Text(
-                                  isArabic ? 'ادفع نقداً في الملعب' : 'Pay cash at stadium',
+                                  isArabic ? 'لا يوجد عربون مطلوب' : 'No deposit required',
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                         color: VSPColors.textSecondary,
                                         fontSize: 10,
