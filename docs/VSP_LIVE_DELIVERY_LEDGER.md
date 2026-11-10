@@ -513,7 +513,7 @@ These changes are **CODE_DONE / Pending Verification** under the deferred-test i
 - `71b1d25`: subscription order billing periods are restricted to monthly/annual and checkout URLs must be valid HTTPS before external launch.
 - `d54b6c8`: trial activation and checkout creation are single-flight and bound to the active authenticated owner across async boundaries.
 - `d9a3b1b`: clarified the verified subscription model (no per-booking commission) and replaced internal “atomic” terminology with understandable conflict-safe booking copy.
-- Candidate mapping: **24.01–24.08 and Phase 10 UX-06/UX-07 are CODE_DONE/IN_PROGRESS** pending deferred widget, two-account, sandbox checkout and renewal/cancellation-source verification. No conversion or revenue uplift is claimed.
+- Candidate mapping: **25.01–25.08, 52.03–52.06 and Phase 10 UX-06/UX-07 are CODE_DONE/IN_PROGRESS** pending deferred widget, two-account, sandbox checkout and renewal/cancellation-source verification. No conversion or revenue uplift is claimed.
 - **Verified progress remains 72/620; 548 remaining.** No production pricing, payment backend, Supabase schema/RLS, `main` merge or APK action.
 
 
