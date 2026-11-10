@@ -111,8 +111,8 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
               final int currentMax = user.maxStadiums;
               return Text(
                 isAr
-                    ? 'باقتك الحالية تتيح تشغيل حتى $currentMax ${currentMax == 1 ? 'ملعب واحد فقط' : 'ملاعب'}.\n\nللإضافة والتوسع حتى 3 ملاعب كاملة، يرجى الترقية للباقة الاحترافية.'
-                    : 'Your current plan allows operating up to $currentMax ${currentMax == 1 ? 'stadium only' : 'stadiums'}.\n\nTo operate up to 3 full stadiums, please upgrade to the Pro Plan.',
+                    ? 'باقتك الحالية تتيح تشغيل حتى $currentMax ${currentMax == 1 ? 'ملعب واحد فقط' : 'ملاعب'}.\n\nراجع حدود ومزايا وأسعار الباقة الاحترافية المحدثة قبل الاشتراك.'
+                    : 'Your current plan allows operating up to $currentMax ${currentMax == 1 ? 'stadium only' : 'stadiums'}.\n\nReview the current Pro limits, features, and prices before subscribing.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: VSPColors.textSecondary,
@@ -137,21 +137,21 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
               children: [
                 _FeatureRow(
                   icon: Iconsax.buildings_copy,
-                  text: isAr ? 'إضافة وتشغيل حتى 3 ملاعب كاملة' : 'Operate up to 3 full stadiums',
+                  text: isAr ? 'عرض حد الملاعب المتاح في الباقة' : 'View the plan stadium limit',
                 ),
                 const SizedBox(height: 8),
                 _FeatureRow(
                   icon: Iconsax.chart_1_copy,
                   text: isAr
-                      ? 'أولوية الظهور في نتائج البحث للاعبين'
-                      : 'Priority search boost in governorate results',
+                      ? 'عرض المزايا المتاحة فعليًا'
+                      : 'View the currently available features',
                 ),
                 const SizedBox(height: 8),
                 _FeatureRow(
                   icon: Iconsax.headphones_copy,
                   text: isAr
-                      ? 'أولوية في التواصل مع فريق الدعم'
-                      : 'Priority access to the support team',
+                      ? 'مراجعة السعر وشروط التجديد قبل الدفع'
+                      : 'Review price and renewal terms before payment',
                 ),
               ],
             ),
@@ -160,7 +160,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
 
           // ─── Subscribe Button ───
           PrimaryButton(
-            text: isAr ? ' اشترك الآن في الباقة الاحترافية' : ' Upgrade to Pro Now',
+            text: isAr ? 'عرض تفاصيل الباقة الاحترافية' : 'View Pro plan details',
             color: VSPColors.proAccent,
             textColor: VSPColors.black,
             onPressed: () async {
