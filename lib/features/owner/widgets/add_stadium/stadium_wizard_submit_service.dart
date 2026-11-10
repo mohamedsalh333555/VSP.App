@@ -6,6 +6,7 @@ import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'stadium_wizard_draft_service.dart';
 import 'stadium_wizard_payload_builder.dart';
+import 'stadium_wizard_image_service.dart';
 
 /// Service executing create or update operations for the stadium wizard.
 class StadiumWizardSubmitService {
@@ -42,6 +43,7 @@ class StadiumWizardSubmitService {
     required bool isSplitShift,
     required List<Map<String, TimeOfDay?>> breakTimes,
     required List<Map<String, dynamic>> images,
+    required Set<String> removedExistingImageUrls,
     required double? latitude,
     required double? longitude,
     required String? uid,
@@ -124,7 +126,7 @@ class StadiumWizardSubmitService {
         return false;
       }
 
-      if (stadiumId == null && uploadedUrls.isEmpty) {
+      if (uploadedUrls.isEmpty) {
         VSPFeedback.showError(
           context,
           isArabic
@@ -172,6 +174,24 @@ class StadiumWizardSubmitService {
           longitude: longitude,
         );
         await databaseService.updateStadium(stadiumId, updatePayload);
+        var cleanupFailed = false;
+        for (final removedUrl in removedExistingImageUrls) {
+          final deleted =
+              await StadiumWizardImageService.deleteUploadedImage(removedUrl);
+          cleanupFailed = cleanupFailed || !deleted;
+        }
+        if (cleanupFailed) {
+          if (context.mounted) {
+            VSPFeedback.showError(
+              context,
+              isArabic
+                  ? 'تم حفظ بيانات الملعب، لكن تعذر حذف بعض الصور القديمة. اضغط حفظ مرة تانية لإعادة المحاولة.'
+                  : 'Stadium details were saved, but some old photos could not be deleted. Save again to retry.',
+            );
+          }
+          return false;
+        }
+        removedExistingImageUrls.clear();
       } else {
         final newId = await databaseService.createStadium(
           name: name.trim(),
