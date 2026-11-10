@@ -7,7 +7,15 @@ void main() {
     final dashboard = File(
       'lib/features/player/screens/team_dashboard_screen.dart',
     ).readAsStringSync();
-    expect(dashboard, contains('TeamInvitationsSheet(userId: _activeUserTeamScope!)'));
+    expect(
+      dashboard,
+      matches(
+        RegExp(
+          r'TeamInvitationsSheet\(\s*userId:\s*_activeUserTeamScope!',
+          multiLine: true,
+        ),
+      ),
+    );
   });
 
   test('inbox offers accept decline and retry without optimistic membership', () {
