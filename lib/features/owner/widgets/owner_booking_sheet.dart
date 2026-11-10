@@ -166,12 +166,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         final endTime = startTime.add(Duration(minutes: _selectedMinutes));
 
         final bookings = bookingProvider.userBookings.where((b) {
-          final bStartLocal = b.startTime.toLocal();
           return b.stadiumId.toLowerCase().trim() == stadium.id.toLowerCase().trim() &&
               b.status != BookingStatus.cancelled &&
-              bStartLocal.year == selectedDate.year &&
-              bStartLocal.month == selectedDate.month &&
-              bStartLocal.day == selectedDate.day;
+              b.status != BookingStatus.expired;
         }).toList();
 
         if (OwnerBookingSheetService.checkBreakOverlap(
@@ -226,13 +223,10 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           final endTime = startTime.add(Duration(minutes: _selectedMinutes));
 
           final bookings = bookingProvider.userBookings.where((b) {
-            final bStartLocal = b.startTime.toLocal();
             return b.id != booking.id &&
                 b.stadiumId.toLowerCase().trim() == stadium.id.toLowerCase().trim() &&
                 b.status != BookingStatus.cancelled &&
-                bStartLocal.year == startTime.year &&
-                bStartLocal.month == startTime.month &&
-                bStartLocal.day == startTime.day;
+                b.status != BookingStatus.expired;
           }).toList();
 
           if (OwnerBookingSheetService.checkBookingsOverlap(
