@@ -211,30 +211,37 @@ class TeamRepository {
 
   Future<List<Team>> fetchTeamsDirectly({String? governorate}) async {
     try {
-      final response = await _supabase.from('teams_public').select().limit(50);
-      return (response as List).map((data) {
-        if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
-          final dbGov = (data['governorate'] ?? '').toString().trim();
-          final stdDbGov = EgyptGovernorates.resolveGoogleName(dbGov) ?? dbGov;
-          final stdFilterGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
-
-          final matches = stdDbGov.toLowerCase() == stdFilterGov.toLowerCase() ||
-              dbGov.toLowerCase() == governorate.toLowerCase();
-
-          if (!matches) {
-            return null;
-          }
-        }
-        return Team.fromFirestore(data as Map<String, dynamic>, data['id'].toString());
-      }).whereType<Team>().toList();
+      return await fetchTeamsDirectlyStrict(governorate: governorate);
     } catch (e) {
       debugPrint('Error fetching teams directly: $e');
       return [];
     }
   }
 
+  /// Strict discovery fetch so the UI can distinguish a real empty ranking
+  /// from a network, authorization, or public-view failure.
+  Future<List<Team>> fetchTeamsDirectlyStrict({String? governorate}) async {
+    final response = await _supabase.from('teams_public').select().limit(50);
+    return (response as List).map((data) {
+      if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
+        final dbGov = (data['governorate'] ?? '').toString().trim();
+        final stdDbGov = EgyptGovernorates.resolveGoogleName(dbGov) ?? dbGov;
+        final stdFilterGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
+
+        final matches = stdDbGov.toLowerCase() == stdFilterGov.toLowerCase() ||
+            dbGov.toLowerCase() == governorate.toLowerCase();
+
+        if (!matches) return null;
+      }
+      return Team.fromFirestore(
+        data as Map<String, dynamic>,
+        data['id'].toString(),
+      );
+    }).whereType<Team>().toList();
+  }
+
   Stream<List<Team>> getTeams({String? governorate}) async* {
-    final direct = await fetchTeamsDirectly(governorate: governorate);
+    final direct = await fetchTeamsDirectlyStrict(governorate: governorate);
     yield direct;
   }
 
