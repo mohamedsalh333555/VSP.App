@@ -57,17 +57,12 @@ class OwnerBookingSheetService {
       if (currentBookingId != null && b.id == currentBookingId) continue;
       if (b.status == BookingStatus.cancelled) continue;
       
-      final bStartLocal = b.startTime.toLocal();
-      if (bStartLocal.year != slotTime.year ||
-          bStartLocal.month != slotTime.month ||
-          bStartLocal.day != slotTime.day) {
-        continue;
-      }
+      if (b.status == BookingStatus.expired) continue;
 
-      final int bStartMin = bStartLocal.hour * 60 + bStartLocal.minute;
-      if (bStartMin > slotMin) {
-        final minsToBooking = bStartMin - slotMin;
-        if (minsToBooking < maxMins) {
+      final bStartLocal = b.startTime.toLocal();
+      if (bStartLocal.isAfter(slotTime)) {
+        final minsToBooking = bStartLocal.difference(slotTime).inMinutes;
+        if (minsToBooking > 0 && minsToBooking < maxMins) {
           maxMins = minsToBooking;
         }
       }
@@ -84,15 +79,46 @@ class OwnerBookingSheetService {
   }) {
     if (!stadium.isSplitShift) return false;
 
-    final int breakStartMin = AppDateFormatter.parseTimeToMinutes(stadium.breakStartTime);
-    final int breakEndMin = AppDateFormatter.parseTimeToMinutes(stadium.breakEndTime);
-    final int startMin = startTime.hour * 60 + startTime.minute;
-    final int endMin = endTime.hour * 60 + endTime.minute;
+    if (!endTime.isAfter(startTime)) return false;
+    final int breakStartMin =
+        AppDateFormatter.parseTimeToMinutes(stadium.breakStartTime);
+    final int breakEndMin =
+        AppDateFormatter.parseTimeToMinutes(stadium.breakEndTime);
+    if (breakStartMin == breakEndMin) return false;
 
-    if (breakStartMin < breakEndMin) {
-      return startMin < breakEndMin && endMin > breakStartMin;
-    } else if (breakStartMin != breakEndMin) {
-      return startMin >= breakStartMin || endMin > breakStartMin;
+    // Compare real local DateTime intervals rather than clock minutes. This
+    // correctly detects both bookings and closures that cross midnight.
+    final firstCandidateDay = DateTime(
+      startTime.year,
+      startTime.month,
+      startTime.day - 1,
+    );
+    final lastCandidateDay = DateTime(
+      endTime.year,
+      endTime.month,
+      endTime.day,
+    );
+    for (var day = firstCandidateDay;
+        !day.isAfter(lastCandidateDay);
+        day = DateTime(day.year, day.month, day.day + 1)) {
+      final breakStart = DateTime(
+        day.year,
+        day.month,
+        day.day,
+        breakStartMin ~/ 60,
+        breakStartMin % 60,
+      );
+      final breakEndDayOffset = breakEndMin <= breakStartMin ? 1 : 0;
+      final breakEnd = DateTime(
+        day.year,
+        day.month,
+        day.day + breakEndDayOffset,
+        breakEndMin ~/ 60,
+        breakEndMin % 60,
+      );
+      if (startTime.isBefore(breakEnd) && endTime.isAfter(breakStart)) {
+        return true;
+      }
     }
     return false;
   }
