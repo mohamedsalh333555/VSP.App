@@ -53,7 +53,7 @@ class OwnerRepository {
  return _supabase
  .from('stadiums')
  .stream(primaryKey: ['id'])
- .eq('owner_id', ownerId)
+ .eq('owner_id', authenticatedOwnerId)
  .timeout(
  const Duration(seconds: 10),
  onTimeout: (sink) => sink.add([]),
@@ -113,7 +113,7 @@ class OwnerRepository {
  final response = await _supabase
  .from('bookings')
  .select('start_time, end_time, status')
- .eq('owner_id', ownerId)
+ .eq('owner_id', authenticatedOwnerId)
  .neq('status', 'cancelled');
 
  double totalHours = 0.0;
@@ -143,8 +143,10 @@ class OwnerRepository {
  .map((list) {
  final sorted = List<Map<String, dynamic>>.from(list);
  sorted.sort((a, b) {
- final dateA = DateTime.parse(a['created_at'].toString());
- final dateB = DateTime.parse(b['created_at'].toString());
+ final dateA = DateTime.tryParse(a['created_at']?.toString() ?? '') ??
+     DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+ final dateB = DateTime.tryParse(b['created_at']?.toString() ?? '') ??
+     DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
  return dateB.compareTo(dateA);
  });
  return sorted;
