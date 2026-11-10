@@ -7,6 +7,7 @@ import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../screens/booking_success_screen.dart';
 import '../../screens/payment_gateway_screen.dart';
@@ -151,8 +152,8 @@ void showBookingPaymentMethodSheet({
                       ),
                       subtitle: Text(
                         isArabic
-                            ? 'سداد ${totalPrice.toInt()} ج.م كاملاً بالفيزا/المحفظة (المتبقي بالملعب: 0 ج.م)'
-                            : 'Pay full ${totalPrice.toInt()} EGP online (Remaining at pitch: 0 EGP)',
+                            ? 'سداد ${VSPMoneyFormatter.amount(totalPrice)} ج.م كاملاً بالفيزا/المحفظة (المتبقي بالملعب: 0 ج.م)'
+                            : 'Pay full ${VSPMoneyFormatter.amount(totalPrice)} EGP online (Remaining at pitch: 0 EGP)',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                       onTap: isNavigating
@@ -183,8 +184,8 @@ void showBookingPaymentMethodSheet({
                       ),
                       subtitle: Text(
                         isArabic
-                            ? 'سداد ${depositAmount.toInt()} ج.م عربون لتأكيد الحجز + سداد المتبقي (${(totalPrice - depositAmount).toInt()} ج.م) كاش بالملعب'
-                            : 'Pay ${depositAmount.toInt()} EGP deposit now + pay remaining (${(totalPrice - depositAmount).toInt()} EGP) in cash',
+                            ? 'سداد ${VSPMoneyFormatter.amount(depositAmount)} ج.م عربون لتأكيد الحجز + سداد المتبقي (${VSPMoneyFormatter.amount(totalPrice - depositAmount)} ج.م) كاش بالملعب'
+                            : 'Pay ${VSPMoneyFormatter.amount(depositAmount)} EGP deposit now + pay remaining (${VSPMoneyFormatter.amount(totalPrice - depositAmount)} EGP) in cash',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                       onTap: isNavigating
