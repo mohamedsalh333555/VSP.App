@@ -8,6 +8,7 @@ import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/tournament/wizard/tournament_basics_step.dart';
@@ -196,7 +197,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       final t = widget.tournament!;
       _nameController.text = t.name;
       _selectedSport = t.sportType;
-      _feeController.text = t.entryFee.toInt().toString();
+      _feeController.text = VSPMoneyFormatter.amount(t.entryFee);
       _selectedType = t.type;
       _selectedTeams = t.maxTeams.toString();
       _numberOfGroups = t.numberOfGroups;
@@ -205,7 +206,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       _startDate = t.startDate;
       _endDate = t.endDate;
       _durationController.text = t.matchDuration.toString();
-      _prizeController.text = t.grandPrize.toInt().toString();
+      _prizeController.text = VSPMoneyFormatter.amount(t.grandPrize);
     } else {
       if (widget.preselectedType != null) {
         _selectedType = widget.preselectedType!;
