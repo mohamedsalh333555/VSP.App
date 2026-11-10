@@ -41,7 +41,10 @@ class BookingMatchCoordinator {
       final success = await _matchRepository.leavePublicMatch(bookingId, userId);
       return (success: success, error: null);
     } catch (e) {
-      return (success: false, error: 'Error leaving match: $e');
+      return (
+        success: false,
+        error: BookingCategorizationService.formatPublicMatchError(e),
+      );
     }
   }
 }
