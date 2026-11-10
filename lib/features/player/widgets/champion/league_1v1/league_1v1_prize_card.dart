@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../../core/utils/vsp_money_formatter.dart';
 
 /// Card displaying the registration fee and the official tournament prize.
 class League1v1PrizeCard extends StatelessWidget {
@@ -58,7 +59,7 @@ class League1v1PrizeCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     entryFee > 0
-                        ? '${entryFee.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}'
+                        ? '${VSPMoneyFormatter.amount(entryFee)} ${isArabic ? "ج.م" : "EGP"}'
                         : (isArabic ? 'غير متاح' : 'Unavailable'),
                     style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.w900),
                   ),
@@ -101,7 +102,7 @@ class League1v1PrizeCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     prizeAmount > 0
-                        ? '${prizeAmount.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}'
+                        ? '${VSPMoneyFormatter.amount(prizeAmount)} ${isArabic ? "ج.م" : "EGP"}'
                         : (isArabic ? 'غير متاح' : 'Unavailable'),
                     style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.w900),
                   ),
