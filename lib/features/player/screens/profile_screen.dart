@@ -185,7 +185,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
  trailing: isSelected ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null,
  onTap: () async {
  try {
-   await auth.updateProfile({'governorate': gov});
+   final submittingUserId = auth.currentUser?.id;
+   if (submittingUserId == null || submittingUserId.isEmpty) {
+     throw StateError('authentication_required');
+   }
+   final saved = await auth.updateProfile({'governorate': gov});
+   if (!saved) throw StateError('governorate_update_failed');
+   if (auth.currentUser?.id != submittingUserId) return;
    if (!context.mounted || !sheetContext.mounted) return;
    context.read<StadiumProvider>().applyGovernorateFilter(gov);
    Navigator.pop(sheetContext);
