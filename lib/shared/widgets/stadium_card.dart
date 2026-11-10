@@ -309,8 +309,8 @@ class StadiumCard extends StatelessWidget {
  Expanded(
  child: Text(
  Localizations.localeOf(context).languageCode == 'ar'
- ? 'السعر ${stadium.pricePerHour.toInt()} ج.م'
- : 'Price ${stadium.pricePerHour.toInt()} EGP',
+ ? 'السعر ${_formatAmount(stadium.pricePerHour)} ج.م'
+ : 'Price ${_formatAmount(stadium.pricePerHour)} EGP',
  style: Theme.of(context).textTheme.titleMedium?.copyWith(
  color: VSPColors.accent,
  fontWeight: FontWeight.w900,
@@ -370,7 +370,7 @@ class StadiumCard extends StatelessWidget {
  crossAxisAlignment: CrossAxisAlignment.end,
  children: [
  Text(
- '${stadium.pricePerHour.toInt()} ${AppLocalizations.of(context)!.egCurrency}',
+ '${_formatAmount(stadium.pricePerHour)} ${AppLocalizations.of(context)!.egCurrency}',
  style: Theme.of(context).textTheme.titleMedium?.copyWith(
  color: VSPColors.accent,
  fontWeight: FontWeight.w900,
@@ -399,6 +399,13 @@ class StadiumCard extends StatelessWidget {
   ),
   );
 }
+
+ String _formatAmount(double value) {
+ if (!value.isFinite || value < 0) return '—';
+ return value == value.roundToDouble()
+     ? value.toStringAsFixed(0)
+     : value.toStringAsFixed(2);
+ }
 
  String _localizeSizeAndType(String size, String type, BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
