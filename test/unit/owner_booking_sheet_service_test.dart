@@ -23,6 +23,34 @@ void main() {
       ballPrice: 50.0,
     );
 
+    Stadium stadiumWithHours({
+      required String openingTime,
+      required String closingTime,
+      bool isSplitShift = false,
+      String? breakStartTime,
+      String? breakEndTime,
+    }) =>
+        Stadium(
+          id: baseStadium.id,
+          name: baseStadium.name,
+          location: baseStadium.location,
+          imageUrl: baseStadium.imageUrl,
+          type: baseStadium.type,
+          size: baseStadium.size,
+          baths: baseStadium.baths,
+          cafeteria: baseStadium.cafeteria,
+          playersPerTeam: baseStadium.playersPerTeam,
+          totalFieldCapacity: baseStadium.totalFieldCapacity,
+          pricePerHour: baseStadium.pricePerHour,
+          basePrice: baseStadium.basePrice,
+          area: baseStadium.area,
+          openingTime: openingTime,
+          closingTime: closingTime,
+          isSplitShift: isSplitShift,
+          breakStartTime: breakStartTime,
+          breakEndTime: breakEndTime,
+        );
+
     test('calculateBookingPrice computes base and extra durations and ball fee correctly', () {
       // 1 hour without ball
       expect(OwnerBookingSheetService.calculateBookingPrice(
@@ -125,6 +153,65 @@ void main() {
 
       // From 16:30 to 18:00 is 90 minutes
       expect(maxMins, 90);
+    });
+
+    test('calculateMaxAvailableMinutes sees a next-day overnight booking', () {
+      final overnightStadium = stadiumWithHours(
+        openingTime: '20:00',
+        closingTime: '03:00',
+      );
+      final nextBooking = Booking(
+        id: 'bk_after_midnight',
+        stadiumId: baseStadium.id,
+        stadiumName: baseStadium.name,
+        stadiumImageUrl: '',
+        ownerId: 'own_1',
+        startTime: DateTime(2026, 9, 11, 0, 30),
+        endTime: DateTime(2026, 9, 11, 1, 30),
+        bookingType: BookingType.personal,
+        totalPrice: 300,
+        isPrivate: true,
+        rentBall: false,
+        paymentMethod: 'cash',
+        status: BookingStatus.confirmed,
+        createdByUserId: 'player_1',
+        createdAt: DateTime(2026, 9, 10),
+      );
+
+      final maxMins = OwnerBookingSheetService.calculateMaxAvailableMinutes(
+        stadium: overnightStadium,
+        slotTime: DateTime(2026, 9, 10, 23, 30),
+        existingBookings: [nextBooking],
+      );
+
+      expect(maxMins, 60);
+    });
+
+    test('checkBreakOverlap detects an overnight closure after midnight', () {
+      final overnightBreak = stadiumWithHours(
+        openingTime: '20:00',
+        closingTime: '03:00',
+        isSplitShift: true,
+        breakStartTime: '23:30',
+        breakEndTime: '00:30',
+      );
+
+      expect(
+        OwnerBookingSheetService.checkBreakOverlap(
+          stadium: overnightBreak,
+          startTime: DateTime(2026, 9, 11, 0, 0),
+          endTime: DateTime(2026, 9, 11, 0, 30),
+        ),
+        isTrue,
+      );
+      expect(
+        OwnerBookingSheetService.checkBreakOverlap(
+          stadium: overnightBreak,
+          startTime: DateTime(2026, 9, 10, 22, 30),
+          endTime: DateTime(2026, 9, 10, 23, 0),
+        ),
+        isFalse,
+      );
     });
 
     test('checkBookingsOverlap detects active overlaps and ignores cancelled or self bookings', () {
