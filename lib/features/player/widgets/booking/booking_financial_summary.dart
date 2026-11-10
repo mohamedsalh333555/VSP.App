@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -82,7 +83,7 @@ class BookingFinancialSummary extends StatelessWidget {
                   style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 Text(
-                  '${deposit.toInt()} ${l10n.egCurrency}',
+                  '${VSPMoneyFormatter.amount(deposit)} ${l10n.egCurrency}',
                   style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ],
@@ -96,7 +97,7 @@ class BookingFinancialSummary extends StatelessWidget {
                   style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
                 Text(
-                  '${(totalPrice - deposit).clamp(0, double.infinity).toInt()} ${l10n.egCurrency}',
+                  '${VSPMoneyFormatter.amount((totalPrice - deposit).clamp(0, double.infinity))} ${l10n.egCurrency}',
                   style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12),
                 ),
               ],
