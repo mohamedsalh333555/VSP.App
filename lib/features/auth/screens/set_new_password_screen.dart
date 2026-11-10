@@ -59,6 +59,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  // ── Save Password ──────────────────────────────────────────────────────────
 
  Future<void> _save(bool isAr) async {
+ if (_isLoading) return;
  if (!_formKey.currentState!.validate()) return;
 
  setState(() {
@@ -68,9 +69,18 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
 
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final success = await auth.updatePassword(_newPassController.text.trim());
+      final recoveryUserId = auth.currentUser?.id;
+      if (recoveryUserId == null) {
+        throw StateError('Missing password recovery session');
+      }
+
+      final success = await auth.updatePassword(_newPassController.text);
       if (!success) {
         throw Exception(isAr ? 'فشل تحديث كلمة المرور' : 'Failed to update password');
+      }
+
+      if (auth.currentUser?.id != recoveryUserId) {
+        throw StateError('Password recovery session changed');
       }
 
       if (!mounted) return;
@@ -83,10 +93,18 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
       await Future.delayed(const Duration(milliseconds: 1200));
       if (!mounted) return;
       // Sign out and back in to refresh session cleanly
-      await auth.signOut();
-    } catch (e) {
+      try {
+        await auth.signOut();
+      } catch (_) {
+        // The password is already updated. Session cleanup can be retried from
+        // the normal logout flow without reporting a false recovery failure.
+      }
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
-        _errorMessage = isAr ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' : 'An unexpected error occurred. Please try again.';
+        _errorMessage = isAr
+            ? 'رابط الاستعادة غير صالح أو انتهت صلاحيته. اطلب رابط جديد وحاول تاني.'
+            : 'This recovery link is invalid or expired. Request a new link and try again.';
         _isLoading = false;
       });
     }
