@@ -29,13 +29,23 @@ void main() {
       'Future<bool> removeParticipantFromPublicMatch(',
       leaveStart,
     );
+    final privateLeaveStart = repository.indexOf(
+      'Future<bool> leavePrivateCollectiveMatch(',
+      removeStart,
+    );
     final joinSource = repository.substring(joinStart, leaveStart);
     final leaveSource = repository.substring(leaveStart, removeStart);
+    final removeSource = repository.substring(removeStart, privateLeaveStart);
     expect(
       joinSource.indexOf("rpc('request_join_public_match'"),
       lessThan(joinSource.indexOf("from('booking_public_feed')")),
     );
     expect(joinSource, contains('notification enrichment unavailable'));
     expect(leaveSource, isNot(contains("from('booking_public_feed')")));
+    expect(
+      removeSource.indexOf("rpc('remove_public_match_participant_atomic'"),
+      lessThan(removeSource.indexOf("from('booking_public_feed')")),
+    );
+    expect(removeSource, contains('notification delivery unavailable'));
   });
 }
