@@ -14,8 +14,6 @@ class StadiumRepository {
         .from('stadiums')
         .stream(primaryKey: ['id'])
         .eq('is_deleted_by_owner', false)
-        .eq('is_verified', true)
-        .eq('is_blocked', false)
         .limit(limit)
         .map((list) => list
             .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
@@ -448,9 +446,12 @@ class StadiumRepository {
         .from('stadiums')
         .stream(primaryKey: ['id'])
         .eq('id', stadiumId)
-        .eq('is_deleted_by_owner', false)
-        .eq('is_verified', true)
-        .eq('is_blocked', false)
+        .map((list) => list
+            .where((data) =>
+                data['is_deleted_by_owner'] != true &&
+                data['is_verified'] == true &&
+                data['is_blocked'] != true)
+            .toList(growable: false))
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) => sink.addError(StateError('stadium_stream_timeout')),
