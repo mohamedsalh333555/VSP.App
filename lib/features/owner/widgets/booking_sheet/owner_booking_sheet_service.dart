@@ -139,12 +139,11 @@ class OwnerBookingSheetService {
     } else if (lower.contains('overlap')) {
       return isArabic ? 'مدة الحجز تتداخل مع حجز آخر نشط على الملعب! يرجى تقليل المدة أو اختيار موعد آخر.' : 'Booking duration overlaps with another active booking!';
     }
-    return cleanErr
-        .replaceAll('Exception:', '')
-        .replaceAll('PostgrestException', '')
-        .replaceAll('(message:', '')
-        .replaceAll('Failed to create booking:', '')
-        .trim();
+    // Do not surface raw PostgREST/SQL details, constraint names or identifiers.
+    // Unknown failures remain retryable through a stable user-facing message.
+    return isArabic
+        ? 'تعذر حفظ الحجز حالياً. راجع البيانات وحاول مرة أخرى.'
+        : 'Could not save the booking right now. Check the details and try again.';
   }
 
   /// Returns localized modal title depending on booking lifecycle status.
