@@ -44,13 +44,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
  void _handleLogin() async {
+ if (_isLoading) return;
  // Basic Validation
- if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+ final email = _emailController.text.trim().toLowerCase();
+ final isValidEmail = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
+ if (!isValidEmail || _passwordController.text.isEmpty) {
  HapticFeedback.heavyImpact();
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
  VSPFeedback.showError(
  context,
- isAr ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور' : 'Please enter email and password',
+ isAr ? 'اكتب بريد إلكتروني صحيح وكلمة المرور' : 'Enter a valid email and password',
  );
  return;
  }
@@ -60,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
  
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
  final success = await authProvider.signIn(
- email: _emailController.text.trim(),
+ email: email,
  password: _passwordController.text
  );
  
