@@ -3,6 +3,7 @@ import '../repositories/booking_repository.dart';
 import '../repositories/notification_repository.dart';
 import 'logger_service.dart';
 import 'no_show_dispute_service.dart';
+import '../utils/vsp_money_formatter.dart';
 
 /// Centralized factory for creating and sending notifications based on the VSP Notification Matrix.
 class NotificationHandler {
@@ -371,15 +372,15 @@ class NotificationHandler {
     final notif = AppNotification(
       id: '',
       title: 'تم استلام دفعة مالية ',
-      body: 'تم استلام مبلغ ${amount.toStringAsFixed(0)} ج.م من $userName.',
+      body: 'تم استلام مبلغ ${VSPMoneyFormatter.amount(amount)} ج.م من $userName.',
       type: 'payment_received',
       bookingId: bookingId,
       createdAt: DateTime.now(),
       metadata: _localizedCopy(
         titleAr: 'تم استلام دفعة مالية',
         titleEn: 'Payment received',
-        bodyAr: 'تم استلام مبلغ ${amount.toStringAsFixed(0)} ج.م من $userName.',
-        bodyEn: 'A payment of ${amount.toStringAsFixed(0)} EGP was received from $userName.',
+        bodyAr: 'تم استلام مبلغ ${VSPMoneyFormatter.amount(amount)} ج.م من $userName.',
+        bodyEn: 'A payment of ${VSPMoneyFormatter.amount(amount)} EGP was received from $userName.',
         metadata: {
           'amount': amount,
           'userName': userName,
@@ -404,14 +405,14 @@ class NotificationHandler {
     final notif = AppNotification(
       id: '',
       title: 'Payment Reminder ',
-      body: 'You have a pending cash payment of ${amount.toStringAsFixed(0)} EGP for $stadiumName. Please settle it at the stadium at your earliest convenience.',
+      body: 'You have a pending cash payment of ${VSPMoneyFormatter.amount(amount)} EGP for $stadiumName. Please settle it at the stadium at your earliest convenience.',
       type: 'debt_reminder',
       createdAt: DateTime.now(),
       metadata: _localizedCopy(
         titleAr: 'تذكير بسداد المستحقات',
         titleEn: 'Payment reminder',
-        bodyAr: 'لديك مبلغ نقدي مستحق بقيمة ${amount.toStringAsFixed(0)} ج.م لصالح $stadiumName. يرجى سداده في الملعب.',
-        bodyEn: 'You have a pending cash payment of ${amount.toStringAsFixed(0)} EGP for $stadiumName. Please settle it at the stadium.',
+        bodyAr: 'لديك مبلغ نقدي مستحق بقيمة ${VSPMoneyFormatter.amount(amount)} ج.م لصالح $stadiumName. يرجى سداده في الملعب.',
+        bodyEn: 'You have a pending cash payment of ${VSPMoneyFormatter.amount(amount)} EGP for $stadiumName. Please settle it at the stadium.',
         metadata: {
           'amount': amount,
           'stadiumName': stadiumName,
