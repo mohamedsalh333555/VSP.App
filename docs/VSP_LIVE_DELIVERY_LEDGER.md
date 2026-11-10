@@ -575,3 +575,11 @@ After reading Work's latest authentication, discovery, team and stadium-media ba
 - Candidate mapping: **16.02**, **23.01**, **27.04**, **29.05**. These are partial implementation improvements, not full task closures.
 - Deferred acceptance: owner/player lists with paid pending, cash pending, partial deposit, cancelled, expired, overlapping bookings, server payment-state reconciliation, Flutter analyze and integration tests.
 - **72 VERIFIED / 620 baseline / 548 not yet accepted**. No production DB/payment/RLS, main merge or APK.
+
+
+## Booking classification consistency continuation — 2026-11-10
+
+- `57a49c0`: removed redundant pending-payment predicate and reused the same reconciliation condition in player history and active buckets; unpaid checkout grace behavior remains distinct from paid-pending reconciliation.
+- `25e441a`: normalize persisted payment-status strings (trim/case) before interpreting paid/refund-pending values, so legacy casing does not hide a booking.
+- Mapping: **16.02**, **27.04**, **29.05** remain IN_PROGRESS / pending consolidated verification; these commits do not close full acceptance subtasks.
+- **72 VERIFIED / 620 total / 548 unaccepted**. Flutter analyze/tests, device journeys and payment-server reconciliation deferred; no production DB, payment writes, main merge or APK.
