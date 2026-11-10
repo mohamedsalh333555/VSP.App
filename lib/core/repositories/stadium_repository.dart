@@ -482,13 +482,26 @@ class StadiumRepository {
     required double rating,
     required String comment,
   }) async {
+    final cleanStadiumId = stadiumId.trim();
+    final cleanUserId = userId.trim();
+    final cleanComment = comment.trim();
+    if (cleanStadiumId.isEmpty ||
+        cleanUserId.isEmpty ||
+        _supabase.auth.currentUser?.id != cleanUserId ||
+        !rating.isFinite ||
+        rating != rating.roundToDouble() ||
+        rating < 1 ||
+        rating > 5 ||
+        cleanComment.length > 500) {
+      throw ArgumentError('invalid_review_submission');
+    }
     final response = await _supabase.rpc('submit_stadium_review_atomic', params: {
-      'p_stadium_id': stadiumId,
-      'p_user_id': userId,
-      'p_user_name': userName,
-      'p_user_image_url': userImageUrl,
+      'p_stadium_id': cleanStadiumId,
+      'p_user_id': cleanUserId,
+      'p_user_name': userName.trim(),
+      'p_user_image_url': userImageUrl.trim(),
       'p_rating': rating.round(),
-      'p_comment': comment,
+      'p_comment': cleanComment,
     });
     if (response is Map && response['success'] == false) {
       throw Exception(response['error']?.toString() ?? 'review_submission_failed');
