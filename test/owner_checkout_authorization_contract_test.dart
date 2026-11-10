@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('SEC-06: checkout status authorization is bound to owner id', () {
     final source = File(
-      'supabase/functions/get_owner_web_checkout_status/index.ts',
+      'supabase/functions/get_owner_web_checkout_status/handler.ts',
     ).readAsStringSync();
 
     // Prevent regression to an email-based ownership check. Checkout email
@@ -22,5 +22,32 @@ void main() {
     expect(source, isNot(contains('owner_id,checkout_email,status')));
     expect(source, contains('FORBIDDEN_NOT_ORDER_OWNER'));
     expect(source, contains('sb.auth.getUser(token)'));
+  });
+
+  test('SEC-06: deployed checkout entrypoints use request-tested handlers', () {
+    for (final name in [
+      'create_owner_web_checkout',
+      'get_owner_web_checkout_status',
+    ]) {
+      final source = File('supabase/functions/$name/index.ts').readAsStringSync();
+      expect(source, contains('import { createHandler } from "./handler.ts"'));
+      expect(source, contains('serve(createHandler('));
+    }
+  });
+
+  test('SEC-06: inquiry and signed subscription callback share strict payment validation', () {
+    final inquiry = File(
+      'supabase/functions/get_owner_web_checkout_status/handler.ts',
+    ).readAsStringSync();
+    final webhook = File(
+      'supabase/functions/paymob_webhook/index.ts',
+    ).readAsStringSync();
+    expect(inquiry, contains('verifyOwnerSubscriptionPayment(tx, order)'));
+    expect(webhook, contains('verifyOwnerSubscriptionPayment(obj, subscriptionOrder)'));
+    // The signature rejection must precede subscription payment validation.
+    expect(
+      webhook.indexOf('if (!isHmacValid)'),
+      lessThan(webhook.indexOf('verifyOwnerSubscriptionPayment(obj, subscriptionOrder)')),
+    );
   });
 }

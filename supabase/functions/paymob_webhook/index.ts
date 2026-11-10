@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { verifyOwnerSubscriptionPayment } from "../_shared/owner_subscription_payment.ts";
 
 declare const Deno: any;
 
@@ -332,18 +333,17 @@ serve(async (req: Request) => {
       if (subscriptionOrderError || !subscriptionOrder) {
         return new Response(JSON.stringify({ error: "Subscription payment order not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
       }
-      if (subscriptionOrder.paymob_order_id && String(subscriptionOrder.paymob_order_id) !== String(orderId)) {
+      if (!subscriptionOrder.paymob_order_id || String(subscriptionOrder.paymob_order_id) !== String(orderId)) {
         return new Response(JSON.stringify({ error: "Invalid subscription payment order correlation" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
-      const actualGross = Math.round(Number(obj.amount_cents || 0)) / 100;
-      const expectedGross = Number(subscriptionOrder.gross_amount ?? subscriptionOrder.amount ?? 0);
-      if (Math.abs(actualGross - expectedGross) > 0.01) {
-        return new Response(JSON.stringify({ error: "Invalid subscription payment amount" }), { status: 400, headers: { "Content-Type": "application/json" } });
+      const verified = verifyOwnerSubscriptionPayment(obj, subscriptionOrder);
+      if (!verified) {
+        return new Response(JSON.stringify({ error: "Invalid subscription payment transaction" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
       const { data: confirmResult, error: confirmError } = await supabase.rpc("confirm_owner_subscription_payment", {
         p_order_id: subscriptionOrder.id,
-        p_paymob_transaction_id: transactionId,
-        p_gross_amount: actualGross,
+        p_paymob_transaction_id: verified.transactionId,
+        p_gross_amount: verified.amount,
       });
       if (confirmError || confirmResult?.success !== true) {
         return new Response(JSON.stringify({ error: "Owner subscription payment confirmation failed" }), { status: 500, headers: { "Content-Type": "application/json" } });
