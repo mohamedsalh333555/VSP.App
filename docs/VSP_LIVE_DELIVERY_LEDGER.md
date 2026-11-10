@@ -599,3 +599,13 @@ After reading Work's latest authentication, discovery, team and stadium-media ba
 - `571100d`, `f05ebb6`: added **13 Flutter unit test cases** at `test/core/providers/booking/booking_categorization_service_test.dart` covering player and owner unpaid checkout grace, exact ten-minute boundary, paid/deposit/refund pending reconciliation, end-time history, same-stadium overlap, cross-stadium isolation, cancelled refunded checkout visibility, deterministic sorting/input immutability, and manual booking ID merge/cancel exclusions.
 - This is **test implementation only**; the tests have **not been executed**. Candidate mappings: **16.02, 16.05, 16.06, 23.01, 27.04, 29.05, 57.02**. They remain pending verification; no assertion that test results passed.
 - **72 VERIFIED / 620 total / 548 unaccepted**. No production DB/payment writes, main merge or APK.
+
+
+## Exact booking-money presentation continuation — 2026-11-10
+
+- `b03f735`, `c830047`: added a shared finite-value money formatter and source tests so decimals are preserved while unnecessary trailing zeros are removed.
+- `12ce079`, `f010406`, `c630aa7`, `850fdfb`, `f7a4804`, `e4dc4c2`, `4ed7de7`: player match details, booking success, collective invitations, result confirmation, booking cards, payment choice and bottom summary no longer truncate monetary decimals.
+- `6ac8680`, `0112bc8`, `ad991fc`, `1988c3f`, `4abd12a`, `f511db4`, `b354b29`, `d2f77d5`, `d25bc30`: public-match cards, payment breakdowns, owner sheets, quick booking, transactional notifications, receipts and cancellation/cash-confirmation copy use the same exact amount representation.
+- `350a3e8`: prepared active-team persistence coverage for verified selection, unauthorized selection rejection and stale-selection cleanup. Tests remain deferred, not claimed passed.
+- Mapping: **10.04, 16.03, 21.04–21.07, 27.02–27.04, 45.01–45.04 and Phase 10 UX-02/UX-03 are IMPLEMENTED_PENDING_VERIFICATION / IN_PROGRESS**. No payment calculation, gateway transaction, price, fee, refund or subscription rule was changed; this batch fixes presentation consistency only.
+- **Verified remains 72/620; 548 not yet accepted.** Final regression/device checks remain deferred; implementation continues.
