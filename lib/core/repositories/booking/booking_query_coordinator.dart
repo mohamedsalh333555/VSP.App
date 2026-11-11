@@ -14,6 +14,10 @@ class BookingQueryCoordinator {
 
   /// Stream of bookings created by user with real-time updates.
   Stream<List<Booking>> getUserBookings(String userId) async* {
+    if (userId.trim().isEmpty) {
+      yield <Booking>[];
+      return;
+    }
     final direct = await getUserBookingsDirectly(userId);
     if (direct.isNotEmpty) yield direct;
 
@@ -172,6 +176,10 @@ class BookingQueryCoordinator {
 
   /// Real-time stream of upcoming confirmed bookings for a player.
   Stream<List<Booking>> getUpcomingBookings(String userId) async* {
+    if (userId.trim().isEmpty) {
+      yield <Booking>[];
+      return;
+    }
     final lowerUserId = userId.trim().toLowerCase();
     final direct = await getUserBookingsDirectly(userId);
     if (direct.isNotEmpty) {
@@ -222,6 +230,10 @@ class BookingQueryCoordinator {
 
   /// Real-time stream of completed bookings history.
   Stream<List<Booking>> getBookingHistory(String userId) async* {
+    if (userId.trim().isEmpty) {
+      yield <Booking>[];
+      return;
+    }
     final lowerUserId = userId.trim().toLowerCase();
     final direct = await getUserBookingsDirectly(userId);
     if (direct.isNotEmpty) {
@@ -317,6 +329,7 @@ class BookingQueryCoordinator {
 
   /// Fetches unpaid confirmed bookings for player.
   Future<List<Booking>> getUnpaidBookingsForUser(String userId) async {
+    if (userId.trim().isEmpty) return <Booking>[];
     try {
       final nowUtcIso = DateTime.now().toUtc().toIso8601String();
       final response = await _supabase
