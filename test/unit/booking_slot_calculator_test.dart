@@ -76,6 +76,45 @@ void main() {
       }
     });
 
+    test('getSlotDateTime rejects a slot inside a configured break', () {
+      final stadium = Stadium(
+        id: 'break_guard',
+        name: 'Break Guard',
+        location: 'Cairo',
+        ownerId: 'owner',
+        imageUrl: '',
+        type: 'Football',
+        size: '5 VS 5',
+        baths: 1,
+        cafeteria: 1,
+        playersPerTeam: 5,
+        totalFieldCapacity: 10,
+        pricePerHour: 300,
+        basePrice: 300,
+        area: '600',
+        features: {
+          'workingHours': {'start': '16:00', 'end': '20:00'},
+          'breakTime': {'start': '18:00', 'end': '19:00'},
+        },
+      );
+      expect(
+        () => BookingSlotCalculator.getSlotDateTime(
+          slotKey: '18:00:00',
+          stadium: stadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ),
+        throwsFormatException,
+      );
+      expect(
+        BookingSlotCalculator.getSlotDateTime(
+          slotKey: '19:00:00',
+          stadium: stadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ).hour,
+        19,
+      );
+    });
+
     test('getSlotDateTime resolves correct hour and minute', () {
       final date = DateTime(2026, 9, 15);
       final dt = BookingSlotCalculator.getSlotDateTime(
