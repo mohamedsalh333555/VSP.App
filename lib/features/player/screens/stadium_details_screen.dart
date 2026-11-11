@@ -140,7 +140,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
         // not only with the route's original widget argument.
         final displayImages = _collectDisplayImages(stadium);
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        final isUnavailable = !widget.stadium.isVerified ||
+        final isUnavailable = !stadium.isVerified ||
             (snapshot.hasData && snapshot.data!.isEmpty);
         final hasStreamIssue = snapshot.hasError || parseFailed;
 
