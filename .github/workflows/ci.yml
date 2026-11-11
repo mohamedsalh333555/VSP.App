@@ -42,6 +42,14 @@ jobs:
         run: test -s lib/firebase_options.dart
       - name: Analyze
         run: flutter analyze --no-fatal-infos
+      - name: Privacy and deletion regression gate
+        run: >-
+          flutter test --concurrency=2
+          test/shared/account_deletion_dialog_test.dart
+          test/shared/owner_delete_account_identity_test.dart
+          test/core/services/image_selection_privacy_test.dart
+          test/core/services/location_session_privacy_test.dart
+          test/core/services/incomplete_account_cleanup_test.dart
       - name: Architecture regression gate
         run: flutter test test/architecture
       - name: Test
