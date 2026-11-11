@@ -92,6 +92,42 @@ DO $$ BEGIN
 END; $$;
 """)
     mutants = [
+        ('legacy blocked admin cross-account deletion', """
+DO $$ DECLARE d text; BEGIN
+  d:=pg_get_functiondef('public.delete_user_permanently(uuid)'::regprocedure);
+  EXECUTE replace(d,' AND COALESCE(is_blocked, false) = false','');
+END; $$;
+""", 'supabase/tests/legacy_reporting_guard_contract.sql', 'FAIL legacy unauthorized account deletion'),
+        ('legacy owner financial report guard removed', """
+DO $$ DECLARE d text; BEGIN
+  d:=pg_get_functiondef('public.get_owner_financial_summary(uuid)'::regprocedure);
+  EXECUTE replace(d,'PERFORM public.require_owner_or_active_admin_actor(p_owner_id);','NULL;');
+END; $$;
+""", 'supabase/tests/legacy_reporting_guard_contract.sql', 'FAIL anonymous legacy report accepted'),
+        ('legacy owner operational report guard removed', """
+DO $$ DECLARE d text; BEGIN
+  d:=pg_get_functiondef('public.get_owner_ai_operational_insights(uuid,text)'::regprocedure);
+  EXECUTE replace(d,'PERFORM public.require_owner_or_active_admin_actor(p_owner_id);','NULL;');
+END; $$;
+""", 'supabase/tests/legacy_reporting_guard_contract.sql', 'FAIL anonymous legacy report accepted'),
+        ('legacy owner comparison report guard removed', """
+DO $$ DECLARE d text; BEGIN
+  d:=pg_get_functiondef('public.get_owner_ai_stadium_comparison(uuid,text)'::regprocedure);
+  EXECUTE replace(d,'PERFORM public.require_owner_or_active_admin_actor(p_owner_id);','NULL;');
+END; $$;
+""", 'supabase/tests/legacy_reporting_guard_contract.sql', 'FAIL anonymous legacy report accepted'),
+        ('legacy tournament blocked admin role accepted', """
+DO $$ DECLARE d text; BEGIN
+  d:=pg_get_functiondef('public.get_tournament_financial_summary(uuid)'::regprocedure);
+  EXECUTE replace(d,' AND public.is_admin_or_cofounder(v_caller)','');
+END; $$;
+""", 'supabase/tests/legacy_reporting_guard_contract.sql', 'FAIL cross-owner tournament financial report accepted'),
+        ('owner reporting missing live-profile check', """
+CREATE OR REPLACE FUNCTION public.require_owner_or_active_admin_actor(p_owner_id uuid)
+RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,public,pg_temp AS $$
+BEGIN IF auth.uid() IS NOT NULL AND auth.uid()=p_owner_id THEN RETURN;END IF;
+PERFORM public.require_active_admin_actor();END;$$;
+""", 'supabase/tests/legacy_reporting_guard_contract.sql', 'FAIL deleted-profile token read'),
         ('blocked admin sensitive profile bypass', """
 DO $$ DECLARE d text; BEGIN
   d:=pg_get_functiondef('public.trg_fn_protect_user_sensitive_fields()'::regprocedure);
@@ -150,6 +186,34 @@ BEGIN UPDATE public.chat_messages SET is_read=true WHERE conversation_id=p_conve
         print('PASS mutation rejected: ' + name, flush=True)
     for path in manifest['tests']:
         require_success(args, env, 'restored baseline: ' + path, read_file(path))
+    legacy_migration = read_file('supabase/migrations/20261111121339_secure_legacy_account_deletion_and_owner_reporting.sql')
+    require_success(args, env, 'legacy authorization migration idempotency', legacy_migration)
+    require_success(args, env, 'legacy authorization source-checked inverse',
+                    read_file('docs/security/sql/rollback_legacy_reporting_guards_2026-11-11.sql'))
+    require_success(args, env, 'legacy authorization restored after inverse', legacy_migration)
+    require_success(args, env, 'legacy authorization baseline after inverse',
+                    read_file('supabase/tests/legacy_reporting_guard_contract.sql'))
+    legacy_drift = invoke(args, env, "BEGIN;\n" + """
+DO $$ DECLARE d text;b text;BEGIN
+ SELECT pg_get_functiondef(oid),prosrc INTO d,b FROM pg_proc
+ WHERE oid='public.get_owner_financial_summary(uuid)'::regprocedure;
+ EXECUTE replace(d,b,E'-- unexpected change\n'||b);
+END;$$;
+""" + legacy_migration)
+    if legacy_drift.returncode == 0 or 'LEGACY_PRIVILEGE_SOURCE_DRIFT' not in legacy_drift.stderr:
+        raise RuntimeError('Unknown legacy routine body not refused: ' + legacy_drift.stderr[-3000:])
+    print('PASS unknown legacy authorization source refused', flush=True)
+    legacy_helper_drift = invoke(args, env, "BEGIN;\n" + """
+CREATE OR REPLACE FUNCTION public.require_owner_or_active_admin_actor(p_owner_id uuid)
+RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,public,pg_temp
+AS $$ BEGIN RETURN; END;$$;
+""" + legacy_migration)
+    if legacy_helper_drift.returncode == 0 or 'OWNER_REPORT_GUARD_SOURCE_DRIFT' not in legacy_helper_drift.stderr:
+        raise RuntimeError('Unknown owner-report helper not refused: ' + legacy_helper_drift.stderr[-3000:])
+    print('PASS owner-report helper source drift refused', flush=True)
+    require_success(args, env, 'legacy staging comparison variant and authorization compatibility',
+                    'BEGIN;\n' + read_file('supabase/tests/fixtures/legacy_reporting_staging_comparison_variant.sql')
+                    + legacy_migration + read_file('supabase/tests/legacy_reporting_guard_contract.sql') + '\nROLLBACK;')
     policy_migration = read_file('supabase/migrations/20261111055255_restrict_blocked_admin_table_and_storage_privileges.sql')
     require_success(args, env, 'admin policy migration idempotent replay', policy_migration)
     drift_policy = invoke(args, env, "BEGIN; ALTER POLICY admin_manage_app_config ON public.app_config USING(false);\n" + policy_migration)
