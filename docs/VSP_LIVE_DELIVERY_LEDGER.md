@@ -8,6 +8,13 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 - Commit `37c45c6` adds architecture regression contract. **83.04 remains open**: calendar availability/closed-day indicators, accessibility, real Android RTL and CI on these commits still need acceptance.
 - On previous head `fbac4a8d`, Account SQL security contracts and Owner checkout security completed successfully; Flutter CI, Android E2E, and iOS compliance were still in progress when checked. These are not new-commit test results.
 
+## 2026-11-11 — 83.04 calendar availability copy (pending acceptance)
+
+- **86 accepted / 541 open / 627 total: unchanged.** `f8478113` clarifies in the date selector that a selectable date is **not** confirmation of bookable slots; the actual slots appear after selection. The selector does not invent or color-code availability from missing data.
+- `4efd268e` adds a static contract verifying the availability disclaimer and the calendar's existing past-date restriction.
+- **83.04 remains open** pending Flutter CI, on-device calendar/RTL testing and an actual per-day availability data contract. The pre-edit branch `08620ed9` had passing Owner checkout and Account SQL security checks while Flutter, Android and iOS were still in progress.
+- No DB, payment, or main changes.
+
 ## 2026-11-11 — 83.06 top SafeArea adjustment (pending CI and device layout acceptance)
 
 - **86 accepted / 541 open / 627 total: unchanged.** `2eecf784` wraps the stadium-details main body in `SafeArea(bottom: false)` so the stream-error warning and carousel respect the system status-bar inset. The fixed booking bottom bar remains outside this wrapper.
