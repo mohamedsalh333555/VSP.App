@@ -95,8 +95,8 @@ class BookingSlotStreamSection extends StatelessWidget {
             icon: Iconsax.clock_copy,
             title: isArabic ? 'لا توجد مواعيد متاحة' : 'No available time slots',
             message: isArabic
-                ? 'الملعب لا يفتح مواعيد للحجز في اليوم ده.'
-                : 'This stadium has no bookable slots for this day.',
+                ? 'لا توجد فترات حجز محددة لهذا اليوم. جرّب يومًا آخر أو تواصل مع الملعب.'
+                : 'No booking time slots are configured for this day. Try another date or contact the venue.',
           );
         }
         final now = VSPTimeService.now;
