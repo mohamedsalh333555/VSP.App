@@ -162,6 +162,24 @@ BEGIN UPDATE public.chat_messages SET is_read=true WHERE conversation_id=p_conve
     require_success(args, env, 'blocked admin baseline after inverse round trip',
                     read_file('supabase/tests/blocked_admin_policy_contract.sql'))
     require_success(args, env, '37 policy definitions restored after negative probes', policy_catalog_sql)
+    variant = next(p['equivalent_guarded_variants'][0] for p in policy_plan['policies']
+                   if p.get('equivalent_guarded_variants'))
+    alternate = ('ALTER POLICY owner_documents_owner_manage ON storage.objects USING ('
+                 + variant['qual'] + ') WITH CHECK (' + variant['with_check'] + ');\n')
+    require_success(args, env, 'reviewed guarded policy variant preserved',
+                    'BEGIN;\n' + alternate + policy_migration
+                    + read_file('supabase/tests/blocked_admin_policy_contract.sql') + '\nROLLBACK;')
+    # The nested contract rolls back the complete outer transaction, including
+    # the temporary alternative, leaving primary production definitions intact.
+    helper_drift = invoke(args, env, 'BEGIN;\n' + alternate + """
+CREATE OR REPLACE FUNCTION public.is_admin_or_cofounder(p_user_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp
+AS $$ SELECT true; $$;
+""" + policy_migration)
+    if helper_drift.returncode == 0 or 'ADMIN_POLICY_GUARDED_HELPER_DRIFT' not in helper_drift.stderr:
+        raise RuntimeError('Guarded-policy helper drift not refused: ' + helper_drift.stderr[-3000:])
+    print('PASS guarded-policy helper source drift refused', flush=True)
+    require_success(args, env, 'primary policy catalog after variant probes', policy_catalog_sql)
     admin_migration = read_file('supabase/migrations/20261111045628_require_active_admin_actor_for_sensitive_rpcs.sql')
     require_success(args, env, 'admin migration idempotent replay', admin_migration)
     drift = invoke(args, env, """BEGIN;

@@ -15,7 +15,14 @@
       "with_check": "((bucket_id = 'owner_documents'::text) AND (((auth.uid())::text = (storage.foldername(name))[1]) OR (EXISTS ( SELECT 1\n   FROM users u\n  WHERE ((u.id = auth.uid()) AND (u.role = ANY (ARRAY['admin'::text, 'co_founder'::text, 'cofounder'::text, 'super_admin'::text])))))))",
       "after_qual": "((bucket_id = 'owner_documents'::text) AND (((auth.uid())::text = (storage.foldername(name))[1]) OR (EXISTS ( SELECT 1\n   FROM users u\n  WHERE ((u.id = auth.uid()) AND ((u.role = ANY (ARRAY['admin'::text, 'co_founder'::text, 'cofounder'::text, 'super_admin'::text])) AND (COALESCE(u.is_blocked, false) = false)))))))",
       "after_check": "((bucket_id = 'owner_documents'::text) AND (((auth.uid())::text = (storage.foldername(name))[1]) OR (EXISTS ( SELECT 1\n   FROM users u\n  WHERE ((u.id = auth.uid()) AND ((u.role = ANY (ARRAY['admin'::text, 'co_founder'::text, 'cofounder'::text, 'super_admin'::text])) AND (COALESCE(u.is_blocked, false) = false)))))))",
-      "origin": "production"
+      "origin": "production",
+      "equivalent_guarded_variants": [
+        {
+          "qual": "((bucket_id = 'owner_documents'::text) AND (((storage.foldername(name))[1] = (auth.uid())::text) OR is_admin_or_cofounder(auth.uid())))",
+          "with_check": "((bucket_id = 'owner_documents'::text) AND (((storage.foldername(name))[1] = (auth.uid())::text) OR is_admin_or_cofounder(auth.uid())))",
+          "helper_sha256": "fca46449c94a6c3a69cd88954986e5237ee3c1028735a3b8fd860a92eca09db7"
+        }
+      ]
     },
     {
       "cmd": "SELECT",
