@@ -32,3 +32,18 @@ A failed test must create a distinct BUG-### row with reproduction details. Do n
 Batch 01 source verification: Flutter CI 42924535090 SUCCESS (1088 passed, 10 skipped), Owner checkout security 42924534900 SUCCESS (39 passed), Android E2E Smoke 42924534915 SUCCESS at `daae560e`. This resolves the batch 01 test failures but does not replace sandbox/deployed authorization or full feature acceptance. Batch 02 evidence is in its own linked checkpoint.
 
 Batch 02 final source verification at `e862fbb`: Flutter CI 42930897576 SUCCESS (32 focused cases, 1120 passed and 10 skipped in full suite), Android smoke/compiled APK gate 42930890192 SUCCESS (six tool tests plus actual package inspection), Owner checkout security 42930897573 SUCCESS (39 isolated cases). Broader server/provider/device/store acceptance remains open.
+
+
+Batch 03 checkpoint (does not renumber prior findings):
+
+| ID | Priority | Scope | Finding / correction | Evidence |
+|---|---|---|---|---|
+| BUG-023 | P0 | Registration cancellation | Known but stale incomplete profile could invoke general permanent deletion; use locking server cancellation RPC | 17 staging checks, app source 3662402 |
+| BUG-024 | P0 | Cleanup network failure | Unconditional deleteAccount fallback could bypass completion check; removed | Added network-negative case, 1128 full suite passed |
+| BUG-025 | P1 | Owner onboarding | Non-map response counted as success, profile identity mismatch not checked; require explicit success and matching UID | Seven added response/identity cases; CI 42939496320 |
+| BUG-026 | P0 | Chat reads | Non-participant could mark another conversation read through definer RPC; membership authorization before mutation | Denied self/impersonation requests leave message/counters intact, authorized/repeat pass |
+| BUG-027 | P0 | Staging account state guard | Existing sensitive field function not attached to users UPDATE; restored production-equivalent trigger binding | Before synthetic privilege escalation reproduced under ROLLBACK; after role/subscription/debt/completion writes denied |
+| BUG-028 | P0 | Staging profile reauthentication guard | Existing recent-password function not attached; restored binding | Four sensitive phone/payment changes denied; recent password claim and ordinary edit allowed |
+| BUG-029 | P2 | New SQL test fixture | Auth email-sync fixture left transaction-local system override enabled, bypassing guard under test | Clear flag before simulated client, rerun 11 checks and all 17 lifecycle/chat checks successfully |
+
+Batch 03 adds four app corrections and two environment corrections. BUG-029 is test setup repair, not product progress. Actual multi-session overlap not observed; no concurrency success claimed. No new baseline task acceptance counted.

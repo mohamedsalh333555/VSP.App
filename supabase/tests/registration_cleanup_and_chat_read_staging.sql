@@ -23,6 +23,7 @@ BEGIN
     VALUES (msg,conv,b,'Synthetic test','Synthetic message',false);
 END;
 $$;
+SELECT set_config('vsp.system_override','false',true);
 SET LOCAL ROLE anon;
 DO $$ BEGIN
   BEGIN
@@ -63,7 +64,9 @@ DO $$ BEGIN
   THEN RAISE EXCEPTION 'FAIL denied request modified messages or counters'; END IF;
 END; $$;
 -- Simulates a stale client: server completion wins before cancellation arrives.
+SELECT set_config('vsp.system_override','true',true);
 UPDATE public.users SET is_registration_complete=true WHERE id=current_setting('test.vsp_a')::uuid;
+SELECT set_config('vsp.system_override','false',true);
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims',jsonb_build_object('role','authenticated','sub',current_setting('test.vsp_a'))::text,true);
 DO $$ DECLARE r jsonb; BEGIN

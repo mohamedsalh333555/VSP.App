@@ -2,6 +2,14 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Third compliance batch: account cancellation and chat authorization
+
+- [Exact changes and evidence](security/STORE_COMPLIANCE_BATCH_03_2026-11-11.md): **4 application corrections + 2 staging security trigger-binding repairs**. Application commit `3662402`.
+- Application checks: Flutter 42939496320 SUCCESS — 1128 passed, 10 skipped (40 focused privacy/deletion cases also included in full suite); Android 42939496341 SUCCESS including actual APK gate and six Python tests; checkout 42939496233 SUCCESS — 39 isolated cases.
+- Staging: new atomic cancellation RPC and conversation membership guard deployed. 17 rollback-fixture checks passed before/after deployment and after trigger repairs. Eleven trigger enforcement/allowed-edit checks passed. No real-token multi-device race claim; explicit registration completion-first case is verified.
+- **76 historical accepted / 544 not fully accepted / 620 unchanged.** Partial SEC-01/02/04/07 and Phase 9 consistency evidence; no full-baseline subtask silently closed.
+- Staging binding drift was verified and repaired against existing function definitions. Production inspected read-only for those definitions; no production mutation/main merge. Remaining: direct profile INSERT/DELETE audit, full environment parity, full deletion/privacy retention, actual OAuth/device/payment/iOS/store acceptance.
+
 ## 2026-11-11 — Second store compliance implementation batch
 
 - [Ten app corrections, exact scope and evidence](security/STORE_COMPLIANCE_BATCH_02_2026-11-11.md); application source checkpoint `e862fbb`. Code, tests and APK permission gate updated; no schema or production mutation.
