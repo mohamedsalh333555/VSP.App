@@ -260,7 +260,10 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
               ],
             ),
           ),
-          bottomNavigationBar: StadiumBottomBookingBar(stadium: stadium),
+          bottomNavigationBar: StadiumBottomBookingBar(
+            stadium: stadium,
+            bookingEnabled: !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty,
+          ),
         );
       },
     );
