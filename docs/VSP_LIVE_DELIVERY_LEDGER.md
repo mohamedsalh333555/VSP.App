@@ -1,3 +1,10 @@
+## 2026-11-11 — Owner-requested scope removal: 24 E2E journeys (group 56)
+
+- Removed the **entire nine-task group 56** from the active detailed task checklist at `cd9b2681`: 3 previously accepted documentation tasks (56.01, 56.02, 56.09) and 6 open tasks (56.03–56.08). This is **scope cancellation**, not completion.
+- **Canonical new inventory: 618 total / 83 accepted / 535 open**, arithmetically verified against the checklist. 82 active groups remain (group number 56 intentionally retired; group identifiers are not renumbered).
+- The historical 24-journey matrix is retained only as archived evidence; it is no longer an active delivery requirement. Other independently scoped Android smoke, UI/device, security, and booking tests remain active unless explicitly removed later.
+- No application code, payment, production, or main-branch changes.
+
 ## 2026-11-11 — Flutter CI regression recovered, all core checks green
 
 - Commit `c39e6110` completed **Flutter CI successfully twice** (runs `43076166273`, `43076157214`), **Android E2E Smoke success** (`43076166167`), **Account SQL security contracts success** (`43076166456`), and **Owner checkout security success** (`43076166066`). iOS compliance build was still running when checked.
@@ -190,7 +197,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **86 verified; 541 not yet accepted** (627 tasks total). This is not a claim that every remaining task is untouched.
+- Current inventory: **83 verified; 535 not yet accepted** (618 tasks total). This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
