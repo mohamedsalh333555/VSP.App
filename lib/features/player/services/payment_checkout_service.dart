@@ -35,10 +35,14 @@ class PaymentCheckoutService {
 
   /// Returns the corresponding Paymob integration ID based on selected payment method.
   static String getIntegrationId(String method) {
-    if (method == 'wallet') {
-      return AppConfig.paymobWalletIntegrationId;
+    switch (method.toLowerCase().trim()) {
+      case 'wallet':
+        return AppConfig.paymobWalletIntegrationId;
+      case 'card':
+        return AppConfig.paymobCardIntegrationId;
+      default:
+        throw ArgumentError.value(method, 'method', 'Unsupported checkout method');
     }
-    return AppConfig.paymobCardIntegrationId;
   }
 
   /// Generates a unique tracking payment reference ID for the Paymob transaction.
