@@ -1,3 +1,9 @@
+## 2026-11-11 — 83.02 live stadium refresh booking safety
+
+- **86 accepted / 541 open / 627 total** at this checkpoint. `01e94307` makes the stadium booking CTA explicitly disable-able; `a3bb534a` disables it while live stadium details are still loading, fail to refresh, or cannot be parsed. This prevents entering the booking flow from a stale route argument after a live refresh error, while preserving retry and stale-data information display.
+- `930c2dee` adds architecture contract tests for stream-error/parse-failure guards and the disabled booking callback. **83.02 remains open**: actual stream failure cause, server-side booking authorization, recovery behavior and UI/E2E verification still need evidence. Do not claim backend booking protection from this UI guard.
+- All changes are on `uxlp-44-implementation`, no payments/Supabase/main changes. CI on these commits not yet verified.
+
 ## 2026-11-11 — 83.04 calendar minimum date aligns with booking operational day
 
 - **86 accepted / 541 open / 627 total: unchanged.** `e0524d85` anchors the monthly calendar's first bookable date and month navigation to the same `operationalBaseDate` used by the 14-day selector, rather than directly reading the device's `DateTime.now()`. `820ddd3c` wires the date from the selector into the modal.
