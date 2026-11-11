@@ -2,6 +2,12 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Batch11 legacy reporting/deletion rollout verified
+
+- **82 accepted /538 pending /620**, no automatic additional closures. [Verified batch11](security/STORE_COMPLIANCE_BATCH_11_2026-11-11.md):7 legacy RPC corrections protect cross-account deletion and owner/admin financial/operational reports while preserving own privacy/deletion.8 known source variants; no business calculation/model/price changes.
+- Native PG17.6 CI43020116975 SUCCESS:8 suites,17 weakened guards rejected,24 Python tests, source/inverse/helper-drift and staging-variant checks. Staging9 denial+9 allowed synthetic report calls pass and roll back;7/7 hosted definitions match. Production routine OIDs/owners/ACL/config preserved; invoker helper private. Advisor counts unchanged; no hosted customer-row deletion or financial mutation.
+- Runtime code0ef4af8: Flutter43020117004, Android43020117129, iOS43020117237 and checkout43020117096 all SUCCESS. Not real OAuth/provider/signed-store approval. Remaining legacy booking/cash/cancellation/payout candidates are the next implementation batch, not accepted by this receipt.
+
 ## 2026-11-11 — Batch10 verified rollout and documentation acceptance80.07
 
 - **82 accepted /538 not fully accepted /620**. Only newly closed task:80.07, [documented release acceptance policy](security/RELEASE_ACCEPTANCE_POLICY.md); runtime/store gates remain open. Corrected stale commission/deletion wording in LAUNCH_CHECKLIST without changing business code/prices.
