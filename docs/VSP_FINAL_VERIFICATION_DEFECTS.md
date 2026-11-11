@@ -60,3 +60,14 @@ Batch 04 findings: source and staging remediation; production approval pending.
 
 
 Final batch 04 verification at app source 906846f: Flutter push 42954730210 SUCCESS (1142 passed, 10 skipped); Android push 42954730199 SUCCESS including actual APK gate; checkout 42954735544 SUCCESS (39). SQL suites and three RPC body readbacks passed on staging. Application release and production remediation remain pending; no signed phone APK/iOS archive claimed.
+
+
+Batch 05:
+
+| ID | Priority | Finding / correction | Evidence at implementation checkpoint |
+|---|---|---|---|
+| BUG-034 | P0 | Direct users role UPDATE by an admin bypasses dedicated role-management authorization. Add invoker trigger rejecting all client role changes and privileged role INSERT while preserving authorized definer RPCs | Five SQL suites and five broken-guard controls passed embedded preflight; stage role contract passed before/after deployment; native CI pending |
+| BUG-035 | P2 | New dependency fixture export omitted function terminators (including inline SQL body), causing CREATE syntax errors | Fixed SQL export terminators; full fixture + four actual migrations + five suites passed embedded preflight |
+| BUG-036 | P2 | Initial dependency-table inventory omitted conversations used by target migration (not by the captured dependency functions) | Added its 13 columns; fixture now 25 tables/518 columns; not product progress |
+
+Production deployment of the new additive client-role guard is planned only after native SQL CI. No existing customer rows targeted. Prior INSERT/DELETE grant revocations remain staging-only; legacy client compatibility is explicitly tested. All broader privilege and payment-state checks remain separate.

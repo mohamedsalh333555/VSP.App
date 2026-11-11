@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "scope": "Account profile RLS and three lifecycle/conversation RPCs; not the entire database",
+  "fixture": "supabase/tests/fixtures/account_security_dependencies.sql",
+  "migrations": [
+    "supabase/migrations/20261111012758_registration_cleanup_and_chat_read_authorization.sql",
+    "supabase/migrations/20261111014123_restore_user_security_trigger_bindings.sql",
+    "supabase/migrations/20261111033941_secure_registration_profile_provisioning.sql",
+    "supabase/migrations/20261111041426_guard_client_profile_role_mutations.sql"
+  ],
+  "tests": [
+    "supabase/tests/registration_cleanup_and_chat_read_staging.sql",
+    "supabase/tests/user_security_trigger_bindings_staging.sql",
+    "supabase/tests/registration_profile_provisioning_staging.sql",
+    "supabase/tests/account_profile_rls_contract.sql",
+    "supabase/tests/client_profile_role_guard_contract.sql"
+  ]
+}
