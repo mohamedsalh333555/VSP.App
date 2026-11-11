@@ -81,9 +81,17 @@ class PaymentCheckoutService {
   static bool isPaymentConfirmed({
     String? status,
     String? paymentStatus,
+    String? paymentReconcileState,
   }) {
     final s = status?.toLowerCase().trim();
     final p = paymentStatus?.toLowerCase().trim();
+    final reconcile = paymentReconcileState?.toLowerCase().trim();
+    // A server reconciliation conflict or refund must never be presented as
+    // checkout success, even when a legacy payment_status remains 'paid'.
+    if (reconcile != null && reconcile.isNotEmpty &&
+        reconcile != 'fully_paid' && reconcile != 'partially_paid') {
+      return false;
+    }
 
     // Booking is confirmed through electronic payment (either full payment 'paid'
     // or deposit payment 'partially_paid') only when server booking status is confirmed.
