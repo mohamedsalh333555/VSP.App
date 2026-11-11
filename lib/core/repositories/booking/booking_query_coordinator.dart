@@ -104,7 +104,12 @@ class BookingQueryCoordinator {
   }
   /// Real-time stream of stadium owner bookings.
   Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) async* {
-    final lowerStadiumIds = stadiumIds?.map((id) => id.toLowerCase()).toList();
+    final lowerStadiumIds = stadiumIds?.map((id) => id.trim().toLowerCase()).toList();
+    final normalizedOwnerId = ownerId.trim().toLowerCase();
+    if (normalizedOwnerId.isEmpty) {
+      yield <Booking>[];
+      return;
+    }
 
     final direct = await fetchOwnerBookingsDirectly(ownerId, stadiumIds: stadiumIds);
     if (direct.isNotEmpty) yield direct;
@@ -118,8 +123,11 @@ class BookingQueryCoordinator {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
+                if (b.ownerId.trim().toLowerCase() != normalizedOwnerId) {
+                  return false;
+                }
                 if (lowerStadiumIds != null && lowerStadiumIds.isNotEmpty) {
-                  return lowerStadiumIds.contains(b.stadiumId.toLowerCase());
+                  return lowerStadiumIds.contains(b.stadiumId.trim().toLowerCase());
                 }
                 return true;
               })
