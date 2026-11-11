@@ -29,16 +29,25 @@ class AppNotification {
    final numericDate = rawDate is num
        ? rawDate
        : (rawDate is String ? num.tryParse(rawDate.trim()) : null);
+   // Validate after unit conversion: large numeric values must not throw
+   // RangeError and hide the rest of the notification inbox.
+   final timestampMs = numericDate == null || !numericDate.isFinite
+       ? null
+       : (numericDate.abs() < 100000000000
+           ? numericDate * 1000
+           : numericDate);
    final parsedDate = rawDate is DateTime
        ? rawDate
-       : numericDate != null && numericDate.isFinite && numericDate >= 0 &&
-               numericDate <= 8640000000000000
+       : timestampMs != null &&
+               timestampMs >= -8640000000000000 &&
+               timestampMs <= 8640000000000000
            ? DateTime.fromMillisecondsSinceEpoch(
-               (numericDate < 100000000000 ? numericDate * 1000 : numericDate)
-                   .round(),
+               timestampMs.round(),
                isUtc: true,
              )
-           : DateTime.tryParse(rawDate?.toString() ?? '');
+           : numericDate == null
+               ? DateTime.tryParse(rawDate?.toString() ?? '')
+               : null;
    final rawRead = data['isRead'] ?? data['is_read'];
    final normalizedRead = rawRead?.toString().trim().toLowerCase();
    final read = rawRead == true ||
