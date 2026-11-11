@@ -73,9 +73,29 @@ class _AccountDeletionDialogState extends State<AccountDeletionDialog> {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    // AlertDialog measures actions intrinsically; a LayoutBuilder there cannot lay out.
+    final actionWidth = (MediaQuery.sizeOf(context).width - 2 * VSPSpacing.lg - 2 * VSPSpacing.md)
+        .clamp(0.0, 480.0).toDouble();
+    final stackActions = actionWidth < 360 || MediaQuery.textScalerOf(context).scale(14) > 18;
+    final cancel = PrimaryButton(
+      text: isArabic ? 'إلغاء' : 'Cancel',
+      height: 48,
+      color: VSPColors.surfaceAlt,
+      textColor: VSPColors.textPrimary,
+      onPressed: _pending ? null : () => Navigator.of(context).pop(false),
+    );
+    final submit = PrimaryButton(
+      text: isArabic ? 'حذف' : 'Delete',
+      height: 48,
+      color: VSPColors.error,
+      textColor: VSPColors.background,
+      isLoading: _pending,
+      onPressed: _pending ? null : _submit,
+    );
     return PopScope(
       canPop: !_pending,
       child: AlertDialog(
+        insetPadding: const EdgeInsets.all(VSPSpacing.lg),
         scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -107,31 +127,16 @@ class _AccountDeletionDialogState extends State<AccountDeletionDialog> {
         ),
         actionsPadding: const EdgeInsets.all(VSPSpacing.md),
         actions: [
-          LayoutBuilder(builder: (_, constraints) {
-            final cancel = PrimaryButton(
-              text: isArabic ? 'إلغاء' : 'Cancel',
-              height: 48,
-              color: VSPColors.surfaceAlt,
-              textColor: VSPColors.textPrimary,
-              onPressed: _pending ? null : () => Navigator.of(context).pop(false),
-            );
-            final submit = PrimaryButton(
-              text: isArabic ? 'حذف' : 'Delete',
-              height: 48,
-              color: VSPColors.error,
-              textColor: VSPColors.background,
-              isLoading: _pending,
-              onPressed: _pending ? null : _submit,
-            );
-            if (constraints.maxWidth < 360) {
-              return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SizedBox(
+            width: actionWidth,
+            child: stackActions
+              ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
                 cancel, const SizedBox(height: VSPSpacing.sm), submit,
-              ]);
-            }
-            return Row(children: [
+              ])
+              : Row(children: [
               Expanded(child: cancel), const SizedBox(width: VSPSpacing.md), Expanded(child: submit),
-            ]);
-          }),
+              ]),
+          ),
         ],
       ),
     );
