@@ -66,8 +66,11 @@ Batch 05:
 
 | ID | Priority | Finding / correction | Evidence at implementation checkpoint |
 |---|---|---|---|
-| BUG-034 | P0 | Direct users role UPDATE by an admin bypasses dedicated role-management authorization. Add invoker trigger rejecting all client role changes and privileged role INSERT while preserving authorized definer RPCs | Five SQL suites and five broken-guard controls passed embedded preflight; stage role contract passed before/after deployment; native CI pending |
+| BUG-034 | P0 | Direct users role UPDATE by an admin bypasses dedicated role-management authorization. Add invoker trigger rejecting all client role changes and privileged role INSERT while preserving authorized definer RPCs | Five SQL suites and five broken-guard controls passed embedded preflight; stage role contract passed before/after deployment; native CI 42958578778 SUCCESS; staging and production guard body readbacks match |
 | BUG-035 | P2 | New dependency fixture export omitted function terminators (including inline SQL body), causing CREATE syntax errors | Fixed SQL export terminators; full fixture + four actual migrations + five suites passed embedded preflight |
 | BUG-036 | P2 | Initial dependency-table inventory omitted conversations used by target migration (not by the captured dependency functions) | Added its 13 columns; fixture now 25 tables/518 columns; not product progress |
 
-Production deployment of the new additive client-role guard is planned only after native SQL CI. No existing customer rows targeted. Prior INSERT/DELETE grant revocations remain staging-only; legacy client compatibility is explicitly tested. All broader privilege and payment-state checks remain separate.
+Production additive client-role guard deployed after native SQL CI 42958578778; body/mode/trigger grants verified and advisor counts unchanged. No existing customer rows targeted. Prior INSERT/DELETE grant revocations remain staging-only; legacy client compatibility is explicitly tested. All broader privilege and payment-state checks remain separate.
+
+
+Batch 05 verification source 3e371a5: native SQL 42958578778 SUCCESS (5 suites, 5 negative fault controls, 9 runner checks); Flutter 42958578707 SUCCESS (1142 passed/10 skipped); Android 42958584079 SUCCESS. BUG-035/036 are fixture-generation corrections, not delivered app features. Production migration 20261111042356 contains only the additive role guard; prior table grant revocations remain staging-only.

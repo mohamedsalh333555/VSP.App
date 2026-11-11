@@ -135,3 +135,8 @@ A direct GitHub source update was attempted but the execution tool blocked the w
 ## 2026-11-11 — SEC-01/02/04/07 implementation checkpoint, batch 03
 
 See [batch 03](security/STORE_COMPLIANCE_BATCH_03_2026-11-11.md): four app corrections and two staging binding repairs. Atomic incomplete-registration cancellation replaces generic cleanup and has no unconditional fallback. Owner completion requires explicit success and matching identity. Conversation read RPC verifies participation before writes and updates the caller counter under a row lock. Staging rollback-fixture checks: 17 cancellation/chat checks and 11 sensitive-profile checks passed; flags explicitly reset between fixture creation and simulated client. Flutter/Android/checkout success at app source 3662402 documented in report. Missing staging UPDATE guard bindings restored using existing bodies; production unchanged. Does not close SC05, full SEC-02, real-JWT/concurrent-device/payment/iOS acceptance, direct profile INSERT/DELETE or environment parity.
+
+
+## 2026-11-11 — Batch 05 / SEC-01/02/09/10
+
+Client role INSERT/UPDATE bypass protected by an invoker trigger; authorized role RPCs and normal legacy registration preserved. Guard deployed to staging and production following owner execution approval; readback matches, no customer rows targeted. Added native PostgreSQL ephemeral CI, profile RLS/lifecycle RPC suites, five broken-guard controls and nine runner target checks. CI 42958578778 succeeded. This closes adding the scoped test foundations 80.01/02/03, not all ACL journeys or release gates. Full report: [batch 05](security/STORE_COMPLIANCE_BATCH_05_2026-11-11.md). Existing advisors remain; no blanket security clearance, full production replay, signing or main merge.

@@ -2,6 +2,14 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Batch 05: client-role guard, native SQL tests and production deployment
+
+- **81 accepted /539 not fully accepted /620**. Accepted additions: 80.01 defined change-triggered security contracts; 80.02 added profile RLS tests; 80.03 added lifecycle/conversation RPC tests. These are test-foundation tasks, not a claim that all database policies/RPCs or the entire release are verified.
+- [Implementation, policy links, exact limits and deployment evidence](security/STORE_COMPLIANCE_BATCH_05_2026-11-11.md). Source `3e371a5`: one additive invoker guard blocks privileged client-role INSERT and direct role UPDATE, including admin-to-founder escalation, while preserving existing authorized role RPCs and legacy ordinary profile creation. Staging and production deployed after owner's blanket execution approval; no customer rows targeted.
+- Native PostgreSQL [42958578778](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42958578778) SUCCESS: 5 transactional suites, 5 intentionally broken guards rejected, restored baseline, 9 Python target-safety tests and refusal to reinstall an existing DB. No hosted credentials/customer data in CI.
+- Flutter push 42958578707 SUCCESS: 1142 passed, 10 skipped; Android PR 42958584079 SUCCESS with actual APK permission inspection and six gate tests; checkout 42958584012 SUCCESS. These are automated contracts, not real OAuth/payment-provider/24-journey proof.
+- Production readback: role-guard body matches source, invoker mode, trigger enabled, client execute revoked; advisors unchanged (197 definer-callable warnings + deferred password warning). Other grant revocations and account/cancellation RPCs from prior batches remain staging-only; no blanket production migration replay or main merge.
+
 ## 2026-11-11 — Final verification receipt and accepted migration comparison
 
 - **Current accepted: 78 / 620; not fully accepted: 542**. Newly accepted this series: 76.01 view inventory and 71.02 full textual collision comparison. These two audit/comparison results are not two shipped features.
@@ -52,7 +60,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **78 verified; 542 not yet accepted**. This is not a claim that every remaining task is untouched.
+- Current inventory: **81 verified; 539 not yet accepted**. This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
