@@ -88,6 +88,7 @@ class PaymentCheckoutCoordinator {
             PaymentCheckoutService.isPaymentConfirmed(
               status: booking.status.toDbValue(),
               paymentStatus: booking.paymentStatus,
+              paymentReconcileState: booking.paymentReconcileState,
             )) {
           hasConfirmed = true;
           timer.cancel();
