@@ -90,8 +90,16 @@ class BookingQueryCoordinator {
     final response = await (stadiumIds != null && stadiumIds.isNotEmpty
         ? _supabase.from('bookings').select().inFilter('stadium_id', stadiumIds).order('start_time', ascending: false).limit(100)
         : _supabase.from('bookings').select().eq('owner_id', ownerId).order('start_time', ascending: false).limit(100));
+    final normalizedOwnerId = ownerId.trim().toLowerCase();
+    final allowedStadiumIds = stadiumIds?.map((id) => id.trim().toLowerCase()).toSet();
     return (response as List)
         .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+        .where((booking) =>
+            normalizedOwnerId.isNotEmpty &&
+            booking.ownerId.trim().toLowerCase() == normalizedOwnerId &&
+            (allowedStadiumIds == null ||
+                allowedStadiumIds.isEmpty ||
+                allowedStadiumIds.contains(booking.stadiumId.trim().toLowerCase())))
         .toList();
   }
   /// Real-time stream of stadium owner bookings.
