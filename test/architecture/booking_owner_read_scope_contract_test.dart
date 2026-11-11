@@ -33,4 +33,28 @@ void main() {
     expect(method, contains('normalizedOwnerId.isNotEmpty'));
     expect(method, contains(".eq('owner_id', ownerId)"));
   });
+  test('owner scope is enforced before optional stadium IDs are applied', () {
+    final source = File(
+      'lib/core/repositories/booking/booking_query_coordinator.dart',
+    ).readAsStringSync();
+    final start = source.indexOf(
+      'Future<List<Booking>> fetchOwnerBookingsDirectlyStrict(',
+    );
+    final end = source.indexOf('/// Real-time stream of stadium owner bookings.', start);
+    expect(start, greaterThanOrEqualTo(0));
+    expect(end, greaterThan(start));
+    final method = source.substring(start, end);
+    expect(method, contains('if (normalizedOwnerId.isEmpty) return <Booking>[];'));
+    expect(method, contains(".select().eq('owner_id', ownerId)"));
+    expect(method, contains("query = query.inFilter('stadium_id', stadiumIds)"));
+    expect(
+      method.indexOf(".select().eq('owner_id', ownerId)"),
+      lessThan(method.indexOf("query = query.inFilter('stadium_id', stadiumIds)")),
+    );
+    expect(
+      method,
+      isNot(contains(".select().inFilter('stadium_id', stadiumIds)")),
+    );
+  });
+
 }
