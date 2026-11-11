@@ -171,9 +171,11 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
 
         return VSPScaffold(
           backgroundColor: VSPColors.background,
-          body: Column(
-            children: [
-              if (hasStreamIssue)
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                if (hasStreamIssue)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     VSPSpacing.md,
@@ -255,7 +257,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                   ],
                 ),
               ),
-            ],
+              ],
+            ),
           ),
           bottomNavigationBar: StadiumBottomBookingBar(stadium: stadium),
         );
