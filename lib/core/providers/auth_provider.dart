@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/location_service.dart';
 import 'auth/auth_account_coordinator.dart';
 import 'auth/auth_coordinators.dart';
 import 'auth/auth_location_coordinator.dart';
@@ -119,6 +120,8 @@ class AuthProvider with ChangeNotifier {
     if (user?.id != _supabaseUser?.id) {
       // Invalidate any profile fetch started for the previous auth identity.
       _userFetchGeneration++;
+      _c.location.clear();
+      unawaited(LocationService.clearCachedLocation().catchError((Object _) {}));
       _c.realtime.stopRealtimeUserListener();
       _userModel = null;
       _form.userType = null;
@@ -399,6 +402,7 @@ class AuthProvider with ChangeNotifier {
     // Invalidate any in-flight profile/retry request *before* awaiting logout.
     // A late response must not repopulate the previous account's state.
     final signOutGeneration = ++_userFetchGeneration;
+    _c.location.clear();
     try {
       await AuthSignOutHandler.performSignOut(
         user: signingOutUser,

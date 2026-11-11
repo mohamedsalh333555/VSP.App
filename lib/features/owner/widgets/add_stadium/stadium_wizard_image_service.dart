@@ -10,7 +10,6 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 enum StadiumImagePickType { multiple, single16x9 }
 
 class StadiumWizardImageService {
-  static final ImagePicker _imagePicker = ImagePicker();
   static final StorageService _storageService = StorageService();
 
   static Future<StadiumImagePickType?> showImageSourceModal(BuildContext context) async {
@@ -74,7 +73,7 @@ class StadiumWizardImageService {
 
   static Future<List<XFile>> pickMultipleImages() async {
     try {
-      return await _imagePicker.pickMultiImage();
+      return await ImagePickService.pickMultiple();
     } catch (e) {
       debugPrint('Error picking multiple images: $e');
       return [];

@@ -3,163 +3,45 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../../core/utils/vsp_feedback.dart';
-import '../../../../shared/widgets/primary_button.dart';
+import '../../../../shared/dialogs/account_deletion_dialog.dart';
 import '../../../auth/screens/welcome_screen.dart';
 
-class OwnerDeleteAccountCard extends StatelessWidget {
+class OwnerDeleteAccountCard extends StatefulWidget {
   const OwnerDeleteAccountCard({super.key});
 
+  @override
+  State<OwnerDeleteAccountCard> createState() => _OwnerDeleteAccountCardState();
+}
+
+class _OwnerDeleteAccountCardState extends State<OwnerDeleteAccountCard> {
+  bool _dialogOpen = false;
+
   Future<void> _showDeleteAccountDialog(BuildContext context) async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    bool isDeleting = false;
-    final passwordController = TextEditingController();
-
-    await showDialog(
-      context: context,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            scrollable: true,
-            backgroundColor: VSPColors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-            title: Text(
-              isArabic ? 'حذف حساب المالك نهائياً؟ ' : 'Delete Account?',
-              style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isArabic
-                      ? 'هذا الإجراء نهائي. يجب أن تكون الحجوزات والتسويات المعلقة منتهية أولاً، ولن يتم حذف أي جزء من الحساب إذا تعذر الإتمام بأمان.'
-                      : 'This action is permanent. Active bookings and pending settlements must be clear first. No partial deletion will occur if secure deletion cannot complete.',
-                  style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  isArabic ? 'أدخل كلمة مرور الحساب للتأكيد' : 'Enter your account password to confirm',
-                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 12),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  enabled: !isDeleting,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Iconsax.lock_1_copy, color: VSPColors.textSecondary),
-                    hintText: isArabic ? 'كلمة مرور الحساب' : 'Account password',
-                    filled: true,
-                    fillColor: VSPColors.surfaceAlt,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                      borderSide: const BorderSide(color: VSPColors.divider),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-            actions: [
-              LayoutBuilder(
-                builder: (_, constraints) {
-                  final cancelButton = PrimaryButton(
-                    text: isArabic ? 'إلغاء' : 'Cancel',
-                    height: 48,
-                    color: VSPColors.surfaceAlt,
-                    textColor: VSPColors.textPrimary,
-                    onPressed: isDeleting ? null : () => Navigator.pop(dialogCtx),
-                  );
-                  final deleteButton = PrimaryButton(
-                    text: isArabic ? 'حذف' : 'Delete',
-                    height: 48,
-                    color: VSPColors.error,
-                    textColor: VSPColors.background,
-                    isLoading: isDeleting,
-                    onPressed: isDeleting
-                        ? null
-                        : () async {
-                            if (passwordController.text.isEmpty) {
-                              VSPFeedback.showWarning(
-                                dialogCtx,
-                                isArabic ? 'أدخل كلمة مرور الحساب أولاً.' : 'Enter your account password first.',
-                              );
-                              return;
-                            }
-
-                            setDialogState(() => isDeleting = true);
-                            try {
-                              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                              final verified = await authProvider.reauthenticateWithPassword(passwordController.text);
-                              if (!dialogCtx.mounted) return;
-
-                              if (!verified) {
-                                setDialogState(() => isDeleting = false);
-                                VSPFeedback.showError(
-                                  dialogCtx,
-                                  isArabic ? 'كلمة المرور غير صحيحة. لم يتم حذف الحساب.' : 'Incorrect password. The account was not deleted.',
-                                );
-                                return;
-                              }
-
-                              final success = await authProvider.deleteAccount();
-                              if (!dialogCtx.mounted) return;
-
-                              if (success) {
-                                Navigator.of(dialogCtx).pushAndRemoveUntil(
-                                  MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                                  (route) => false,
-                                );
-                              } else {
-                                setDialogState(() => isDeleting = false);
-                                VSPFeedback.showError(
-                                  dialogCtx,
-                                  isArabic
-                                      ? 'تعذر حذف الحساب. حاول مرة أخرى.'
-                                      : 'Could not delete the account. Please try again.',
-                                );
-                              }
-                            } catch (e) {
-                              if (!dialogCtx.mounted) return;
-                              setDialogState(() => isDeleting = false);
-                              VSPFeedback.showError(
-                                dialogCtx,
-                                isArabic
-                                    ? 'تعذر حذف الحساب. تحقق من الاتصال وحاول مرة أخرى.'
-                                    : 'Could not delete the account. Check your connection and try again.',
-                              );
-                            }
-                          },
-                  );
-
-                  if (constraints.maxWidth < 360) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        cancelButton,
-                        const SizedBox(height: VSPSpacing.sm),
-                        deleteButton,
-                      ],
-                    );
-                  }
-
-                  return Row(
-                    children: [
-                      Expanded(child: cancelButton),
-                      const SizedBox(width: VSPSpacing.md),
-                      Expanded(child: deleteButton),
-                    ],
-                  );
-                },
-              ),
-            ],
-          );
+    if (_dialogOpen) return;
+    final auth = context.read<AuthProvider>();
+    final uid = auth.currentUser?.id;
+    if (uid == null) return;
+    setState(() => _dialogOpen = true);
+    try {
+      final deleted = await showAccountDeletionDialog(
+        context,
+        requirePassword: true,
+        onDelete: (password) async {
+          if (auth.currentUser?.id != uid) return false;
+          final verified = await auth.reauthenticateWithPassword(password!);
+          if (!verified || auth.currentUser?.id != uid) return false;
+          return auth.deleteAccount();
         },
-      ),
-    );
-    passwordController.dispose();
+      );
+      if (deleted == true && context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          (route) => false,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _dialogOpen = false);
+    }
   }
 
   @override
@@ -201,7 +83,7 @@ class OwnerDeleteAccountCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isArabic ? 'حذف كافة البيانات والملاعب السابقة' : 'Permanently remove profile & stadiums',
+                    isArabic ? 'حذف الحساب والبيانات المرتبطة به' : 'Delete your account and associated data',
                     style: TextStyle(
                       color: VSPColors.textSecondary.withValues(alpha: 0.8),
                       fontSize: 11,
@@ -211,7 +93,7 @@ class OwnerDeleteAccountCard extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () => _showDeleteAccountDialog(context),
+              onPressed: _dialogOpen ? null : () => _showDeleteAccountDialog(context),
               style: TextButton.styleFrom(
                 backgroundColor: VSPColors.error,
                 foregroundColor: VSPColors.white,

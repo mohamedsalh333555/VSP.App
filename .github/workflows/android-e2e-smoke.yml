@@ -15,6 +15,8 @@ on:
     paths:
       - "integration_test/**"
       - "lib/**"
+      - "android/**"
+      - "scripts/verify_android_media_permissions.py"
       - "pubspec.yaml"
       - ".github/workflows/android-e2e-smoke.yml"
   pull_request:
@@ -22,6 +24,8 @@ on:
     paths:
       - "integration_test/**"
       - "lib/**"
+      - "android/**"
+      - "scripts/verify_android_media_permissions.py"
       - "pubspec.yaml"
       - ".github/workflows/android-e2e-smoke.yml"
 
@@ -88,6 +92,9 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Verify APK permission gate rejects unsafe fixtures
+        run: python3 -m unittest discover -s test/tooling -p 'test_android_media_permissions.py' -v
+
       - name: Run Android onboarding/login smoke against staging
         id: android_smoke
         continue-on-error: true
@@ -107,18 +114,24 @@ jobs:
             --dart-define=SUPABASE_ANON_KEY=sb_publishable_PZazWl2p0qR5lsqh6jr83A_cq-ov516
             || (adb logcat -d -t 1200; exit 1)
 
+      - name: Verify compiled APK media permissions and optional hardware
+        id: media_policy
+        if: always() && steps.android_smoke.outcome == 'success'
+        run: python3 scripts/verify_android_media_permissions.py
+
       - name: Publish Android smoke commit status
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           SMOKE_OUTCOME: ${{ steps.android_smoke.outcome }}
+          MEDIA_POLICY_OUTCOME: ${{ steps.media_policy.outcome }}
         run: |
-          if [ "$SMOKE_OUTCOME" = "success" ]; then
+          if [ "$SMOKE_OUTCOME" = "success" ] && [ "$MEDIA_POLICY_OUTCOME" = "success" ]; then
             state=success
-            description="Android onboarding/login smoke passed"
+            description="Android smoke and compiled media permission check passed"
           else
             state=failure
-            description="Android onboarding/login smoke failed"
+            description="Android smoke or compiled media permission check failed"
           fi
           gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
             -f state="$state" \

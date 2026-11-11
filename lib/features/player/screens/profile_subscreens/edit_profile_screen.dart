@@ -12,6 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/vsp_back_button.dart';
+import '../../../../shared/dialogs/account_deletion_dialog.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -31,7 +32,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  String? _selectedPosition;
  String _selectedSport = 'Football';
  bool _isLoading = false;
- bool _isDeleting = false;
+ bool _isDeletionDialogOpen = false;
  XFile? _newProfileImage;
 
  @override
@@ -358,7 +359,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ),
  const SizedBox(height: 2),
  Text(
- isArabic ? 'حذف كافة البيانات والحجوزات نهائياً' : 'Permanently remove your account & data',
+ isArabic ? 'حذف الحساب والبيانات المرتبطة به' : 'Delete your account and associated data',
  style: TextStyle(
  color: VSPColors.textSecondary.withValues(alpha: 0.8),
  fontSize: 11,
@@ -368,7 +369,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ),
  ),
  TextButton(
- onPressed: () => _showDeleteAccountDialog(context),
+ onPressed: _isDeletionDialogOpen ? null : () => _showDeleteAccountDialog(context),
  style: TextButton.styleFrom(
  backgroundColor: VSPColors.error,
  foregroundColor: VSPColors.white,
@@ -392,75 +393,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  );
  }
 
- void _showDeleteAccountDialog(BuildContext context) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
- showDialog(
- context: context,
- useSafeArea: true,
- builder: (context) => StatefulBuilder(
- builder: (context, setDialogState) {
- return AlertDialog(
- scrollable: true,
- backgroundColor: VSPColors.surface,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
- title: Text(
- isArabic ? 'حذف الحساب نهائياً؟ ' : 'Delete Account?', 
- style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
- ),
- content: Text(
- isArabic 
- ? 'هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتك وفريقك وتاريخ مبارياتك نهائياً.' 
- : 'Are you sure? This action cannot be undone. You will lose all your data, teams, and match history permanently.',
- style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
- ),
- actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
- actions: [
- Row(
- children: [
- Expanded(
- child: PrimaryButton(
- text: isArabic ? 'إلغاء' : 'Cancel',
- height: 48,
- color: VSPColors.surfaceAlt,
- textColor: VSPColors.textPrimary,
- onPressed: _isDeleting ? null : () => Navigator.pop(context),
- ),
- ),
- const SizedBox(width: VSPSpacing.md),
- Expanded(
- child: PrimaryButton(
- text: isArabic ? 'حذف' : 'Delete',
- height: 48,
- color: VSPColors.error,
- textColor: VSPColors.background,
- isLoading: _isDeleting,
- onPressed: _isDeleting ? null : () async {
- setDialogState(() => _isDeleting = true);
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final success = await authProvider.deleteAccount();
- 
- if (!context.mounted) return;
- 
- if (success) {
- Navigator.of(context).pushAndRemoveUntil(
- MaterialPageRoute(builder: (_) => const WelcomeScreen()),
- (route) => false,
- );
- } else {
- setDialogState(() => _isDeleting = false);
- VSPFeedback.showError(context, isArabic ? "تعذر حذف الحساب. حاول مرة أخرى." : "Could not delete the account. Please try again.");
- }
- },
- ),
- ),
- ],
- ),
- ],
- );
- }
- ),
- );
+ Future<void> _showDeleteAccountDialog(BuildContext context) async {
+   if (_isDeletionDialogOpen) return;
+   final auth = context.read<AuthProvider>();
+   final uid = auth.currentUser?.id;
+   if (uid == null) return;
+   setState(() => _isDeletionDialogOpen = true);
+   try {
+     final deleted = await showAccountDeletionDialog(
+       context,
+       onDelete: (_) async {
+         if (auth.currentUser?.id != uid) return false;
+         return auth.deleteAccount();
+       },
+     );
+     if (deleted == true && context.mounted) {
+       Navigator.of(context).pushAndRemoveUntil(
+         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+         (route) => false,
+       );
+     }
+   } finally {
+     if (mounted) setState(() => _isDeletionDialogOpen = false);
+   }
  }
 }
-

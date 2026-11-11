@@ -267,10 +267,14 @@ class AuthRegistrationService {
     if (uid != null) {
       if (userModel?.isRegistrationComplete != true) {
         try {
-          await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
-          VSPLogger.i('abortRegistration: Incomplete account purged for UID: $uid');
+          final result = await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
+          if (result is! Map || result['success'] != true) {
+            VSPLogger.w('Incomplete-account cleanup was not confirmed.');
+            return;
+          }
+          VSPLogger.i('Incomplete-account cleanup confirmed.');
         } catch (e) {
-          VSPLogger.w('abortRegistration RPC error: $e');
+          VSPLogger.w('Incomplete-account cleanup failed (${e.runtimeType}).');
           try {
             await _authService.deleteAccount(uid);
           } catch (_) {}
