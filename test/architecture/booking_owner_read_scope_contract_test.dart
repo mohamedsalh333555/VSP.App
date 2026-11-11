@@ -57,4 +57,25 @@ void main() {
     );
   });
 
+  test('player booking reads reject blank identity before querying or streaming', () {
+    final source = File(
+      'lib/core/repositories/booking/booking_query_coordinator.dart',
+    ).readAsStringSync();
+    for (final signature in <String>[
+      'Stream<List<Booking>> getUserBookings(String userId) async* {',
+      'Stream<List<Booking>> getUpcomingBookings(String userId) async* {',
+      'Stream<List<Booking>> getBookingHistory(String userId) async* {',
+      'Future<List<Booking>> getUnpaidBookingsForUser(String userId) async {',
+    ]) {
+      final start = source.indexOf(signature);
+      expect(start, greaterThanOrEqualTo(0), reason: signature);
+      final body = source.substring(start + signature.length);
+      final guard = body.indexOf('if (userId.trim().isEmpty)');
+      final query = body.indexOf(".from('bookings')");
+      expect(guard, greaterThanOrEqualTo(0), reason: signature);
+      expect(query, greaterThan(guard), reason: signature);
+      expect(body.substring(guard, query), anyOf(contains('return;'), contains('return <Booking>[];')));
+    }
+  });
+
 }
