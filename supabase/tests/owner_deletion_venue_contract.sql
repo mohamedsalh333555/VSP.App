@@ -46,6 +46,15 @@ BEGIN
     RAISE EXCEPTION 'Denied owner deletion unexpectedly removed auth account';
   END IF;
 
+  -- A confirmed future reservation must also block deletion.
+  UPDATE public.bookings SET status='confirmed' WHERE id=booking_id;
+  SET LOCAL ROLE authenticated;
+  result := public.delete_user_permanently(owner_id);
+  IF result->>'error' IS DISTINCT FROM 'ACTIVE_OWNER_STADIUMS' THEN
+    RAISE EXCEPTION 'Confirmed future booking guard failed: %',result;
+  END IF;
+  RESET ROLE;
+
   DELETE FROM public.bookings WHERE id=booking_id;
   SET LOCAL ROLE authenticated;
   result := public.delete_user_permanently(owner_id);
