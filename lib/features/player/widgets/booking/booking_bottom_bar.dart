@@ -197,7 +197,9 @@ class BookingBottomBar extends StatelessWidget {
           // ── خيار إيجار الكرة ──
           if (hasBallOption) ...[
             GestureDetector(
-              onTap: () => onBallRentedChanged(!isBallRented),
+              onTap: isSlotSelected && !isLoading
+                  ? () => onBallRentedChanged(!isBallRented)
+                  : null,
               behavior: HitTestBehavior.opaque,
               child: AnimatedContainer(
                 duration: VSPDSMotion.navigationSwitch,
@@ -229,7 +231,9 @@ class BookingBottomBar extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            isArabic ? 'دفع رسوم إيجار الكرة في هذا الملعب' : 'Pay Per Ball At This Pitch',
+                            !isSlotSelected
+                                ? (isArabic ? 'اختار موعد الحجز أولًا' : 'Select a booking slot first')
+                                : (isArabic ? 'إضافة اختيارية للحجز' : 'Optional booking add-on'),
                             style: const TextStyle(
                               color: VSPColors.textSecondary,
                               fontSize: 11,
