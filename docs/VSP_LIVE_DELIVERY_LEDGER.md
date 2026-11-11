@@ -2,6 +2,12 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Tasks 78.02 and 78.03 definition acceptance; 85/620
+
+- **85 accepted / 535 not yet accepted / 620**, previously 83/537. Exactly two source-level documentation tasks closed, **78.02** (resource/operation inventory) and **78.03** (intended allow/deny role matrix).
+- Evidence: [78.02 inventory](security/VSP_RESOURCE_OPERATION_INVENTORY_78_02.md), source commit `7d6f335`; [78.03 role matrix](security/VSP_ROLE_ACCESS_MATRIX_78_03.md), source commit `dd69596`. The matrix is a target contract **not** proof of deployed RLS/RPC/storage policy correctness.
+- **78.04–78.07 and 79.01–79.08 remain open**, including real role tests, anonymous access, exception documentation, bucket-level checks and two-account tests. No code, production Supabase, payment or main merge changed in this batch.
+
 ## 2026-11-11 — Task 78.01 accepted; accounting 83/620
 
 - **83 accepted / 537 not yet accepted / 620** (previously 82/538). Exactly one new checklist task closed: **78.01 — define player, stadium owner, and administrator roles**.
@@ -94,7 +100,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **83 verified; 537 not yet accepted**. This is not a claim that every remaining task is untouched.
+- Current inventory: **85 verified; 535 not yet accepted**. This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
