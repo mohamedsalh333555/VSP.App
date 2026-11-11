@@ -1,3 +1,9 @@
+## 2026-11-11 — Flutter CI regression recovered, all core checks green
+
+- Commit `c39e6110` completed **Flutter CI successfully twice** (runs `43076166273`, `43076157214`), **Android E2E Smoke success** (`43076166167`), **Account SQL security contracts success** (`43076166456`), and **Owner checkout security success** (`43076166066`). iOS compliance build was still running when checked.
+- This confirms the architecture regression failure on `7edbd256` was resolved by `df47d64a`'s updated stale test assertion. It does **not** establish real-device acceptance for screenshot tasks 83.01–83.07 or a backend fix for the live stadium refresh cause.
+- **Counter remains 86 accepted / 541 open / 627 total** until each task's complete acceptance criteria are met. No invented completion counts.
+
 ## 2026-11-11 — CI regression repair after stadium booking CTA guard
 
 - Flutter CI on `7edbd256` failed at the **Architecture regression gate** (runs `43074919354` and `43074904681`); Account SQL security contracts and Owner checkout security passed. CI job metadata does not expose the failing assertion text.
