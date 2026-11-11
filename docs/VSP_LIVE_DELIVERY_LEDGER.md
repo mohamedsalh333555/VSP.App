@@ -2,6 +2,18 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Fourth implementation batch: server-owned profile provisioning
+
+- [Four additional application corrections and verification boundaries](security/STORE_COMPLIANCE_BATCH_04_2026-11-11.md): direct profile INSERT/DELETE removed from authenticated clients, atomic server provisioning uses real Auth state and existing owner trial policy; no phantom local profile/role/completion.
+- New source includes 14 Flutter cases. All three staging rollback scripts passed after deployment, including existing 17 lifecycle/chat and 11 sensitive-update checks. CI for the new app source pending at this commit.
+- Production grants inspected read-only; no production exploit/mutation. Applying these changes there requires explicit review/approval and coordination with all external clients.
+- Accounting: **77 accepted / 543 not fully accepted / 620**; one new inventory closure (76.01), no automatic full journey closures from these partial corrections.
+
+## 2026-11-11 — Accepted inventory task 76.01
+
+- **77 accepted / 543 not fully accepted / 620 total**: 76 historical accepted checklist entries plus one newly accepted inventory task. This is a documentation/audit result, not one additional shipped feature.
+- **76.01 VERIFIED**: all nine public views inventoried in each environment using read-only schema metadata, definitions and SELECT privileges; current count supersedes the historical “four” in task text. [Evidence and limits](security/VIEW_INVENTORY_2026-11-11.md). Remaining 76.xx permission design, runtime isolation and release acceptance stay open.
+
 ## 2026-11-11 — Third compliance batch: account cancellation and chat authorization
 
 - [Exact changes and evidence](security/STORE_COMPLIANCE_BATCH_03_2026-11-11.md): **4 application corrections + 2 staging security trigger-binding repairs**. Application commit `3662402`.
@@ -30,7 +42,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **76 verified; 544 not yet accepted**. This is not a claim that every remaining task is untouched.
+- Current inventory: **77 verified; 543 not yet accepted**. This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.

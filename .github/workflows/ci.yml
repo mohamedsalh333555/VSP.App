@@ -50,6 +50,7 @@ jobs:
           test/core/services/image_selection_privacy_test.dart
           test/core/services/location_session_privacy_test.dart
           test/core/services/incomplete_account_cleanup_test.dart
+          test/core/services/registration_profile_provisioning_test.dart
       - name: Architecture regression gate
         run: flutter test test/architecture
       - name: Test

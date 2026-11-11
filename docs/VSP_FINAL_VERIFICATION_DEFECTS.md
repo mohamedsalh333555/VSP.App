@@ -47,3 +47,13 @@ Batch 03 checkpoint (does not renumber prior findings):
 | BUG-029 | P2 | New SQL test fixture | Auth email-sync fixture left transaction-local system override enabled, bypassing guard under test | Clear flag before simulated client, rerun 11 checks and all 17 lifecycle/chat checks successfully |
 
 Batch 03 adds four app corrections and two environment corrections. BUG-029 is test setup repair, not product progress. Actual multi-session overlap not observed; no concurrency success claimed. No new baseline task acceptance counted.
+
+
+Batch 04 findings: source and staging remediation; production approval pending.
+
+| ID | Priority | Finding / fix | Evidence |
+|---|---|---|---|
+| BUG-030 | P0 | Direct own-profile INSERT can choose admin/pro; DELETE bypasses account lifecycle. Revoke client INSERT/DELETE and provision via identity-scoped server RPC | Synthetic privileged INSERT reproduced before fix; all new provisioning server checks and explicit cancellation passed after fix |
+| BUG-031 | P1 | Failed OAuth profile upsert manufactured an unpersisted local profile; require explicit response and matching persisted profile | Added response/network/missing-profile tests; CI pending |
+| BUG-032 | P1 | setUserRole failure or stale reread still changed local routing role; require success and authoritative matching reread | Added two negative role tests; CI pending |
+| BUG-033 | P1 | Phone present locally granted registration completion before/without server state | Added false/true update-result tests with server state still incomplete; CI pending |
