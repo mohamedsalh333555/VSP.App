@@ -175,6 +175,26 @@ void main() {
       expect(dt.minute, 30);
     });
 
+    test('schedule refresh drops unavailable selected slots', () {
+      final slots = <TimeSlotItem>[
+        TimeSlotItem(
+          startTime: '04:00 PM',
+          endTime: '04:30 PM',
+          key: '16:00:00',
+          startMinutes: 960,
+        ),
+      ];
+      final selection = BookingSlotCalculator.calculateNewSelectedSlots(
+        slotKey: '17:00:00',
+        currentSelectedSlots: ['16:00:00', '16:30:00'],
+        timeSlots: slots,
+        stadium: testStadium,
+        selectedDate: DateTime(2030, 1, 1),
+        existingBookings: [],
+      );
+      expect(selection, ['16:00:00']);
+    });
+
     test('calculateNewSelectedSlots handles single selection and toggle-off', () {
       // Selection rejects past slots; use a future date for this toggle test.
       final date = DateTime(2030, 9, 15);
