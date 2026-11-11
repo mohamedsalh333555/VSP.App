@@ -1,3 +1,10 @@
+## 2026-11-11 — CI regression repair after stadium booking CTA guard
+
+- Flutter CI on `7edbd256` failed at the **Architecture regression gate** (runs `43074919354` and `43074904681`); Account SQL security contracts and Owner checkout security passed. CI job metadata does not expose the failing assertion text.
+- Source inspection identified a definite stale assertion in `test/architecture/stadium_details_safe_area_contract_test.dart`: it expected the former one-line `StadiumBottomBookingBar(stadium: stadium)` call, which the guarded booking-CTA implementation replaced with a multiline call and `bookingEnabled` predicate.
+- `df47d64a` updates that assertion to the current guarded API. This is a **candidate cause** of the CI failure, not a claim that no other failures exist. Await rerun before accepting or closing any task.
+- Counter remains **86 accepted / 541 open / 627 total**. No main, production, or payment changes.
+
 ## 2026-11-11 — 83.02 live stadium refresh booking safety
 
 - **86 accepted / 541 open / 627 total** at this checkpoint. `01e94307` makes the stadium booking CTA explicitly disable-able; `a3bb534a` disables it while live stadium details are still loading, fail to refresh, or cannot be parsed. This prevents entering the booking flow from a stale route argument after a live refresh error, while preserving retry and stale-data information display.
