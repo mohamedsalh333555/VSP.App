@@ -117,9 +117,9 @@ class StadiumInformationTab extends StatelessWidget {
   // arbitrary owner-written prose or persist translated text to the database.
   static String localizeKnownDescriptionLabels(String description, {required bool isArabic}) {
     if (!isArabic || description.isEmpty) return description;
-    return description.split('\\n').map((line) {
+    return description.split('\n').map((line) {
       final trimmed = line.trim();
-      final label = trimmed.replaceFirst(RegExp(r'^[•\\-]\\s*'), '').trim();
+      final label = trimmed.replaceFirst(RegExp(r'^[•-]\s*'), '').trim();
       final translation = switch (label.toLowerCase()) {
         'cleanliness' => 'الحفاظ على النظافة',
         'no smoking' => 'ممنوع التدخين',
@@ -130,7 +130,7 @@ class StadiumInformationTab extends StatelessWidget {
       final prefix = trimmed.startsWith('•') ? '• ' : (trimmed.startsWith('-') ? '- ' : '');
       final leading = line.substring(0, line.length - line.trimLeft().length);
       return '$leading$prefix$translation';
-    }).join('\\n');
+    }).join('\n');
   }
 
 
