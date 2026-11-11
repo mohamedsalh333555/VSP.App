@@ -203,6 +203,17 @@ class BookingSlotCalculator {
     if (normalizedSlot < openMin || normalizedSlot + 30 > normalizedClose) {
       throw FormatException('Booking slot outside stadium operating hours');
     }
+    // The caller may supply a stale or forged slot key. Apply the same
+    // closure/break validation used by the schedule generator rather than
+    // accepting every time inside the outer opening-hours interval.
+    final availableSlots = generateDynamicTimeSlots(
+      stadium: stadium,
+      isArabic: false,
+    );
+    if (!availableSlots.any((slot) =>
+        AppDateFormatter.tryParseTimeToMinutes(slot.key) == startMin)) {
+      throw FormatException('Booking slot is not available in stadium schedule');
+    }
 
     // Construct the next *calendar* day rather than adding 24 elapsed hours:
     // Egypt daylight-saving transitions can make a local day 23 or 25 hours.
