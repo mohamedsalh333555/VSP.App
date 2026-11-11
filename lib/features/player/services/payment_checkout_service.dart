@@ -52,14 +52,21 @@ class PaymentCheckoutService {
     String? bookingId,
     required int timestampMs,
   }) {
+    final normalizedBookingId = bookingId?.trim();
     if (isTournamentPayment) {
-      if (bookingId != null && (bookingId.startsWith('LEAGUE_') || bookingId.startsWith('TOURN_'))) {
-        return bookingId;
+      if (normalizedBookingId != null &&
+          (normalizedBookingId.startsWith('LEAGUE_') ||
+              normalizedBookingId.startsWith('TOURN_'))) {
+        return normalizedBookingId;
       }
-      final teamId = (playerTeamId != null && playerTeamId.isNotEmpty) ? playerTeamId : 'TEAM';
+      final teamId = (playerTeamId != null && playerTeamId.trim().isNotEmpty)
+          ? playerTeamId.trim()
+          : 'TEAM';
       return 'TOURN_${teamId}_$timestampMs';
     }
-    return bookingId ?? 'BK_$timestampMs';
+    return normalizedBookingId != null && normalizedBookingId.isNotEmpty
+        ? normalizedBookingId
+        : 'BK_$timestampMs';
   }
 
   /// Determines if stale pending bookings should be cleaned up for the user.
