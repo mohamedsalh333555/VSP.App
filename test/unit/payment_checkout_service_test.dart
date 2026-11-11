@@ -40,6 +40,51 @@ void main() {
       expect(amount, 400.0);
     });
 
+    test('rejects invalid amounts before requesting a payment session', () {
+      for (final amount in <double>[
+        -1,
+        0,
+        double.nan,
+        double.infinity,
+        double.negativeInfinity,
+      ]) {
+        expect(
+          () => PaymentCheckoutService.calculateBasePayableAmount(
+            needsDeposit: false,
+            depositPaid: 0,
+            totalPrice: amount,
+          ),
+          throwsArgumentError,
+          reason: 'totalPrice=$amount',
+        );
+      }
+      for (final deposit in <double>[
+        -1,
+        401,
+        double.nan,
+        double.infinity,
+        double.negativeInfinity,
+      ]) {
+        expect(
+          () => PaymentCheckoutService.calculateBasePayableAmount(
+            needsDeposit: true,
+            depositPaid: deposit,
+            totalPrice: 400,
+          ),
+          throwsArgumentError,
+          reason: 'depositPaid=$deposit',
+        );
+      }
+      expect(
+        PaymentCheckoutService.calculateBasePayableAmount(
+          needsDeposit: true,
+          depositPaid: 400,
+          totalPrice: 400,
+        ),
+        400,
+      );
+    });
+
     test('getIntegrationId returns wallet vs card integration ID accurately', () {
       expect(
         PaymentCheckoutService.getIntegrationId('wallet'),
