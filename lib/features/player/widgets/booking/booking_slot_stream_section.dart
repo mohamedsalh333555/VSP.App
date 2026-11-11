@@ -76,13 +76,15 @@ class BookingSlotStreamSection extends StatelessWidget {
           );
         }
 
-        if (snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)) {
+        // Fail closed on stream errors, even when stale bookings are cached.
+        // Rendering stale availability as selectable could enable double-booking.
+        if (snapshot.hasError) {
           return VSPStateView(
             state: VSPUiState.error,
             title: isArabic ? 'تعذر تحميل المواعيد' : 'Could not load availability',
             message: isArabic
-                ? 'راجع الاتصال وحاول مرة تانية.'
-                : 'Check your connection and try again.',
+                ? 'تعذر التأكد من الحجوزات الحالية. حاول مرة تانية قبل اختيار موعد.'
+                : 'Current bookings could not be verified. Retry before choosing a slot.',
             onRetry: onRetry,
           );
         }
