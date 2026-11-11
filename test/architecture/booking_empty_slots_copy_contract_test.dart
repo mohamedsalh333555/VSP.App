@@ -21,7 +21,8 @@ void main() {
     final source = File(
       'lib/features/player/widgets/booking/booking_slot_stream_section.dart',
     ).readAsStringSync();
-    expect(source, contains('snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)'));
+    expect(source, contains('if (snapshot.hasError) {'));
+    expect(source, isNot(contains('snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)')));
     expect(source, contains('state: VSPUiState.error'));
     expect(source, contains('if (timeSlots.isEmpty)'));
   });
