@@ -9,6 +9,8 @@ void main() {
     ).readAsStringSync();
     expect(details, contains('bookingEnabled: !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty'));
     expect(details, contains('final hasStreamIssue = snapshot.hasError || parseFailed;'));
+    expect(details, contains('final isUnavailable = !stadium.isVerified ||'));
+    expect(details, isNot(contains('final isUnavailable = !widget.stadium.isVerified ||')));
   });
 
   test('disabled booking action cannot open booking type modal', () {
