@@ -2,6 +2,13 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — 83.03 preselection financial summary UI fix (pending verification)
+
+- **86 accepted / 541 open / 627 total: unchanged.** `83.03` remains open pending widget/Flutter CI and server-authoritative amount tests.
+- Commits `7422496`, `a30526d`: before a time slot is selected, the deposit summary now says **“يُحسب بعد اختيار الموعد”** instead of falsely showing **0 EGP** as the remaining balance. The existing calculation after slot selection is unchanged.
+- Commit `9bddcd3`: architecture regression contract for the placeholder and selected-slot wiring. No booking price formula, deposit rule, Supabase, payment backend, or main branch changed.
+- Follow-up: verify UI rendering in Arabic/English and 1/2 slots plus ball add-on; confirm server-side final charges. Do not mark 83.03 accepted on a static contract alone.
+
 ## 2026-11-11 — Screenshot triage scope added; 86/627
 
 - **86 accepted / 541 not yet accepted / 627 total**, previously 86/534/620. Added seven **open** screenshot-specific tasks **83.01–83.07**, no tasks accepted.
