@@ -96,6 +96,24 @@ void main() {
       );
     });
 
+    test('unsupported payment methods never silently select card checkout', () {
+      for (final method in <String>['', 'cash', 'instapay', 'unknown']) {
+        expect(
+          () => PaymentCheckoutService.getIntegrationId(method),
+          throwsArgumentError,
+          reason: 'method=$method',
+        );
+      }
+      expect(
+        PaymentCheckoutService.getIntegrationId(' WALLET '),
+        AppConfig.paymobWalletIntegrationId,
+      );
+      expect(
+        PaymentCheckoutService.getIntegrationId(' CARD '),
+        AppConfig.paymobCardIntegrationId,
+      );
+    });
+
     test('generatePaymentReference formats tournament and pitch references correctly', () {
       final tournRef = PaymentCheckoutService.generatePaymentReference(
         isTournamentPayment: true,
