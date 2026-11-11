@@ -75,10 +75,8 @@ class PaymentCheckoutService {
     if (s == 'confirmed') {
       return p == 'paid' || p == 'partially_paid';
     }
-    // Backward-compatibility fallback when status is omitted: only accept strictly 'paid'
-    if (s == null && p == 'paid') {
-      return true;
-    }
+    // A paid flag without a confirmed server booking is not payment proof.
+    // Keep unknown/missing booking status in the uncertain state.
     return false;
   }
 
