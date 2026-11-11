@@ -24,9 +24,21 @@ class AppNotification {
 
  factory AppNotification.fromFirestore(Map<String, dynamic> data, String id) {
    final rawDate = data['createdAt'] ?? data['created_at'];
+   // Some historical notification producers wrote Unix seconds/milliseconds
+   // rather than ISO timestamps. Preserve their chronological order.
+   final numericDate = rawDate is num
+       ? rawDate
+       : (rawDate is String ? num.tryParse(rawDate.trim()) : null);
    final parsedDate = rawDate is DateTime
        ? rawDate
-       : DateTime.tryParse(rawDate?.toString() ?? '');
+       : numericDate != null && numericDate.isFinite && numericDate >= 0 &&
+               numericDate <= 8640000000000000
+           ? DateTime.fromMillisecondsSinceEpoch(
+               (numericDate < 100000000000 ? numericDate * 1000 : numericDate)
+                   .round(),
+               isUtc: true,
+             )
+           : DateTime.tryParse(rawDate?.toString() ?? '');
    final rawRead = data['isRead'] ?? data['is_read'];
    final normalizedRead = rawRead?.toString().trim().toLowerCase();
    final read = rawRead == true ||
