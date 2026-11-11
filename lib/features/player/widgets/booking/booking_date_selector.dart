@@ -34,6 +34,7 @@ class BookingDateSelector extends StatelessWidget {
               onTap: () => showBookingCalendarModal(
                 context: context,
                 initialDate: selectedDate,
+                operationalBaseDate: operationalBaseDate,
                 onDateSelected: onDateChanged,
               ),
               child: Container(
