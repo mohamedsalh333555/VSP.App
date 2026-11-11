@@ -2,6 +2,12 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Task 78.01 accepted; accounting 83/620
+
+- **83 accepted / 537 not yet accepted / 620** (previously 82/538). Exactly one new checklist task closed: **78.01 — define player, stadium owner, and administrator roles**.
+- [Role definitions and direct source references](security/VSP_ROLE_DEFINITIONS_78_01.md) document public `player`/`owner` registration, privileged admin/founder variants, and technical Supabase principals. Definition-only acceptance; this is **not** an RLS/RPC/staging authorization or E2E pass. Source document commit `9e1caf3`; checklist updated separately.
+- The latest booking owner identity-scoping changes are **CODE_DONE pending CI** and do not close 23.07, 23.08, 79.05 or any other cross-account test. No production database, payments, pricing or main-branch change.
+
 ## 2026-11-11 — Batch11 legacy reporting/deletion rollout verified
 
 - **82 accepted /538 pending /620**, no automatic additional closures. [Verified batch11](security/STORE_COMPLIANCE_BATCH_11_2026-11-11.md):7 legacy RPC corrections protect cross-account deletion and owner/admin financial/operational reports while preserving own privacy/deletion.8 known source variants; no business calculation/model/price changes.
@@ -88,7 +94,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **82 verified; 538 not yet accepted**. This is not a claim that every remaining task is untouched.
+- Current inventory: **83 verified; 537 not yet accepted**. This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
