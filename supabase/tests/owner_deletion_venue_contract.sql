@@ -1,22 +1,62 @@
+-- Isolated synthetic fixture; all changes are rolled back.
+-- Cover active venues, archived venues with a pending future booking,
+-- and finally an archived venue whose owner can be removed.
 BEGIN;
 DO $test$
-DECLARE owner_id uuid:=gen_random_uuid(); venue_id uuid:=gen_random_uuid(); result jsonb;
+DECLARE
+  owner_id uuid := gen_random_uuid();
+  customer_id uuid := gen_random_uuid();
+  venue_id uuid := gen_random_uuid();
+  booking_id uuid := gen_random_uuid();
+  slot_start timestamptz := now() + interval '2 days';
+  result jsonb;
 BEGIN
-  INSERT INTO auth.users(id,email) VALUES(owner_id,'owner@example.invalid');
-  INSERT INTO public.users(id,role) VALUES(owner_id,'owner');
+  INSERT INTO auth.users(id,email) VALUES
+    (owner_id, owner_id::text || '@owner.invalid'),
+    (customer_id, customer_id::text || '@customer.invalid');
+  INSERT INTO public.users(id,role) VALUES
+    (owner_id,'owner'), (customer_id,'player');
   INSERT INTO public.stadiums(id,owner_id,name,location,governorate,price_per_hour,base_price)
     VALUES(venue_id,owner_id,'Fixture','Fixture','Aswan',100,100);
+
   PERFORM set_config('request.jwt.claims',jsonb_build_object('role','authenticated','sub',owner_id)::text,true);
   SET LOCAL ROLE authenticated;
-  result:=public.delete_user_permanently(owner_id);
-  IF result->>'error' IS DISTINCT FROM 'ACTIVE_OWNER_STADIUMS' THEN RAISE EXCEPTION 'Active venue guard failed: %',result; END IF;
+  result := public.delete_user_permanently(owner_id);
+  IF result->>'error' IS DISTINCT FROM 'ACTIVE_OWNER_STADIUMS' THEN
+    RAISE EXCEPTION 'Active venue guard failed: %',result;
+  END IF;
   RESET ROLE;
+
   UPDATE public.stadiums SET is_deleted_by_owner=true WHERE id=venue_id;
+  INSERT INTO public.bookings(
+    id,stadium_id,owner_id,user_id,created_by_user_id,start_time,end_time,
+    total_price,payment_method,payment_source,payment_status,is_paid,
+    deposit_paid,status
+  ) VALUES (
+    booking_id,venue_id,owner_id,customer_id,customer_id,slot_start,
+    slot_start+interval '1 hour',100,'cash','cash','pending',false,0,'pending'
+  );
   SET LOCAL ROLE authenticated;
-  result:=public.delete_user_permanently(owner_id);
-  IF result->>'auth_user_deleted' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'Archived venue owner deletion failed: %',result; END IF;
+  result := public.delete_user_permanently(owner_id);
+  IF result->>'error' IS DISTINCT FROM 'ACTIVE_OWNER_STADIUMS' THEN
+    RAISE EXCEPTION 'Future booking on archived venue guard failed: %',result;
+  END IF;
   RESET ROLE;
-  IF EXISTS(SELECT FROM auth.users u WHERE u.id=owner_id) OR EXISTS(SELECT FROM public.users u WHERE u.id=owner_id) THEN RAISE EXCEPTION 'Owner account remains'; END IF;
+  IF NOT EXISTS(SELECT 1 FROM auth.users WHERE id=owner_id) THEN
+    RAISE EXCEPTION 'Denied owner deletion unexpectedly removed auth account';
+  END IF;
+
+  DELETE FROM public.bookings WHERE id=booking_id;
+  SET LOCAL ROLE authenticated;
+  result := public.delete_user_permanently(owner_id);
+  IF result->>'auth_user_deleted' IS DISTINCT FROM 'true' THEN
+    RAISE EXCEPTION 'Archived venue owner deletion failed: %',result;
+  END IF;
+  RESET ROLE;
+  IF EXISTS(SELECT 1 FROM auth.users WHERE id=owner_id)
+     OR EXISTS(SELECT 1 FROM public.users WHERE id=owner_id) THEN
+    RAISE EXCEPTION 'Owner account remains';
+  END IF;
 END;
 $test$;
 ROLLBACK;
