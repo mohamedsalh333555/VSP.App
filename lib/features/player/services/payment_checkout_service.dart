@@ -86,6 +86,11 @@ class PaymentCheckoutService {
     final s = status?.toLowerCase().trim();
     final p = paymentStatus?.toLowerCase().trim();
     final reconcile = paymentReconcileState?.toLowerCase().trim();
+    // A refund lifecycle state is never proof of a successful checkout,
+    // including when an older reconciliation value still says fully_paid.
+    if (p == 'refund_pending' || p == 'refunded' || p == 'refund_failed') {
+      return false;
+    }
     // A server reconciliation conflict or refund must never be presented as
     // checkout success, even when a legacy payment_status remains 'paid'.
     if (reconcile != null && reconcile.isNotEmpty &&
