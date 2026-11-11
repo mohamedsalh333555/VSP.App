@@ -217,7 +217,8 @@ class AuthRegistrationService {
     required UserModel? currentUserModel,
     required String verificationStatus,
   }) async {
-    if (authUser == null || currentUserModel == null) {
+    if (authUser == null || currentUserModel == null ||
+        currentUserModel.uid != authUser.id) {
       return (success: false, userModel: null);
     }
 
@@ -240,12 +241,12 @@ class AuthRegistrationService {
         'p_additional_data': updatedAdditional,
       });
 
-      if (response is Map && response['success'] != true) {
-        VSPLogger.w('submit_owner_verification returned error: ${response['error']}');
+      if (response is! Map || response['success'] != true) {
+        VSPLogger.w('Owner registration completion was not confirmed.');
         return (success: false, userModel: null);
       }
 
-      final bool authoritativeHasStadium = response is Map && response['has_stadium'] == true;
+      final bool authoritativeHasStadium = response['has_stadium'] == true;
 
       final updatedModel = currentUserModel.copyWith(
         verificationStatus: verificationStatus,
@@ -256,12 +257,12 @@ class AuthRegistrationService {
 
       return (success: true, userModel: updatedModel);
     } catch (e) {
-      VSPLogger.e('completeOwnerRegistration failed', e);
+      VSPLogger.w('Owner registration completion failed (${e.runtimeType}).');
       return (success: false, userModel: null);
     }
   }
 
-  /// Aborts uncompleted registration and purges the row.
+  /// Requests cancellation; the server rechecks completion under a row lock.
   Future<void> abortRegistration(User? authUser, UserModel? userModel) async {
     final uid = authUser?.id;
     if (uid != null) {
@@ -271,7 +272,7 @@ class AuthRegistrationService {
       }
       if (!userModel.isRegistrationComplete) {
         try {
-          final result = await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
+          final result = await _supabase.rpc('cancel_incomplete_registration_atomic', params: {'p_user_id': uid});
           if (result is! Map || result['success'] != true) {
             VSPLogger.w('Incomplete-account cleanup was not confirmed.');
             return;
@@ -279,9 +280,9 @@ class AuthRegistrationService {
           VSPLogger.i('Incomplete-account cleanup confirmed.');
         } catch (e) {
           VSPLogger.w('Incomplete-account cleanup failed (${e.runtimeType}).');
-          try {
-            await _authService.deleteAccount(uid);
-          } catch (_) {}
+          // Do not fall back to unconditional deletion after a network failure.
+          // The first request may have completed, or another device may have
+          // finished registration while this request was in flight.
         }
       } else {
         VSPLogger.w('abortRegistration called on a completed account.');
