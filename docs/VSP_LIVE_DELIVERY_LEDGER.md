@@ -1,3 +1,9 @@
+## 2026-11-11 — 83.04 calendar minimum date aligns with booking operational day
+
+- **86 accepted / 541 open / 627 total: unchanged.** `e0524d85` anchors the monthly calendar's first bookable date and month navigation to the same `operationalBaseDate` used by the 14-day selector, rather than directly reading the device's `DateTime.now()`. `820ddd3c` wires the date from the selector into the modal.
+- `8257ee34` adds an architecture regression contract for the date-boundary wiring. **83.04 remains open** pending actual date-availability markers, timezone rollover, and device calendar tests; this fix does not claim that a date with zero slots is bookable.
+- No Supabase, payments, or main merge changes. CI on this new code is not yet verified.
+
 # VSP — Live delivery ledger
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
