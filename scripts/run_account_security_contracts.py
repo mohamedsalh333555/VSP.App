@@ -261,6 +261,9 @@ END; $$;
     require_success(args, env, 'admin guard restored after inverse', admin_migration)
     require_success(args, env, 'admin baseline after inverse round trip',
                     read_file('supabase/tests/admin_actor_contract.sql'))
+    for path in ('supabase/migrations/20261111142100_repair_owner_deletion_venue_check.sql',
+                 'supabase/tests/owner_deletion_venue_contract.sql'):
+        require_success(args, env, path, read_file(path))
     require_success(args, env, 'final fixture cleanup', """
 DO $$ BEGIN
   IF EXISTS(SELECT 1 FROM auth.users) OR EXISTS(SELECT 1 FROM public.users) THEN
@@ -268,7 +271,7 @@ DO $$ BEGIN
   END IF;
 END; $$;
 """)
-    print(json.dumps({'status': 'PASS', 'sql_suites': len(manifest['tests']),
+    print(json.dumps({'status': 'PASS', 'sql_suites': len(manifest['tests']) + 1,
                       'security_mutants_rejected': len(mutants),
                       'scope': manifest['scope']}))
     return 0
