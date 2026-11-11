@@ -2,6 +2,12 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — 83.04 calendar selected-date correctness (pending acceptance)
+
+- **86 accepted / 541 open / 627 total: unchanged.** Commit `8d5e230` fixes 14-day strip selection to compare **year, month, and day**, not just month/day; removes the hard-coded comma in localized month/year header.
+- Commit `37c45c6` adds architecture regression contract. **83.04 remains open**: calendar availability/closed-day indicators, accessibility, real Android RTL and CI on these commits still need acceptance.
+- On previous head `fbac4a8d`, Account SQL security contracts and Owner checkout security completed successfully; Flutter CI, Android E2E, and iOS compliance were still in progress when checked. These are not new-commit test results.
+
 ## 2026-11-11 — 83.07 ball rental without slot (pending CI and UI acceptance)
 
 - **86 accepted / 541 open / 627 total: unchanged.** `8f817baa`: ball-rental toggle now requires a selected slot and not loading, with Arabic/English instruction to choose a slot first.
