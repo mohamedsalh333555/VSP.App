@@ -219,6 +219,36 @@ void main() {
       expect(PaymentCheckoutService.isPaymentConfirmed(status: null, paymentStatus: null), isFalse);
     });
 
+    test('reconciliation conflicts never report successful checkout', () {
+      for (final state in <String>[
+        'unpaid',
+        'refund_pending',
+        'refunded',
+        'refund_failed',
+      ]) {
+        expect(
+          PaymentCheckoutService.isPaymentConfirmed(
+            status: 'confirmed',
+            paymentStatus: 'paid',
+            paymentReconcileState: state,
+          ),
+          isFalse,
+          reason: 'reconcile=$state',
+        );
+      }
+      for (final state in <String>['fully_paid', 'partially_paid']) {
+        expect(
+          PaymentCheckoutService.isPaymentConfirmed(
+            status: 'confirmed',
+            paymentStatus: 'paid',
+            paymentReconcileState: state,
+          ),
+          isTrue,
+          reason: 'reconcile=$state',
+        );
+      }
+    });
+
     test('preparePendingDraft sets status to pending and method to paymob', () {
       final now = DateTime(2026, 9, 9, 20, 0);
       final draft = BookingDraft(
