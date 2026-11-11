@@ -146,6 +146,43 @@ void main() {
       expect(fallbackBookingRef, 'BK_1700000000000');
     });
 
+    test('blank checkout booking references use a nonempty fallback', () {
+      for (final bookingId in <String?>[null, '', '   ']) {
+        expect(
+          PaymentCheckoutService.generatePaymentReference(
+            isTournamentPayment: false,
+            bookingId: bookingId,
+            timestampMs: 1700000000000,
+          ),
+          'BK_1700000000000',
+        );
+      }
+      expect(
+        PaymentCheckoutService.generatePaymentReference(
+          isTournamentPayment: false,
+          bookingId: '  booking-123  ',
+          timestampMs: 1700000000000,
+        ),
+        'booking-123',
+      );
+      expect(
+        PaymentCheckoutService.generatePaymentReference(
+          isTournamentPayment: true,
+          bookingId: '  LEAGUE_abc  ',
+          timestampMs: 1700000000000,
+        ),
+        'LEAGUE_abc',
+      );
+      expect(
+        PaymentCheckoutService.generatePaymentReference(
+          isTournamentPayment: true,
+          playerTeamId: '   ',
+          timestampMs: 1700000000000,
+        ),
+        'TOURN_TEAM_1700000000000',
+      );
+    });
+
     test('shouldCleanupStaleBookings allows cleanup only on non-tournament and new bookings', () {
       expect(
         PaymentCheckoutService.shouldCleanupStaleBookings(
