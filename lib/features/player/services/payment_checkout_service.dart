@@ -22,6 +22,11 @@ class PaymentCheckoutService {
     required double totalPrice,
     bool isFullPayment = false,
   }) {
+    if (!totalPrice.isFinite || totalPrice <= 0 ||
+        !depositPaid.isFinite || depositPaid < 0 ||
+        depositPaid > totalPrice) {
+      throw ArgumentError('Invalid checkout amount or deposit');
+    }
     if (!isFullPayment && needsDeposit && depositPaid > 0) {
       return depositPaid;
     }
