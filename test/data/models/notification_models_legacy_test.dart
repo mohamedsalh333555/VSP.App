@@ -14,6 +14,26 @@ void main() {
     expect(notification.bookingId, 'booking-1');
     expect(notification.createdAt, DateTime.parse(now));
   });
+  test('legacy Unix timestamps retain chronological ordering', () {
+    const seconds = 1794096000;
+    const milliseconds = seconds * 1000;
+    for (final timestamp in <Object>[
+      seconds,
+      milliseconds,
+      '$seconds',
+      '$milliseconds',
+    ]) {
+      final notification = AppNotification.fromMap({
+        'id': 'unix-time',
+        'created_at': timestamp,
+      });
+      expect(
+        notification.createdAt.millisecondsSinceEpoch,
+        milliseconds,
+        reason: 'timestamp=$timestamp',
+      );
+    }
+  });
   test('malformed legacy timestamp does not crash notification list', () {
     final notification = AppNotification.fromMap({
       'id': 'broken-1', 'created_at': 'not-a-date',
