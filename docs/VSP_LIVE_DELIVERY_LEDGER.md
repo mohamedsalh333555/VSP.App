@@ -1,3 +1,10 @@
+## 2026-11-11 — Post-scope-removal execution: live venue verification safety
+
+- Group 56 remains removed from the active task inventory: **618 total / 83 accepted / 535 open**.
+- Found a booking-safety gap in stadium details: the unavailable-state check used `widget.stadium.isVerified` from route arguments, even after parsing a newer live `stadium` snapshot. A venue revoked in live data could continue to appear bookable.
+- `7b61f6af` switches the availability gate to `stadium.isVerified`, retaining fail-closed booking behavior for loading/error/parse-failure. `1e19164c` adds an architecture regression assertion. **83.02 remains open** pending CI and server-side authorization/device validation.
+- No changes to main, production Supabase, or payment logic.
+
 ## 2026-11-11 — Owner-requested scope removal: 24 E2E journeys (group 56)
 
 - Removed the **entire nine-task group 56** from the active detailed task checklist at `cd9b2681`: 3 previously accepted documentation tasks (56.01, 56.02, 56.09) and 6 open tasks (56.03–56.08). This is **scope cancellation**, not completion.
