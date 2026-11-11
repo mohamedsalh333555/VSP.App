@@ -11,11 +11,13 @@ import '../../../../l10n/app_localizations.dart';
 class BookingFinancialSummary extends StatelessWidget {
   final Stadium stadium;
   final double totalPrice;
+  final bool hasSelectedSlots;
 
   const BookingFinancialSummary({
     super.key,
     required this.stadium,
     required this.totalPrice,
+    required this.hasSelectedSlots,
   });
 
   @override
@@ -97,7 +99,9 @@ class BookingFinancialSummary extends StatelessWidget {
                   style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
                 Text(
-                  '${VSPMoneyFormatter.amount((totalPrice - deposit).clamp(0, double.infinity))} ${l10n.egCurrency}',
+                  hasSelectedSlots
+                      ? '${VSPMoneyFormatter.amount((totalPrice - deposit).clamp(0, double.infinity))} ${l10n.egCurrency}'
+                      : (isArabic ? 'يُحسب بعد اختيار الموعد' : 'Calculated after selecting a slot'),
                   style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12),
                 ),
               ],
