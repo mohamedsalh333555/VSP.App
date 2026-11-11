@@ -322,7 +322,13 @@ class BookingSlotCalculator {
       return selectedTimeSlots;
     }
 
-    if (idxTapped == -1) return selectedTimeSlots;
+    if (idxTapped == -1) {
+      // A schedule refresh can remove the tapped slot or an existing
+      // selection. Never keep an unavailable selection alive.
+      return selectedTimeSlots
+          .where((key) => timeSlots.any((slot) => slot.key == key))
+          .toList();
+    }
 
     if (selectedTimeSlots.isEmpty) {
       selectedTimeSlots.add(slotKey);
