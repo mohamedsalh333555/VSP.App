@@ -2,6 +2,14 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Batches 06/07: dashboard delivery and active-admin RPC enforcement
+
+- **81 accepted / 539 not fully accepted /620**; no duplicate closures for scoped fixes.
+- [Batch 07 evidence and limits](security/STORE_COMPLIANCE_BATCH_07_2026-11-11.md): 40 admin routines reviewed, 32 source-checked guards deployed to staging and production. 192 staged unauthorized calls rejected; three real RPC positive fixtures roll back cleanly. Production 32/32 fingerprints and original OIDs/ACLs/owners/config verified read-only.
+- Native PG17.6 run 42965386816 SUCCESS: six SQL suites, seven weakened guards rejected, 18 Python tests, idempotent replay/source-drift and fresh-database gates. Existing security-advisor counts unchanged. No customer-row production test or pricing/model change.
+- Private dashboard PR #9 merged at 91964ad after CI 42963826004 (53 tests/audit zero/build) passed. Vercel status SUCCESS and Google-only sign-in rendered live; real OAuth/post-login journey remains open.
+- App source 379adb4; App main remains unchanged. These are partial implementation/verification contributions to existing Phase 8/9 tasks, not release acceptance. Follow-up source-checked inverse round trip is recorded by its CI.
+
 ## 2026-11-11 — Batch 05: client-role guard, native SQL tests and production deployment
 
 - **81 accepted /539 not fully accepted /620**. Accepted additions: 80.01 defined change-triggered security contracts; 80.02 added profile RLS tests; 80.03 added lifecycle/conversation RPC tests. These are test-foundation tasks, not a claim that all database policies/RPCs or the entire release are verified.

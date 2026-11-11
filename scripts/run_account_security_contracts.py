@@ -125,6 +125,11 @@ END; $$;
     if drift.returncode == 0 or 'ADMIN_RPC_SOURCE_DRIFT' not in drift.stderr:
         raise RuntimeError('Unknown admin source body was not refused: ' + drift.stderr[-3000:])
     print('PASS unknown admin source fingerprint refused without clobbering', flush=True)
+    require_success(args, env, 'admin source-checked inverse',
+                    read_file('docs/security/sql/rollback_admin_actor_guard_2026-11-11.sql'))
+    require_success(args, env, 'admin guard restored after inverse', admin_migration)
+    require_success(args, env, 'admin baseline after inverse round trip',
+                    read_file('supabase/tests/admin_actor_contract.sql'))
     require_success(args, env, 'final fixture cleanup', """
 DO $$ BEGIN
   IF EXISTS(SELECT 1 FROM auth.users) OR EXISTS(SELECT 1 FROM public.users) THEN

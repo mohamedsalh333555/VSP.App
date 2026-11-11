@@ -24,3 +24,18 @@ Private dashboard PR #9 was merged after owner standing authorization. Validated
 ## Acceptance
 
 Core ledger remains 81 accepted / 539 pending of 620. These are scoped fixes, not 32 complete parent requirements or overall store readiness. No iOS build, signed release, Data Safety/App Privacy submission, or real multi-account journey is claimed here.
+
+## Hosted rollout and native CI receipt
+
+- Source commit: 379adb4c50aaee40c74221ff054bca5f9fc3fdb2.
+- Native PostgreSQL 17.6 [run 42965386816](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42965386816), job 130341288584: SUCCESS. Six suites, seven weakened guards detected, restored baselines, idempotency, unknown-source refusal, clean accounts and existing-database refusal. 9 target-guard and 9 planner Python tests pass.
+- Staging migration applied; exact after-fingerprints verified on all 32 routines before probes. **192 negative calls / 32 RPCs / six actor contexts rejected**. The initial probe expected every denial to throw; two existing exception handlers instead returned explicit success:false with ADMIN_ACCESS_REQUIRED. The corrected probe accepts only those two exact response contracts. No security condition was weakened.
+- Staging positive contract succeeds for subscription assignment, block plus audit log, no-show reset, all admin aliases/service/native contexts. All fixture rows and temporary grants rolled back; zero matching fixture Auth accounts remain.
+- Production migration applied after staging/native verification. Read-only checks verify **32/32 known after-fingerprints**, original OIDs, owners, ACLs, proconfig and definer flags preserved. The new helper is invoker and not executable directly by anon/authenticated/service_role. No production business operation or customer-row test was run.
+- Advisors unchanged: production 197 callable-definer findings + 1 deferred password-protection warning; staging 200 callable-definer + 4 public-extension + 1 deferred password warning. The extra invoker helper adds no definer finding. This patch does not resolve all historical warnings.
+- Emergency inverse is outside forward migrations and refuses unknown source. Its local PGlite inverse/forward round trip passes; native CI round-trip coverage is added in the follow-up commit.
+- Dashboard merge 91964ad deployed: GitHub Vercel commit status SUCCESS. Live production page rendered the Google-only sign-in button and authorized-admin notice, no password form. The deployed JS includes new identity-mismatch and safe-failure markers. Real Google sign-in and post-login navigation remain unverified.
+- Machine-readable metadata: [batch evidence](STORE_COMPLIANCE_BATCH_07_EVIDENCE_2026-11-11.json). Staging-only all-RPC denial script is not part of the three-RPC native fixture.
+- Core remains **81 accepted / 539 not fully accepted /620**. Full Flutter/Android checks were still running at this receipt's creation; later results must be recorded separately. App main not merged; private dashboard main merged under standing owner approval.
+
+Policy alignment: [Apple App Review Guidelines 1.6](https://developer.apple.com/app-store/review/guidelines/#data-security), [Google Play User Data](https://support.google.com/googleplay/android-developer/answer/10144311). These are existing access/data-security obligations, not a newly announced policy effective date. Execution/observation date is 2026-11-11; this narrow fix does not prove complete store compliance.
