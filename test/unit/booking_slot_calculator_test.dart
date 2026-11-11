@@ -160,6 +160,25 @@ void main() {
       );
     });
 
+    test('booking slot keys reject nonzero seconds without rounding', () {
+      expect(
+        () => BookingSlotCalculator.getSlotDateTime(
+          slotKey: '16:00:30',
+          stadium: testStadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ),
+        throwsFormatException,
+      );
+      expect(
+        BookingSlotCalculator.getSlotDateTime(
+          slotKey: '16:00:00',
+          stadium: testStadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ).hour,
+        16,
+      );
+    });
+
     test('getSlotDateTime resolves correct hour and minute', () {
       final date = DateTime(2026, 9, 15);
       final dt = BookingSlotCalculator.getSlotDateTime(
