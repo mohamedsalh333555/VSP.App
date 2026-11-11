@@ -263,7 +263,31 @@ class BookingSlotCalculator {
     required DateTime selectedDate,
     required List<Booking> existingBookings,
   }) {
-    final selectedTimeSlots = List<String>.from(currentSelectedSlots);
+    // Revalidate previously selected slots against the latest availability
+    // snapshot before processing another tap. A booking or closure may have
+    // appeared since the user first selected the time.
+    final selectedTimeSlots = <String>[];
+    for (final key in currentSelectedSlots) {
+      if (!timeSlots.any((slot) => slot.key == key)) continue;
+      try {
+        final start = getSlotDateTime(
+          slotKey: key,
+          stadium: stadium,
+          selectedDate: selectedDate,
+        );
+        if (!start.isBefore(DateTime.now()) &&
+            !isSlotBooked(
+              slotKey: key,
+              stadium: stadium,
+              selectedDate: selectedDate,
+              existingBookings: existingBookings,
+            )) {
+          selectedTimeSlots.add(key);
+        }
+      } on FormatException {
+        // A stale or malformed slot must not survive a schedule refresh.
+      }
+    }
     final isAlreadySelected = selectedTimeSlots.contains(slotKey);
     final idxTapped = timeSlots.indexWhere((s) => s.key == slotKey);
 
