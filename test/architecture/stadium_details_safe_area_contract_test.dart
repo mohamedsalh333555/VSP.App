@@ -10,6 +10,7 @@ void main() {
     expect(source, contains('body: SafeArea(\n            bottom: false,'));
     expect(source, contains('if (hasStreamIssue)'));
     expect(source, contains('StadiumImageCarousel('));
-    expect(source, contains('bottomNavigationBar: StadiumBottomBookingBar(stadium: stadium)'));
+    expect(source, contains('bottomNavigationBar: StadiumBottomBookingBar('));
+    expect(source, contains('bookingEnabled: !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty'));
   });
 }
