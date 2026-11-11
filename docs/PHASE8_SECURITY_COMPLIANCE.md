@@ -1,5 +1,9 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## Batch10 verified security rollout and release-policy documentation — 2026-11-11
+
+[37-policy/self-unblock deployment and evidence](security/STORE_COMPLIANCE_BATCH_10_2026-11-11.md), [website delivery](security/STORE_COMPLIANCE_BATCH_08_2026-11-11.md), [actual iOS build](security/STORE_COMPLIANCE_BATCH_09_2026-11-11.md) and [release policy80.07](security/RELEASE_ACCEPTANCE_POLICY.md). Core82 accepted/538 pending. SEC-02/09 scoped corrections verified in native CI and staging then production; not completion of all Phase8/9 or store readiness.
+
 ## Batch 02 continuation — 2026-11-11
 
 See [privacy, permissions and deletion batch](security/STORE_COMPLIANCE_BATCH_02_2026-11-11.md). Ten app corrections contribute to SEC-01/03/04/08 and SC03/05/07/14: scoped photo picking, optional camera/location hardware, minimal photo metadata requests, auth-bound location cache cleanup, corrupt-cache recovery, guarded deletion confirmation, truthful incomplete-account cleanup, deletion identity snapshots, Android advertising identifier opt-out and known-profile-only automatic cleanup. Application commits: `27b34f7`, `1a89e0d`, `1143044`, `e862fbb`; fixture/CI commits are recorded separately in the report.

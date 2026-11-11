@@ -2,6 +2,14 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Batch10 verified rollout and documentation acceptance80.07
+
+- **82 accepted /538 not fully accepted /620**. Only newly closed task:80.07, [documented release acceptance policy](security/RELEASE_ACCEPTANCE_POLICY.md); runtime/store gates remain open. Corrected stale commission/deletion wording in LAUNCH_CHECKLIST without changing business code/prices.
+- [Batch10 receipt](security/STORE_COMPLIANCE_BATCH_10_2026-11-11.md): blocked-admin self-unblock fixed and37 production RLS/storage policies guarded. Stage28 changed,1 pre-existing secure variant preserved,8 absent. Source fingerprints/metadata drift protection and inverse round trips verified.
+- Native PG17.6 CI43012907874 SUCCESS:7 suites,11 weakened guards rejected,24 Python tests,37 policy definitions/metadata, guarded variant/helper-drift tests, replay/inverse/clean-fixture gates. Staging self-unblock/private storage denial plus own-profile/file and authorized-founder compatibility pass;0 remaining fixture accounts.
+- Production37/37 definitions and trigger hash match; original policy OIDs/roles/commands/permissiveness/table ACLs and trigger OID/owner/ACL/config preserved. Three sensitive bucket flags read-only verified private. Advisor counts unchanged; no customer-row production tests.
+- Tested runtime source f26bd2923d08e702fe72c02805ba63f54dca322e: Flutter43012907821 SUCCESS(1142/10skip,54 focused); Android43012907900 SUCCESS; iOS43012907858 SUCCESS(actual43.9MB unsigned app,SDK26.2,38 manifests,8 gate tests); checkout43012907769 SUCCESS. Web deletion page and updated JavaScript verified live after private site PR4/Vercel success. Exact-account/store/device/provider gaps remain.
+
 ## 2026-11-11 — Batches08/09 delivered; blocked-admin policy remediation underway
 
 - **81 accepted /539 pending /620**. [Website delivery](security/STORE_COMPLIANCE_BATCH_08_2026-11-11.md): private PR4 merged after CI42968160243 passed28 tests, lint, types, build and audit0 (was11). Vercel SUCCESS. Real deletion fulfillment remains open.
@@ -74,7 +82,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **81 verified; 539 not yet accepted**. This is not a claim that every remaining task is untouched.
+- Current inventory: **82 verified; 538 not yet accepted**. This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
