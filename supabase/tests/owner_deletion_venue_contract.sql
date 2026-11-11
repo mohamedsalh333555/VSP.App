@@ -56,6 +56,14 @@ BEGIN
     RAISE EXCEPTION 'Denied owner deletion changed pending booking';
   END IF;
 
+  IF NOT EXISTS(
+    SELECT 1 FROM public.stadiums st
+    WHERE st.id=venue_id AND st.owner_id=owner_deletion_fixture.owner_id
+      AND st.is_deleted_by_owner IS TRUE
+  ) THEN
+    RAISE EXCEPTION 'Denied owner deletion changed archived venue';
+  END IF;
+
   -- A confirmed future reservation must also block deletion.
   UPDATE public.bookings SET status='confirmed' WHERE id=booking_id;
   SET LOCAL ROLE authenticated;
@@ -74,6 +82,14 @@ BEGIN
       AND b.stadium_id=venue_id AND b.owner_id=owner_deletion_fixture.owner_id
   ) THEN
     RAISE EXCEPTION 'Denied owner deletion changed confirmed booking';
+  END IF;
+
+  IF NOT EXISTS(
+    SELECT 1 FROM public.stadiums st
+    WHERE st.id=venue_id AND st.owner_id=owner_deletion_fixture.owner_id
+      AND st.is_deleted_by_owner IS TRUE
+  ) THEN
+    RAISE EXCEPTION 'Confirmed booking guard changed archived venue';
   END IF;
 
   DELETE FROM public.bookings WHERE id=booking_id;
