@@ -64,6 +64,13 @@ class BookingDateSelector extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(l10n.selectDate, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                const SizedBox(height: VSPSpacing.xs),
+                Text(
+                  Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'اختيار اليوم لا يعني توفر مواعيد؛ المواعيد تظهر بعد الاختيار.'
+                      : 'Selecting a date does not guarantee availability; slots appear after selection.',
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                ),
                 const SizedBox(height: VSPSpacing.sm),
                 SizedBox(
                   height: 70,
