@@ -1,0 +1,25 @@
+# VSP — Stadium details and booking screenshot triage
+
+Date: 2026-11-11. Input: two user-provided Android screenshots (stadium details, booking date 11 November 2026). **Static screenshots plus source inspection only.** No reproduction on device, live API payload, network log, authenticated staging run, or production data read. All seven tasks remain OPEN. Do not conflate a displayed symptom with a verified backend root cause.
+
+| ID | Screenshot observation | Source inspection | Classification | Next acceptance evidence |
+|---|---|---|---|---|
+| 83.01 | 11 Nov booking screen shows no slots and says the stadium opens no times that day | `booking_slot_stream_section.dart` uses `timeSlots.isEmpty` to display a definitive closure message (lines 92–100), while stream errors have a separate branch (79–88). `booking_confirmation_screen.dart` generates dynamic slots. | **Confirmed misleading/over-specific empty-state copy**; actual hours, availability, date and backend fault **not established** | Inspect stadium operating hours, dynamic slot generation and slot RPC for that date; test closed day vs fully booked vs error vs timezone |
+| 83.02 | Details screen displays a refresh warning | `stadium_details_screen.dart` shows this warning for `snapshot.hasError || parseFailed` and continues with a prior stadium object (lines 130–145, 176–218) | **Confirmed warning and stale fallback are intentional code paths**; source of error **unknown** | Reproduce offline, invalid payload and stream failure; verify retry, stale-data indication and booking eligibility |
+| 83.03 | Hourly price 200 EGP, deposit 50 EGP, remaining at stadium 0 EGP before slot selection | `booking_confirmation_screen.dart` computes total from selected slots (68–72), starting at zero; `booking_financial_summary.dart` clamps `totalPrice - deposit` to zero (68–101) | **Confirmed preselection financial-summary UX ambiguity**, not evidence of incorrect charged amount | Verify selection of 1/2 slots, optional ball, deposit less/equal/greater than total; ensure server-authoritative final charge and remaining |
+| 83.04 | Date selector gives no obvious open/closed day indicator | `booking_date_selector.dart` highlights selected date; screenshot shows same-day no-slot state | **UX concern visible; absence of per-day availability not conclusively proven for all flows** | Device test days open/closed, disabled past dates, calendar navigation, loading and date/timezone |
+| 83.05 | English phrases 'Cleanliness' and 'No Smoking' appear in Arabic screen; some text is clipped | `stadium_information_tab.dart` only performs Arabic-to-English substitutions when locale is **not** Arabic (124–131); Arabic branch does not translate stored English description | **Confirmed mixed-language display in screenshot**, but original stored description and clipping mechanism unknown | Inspect description source; translate known labels safely without altering free-form user text; verify Arabic/English RTL, long descriptions |
+| 83.06 | Warning near status bar, content cut off above facilities and under fixed price bar; bright lime accent | `stadium_details_screen.dart` uses a body Column and fixed bottomNavigationBar; screenshot supports visible truncation. Accent token/color behavior requires design-system audit | **Visible layout concern and design-preference mismatch**, not proven Flutter overflow exception | Test SafeArea, text scaling, keyboard, short screens and scroll; confirm intended charcoal tokens and contrast |
+| 83.07 | Optional ball rental shown at 30 EGP with no available slot | `booking_bottom_bar.dart` displays ball rental and disables confirmation if `!isSlotSelected` (line 328). | **Confirmed displayed optional control; not a confirmed booking or payment defect** | Check whether toggle should be disabled until a slot is chosen; verify no charge when slot absent and proper price recalculation after selection |
+
+## Scope and priority
+
+- 83.01 **P1 investigation** (upgrade to P0 only if a reproducible incorrect booking/availability decision is proven).
+- 83.02 **P1 diagnosis**; 83.03 **P1 clarity and financial acceptance tests** (not a proven payment mischarge).
+- 83.04–83.07 **P2 UX/localization/layout/optional-control validation**, upgrade on concrete impact.
+- Existing tasks for booking availability, payment integrity, RTL and design tokens remain; these seven IDs represent **screenshot-specific reproduction and acceptance outcomes**, not blanket claims that the underlying features were never implemented.
+- No code, Supabase, payment configuration, production data or main branch changed by this triage.
+
+## Acceptance rules
+
+Each task needs a reproduction record (device/date/stadium ID with sensitive data redacted), expected/actual result, root-cause evidence, minimal fix if needed, and passing Flutter/widget tests. Financial and availability tasks additionally require authenticated staging/server checks before marking accepted. A confirmed intentional behavior may close only with documented product decision and UI evidence.
