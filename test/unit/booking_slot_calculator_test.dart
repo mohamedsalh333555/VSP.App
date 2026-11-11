@@ -195,6 +195,32 @@ void main() {
       expect(selection, ['16:00:00']);
     });
 
+    test('stale selected slots are revalidated before an unavailable tap', () {
+      final slots = <TimeSlotItem>[
+        TimeSlotItem(
+          startTime: '04:00 PM',
+          endTime: '04:30 PM',
+          key: '16:00:00',
+          startMinutes: 960,
+        ),
+        TimeSlotItem(
+          startTime: '04:05 PM',
+          endTime: '04:35 PM',
+          key: '16:05:00',
+          startMinutes: 965,
+        ),
+      ];
+      final selection = BookingSlotCalculator.calculateNewSelectedSlots(
+        slotKey: '17:00:00',
+        currentSelectedSlots: ['16:05:00', '16:00:00'],
+        timeSlots: slots,
+        stadium: testStadium,
+        selectedDate: DateTime(2030, 1, 1),
+        existingBookings: [],
+      );
+      expect(selection, ['16:00:00']);
+    });
+
     test('calculateNewSelectedSlots handles single selection and toggle-off', () {
       // Selection rejects past slots; use a future date for this toggle test.
       final date = DateTime(2030, 9, 15);
