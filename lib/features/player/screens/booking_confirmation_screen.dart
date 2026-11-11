@@ -265,6 +265,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   BookingFinancialSummary(
                     stadium: widget.stadium,
                     totalPrice: _totalPrice,
+                    hasSelectedSlots: isSlotSelected,
                   ),
                   const SizedBox(height: VSPSpacing.xl),
                 ],
