@@ -35,6 +35,11 @@ class CompiledMediaGateTests(unittest.TestCase):
             with self.subTest(feature=feature):
                 self.assertEqual(self.check_output(BASE + f"uses-feature: name='android.hardware.{feature}'\n").returncode, 1)
 
+    def test_rejects_ad_identifier_and_attribution_permissions(self):
+        for permission in ['com.google.android.gms.permission.AD_ID', 'android.permission.ACCESS_ADSERVICES_AD_ID', 'android.permission.ACCESS_ADSERVICES_ATTRIBUTION']:
+            with self.subTest(permission=permission):
+                self.assertEqual(self.check_output(BASE + f"uses-permission: name='{permission}'\n").returncode, 1)
+
     def test_missing_artifact_is_blocked_not_passed(self):
         self.assertEqual(self.check_output(BASE, apk_exists=False).returncode, 2)
 

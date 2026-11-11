@@ -14,6 +14,9 @@ FORBIDDEN = {
     'android.permission.READ_MEDIA_IMAGES',
     'android.permission.READ_MEDIA_VIDEO',
     'android.permission.MANAGE_EXTERNAL_STORAGE',
+    'com.google.android.gms.permission.AD_ID',
+    'android.permission.ACCESS_ADSERVICES_AD_ID',
+    'android.permission.ACCESS_ADSERVICES_ATTRIBUTION',
 }
 OPTIONAL_HARDWARE = {
     'android.hardware.camera', 'android.hardware.camera.any', 'android.hardware.camera.autofocus',
@@ -51,7 +54,7 @@ def main():
     if errors:
         print('FAIL:', ', '.join(errors), file=sys.stderr)
         return 1
-    print('PASS: no broad media/storage permissions or required camera/location hardware.')
+    print('PASS: no broad media/storage/ad-identifier permissions or required camera/location hardware.')
     return 0
 
 
