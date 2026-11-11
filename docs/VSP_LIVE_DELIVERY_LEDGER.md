@@ -2,6 +2,12 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Task 78.07 storage role-matrix coverage; 86/620
+
+- **86 accepted / 534 not yet accepted / 620**, previously 85/535. Exactly one new task closed: **78.07**, covering storage and file authorization in the role matrix.
+- [Storage matrix and evidence limitations](security/VSP_STORAGE_ACCESS_MATRIX_78_07.md), source commit `8127c3b`: mapped sensitive private buckets, nine reviewed storage policy names, owner/admin boundaries, and explicit staging/production differences from batch-10 readbacks. This is **documentation/matrix coverage**, not proof of real file upload, download or cross-account E2E.
+- **78.04–78.06, 79.01–79.08 remain open.** No Supabase migrations, storage object changes, production data/payment changes, or main merge in this batch.
+
 ## 2026-11-11 — Tasks 78.02 and 78.03 definition acceptance; 85/620
 
 - **85 accepted / 535 not yet accepted / 620**, previously 83/537. Exactly two source-level documentation tasks closed, **78.02** (resource/operation inventory) and **78.03** (intended allow/deny role matrix).
@@ -100,7 +106,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **85 verified; 535 not yet accepted**. This is not a claim that every remaining task is untouched.
+- Current inventory: **86 verified; 534 not yet accepted**. This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
