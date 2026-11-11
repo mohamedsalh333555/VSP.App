@@ -182,17 +182,15 @@ class BookingQueryCoordinator {
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) async {
-            final refreshed = await getUserBookingsDirectly(userId);
-            if (refreshed.isNotEmpty) {
-              final now = DateTime.now();
-              final upcoming = refreshed.where((b) {
-                final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
-                    b.userId.trim().toLowerCase() == lowerUserId ||
-                    b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
-                return isParticipant && b.status == BookingStatus.confirmed && b.startTime.isAfter(now);
-              }).toList();
-              sink.add(upcoming);
-            }
+            final refreshed = await getUserBookingsDirectlyStrict(userId);
+            final now = DateTime.now();
+            final upcoming = refreshed.where((b) {
+              final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+                  b.userId.trim().toLowerCase() == lowerUserId ||
+                  b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
+              return isParticipant && b.status == BookingStatus.confirmed && b.startTime.isAfter(now);
+            }).toList();
+            sink.add(upcoming);
           },
         )
         .handleError((error) {
@@ -232,16 +230,14 @@ class BookingQueryCoordinator {
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) async {
-            final refreshed = await getUserBookingsDirectly(userId);
-            if (refreshed.isNotEmpty) {
-              final history = refreshed.where((b) {
-                final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
-                    b.userId.trim().toLowerCase() == lowerUserId ||
-                    b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
-                return isParticipant && b.status == BookingStatus.completed;
-              }).toList();
-              sink.add(history);
-            }
+            final refreshed = await getUserBookingsDirectlyStrict(userId);
+            final history = refreshed.where((b) {
+              final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+                  b.userId.trim().toLowerCase() == lowerUserId ||
+                  b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
+              return isParticipant && b.status == BookingStatus.completed;
+            }).toList();
+            sink.add(history);
           },
         )
         .handleError((error) {
