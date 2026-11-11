@@ -9,9 +9,11 @@ import '../../../../shared/widgets/primary_button.dart';
 void showBookingCalendarModal({
   required BuildContext context,
   required DateTime initialDate,
+  required DateTime operationalBaseDate,
   required ValueChanged<DateTime> onDateSelected,
 }) {
   final l10n = AppLocalizations.of(context)!;
+  final firstBookableDay = DateTime(operationalBaseDate.year, operationalBaseDate.month, operationalBaseDate.day);
   showDialog(
     context: context,
     useSafeArea: true,
@@ -19,8 +21,8 @@ void showBookingCalendarModal({
     builder: (context) {
       DateTime tempSelectedDate = initialDate;
       DateTime currentMonth = DateTime(initialDate.year, initialDate.month);
-      final DateTime todayMonth = DateTime(DateTime.now().year, DateTime.now().month);
-      final DateTime maxMonth = DateTime(DateTime.now().year, DateTime.now().month + 3);
+      final DateTime todayMonth = DateTime(firstBookableDay.year, firstBookableDay.month);
+      final DateTime maxMonth = DateTime(firstBookableDay.year, firstBookableDay.month + 3);
 
       return StatefulBuilder(
         builder: (context, setModalState) {
@@ -134,9 +136,7 @@ void showBookingCalendarModal({
                         final isSelected = date.year == tempSelectedDate.year &&
                             date.month == tempSelectedDate.month &&
                             date.day == tempSelectedDate.day;
-                        final isPastDate = date.isBefore(
-                          DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0),
-                        );
+                        final isPastDate = date.isBefore(firstBookableDay);
 
                         return InkWell(
                           onTap: isPastDate
