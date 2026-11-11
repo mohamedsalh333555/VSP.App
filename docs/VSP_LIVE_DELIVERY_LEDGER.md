@@ -8,6 +8,12 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 - Commit `37c45c6` adds architecture regression contract. **83.04 remains open**: calendar availability/closed-day indicators, accessibility, real Android RTL and CI on these commits still need acceptance.
 - On previous head `fbac4a8d`, Account SQL security contracts and Owner checkout security completed successfully; Flutter CI, Android E2E, and iOS compliance were still in progress when checked. These are not new-commit test results.
 
+## 2026-11-11 — 83.06 top SafeArea adjustment (pending CI and device layout acceptance)
+
+- **86 accepted / 541 open / 627 total: unchanged.** `2eecf784` wraps the stadium-details main body in `SafeArea(bottom: false)` so the stream-error warning and carousel respect the system status-bar inset. The fixed booking bottom bar remains outside this wrapper.
+- `53c9350c`: architecture contract for SafeArea, error warning, carousel and bottom booking bar. **83.06 remains open** pending Flutter CI and real-device short-height, large-text, tab scrolling and bottom-bar overlap tests. No design-token palette changes were made.
+- At the pre-edit check, on commit `fbac4a8d`, Account SQL contracts and Owner checkout security had passed; Flutter, iOS and Android were still in progress. No claim that the latest edit has passed CI.
+
 ## 2026-11-11 — 83.07 ball rental without slot (pending CI and UI acceptance)
 
 - **86 accepted / 541 open / 627 total: unchanged.** `8f817baa`: ball-rental toggle now requires a selected slot and not loading, with Arabic/English instruction to choose a slot first.
