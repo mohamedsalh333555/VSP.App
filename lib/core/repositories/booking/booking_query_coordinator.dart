@@ -87,10 +87,16 @@ class BookingQueryCoordinator {
 
   /// Strict owner fetch used by the booking sync coordinator.
   Future<List<Booking>> fetchOwnerBookingsDirectlyStrict(String ownerId, {List<String>? stadiumIds}) async {
-    final response = await (stadiumIds != null && stadiumIds.isNotEmpty
-        ? _supabase.from('bookings').select().inFilter('stadium_id', stadiumIds).order('start_time', ascending: false).limit(100)
-        : _supabase.from('bookings').select().eq('owner_id', ownerId).order('start_time', ascending: false).limit(100));
     final normalizedOwnerId = ownerId.trim().toLowerCase();
+    if (normalizedOwnerId.isEmpty) return <Booking>[];
+
+    // Stadium IDs are an optional narrowing filter, never an alternative to
+    // owner identity. A caller-supplied stadium list must not broaden reads.
+    var query = _supabase.from('bookings').select().eq('owner_id', ownerId);
+    if (stadiumIds != null && stadiumIds.isNotEmpty) {
+      query = query.inFilter('stadium_id', stadiumIds);
+    }
+    final response = await query.order('start_time', ascending: false).limit(100);
     final allowedStadiumIds = stadiumIds?.map((id) => id.trim().toLowerCase()).toSet();
     return (response as List)
         .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
