@@ -17,7 +17,7 @@ class DeletionIdentityAuth extends ChangeNotifier implements AuthProvider {
   User get currentUser => User.fromJson({
     'id': uid, 'aud': 'authenticated', 'role': 'authenticated',
     'created_at': '2026-01-01T00:00:00Z', 'app_metadata': <String, dynamic>{}, 'user_metadata': <String, dynamic>{},
-  });
+  })!;
   @override
   Future<bool> reauthenticateWithPassword(String password) { verificationCalls++; return verification.future; }
   @override

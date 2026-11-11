@@ -17,7 +17,7 @@ void main() {
   final user = User.fromJson({
     'id': 'test-incomplete-user', 'aud': 'authenticated', 'role': 'authenticated',
     'created_at': '2026-01-01T00:00:00Z', 'app_metadata': <String, dynamic>{}, 'user_metadata': <String, dynamic>{},
-  });
+  })!;
   for (final payload in [null, <String, dynamic>{}, {'success': false}, {'success': 'true'}, {'success': true}]) {
     test('incomplete cleanup handles ${jsonEncode(payload)} without extra destructive retries', () async {
       final fallback = CleanupFallback();
