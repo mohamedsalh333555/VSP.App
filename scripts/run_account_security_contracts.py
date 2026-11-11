@@ -64,7 +64,7 @@ DO $$ BEGIN
   END IF;
 END; $$;
 """)
-    for path in [manifest['fixture'], *manifest['migrations'], *manifest['tests']]:
+    for path in [manifest['fixture'], *manifest.get('dependencies', []), *manifest['migrations'], *manifest['tests']]:
         require_success(args, env, path, read_file(path))
     # A suite must leave no account rows behind after its rollback.
     require_success(args, env, 'no persistent test accounts', """
@@ -75,6 +75,17 @@ DO $$ BEGIN
 END; $$;
 """)
     mutants = [
+        ('active admin helper disabled', """
+CREATE OR REPLACE FUNCTION public.require_active_admin_actor()
+RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,public,pg_temp
+AS $$ BEGIN RETURN; END; $$;
+""", 'supabase/tests/admin_actor_contract.sql', 'FAIL anonymous admin guard accepted'),
+        ('admin RPC precondition removed', """
+DO $$ DECLARE d text; BEGIN
+  d:=pg_get_functiondef('public.admin_set_owner_subscription_atomic(uuid,text,integer)'::regprocedure);
+  EXECUTE replace(d,'PERFORM public.require_active_admin_actor();','NULL;');
+END; $$;
+""", 'supabase/tests/admin_actor_contract.sql', 'FAIL admin RPC precondition'),
         ('client role guard removed', 'DROP TRIGGER aaa_guard_client_profile_role ON public.users;',
          'supabase/tests/client_profile_role_guard_contract.sql', 'FAIL privileged legacy insert'),
         ('profile RLS disabled', 'ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;',
@@ -102,6 +113,18 @@ BEGIN UPDATE public.chat_messages SET is_read=true WHERE conversation_id=p_conve
         print('PASS mutation rejected: ' + name, flush=True)
     for path in manifest['tests']:
         require_success(args, env, 'restored baseline: ' + path, read_file(path))
+    admin_migration = read_file('supabase/migrations/20261111045628_require_active_admin_actor_for_sensitive_rpcs.sql')
+    require_success(args, env, 'admin migration idempotent replay', admin_migration)
+    drift = invoke(args, env, """BEGIN;
+DO $$ DECLARE d text; b text; BEGIN
+  SELECT pg_get_functiondef(oid),prosrc INTO d,b FROM pg_proc
+  WHERE oid='public.admin_set_owner_subscription_atomic(uuid,text,integer)'::regprocedure;
+  EXECUTE replace(d,b,E'-- unexpected concurrent change\n'||b);
+END; $$;
+""" + admin_migration)
+    if drift.returncode == 0 or 'ADMIN_RPC_SOURCE_DRIFT' not in drift.stderr:
+        raise RuntimeError('Unknown admin source body was not refused: ' + drift.stderr[-3000:])
+    print('PASS unknown admin source fingerprint refused without clobbering', flush=True)
     require_success(args, env, 'final fixture cleanup', """
 DO $$ BEGIN
   IF EXISTS(SELECT 1 FROM auth.users) OR EXISTS(SELECT 1 FROM public.users) THEN

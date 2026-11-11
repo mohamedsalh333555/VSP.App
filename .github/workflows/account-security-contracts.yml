@@ -11,6 +11,8 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/tests/**'
       - 'scripts/run_account_security_contracts.py'
+      - 'scripts/admin_rpc_guard_plan.py'
+      - 'test/tooling/test_admin_rpc_guard_plan.py'
       - 'test/tooling/test_account_security_runner.py'
       - '.github/workflows/account-security-contracts.yml'
   pull_request:
@@ -19,6 +21,8 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/tests/**'
       - 'scripts/run_account_security_contracts.py'
+      - 'scripts/admin_rpc_guard_plan.py'
+      - 'test/tooling/test_admin_rpc_guard_plan.py'
       - 'test/tooling/test_account_security_runner.py'
       - '.github/workflows/account-security-contracts.yml'
 
@@ -55,6 +59,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify runner refuses non-isolated targets
         run: python3 -m unittest discover -s test/tooling -p test_account_security_runner.py -v
+      - name: Verify source fingerprint planner
+        run: python3 -m unittest discover -s test/tooling -p test_admin_rpc_guard_plan.py -v
       - name: Execute SQL authorization suites and negative gate controls
         run: python3 scripts/run_account_security_contracts.py
       - name: Verify an existing contract database cannot be reinitialised
