@@ -80,6 +80,44 @@ void main() {
           BookingStatus.noShow);
     });
 
+    test('server reconciliation state overrides conflicting legacy paid flag', () {
+      final booking = BookingMapper.fromFirestore({
+        ...sampleMap,
+        'is_paid': true,
+        'payment_status': 'paid',
+        'payment_reconcile_state': 'refund_pending',
+      }, 'booking_999');
+
+      expect(booking.effectivePaymentState, 'refund_pending');
+      expect(booking.digitalAmountPaid, 0);
+      expect(booking.pitchCashCollected, 0);
+    });
+
+    test('legacy refund state wins over is_paid when reconciliation is absent', () {
+      final booking = BookingMapper.fromFirestore({
+        ...sampleMap,
+        'is_paid': true,
+        'payment_status': 'refunded',
+        'payment_reconcile_state': null,
+      }, 'booking_999');
+
+      expect(booking.effectivePaymentState, 'refunded');
+      expect(booking.totalAmountPaid, 0);
+    });
+
+    test('partial deposit is not presented as full payment', () {
+      final booking = BookingMapper.fromFirestore({
+        ...sampleMap,
+        'is_paid': false,
+        'payment_status': 'pending',
+        'payment_reconcile_state': null,
+        'deposit_paid': 75,
+      }, 'booking_999');
+
+      expect(booking.effectivePaymentState, 'partially_paid');
+      expect(booking.totalAmountPaid, 75);
+    });
+
     test('legacy upcoming status maps to canonical confirmed', () {
       final legacy = {...sampleMap, 'status': 'upcoming'};
       expect(
