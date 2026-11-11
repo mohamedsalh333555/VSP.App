@@ -161,9 +161,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 message: isArabic
                     ? 'قد يكون الملعب قيد المراجعة أو متوقفًا عن استقبال الحجوزات.'
                     : 'The pitch may be under review or unavailable for bookings.',
-                onRetry: widget.stadium.isVerified
-                    ? () => setState(_subscribeToStadium)
-                    : null,
+                onRetry: () => setState(_subscribeToStadium),
               ),
             ),
           );
@@ -262,7 +260,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           ),
           bottomNavigationBar: StadiumBottomBookingBar(
             stadium: stadium,
-            bookingEnabled: !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty,
+            bookingEnabled: stadium.isVerified && !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty,
           ),
         );
       },
