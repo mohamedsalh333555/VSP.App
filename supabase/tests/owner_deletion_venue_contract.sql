@@ -3,6 +3,7 @@
 -- and finally an archived venue whose owner can be removed.
 BEGIN;
 DO $test$
+<<owner_deletion_fixture>>
 DECLARE
   owner_id uuid := gen_random_uuid();
   customer_id uuid := gen_random_uuid();
@@ -59,9 +60,9 @@ BEGIN
     RAISE EXCEPTION 'Confirmed booking guard removed owner account';
   END IF;
   IF NOT EXISTS(
-    SELECT 1 FROM public.bookings
-    WHERE id=booking_id AND status='confirmed'
-      AND stadium_id=venue_id AND owner_id=owner_id
+    SELECT 1 FROM public.bookings b
+    WHERE b.id=booking_id AND b.status='confirmed'
+      AND b.stadium_id=venue_id AND b.owner_id=owner_deletion_fixture.owner_id
   ) THEN
     RAISE EXCEPTION 'Denied owner deletion changed confirmed booking';
   END IF;
