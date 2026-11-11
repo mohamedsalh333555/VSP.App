@@ -2,6 +2,13 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — CI green and 83.01 empty-state copy fix (pending device checks)
+
+- **86 accepted / 541 open / 627 total: unchanged.** On commit `ecdfc0dd`, Flutter CI (runs 43062854125, 43062841461), Android E2E Smoke (43062854000), iOS compliance build (43062854302), Account SQL contracts (43062854398), and Owner checkout security (43062854012) all completed **successfully**. These are workflow results, not proof of real two-account booking authorization or payment amount scenarios.
+- `70faedbd`: booking slot empty-state no longer states that the stadium does not open on that day; it states that no slots are configured and suggests another date/contact. The existing separate stream-error branch remains.
+- `b3c9148c`: architecture contract covering neutral no-slots copy and separate error state. **83.01 remains open** pending real operating-hours/timezone/fully-booked vs error reproduction and CI on this new commit. **83.03 remains open** pending financial widget/server amount tests.
+- No Supabase migrations, payment changes, customer data changes, or main merge.
+
 ## 2026-11-11 — 83.03 preselection financial summary UI fix (pending verification)
 
 - **86 accepted / 541 open / 627 total: unchanged.** `83.03` remains open pending widget/Flutter CI and server-authoritative amount tests.
