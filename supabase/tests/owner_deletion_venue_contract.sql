@@ -57,6 +57,9 @@ BEGIN
      OR EXISTS(SELECT 1 FROM public.users WHERE id=owner_id) THEN
     RAISE EXCEPTION 'Owner account remains';
   END IF;
+  -- Keep the runner's final zero-account fixture invariant.
+  DELETE FROM public.users WHERE id=customer_id;
+  DELETE FROM auth.users WHERE id=customer_id;
 END;
 $test$;
 ROLLBACK;
