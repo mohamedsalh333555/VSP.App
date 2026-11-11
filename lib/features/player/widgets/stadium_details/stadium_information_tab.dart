@@ -113,6 +113,27 @@ class StadiumInformationTab extends StatelessWidget {
 
   const StadiumInformationTab({super.key, required this.stadium});
 
+  // Localize only standalone, known facility/rule labels. Do not rewrite
+  // arbitrary owner-written prose or persist translated text to the database.
+  static String localizeKnownDescriptionLabels(String description, {required bool isArabic}) {
+    if (!isArabic || description.isEmpty) return description;
+    return description.split('\\n').map((line) {
+      final trimmed = line.trim();
+      final label = trimmed.replaceFirst(RegExp(r'^[•\\-]\\s*'), '').trim();
+      final translation = switch (label.toLowerCase()) {
+        'cleanliness' => 'الحفاظ على النظافة',
+        'no smoking' => 'ممنوع التدخين',
+        'punctuality' => 'الالتزام بالمواعيد',
+        _ => null,
+      };
+      if (translation == null) return line;
+      final prefix = trimmed.startsWith('•') ? '• ' : (trimmed.startsWith('-') ? '- ' : '');
+      final leading = line.substring(0, line.length - line.trimLeft().length);
+      return '$leading$prefix$translation';
+    }).join('\\n');
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -122,6 +143,7 @@ class StadiumInformationTab extends StatelessWidget {
         : (isArabic ? 'ملعب بدون اسم' : 'Unnamed Pitch');
 
     String rawDesc = stadium.description.isNotEmpty ? stadium.description : l10n.noDescription;
+    rawDesc = localizeKnownDescriptionLabels(rawDesc, isArabic: isArabic);
     if (!isArabic && rawDesc.isNotEmpty) {
       rawDesc = rawDesc
           .replaceAll('الالتزام بالمواعد', '• Punctuality')
