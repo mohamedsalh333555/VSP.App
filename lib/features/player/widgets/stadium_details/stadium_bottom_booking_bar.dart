@@ -11,10 +11,12 @@ import '../booking_type_modal.dart';
 /// Fixed bottom bar for StadiumDetailsScreen displaying hourly price, deposit info, and "Book Now" button.
 class StadiumBottomBookingBar extends StatelessWidget {
   final Stadium stadium;
+  final bool bookingEnabled;
 
   const StadiumBottomBookingBar({
     super.key,
     required this.stadium,
+    this.bookingEnabled = true,
   });
 
   String _formatAmount(double value) {
@@ -107,14 +109,14 @@ class StadiumBottomBookingBar extends StatelessWidget {
                 Expanded(
                   child: PrimaryButton(
                     text: isArabic ? 'احجز الآن' : 'Book Now',
-                    onPressed: () {
+                    onPressed: bookingEnabled ? () {
                       unawaited(
                         AnalyticsService.logBookingStarted(
                           venueId: stadium.id,
                         ),
                       );
                       BookingTypeModal.show(context, stadium);
-                    },
+                    } : null,
                   ),
                 ),
               ],
