@@ -47,6 +47,15 @@ BEGIN
     RAISE EXCEPTION 'Denied owner deletion unexpectedly removed auth account';
   END IF;
 
+  IF NOT EXISTS(
+    SELECT 1 FROM public.bookings b
+    WHERE b.id=booking_id AND b.status='pending'
+      AND b.stadium_id=venue_id
+      AND b.owner_id=owner_deletion_fixture.owner_id
+  ) THEN
+    RAISE EXCEPTION 'Denied owner deletion changed pending booking';
+  END IF;
+
   -- A confirmed future reservation must also block deletion.
   UPDATE public.bookings SET status='confirmed' WHERE id=booking_id;
   SET LOCAL ROLE authenticated;
