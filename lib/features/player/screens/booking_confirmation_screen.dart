@@ -67,7 +67,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   double get _totalPrice {
     double total = _selectedTimeSlots.length * _slotPrice;
-    if (_isBallRented) total += _ballPrice;
+    if (_selectedTimeSlots.isNotEmpty && _isBallRented) total += _ballPrice;
     return total;
   }
 
@@ -283,7 +283,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         onPlayersCountChanged: (count) => setState(() => _initialPlayersCount = count),
         hasBallOption: hasBallOption,
         isBallRented: _isBallRented,
-        onBallRentedChanged: (val) => setState(() => _isBallRented = val),
+        onBallRentedChanged: (val) {
+          if (!isSlotSelected || _isLoading) return;
+          setState(() => _isBallRented = val);
+        },
         ballPrice: _ballPrice,
         totalPrice: _totalPrice,
         depositAmount: deposit,
