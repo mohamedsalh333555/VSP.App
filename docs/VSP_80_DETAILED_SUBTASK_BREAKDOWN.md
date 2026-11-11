@@ -853,7 +853,7 @@
 ### 71 — Duplicate-named migration versions (7)
 
 - [x] 71.01 — حصر نسخ migrations المتشابهة — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
-- [ ] 71.02 — مقارنة المحتوى
+- [x] 71.02 — مقارنة المحتوى — [المقارنة الكاملة وحدودها](security/MIGRATION_CONTENT_COMPARISON_2026-11-11.md)، مصدر `906846f`
 - [ ] 71.03 — تحديد ترتيب التنفيذ
 - [ ] 71.04 — التحقق من بيئة staging
 - [ ] 71.05 — توثيق الفروقات

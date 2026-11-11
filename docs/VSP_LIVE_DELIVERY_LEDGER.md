@@ -2,10 +2,20 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Final verification receipt and accepted migration comparison
+
+- **Current accepted: 78 / 620; not fully accepted: 542**. Newly accepted this series: 76.01 view inventory and 71.02 full textual collision comparison. These two audit/comparison results are not two shipped features.
+- Application source `906846f` final push checks: Flutter CI [42954730210](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42954730210) SUCCESS — analyze, 54 focused privacy/account cases, 59 architecture checks, then **1142 passed / 10 skipped** in the full suite. Focused and architecture cases are included in full, not extra unique tests.
+- Android [42954730199](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42954730199) SUCCESS — build, two public/auth smoke checks, six Python permission-gate tests and actual compiled APK policy gate. Checkout [42954735544](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42954735544) SUCCESS — 39 hermetic cases. PR duplicate checks also passed; not extra coverage.
+- All three changed staging RPC bodies read back and matched repository function bodies exactly. All three transactional staging SQL suites passed after final deployment; no actual two-device/JWT concurrency claim.
+- [71.02 comparison](security/MIGRATION_CONTENT_COMPARISON_2026-11-11.md): 314 forward SQL files, 19 collision groups / 79 files / 296 pairs, zero byte-identical pairs; eight rollback files excluded. All pair byte results independently cross-checked. Does not establish safe replay or execution order.
+- Eight app improvements plus two staging trigger repairs in batches 03/04; no additional feature count for tests/tooling. Production not changed. Privileged profile insertion proved only on synthetic staging fixtures; production table grants remain pending approved remediation and client coordination.
+- Release remains NOT READY: external client inventory and production approval/rollout, provider sandbox and actual identities, full deletion/retention, iOS and store-console acceptance remain open. This is a batch verification receipt, not closure of 542 tasks.
+
 ## 2026-11-11 — Fourth implementation batch: server-owned profile provisioning
 
 - [Four additional application corrections and verification boundaries](security/STORE_COMPLIANCE_BATCH_04_2026-11-11.md): direct profile INSERT/DELETE removed from authenticated clients, atomic server provisioning uses real Auth state and existing owner trial policy; no phantom local profile/role/completion.
-- New source includes 14 Flutter cases. All three staging rollback scripts passed after deployment, including existing 17 lifecycle/chat and 11 sensitive-update checks. CI for the new app source pending at this commit.
+- New source includes 14 Flutter cases. All three staging rollback scripts passed after deployment, including existing 17 lifecycle/chat and 11 sensitive-update checks. Final app source 906846f checks passed; exact runs/counts in the receipt above.
 - Production grants inspected read-only; no production exploit/mutation. Applying these changes there requires explicit review/approval and coordination with all external clients.
 - Accounting: **77 accepted / 543 not fully accepted / 620**; one new inventory closure (76.01), no automatic full journey closures from these partial corrections.
 
@@ -42,7 +52,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **77 verified; 543 not yet accepted**. This is not a claim that every remaining task is untouched.
+- Current inventory: **78 verified; 542 not yet accepted**. This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.

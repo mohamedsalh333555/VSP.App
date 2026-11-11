@@ -54,6 +54,9 @@ Batch 04 findings: source and staging remediation; production approval pending.
 | ID | Priority | Finding / fix | Evidence |
 |---|---|---|---|
 | BUG-030 | P0 | Direct own-profile INSERT can choose admin/pro; DELETE bypasses account lifecycle. Revoke client INSERT/DELETE and provision via identity-scoped server RPC | Synthetic privileged INSERT reproduced before fix; all new provisioning server checks and explicit cancellation passed after fix |
-| BUG-031 | P1 | Failed OAuth profile upsert manufactured an unpersisted local profile; require explicit response and matching persisted profile | Added response/network/missing-profile tests; CI pending |
-| BUG-032 | P1 | setUserRole failure or stale reread still changed local routing role; require success and authoritative matching reread | Added two negative role tests; CI pending |
-| BUG-033 | P1 | Phone present locally granted registration completion before/without server state | Added false/true update-result tests with server state still incomplete; CI pending |
+| BUG-031 | P1 | Failed OAuth profile upsert manufactured an unpersisted local profile; require explicit response and matching persisted profile | Added response/network/missing-profile tests; passed in 54-case gate and 1142-case suite, push 42954730210 |
+| BUG-032 | P1 | setUserRole failure or stale reread still changed local routing role; require success and authoritative matching reread | Added two negative role tests; passed in push 42954730210 |
+| BUG-033 | P1 | Phone present locally granted registration completion before/without server state | Added false/true update-result tests with server state still incomplete; passed in push 42954730210 |
+
+
+Final batch 04 verification at app source 906846f: Flutter push 42954730210 SUCCESS (1142 passed, 10 skipped); Android push 42954730199 SUCCESS including actual APK gate; checkout 42954735544 SUCCESS (39). SQL suites and three RPC body readbacks passed on staging. Application release and production remediation remain pending; no signed phone APK/iOS archive claimed.
