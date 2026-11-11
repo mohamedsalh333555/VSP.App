@@ -36,8 +36,8 @@ void main() {
   });
   test('out-of-range numeric timestamps do not crash inbox parsing', () {
     for (final timestamp in <Object>[
-      8640000000000000,
-      -8640000000000000,
+      8640000000000001,
+      -8640000000000001,
       1e30,
       -1e30,
       double.infinity,
