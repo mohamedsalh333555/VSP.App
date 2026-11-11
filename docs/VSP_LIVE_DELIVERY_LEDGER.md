@@ -2,6 +2,13 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — 83.07 ball rental without slot (pending CI and UI acceptance)
+
+- **86 accepted / 541 open / 627 total: unchanged.** `8f817baa`: ball-rental toggle now requires a selected slot and not loading, with Arabic/English instruction to choose a slot first.
+- `422eb7e3`: booking total excludes ball add-on when no slots are selected, including when a user clears previously selected slots; callback also rejects toggles without a slot or during loading.
+- `10dc7a34`: architecture regression contracts for disabled toggle, zero-slot total and callback guard. **83.07 remains open** pending CI and real widget/date-switch/selection tests; no payment backend or Supabase changes.
+- Previous branch commit `e7373587` passed Flutter CI (43070238156), Android E2E (43070248475), iOS build (43070248379), account SQL (43070248341), and checkout security (43070248344); the additional concurrent Flutter run was still in progress at the time checked. These results predate the new ball-rental code.
+
 ## 2026-11-11 — 83.05 mixed-language stadium labels (pending UI/CI verification)
 
 - **86 accepted / 541 open / 627 total: unchanged.** Source commits `02d0848`, `e2af197`: stadium information tab translates only standalone known English rule labels (`Cleanliness`, `No Smoking`, `Punctuality`) when Arabic locale is active. Arbitrary owner prose and stored descriptions are not rewritten.
