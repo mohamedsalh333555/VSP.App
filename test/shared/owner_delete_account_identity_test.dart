@@ -48,6 +48,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(auth.deletionCalls, 0);
     expect(find.byType(AccountDeletionDialog), findsOneWidget);
+    await tester.pump(const Duration(seconds: 4));
     await tester.tap(find.text('Cancel')); await tester.pumpAndSettle();
     await tester.pumpWidget(const SizedBox());
     auth.dispose();

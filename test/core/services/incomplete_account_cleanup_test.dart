@@ -29,7 +29,8 @@ void main() {
         return http.Response(jsonEncode(payload), 200, request: request, headers: {'content-type': 'application/json'});
       }));
       addTearDown(client.dispose);
-      await AuthRegistrationService(client: client, authService: fallback).abortRegistration(user, null);
+      await AuthRegistrationService(client: client, authService: fallback).abortRegistration(user,
+        UserModel(uid: user.id, email: 'test@example.invalid', role: 'player'));
       expect(rpcCalls, 1); expect(fallback.calls, 0);
     });
   }
@@ -44,4 +45,19 @@ void main() {
     ));
     expect(requests, 0);
   });
+  for (final model in <UserModel?>[
+    null,
+    UserModel(uid: 'another-account', email: 'other@example.invalid', role: 'player'),
+  ]) {
+    test('unknown or mismatched registration profile never triggers account deletion ${model?.uid}', () async {
+      var requests = 0;
+      final client = SupabaseClient('https://staging.invalid', 'fake-public-key', httpClient: MockClient((request) async {
+        requests++; return http.Response('{}', 200, request: request);
+      }));
+      addTearDown(client.dispose);
+      final fallback = CleanupFallback();
+      await AuthRegistrationService(client: client, authService: fallback).abortRegistration(user, model);
+      expect(requests, 0); expect(fallback.calls, 0);
+    });
+  }
 }

@@ -69,7 +69,7 @@ void main() {
       await tester.tap(find.text(delete)); await tester.pumpAndSettle();
       expect(find.byType(AccountDeletionDialog), findsOneWidget);
       expect(result, isNull);
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(seconds: 4));
       await tester.tap(find.text(delete)); await tester.pumpAndSettle();
       expect(calls, 2); expect(result, isTrue);
     });
@@ -80,6 +80,7 @@ void main() {
       expect(find.textContaining('sentinel-private-data'), findsNothing);
       expect(find.byType(AccountDeletionDialog), findsOneWidget);
       expect(tester.takeException(), isNull);
+      await tester.pump(const Duration(seconds: 4));
       await tester.tap(find.text(cancel)); await tester.pumpAndSettle();
     });
 
@@ -90,10 +91,11 @@ void main() {
       expect(tester.widget<TextField>(find.byType(TextField)).obscureText, isTrue);
       await tester.tap(find.text(delete)); await tester.pumpAndSettle();
       expect(calls, 0);
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(seconds: 4));
       await tester.enterText(find.byType(TextField), ' test password ');
       await tester.tap(find.text(delete)); await tester.pumpAndSettle();
       expect(calls, 1); expect(supplied, ' test password ');
+      await tester.pump(const Duration(seconds: 4));
       await tester.tap(find.text(cancel)); await tester.pumpAndSettle();
     });
 

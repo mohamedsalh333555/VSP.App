@@ -265,7 +265,11 @@ class AuthRegistrationService {
   Future<void> abortRegistration(User? authUser, UserModel? userModel) async {
     final uid = authUser?.id;
     if (uid != null) {
-      if (userModel?.isRegistrationComplete != true) {
+      if (userModel == null || userModel.uid != uid) {
+        VSPLogger.w('Incomplete-account cleanup skipped: profile identity is not confirmed.');
+        return;
+      }
+      if (!userModel.isRegistrationComplete) {
         try {
           final result = await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
           if (result is! Map || result['success'] != true) {
