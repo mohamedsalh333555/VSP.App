@@ -2,6 +2,13 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Owner booking direct-read server query narrowing (pending CI)
+
+- **86 accepted / 534 not yet accepted / 620: unchanged.** This is a **CODE_DONE / pending automated and two-account staging verification** batch, not a completed 23.07/79.05 authorization test.
+- `8389a655`: `fetchOwnerBookingsDirectlyStrict` now always scopes the REST query by `owner_id` **before** applying optional stadium IDs; a blank owner ID returns an empty list without querying. This removes the prior stadium-only query path. Post-query owner/stadium validation remains.
+- `1f940083`: adds an architecture regression contract verifying owner scoping, stadium narrowing order and blank-owner handling.
+- Follow-up required: Flutter CI, two-account authenticated Supabase/RLS checks and negative cross-owner reads. **No production database, payment, or main-branch changes.**
+
 ## 2026-11-11 — Task 78.07 storage role-matrix coverage; 86/620
 
 - **86 accepted / 534 not yet accepted / 620**, previously 85/535. Exactly one new task closed: **78.07**, covering storage and file authorization in the role matrix.
