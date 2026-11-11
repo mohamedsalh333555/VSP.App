@@ -54,6 +54,17 @@ BEGIN
     RAISE EXCEPTION 'Confirmed future booking guard failed: %',result;
   END IF;
   RESET ROLE;
+  IF NOT EXISTS(SELECT 1 FROM auth.users WHERE id=owner_id)
+     OR NOT EXISTS(SELECT 1 FROM public.users WHERE id=owner_id) THEN
+    RAISE EXCEPTION 'Confirmed booking guard removed owner account';
+  END IF;
+  IF NOT EXISTS(
+    SELECT 1 FROM public.bookings
+    WHERE id=booking_id AND status='confirmed'
+      AND stadium_id=venue_id AND owner_id=owner_id
+  ) THEN
+    RAISE EXCEPTION 'Denied owner deletion changed confirmed booking';
+  END IF;
 
   DELETE FROM public.bookings WHERE id=booking_id;
   SET LOCAL ROLE authenticated;
