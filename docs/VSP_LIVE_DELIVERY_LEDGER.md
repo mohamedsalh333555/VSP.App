@@ -2,6 +2,12 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Screenshot triage scope added; 86/627
+
+- **86 accepted / 541 not yet accepted / 627 total**, previously 86/534/620. Added seven **open** screenshot-specific tasks **83.01–83.07**, no tasks accepted.
+- [Evidence and source inspection](ux/VSP_STADIUM_BOOKING_SCREENSHOT_TRIAGE_2026-11-11.md), commit `fc64bd0`; [checklist update](VSP_80_DETAILED_SUBTASK_BREAKDOWN.md). Confirmed misleading no-slot copy, preselection financial display ambiguity, stale-data warning path and mixed-language screenshot; other visual observations require reproduction. No backend/payment root cause is claimed.
+- **No runtime fix or staged/production validation** performed for these seven. No Supabase, payments, customer data, or main merge changed. Existing booking/RTL/design tasks remain distinct; acceptance needs screenshots + reproducible tests.
+
 ## 2026-11-11 — Owner booking direct-read server query narrowing (pending CI)
 
 - **86 accepted / 534 not yet accepted / 620: unchanged.** This is a **CODE_DONE / pending automated and two-account staging verification** batch, not a completed 23.07/79.05 authorization test.
@@ -113,7 +119,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **86 verified; 534 not yet accepted**. This is not a claim that every remaining task is untouched.
+- Current inventory: **86 verified; 541 not yet accepted** (627 tasks total). This is not a claim that every remaining task is untouched.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
