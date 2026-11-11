@@ -2,6 +2,12 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — Batches08/09 delivered; blocked-admin policy remediation underway
+
+- **81 accepted /539 pending /620**. [Website delivery](security/STORE_COMPLIANCE_BATCH_08_2026-11-11.md): private PR4 merged after CI42968160243 passed28 tests, lint, types, build and audit0 (was11). Vercel SUCCESS. Real deletion fulfillment remains open.
+- [Actual iOS build](security/STORE_COMPLIANCE_BATCH_09_2026-11-11.md): source65fead5, CI42967553018 SUCCESS on Xcode26.3/iOS SDK26.2. Runner43.9MB, correct app.vsp.sports identifier, iOS13 minimum,38 bundled privacy manifests,8 negative gate tests. Unsigned compilation is not signed/device/store verification.
+- [New P0 findings and scoped fix](security/STORE_COMPLIANCE_BATCH_10_2026-11-11.md): staging synthetic blocked-admin self-unblock reproduced and rolled back;37 of42 admin-role policies require active-actor checks. Local7 SQL suites/11 weakened guards pass; native CI/hosted deployment pending at this entry. No production test rows.
+
 ## 2026-11-11 — Batches 06/07: dashboard delivery and active-admin RPC enforcement
 
 - **81 accepted / 539 not fully accepted /620**; no duplicate closures for scoped fixes.

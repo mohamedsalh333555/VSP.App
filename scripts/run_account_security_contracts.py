@@ -66,6 +66,23 @@ END; $$;
 """)
     for path in [manifest['fixture'], *manifest.get('dependencies', []), *manifest['migrations'], *manifest['tests']]:
         require_success(args, env, path, read_file(path))
+    policy_plan = json.loads(read_file('supabase/tests/fixtures/blocked_admin_policy_plan_2026-11-11.json'))
+    policy_catalog_sql = """DO $catalog$ DECLARE p jsonb; c record; n integer:=0; BEGIN
+      FOR p IN SELECT * FROM jsonb_array_elements($plan$""" + json.dumps(policy_plan['policies']) + """$plan$::jsonb) LOOP
+        SELECT qual,with_check,roles,cmd,permissive INTO c FROM pg_policies
+          WHERE schemaname=p->>'schemaname' AND tablename=p->>'tablename' AND policyname=p->>'policyname';
+        IF NOT FOUND THEN RAISE EXCEPTION 'FAIL expected policy missing'; END IF;
+        IF c.qual IS DISTINCT FROM p->>'after_qual' OR c.with_check IS DISTINCT FROM p->>'after_check'
+          OR to_jsonb(c.roles) IS DISTINCT FROM p->'roles' OR c.cmd IS DISTINCT FROM p->>'cmd'
+          OR c.permissive IS DISTINCT FROM p->>'permissive' THEN
+          RAISE EXCEPTION 'FAIL policy catalog fingerprint or metadata drift: %',p->>'policyname';
+        END IF;
+        n:=n+1;
+      END LOOP;
+      IF n<>37 THEN RAISE EXCEPTION 'FAIL policy catalog count'; END IF;
+    END;$catalog$;
+    """
+    require_success(args, env, '37 exact policy definitions and metadata', policy_catalog_sql)
     # A suite must leave no account rows behind after its rollback.
     require_success(args, env, 'no persistent test accounts', """
 DO $$ BEGIN
@@ -75,6 +92,26 @@ DO $$ BEGIN
 END; $$;
 """)
     mutants = [
+        ('blocked admin sensitive profile bypass', """
+DO $$ DECLARE d text; BEGIN
+  d:=pg_get_functiondef('public.trg_fn_protect_user_sensitive_fields()'::regprocedure);
+  EXECUTE replace(d,' AND COALESCE(is_blocked, false) = false','');
+END; $$;
+""", 'supabase/tests/blocked_admin_policy_contract.sql', 'FAIL blocked administrator unblocked self'),
+        ('blocked admin config policy bypass', """
+ALTER POLICY admin_manage_app_config ON public.app_config
+USING (EXISTS(SELECT 1 FROM public.users u WHERE u.id=auth.uid() AND u.role IN('admin','co_founder')))
+WITH CHECK (EXISTS(SELECT 1 FROM public.users u WHERE u.id=auth.uid() AND u.role IN('admin','co_founder')));
+""", 'supabase/tests/blocked_admin_policy_contract.sql', 'FAIL blocked admin changed application configuration'),
+        ('blocked admin scalar-role policy bypass', """
+ALTER POLICY platform_business_rules_admin_write ON public.platform_business_rules
+USING (EXISTS(SELECT 1 FROM public.users u WHERE u.id=auth.uid() AND u.role IN('admin','co_founder')))
+WITH CHECK (EXISTS(SELECT 1 FROM public.users u WHERE u.id=auth.uid() AND u.role IN('admin','co_founder')));
+""", 'supabase/tests/blocked_admin_policy_contract.sql', 'FAIL blocked admin changed business rules'),
+        ('blocked admin private storage bypass', """
+ALTER POLICY owner_documents_owner_manage ON storage.objects
+USING (bucket_id='owner_documents') WITH CHECK (bucket_id='owner_documents');
+""", 'supabase/tests/blocked_admin_policy_contract.sql', 'FAIL blocked admin storage read isolation'),
         ('active admin helper disabled', """
 CREATE OR REPLACE FUNCTION public.require_active_admin_actor()
 RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,public,pg_temp
@@ -113,6 +150,18 @@ BEGIN UPDATE public.chat_messages SET is_read=true WHERE conversation_id=p_conve
         print('PASS mutation rejected: ' + name, flush=True)
     for path in manifest['tests']:
         require_success(args, env, 'restored baseline: ' + path, read_file(path))
+    policy_migration = read_file('supabase/migrations/20261111055255_restrict_blocked_admin_table_and_storage_privileges.sql')
+    require_success(args, env, 'admin policy migration idempotent replay', policy_migration)
+    drift_policy = invoke(args, env, "BEGIN; ALTER POLICY admin_manage_app_config ON public.app_config USING(false);\n" + policy_migration)
+    if drift_policy.returncode == 0 or 'ADMIN_POLICY_SOURCE_DRIFT' not in drift_policy.stderr:
+        raise RuntimeError('Unknown policy source was not refused: ' + drift_policy.stderr[-3000:])
+    print('PASS unknown policy source refused without clobbering', flush=True)
+    require_success(args, env, 'admin policies source-checked inverse',
+                    read_file('docs/security/sql/rollback_blocked_admin_policies_2026-11-11.sql'))
+    require_success(args, env, 'admin policy guards restored after inverse', policy_migration)
+    require_success(args, env, 'blocked admin baseline after inverse round trip',
+                    read_file('supabase/tests/blocked_admin_policy_contract.sql'))
+    require_success(args, env, '37 policy definitions restored after negative probes', policy_catalog_sql)
     admin_migration = read_file('supabase/migrations/20261111045628_require_active_admin_actor_for_sensitive_rpcs.sql')
     require_success(args, env, 'admin migration idempotent replay', admin_migration)
     drift = invoke(args, env, """BEGIN;

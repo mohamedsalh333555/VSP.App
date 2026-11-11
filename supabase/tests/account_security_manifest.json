@@ -1,13 +1,14 @@
 {
   "schema_version": 1,
-  "scope": "Account profile RLS, three lifecycle/conversation RPCs and three admin RPCs plus active-admin predicate; not full database",
+  "scope": "Scoped account lifecycle/RLS/RPC contracts plus 37 admin RLS/storage policy definitions and representative behavioral checks; not full database or real OAuth",
   "fixture": "supabase/tests/fixtures/account_security_dependencies.sql",
   "migrations": [
     "supabase/migrations/20261111012758_registration_cleanup_and_chat_read_authorization.sql",
     "supabase/migrations/20261111014123_restore_user_security_trigger_bindings.sql",
     "supabase/migrations/20261111033941_secure_registration_profile_provisioning.sql",
     "supabase/migrations/20261111041426_guard_client_profile_role_mutations.sql",
-    "supabase/migrations/20261111045628_require_active_admin_actor_for_sensitive_rpcs.sql"
+    "supabase/migrations/20261111045628_require_active_admin_actor_for_sensitive_rpcs.sql",
+    "supabase/migrations/20261111055255_restrict_blocked_admin_table_and_storage_privileges.sql"
   ],
   "tests": [
     "supabase/tests/registration_cleanup_and_chat_read_staging.sql",
@@ -15,9 +16,11 @@
     "supabase/tests/registration_profile_provisioning_staging.sql",
     "supabase/tests/account_profile_rls_contract.sql",
     "supabase/tests/client_profile_role_guard_contract.sql",
-    "supabase/tests/admin_actor_contract.sql"
+    "supabase/tests/admin_actor_contract.sql",
+    "supabase/tests/blocked_admin_policy_contract.sql"
   ],
   "dependencies": [
-    "supabase/tests/fixtures/admin_rpc_contract_dependencies.sql"
+    "supabase/tests/fixtures/admin_rpc_contract_dependencies.sql",
+    "supabase/tests/fixtures/blocked_admin_policy_dependencies.sql"
   ]
 }
