@@ -166,7 +166,7 @@ class BookingSlotCalculator {
     // The shared time parser works at minute precision. Reject non-zero
     // seconds in an incoming slot key instead of silently rounding them down
     // to an otherwise valid 30-minute booking boundary.
-    final secondsMatch = RegExp(r'^\\s*\\d{1,2}:\\d{1,2}:([0-5]\\d)(?:\\s|$)')
+    final secondsMatch = RegExp(r'^\s*\d{1,2}:\d{1,2}:([0-5]\d)(?:\s|$)')
         .firstMatch(slotKey);
     if (secondsMatch != null && secondsMatch.group(1) != '00') {
       throw FormatException('Booking slot must start at an exact minute');
