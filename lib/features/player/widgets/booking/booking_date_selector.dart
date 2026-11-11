@@ -47,7 +47,7 @@ class BookingDateSelector extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      DateFormat('MMMM, yyyy', Localizations.localeOf(context).toString()).format(selectedDate),
+                      DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(selectedDate),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: VSPSpacing.xs),
@@ -72,7 +72,9 @@ class BookingDateSelector extends StatelessWidget {
                     itemCount: 14,
                     itemBuilder: (context, index) {
                       final date = operationalBaseDate.add(Duration(days: index));
-                      final isSelected = date.day == selectedDate.day && date.month == selectedDate.month;
+                      final isSelected = date.year == selectedDate.year &&
+                          date.month == selectedDate.month &&
+                          date.day == selectedDate.day;
                       return GestureDetector(
                         onTap: () => onDateChanged(date),
                         child: Container(
