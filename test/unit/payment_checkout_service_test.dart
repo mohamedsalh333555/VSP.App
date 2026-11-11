@@ -249,6 +249,24 @@ void main() {
       }
     });
 
+    test('refund lifecycle overrides stale fully paid reconciliation', () {
+      for (final status in <String>[
+        'refund_pending',
+        'refunded',
+        'refund_failed',
+      ]) {
+        expect(
+          PaymentCheckoutService.isPaymentConfirmed(
+            status: 'confirmed',
+            paymentStatus: status,
+            paymentReconcileState: 'fully_paid',
+          ),
+          isFalse,
+          reason: 'paymentStatus=$status',
+        );
+      }
+    });
+
     test('preparePendingDraft sets status to pending and method to paymob', () {
       final now = DateTime(2026, 9, 9, 20, 0);
       final draft = BookingDraft(
