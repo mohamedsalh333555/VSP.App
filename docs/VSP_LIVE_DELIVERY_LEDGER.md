@@ -2,6 +2,12 @@
 
 Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
 
+## 2026-11-11 — 83.05 mixed-language stadium labels (pending UI/CI verification)
+
+- **86 accepted / 541 open / 627 total: unchanged.** Source commits `02d0848`, `e2af197`: stadium information tab translates only standalone known English rule labels (`Cleanliness`, `No Smoking`, `Punctuality`) when Arabic locale is active. Arbitrary owner prose and stored descriptions are not rewritten.
+- `15434b3`: adds unit tests for Arabic known labels, unchanged free-form text, and unchanged English locale.
+- **83.05 remains open** until Flutter CI and device RTL/long-description checks confirm actual rendering and clipping behavior. No Supabase, payment, or main merge changes.
+
 ## 2026-11-11 — CI green and 83.01 empty-state copy fix (pending device checks)
 
 - **86 accepted / 541 open / 627 total: unchanged.** On commit `ecdfc0dd`, Flutter CI (runs 43062854125, 43062841461), Android E2E Smoke (43062854000), iOS compliance build (43062854302), Account SQL contracts (43062854398), and Owner checkout security (43062854012) all completed **successfully**. These are workflow results, not proof of real two-account booking authorization or payment amount scenarios.
