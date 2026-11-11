@@ -108,7 +108,11 @@ void main() {
     });
 
     test('isPaymentConfirmed accepts server-paid and confirmed partially_paid states', () {
-      expect(PaymentCheckoutService.isPaymentConfirmed(paymentStatus: 'paid'), isTrue);
+      expect(PaymentCheckoutService.isPaymentConfirmed(paymentStatus: 'paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed', paymentStatus: 'paid'), isTrue);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: '', paymentStatus: 'paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'cancelled', paymentStatus: 'paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'paid'), isFalse);
       expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed', paymentStatus: 'partially_paid'), isTrue);
       expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'partially_paid'), isFalse);
       expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'pending'), isFalse);
