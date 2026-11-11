@@ -1,5 +1,11 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## Batch 02 continuation — 2026-11-11
+
+See [privacy, permissions and deletion batch](security/STORE_COMPLIANCE_BATCH_02_2026-11-11.md). Ten app corrections contribute to SEC-01/03/04/08 and SC03/05/07/14: scoped photo picking, optional camera/location hardware, minimal photo metadata requests, auth-bound location cache cleanup, corrupt-cache recovery, guarded deletion confirmation, truthful incomplete-account cleanup, deletion identity snapshots, Android advertising identifier opt-out and known-profile-only automatic cleanup. Application commits: `27b34f7`, `1a89e0d`, `1143044`, `e862fbb`; fixture/CI commits are recorded separately in the report.
+
+Final verified checks at `e862fbb`: Flutter CI 42930897576 SUCCESS — 32 focused privacy/deletion cases and **1120 passed, 10 skipped** in the full suite; Android smoke and actual APK permission gate 42930890192 SUCCESS, including six Python gate tests; Owner checkout security 42930897573 SUCCESS — 39 isolated cases. The APK has no broad media/storage or ad-identifier/attribution permissions and no required camera/GPS hardware. No Supabase deployment, schema/data mutation, production change or main merge in this batch. OAuth deletion, server-side erasure/retention and atomic registration-cancellation checks remain open.
+
 ## Current continuation — 2026-11-11
 
 Implementation `00b530fcf5de6ed44324c36f0e623dc572ba7e18`: seven concrete corrections in owner payment verification/correlation/CAPTCHA/inquiry, explicit account deletion confirmation, sensitive auth/deletion logging and malformed-request handling. See [batch evidence](security/STORE_COMPLIANCE_BATCH_01_2026-11-11.md) for exact scope, files, tests, deployment and remaining gates. This is a partial SEC-01/03/04/06/08/10 continuation, not new duplicate Phase 8 scope.

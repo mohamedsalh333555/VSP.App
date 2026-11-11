@@ -1,6 +1,14 @@
 # VSP — Live delivery ledger
 
-Updated 2026-11-10. This ledger is the source of truth for **execution progress**, distinct from final release verification.
+Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
+
+## 2026-11-11 — Second store compliance implementation batch
+
+- [Ten app corrections, exact scope and evidence](security/STORE_COMPLIANCE_BATCH_02_2026-11-11.md); application source checkpoint `e862fbb`. Code, tests and APK permission gate updated; no schema or production mutation.
+- **Final checks SUCCESS at e862fbb**: Flutter CI 42930897576 — 32 focused cases and 1120 passed, 10 skipped in the full suite; Android smoke and compiled APK permission gate 42930890192, including six Python gate tests; Owner checkout security 42930897573 — 39 isolated cases. No broad media/storage/advertising permissions or mandatory camera/GPS in the verified APK. Earlier failures, corrections and cancelled superseded runs remain documented.
+- Contributions: partial 03.02/03.04/03.05, 04.06, 05.04, 12.03, 20.02; SEC-01/03/04/08 and Phase 9 failure/race handling. These checks do not close every screen or live upload/deletion acceptance condition.
+- **Core accounting unchanged: 76 historically accepted / 544 not fully accepted / 620 total.** Ten defects corrected is not ten closed baseline subtasks. One introduced dialog layout regression and test-fixture/timing corrections were fixed and recorded without inflating the delivered improvement count.
+- Remaining: actual photo upload/camera/device variants, valid multi-account staging journeys, atomic server cleanup/deletion and retention, OAuth/web deletion, payment sandbox, iOS/archive/store metadata. Current data safety/readiness is not certified.
 
 ## 2026-11-11 — Unified plan, first security implementation batch
 
