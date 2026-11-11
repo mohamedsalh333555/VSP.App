@@ -34,6 +34,27 @@ void main() {
       );
     }
   });
+  test('out-of-range numeric timestamps do not crash inbox parsing', () {
+    for (final timestamp in <Object>[
+      8640000000000000,
+      -8640000000000000,
+      1e30,
+      -1e30,
+      double.infinity,
+      double.nan,
+      '1e30',
+    ]) {
+      final notification = AppNotification.fromMap({
+        'id': 'invalid-date',
+        'created_at': timestamp,
+      });
+      expect(
+        notification.createdAt.millisecondsSinceEpoch,
+        0,
+        reason: 'timestamp=$timestamp',
+      );
+    }
+  });
   test('malformed legacy timestamp does not crash notification list', () {
     final notification = AppNotification.fromMap({
       'id': 'broken-1', 'created_at': 'not-a-date',
