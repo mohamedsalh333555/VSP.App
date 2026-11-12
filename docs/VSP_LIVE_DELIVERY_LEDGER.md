@@ -1,3 +1,12 @@
+## 2026-11-13 — Acceptance progress audited: 86 accepted / 532 open
+
+- Canonical checklist recounted: **618 scoped tasks / 86 VERIFIED / 532 open**; group 56 (24 journeys) remains excluded.
+- **59.07** accepted for a documented list of staging multi-role blockers and limits, not their resolution. Evidence: [staging blockers and performance budget](VSP_PERFORMANCE_BUDGET_AND_STAGING_BLOCKERS_2026-11-13.md).
+- **60.01** accepted for defining explicit, measurable startup/navigation/availability/frame/memory/APK performance targets and measurement conditions; these targets remain **NOT MEASURED**. Tasks 60.02–60.09 are not accepted by implication.
+- Independent prior acceptance: **58.06** Android log collection; acceptance count moved 83 → 84 before this 84 → 86 step.
+- CI success for application commit `6ea1dc38`: [Flutter](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43320006151), [Android smoke](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43320006172), [iOS build](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43320006056), Account SQL security and Owner checkout security both successful. This does **not** close outstanding device, real-account or server-side payment test tasks.
+- The accepted work in this batch is documentation/criteria, **not two completed feature implementations**. No `main` merge or production mutations.
+
 ## 2026-11-12 — Accepted Android smoke log collection (58.06)
 
 - Verified [Android E2E Smoke run 43302703167](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43302703167) and [job 131480962116](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43302703167/job/131480962116), on application commit `366e75d8`: success. Decoded job logs confirm APK build and `+2: All tests passed!`; no fatal job-log error markers found.
