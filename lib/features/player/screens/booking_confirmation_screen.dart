@@ -211,7 +211,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       userTeamId: _userTeamId,
       userTeamName: _userTeamName,
       onLoadingChanged: (loading) => setState(() => _isLoading = loading),
-      onSlotsCleared: () => setState(() => _selectedTimeSlots.clear()),
+      onSlotsCleared: () => setState(() {
+        _selectedTimeSlots.clear();
+        _isBallRented = false;
+      }),
     );
   }
 
@@ -242,6 +245,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
               setState(() {
                 _selectedDate = date;
                 _selectedTimeSlots.clear();
+                _isBallRented = false;
               });
             },
           ),
