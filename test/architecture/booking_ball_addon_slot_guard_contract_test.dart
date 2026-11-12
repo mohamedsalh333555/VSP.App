@@ -22,4 +22,11 @@ void main() {
     );
     expect(screen, contains('if (!isSlotSelected || _isLoading) return;'));
   });
+  test('ball rental consent resets when date changes or slots clear', () {
+    final screen = File(
+      'lib/features/player/screens/booking_confirmation_screen.dart',
+    ).readAsStringSync();
+    expect(screen, contains('onSlotsCleared: () => setState(() {\\n        _selectedTimeSlots.clear();\\n        _isBallRented = false;'.replaceAll(r'\n', '\n')));
+    expect(screen, contains('_selectedDate = date;\\n                _selectedTimeSlots.clear();\\n                _isBallRented = false;'.replaceAll(r'\n', '\n')));
+  });
 }
