@@ -3,6 +3,20 @@ import '../../../../data/models.dart';
 import 'booking_slot_models.dart';
 
 class BookingSlotCalculator {
+  /// Reject forged/non-contiguous multi-slot selections before creating a
+  /// single booking interval. Compare UTC instants across DST boundaries.
+  static bool areContiguousHalfHourStarts(List<DateTime> starts) {
+    if (starts.isEmpty) return false;
+    final sorted = starts.map((date) => date.toUtc()).toList()..sort();
+    for (var i = 1; i < sorted.length; i++) {
+      if (sorted[i].difference(sorted[i - 1]) !=
+          const Duration(minutes: 30)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   static int _parseTimeToMinutes(String timeStr) {
     return AppDateFormatter.parseTimeToMinutes(timeStr);
   }
