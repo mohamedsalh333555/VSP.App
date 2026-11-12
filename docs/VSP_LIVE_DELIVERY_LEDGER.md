@@ -1,3 +1,11 @@
+## 2026-11-13 — Analytics deduplication accepted (89/529)
+
+- Verified uncancelled successful [Flutter CI run 43326492976](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43326492976) at `b19f7d9e`, covering `AnalyticsSessionDedupe` tests and repository architecture guards. iOS build and Android public smoke also green on that commit.
+- **50.07** accepted: in-process venue-visit deduplication, test for repeat visit vs separate venues.
+- **55.05** accepted: event-type-isolated deduplication tests and new-session behavior. Evidence: [acceptance report](VSP_ANALYTICS_DEDUPE_ACCEPTANCE_50_07_55_05.md).
+- Scope stays limited to client-session logic, **not** cross-device counting, Firebase ingestion dashboards, offline recovery, or real-account staging acceptance.
+- Recounted active detailed checklist: **618 total / 89 VERIFIED / 529 open**. Group 56 remains cancelled. No production or `main` changes.
+
 ## 2026-11-13 — Accepted 51.05 availability messages: 87 / 531
 
 - Canonical inventory checked: **618 tasks / 87 VERIFIED / 531 open** (group 56 remains cancelled).
