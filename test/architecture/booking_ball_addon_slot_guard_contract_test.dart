@@ -22,6 +22,13 @@ void main() {
     );
     expect(screen, contains('if (!isSlotSelected || _isLoading) return;'));
   });
+  test('ball rental resets when the last selected slot is deselected', () {
+    final screen = File(
+      'lib/features/player/screens/booking_confirmation_screen.dart',
+    ).readAsStringSync();
+    expect(screen, contains('if (_selectedTimeSlots.isEmpty) _isBallRented = false;'));
+  });
+
   test('ball rental consent resets when date changes or slots clear', () {
     final screen = File(
       'lib/features/player/screens/booking_confirmation_screen.dart',
