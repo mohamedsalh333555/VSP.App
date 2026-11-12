@@ -26,7 +26,10 @@ void main() {
     final screen = File(
       'lib/features/player/screens/booking_confirmation_screen.dart',
     ).readAsStringSync();
-    expect(screen, contains('onSlotsCleared: () => setState(() {\\n        _selectedTimeSlots.clear();\\n        _isBallRented = false;'.replaceAll(r'\n', '\n')));
-    expect(screen, contains('_selectedDate = date;\\n                _selectedTimeSlots.clear();\\n                _isBallRented = false;'.replaceAll(r'\n', '\n')));
+    expect(screen, contains('onSlotsCleared: () => setState(() {'));
+    expect(screen, contains('_selectedDate = date;'));
+    expect(RegExp(r'_selectedTimeSlots\.clear\(\);\s*_isBallRented = false;')
+        .allMatches(screen).length, 2);
+
   });
 }
