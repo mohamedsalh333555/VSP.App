@@ -286,7 +286,7 @@ class BookingQueryCoordinator {
     }
     try {
       final startOfDay = DateTime(date.year, date.month, date.day);
-      final endOfDay = startOfDay.add(const Duration(days: 2));
+      // Two local calendar dates cover bookings crossing midnight, including\n      // days whose UTC offset changes with Egyptian daylight saving time.\n      final endOfDay = DateTime(date.year, date.month, date.day + 2);
       final response = await _supabase.rpc('get_stadium_booking_slots', params: {
         'p_stadium_id': stadiumId,
         'p_start_time': startOfDay.toUtc().toIso8601String(),
