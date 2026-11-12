@@ -127,7 +127,7 @@ class BookingSlotStreamSection extends StatelessWidget {
         if (allSlotsBooked) {
           return VSPStateView(
             state: VSPUiState.empty,
-            icon: Iconsax.calendar_remove_copy,
+            icon: Iconsax.clock_copy,
             title: isArabic ? 'كل المواعيد محجوزة' : 'All slots are booked',
             message: isArabic
                 ? 'مواعيد اليوم محجوزة بالفعل. جرّب تاريخًا آخر.'
