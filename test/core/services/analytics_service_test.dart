@@ -2,6 +2,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/services/analytics_service.dart';
 
 void main() {
+  group('Session funnel deduplication', () {
+    test('counts one venue visit once despite repeated route rebuilds', () {
+      final dedupe = AnalyticsSessionDedupe();
+      expect(dedupe.markFirst(name: VSPAnalyticsEvents.venueViewed, dedupeKey: 'venue_viewed:venue-a'), isTrue);
+      expect(dedupe.markFirst(name: VSPAnalyticsEvents.venueViewed, dedupeKey: 'venue_viewed:venue-a'), isFalse);
+      expect(dedupe.markFirst(name: VSPAnalyticsEvents.venueViewed, dedupeKey: 'venue_viewed:venue-b'), isTrue);
+    });
+
+    test('isolates event types even when supplied the same dedupe key', () {
+      final dedupe = AnalyticsSessionDedupe();
+      expect(dedupe.markFirst(name: VSPAnalyticsEvents.venueViewed, dedupeKey: 'same'), isTrue);
+      expect(dedupe.markFirst(name: VSPAnalyticsEvents.bookingStarted, dedupeKey: 'same'), isTrue);
+      expect(dedupe.markFirst(name: VSPAnalyticsEvents.bookingStarted, dedupeKey: 'same'), isFalse);
+    });
+
+    test('a new session registry allows a new session visit', () {
+      final firstSession = AnalyticsSessionDedupe();
+      final secondSession = AnalyticsSessionDedupe();
+      expect(firstSession.markFirst(name: VSPAnalyticsEvents.appOpened, dedupeKey: 'app_opened'), isTrue);
+      expect(firstSession.markFirst(name: VSPAnalyticsEvents.appOpened, dedupeKey: 'app_opened'), isFalse);
+      expect(secondSession.markFirst(name: VSPAnalyticsEvents.appOpened, dedupeKey: 'app_opened'), isTrue);
+    });
+  });
+
   group('AnalyticsService privacy contract', () {
     test('removes direct personal and credential-like parameters', () {
       final safe = AnalyticsService.privacySafeParameters({
