@@ -34,6 +34,15 @@ abstract final class VSPAnalyticsEvents {
   };
 }
 
+/// Deterministic in-process funnel deduplication; no Firebase dependency.
+/// Event names are part of the key so unrelated event types cannot collide.
+class AnalyticsSessionDedupe {
+  final Set<String> _seen = <String>{};
+
+  bool markFirst({required String name, required String dedupeKey}) =>
+      _seen.add('${name.length}:$name:$dedupeKey');
+}
+
 /// Privacy-conscious analytics for product funnels.
 ///
 /// UI code should prefer the typed helpers below. They keep event names
@@ -45,7 +54,7 @@ class AnalyticsService {
   static final FirebaseAnalyticsObserver observer =
       FirebaseAnalyticsObserver(analytics: _analytics);
 
-  static final Set<String> _sessionDedupeKeys = <String>{};
+  static final AnalyticsSessionDedupe _sessionDedupe = AnalyticsSessionDedupe();
 
   static const Set<String> _sensitiveParameterFragments = <String>{
     'email',
@@ -100,7 +109,7 @@ class AnalyticsService {
     required String dedupeKey,
     Map<String, Object>? parameters,
   }) async {
-    if (!_sessionDedupeKeys.add(dedupeKey)) return;
+    if (!_sessionDedupe.markFirst(name: name, dedupeKey: dedupeKey)) return;
     await logEvent(name: name, parameters: parameters);
   }
 
