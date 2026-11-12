@@ -14,8 +14,9 @@ void main() {
     )));
     expect(source, contains('state: VSPUiState.error'));
     expect(source, contains('onRetry: onRetry'));
-    expect(source, contains('final existingBookings = snapshot.data ?? [];'));
+    expect(source, contains('if (!snapshot.hasData) {'));
+    expect(source, contains('final existingBookings = snapshot.data!;'));
     expect(source.indexOf('if (snapshot.hasError) {'),
-        lessThan(source.indexOf('final existingBookings = snapshot.data ?? [];')));
+        lessThan(source.indexOf('final existingBookings = snapshot.data!;')));
   });
 }
