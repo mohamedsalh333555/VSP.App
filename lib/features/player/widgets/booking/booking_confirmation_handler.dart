@@ -187,6 +187,32 @@ class BookingConfirmationHandler {
               selectedDate: selectedDate,
             )));
 
+      final selectedStarts = sortedCheck.map(
+        (slot) => BookingSlotCalculator.getSlotDateTime(
+          slotKey: slot,
+          stadium: stadium,
+          selectedDate: selectedDate,
+        ),
+      ).toList();
+      // Initial route selections and stale selections may bypass the UI
+      // range picker. Never turn non-adjacent keys into a longer interval
+      // that silently reserves unselected times.
+      if (!BookingSlotCalculator.areContiguousHalfHourStarts(selectedStarts) ||
+          selectedStarts.any((start) => !start.isAfter(DateTime.now()))) {
+        onSlotsCleared();
+        onLoadingChanged(false);
+        if (context.mounted) {
+          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isAr
+                ? 'المواعيد المحددة غير متصلة أو انتهت. اختر مواعيد متتالية متاحة.'
+                : 'Selected times are expired or not consecutive. Choose available consecutive slots.',
+          );
+        }
+        return;
+      }
+
       // Every selected half-hour must still be free at confirmation time.
       // Checking only the first slot allowed a later slot in a multi-slot
       // booking to be taken between selection and submission.
