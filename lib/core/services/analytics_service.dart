@@ -39,8 +39,30 @@ abstract final class VSPAnalyticsEvents {
 class AnalyticsSessionDedupe {
   final Set<String> _seen = <String>{};
 
+  String _eventKey(String name, String dedupeKey) =>
+      '${name.length}:$name:$dedupeKey';
+
   bool markFirst({required String name, required String dedupeKey}) =>
-      _seen.add('${name.length}:$name:$dedupeKey');
+      _seen.add(_eventKey(name, dedupeKey));
+
+  /// Reserve before the async write to block concurrent duplicate events.
+  /// Allow a retry when the sender reports a failure or throws (e.g. offline).
+  Future<bool> sendOnce({
+    required String name,
+    required String dedupeKey,
+    required Future<bool> Function() send,
+  }) async {
+    final key = _eventKey(name, dedupeKey);
+    if (!_seen.add(key)) return false;
+    try {
+      if (await send()) return true;
+      _seen.remove(key);
+      return false;
+    } catch (_) {
+      _seen.remove(key);
+      rethrow;
+    }
+  }
 }
 
 /// Privacy-conscious analytics for product funnels.
@@ -82,7 +104,7 @@ class AnalyticsService {
     );
   }
 
-  static Future<void> logEvent({
+  static Future<bool> _sendEvent({
     required String name,
     Map<String, Object>? parameters,
   }) async {
@@ -93,24 +115,33 @@ class AnalyticsService {
         parameters: safeParameters.isEmpty ? null : safeParameters,
       );
       VSPLogger.i('Analytics Event: $name | $safeParameters');
+      return true;
     } catch (e) {
       // Analytics is auxiliary and must never block a user journey.
       VSPLogger.e('Analytics Error: $e');
+      return false;
     }
   }
 
-  /// Logs an event at most once for [dedupeKey] during this process lifetime.
-  ///
-  /// This prevents duplicate funnel entries caused by widget rebuilds or
-  /// retries while still allowing callers to choose a distinct key for a
-  /// genuinely new action.
+  static Future<void> logEvent({
+    required String name,
+    Map<String, Object>? parameters,
+  }) async {
+    await _sendEvent(name: name, parameters: parameters);
+  }
+
+  /// Duplicate calls in one session are suppressed only after delivery.
+  /// If Firebase reports an offline/transport failure, another trigger can retry.
   static Future<void> logOncePerSession({
     required String name,
     required String dedupeKey,
     Map<String, Object>? parameters,
   }) async {
-    if (!_sessionDedupe.markFirst(name: name, dedupeKey: dedupeKey)) return;
-    await logEvent(name: name, parameters: parameters);
+    await _sessionDedupe.sendOnce(
+      name: name,
+      dedupeKey: dedupeKey,
+      send: () => _sendEvent(name: name, parameters: parameters),
+    );
   }
 
   static Future<void> setUserProperties({
