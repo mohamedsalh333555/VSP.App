@@ -1,3 +1,10 @@
+## 2026-11-12 — Accepted Android smoke log collection (58.06)
+
+- Verified [Android E2E Smoke run 43302703167](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43302703167) and [job 131480962116](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43302703167/job/131480962116), on application commit `366e75d8`: success. Decoded job logs confirm APK build and `+2: All tests passed!`; no fatal job-log error markers found.
+- Evidence appended to [Android smoke verification](VSP_ANDROID_E2E_SMOKE_VERIFICATION_58.md); **58.06 is now VERIFIED** for scoped log collection. It does not imply credentialed login, booking, team invite or physical-device testing.
+- Active task inventory recounted from canonical checklist: **618 total / 84 VERIFIED / 534 remaining**. Previously 83/535.
+- No production modification or main branch merge.
+
 ## 2026-11-11 — Post-scope-removal execution: live venue verification safety
 
 - Group 56 remains removed from the active task inventory: **618 total / 83 accepted / 535 open**.
