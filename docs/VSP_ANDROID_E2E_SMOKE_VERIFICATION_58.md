@@ -28,3 +28,15 @@ The GitHub Actions workflow provisions Android emulator **API 35, x86_64, Pixel 
 ## Outstanding acceptance
 
 58.03 requires actual successful sign-in, not just navigating to the login screen. 58.04/58.05 need booking/team/challenge scenarios. 58.06 needs explicit log collection/report. 58.08 needs accept/reject invitation Android test. None is claimed complete. Live payment and user account journeys require appropriately isolated staging test users and controlled test data.
+
+## Android smoke log collection (58.06) — 2026-11-12
+
+- Source: [Android E2E Smoke workflow run 43302703167](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43302703167), branch `uxlp-44-implementation`, commit `366e75d897343633563db92c36446ab4a5115770`.
+- Source job: [Android public/auth journey smoke — job 131480962116](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43302703167/job/131480962116), **success**.
+- Retrieved and reviewed the workflow job's decoded execution log (1,701 lines). The staging Android public smoke command used `flutter drive` targeting `integration_test/app_public_smoke_test.dart` on `emulator-5554`.
+- Relevant log evidence (excluding environment credentials):
+  - `2026-11-12T20:52:57Z ✓ Built build/app/outputs/flutter-apk/app-debug.apk`
+  - `2026-11-12T20:53:13Z I/flutter: 00:10 +2: All tests passed!`
+  - `2026-11-12T20:53:13Z All tests passed.`
+- The job shows successful configuration/dependency installation, KVM, fixture safety guard, Android onboarding/login smoke, compiled APK permission verification, and commit-status publication. No `##[error]`, `BUILD FAILED`, or nonzero process-exit marker was found in the reviewed job log.
+- **Acceptance boundary:** This closes **log collection (58.06)** for the checked-in public smoke only; it does not establish successful sign-in with credentials, booking, payment, invitations, team/challenge operations, physical-device validation, or complete E2E coverage. Tasks 58.03–58.05 and 58.08 remain open. No sensitive environment values have been reproduced in this evidence note.
