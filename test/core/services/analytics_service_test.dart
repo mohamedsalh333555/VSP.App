@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/services/analytics_service.dart';
 
@@ -23,6 +25,75 @@ void main() {
       expect(firstSession.markFirst(name: VSPAnalyticsEvents.appOpened, dedupeKey: 'app_opened'), isTrue);
       expect(firstSession.markFirst(name: VSPAnalyticsEvents.appOpened, dedupeKey: 'app_opened'), isFalse);
       expect(secondSession.markFirst(name: VSPAnalyticsEvents.appOpened, dedupeKey: 'app_opened'), isTrue);
+    });
+  });
+
+  group('Offline analytics event retry', () {
+    test('failed delivery is retried and success is deduplicated', () async {
+      final dedupe = AnalyticsSessionDedupe();
+      var attempts = 0;
+      Future<bool> simulateSend() async {
+        attempts++;
+        return attempts > 1;
+      }
+
+      Future<bool> emit() => dedupe.sendOnce(
+            name: VSPAnalyticsEvents.bookingCompleted,
+            dedupeKey: 'booking_completed:booking-1',
+            send: simulateSend,
+          );
+
+      expect(await emit(), isFalse);
+      expect(await emit(), isTrue);
+      expect(await emit(), isFalse);
+      expect(attempts, 2);
+    });
+
+    test('concurrent requests suppress a duplicate pending send', () async {
+      final dedupe = AnalyticsSessionDedupe();
+      final pending = Completer<bool>();
+      var attempts = 0;
+      Future<bool> send() {
+        attempts++;
+        return pending.future;
+      }
+
+      Future<bool> emit() => dedupe.sendOnce(
+            name: VSPAnalyticsEvents.venueViewed,
+            dedupeKey: 'venue_viewed:venue-1',
+            send: send,
+          );
+
+      final first = emit();
+      expect(await emit(), isFalse);
+      expect(attempts, 1);
+      pending.complete(true);
+      expect(await first, isTrue);
+      expect(await emit(), isFalse);
+      expect(attempts, 1);
+    });
+
+    test('sender exceptions release the deduplication key', () async {
+      final dedupe = AnalyticsSessionDedupe();
+      Future<bool> fail() async => throw StateError('offline');
+      expect(
+        () => dedupe.sendOnce(
+          name: VSPAnalyticsEvents.bookingStarted,
+          dedupeKey: 'booking_started:venue-1',
+          send: fail,
+        ),
+        throwsStateError,
+      );
+      // Allow the previous Future to settle before attempting another send.
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        await dedupe.sendOnce(
+          name: VSPAnalyticsEvents.bookingStarted,
+          dedupeKey: 'booking_started:venue-1',
+          send: () async => true,
+        ),
+        isTrue,
+      );
     });
   });
 
