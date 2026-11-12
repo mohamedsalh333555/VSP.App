@@ -155,6 +155,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   void _onTimeSlotTap(String slotKey, List<Booking> existingBookings) {
+    if (_isLoading) return;
     setState(() {
       final updated = BookingSlotCalculator.calculateNewSelectedSlots(
         slotKey: slotKey,
@@ -172,6 +173,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   Future<void> _handleBookingConfirmation() async {
+    // Reject rapid repeat taps while the first confirmation is running.
+    if (_isLoading || _selectedTimeSlots.isEmpty) return;
     if (_requiresTeamContext && _isLoadingUserTeam) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       VSPFeedback.showInfo(
@@ -243,6 +246,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             selectedDate: _selectedDate,
             operationalBaseDate: _operationalBaseDate,
             onDateChanged: (date) {
+              // Do not mutate the booking date while confirmation is in flight.
+              if (_isLoading) return;
               setState(() {
                 _selectedDate = date;
                 _selectedTimeSlots.clear();
