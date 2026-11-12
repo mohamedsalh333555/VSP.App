@@ -16,7 +16,14 @@ void main() {
     expect(fetchMethod, isNotNull);
     expect(fetchMethod, contains('rethrow;'));
     expect(fetchMethod, isNot(contains('return [];')));
-    expect(source, contains('List<Booking>? lastVerified;'));
-    expect(source, contains('if (lastVerified == null)'));
+    final streamStart = source.indexOf('Stream<List<Booking>> getBookingsForStadium(');
+    final streamEnd = source.indexOf('/// Fetches unpaid confirmed bookings', streamStart);
+    expect(streamStart, greaterThanOrEqualTo(0));
+    expect(streamEnd, greaterThan(streamStart));
+    final streamBody = source.substring(streamStart, streamEnd);
+    expect(streamBody, contains('Error.throwWithStackTrace(e, stack);'));
+    expect(streamBody, contains('yield refreshed;'));
+    expect(streamBody, isNot(contains('lastVerified')));
+    expect(streamBody, isNot(contains('retaining the last verified snapshot')));
   });
 }
