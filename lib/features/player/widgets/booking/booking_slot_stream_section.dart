@@ -119,6 +119,35 @@ class BookingSlotStreamSection extends StatelessWidget {
             selectedDate.month == now.month &&
             selectedDate.day == now.day;
 
+        // Separate a fully booked day from a day without configured hours,
+        // and from one where every slot has already passed.
+        final allSlotsBooked = timeSlots.every(
+          (slot) => _isSlotBooked(slot.key, existingBookings),
+        );
+        if (allSlotsBooked) {
+          return VSPStateView(
+            state: VSPUiState.empty,
+            icon: Iconsax.calendar_remove_copy,
+            title: isArabic ? 'كل المواعيد محجوزة' : 'All slots are booked',
+            message: isArabic
+                ? 'مواعيد اليوم محجوزة بالفعل. جرّب تاريخًا آخر.'
+                : 'All slots for this date are booked. Try another date.',
+          );
+        }
+        final allSlotsPassed = timeSlots.every(
+          (slot) => !_getSlotDateTime(slot.key).isAfter(now),
+        );
+        if (allSlotsPassed) {
+          return VSPStateView(
+            state: VSPUiState.empty,
+            icon: Iconsax.clock_copy,
+            title: isArabic ? 'انتهت مواعيد اليوم' : 'All slots have passed',
+            message: isArabic
+                ? 'كل مواعيد اليوم أصبحت في الماضي. اختر يومًا آخر.'
+                : 'All available times for this date have passed. Choose another day.',
+          );
+        }
+
         String? firstUpcomingSlotKey;
         if (isToday) {
           for (final item in timeSlots) {
