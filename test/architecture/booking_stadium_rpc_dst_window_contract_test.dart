@@ -26,6 +26,12 @@ void main() {
       contains('final endOfDay = DateTime(date.year, date.month, date.day + 2);'),
     );
     expect(fetch, isNot(contains('startOfDay.add(const Duration(days: 2))')));
+    // Guard against a literal backslash-n accidentally commenting out the
+    // variable declaration while still satisfying a substring assertion.
+    expect(
+      fetch.split('\n').map((line) => line.trim()),
+      contains('final endOfDay = DateTime(date.year, date.month, date.day + 2);'),
+    );
     expect(fetch, contains('startOfDay.toUtc().toIso8601String()'));
     expect(fetch, contains('endOfDay.toUtc().toIso8601String()'));
   });
