@@ -89,7 +89,20 @@ class BookingSlotStreamSection extends StatelessWidget {
           );
         }
 
-        final existingBookings = snapshot.data ?? [];
+        // A completed stream without a verified bookings payload is not proof
+        // that the venue has zero bookings. Never offer selectable slots.
+        if (!snapshot.hasData) {
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر التحقق من المواعيد' : 'Availability not verified',
+            message: isArabic
+                ? 'لم تصل بيانات الحجوزات. أعد المحاولة قبل اختيار موعد.'
+                : 'Booking data was not received. Retry before choosing a slot.',
+            onRetry: onRetry,
+          );
+        }
+
+        final existingBookings = snapshot.data!;
 
         if (timeSlots.isEmpty) {
           return VSPStateView(
