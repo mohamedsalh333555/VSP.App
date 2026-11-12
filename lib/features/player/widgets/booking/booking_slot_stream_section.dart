@@ -15,7 +15,7 @@ import 'booking_slot_models.dart';
 /// Subscribes to the [BookingProvider] stream for the given [stadiumId] and
 /// [selectedDate] and maps each [TimeSlotItem] to a [BookingSlotCard],
 /// highlighting past, booked, selected, and next-available slots.
-class BookingSlotStreamSection extends StatelessWidget {
+class BookingSlotStreamSection extends StatefulWidget {
   final String stadiumId;
   final Stadium stadium;
   final DateTime selectedDate;
@@ -41,11 +41,43 @@ class BookingSlotStreamSection extends StatelessWidget {
     this.onRetry,
   });
 
+  @override
+  State<BookingSlotStreamSection> createState() => _BookingSlotStreamSectionState();
+}
+
+class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
+  late Stream<List<Booking>> _bookingsStream;
+
+  void _subscribe() {
+    _bookingsStream = Provider.of<BookingProvider>(context, listen: false)
+        .getBookingsForStadium(widget.stadiumId, widget.selectedDate);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribe();
+  }
+
+  @override
+  void didUpdateWidget(covariant BookingSlotStreamSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stadiumId != widget.stadiumId ||
+        oldWidget.selectedDate != widget.selectedDate) {
+      _subscribe();
+    }
+  }
+
+  void _retry() {
+    setState(_subscribe);
+    widget.onRetry?.call();
+  }
+
   bool _isSlotBooked(String slotKey, List<Booking> existingBookings) {
     return BookingSlotCalculator.isSlotBooked(
       slotKey: slotKey,
-      stadium: stadium,
-      selectedDate: selectedDate,
+      stadium: widget.stadium,
+      selectedDate: widget.selectedDate,
       existingBookings: existingBookings,
     );
   }
@@ -53,16 +85,15 @@ class BookingSlotStreamSection extends StatelessWidget {
   DateTime _getSlotDateTime(String slotKey) {
     return BookingSlotCalculator.getSlotDateTime(
       slotKey: slotKey,
-      stadium: stadium,
-      selectedDate: selectedDate,
+      stadium: widget.stadium,
+      selectedDate: widget.selectedDate,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Booking>>(
-      stream: Provider.of<BookingProvider>(context, listen: false)
-          .getBookingsForStadium(stadiumId, selectedDate),
+      stream: _bookingsStream,
       builder: (context, snapshot) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
@@ -85,7 +116,7 @@ class BookingSlotStreamSection extends StatelessWidget {
             message: isArabic
                 ? 'تعذر التأكد من الحجوزات الحالية. حاول مرة تانية قبل اختيار موعد.'
                 : 'Current bookings could not be verified. Retry before choosing a slot.',
-            onRetry: onRetry,
+            onRetry: _retry,
           );
         }
 
@@ -98,13 +129,13 @@ class BookingSlotStreamSection extends StatelessWidget {
             message: isArabic
                 ? 'لم تصل بيانات الحجوزات. أعد المحاولة قبل اختيار موعد.'
                 : 'Booking data was not received. Retry before choosing a slot.',
-            onRetry: onRetry,
+            onRetry: _retry,
           );
         }
 
         final existingBookings = snapshot.data!;
 
-        if (timeSlots.isEmpty) {
+        if (widget.timeSlots.isEmpty) {
           return VSPStateView(
             state: VSPUiState.empty,
             icon: Iconsax.clock_copy,
@@ -115,13 +146,13 @@ class BookingSlotStreamSection extends StatelessWidget {
           );
         }
         final now = VSPTimeService.now;
-        final bool isToday = selectedDate.year == now.year &&
-            selectedDate.month == now.month &&
-            selectedDate.day == now.day;
+        final bool isToday = widget.selectedDate.year == now.year &&
+            widget.selectedDate.month == now.month &&
+            widget.selectedDate.day == now.day;
 
         // Separate a fully booked day from a day without configured hours,
         // and from one where every slot has already passed.
-        final allSlotsBooked = timeSlots.every(
+        final allSlotsBooked = widget.timeSlots.every(
           (slot) => _isSlotBooked(slot.key, existingBookings),
         );
         if (allSlotsBooked) {
@@ -134,7 +165,7 @@ class BookingSlotStreamSection extends StatelessWidget {
                 : 'All slots for this date are booked. Try another date.',
           );
         }
-        final allSlotsPassed = timeSlots.every(
+        final allSlotsPassed = widget.timeSlots.every(
           (slot) => !_getSlotDateTime(slot.key).isAfter(now),
         );
         if (allSlotsPassed) {
@@ -150,7 +181,7 @@ class BookingSlotStreamSection extends StatelessWidget {
 
         String? firstUpcomingSlotKey;
         if (isToday) {
-          for (final item in timeSlots) {
+          for (final item in widget.timeSlots) {
             final dt = _getSlotDateTime(item.key);
             final booked = _isSlotBooked(item.key, existingBookings);
             if (dt.isAfter(now) && !booked) {
@@ -161,10 +192,10 @@ class BookingSlotStreamSection extends StatelessWidget {
         }
 
         return Column(
-          children: List.generate(timeSlots.length, (index) {
-            final slotItem = timeSlots[index];
+          children: List.generate(widget.timeSlots.length, (index) {
+            final slotItem = widget.timeSlots[index];
             final isBooked = _isSlotBooked(slotItem.key, existingBookings);
-            final isSelected = selectedTimeSlots.contains(slotItem.key);
+            final isSelected = widget.selectedTimeSlots.contains(slotItem.key);
             final slotDateTime = _getSlotDateTime(slotItem.key);
             final slotEndDateTime = slotDateTime.add(const Duration(minutes: 30));
             final isPast = slotDateTime.isBefore(now);
@@ -174,7 +205,7 @@ class BookingSlotStreamSection extends StatelessWidget {
 
             final isOvernightSlot = slotItem.startMinutes >= 1440;
             final bool isFirstOvernightSlot =
-                isOvernightSlot && (index == 0 || timeSlots[index - 1].startMinutes < 1440);
+                isOvernightSlot && (index == 0 || widget.timeSlots[index - 1].startMinutes < 1440);
             final String nextDayName = isOvernightSlot
                 ? DateFormat('EEEE', Localizations.localeOf(context).toString())
                     .format(slotDateTime)
@@ -189,7 +220,7 @@ class BookingSlotStreamSection extends StatelessWidget {
               isNextAvailable: isNextAvailable,
               isFirstOvernightSlot: isFirstOvernightSlot,
               nextDayName: nextDayName,
-              onTap: () => onSlotTap(slotItem.key, existingBookings),
+              onTap: () => widget.onSlotTap(slotItem.key, existingBookings),
             );
           }),
         );
