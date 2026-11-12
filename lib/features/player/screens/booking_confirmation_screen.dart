@@ -167,6 +167,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       _selectedTimeSlots
         ..clear()
         ..addAll(updated);
+      if (_selectedTimeSlots.isEmpty) _isBallRented = false;
     });
   }
 
