@@ -13,7 +13,7 @@ void main() {
       'snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)',
     )));
     expect(source, contains('state: VSPUiState.error'));
-    expect(source, contains('onRetry: onRetry'));
+    expect(source, contains('onRetry: _retry'));
     expect(source, contains('if (!snapshot.hasData) {'));
     expect(source, contains('final existingBookings = snapshot.data!;'));
     expect(source.indexOf('if (snapshot.hasError) {'),
