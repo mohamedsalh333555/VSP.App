@@ -305,23 +305,17 @@ class BookingQueryCoordinator {
   }
 
   /// Polls the scoped stadium-slot RPC so public users never receive private
-  /// booking fields. A failed read is never converted to an authoritative
-  /// empty schedule: the UI either retains the last verified snapshot or
-  /// receives an error on the initial load.
+  /// booking fields. After any failed refresh, terminate with an error rather
+  /// than leave an old successful snapshot selectable indefinitely. The UI
+  /// re-subscribes only when the user explicitly retries.
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) async* {
-    List<Booking>? lastVerified;
     while (true) {
       try {
         final refreshed = await fetchStadiumBookingsDirectly(stadiumId, date);
-        lastVerified = refreshed;
         yield refreshed;
       } catch (e, stack) {
-        if (lastVerified == null) {
-          Error.throwWithStackTrace(e, stack);
-        }
-        VSPLogger.w(
-          'Availability refresh failed; retaining the last verified snapshot',
-        );
+        VSPLogger.w('Availability refresh failed; booking selection disabled');
+        Error.throwWithStackTrace(e, stack);
       }
       await Future<void>.delayed(const Duration(seconds: 10));
     }
