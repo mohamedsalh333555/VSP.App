@@ -163,16 +163,12 @@ class BookingConfirmationHandler {
 
     // ── Pre-confirmation double-check ────────────────────────────────────────
     try {
-      List<Booking> currentBookings = [];
-      try {
-        currentBookings = await bookingProvider
-            .getBookingsForStadium(stadium.id, selectedDate)
-            .first
-            .timeout(const Duration(seconds: 4));
-      } catch (_) {
-        final repo = SupabaseBookingRepository();
-        currentBookings = await repo.fetchStadiumBookingsDirectly(stadium.id, selectedDate);
-      }
+      // Always query the authoritative booking-slot RPC at confirmation time.
+      // The polling stream can retain a previously verified snapshot after a
+      // refresh error, so its first event is not suitable for final validation.
+      final currentBookings = await SupabaseBookingRepository()
+          .fetchStadiumBookingsDirectly(stadium.id, selectedDate)
+          .timeout(const Duration(seconds: 10));
 
       if (!context.mounted) return;
       if (!isSameUser()) {
