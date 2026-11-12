@@ -23,8 +23,13 @@ void main() {
     final bookedIndex = source.indexOf('if (allSlotsBooked) {');
     final passedIndex = source.indexOf('if (allSlotsPassed) {');
     final cardsIndex = source.indexOf('return Column(\n          children: List.generate');
-    expect(emptyIndex, lessThan(bookedIndex));
-    expect(bookedIndex, lessThan(passedIndex));
-    expect(passedIndex, lessThan(cardsIndex));
+    final mixedIndex = source.indexOf('if (!hasBookableSlot) {');
+    expect(source, contains('final hasBookableSlot = widget.timeSlots.any('));
+    expect(source, contains('لا توجد مواعيد متبقية'));
+    expect(source, contains('No slots remaining'));
+    expect(emptyIndex, lessThan(passedIndex));
+    expect(passedIndex, lessThan(bookedIndex));
+    expect(bookedIndex, lessThan(mixedIndex));
+    expect(mixedIndex, lessThan(cardsIndex));
   });
 }
