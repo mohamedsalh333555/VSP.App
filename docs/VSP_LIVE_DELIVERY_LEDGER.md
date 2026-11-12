@@ -1,3 +1,11 @@
+## 2026-11-13 — Accepted 51.05 availability messages: 87 / 531
+
+- Canonical inventory checked: **618 tasks / 87 VERIFIED / 531 open** (group 56 remains cancelled).
+- **51.05** accepted for the *automated availability message contracts*: distinct no-schedule, all-past, all-booked, mixed booked/past, network/verification error and retry branches. Evidence: [acceptance scope](VSP_BOOKING_AVAILABILITY_COPY_ACCEPTANCE_51_05.md) and [Flutter CI run 43320006151](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43320006151).
+- This acceptance does **not** close 83.01 actual stadium-operating-hours diagnosis, 83.04 calendar RTL/device tests, or server booking/concurrency test tasks.
+- Separate analytics deduplication code and unit tests at commits `26e405e5` and `6e6210bf` are *not accepted* until an uncancelled passing CI run confirms them; 50.07 and 55.05 remain open.
+- No changes to production or main.
+
 ## 2026-11-13 — Acceptance progress audited: 86 accepted / 532 open
 
 - Canonical checklist recounted: **618 scoped tasks / 86 VERIFIED / 532 open**; group 56 (24 journeys) remains excluded.
