@@ -150,8 +150,21 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
             widget.selectedDate.month == now.month &&
             widget.selectedDate.day == now.day;
 
-        // Separate a fully booked day from a day without configured hours,
-        // and from one where every slot has already passed.
+        // A day can have a mixture of past and booked slots. Do not show a
+        // selectable-looking schedule when none remains available.
+        final allSlotsPassed = widget.timeSlots.every(
+          (slot) => !_getSlotDateTime(slot.key).isAfter(now),
+        );
+        if (allSlotsPassed) {
+          return VSPStateView(
+            state: VSPUiState.empty,
+            icon: Iconsax.clock_copy,
+            title: isArabic ? 'انتهت مواعيد اليوم' : 'All slots have passed',
+            message: isArabic
+                ? 'كل مواعيد اليوم أصبحت في الماضي. اختر يومًا آخر.'
+                : 'All available times for this date have passed. Choose another day.',
+          );
+        }
         final allSlotsBooked = widget.timeSlots.every(
           (slot) => _isSlotBooked(slot.key, existingBookings),
         );
@@ -165,17 +178,18 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
                 : 'All slots for this date are booked. Try another date.',
           );
         }
-        final allSlotsPassed = widget.timeSlots.every(
-          (slot) => !_getSlotDateTime(slot.key).isAfter(now),
+        final hasBookableSlot = widget.timeSlots.any(
+          (slot) => _getSlotDateTime(slot.key).isAfter(now) &&
+              !_isSlotBooked(slot.key, existingBookings),
         );
-        if (allSlotsPassed) {
+        if (!hasBookableSlot) {
           return VSPStateView(
             state: VSPUiState.empty,
             icon: Iconsax.clock_copy,
-            title: isArabic ? 'انتهت مواعيد اليوم' : 'All slots have passed',
+            title: isArabic ? 'لا توجد مواعيد متبقية' : 'No slots remaining',
             message: isArabic
-                ? 'كل مواعيد اليوم أصبحت في الماضي. اختر يومًا آخر.'
-                : 'All available times for this date have passed. Choose another day.',
+                ? 'المواعيد المتبقية محجوزة، والباقي انتهى. جرّب يومًا آخر.'
+                : 'Remaining slots are booked and earlier slots have passed. Try another date.',
           );
         }
 
