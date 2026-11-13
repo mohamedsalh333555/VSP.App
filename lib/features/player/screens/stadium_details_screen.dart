@@ -97,7 +97,11 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           onTap: () => _tabController.animateTo(index),
           child: AnimatedContainer(
           duration: VSPDSMotion.selection,
-          height: 48,
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(
+            horizontal: VSPSpacing.sm,
+            vertical: VSPSpacing.sm,
+          ),
           margin: EdgeInsets.zero,
           decoration: BoxDecoration(
             color: isSelected ? VSPColors.accent : VSPColors.transparent,
@@ -261,7 +265,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 color: VSPColors.background,
                 padding: const EdgeInsets.all(VSPSpacing.md),
                 child: Container(
-                  height: 48,
+                  constraints: const BoxConstraints(minHeight: 48),
                   decoration: BoxDecoration(
                     color: VSPColors.surface,
                     borderRadius: BorderRadius.circular(VSPRadius.xl),
