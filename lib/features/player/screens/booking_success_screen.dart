@@ -8,6 +8,7 @@ import 'package:confetti/confetti.dart';
 import 'dart:math';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/analytics_service.dart';
+import '../widgets/booking/booking_status_presentation.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 
@@ -38,12 +39,14 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  @override
  void initState() {
  super.initState();
- unawaited(
-   AnalyticsService.logBookingCompleted(
-     bookingId: widget.booking.id,
-     paymentMethod: widget.booking.paymentMethod,
-   ),
- );
+ if (BookingStatusPresentation.isConfirmed(widget.booking.status)) {
+   unawaited(
+     AnalyticsService.logBookingCompleted(
+       bookingId: widget.booking.id,
+       paymentMethod: widget.booking.paymentMethod,
+     ),
+   );
+ }
 
  // 1. Setup Confetti
  _confettiController = ConfettiController(duration: const Duration(seconds: 3));
@@ -93,6 +96,9 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Widget build(BuildContext context) {
  final l10n = AppLocalizations.of(context)!;
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+ final isBookingConfirmed = BookingStatusPresentation.isConfirmed(widget.booking.status);
+ final bookingStatusHeading = BookingStatusPresentation.heading(widget.booking.status, isArabic: isArabic);
+ final confirmationColor = isBookingConfirmed ? VSPColors.accent : VSPColors.warning;
 
  final shortRef = widget.booking.id.length >= 8 
  ? widget.booking.id.substring(0, 8).toUpperCase() 
@@ -150,14 +156,14 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  border: Border.all(color: VSPColors.accent, width: 3.5),
  color: VSPColors.accent.withValues(alpha: 0.1),
  ),
- child: const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 48),
+ child: Icon(isBookingConfirmed ? Iconsax.tick_circle_copy : Iconsax.clock_copy, color: confirmationColor, size: 48),
  ),
  ),
  const SizedBox(height: 20),
  
  // Title
  Text(
- l10n.bookingSuccess,
+ bookingStatusHeading,
  textAlign: TextAlign.center,
  style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 22),
  ),
@@ -167,17 +173,17 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Container(
    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
    decoration: BoxDecoration(
-     color: VSPColors.accentSoft,
+     color: confirmationColor.withValues(alpha: 0.12),
      borderRadius: BorderRadius.circular(VSPRadius.full),
-     border: Border.all(color: VSPColors.borderAccent),
+     border: Border.all(color: confirmationColor.withValues(alpha: 0.35)),
    ),
    child: Row(
      mainAxisSize: MainAxisSize.min,
      children: [
-       const Icon(Iconsax.verify_copy, color: VSPColors.accent, size: 15),
+       Icon(isBookingConfirmed ? Iconsax.verify_copy : Iconsax.clock_copy, color: confirmationColor, size: 15),
        const SizedBox(width: 6),
        Text(
-         isArabic ? 'الحجز مؤكد' : 'Booking confirmed',
+         bookingStatusHeading,
          style: const TextStyle(
            color: VSPColors.accent,
            fontWeight: FontWeight.w800,
