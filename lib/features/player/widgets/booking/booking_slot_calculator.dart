@@ -49,10 +49,9 @@ class BookingSlotCalculator {
       }
       if (startStr.isEmpty) startStr = stadium.openingTime;
       if (endStr.isEmpty) endStr = stadium.closingTime;
-      if (startStr.isEmpty && endStr.isEmpty) {
-        startStr = '04:00 PM';
-        endStr = '03:00 AM';
-      } else if (startStr.isEmpty || endStr.isEmpty) {
+      // Missing hours are not bookable: the server requires explicit
+      // opening_time and closing_time and rejects unconfigured schedules.
+      if (startStr.isEmpty || endStr.isEmpty) {
         return const <TimeSlotItem>[];
       }
       if (!_isValidTime(startStr) || !_isValidTime(endStr)) {
@@ -205,11 +204,9 @@ class BookingSlotCalculator {
     }
     if (openStr.isEmpty) openStr = stadium.openingTime;
     if (closeStr.isEmpty) closeStr = stadium.closingTime;
-    // Match the schedule generator: only use defaults if both are missing.
-    if (openStr.isEmpty && closeStr.isEmpty) {
-      openStr = '04:00 PM';
-      closeStr = '03:00 AM';
-    } else if (openStr.isEmpty || closeStr.isEmpty) {
+    // Match the schedule generator and server: missing hours fail closed
+    // instead of presenting fabricated 4 PM–3 AM booking availability.
+    if (openStr.isEmpty || closeStr.isEmpty) {
       throw FormatException('Incomplete stadium working hours');
     }
     if (!_isValidTime(openStr) || !_isValidTime(closeStr)) {
