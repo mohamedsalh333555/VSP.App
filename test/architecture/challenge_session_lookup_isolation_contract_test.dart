@@ -43,7 +43,16 @@ void main() {
     expect(scope, contains('final initiatingUserId ='));
     expect(scope, contains('generateChallengeCode(initiatingTeamId)'));
     expect(scope, contains('currentUser?.id != initiatingUserId'));
+    expect(scope, contains('setState(() => _isGeneratingCode = false);'));
     expect(scope, contains('_userTeam?.id != initiatingTeamId'));
     expect(scope, contains('_displayChallengeCodeBottomSheet(code);'));
   });
+  test('late 1v1 champion responses cannot repopulate another account', () {
+    final from = source.indexOf('Future<void> _check1v1ChampionForTeam(');
+    final to = source.indexOf('Future<void> _handleLookupCode()', from);
+    final scope = source.substring(from, to);
+    expect(scope, contains('final checkingUserId ='));
+    expect(scope, contains('currentUser?.id == checkingUserId'));
+  });
+
 }

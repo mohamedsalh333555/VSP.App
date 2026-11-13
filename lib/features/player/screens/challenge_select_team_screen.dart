@@ -262,9 +262,11 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
   Future<void> _check1v1ChampionForTeam(String teamId) async {
     if (_championStatusMap.containsKey(teamId)) return;
+    final checkingUserId = context.read<app_auth.AuthProvider>().currentUser?.id;
     try {
       final hasChamp = await TeamRepository().has1v1Champion(teamId);
-      if (mounted) {
+      if (mounted &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == checkingUserId) {
         setState(() {
           _championStatusMap[teamId] = hasChamp;
         });
@@ -419,9 +421,13 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
     try {
       final res = await TeamRepository().generateChallengeCode(initiatingTeamId);
-      if (!mounted ||
-          context.read<app_auth.AuthProvider>().currentUser?.id != initiatingUserId ||
-          _userTeam?.id != initiatingTeamId) return;
+      if (!mounted) return;
+      if (context.read<app_auth.AuthProvider>().currentUser?.id != initiatingUserId ||
+          _userTeam?.id != initiatingTeamId) {
+        // A switched team must not inherit an in-flight loading indicator.
+        setState(() => _isGeneratingCode = false);
+        return;
+      }
       setState(() => _isGeneratingCode = false);
 
       if (res['success'] != true || res['code'] == null) {
