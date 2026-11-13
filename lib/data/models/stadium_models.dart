@@ -267,6 +267,9 @@ class Stadium {
  contractUrl: data['contractUrl'] ?? data['contract_url'],
  ownerIdUrl: data['ownerIdUrl'] ?? data['owner_id_url'],
  isVerified: data['isVerified'] ?? data['is_verified'] ?? false,
+ // Administrative venue blocking is read-only in the public model. It must
+ // travel from the live database snapshot to the booking-availability gate.
+ isBlocked: (data['is_blocked'] ?? data['isBlocked']) == true,
  isFeatured: data['isFeatured'] ?? data['is_featured'] ?? false,
  ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
  openingTime: (data['opening_time'] ?? data['openingTime'] ?? data['features']?['workingHours']?['start'])?.toString() ?? '',
