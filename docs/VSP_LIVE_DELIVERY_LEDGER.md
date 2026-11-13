@@ -1,3 +1,9 @@
+## 2026-11-13 — Isolated final-seat pickup join race accepted (157/461)
+
+- **35.08** accepted as a **two-session native PostgreSQL concurrency contract**, not staging/production E2E. [CI 43473270739](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43473270739) passed, including independent SQL clients attempting the one remaining booking slot; one accepted, one refused with `BOOKING_FULL`, final row/roster counts consistent. [Evidence and open integration conditions](VSP_PICKUP_LAST_SLOT_CONCURRENCY_ACCEPTANCE_35_08.md).
+- This proves only the branch-only `accept_join_request` candidate under controlled isolation; related live entry-point mapping, applied migration, cross-account authorization, and physical device tests remain OPEN. No payment, customer, staging or production data was used/changed; no main merge.
+- **618 total / 157 VERIFIED / 461 open**.
+
 ## 2026-11-13 — Android release signing configuration audit accepted (156/462)
 
 - **60.07** accepted for a **source/config-only audit**: original-release-signing fail-closed guard, explicit debug-signed QA override, separate Shorebird signing secrets, ignored keystore files and manual build workflow. [Audit and unresolved certificate/Play checks](security/VSP_ANDROID_RELEASE_SIGNING_SOURCE_AUDIT_60_07_2026-11-13.md). No keystore, signature fingerprint, real APK, signing secret, production account or store delivery was accessed; clean release tasks remain OPEN.
