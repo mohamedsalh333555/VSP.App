@@ -47,6 +47,11 @@ class BookingBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    // The parent can briefly retain the previous slot's optional selection
+    // during date/network refreshes. Never display a stale add-on as selected
+    // or a previous booking total when there is no active slot selection.
+    final displayBallRented = isSlotSelected && isBallRented;
+    final displayTotalPrice = isSlotSelected ? totalPrice : 0.0;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -198,18 +203,18 @@ class BookingBottomBar extends StatelessWidget {
           if (hasBallOption) ...[
             GestureDetector(
               onTap: isSlotSelected && !isLoading
-                  ? () => onBallRentedChanged(!isBallRented)
+                  ? () => onBallRentedChanged(!displayBallRented)
                   : null,
               behavior: HitTestBehavior.opaque,
               child: AnimatedContainer(
                 duration: VSPDSMotion.navigationSwitch,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isBallRented ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surfaceAlt,
+                  color: displayBallRented ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(VSPRadius.lg),
                   border: Border.all(
-                    color: isBallRented ? VSPColors.accent : VSPColors.divider,
-                    width: isBallRented ? 1.5 : 1.0,
+                    color: displayBallRented ? VSPColors.accent : VSPColors.divider,
+                    width: displayBallRented ? 1.5 : 1.0,
                   ),
                 ),
                 child: Row(
@@ -224,7 +229,7 @@ class BookingBottomBar extends StatelessWidget {
                                 ? 'إيجار كرة / ${VSPMoneyFormatter.amount(ballPrice)} ج.م'
                                 : 'Ball / ${VSPMoneyFormatter.amount(ballPrice)} EGP',
                             style: TextStyle(
-                              color: isBallRented ? VSPColors.white : VSPColors.textPrimary,
+                              color: displayBallRented ? VSPColors.white : VSPColors.textPrimary,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ).merge(VSPTypography.numericStyle),
@@ -249,13 +254,13 @@ class BookingBottomBar extends StatelessWidget {
                       height: 24,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isBallRented ? VSPColors.accent : VSPColors.transparent,
+                        color: displayBallRented ? VSPColors.accent : VSPColors.transparent,
                         border: Border.all(
-                          color: isBallRented ? VSPColors.accent : VSPColors.textMuted,
+                          color: displayBallRented ? VSPColors.accent : VSPColors.textMuted,
                           width: 1.5,
                         ),
                       ),
-                      child: isBallRented
+                      child: displayBallRented
                           ? const Icon(Iconsax.tick_circle_copy, size: 16, color: VSPColors.black)
                           : null,
                     ),
@@ -288,7 +293,7 @@ class BookingBottomBar extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '${VSPMoneyFormatter.amount(totalPrice)} ${isArabic ? "ج.م" : "EGP"}',
+                        '${VSPMoneyFormatter.amount(displayTotalPrice)} ${isArabic ? "ج.م" : "EGP"}',
                         style: TextStyle(
                           color: isSlotSelected ? VSPColors.accent : VSPColors.textPrimary,
                           fontSize: 22,
