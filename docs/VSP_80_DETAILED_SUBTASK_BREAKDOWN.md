@@ -92,7 +92,8 @@
 | 80 | Security regression tests and advisor review | 8 |
 | 81 | Team profile achievement badges | 10 |
 | 82 | Rotating per-match team challenge consent code | 9 |
-| **الإجمالي** | **82 بندًا** | **620 مهمة** |
+| 83 | Stadium details and booking screenshot follow-up | 7 |
+| **الإجمالي** | **82 بندًا** | **618 مهمة** |
 
 
 > إثبات إغلاق 09.01 و10.08: [مصفوفة أحجام الأجهزة ومعايير قبول الاختلافات البصرية](VSP_RESPONSIVE_VISUAL_ACCEPTANCE_MATRIX.md)، commit `655e583aa365c04b3bc629b0425a471b963783a4`. هذا إغلاق للتعريف والتوثيق فقط؛ اختبارات Android واللقطات المرجعية لم تُنفذ بعد.
