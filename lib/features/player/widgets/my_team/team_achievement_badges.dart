@@ -71,8 +71,8 @@ class TeamAchievementBadges extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              // Full titles must remain available with large accessibility text.
+              softWrap: true,
               style: Theme.of(context).textTheme.labelSmall,
             ),
           ),

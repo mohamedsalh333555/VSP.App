@@ -191,8 +191,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
               Expanded(
                 child: Text(
                   isArabic ? 'خيارات المباراة الأخرى' : 'Other match options',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -283,8 +282,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                       children: [
                         Text(
                           title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
                           style: const TextStyle(
                             color: VSPColors.white,
                             fontWeight: FontWeight.bold,
@@ -294,8 +292,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                         const SizedBox(height: 4),
                         Text(
                           subtitle,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
                           style: const TextStyle(
                             color: VSPColors.textSecondary,
                             fontSize: 11.5,
