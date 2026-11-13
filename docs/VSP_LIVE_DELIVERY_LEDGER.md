@@ -1,3 +1,10 @@
+## 2026-11-13 — Operating-hours precedence and maintenance defect reproduction (116/502)
+
+- **66.02–66.06** accepted as **read-only source-precedence analysis, edge-case inventory, deterministic validator test and documented backend-authority decision only**. Evidence: [staging validator reproduction](security/VSP_STAGING_OPERATING_HOURS_GUARD_REPRO_2026-11-13.md) and [GitHub Issue #37](https://github.com/mohamedsalh333555/VSP.App/issues/37#issuecomment-6840270011).
+- The active `vsp_validate_stadium_booking_window` in staging returns `true` for a normal in-hours booking, **false** for the same booking with an expired non-null `maintenance_until` marker, and **true** for a booking ending before a future `maintenance_until` marker. This is a **reproduced logic defect for conditional inputs**, *not* proven live impact; 0 of 17 staging stadiums currently have a non-null maintenance marker. No booking/user/payment rows changed or read.
+- The server `trg_bookings_operating_window` is the authoritative booking guard; Flutter `features.workingHours` and `court_operating_hours` are not equivalent sources. **The defective maintenance predicate has not been repaired**; staging migration/rollback, live closure tests and task 66.07 remain open. Do not mark release ready from the new tally.
+- Recount: **618 total / 116 VERIFIED / 502 open**. Scope group 56 still cancelled. No `main` merge and no production/staging mutation.
+
 ## 2026-11-13 — Privileged RPC review triage accepted: 111 / 507
 
 - **77.02**: Classified 200 staging authenticated-executable SECURITY DEFINER overloads into financial/payment (21), admin/identity (36), booking/sports write (66) and other/utility (77) for **manual review prioritization**, not exploitability ranking. Source: [risk triage and execution-owner inventory](security/VSP_STAGING_PRIVILEGED_RPC_TRIAGE_2026-11-13.md).
