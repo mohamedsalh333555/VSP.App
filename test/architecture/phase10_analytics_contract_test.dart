@@ -60,6 +60,20 @@ void main() {
       );
     });
 
+    test('records an owner home entry only for the visible owner dashboard', () {
+      final source = _source(
+        'lib/features/owner/screens/owner_dashboard_screen.dart',
+      );
+      final service = _source('lib/core/services/analytics_service.dart');
+      expect(service, contains("ownerDashboardViewed = 'owner_dashboard_viewed'"));
+      expect(service, contains("dedupeKey: 'owner_dashboard_viewed:$ownerId'"));
+      expect(source, contains('if (widget.isHomeVisible) {'));
+      expect(source, contains('AnalyticsService.logOwnerDashboardViewed(ownerId: ownerId)'));
+      expect(source, contains('auth.isOwner ? auth.currentUser?.id : null'));
+      expect(source, contains('AnalyticsService.logOwnerDashboardViewed(ownerId: uid)'));
+      expect(source, contains('if (!oldWidget.isHomeVisible && widget.isHomeVisible)'));
+    });
+
     test('does not report financial completion before confirmation', () {
       final confirmation =
           _source('lib/features/player/screens/booking_confirmation_screen.dart');
