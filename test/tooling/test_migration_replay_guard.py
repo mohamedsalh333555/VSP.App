@@ -1,4 +1,6 @@
 import importlib.util
+import json
+from unittest.mock import patch
 from pathlib import Path
 import tempfile
 import unittest
@@ -68,6 +70,90 @@ class MigrationReplayGuardTest(unittest.TestCase):
             {"VSP_ALLOW_STAGING_MIGRATION": "1",
              "VSP_APPROVED_MIGRATION_REVIEW": "1"},
         )
+
+    def test_staging_history_preflight_allows_only_unapplied_version(self):
+        version = "20261113120000"
+        observed = []
+
+        class Response:
+            status = 200
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, traceback):
+                return False
+
+            def read(self, limit):
+                return b"[]"
+
+        def fake_open(request, timeout):
+            observed.append((request.full_url, json.loads(request.data), timeout))
+            return Response()
+
+        with patch.object(runner.urllib.request, "urlopen", fake_open):
+            runner.reject_applied_version(version, "synthetic_ci_token")
+        self.assertEqual(len(observed), 1)
+        self.assertIn(runner.STAGING_PROJECT_REF, observed[0][0])
+        self.assertEqual(observed[0][1]["query"],
+                         "SELECT version FROM supabase_migrations.schema_migrations "
+                         f"WHERE version = '{version}' LIMIT 1")
+        self.assertEqual(observed[0][2], 30)
+
+    def test_staging_history_preflight_rejects_applied_version(self):
+        version = "20261113120000"
+
+        class Response:
+            status = 200
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, traceback):
+                return False
+
+            def read(self, limit):
+                return json.dumps([{"version": version}]).encode()
+
+        with patch.object(runner.urllib.request, "urlopen", return_value=Response()):
+            with self.assertRaisesRegex(ValueError, "already applied"):
+                runner.reject_applied_version(version, "synthetic_ci_token")
+
+    def test_staging_history_preflight_fails_closed_on_unknown_results(self):
+        version = "20261113120000"
+
+        class Response:
+            status = 200
+
+            def __init__(self, body):
+                self.body = body
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, traceback):
+                return False
+
+            def read(self, limit):
+                return self.body[:limit]
+
+        for body in (
+            b'{"error":"forbidden"}', b'[{"version":"other"}]',
+            b'[{"version":null}]', b"not json",
+            b'[{"version":"20261113120000"},{"version":"20261113120000"}]',
+        ):
+            with self.subTest(body=body):
+                with patch.object(runner.urllib.request, "urlopen",
+                                  return_value=Response(body)):
+                    with self.assertRaises((ValueError, json.JSONDecodeError)):
+                        runner.reject_applied_version(version, "synthetic_ci_token")
+
+    def test_staging_history_preflight_rejects_malformed_version_without_http(self):
+        with patch.object(runner.urllib.request, "urlopen") as network:
+            with self.assertRaisesRegex(ValueError, "Invalid migration version"):
+                runner.reject_applied_version("1';drop table users;--", "synthetic_ci_token")
+            network.assert_not_called()
+
 
 
 if __name__ == "__main__":
