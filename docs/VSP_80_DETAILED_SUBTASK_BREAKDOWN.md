@@ -397,7 +397,7 @@
 - [ ] 29.03 — بناء إعادة المحاولة الآمنة
 - [ ] 29.04 — منع خصم مزدوج
 - [ ] 29.05 — استرجاع الحالة بعد العودة
-- [ ] 29.06 — اختبار مهلة الدفع
+- [x] 29.06 — اختبار مهلة الدفع — [client timeout test evidence](VSP_PAYMENT_TIMEOUT_CLIENT_ACCEPTANCE_29_06_2026-11-13.md) (50 ms simulated webhook timeout/cancel; Paymob sandbox and real provider reconciliation still open)
 - [ ] 29.07 — اختبار السيناريوهات الفاشلة
 - [ ] 29.08 — اختبار إعادة فتح التطبيق بعد فشل الدفع واستعادة الحالة
 

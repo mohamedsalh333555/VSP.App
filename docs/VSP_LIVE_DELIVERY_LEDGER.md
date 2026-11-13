@@ -1,3 +1,9 @@
+## 2026-11-13 — Payment timeout client simulation accepted (167/451)
+
+- **29.06** accepted specifically for **client-side webhook timeout, cancellation and recovery timer tests**, using the direct `PaymentCheckoutCoordinator` unit test and source inspection of `PaymentGatewayScreen`. See [detailed acceptance and limits](VSP_PAYMENT_TIMEOUT_CLIENT_ACCEPTANCE_29_06_2026-11-13.md) and [Flutter CI 43501718030](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43501718030) (1288 passed, 11 skipped). This simulated callback/cancel behavior; **not** live Paymob sandbox, a financial success claim, a 5-minute device test, or proof of no double charging. Tasks 29.03–29.05, 29.07–29.08 and 30.02–30.08 remain open.
+- The newest booking disclosure and payment logging code in `db9dec05` was awaiting fresh CI at this documentation checkpoint. The validated timer source and its tests are unchanged by those additions.
+- **Total 618 / scoped accepted 167 / open 451.** No `main` merge, staging/production payment mutations or schema deployment.
+
 ## 2026-11-13 — Booking price disclosures and sensitive payment logging (new CI pending, 166/452)
 
 - The [booking disclosure update](https://github.com/mohamedsalh333555/VSP.App/commit/ea913b36c60012dd799d73228e21f9a151e32561) made collective full-online payment explicit, stopped promising unconditional cash payment before location checks, and stopped a negative deposit remainder being disguised as 0 EGP. [Flutter CI 43504622650](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43504622650) identified **two older source-contract assertions** still requiring the previously unsafe `(totalPrice - deposit).clamp(0,...)` expression. Those tests have been revised to assert the new safer disclosure and remain runnable. This is an intentional change of contract, not an attempt to mask a runtime failure.
