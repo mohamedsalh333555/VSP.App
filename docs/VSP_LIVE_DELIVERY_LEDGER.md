@@ -1,3 +1,11 @@
+## 2026-11-13 — Staging metadata audit acceptance batch: 101 / 517
+
+- Canonical checklist recount: **618 tasks / 101 VERIFIED / 517 open**; group 56 remains retired. Previous verified count 89, this audit accepted **12 inventory/classification-only items**: `65.01`, `65.03`, `66.01`, `68.01`, `70.01`, `73.01`, `74.01`, `74.02`, `75.01`, `75.02`, `76.02`, `77.01`.
+- Sources: [staging schema/queues/Auth/view grants](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md), [full 200 RPC inventory](security/VSP_STAGING_PRIVILEGED_RPC_INVENTORY_2026-11-13.md), [44 initplan and 50 multiple-permissive advisor findings](security/VSP_STAGING_RLS_ADVISOR_INVENTORY_2026-11-13.md).
+- Scope is *read-only metadata review on vsp-staging* `vtwgqyxglevcsxwdmhop`. No production access or database/auth mutation. **200 privileged callable RPC warnings are not 200 confirmed exploitable vulnerabilities.** Current historical-definer views are all `security_invoker=true`, but role and RLS negative tests remain open.
+- Refund queues, `court_operating_hours` and `challenge_results` had 0 rows in staging. No data-driven refund, scheduling, challenge-result, authorization or production safety conclusions were accepted. Remaining related implementation/tests stay open.
+- Current checkout, owner-analytics and anti-fabricated-scarcity code changes are not counted as accepted tasks pending an uncancelled passing CI run and scoped criteria evidence.
+
 ## 2026-11-13 — Analytics deduplication accepted (89/529)
 
 - Verified uncancelled successful [Flutter CI run 43326492976](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43326492976) at `b19f7d9e`, covering `AnalyticsSessionDedupe` tests and repository architecture guards. iOS build and Android public smoke also green on that commit.
