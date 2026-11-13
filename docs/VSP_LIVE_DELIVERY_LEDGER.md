@@ -1,3 +1,9 @@
+## 2026-11-13 — Verified badge source tracing accepted (153/465)
+
+- **81.02 and 81.05** accepted as **source-inventory-only**, not deployed or displayed achievements. [Official winner and current roster sources](security/VSP_VERIFIED_TEAM_BADGE_SOURCE_AUDIT_2026-11-13.md) were mapped from deployed RPC and schema with read-only aggregate SQL: 0 venue-owner-completed approved team titles, 0 completed 1v1 champions and 12 teams in Staging.
+- **UI gap remains:** `MyTeamScreen` does not pass `verifiedSummary`, and legacy `check_team_has_1v1_champion` may return stale/unverified flags. Tasks 81.07/81.09/81.10 remain open; no UI, DB or production change made.
+- **618 total / 153 VERIFIED / 465 open**.
+
 ## 2026-11-13 — Scoped Flutter UI and policy inventory acceptance (151/467)
 
 - **Five accepted scoped tasks:** `67.04` legacy notification template tests, `67.07` synthetic in-app legacy render tests, `83.05` stadium owner prose/stock label translation, `83.07` ball option/no-slot and UI total tests, `75.03` staging RLS overlap audit. These are test/UI/source-inventory deliverables, **not** production notification delivery, cross-account RLS proof or Paymob settlement.
