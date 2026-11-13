@@ -24,7 +24,9 @@ void main() {
     );
     expect(bar, contains("isArabic ? 'إجمالي الحجز' : 'Booking total'"));
     expect(bar, isNot(contains("isArabic ? 'المبلغ المطلوب' : 'Amount due'")));
-    expect(bar, contains('VSPMoneyFormatter.amount(totalPrice)'));
+    // A stale price cannot be displayed when the selected time slots vanish.
+    expect(bar, contains('isSlotSelected ? totalPrice : 0.0'));
+    expect(bar, contains('VSPMoneyFormatter.amount(displayTotalPrice)'));
     expect(bar, contains('VSPMoneyFormatter.amount(depositAmount)'));
     expect(summary, contains('عربون الحجز المطلوب'));
     expect(summary, contains('Upfront Deposit Required'));
