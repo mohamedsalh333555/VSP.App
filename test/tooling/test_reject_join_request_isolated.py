@@ -42,6 +42,27 @@ class RejectRunnerSafetyTest(unittest.TestCase):
     def test_safe_local_target(self):
         runner.only_disposable_local_pg(self.safe)
 
+    def test_psql_forces_loopback_and_discards_environment_redirects(self):
+        import os
+        import subprocess
+        from unittest.mock import patch
+
+        unsafe = {**self.safe,
+                  "PGHOSTADDR": "203.0.113.15", "PGSERVICE": "production",
+                  "PGSERVICEFILE": "/tmp/unsafe-service",
+                  "PGOPTIONS": "-c role=service_role"}
+        with patch.dict(os.environ, unsafe, clear=True):
+            with patch.object(runner.subprocess, "run",
+                              return_value=subprocess.CompletedProcess(["psql"], 0)) as mocked:
+                runner.psql("postgres", command="SELECT 1")
+        argv = mocked.call_args.args[0]
+        forwarded = mocked.call_args.kwargs["env"]
+        for expected in ("--host=127.0.0.1", "--port=5432", "--username=postgres"):
+            self.assertIn(expected, argv)
+        for blocked in ("PGHOSTADDR", "PGSERVICE", "PGSERVICEFILE", "PGOPTIONS",
+                        "PGHOST", "PGUSER", "PGDATABASE", "PGPORT"):
+            self.assertNotIn(blocked, forwarded)
+
 
 if __name__ == "__main__":
     unittest.main()

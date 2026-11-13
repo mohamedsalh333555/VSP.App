@@ -40,6 +40,27 @@ class IsolatedBookingWindowContractRunnerTest(unittest.TestCase):
         self.assertIn("v_break_start_ts := v_open_ts::date", candidate)
         self.assertNotIn("do $$", baseline.lower())
 
+    def test_psql_forces_loopback_and_discards_environment_redirects(self):
+        import os
+        import subprocess
+        from unittest.mock import patch
+
+        unsafe = {**self.env,
+                  "PGHOSTADDR": "203.0.113.15", "PGSERVICE": "production",
+                  "PGSERVICEFILE": "/tmp/unsafe-service",
+                  "PGOPTIONS": "-c role=service_role"}
+        with patch.dict(os.environ, unsafe, clear=True):
+            with patch.object(runner.subprocess, "run",
+                              return_value=subprocess.CompletedProcess(["psql"], 0)) as mocked:
+                runner.run_psql("SELECT 1")
+        argv = mocked.call_args.args[0]
+        forwarded = mocked.call_args.kwargs["env"]
+        for expected in ("--host=127.0.0.1", "--port=5432", "--username=postgres"):
+            self.assertIn(expected, argv)
+        for blocked in ("PGHOSTADDR", "PGSERVICE", "PGSERVICEFILE", "PGOPTIONS",
+                        "PGHOST", "PGUSER", "PGDATABASE", "PGPORT"):
+            self.assertNotIn(blocked, forwarded)
+
 
 if __name__ == "__main__":
     unittest.main()

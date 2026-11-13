@@ -11,6 +11,15 @@ BASELINE = ROOT / "supabase/tests/baseline_reject_join_request_staging_20261113.
 CANDIDATE = ROOT / "supabase/migrations/20261113172000_guard_reject_join_request_authorization.sql"
 CONTRACT = ROOT / "supabase/tests/reject_join_request_isolated_contract.sql"
 
+def isolated_psql_environment(env: dict[str, str]) -> dict[str, str]:
+    """Strip libpq redirects; the subprocess must use its explicit loopback CLI target."""
+    unsafe = {
+        "PGHOSTADDR", "PGHOST", "PGPORT", "PGDATABASE", "PGUSER",
+        "PGSERVICE", "PGSERVICEFILE", "PGOPTIONS", "PGPASSFILE",
+    }
+    return {key: value for key, value in env.items() if key not in unsafe}
+
+
 
 def only_disposable_local_pg(env: dict[str, str]) -> None:
     if env.get("VSP_CONTRACT_ISOLATED") != "1":
@@ -33,10 +42,13 @@ def extract_function(path: Path) -> str:
 
 
 def psql(dbname: str, *, content: str | None = None, command: str | None = None):
-    argv = ["psql", "-X", "--no-psqlrc", "-d", dbname, "-v", "ON_ERROR_STOP=1", "-q"]
+    argv = ["psql", "-X", "--no-psqlrc", "--host=127.0.0.1", "--port=5432",
+            "--username=postgres", "--dbname=" + dbname,
+            "-v", "ON_ERROR_STOP=1", "-q"]
     if command is not None:
         argv.extend(["-c", command])
-    return subprocess.run(argv, input=content, text=True, capture_output=True, timeout=60)
+    return subprocess.run(argv, input=content, text=True, capture_output=True,
+                          env=isolated_psql_environment(dict(os.environ)), timeout=60)
 
 
 def main() -> int:

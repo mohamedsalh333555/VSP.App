@@ -16,6 +16,15 @@ BASELINE = ROOT / "supabase/migrations/20261006005321_enforce_booking_operating_
 CANDIDATE = ROOT / "supabase/migrations/20261113143000_fix_expired_stadium_maintenance_booking_guard.sql"
 CONTRACT = ROOT / "supabase/tests/booking_operating_maintenance_guard_contract.sql"
 
+def isolated_psql_environment(env: dict[str, str]) -> dict[str, str]:
+    """Strip libpq redirects; the subprocess must use its explicit loopback CLI target."""
+    unsafe = {
+        "PGHOSTADDR", "PGHOST", "PGPORT", "PGDATABASE", "PGUSER",
+        "PGSERVICE", "PGSERVICEFILE", "PGOPTIONS", "PGPASSFILE",
+    }
+    return {key: value for key, value in env.items() if key not in unsafe}
+
+
 
 def assert_isolated_environment(env: dict[str, str]) -> None:
     if env.get("VSP_CONTRACT_ISOLATED") != "1":
@@ -47,10 +56,13 @@ def extract_validator_definition(path: Path) -> str:
 
 def run_psql(sql: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["psql", "--no-psqlrc", "-X", "-v", "ON_ERROR_STOP=1", "-q"],
+        ["psql", "--no-psqlrc", "-X", "--host=127.0.0.1",
+         "--port=5432", "--username=postgres",
+         "--dbname=vsp_security_contracts", "-v", "ON_ERROR_STOP=1", "-q"],
         input=sql,
         text=True,
         capture_output=True,
+        env=isolated_psql_environment(dict(os.environ)),
         timeout=55,
         check=False,
     )

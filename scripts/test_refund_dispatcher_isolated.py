@@ -14,6 +14,23 @@ ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "supabase/migrations/20261113160000_guard_refund_dispatcher_project_isolation.sql"
 CONTRACT = ROOT / "supabase/tests/refund_dispatcher_isolated_contract.sql"
 
+def isolated_psql_environment(env: dict[str, str]) -> dict[str, str]:
+    """Strip libpq redirects; the subprocess must use its explicit loopback CLI target."""
+    unsafe = {
+        "PGHOSTADDR", "PGHOST", "PGPORT", "PGDATABASE", "PGUSER",
+        "PGSERVICE", "PGSERVICEFILE", "PGOPTIONS", "PGPASSFILE",
+    }
+    return {key: value for key, value in env.items() if key not in unsafe}
+
+def contract_psql_args(database: str) -> list[str]:
+    """Always use a numeric local host, fixed port and ephemeral fixture owner."""
+    if database not in ("postgres", "vsp_refund_contracts"):
+        raise RuntimeError("Unexpected isolated SQL database")
+    return ["psql", "-X", "--no-psqlrc", "--host=127.0.0.1",
+            "--port=5432", "--username=postgres", "--dbname=" + database,
+            "-v", "ON_ERROR_STOP=1", "-q"]
+
+
 
 def verify_local_fixture_target(env: dict[str, str]) -> None:
     if env.get("VSP_CONTRACT_ISOLATED") != "1":
@@ -52,28 +69,29 @@ def main() -> int:
     # avoids clashing with those tables (and cannot change their data).
     isolated_db = "vsp_refund_contracts"
     create = subprocess.run(
-        ["psql", "-X", "--no-psqlrc", "-d", "postgres", "-v",
-         "ON_ERROR_STOP=1", "-c", f"CREATE DATABASE {isolated_db}"],
+        contract_psql_args("postgres") + ["-c", f"CREATE DATABASE {isolated_db}"],
         text=True, capture_output=True, timeout=20, check=False,
+        env=isolated_psql_environment(dict(os.environ)),
     )
     if create.returncode != 0:
         print("REFUND_TEST_DATABASE_CREATION_FAILED", file=sys.stderr)
         return 1
     try:
         completed = subprocess.run(
-            ["psql", "-X", "--no-psqlrc", "-d", isolated_db,
-             "-v", "ON_ERROR_STOP=1", "-q"],
+            contract_psql_args(isolated_db),
             input="BEGIN;\n" + fixture + "\nROLLBACK;\n",
             text=True, capture_output=True, timeout=55, check=False,
+            env=isolated_psql_environment(dict(os.environ)),
         )
     finally:
         # This separate database exists only inside the isolated CI Postgres
         # service. Destroy it even when the contract itself fails.
         drop = subprocess.run(
-            ["psql", "-X", "--no-psqlrc", "-d", "postgres", "-v",
-             "ON_ERROR_STOP=1", "-c",
-             f"DROP DATABASE IF EXISTS {isolated_db} WITH (FORCE)"],
+            contract_psql_args("postgres") + [
+                "-c", f"DROP DATABASE IF EXISTS {isolated_db} WITH (FORCE)"
+            ],
             text=True, capture_output=True, timeout=20, check=False,
+        env=isolated_psql_environment(dict(os.environ)),
         )
         if drop.returncode != 0:
             raise RuntimeError("Could not clean up disposable refund test database")

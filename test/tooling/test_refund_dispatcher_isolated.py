@@ -43,6 +43,27 @@ class RefundDispatcherFixtureTest(unittest.TestCase):
     def test_staging_guard_requires_explicit_local_project_ref(self):
         runner.verify_local_fixture_target(self.base)
 
+    def test_all_refund_sql_subprocesses_are_loopback_only(self):
+        import os
+        import subprocess
+        from unittest.mock import patch
+
+        unsafe = {**self.base, "PGHOSTADDR": "203.0.113.15",
+                  "PGSERVICE": "production", "PGOPTIONS": "-c role=service_role"}
+        with patch.dict(os.environ, unsafe, clear=True):
+            with patch.object(runner.subprocess, "run",
+                              return_value=subprocess.CompletedProcess(["psql"], 0)) as mocked:
+                self.assertEqual(runner.main(), 0)
+        self.assertEqual(mocked.call_count, 3)
+        for call in mocked.call_args_list:
+            argv = call.args[0]
+            forwarded = call.kwargs["env"]
+            for expected in ("--host=127.0.0.1", "--port=5432", "--username=postgres"):
+                self.assertIn(expected, argv)
+            for blocked in ("PGHOSTADDR", "PGSERVICE", "PGSERVICEFILE",
+                            "PGOPTIONS", "PGHOST", "PGDATABASE", "PGUSER"):
+                self.assertNotIn(blocked, forwarded)
+
 
 if __name__ == "__main__":
     unittest.main()
