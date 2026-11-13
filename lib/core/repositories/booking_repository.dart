@@ -5,6 +5,7 @@ import '../../data/models.dart';
 import '../services/logger_service.dart';
 import '../services/notification_handler.dart';
 import 'booking/booking_cancellation_coordinator.dart';
+import 'booking/cash_collection_validation.dart';
 import 'booking/booking_creation_coordinator.dart';
 import 'booking/booking_query_coordinator.dart';
 import 'booking/booking_reconciliation_service.dart';
@@ -175,8 +176,8 @@ class SupabaseBookingRepository implements BookingRepository {
           })
           .eq('id', bookingId);
       return true;
-    } catch (e) {
-      debugPrint('Error updating booking status: $e');
+    } catch (_) {
+      debugPrint('Booking status update failed (details redacted)');
       return false;
     }
   }
@@ -224,44 +225,69 @@ class SupabaseBookingRepository implements BookingRepository {
 
   @override
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
+    // There is no authorized reversal RPC in this flow. Never claim a
+    // transition to unpaid succeeded when nothing was written to the server.
+    if (!isPaid) return false;
+
     try {
-      final b = await getBookingById(bookingId);
-      if (b == null) return false;
+      final booking = await getBookingById(bookingId);
+      if (booking == null) return false;
 
-      if (isPaid) {
-        final double remainingCash = (b.totalPrice - b.depositPaid).clamp(0.0, 999999.0);
-        final double actualCashPaid = (remainingCash > 0 && b.depositPaid > 0) ? remainingCash : b.totalPrice;
+      // Idempotent confirmation must not collect twice or send duplicate
+      // receipts. Inconsistent paid flags require authoritative repair.
+      if (booking.isPaid &&
+          (booking.paymentStatus == 'paid' ||
+              booking.paymentStatus == 'fully_paid')) {
+        return true;
+      }
+      if (booking.paymentStatus == 'paid' ||
+          booking.paymentStatus == 'fully_paid') {
+        return false;
+      }
 
-        final rpcRes = await _supabase.rpc('confirm_cash_booking_atomic', params: {
-          'p_booking_id': bookingId,
-          'p_owner_id': b.ownerId,
-          'p_total_price': b.totalPrice,
-          'p_collected_amount': actualCashPaid,
-        });
+      // A digital deposit is not cash. Collect only the remaining verified
+      // portion, never the full total again after a complete deposit.
+      final cashDue = CashCollectionValidation.calculateDue(
+        totalPrice: booking.totalPrice,
+        depositPaid: booking.depositPaid,
+        paymentMethod: booking.paymentMethod,
+        paymentStatus: booking.paymentStatus,
+      );
+      if (cashDue == null) return false;
 
-        if (rpcRes is Map && rpcRes['success'] == false) {
-          VSPLogger.w('RPC confirm_cash_booking_atomic returned error: ${rpcRes['message']}');
-          return false;
-        }
+      final rpcRes = await _supabase.rpc('confirm_cash_booking_atomic', params: {
+        'p_booking_id': bookingId,
+        'p_owner_id': booking.ownerId,
+        'p_total_price': booking.totalPrice,
+        'p_collected_amount': cashDue,
+      });
 
-        final String playerUserId = b.userId;
+      // Only an explicit server-confirmed success may update payment UI.
+      if (rpcRes is! Map || rpcRes['success'] != true) {
+        VSPLogger.w('Cash collection was not confirmed (details redacted)');
+        return false;
+      }
+      if (rpcRes['already_confirmed'] == true) {
+        return true; // Retry/replay: never dispatch another receipt.
+      }
 
-        if (playerUserId.isNotEmpty && playerUserId != b.ownerId) {
-          try {
-            await NotificationHandler.notifyPaymentReceived(
-              recipientId: playerUserId,
-              userName: b.stadiumName,
-              amount: actualCashPaid,
-              bookingId: bookingId,
-            );
-          } catch (e) {
-            VSPLogger.w('Skip player payment notification: $e');
-          }
+      final playerUserId = booking.userId;
+      if (playerUserId.isNotEmpty && playerUserId != booking.ownerId) {
+        try {
+          await NotificationHandler.notifyPaymentReceived(
+            recipientId: playerUserId,
+            userName: booking.stadiumName,
+            amount: cashDue,
+            bookingId: bookingId,
+          );
+        } catch (_) {
+          // Collection has succeeded; notification failure cannot undo it.
+          VSPLogger.w('Player payment receipt notification failed (details redacted)');
         }
       }
       return true;
-    } catch (e) {
-      debugPrint('Error updating payment status via RPC: $e');
+    } catch (_) {
+      debugPrint('Cash payment confirmation failed (details redacted)');
       return false;
     }
   }
