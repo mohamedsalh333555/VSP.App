@@ -66,7 +66,7 @@ void main() {
       );
       final service = _source('lib/core/services/analytics_service.dart');
       expect(service, contains("ownerDashboardViewed = 'owner_dashboard_viewed'"));
-      expect(service, contains("dedupeKey: 'owner_dashboard_viewed:$ownerId'"));
+      expect(service, contains(r"dedupeKey: 'owner_dashboard_viewed:$ownerId'"));
       expect(source, contains('if (widget.isHomeVisible) {'));
       expect(source, contains('AnalyticsService.logOwnerDashboardViewed(ownerId: ownerId)'));
       expect(source, contains('auth.isOwner ? auth.currentUser?.id : null'));
