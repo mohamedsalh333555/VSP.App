@@ -69,6 +69,10 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_blocked_admin_policy_plan.py -v
       - name: Execute SQL authorization suites and negative gate controls
         run: python3 scripts/run_account_security_contracts.py
+      - name: Verify isolated booking validator runner guard and SQL parsing
+        run: python3 -m unittest discover -s test/tooling -p test_booking_window_contract_runner.py -v
+      - name: Verify booking maintenance and overnight split-break SQL on isolated Postgres
+        run: python3 scripts/test_booking_window_function_isolated.py
       - name: Verify an existing contract database cannot be reinitialised
         run: |
           python3 - <<'PY'
