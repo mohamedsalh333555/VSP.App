@@ -148,8 +148,7 @@ class AppDateFormatter {
     }
     final local = dateTime.toLocal();
     if (local.hour < shiftStartHour) {
-      final prev = local.subtract(const Duration(days: 1));
-      return DateTime(prev.year, prev.month, prev.day);
+      return addCivilDays(local, -1);
     }
     return DateTime(local.year, local.month, local.day);
   }

@@ -53,6 +53,13 @@ jobs:
           test/core/services/registration_profile_provisioning_test.dart
       - name: Architecture regression gate
         run: flutter test test/architecture
+      - name: Verify Cairo DST booking calendar and operational dates
+        env:
+          TZ: Africa/Cairo
+        run: >-
+          flutter test --concurrency=1
+          test/core/utils/booking_civil_day_time_test.dart
+          test/unit/booking_server_operating_hours_precedence_test.dart
       - name: Test
         # Bound worker creation on hosted runners. The suite is large enough
         # that default CPU-based concurrency can exhaust the process/thread

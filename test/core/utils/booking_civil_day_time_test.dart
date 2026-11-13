@@ -24,7 +24,9 @@ void main() {
         final expected = DateTime(start.year, start.month, start.day + i);
         expect([days[i].year,days[i].month,days[i].day],
                [expected.year,expected.month,expected.day]);
-        expect(days[i].hour, 0);
+        // Cairo's spring transition has no local 00:00, so that day can
+        // naturally normalize to 01:00; compare civil calendar identity.
+        expect(days[i].hour, expected.hour);
       }
     }
   });
@@ -35,4 +37,18 @@ void main() {
     );
     expect(following, DateTime(2026, 10, 30));
   });
+  test('operational date goes to previous civil day before shift cutoff', () {
+    final early = DateTime(2026, 4, 24, 1, 30);
+    final businessDate = AppDateFormatter.getOperationalDate(early);
+    expect(
+      [businessDate.year, businessDate.month, businessDate.day],
+      [2026, 4, 23],
+    );
+    final late = AppDateFormatter.getOperationalDate(DateTime(2026, 10, 30, 9));
+    expect(
+      [late.year, late.month, late.day],
+      [2026, 10, 30],
+    );
+  });
+
 }
