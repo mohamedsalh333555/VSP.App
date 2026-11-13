@@ -120,8 +120,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         _isLoadingUserTeam = false;
         _hasUserTeamLoadError = false;
       });
-    } catch (e) {
-      debugPrint('Failed to verify challenge captain team: $e');
+    } catch (_) {
+      debugPrint('Challenge captain team verification failed (details redacted)');
       if (!mounted ||
           generation != _teamRequestGeneration ||
           context.read<app_auth.AuthProvider>().currentUser?.id != uid) {
@@ -228,8 +228,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           ),
         ),
       );
-    } catch (e) {
-      debugPrint('Failed to verify team before challenge booking: $e');
+    } catch (_) {
+      debugPrint('Challenge booking team verification failed (details redacted)');
       if (mounted) {
         VSPFeedback.showError(
           context,
@@ -252,8 +252,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           _championStatusMap[teamId] = hasChamp;
         });
       }
-    } catch (e) {
-      debugPrint('Error checking 1v1 champion for team $teamId: $e');
+    } catch (_) {
+      debugPrint('Team champion status lookup failed (details redacted)');
     }
   }
 

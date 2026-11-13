@@ -81,8 +81,8 @@ class StadiumRepository {
           .map((data) => Stadium.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
           .toList();
       yield initialList;
-    } catch (e) {
-      VSPLogger.w('Initial REST fetch for owner stadiums notice: $e');
+    } catch (_) {
+      VSPLogger.w('Initial owner stadium fetch failed (details redacted)');
     }
 
     // 2. Realtime Stream updates with error handling
@@ -94,8 +94,8 @@ class StadiumRepository {
             .where((data) => data['is_deleted_by_owner'] != true)
             .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
             .toList())
-        .handleError((error) {
-      VSPLogger.w('Realtime stream error for owner stadiums (handled): $error');
+        .handleError((_) {
+      VSPLogger.w('Owner stadium stream failed (details redacted)');
       return <Stadium>[];
     });
   }
@@ -131,11 +131,11 @@ class StadiumRepository {
       
       VSPLogger.i(' Stadium successfully added to Supabase: ${response['id']}');
       return response['id']?.toString();
-    } catch (e, stack) {
+    } catch (e) {
       if (e.toString().contains('باقتك') || e.toString().contains('الحد الأقصى')) {
         rethrow;
       }
-      VSPLogger.e(' CRITICAL ERROR IN addStadium', e, stack);
+      VSPLogger.e('Stadium creation failed (details redacted)');
       return null;
     }
   }
@@ -157,8 +157,8 @@ class StadiumRepository {
           .select('id, is_verified')
           .maybeSingle();
       return response != null;
-    } catch (e, stack) {
-      VSPLogger.e(' CRITICAL ERROR IN updateStadium', e, stack);
+    } catch (_) {
+      VSPLogger.e('Stadium update failed (details redacted)');
       return false;
     }
   }
@@ -374,8 +374,8 @@ class StadiumRepository {
         'items': items,
         'lastDoc': startIndex + items.length,
       };
-    } catch (e) {
-      VSPLogger.e('FAILED TO FETCH STADIUMS', e);
+    } catch (_) {
+      VSPLogger.e('Stadium listing failed (details redacted)');
       rethrow;
     }
   }
@@ -410,8 +410,8 @@ class StadiumRepository {
         params: {'p_stadium_id': stadiumId},
       );
       return result is Map && result['success'] == true;
-    } catch (e) {
-      VSPLogger.e('Error deleting stadium', e);
+    } catch (_) {
+      VSPLogger.e('Stadium deletion failed (details redacted)');
       rethrow;
     }
   }
@@ -424,8 +424,8 @@ class StadiumRepository {
           .eq('owner_id', ownerId)
           .neq('is_deleted_by_owner', true);
       return (remaining as List).isNotEmpty;
-    } catch (e, stack) {
-      VSPLogger.e('Error checking remaining stadiums for $ownerId', e, stack);
+    } catch (_) {
+      VSPLogger.e('Remaining owner stadium check failed (details redacted)');
       return false;
     }
   }
@@ -530,8 +530,8 @@ class StadiumRepository {
       return (res as List)
           .map((d) => Stadium.fromFirestore(d as Map<String, dynamic>, d['id'].toString()))
           .toList();
-    } catch (e, stack) {
-      VSPLogger.e('Error fetching stadiums by IDs: $ids', e, stack);
+    } catch (_) {
+      VSPLogger.e('Stadium batch lookup failed (details redacted)');
       return [];
     }
   }
@@ -552,8 +552,8 @@ class StadiumRepository {
               ))
           .where((stadium) => stadium.isVerified && !stadium.isBlocked)
           .toList(growable: false);
-    } catch (e) {
-      VSPLogger.e('FAILED TO FETCH NEARBY STADIUMS', e);
+    } catch (_) {
+      VSPLogger.e('Nearby stadium lookup failed (details redacted)');
       rethrow;
     }
   }

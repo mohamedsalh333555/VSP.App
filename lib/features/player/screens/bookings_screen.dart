@@ -76,8 +76,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
           _hasTeamContextError = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading player bookings/team context: $e');
+    } catch (_) {
+      debugPrint('Player booking team context unavailable (details redacted)');
       if (mounted &&
           generation == _userScopeGeneration &&
           context.read<app_auth.AuthProvider>().currentUser?.id == userId) {

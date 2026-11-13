@@ -140,8 +140,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           _hasUserTeamLoadError = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading booking team context: $e');
+    } catch (_) {
+      debugPrint('Booking team context unavailable (details redacted)');
       if (mounted &&
           generation == _userTeamRequestGeneration &&
           context.read<AuthProvider>().currentUser?.id == userId) {
