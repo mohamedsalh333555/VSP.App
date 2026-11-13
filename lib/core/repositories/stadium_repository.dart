@@ -6,7 +6,12 @@ import '../services/logger_service.dart';
 import 'stadium/stadium_payload_builder.dart';
 
 class StadiumRepository {
-  SupabaseClient get _supabase => Supabase.instance.client;
+  // Optional client injection permits real repository request-flow tests with
+  // a local HTTP stub, without touching staging or production.
+  final SupabaseClient? _client;
+  StadiumRepository({SupabaseClient? client}) : _client = client;
+
+  SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
   // Get all verified stadiums with server-side filtering
   Stream<List<Stadium>> getStadiums({int limit = 50}) {
