@@ -1,3 +1,10 @@
+## 2026-11-13 — Staging legacy 1v1 and challenge result preservation decisions (145/473)
+
+- Read-only Staging aggregate and unique-index review: legacy \`vsp_1v1_registrations=0\`, current tournament players=16 across two tournaments, no repeated current \`(tournament_id,user_id)\` keys, legacy \`challenge_results=0\`, and 20 confirmed booking-side challenge result statuses. Counts do not establish production historical integrity.
+- Six **data review and source-retention decision** tasks accepted in a narrow scope: \`69.04\`, \`69.05\`, \`69.06\`, \`70.02\`, \`70.05\`, \`70.06\`. [Evidence and safe-migration plans](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md). No actual merge, payment reconciliation, RLS change or migration; \`69.07\`, \`70.04\`, \`70.07\` remain open.
+- **618 total / 145 VERIFIED / 473 open**. Other recently proposed Flutter and refund dispatcher changes require final CI and staging integration gates before operational acceptance.
+
+
 ## 2026-11-13 — Source-of-truth and retention decisions accepted (139/479)
 
 - **11 narrowly scoped decision/plan subtasks accepted:** \`61.06\`, \`62.04\`, \`62.06\`, \`63.06\`, \`64.03\`, \`64.06\`, \`65.04\`, \`65.05\`, \`65.07\`, \`68.04\`, \`68.06\`. [Evidence and decisions](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) distinguish final source choices from production data migration. These are **documentation/compatibility decisions, not 11 deployed bug fixes**.
