@@ -82,6 +82,12 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
     );
   }
 
+  bool _isSlotClosed(String slotKey) =>
+      BookingSlotCalculator.isVenueSlotClosed(
+        stadium: widget.stadium,
+        slotStart: _getSlotDateTime(slotKey),
+      );
+
   DateTime _getSlotDateTime(String slotKey) {
     return BookingSlotCalculator.getSlotDateTime(
       slotKey: slotKey,
@@ -135,6 +141,17 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
 
         final existingBookings = snapshot.data!;
 
+        if (widget.stadium.isBlocked) {
+          return VSPStateView(
+            state: VSPUiState.empty,
+            icon: Iconsax.lock_copy,
+            title: isArabic ? 'الملعب غير متاح للحجز' : 'Venue unavailable',
+            message: isArabic
+                ? 'تم إيقاف الحجوزات لهذا الملعب حاليًا. تواصل مع إدارة الملعب.'
+                : 'Bookings are temporarily disabled for this venue. Contact the venue.',
+          );
+        }
+
         if (widget.timeSlots.isEmpty) {
           return VSPStateView(
             state: VSPUiState.empty,
@@ -165,6 +182,19 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
                 : 'All available times for this date have passed. Choose another day.',
           );
         }
+        final allSlotsClosed = widget.timeSlots.every(
+          (slot) => _isSlotClosed(slot.key),
+        );
+        if (allSlotsClosed) {
+          return VSPStateView(
+            state: VSPUiState.empty,
+            icon: Iconsax.clock_copy,
+            title: isArabic ? 'الملعب مغلق مؤقتًا' : 'Venue temporarily closed',
+            message: isArabic
+                ? 'المواعيد المختارة تقع ضمن فترة الإغلاق. جرّب تاريخًا أو وقتًا آخر.'
+                : 'These slots fall within a closure. Try another time or date.',
+          );
+        }
         final allSlotsBooked = widget.timeSlots.every(
           (slot) => _isSlotBooked(slot.key, existingBookings),
         );
@@ -180,7 +210,8 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
         }
         final hasBookableSlot = widget.timeSlots.any(
           (slot) => _getSlotDateTime(slot.key).isAfter(now) &&
-              !_isSlotBooked(slot.key, existingBookings),
+              !_isSlotBooked(slot.key, existingBookings) &&
+              !_isSlotClosed(slot.key),
         );
         if (!hasBookableSlot) {
           return VSPStateView(
@@ -188,8 +219,8 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
             icon: Iconsax.clock_copy,
             title: isArabic ? 'لا توجد مواعيد متبقية' : 'No slots remaining',
             message: isArabic
-                ? 'المواعيد المتبقية محجوزة، والباقي انتهى. جرّب يومًا آخر.'
-                : 'Remaining slots are booked and earlier slots have passed. Try another date.',
+                ? 'لا توجد فترات قابلة للحجز الآن؛ قد تكون محجوزة أو مغلقة أو انتهت. جرّب يومًا آخر.'
+                : 'No bookable times remain; slots may be booked, closed or past. Try another date.',
           );
         }
 
@@ -198,7 +229,7 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
           for (final item in widget.timeSlots) {
             final dt = _getSlotDateTime(item.key);
             final booked = _isSlotBooked(item.key, existingBookings);
-            if (dt.isAfter(now) && !booked) {
+            if (dt.isAfter(now) && !booked && !_isSlotClosed(item.key)) {
               firstUpcomingSlotKey = item.key;
               break;
             }
@@ -209,6 +240,7 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
           children: List.generate(widget.timeSlots.length, (index) {
             final slotItem = widget.timeSlots[index];
             final isBooked = _isSlotBooked(slotItem.key, existingBookings);
+            final isClosed = _isSlotClosed(slotItem.key);
             final isSelected = widget.selectedTimeSlots.contains(slotItem.key);
             final slotDateTime = _getSlotDateTime(slotItem.key);
             final slotEndDateTime = slotDateTime.add(const Duration(minutes: 30));
@@ -228,6 +260,7 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
             return BookingSlotCard(
               slotItem: slotItem,
               isBooked: isBooked,
+              isClosed: isClosed,
               isPast: isPast,
               isSelected: isSelected,
               isCurrentOngoing: isCurrentOngoing,

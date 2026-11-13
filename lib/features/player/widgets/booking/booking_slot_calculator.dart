@@ -17,6 +17,20 @@ class BookingSlotCalculator {
     return true;
   }
 
+  /// Client-side closing-state preview; the server remains the final
+  /// authorization source for booking and may have fresher venue status.
+  static bool isVenueSlotClosed({
+    required Stadium stadium,
+    required DateTime slotStart,
+    DateTime? now,
+  }) {
+    if (stadium.isBlocked) return true;
+    final closesAt = stadium.maintenanceUntil;
+    if (closesAt == null) return false;
+    final current = now ?? DateTime.now();
+    return closesAt.isAfter(current) && slotStart.isBefore(closesAt);
+  }
+
   static int _parseTimeToMinutes(String timeStr) {
     return AppDateFormatter.parseTimeToMinutes(timeStr);
   }
@@ -319,6 +333,7 @@ class BookingSlotCalculator {
           selectedDate: selectedDate,
         );
         if (!start.isBefore(DateTime.now()) &&
+            !isVenueSlotClosed(stadium: stadium, slotStart: start) &&
             !isSlotBooked(
               slotKey: key,
               stadium: stadium,
@@ -344,6 +359,7 @@ class BookingSlotCalculator {
           selectedDate: selectedDate,
         );
         if (tappedTime.isBefore(DateTime.now()) ||
+            isVenueSlotClosed(stadium: stadium, slotStart: tappedTime) ||
             isSlotBooked(
               slotKey: slotKey,
               stadium: stadium,
@@ -436,7 +452,8 @@ class BookingSlotCalculator {
             selectedDate: selectedDate,
             existingBookings: existingBookings,
           );
-          if (isPast || isBooked) {
+          if (isPast || isBooked ||
+              isVenueSlotClosed(stadium: stadium, slotStart: slotDateTime)) {
             hasInvalidSlot = true;
             break;
           }

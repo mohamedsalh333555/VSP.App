@@ -76,6 +76,20 @@ class BookingConfirmationHandler {
       return;
     }
 
+    // A deep link or stale booking screen must not bypass venue blocking.
+    if (stadium.isBlocked) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'الملعب غير متاح للحجز حاليًا.'
+            : 'This venue is currently unavailable for booking.',
+      );
+      onSlotsCleared();
+      onLoadingChanged(false);
+      return;
+    }
+
     onLoadingChanged(true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -194,6 +208,25 @@ class BookingConfirmationHandler {
           selectedDate: selectedDate,
         ),
       ).toList();
+      // Do not pass a temporarily closed slot into any payment path, even if
+      // it came from a stale deep link. The server validates again on write.
+      if (selectedStarts.any((start) =>
+          BookingSlotCalculator.isVenueSlotClosed(
+            stadium: stadium, slotStart: start))) {
+        onSlotsCleared();
+        onLoadingChanged(false);
+        if (context.mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isArabic
+                ? 'الموعد داخل فترة إغلاق الملعب. اختر موعدًا آخر.'
+                : 'Selected slot is within a venue closure. Choose another time.',
+          );
+        }
+        return;
+      }
+
       // Initial route selections and stale selections may bypass the UI
       // range picker. Never turn non-adjacent keys into a longer interval
       // that silently reserves unselected times.
