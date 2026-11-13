@@ -19,7 +19,14 @@ void main() {
       'lib/features/player/widgets/stadium_details/stadium_bottom_booking_bar.dart',
     ).readAsStringSync();
     expect(bar, contains('final bool bookingEnabled;'));
-    expect(bar, contains('onPressed: bookingEnabled ? () {'));
+    // Formatter may wrap the conditional callback across several lines.
+    // Verify that the disabled branch remains null, not the exact spacing.
+    expect(
+      RegExp(r'onPressed:\s*bookingEnabled\s*\?\s*\(\)\s*\{')
+          .hasMatch(bar),
+      isTrue,
+    );
+    expect(bar, contains(': null,'));
     expect(bar, contains('BookingTypeModal.show(context, stadium);'));
   });
 }
