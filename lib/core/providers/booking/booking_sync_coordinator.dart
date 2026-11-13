@@ -95,10 +95,11 @@ class BookingSyncCoordinator {
       // An empty authoritative list is still a completed load, not "still loading".
       onData(directList, categorized);
       initialSnapshotLoaded = true;
-    } catch (e, stack) {
-      // Preserve current state if the direct fetch fails.
-      VSPLogger.e('Error loading direct user bookings in BookingSyncCoordinator', e, stack);
-      if (generation == _syncGeneration) onError('Failed to load bookings: $e');
+    } catch (_) {
+      // Preserve the last trusted state, but never log provider messages,
+      // user identifiers or transport headers.
+      VSPLogger.e('Direct player booking sync failed (details redacted)');
+      if (generation == _syncGeneration) onError('Failed to load bookings');
     }
 
     if (generation != _syncGeneration) return false;
@@ -121,10 +122,10 @@ class BookingSyncCoordinator {
         );
         onData(merged, categorized);
       },
-      onError: (e) {
+      onError: (_) {
         if (generation != _syncGeneration) return;
-        // Transport error — preserve existing state, report error to UI.
-        VSPLogger.w('Realtime stream error in syncUserBookings (keeping existing state): $e');
+        // Transport error: preserve trusted state without printing raw payloads.
+        VSPLogger.w('Player booking realtime sync failed (details redacted)');
         // Re-emit last known so UI doesn't go blank.
         if (_lastKnownUserBookings.isNotEmpty) {
           final categorized = BookingCategorizationService.categorizeUserBookings(
@@ -133,7 +134,7 @@ class BookingSyncCoordinator {
           );
           onData(_lastKnownUserBookings, categorized);
         }
-        onError('Failed to load bookings: $e');
+        onError('Failed to load bookings');
       },
     );
     return initialSnapshotLoaded;
@@ -150,6 +151,9 @@ class BookingSyncCoordinator {
   }) async {
     // Stop any previous user's/owner's stream before changing the booking scope.
     final generation = ++_syncGeneration;
+    // Owner mode never reuses a previously cached player booking baseline.
+    _activeUserId = null;
+    _lastKnownUserBookings = [];
     await _subscription?.cancel();
     if (generation != _syncGeneration) return;
     _subscription = null;
@@ -167,9 +171,9 @@ class BookingSyncCoordinator {
         // An authoritative empty result is still a completed initial load.
         onData(directBookings, categorized);
       }
-    } catch (e, stack) {
-      VSPLogger.e('Error loading direct owner bookings in BookingSyncCoordinator', e, stack);
-      if (generation == _syncGeneration) onError('Failed to load owner bookings: $e');
+    } catch (_) {
+      VSPLogger.e('Direct owner booking sync failed (details redacted)');
+      if (generation == _syncGeneration) onError('Failed to load owner bookings');
     }
 
     if (generation != _syncGeneration) return;
@@ -188,9 +192,9 @@ class BookingSyncCoordinator {
         );
         onData(merged, categorized);
       },
-      onError: (e) {
+      onError: (_) {
         if (generation != _syncGeneration) return;
-        onError('Failed to load owner bookings: $e');
+        onError('Failed to load owner bookings');
       },
     );
   }

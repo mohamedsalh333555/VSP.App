@@ -20,6 +20,9 @@ class BookingProvider with ChangeNotifier {
   BookingDraft? _currentDraft;
   String? _activeOwnerId;
   String? _activeUserId;
+  // Every booking-list request owns a generation. Older async work must never
+  // repopulate lists or errors for a newer account, role, or refresh.
+  int _bookingScopeGeneration = 0;
 
   bool _isLoading = false;
   int _userBookingLoadCount = 0;
@@ -216,16 +219,25 @@ class BookingProvider with ChangeNotifier {
 
   /// Load user's bookings
   Future<bool> loadUserBookings(String userId) async {
+    final requestGeneration = ++_bookingScopeGeneration;
     if (_activeUserId != userId) {
-      if (_activeUserId != null || _activeOwnerId != null) {
-        await _clearDraftOnAccountScopeChange();
-      }
+      final clearOldDraft = _activeUserId != null || _activeOwnerId != null;
+      // Clear the previous scope synchronously *before* any async storage
+      // operation. Otherwise a late user-A callback may appear on user-B UI.
       _activeUserId = userId;
       _activeOwnerId = null;
       _userBookings = [];
       _hasLoadedOwnerBookings = false;
       _ownerBookingsError = null;
+      _errorMessage = null;
+      notifyListeners();
+      if (clearOldDraft) {
+        await _clearDraftOnAccountScopeChange();
+        if (requestGeneration != _bookingScopeGeneration) return false;
+      }
     }
+    if (requestGeneration != _bookingScopeGeneration) return false;
+
     _userBookingLoadCount++;
     _errorMessage = null;
     notifyListeners();
@@ -233,14 +245,16 @@ class BookingProvider with ChangeNotifier {
       return await _syncCoordinator.syncUserBookings(
         userId: userId,
         onData: (userBookings, _) {
-          if (_activeUserId != userId) return;
+          if (requestGeneration != _bookingScopeGeneration ||
+              _activeUserId != userId) return;
           _userBookings = userBookings;
           _errorMessage = null;
           notifyListeners();
         },
-        onError: (e) {
-          if (_activeUserId != userId) return;
-          _errorMessage = e;
+        onError: (message) {
+          if (requestGeneration != _bookingScopeGeneration ||
+              _activeUserId != userId) return;
+          _errorMessage = message;
           notifyListeners();
         },
       );
@@ -257,17 +271,24 @@ class BookingProvider with ChangeNotifier {
     bool forceRefresh = false,
   }) async {
     if (!forceRefresh && _activeOwnerId == ownerId) return;
+    final requestGeneration = ++_bookingScopeGeneration;
 
     if (_activeOwnerId != ownerId || _activeUserId != null) {
-      if (_activeOwnerId != null || _activeUserId != null) {
-        await _clearDraftOnAccountScopeChange();
-      }
+      final clearOldDraft = _activeOwnerId != null || _activeUserId != null;
       _activeUserId = null;
       _activeOwnerId = ownerId;
       _userBookings = [];
       _hasLoadedOwnerBookings = false;
       _ownerBookingsError = null;
+      _errorMessage = null;
+      notifyListeners();
+      if (clearOldDraft) {
+        await _clearDraftOnAccountScopeChange();
+        if (requestGeneration != _bookingScopeGeneration) return;
+      }
     }
+    if (requestGeneration != _bookingScopeGeneration) return;
+
     _ownerBookingLoadCount++;
     _ownerBookingsError = null;
     notifyListeners();
@@ -279,15 +300,17 @@ class BookingProvider with ChangeNotifier {
         getCurrentBookings: () => _userBookings,
         cancellingIds: _cancellingIds,
         onData: (merged, _) {
-          if (_activeOwnerId != ownerId) return;
+          if (requestGeneration != _bookingScopeGeneration ||
+              _activeOwnerId != ownerId) return;
           _userBookings = merged;
           _hasLoadedOwnerBookings = true;
           _ownerBookingsError = null;
           notifyListeners();
         },
-        onError: (e) {
-          if (_activeOwnerId != ownerId) return;
-          _ownerBookingsError = e;
+        onError: (message) {
+          if (requestGeneration != _bookingScopeGeneration ||
+              _activeOwnerId != ownerId) return;
+          _ownerBookingsError = message;
           notifyListeners();
         },
       );
