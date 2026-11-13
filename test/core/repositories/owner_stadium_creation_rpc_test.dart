@@ -26,6 +26,7 @@ void main() {
           jsonEncode(capacity),
           200,
           headers: {'content-type': 'application/json'},
+          request: request,
         );
       }
       if (request.url.path.endsWith('/stadiums')) {
@@ -35,6 +36,7 @@ void main() {
           jsonEncode({'id': createdId}),
           201,
           headers: {'content-type': 'application/json'},
+          request: request,
         );
       }
       throw StateError('Unexpected stub route: ${request.url}');

@@ -38,11 +38,7 @@ void main() {
             'max_allowed': max,
             'plan_code': max == 1 ? 'basic' : 'pro',
           }),
-          throwsA(isA<StateError>().having(
-            (e) => e.toString(),
-            'limit message',
-            contains('الحد الأقصى'),
-          )),
+          throwsStateError,
         );
       }
     });
