@@ -14,6 +14,7 @@ abstract final class VSPAnalyticsEvents {
   static const teamCreated = 'team_created';
   static const ownerRegistrationStarted = 'owner_registration_started';
   static const ownerRegistrationCompleted = 'owner_registration_completed';
+  static const ownerDashboardViewed = 'owner_dashboard_viewed';
   static const subscriptionViewed = 'subscription_viewed';
   static const subscriptionActivated = 'subscription_activated';
 
@@ -217,6 +218,13 @@ class AnalyticsService {
 
   static Future<void> logOwnerRegistrationCompleted() => logEvent(
         name: VSPAnalyticsEvents.ownerRegistrationCompleted,
+      );
+
+  /// First dashboard entry per owner account in the current app session.
+  static Future<void> logOwnerDashboardViewed({required String ownerId}) =>
+      logOncePerSession(
+        name: VSPAnalyticsEvents.ownerDashboardViewed,
+        dedupeKey: 'owner_dashboard_viewed:$ownerId',
       );
 
   static Future<void> logSubscriptionViewed() => logOncePerSession(
