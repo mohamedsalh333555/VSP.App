@@ -47,16 +47,36 @@ def main() -> int:
     if fixture.count(placeholder) != 1:
         raise RuntimeError("Unexpected contract placeholder")
     fixture = fixture.replace(placeholder, get_dispatcher_definition())
-    # The disposable CI PostgreSQL service already has Supabase-related
-    # roles from the account security fixture; no real external role used.
-    completed = subprocess.run(
-        ["psql", "-X", "--no-psqlrc", "-v", "ON_ERROR_STOP=1", "-q"],
-        input="BEGIN;\n" + fixture + "\nROLLBACK;\n",
-        text=True,
-        capture_output=True,
-        timeout=55,
-        check=False,
+    # The earlier account security suite intentionally leaves many public
+    # fixture relations in the CI cluster. A separate, disposable database
+    # avoids clashing with those tables (and cannot change their data).
+    isolated_db = "vsp_refund_contracts"
+    create = subprocess.run(
+        ["psql", "-X", "--no-psqlrc", "-d", "postgres", "-v",
+         "ON_ERROR_STOP=1", "-c", f"CREATE DATABASE {isolated_db}"],
+        text=True, capture_output=True, timeout=20, check=False,
     )
+    if create.returncode != 0:
+        print("REFUND_TEST_DATABASE_CREATION_FAILED", file=sys.stderr)
+        return 1
+    try:
+        completed = subprocess.run(
+            ["psql", "-X", "--no-psqlrc", "-d", isolated_db,
+             "-v", "ON_ERROR_STOP=1", "-q"],
+            input="BEGIN;\n" + fixture + "\nROLLBACK;\n",
+            text=True, capture_output=True, timeout=55, check=False,
+        )
+    finally:
+        # This separate database exists only inside the isolated CI Postgres
+        # service. Destroy it even when the contract itself fails.
+        drop = subprocess.run(
+            ["psql", "-X", "--no-psqlrc", "-d", "postgres", "-v",
+             "ON_ERROR_STOP=1", "-c",
+             f"DROP DATABASE IF EXISTS {isolated_db} WITH (FORCE)"],
+            text=True, capture_output=True, timeout=20, check=False,
+        )
+        if drop.returncode != 0:
+            raise RuntimeError("Could not clean up disposable refund test database")
     if completed.returncode != 0:
         # Error messages are synthetic assertion messages, not secrets.
         print("REFUND_ISOLATED_CONTRACT_FAILED:", completed.stderr[-2000:], file=sys.stderr)
