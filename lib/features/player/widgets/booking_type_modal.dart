@@ -71,7 +71,14 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
         }
       }
 
-      // A team lookup may finish after the signed-in account changes.\n      // Never create a challenge draft for a different account.\n      if (typeId == 'Challenge Match' &&\n          authProvider.currentUser?.id != uid) {\n        return;\n      }\n\n      BookingType type = BookingType.personal;
+      // A team lookup may finish after the signed-in account changes.
+      // Never create a challenge draft for a different account.
+      if (typeId == 'Challenge Match' &&
+          authProvider.currentUser?.id != uid) {
+        return;
+      }
+
+      BookingType type = BookingType.personal;
       String typeString = 'Personal';
 
       if (typeId == 'Open Join Match') {
@@ -99,7 +106,10 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
       ));
 
       if (!mounted) return;
-      // Keep the navigator before popping; the sheet context is then stale.\n      final navigator = Navigator.of(context);\n      navigator.pop(); // Close Bottom Sheet\n      if (!navigator.mounted) return;
+      // Keep the navigator before popping; the sheet context is then stale.
+      final navigator = Navigator.of(context);
+      navigator.pop(); // Close Bottom Sheet
+      if (!navigator.mounted) return;
 
       if (type == BookingType.challenge) {
         navigator.push(
