@@ -726,7 +726,7 @@
 - [ ] 59.05 — اختبار الحجز والدفع التجريبي
 - [ ] 59.06 — اختبار صلاحيات الإدارة
 - [x] 59.07 — توثيق العوائق — [دليل القبول المحدود](VSP_PERFORMANCE_BUDGET_AND_STAGING_BLOCKERS_2026-11-13.md)، commit `a613b74e`
-- [ ] 59.08 — توثيق عزل staging عن الإنتاج وعدم استعمال بيانات عملاء حقيقية
+- [x] 59.08 — توثيق عزل staging عن الإنتاج وعدم استعمال بيانات عملاء حقيقية — [staging automated-test boundary evidence](VSP_STAGING_TEST_ISOLATION_59_08_2026-11-13.md) (current CI/public/live-contract scope only; no credentialed staging, payment sandbox or production-data isolation certified)
 
 ### 60 — Performance benchmarks and APK release readiness (9)
 
