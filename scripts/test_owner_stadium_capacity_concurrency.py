@@ -15,6 +15,7 @@ import threading
 
 ROOT = Path(__file__).resolve().parents[1]
 CANDIDATE = ROOT / "docs/security/sql/owner_stadium_capacity_guard_candidate.sql"
+MODERATION_CANDIDATE = ROOT / "docs/security/sql/stadium_moderation_write_guard_candidate.sql"
 SCRATCH = "vsp_owner_quota_contracts"
 FREE = "10000000-0000-4000-8000-000000000001"
 PRO = "10000000-0000-4000-8000-000000000002"
@@ -48,7 +49,12 @@ CREATE TABLE public.stadiums (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id uuid NOT NULL REFERENCES public.users(id),
   is_deleted_by_owner boolean DEFAULT false,
-  name text
+  name text,
+  is_verified boolean DEFAULT true,
+  is_blocked boolean DEFAULT false,
+  is_featured boolean DEFAULT false,
+  rating numeric DEFAULT 0,
+  reviews_count integer DEFAULT 0
 );
 GRANT SELECT, INSERT, UPDATE ON public.stadiums TO authenticated;
 GRANT SELECT ON public.users TO authenticated;
@@ -69,6 +75,11 @@ AS $admin$
     WHERE id = p_user_id AND role IN ('admin','co_founder')
   )
 $admin$;
+
+-- Isolated admin role may approve/moderate any pitch.
+CREATE POLICY moderation_admin_all ON public.stadiums FOR ALL TO authenticated
+USING (public.is_admin_or_cofounder(auth.uid()))
+WITH CHECK (public.is_admin_or_cofounder(auth.uid()));
 
 -- Minimal signature-compatible stand-in for the real evaluator.
 -- Uses server-side owner rows and counts active stadiums; does not take
@@ -100,7 +111,8 @@ $eval$;
 INSERT INTO public.users(id,role,max_stadiums) VALUES
  ('10000000-0000-4000-8000-000000000001','owner',1),
  ('10000000-0000-4000-8000-000000000002','owner',3),
- ('10000000-0000-4000-8000-000000000003','owner',1);
+ ('10000000-0000-4000-8000-000000000003','owner',1),
+ ('10000000-0000-4000-8000-000000000004','admin',99);
 
 INSERT INTO public.stadiums(owner_id,name) VALUES
  ('10000000-0000-4000-8000-000000000002','pro-1'),
@@ -263,6 +275,79 @@ VALUES('{RACE}','race-{number}');
                                + " | ".join(p.stderr[-500:] for p in results))
         print("PASS: independent concurrent direct INSERTs serialize to one winner",
               flush=True)
+
+        # Source-equivalent moderator-write bypass is demonstrated before the
+        # candidate trigger, using synthetic data only (not customer venues).
+        ok(SCRATCH, as_owner(PRO, """
+UPDATE public.stadiums SET rating=4.9, reviews_count=450,
+  is_blocked=false WHERE name='pro-1';
+"""))
+        baseline = ok(SCRATCH, """
+SELECT rating::text || '/' || reviews_count::text
+FROM public.stadiums WHERE name='pro-1';
+""")
+        if baseline != "4.9/450":
+            raise RuntimeError("Baseline owner review-tampering not reproduced")
+        ok(SCRATCH, """
+UPDATE public.stadiums SET rating=0, reviews_count=0, is_verified=false
+WHERE name='pro-1';
+""")
+        print("PASS: ownership-only baseline permits forged rating/review count",
+              flush=True)
+
+        ok(SCRATCH, MODERATION_CANDIDATE.read_text(encoding="utf-8"))
+
+        for field_update in (
+            "rating=5",
+            "reviews_count=10000",
+            "is_blocked=true",
+            "is_featured=true",
+            "is_verified=true",
+        ):
+            deny(SCRATCH, as_owner(PRO, f"""
+UPDATE public.stadiums SET {field_update} WHERE name='pro-1';
+"""), "STADIUM_MODERATION_FIELD_FORBIDDEN")
+        print("PASS: owner cannot forge reviews, unblock/alter moderation or self-verify",
+              flush=True)
+
+        # Existing owner edits and voluntary review demotion remain possible.
+        ok(SCRATCH, as_owner(PRO, """
+UPDATE public.stadiums SET name='pro-edited', is_verified=false
+WHERE name='pro-1';
+"""))
+        print("PASS: owner venue edits and re-review remain available", flush=True)
+
+        # Quota guard intentionally ignores archived rows; the moderation
+        # trigger must still reject the live is_verified=true column default
+        # and direct explicit approval flags on any insert.
+        deny(SCRATCH, as_owner(FREE, f"""
+INSERT INTO public.stadiums(owner_id,name,is_deleted_by_owner)
+VALUES('{FREE}', 'unapproved-default-insert', true);
+"""), "STADIUM_MODERATION_FIELD_FORBIDDEN")
+        deny(SCRATCH, as_owner(FREE, f"""
+INSERT INTO public.stadiums(owner_id,name,is_deleted_by_owner,is_verified,rating)
+VALUES('{FREE}', 'forged-insert', true,false,5);
+"""), "STADIUM_MODERATION_FIELD_FORBIDDEN")
+        ok(SCRATCH, as_owner(FREE, f"""
+INSERT INTO public.stadiums(owner_id,name,is_deleted_by_owner,is_verified)
+VALUES('{FREE}', 'properly-unverified-archive', true,false);
+"""))
+        print("PASS: direct owner insert cannot publish venue/forge rating", flush=True)
+
+        # Admin approval remains possible. Test as an independent JWT subject
+        # with a real admin policy in the disposable test database.
+        admin = "10000000-0000-4000-8000-000000000004"
+        ok(SCRATCH, as_owner(admin, """
+UPDATE public.stadiums SET is_verified=true, is_blocked=true, rating=3.5
+WHERE name='pro-edited';
+"""))
+        actual = ok(SCRATCH, """
+SELECT is_verified::text || '/' || is_blocked::text || '/' || rating::text
+FROM public.stadiums WHERE name='pro-edited';
+""")
+        if actual != "true/true/3.5":
+            raise RuntimeError("Admin moderation was blocked in the fixture")
+        print("PASS: approved admin role retains moderator permissions", flush=True)
         return 0
     finally:
         if created:

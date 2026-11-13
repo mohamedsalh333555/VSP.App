@@ -49,6 +49,17 @@ class QuotaTestIsolationGuard(unittest.TestCase):
             self.assertNotIn(key, env)
         self.assertEqual(env["PGPASSWORD"], "ephemeral-fixture-only")
 
+    def test_moderation_candidate_is_draft_and_checks_all_sensitive_fields(self):
+        path = ROOT / "docs/security/sql/stadium_moderation_write_guard_candidate.sql"
+        source = path.read_text()
+        self.assertIn("NOT APPLIED TO STAGING OR PRODUCTION", source)
+        self.assertIn("BEFORE INSERT OR UPDATE ON public.stadiums", source)
+        for field in ("is_verified", "is_blocked", "is_featured", "rating",
+                      "reviews_count", "owner_id"):
+            with self.subTest(field=field):
+                self.assertIn(field, source)
+        self.assertIn("STADIUM_MODERATION_FIELD_FORBIDDEN", source)
+
     def test_sql_candidate_is_not_migration_and_covers_write_escapes(self):
         path = ROOT / "docs/security/sql/owner_stadium_capacity_guard_candidate.sql"
         source = path.read_text()
