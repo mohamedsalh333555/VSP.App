@@ -19,7 +19,7 @@ void main() {
   });
 
   test('a fully paid deposit or inconsistent amount fails closed', () {
-    expect(due(400, 400), isNull);
+    expect(due(400, 400), 0.0); // Reconcile a full deposit, no cash owed.
     expect(due(400, 450), isNull);
     expect(due(400, -1), isNull);
     expect(due(0, 0), isNull);

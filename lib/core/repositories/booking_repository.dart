@@ -254,6 +254,8 @@ class SupabaseBookingRepository implements BookingRepository {
         paymentStatus: booking.paymentStatus,
       );
       if (cashDue == null) return false;
+      // A zero balance is sent to the RPC only to reconcile a complete
+      // existing deposit; its idempotent response must never send a receipt.
 
       final rpcRes = await _supabase.rpc('confirm_cash_booking_atomic', params: {
         'p_booking_id': bookingId,

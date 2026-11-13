@@ -26,11 +26,14 @@ class CashCollectionValidation {
         !depositPaid.isFinite ||
         totalPrice <= 0 ||
         depositPaid < 0 ||
-        depositPaid >= totalPrice) {
+        depositPaid > totalPrice) {
       return null;
     }
     final remaining = totalPrice - depositPaid;
-    if (!remaining.isFinite || remaining <= 0) return null;
+    if (!remaining.isFinite || remaining < 0) return null;
+    // The authoritative RPC can reconcile a fully covered deposit without
+    // collecting or notifying another cash payment (already_confirmed=true).
+    if (remaining == 0) return 0.0;
     return remaining;
   }
 }
