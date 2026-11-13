@@ -37,6 +37,18 @@ void main() {
     expect(result.slots, ['18:00', '18:30']);
   });
 
+  test('slot-only link cannot assign an unbound old time to today', () {
+    final result = BookingInitialSelection.resolve(
+      stadium: stadium,
+      operationalBaseDate: today,
+      now: now,
+      requestedDate: null,
+      requestedSlots: const ['18:00'],
+    );
+    expect(result.date, today);
+    expect(result.slots, isEmpty);
+  });
+
   test('past date is clamped and stale slots are cleared before displaying total', () {
     final result = BookingInitialSelection.resolve(
       stadium: stadium,

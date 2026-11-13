@@ -34,7 +34,9 @@ final class BookingInitialSelection {
     }
 
     final rawSlots = requestedSlots ?? const <String>[];
-    if (rawSlots.isEmpty) {
+    // A slot-only deep link has no trustworthy calendar date. Do not silently
+    // reinterpret an unknown day's price/time as today's availability.
+    if (rawSlots.isEmpty || requestedDate == null) {
       return BookingInitialSelection._(day, const <String>[]);
     }
 
