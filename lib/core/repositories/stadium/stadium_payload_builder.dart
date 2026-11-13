@@ -152,14 +152,12 @@ class StadiumPayloadBuilder {
     if (securedData.containsKey('images')) pgData['images'] = securedData['images'];
     if (securedData.containsKey('imageUrl')) pgData['image_url'] = securedData['imageUrl'];
     if (securedData.containsKey('image_url')) pgData['image_url'] = securedData['image_url'];
-    if (securedData.containsKey('isBlocked')) pgData['is_blocked'] = securedData['isBlocked'];
-    if (securedData.containsKey('is_blocked')) pgData['is_blocked'] = securedData['is_blocked'];
-    if (securedData.containsKey('is_verified')) pgData['is_verified'] = securedData['is_verified'];
-    if (securedData.containsKey('isVerified')) pgData['is_verified'] = securedData['isVerified'];
+    // Administrative moderation, verification and user-review aggregation are
+    // server-owned. Never forward client-supplied is_verified/is_blocked/rating
+    // or reviews_count fields. StadiumRepository.updateStadium() deliberately
+    // reopens review by setting is_verified=false on legitimate owner edits.
+    // Direct PostgREST writes still require a database-side guard (Issue #43).
     if (securedData.containsKey('is_deleted_by_owner')) pgData['is_deleted_by_owner'] = securedData['is_deleted_by_owner'];
-    if (securedData.containsKey('rating')) pgData['rating'] = securedData['rating'];
-    if (securedData.containsKey('reviewsCount')) pgData['reviews_count'] = securedData['reviewsCount'];
-    if (securedData.containsKey('reviews_count')) pgData['reviews_count'] = securedData['reviews_count'];
     if (securedData.containsKey('deposit_amount')) pgData['deposit_amount'] = securedData['deposit_amount'];
     if (securedData.containsKey('depositAmount')) pgData['deposit_amount'] = securedData['depositAmount'];
     if (securedData.containsKey('needs_deposit')) pgData['needs_deposit'] = securedData['needs_deposit'];

@@ -40,6 +40,36 @@ void main() {
       expect(payload['total_field_capacity'], 12);
     });
 
+    test('owner edits cannot smuggle moderator flags or review scores', () {
+      final payload = StadiumPayloadBuilder.buildUpdatePayload({
+        'name': 'Updated Pitch',
+        'ownerId': 'another_owner',
+        'owner_id': 'another_owner',
+        'isVerified': true,
+        'is_verified': true,
+        'isBlocked': false,
+        'is_blocked': false,
+        'rating': 5.0,
+        'reviewsCount': 100000,
+        'reviews_count': 100000,
+        'is_deleted_by_owner': true,
+      });
+
+      expect(payload['name'], 'Updated Pitch');
+      expect(payload['is_deleted_by_owner'], isTrue);
+      for (final forbidden in <String>[
+        'ownerId',
+        'owner_id',
+        'is_verified',
+        'is_blocked',
+        'rating',
+        'reviews_count',
+      ]) {
+        expect(payload.containsKey(forbidden), isFalse,
+            reason: 'Owner should not be able to edit protected field $forbidden');
+      }
+    });
+
     test('buildUpdatePayload strips ownerId and synchronizes base_price', () {
       final updateData = {
         'ownerId': 'malicious_owner_spoof',
