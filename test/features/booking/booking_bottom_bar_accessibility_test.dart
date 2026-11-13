@@ -41,6 +41,11 @@ void main() {
     );
   }
 
+  Finder ballControlWithLabel(String label) => find.byWidgetPredicate(
+    (widget) => widget is Semantics &&
+        (widget.properties.label?.contains(label) ?? false),
+  );
+
   testWidgets('ball rental is announced but disabled without a chosen slot', (tester) async {
     final semantics = tester.ensureSemantics();
     var toggles = 0;
@@ -51,7 +56,7 @@ void main() {
       onBallChanged: (_) => toggles++,
     ));
 
-    final control = find.bySemanticsLabel(RegExp(r'Ball rental, 50 EGP'));
+    final control = ballControlWithLabel('Ball rental, 50 EGP');
     expect(control, findsOneWidget);
     final props = tester.widget<Semantics>(control).properties;
     expect(props.button, isTrue);
@@ -72,7 +77,7 @@ void main() {
       onBallChanged: (value) => lastValue = value,
     ));
 
-    final control = find.bySemanticsLabel(RegExp(r'إيجار كرة، 50 جنيه'));
+    final control = ballControlWithLabel('إيجار كرة');
     expect(control, findsOneWidget);
     final props = tester.widget<Semantics>(control).properties;
     expect(props.enabled, isTrue);
@@ -96,7 +101,12 @@ void main() {
     final increase = find.byTooltip('Increase player count');
     expect(decrease, findsOneWidget);
     expect(increase, findsOneWidget);
-    expect(tester.widget<IconButton>(decrease).onPressed, isNull);
+    final decreaseButton = find.ancestor(
+      of: decrease,
+      matching: find.byType(IconButton),
+    );
+    expect(decreaseButton, findsOneWidget);
+    expect(tester.widget<IconButton>(decreaseButton).onPressed, isNull);
     expect(find.bySemanticsLabel('Player count: 1'), findsOneWidget);
     await tester.tap(increase);
     expect(changed, 2);

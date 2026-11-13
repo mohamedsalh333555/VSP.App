@@ -34,6 +34,11 @@ void main() {
         ),
       );
 
+  Finder dateWithLabel(String label) => find.byWidgetPredicate(
+    (widget) => widget is Semantics &&
+        (widget.properties.label?.contains(label) ?? false),
+  );
+
   testWidgets('past date is disabled; future day is announced and applied in English', (tester) async {
     final semantics = tester.ensureSemantics();
     DateTime? selected;
@@ -41,9 +46,9 @@ void main() {
     await tester.tap(find.text('Open calendar'));
     await tester.pumpAndSettle();
 
-    final past = find.bySemanticsLabel(RegExp(r'Booking date: Thursday, 12 November 2026'));
-    final today = find.bySemanticsLabel(RegExp(r'Booking date: Friday, 13 November 2026'));
-    final next = find.bySemanticsLabel(RegExp(r'Booking date: Saturday, 14 November 2026'));
+    final past = dateWithLabel('Booking date: Thursday, 12 November 2026');
+    final today = dateWithLabel('Booking date: Friday, 13 November 2026');
+    final next = dateWithLabel('Booking date: Saturday, 14 November 2026');
 
     expect(past, findsOneWidget);
     expect(tester.widget<Semantics>(past).properties.enabled, isFalse);
@@ -93,7 +98,7 @@ void main() {
       await tester.tap(find.text('Open calendar'));
       await tester.pumpAndSettle();
 
-      final current = find.bySemanticsLabel(RegExp(r'Booking date: Friday, 13 November 2026'));
+      final current = dateWithLabel('Booking date: Friday, 13 November 2026');
       expect(tester.widget<Semantics>(current).properties.selected, isTrue);
       await tester.tap(find.text('Apply'));
       await tester.pumpAndSettle();
@@ -113,7 +118,7 @@ void main() {
     await tester.tap(find.text('Open calendar'));
     await tester.pumpAndSettle();
 
-    final lastDay = find.bySemanticsLabel(RegExp(r'Booking date: Monday, 31 August 2026'));
+    final lastDay = dateWithLabel('Booking date: Monday, 31 August 2026');
     expect(lastDay, findsOneWidget);
     expect(tester.getSize(lastDay).height, greaterThanOrEqualTo(48));
     expect(tester.takeException(), isNull);

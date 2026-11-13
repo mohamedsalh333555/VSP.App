@@ -31,6 +31,11 @@ void main() {
     );
   }
 
+  Finder dateWithLabel(String label) => find.byWidgetPredicate(
+    (widget) => widget is Semantics &&
+        (widget.properties.label?.contains(label) ?? false),
+  );
+
   testWidgets('English day chip exposes full date, selected state and tap', (tester) async {
     final semantics = tester.ensureSemantics();
     DateTime? picked;
@@ -39,17 +44,13 @@ void main() {
       onChanged: (date) => picked = date,
     ));
 
-    final current = find.bySemanticsLabel(
-      RegExp(r'Booking date: Friday, 13 November 2026'),
-    );
+    final current = dateWithLabel('Booking date: Friday, 13 November 2026');
     expect(current, findsOneWidget);
     final currentWidget = tester.widget<Semantics>(current);
     expect(currentWidget.properties.button, isTrue);
     expect(currentWidget.properties.selected, isTrue);
 
-    final next = find.bySemanticsLabel(
-      RegExp(r'Booking date: Saturday, 14 November 2026'),
-    );
+    final next = dateWithLabel('Booking date: Saturday, 14 November 2026');
     expect(next, findsOneWidget);
     expect(tester.widget<Semantics>(next).properties.selected, isFalse);
     await tester.tap(next);
