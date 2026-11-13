@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import '../../owner/screens/subscription_plans_screen.dart';
 import '../../owner/screens/owner_ledger_screen.dart';
 import '../../../core/services/notification/notification_ui_helper.dart';
+import '../../../core/services/notification/notification_display_text_resolver.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/notification_repository.dart';
@@ -601,48 +602,12 @@ class _NotificationCard extends StatelessWidget {
     AppNotification notification, {
     required bool isTitle,
   }) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final metadata = notification.metadata ?? const <String, dynamic>{};
-    final key = isTitle
-        ? (isArabic ? 'title_ar' : 'title_en')
-        : (isArabic ? 'body_ar' : 'body_en');
-    final localized = metadata[key]?.toString().trim();
-    if (localized != null && localized.isNotEmpty) return localized;
-    return _localizeText(
-      context,
-      isTitle ? notification.title : notification.body,
+    return NotificationDisplayTextResolver.resolve(
+      notification,
+      isArabic: Localizations.localeOf(context).languageCode == 'ar',
+      isTitle: isTitle,
     );
   }
 
-  String _localizeText(BuildContext context, String text) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    if (isArabic) return text;
-
-    String result = text;
-    final Map<String, String> replacements = {
-      'يناير': 'Jan',
-      'فبراير': 'Feb',
-      'مارس': 'Mar',
-      'أبريل': 'Apr',
-      'مايو': 'May',
-      'يونيو': 'Jun',
-      'يوليو': 'Jul',
-      'أغسطس': 'Aug',
-      'سبتمبر': 'Sep',
-      'أكتوبر': 'Oct',
-      'نوفمبر': 'Nov',
-      'ديسمبر': 'Dec',
-      ' م': ' PM',
-      ' ص': ' AM',
-      'مـ': 'PM',
-      'صـ': 'AM',
-    };
-
-    replacements.forEach((ar, en) {
-      result = result.replaceAll(ar, en);
-    });
-
-    return result;
-  }
 }
 
