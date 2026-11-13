@@ -22,6 +22,8 @@ class BookingDateSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toString();
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Container(
       color: VSPColors.background,
@@ -84,9 +86,18 @@ class BookingDateSelector extends StatelessWidget {
                       final isSelected = date.year == selectedDate.year &&
                           date.month == selectedDate.month &&
                           date.day == selectedDate.day;
-                      return GestureDetector(
+                      final readableDate = DateFormat('EEEE, d MMMM yyyy', locale).format(date);
+                      return Semantics(
+                        button: true,
+                        selected: isSelected,
+                        label: isArabic
+                            ? 'تاريخ الحجز: $readableDate'
+                            : 'Booking date: $readableDate',
                         onTap: () => onDateChanged(date),
-                        child: Container(
+                        child: ExcludeSemantics(
+                          child: GestureDetector(
+                            onTap: () => onDateChanged(date),
+                            child: Container(
                           width: 60,
                           margin: const EdgeInsetsDirectional.only(end: VSPSpacing.sm),
                           decoration: BoxDecoration(
@@ -116,6 +127,8 @@ class BookingDateSelector extends StatelessWidget {
                                 ),
                               ),
                             ],
+                          ),
+                            ),
                           ),
                         ),
                       );
