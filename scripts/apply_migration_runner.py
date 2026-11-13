@@ -68,6 +68,41 @@ def _management_key(repository_root: Path) -> str:
     return key
 
 
+def reject_applied_version(version: str, token: str) -> None:
+    """Fail closed if staging already knows this version or history is unreadable.
+
+    A preflight is a second guard, not an atomic migration lock. The official
+    reviewed Supabase migration pipeline must still handle history recording.
+    """
+    if re.fullmatch(r"\d{8,14}", version) is None:
+        raise ValueError("Invalid migration version")
+    request = urllib.request.Request(
+        f"https://api.supabase.com/v1/projects/{STAGING_PROJECT_REF}/database/query",
+        data=json.dumps({
+            "query": (
+                "SELECT version FROM supabase_migrations.schema_migrations "
+                f"WHERE version = '{version}' LIMIT 1"
+            ),
+        }).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token,
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=30) as response:
+        if response.status not in (200, 201):
+            raise ValueError("Staging migration history lookup failed")
+        payload = json.loads(response.read(65537))
+    if not isinstance(payload, list) or any(
+        not isinstance(row, dict) or row.get("version") != version
+        for row in payload
+    ) or len(payload) > 1:
+        raise ValueError("Unrecognized staging migration history response")
+    if payload:
+        raise ValueError("Migration version already applied to staging")
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("migration_file")
@@ -85,6 +120,9 @@ def main(argv=None) -> int:
         if not sql.strip():
             raise ValueError("Empty migration is not deployable")
         token = _management_key(root)
+        # Never replay a version recorded in staging history, even if this
+        # repository currently has one uniquely named forward SQL file.
+        reject_applied_version(path.name.split("_", 1)[0], token)
         req = urllib.request.Request(
             f"https://api.supabase.com/v1/projects/{STAGING_PROJECT_REF}/database/query",
             data=json.dumps({"query": sql}).encode("utf-8"),
