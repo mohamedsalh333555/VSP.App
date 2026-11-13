@@ -348,8 +348,8 @@
 
 ### 25 — Free/pro subscription entitlements (8)
 
-- [ ] 25.01 — توثيق حدود الباقة المجانية
-- [ ] 25.02 — توثيق صلاحيات الباقة المدفوعة
+- [x] 25.01 — توثيق حدود الباقة المجانية — [staging public-plan source inventory](VSP_OWNER_FREE_PRO_ENTITLEMENT_SOURCE_25_01_25_02_2026-11-13.md) (documentation only; server enforcement and paid delivery unverified)
+- [x] 25.02 — توثيق صلاحيات الباقة المدفوعة — [staging public-plan source inventory](VSP_OWNER_FREE_PRO_ENTITLEMENT_SOURCE_25_01_25_02_2026-11-13.md) (documentation only; server enforcement and paid delivery unverified)
 - [ ] 25.03 — تطبيق القيود من الخادم
 - [ ] 25.04 — بناء حالات انتهاء الاشتراك
 - [ ] 25.05 — اختبار الترقية والتجديد
