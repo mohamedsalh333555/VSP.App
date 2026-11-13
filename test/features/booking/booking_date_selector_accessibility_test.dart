@@ -12,16 +12,20 @@ void main() {
   Widget picker({
     required Locale locale,
     required ValueChanged<DateTime> onChanged,
+    double textScale = 1,
   }) {
     return MaterialApp(
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        body: BookingDateSelector(
-          selectedDate: DateTime(2026, 11, 13),
-          operationalBaseDate: DateTime(2026, 11, 13),
-          onDateChanged: onChanged,
+      home: MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+        child: Scaffold(
+          body: BookingDateSelector(
+            selectedDate: DateTime(2026, 11, 13),
+            operationalBaseDate: DateTime(2026, 11, 13),
+            onDateChanged: onChanged,
+          ),
         ),
       ),
     );
@@ -76,4 +80,23 @@ void main() {
     expect(picked?.day, 14);
     semantics.dispose();
   });
+  for (final locale in [const Locale('ar'), const Locale('en')]) {
+    testWidgets('calendar opener is accessible and scales day chips ($locale)', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(picker(locale: locale, onChanged: (_) {}, textScale: 2));
+      await tester.pump();
+
+      final label = locale.languageCode == 'ar'
+          ? 'فتح تقويم الحجز'
+          : 'Open booking calendar';
+      final control = find.bySemanticsLabel(RegExp(RegExp.escape(label)));
+      expect(control, findsOneWidget);
+      final semanticWidget = tester.widget<Semantics>(control);
+      expect(semanticWidget.properties.button, isTrue);
+      expect(semanticWidget.properties.onTap, isNotNull);
+      expect(tester.getSize(find.byType(ListView)).height, greaterThanOrEqualTo(140));
+      expect(tester.takeException(), isNull);
+      semantics.dispose();
+    });
+  }
 }

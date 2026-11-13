@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -24,6 +25,16 @@ class BookingDateSelector extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).toString();
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final textScaler = MediaQuery.textScalerOf(context);
+    final dayChipHeight = math.max(70.0, textScaler.scale(70));
+    final dayChipWidth = math.max(60.0, textScaler.scale(60));
+
+    void openCalendar() => showBookingCalendarModal(
+      context: context,
+      initialDate: selectedDate,
+      operationalBaseDate: operationalBaseDate,
+      onDateSelected: onDateChanged,
+    );
 
     return Container(
       color: VSPColors.background,
@@ -33,14 +44,15 @@ class BookingDateSelector extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-            child: GestureDetector(
-              onTap: () => showBookingCalendarModal(
-                context: context,
-                initialDate: selectedDate,
-                operationalBaseDate: operationalBaseDate,
-                onDateSelected: onDateChanged,
-              ),
-              child: Container(
+            child: Semantics(
+              button: true,
+              label: isArabic ? 'فتح تقويم الحجز' : 'Open booking calendar',
+              hint: DateFormat('MMMM yyyy', locale).format(selectedDate),
+              onTap: openCalendar,
+              child: ExcludeSemantics(
+                child: GestureDetector(
+                  onTap: openCalendar,
+                  child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.xs),
                 decoration: BoxDecoration(
                   color: VSPColors.surface,
@@ -57,6 +69,8 @@ class BookingDateSelector extends StatelessWidget {
                     const SizedBox(width: VSPSpacing.xs),
                     const Icon(Iconsax.calendar_1_copy, color: VSPColors.textPrimary, size: 18),
                   ],
+                ),
+                  ),
                 ),
               ),
             ),
@@ -77,7 +91,7 @@ class BookingDateSelector extends StatelessWidget {
                 ),
                 const SizedBox(height: VSPSpacing.sm),
                 SizedBox(
-                  height: 70,
+                  height: dayChipHeight,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: 14,
@@ -98,7 +112,7 @@ class BookingDateSelector extends StatelessWidget {
                           child: GestureDetector(
                             onTap: () => onDateChanged(date),
                             child: Container(
-                          width: 60,
+                          width: dayChipWidth,
                           margin: const EdgeInsetsDirectional.only(end: VSPSpacing.sm),
                           decoration: BoxDecoration(
                             color: isSelected ? VSPColors.accent : VSPColors.transparent,
