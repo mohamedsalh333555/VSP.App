@@ -83,6 +83,9 @@ class StadiumRepository {
       yield initialList;
     } catch (_) {
       VSPLogger.w('Initial owner stadium fetch failed (details redacted)');
+      // Never claim the account has zero stadiums when its initial
+      // authoritative REST query failed.
+      rethrow;
     }
 
     // 2. Realtime Stream updates with error handling

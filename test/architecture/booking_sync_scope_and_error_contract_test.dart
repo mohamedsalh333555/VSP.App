@@ -42,6 +42,8 @@ void main() {
     expect(end, greaterThan(start));
     final stream = stadium.substring(start, end);
     expect(stream, contains('Error.throwWithStackTrace(error, stack);'));
+    expect(stream, contains('rethrow;'));
+    expect(stream, contains('Initial owner stadium fetch failed (details redacted)'));
     expect(stream, isNot(contains('return <Stadium>[];\n    });')));
     expect(stream, contains('.eq(\'owner_id\', cleanOwnerId)'));
   });
