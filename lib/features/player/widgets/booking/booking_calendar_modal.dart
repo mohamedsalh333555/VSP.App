@@ -138,15 +138,28 @@ void showBookingCalendarModal({
                             date.day == tempSelectedDate.day;
                         final isPastDate = date.isBefore(firstBookableDay);
 
-                        return InkWell(
-                          onTap: isPastDate
-                              ? null
-                              : () {
-                                  setModalState(() {
-                                    tempSelectedDate = date;
-                                  });
-                                },
-                          child: Container(
+                        final readableDate = DateFormat(
+                          'EEEE, d MMMM yyyy',
+                          Localizations.localeOf(context).toString(),
+                        ).format(date);
+                        void selectDay() {
+                          setModalState(() {
+                            tempSelectedDate = date;
+                          });
+                        }
+
+                        return Semantics(
+                          button: true,
+                          enabled: !isPastDate,
+                          selected: isSelected,
+                          label: isArabic
+                              ? 'تاريخ الحجز: $readableDate'
+                              : 'Booking date: $readableDate',
+                          onTap: isPastDate ? null : selectDay,
+                          child: ExcludeSemantics(
+                            child: InkWell(
+                              onTap: isPastDate ? null : selectDay,
+                              child: Container(
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: isSelected
@@ -163,6 +176,8 @@ void showBookingCalendarModal({
                                         ? VSPColors.textSecondary.withValues(alpha: 0.5)
                                         : VSPColors.textSecondary),
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
                               ),
                             ),
                           ),
