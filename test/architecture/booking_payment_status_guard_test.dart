@@ -27,8 +27,9 @@ void main() {
     );
     expect(update, contains('BookingListModifier.updateBooking(_userBookings, updated)'));
     expect(update, contains('_currentBooking = updated'));
-    expect(update, contains('catch (refreshError)'));
-    expect(update, contains("debugPrint('Payment status refresh failed:"));
+    expect(update, contains('catch (_)'));
+    expect(update, contains("debugPrint('Payment status refresh failed (details redacted)')"));
+    expect(update, isNot(contains('refresh failed: \$refreshError')));
     expect(update, contains("_errorMessage = 'تعذر تحديث حالة الدفع'"));
     expect(update, contains('notifyListeners()'));
   });
