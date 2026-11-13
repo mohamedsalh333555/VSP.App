@@ -64,7 +64,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
  // 3. Trigger Confetti & Haptics
  Future.delayed(const Duration(milliseconds: 500), () {
- if (mounted) {
+ if (mounted && BookingStatusPresentation.isConfirmed(widget.booking.status)) {
  _confettiController.play();
  HapticFeedback.heavyImpact();
  }
@@ -107,7 +107,13 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  final isDeposit = widget.booking.paymentStatus == 'partially_paid' ||
      (widget.booking.depositPaid > 0 && widget.booking.depositPaid < widget.booking.totalPrice);
 
- final paymentMethodText = widget.booking.paymentMethod.toLowerCase() == 'cash'
+ final paymentPendingVerification =
+     widget.booking.paymentMethod.toLowerCase() != 'cash' &&
+     (widget.booking.status == BookingStatus.pending ||
+         widget.booking.paymentStatus.toLowerCase() == 'pending');
+ final paymentMethodText = paymentPendingVerification
+     ? (isArabic ? 'الدفع قيد التحقق' : 'Payment pending verification')
+     : widget.booking.paymentMethod.toLowerCase() == 'cash'
  ? (isArabic ? 'دفع نقداً' : 'Cash')
  : isDeposit
      ? (isArabic ? 'دفع عربون إلكتروني' : 'Online Deposit')
