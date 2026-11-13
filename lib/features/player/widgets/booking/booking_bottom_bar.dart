@@ -276,7 +276,7 @@ class BookingBottomBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isArabic ? 'المبلغ المطلوب' : 'Amount due',
+                    isArabic ? 'إجمالي الحجز' : 'Booking total',
                     style: const TextStyle(
                       color: VSPColors.textSecondary,
                       fontSize: 11,
