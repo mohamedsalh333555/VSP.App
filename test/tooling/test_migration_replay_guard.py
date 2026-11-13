@@ -72,7 +72,6 @@ class MigrationReplayGuardTest(unittest.TestCase):
         )
 
     def test_staging_history_preflight_allows_only_unapplied_version(self):
-        version = "20261113120000"
         observed = []
 
         class Response:
@@ -85,20 +84,21 @@ class MigrationReplayGuardTest(unittest.TestCase):
                 return False
 
             def read(self, limit):
-                return b"[]"
+                return b'[{"version":"20261112000000","name":"existing"}]'
 
         def fake_open(request, timeout):
-            observed.append((request.full_url, json.loads(request.data), timeout))
+            observed.append((request, timeout))
             return Response()
 
         with patch.object(runner.urllib.request, "urlopen", fake_open):
-            runner.reject_applied_version(version, "synthetic_ci_token")
+            runner.reject_applied_version("20261113120000", "synthetic_ci_token")
         self.assertEqual(len(observed), 1)
-        self.assertIn(runner.STAGING_PROJECT_REF, observed[0][0])
-        self.assertEqual(observed[0][1]["query"],
-                         "SELECT version FROM supabase_migrations.schema_migrations "
-                         f"WHERE version = '{version}' LIMIT 1")
-        self.assertEqual(observed[0][2], 30)
+        self.assertEqual(
+            observed[0][0].full_url,
+            f"https://api.supabase.com/v1/projects/{runner.STAGING_PROJECT_REF}/database/migrations",
+        )
+        self.assertEqual(observed[0][0].get_method(), "GET")
+        self.assertEqual(observed[0][1], 30)
 
     def test_staging_history_preflight_rejects_applied_version(self):
         version = "20261113120000"
@@ -138,14 +138,13 @@ class MigrationReplayGuardTest(unittest.TestCase):
                 return self.body[:limit]
 
         for body in (
-            b'{"error":"forbidden"}', b'[{"version":"other"}]',
-            b'[{"version":null}]', b"not json",
-            b'[{"version":"20261113120000"},{"version":"20261113120000"}]',
+            b'{"error":"forbidden"}', b'[{"version":null}]',
+            b'[{"version":"bad"}]', b"not json", b"[]",
         ):
             with self.subTest(body=body):
                 with patch.object(runner.urllib.request, "urlopen",
                                   return_value=Response(body)):
-                    with self.assertRaises((ValueError, json.JSONDecodeError)):
+                    with self.assertRaises(ValueError):
                         runner.reject_applied_version(version, "synthetic_ci_token")
 
     def test_staging_history_preflight_rejects_malformed_version_without_http(self):
