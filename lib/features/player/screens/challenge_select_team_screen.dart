@@ -66,6 +66,21 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     super.didChangeDependencies();
     final userId = context.watch<app_auth.AuthProvider>().currentUser?.id;
     if (!_hasObservedUserId || userId != _activeUserId) {
+      if (_hasObservedUserId) {
+        // Keep private opponent and captain-code state bound to one session.
+        ++_opponentRequestGeneration;
+        _selectedTeam = null;
+        _userTeam = null;
+        _appliedChallengeCode = null;
+        _h2hStats = null;
+        _isLoadingH2H = false;
+        _hasH2HError = false;
+        _isLookingUpCode = false;
+        _isGeneratingCode = false;
+        _isContinuing = false;
+        _championStatusMap.clear();
+        _challengeCodeController.clear();
+      }
       _hasObservedUserId = true;
       _activeUserId = userId;
       final generation = ++_teamRequestGeneration;
@@ -230,7 +245,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       );
     } catch (_) {
       debugPrint('Challenge booking team verification failed (details redacted)');
-      if (mounted) {
+      if (mounted &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == uid &&
+          opponentGeneration == _opponentRequestGeneration) {
         VSPFeedback.showError(
           context,
           isArabic
@@ -271,13 +288,23 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       return;
     }
 
+    final lookupUserId = context.read<app_auth.AuthProvider>().currentUser?.id;
+    if (lookupUserId == null) {
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'سجّل الدخول أولاً لفحص كود التحدي.' : 'Sign in to check a challenge code.',
+      );
+      return;
+    }
     FocusScope.of(context).unfocus();
     final opponentGeneration = ++_opponentRequestGeneration;
     setState(() => _isLookingUpCode = true);
 
     try {
       final res = await TeamRepository().lookupChallengeCode(code);
-      if (!mounted || opponentGeneration != _opponentRequestGeneration) return;
+      if (!mounted ||
+          opponentGeneration != _opponentRequestGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != lookupUserId) return;
       // Ignore an in-flight lookup if the player edited the code meanwhile.
       if (_challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) {
         setState(() => _isLookingUpCode = false);
@@ -287,7 +314,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       if (res['success'] == true && res['opponent_team_id'] != null) {
         final oppId = res['opponent_team_id'].toString();
         final oppTeam = await TeamRepository().getTeam(oppId);
-        if (!mounted || opponentGeneration != _opponentRequestGeneration) return;
+        if (!mounted ||
+          opponentGeneration != _opponentRequestGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != lookupUserId) return;
         if (_challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) {
           setState(() => _isLookingUpCode = false);
           return;
@@ -337,6 +366,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       }
 
       if (!mounted || opponentGeneration != _opponentRequestGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != lookupUserId ||
           _challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) return;
       setState(() => _isLookingUpCode = false);
       final err = res['error']?.toString() ?? '';
@@ -355,8 +385,10 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         errorMsg = isArabic ? 'تعذر التحقق من كود التحدي. تأكد من الكود وأعد المحاولة.' : 'Could not verify the challenge code. Check it and retry.';
       }
       VSPFeedback.showError(context, errorMsg);
-    } catch (e) {
-      if (mounted) {
+    } catch (_) {
+      if (mounted && opponentGeneration == _opponentRequestGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == lookupUserId &&
+          _challengeCodeController.text.trim().toUpperCase() == code.toUpperCase()) {
         setState(() => _isLookingUpCode = false);
         VSPFeedback.showError(
           context,
@@ -379,13 +411,17 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   }
 
   Future<void> _showMyChallengeCodeModal() async {
-    if (_userTeam == null) return;
+    final initiatingTeamId = _userTeam?.id;
+    final initiatingUserId = context.read<app_auth.AuthProvider>().currentUser?.id;
+    if (initiatingTeamId == null || initiatingUserId == null) return;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     setState(() => _isGeneratingCode = true);
 
     try {
-      final res = await TeamRepository().generateChallengeCode(_userTeam!.id);
-      if (!mounted) return;
+      final res = await TeamRepository().generateChallengeCode(initiatingTeamId);
+      if (!mounted ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != initiatingUserId ||
+          _userTeam?.id != initiatingTeamId) return;
       setState(() => _isGeneratingCode = false);
 
       if (res['success'] != true || res['code'] == null) {
@@ -401,8 +437,10 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
       final code = res['code'].toString();
       _displayChallengeCodeBottomSheet(code);
-    } catch (e) {
-      if (mounted) {
+    } catch (_) {
+      if (mounted &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == initiatingUserId &&
+          _userTeam?.id == initiatingTeamId) {
         setState(() => _isGeneratingCode = false);
         VSPFeedback.showError(
           context,
