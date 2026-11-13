@@ -74,3 +74,10 @@ Production additive client-role guard deployed after native SQL CI 42958578778; 
 
 
 Batch 05 verification source 3e371a5: native SQL 42958578778 SUCCESS (5 suites, 5 negative fault controls, 9 runner checks); Flutter 42958578707 SUCCESS (1142 passed/10 skipped); Android 42958584079 SUCCESS. BUG-035/036 are fixture-generation corrections, not delivered app features. Production migration 20261111042356 contains only the additive role guard; prior table grant revocations remain staging-only.
+
+
+## 2026-11-13 — Follow-up automated source contract
+
+| ID | Priority | Finding / correction | Evidence and status |
+|---|---|---|---|
+| BUG-037 | P2 | Architecture regression test for disabled stadium booking action assumed an exact single-line `onPressed: bookingEnabled ? () {` expression. The responsive-bar refactor preserved the disabled `null` branch but formatted the ternary over multiple lines; this test-only string assertion failed before the full suite ran. Changed to a whitespace-tolerant callback pattern and explicit null-branch assertion without weakening disabled booking behavior. | [Failed Flutter CI 43516488567](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43516488567), [repair commit be25d294](https://github.com/mohamedsalh333555/VSP.App/commit/be25d294f5c8b201fe66207669405a48a419199c). Retest on current head pending; not a completed product feature or core-subtask acceptance. |
