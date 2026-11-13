@@ -3,6 +3,29 @@
 class StadiumPayloadBuilder {
   const StadiumPayloadBuilder._();
 
+  // Venue prices in the current Egyptian product are EGP-only. Never quietly
+  // drop a caller-supplied foreign currency and label its price as EGP.
+  static void _requireEgp(Map<String, dynamic> input) {
+    final currency = input['currency'] ?? input['currency_code'];
+    if (currency != null && currency.toString().trim().toUpperCase() != 'EGP') {
+      throw const FormatException('Unsupported stadium currency: only EGP is allowed');
+    }
+  }
+
+  static num _checkedMoney(Object? raw, String name) {
+    final num? amount = raw == null
+        ? 0.0
+        : raw is num
+            ? raw
+            : raw is String
+                ? num.tryParse(raw.trim())
+                : null;
+    if (amount == null || !amount.isFinite || amount < 0) {
+      throw FormatException('Invalid nonnegative stadium amount: $name');
+    }
+    return amount;
+  }
+
   /// Formats time strings into standard HH:mm:ss format for Postgres TIME column.
   static String? formatTimeToHms(dynamic timeVal) {
     if (timeVal == null) return null;
@@ -27,13 +50,30 @@ class StadiumPayloadBuilder {
 
   /// Builds a sanitized map payload for inserting a new stadium into Postgres.
   static Map<String, dynamic> buildInsertPayload(Map<String, dynamic> rawData) {
+    _requireEgp(rawData);
     final sanitizedData = Map<String, dynamic>.from(rawData);
     sanitizedData.remove('isVerified');
     sanitizedData.remove('is_verified');
     sanitizedData.remove('createdAt');
     sanitizedData.remove('created_at');
 
-    final price = sanitizedData['pricePerHour'] ?? sanitizedData['price_per_hour'] ?? 0.0;
+    final price = _checkedMoney(
+      sanitizedData['pricePerHour'] ?? sanitizedData['price_per_hour'],
+      'price_per_hour',
+    );
+    final basePrice = _checkedMoney(
+      sanitizedData['basePrice'] ?? sanitizedData['base_price'] ?? price,
+      'base_price',
+    );
+    final deposit = _checkedMoney(
+      sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'],
+      'deposit_amount',
+    );
+    final needsDeposit =
+        sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false;
+    if (needsDeposit == true && (deposit <= 0 || deposit > price)) {
+      throw const FormatException('Required stadium deposit must be positive and within the hourly price');
+    }
     final features = sanitizedData['features'] ?? {};
     final String sport = features['sportType'] ?? sanitizedData['sportType'] ?? sanitizedData['type'] ?? 'Football';
     final String originalDesc = sanitizedData['description'] ?? sanitizedData['notes'] ?? '';
@@ -77,7 +117,7 @@ class StadiumPayloadBuilder {
       'city': sanitizedData['area'] ?? sanitizedData['location'] ?? 'Cairo',
       'location': sanitizedData['address'] ?? sanitizedData['location'] ?? '',
       'price_per_hour': price,
-      'base_price': sanitizedData['basePrice'] ?? sanitizedData['base_price'] ?? price,
+      'base_price': basePrice,
       'images': imagesList,
       'image_url': sanitizedData['imageUrl'] ?? sanitizedData['image_url'] ?? firstImage,
       'is_verified': false,
@@ -85,8 +125,8 @@ class StadiumPayloadBuilder {
       'is_deleted_by_owner': false,
       'rating': 0.0,
       'reviews_count': 0,
-      'deposit_amount': sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'] ?? 0.0,
-      'needs_deposit': sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false,
+      'deposit_amount': deposit,
+      'needs_deposit': needsDeposit,
       'lat': sanitizedData['lat'],
       'lng': sanitizedData['lng'],
     };
@@ -94,6 +134,7 @@ class StadiumPayloadBuilder {
 
   /// Builds a sanitized map payload for updating an existing stadium in Postgres.
   static Map<String, dynamic> buildUpdatePayload(Map<String, dynamic> data) {
+    _requireEgp(data);
     final securedData = Map<String, dynamic>.from(data);
     securedData.remove('ownerId');
     securedData.remove('owner_id');
@@ -170,6 +211,22 @@ class StadiumPayloadBuilder {
     // Keep base_price in sync with price_per_hour if modified
     if (pgData.containsKey('price_per_hour') && !pgData.containsKey('base_price')) {
       pgData['base_price'] = pgData['price_per_hour'];
+    }
+
+    for (final field in const <String>['price_per_hour', 'base_price', 'deposit_amount']) {
+      if (pgData.containsKey(field)) {
+        pgData[field] = _checkedMoney(pgData[field], field);
+      }
+    }
+    if (pgData['needs_deposit'] == true &&
+        pgData.containsKey('deposit_amount') &&
+        (pgData['deposit_amount'] as num) <= 0) {
+      throw const FormatException('Required stadium deposit cannot be zero');
+    }
+    if (pgData.containsKey('deposit_amount') &&
+        pgData.containsKey('price_per_hour') &&
+        (pgData['deposit_amount'] as num) > (pgData['price_per_hour'] as num)) {
+      throw const FormatException('Stadium deposit exceeds the hourly price');
     }
 
     return pgData;

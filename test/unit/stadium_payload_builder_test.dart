@@ -11,6 +11,89 @@ void main() {
       expect(StadiumPayloadBuilder.formatTimeToHms('08:15:30'), '08:15:30');
     });
 
+    test('only EGP currency is accepted and normalized money stays numeric', () {
+      final result = StadiumPayloadBuilder.buildInsertPayload({
+        'currency': 'egp',
+        'pricePerHour': ' 350.25 ',
+        'basePrice': '350.25',
+        'depositAmount': '100',
+        'needsDeposit': true,
+      });
+      expect(result['price_per_hour'], 350.25);
+      expect(result['base_price'], 350.25);
+      expect(result['deposit_amount'], 100);
+      expect(result['needs_deposit'], isTrue);
+      for (final currency in <String>['USD', 'EUR', '']) {
+        expect(
+          () => StadiumPayloadBuilder.buildInsertPayload({
+            'currency': currency, 'pricePerHour': 200,
+          }),
+          throwsFormatException,
+        );
+        expect(
+          () => StadiumPayloadBuilder.buildUpdatePayload({
+            'currency_code': currency, 'price_per_hour': 200,
+          }),
+          throwsFormatException,
+        );
+      }
+    });
+
+    test('invalid hourly, base and deposit amounts fail before database insertion', () {
+      for (final invalid in <Object?>[
+        -1, double.nan, double.infinity, '-12.50', 'invalid', true,
+      ]) {
+        expect(
+          () => StadiumPayloadBuilder.buildInsertPayload({'pricePerHour': invalid}),
+          throwsFormatException,
+          reason: 'invalid hourly price: $invalid',
+        );
+        expect(
+          () => StadiumPayloadBuilder.buildUpdatePayload({'basePrice': invalid}),
+          throwsFormatException,
+          reason: 'invalid base price: $invalid',
+        );
+        expect(
+          () => StadiumPayloadBuilder.buildUpdatePayload({'depositAmount': invalid}),
+          throwsFormatException,
+          reason: 'invalid deposit: $invalid',
+        );
+      }
+    });
+
+    test('required deposit cannot exceed price or be zero', () {
+      expect(
+        () => StadiumPayloadBuilder.buildInsertPayload({
+          'pricePerHour': 250,
+          'needsDeposit': true,
+          'depositAmount': 251,
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => StadiumPayloadBuilder.buildInsertPayload({
+          'pricePerHour': 250,
+          'needsDeposit': true,
+          'depositAmount': 0,
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => StadiumPayloadBuilder.buildUpdatePayload({
+          'price_per_hour': 250,
+          'deposit_amount': 251,
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => StadiumPayloadBuilder.buildUpdatePayload({
+          'needs_deposit': true,
+          'deposit_amount': 0,
+        }),
+        throwsFormatException,
+      );
+    });
+
     test('buildInsertPayload removes restricted keys and formats defaults', () {
       final raw = {
         'name': 'Al-Ahly Pitch',
