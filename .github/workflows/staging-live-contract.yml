@@ -11,6 +11,7 @@ on:
     paths:
       - "test/db_live_verification_test.dart"
       - ".github/workflows/staging-live-contract.yml"
+      - "test/tooling/test_staging_live_project_guard.py"
 
 jobs:
   public-contract:
@@ -24,6 +25,8 @@ jobs:
           flutter-version: "3.32.8"
           channel: stable
           cache: true
+      - name: Verify staging-only target and no data writes in live tests
+        run: python3 -m unittest discover -s test/tooling -p test_staging_live_project_guard.py -v
       - name: Install dependencies
         run: flutter pub get
       - name: Run read-only live contract checks

@@ -11,12 +11,24 @@ const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
 const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 const _runLiveTests =
     bool.fromEnvironment('VSP_RUN_LIVE_TESTS', defaultValue: false);
+// Staging-only live contract: accidentally supplied production credentials
+// must FAIL rather than probing a customer environment.
+const _expectedStagingUrl = 'https://vtwgqyxglevcsxwdmhop.supabase.co';
 const _canRunLiveTests =
-    _runLiveTests && _supabaseUrl != '' && _supabaseAnonKey != '';
+    _runLiveTests && _supabaseUrl == _expectedStagingUrl &&
+    _supabaseAnonKey != '';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = RealHttpOverrides();
+
+  test('live verification refuses a non-staging Supabase URL', () {
+    expect(
+      _supabaseUrl,
+      _expectedStagingUrl,
+      reason: 'Refusing to run VSP live tests against production or an unknown project.',
+    );
+  }, skip: !_runLiveTests);
 
   group(
     'VSP staging public and anonymous security contract',

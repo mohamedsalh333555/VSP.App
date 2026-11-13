@@ -30,6 +30,9 @@ on:
       - 'test/tooling/test_account_security_runner.py'
       - 'scripts/test_owner_stadium_capacity_concurrency.py'
       - 'test/tooling/test_owner_stadium_capacity_target_guard.py'
+      - 'docs/security/sql/owner_trial_365_day_default_candidate.sql'
+      - 'scripts/test_owner_trial_default_isolated.py'
+      - 'test/tooling/test_owner_trial_default_target_guard.py'
       - 'docs/security/sql/owner_stadium_capacity_guard_candidate.sql'
       - '.github/workflows/account-security-contracts.yml'
   pull_request:
@@ -57,6 +60,9 @@ on:
       - 'test/tooling/test_account_security_runner.py'
       - 'scripts/test_owner_stadium_capacity_concurrency.py'
       - 'test/tooling/test_owner_stadium_capacity_target_guard.py'
+      - 'docs/security/sql/owner_trial_365_day_default_candidate.sql'
+      - 'scripts/test_owner_trial_default_isolated.py'
+      - 'test/tooling/test_owner_trial_default_target_guard.py'
       - 'docs/security/sql/owner_stadium_capacity_guard_candidate.sql'
       - '.github/workflows/account-security-contracts.yml'
 
@@ -103,6 +109,10 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_owner_stadium_capacity_target_guard.py -v
       - name: Verify quota candidate in independent local SQL sessions
         run: python3 scripts/test_owner_stadium_capacity_concurrency.py
+      - name: Verify owner trial default test cannot reach hosted databases
+        run: python3 -m unittest discover -s test/tooling -p test_owner_trial_default_target_guard.py -v
+      - name: Verify explicit seven-day trial after source-checked default removal on isolated SQL
+        run: python3 scripts/test_owner_trial_default_isolated.py
       - name: Verify isolated booking validator runner guard and SQL parsing
         run: python3 -m unittest discover -s test/tooling -p test_booking_window_contract_runner.py -v
       - name: Verify booking maintenance and overnight split-break SQL on isolated Postgres
