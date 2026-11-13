@@ -140,7 +140,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
         // not only with the route's original widget argument.
         final displayImages = _collectDisplayImages(stadium);
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        final isUnavailable = !stadium.isVerified || stadium.isBlocked || stadium.isUnderMaintenance ||
+        final isUnavailable = !stadium.isVerified || stadium.isBlocked ||
             (snapshot.hasData && snapshot.data!.isEmpty);
         final hasStreamIssue = snapshot.hasError || parseFailed;
 
@@ -173,6 +173,39 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
             bottom: false,
             child: Column(
               children: [
+                if (stadium.isUnderMaintenance)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      VSPSpacing.md, VSPSpacing.sm, VSPSpacing.md, 0,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      decoration: BoxDecoration(
+                        color: VSPColors.warning.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(
+                          color: VSPColors.warning.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.schedule, color: VSPColors.warning),
+                          const SizedBox(width: VSPSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              isArabic
+                                  ? 'الملعب مغلق للصيانة مؤقتًا. يمكنك استعراض المواعيد بعد انتهاء الإغلاق.'
+                                  : 'The venue is temporarily closed for maintenance. You can explore slots after it ends.',
+                              style: const TextStyle(
+                                color: VSPColors.textPrimary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 if (hasStreamIssue)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -260,7 +293,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           ),
           bottomNavigationBar: StadiumBottomBookingBar(
             stadium: stadium,
-            bookingEnabled: stadium.isVerified && !stadium.isBlocked && !stadium.isUnderMaintenance && !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty,
+            bookingEnabled: stadium.isVerified && !stadium.isBlocked && !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty,
           ),
         );
       },

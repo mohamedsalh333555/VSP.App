@@ -4,6 +4,11 @@ import '../constants/egypt_governorates.dart';
 
 /// Standardized Date & Time Formatter and Parser for VSP Application
 class AppDateFormatter {
+  /// Booking dates are local *calendar* days, not elapsed 24-hour intervals.
+  /// Egypt daylight-saving changes can produce 23/25-hour civil days.
+  static DateTime addCivilDays(DateTime date, int dayOffset) =>
+      DateTime(date.year, date.month, date.day + dayOffset);
+
   /// Format date as day and month (e.g., "15 أغسطس" in AR, "15 Aug" in EN)
   static String formatDayMonth(DateTime date, String locale) {
     final localDate = date.toLocal();

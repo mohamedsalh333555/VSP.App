@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'booking_calendar_modal.dart';
 
@@ -79,7 +80,7 @@ class BookingDateSelector extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     itemCount: 14,
                     itemBuilder: (context, index) {
-                      final date = operationalBaseDate.add(Duration(days: index));
+                      final date = AppDateFormatter.addCivilDays(operationalBaseDate, index);
                       final isSelected = date.year == selectedDate.year &&
                           date.month == selectedDate.month &&
                           date.day == selectedDate.day;
