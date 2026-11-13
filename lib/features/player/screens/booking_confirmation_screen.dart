@@ -16,6 +16,7 @@ import '../widgets/booking/booking_financial_summary.dart';
 import '../widgets/booking/booking_slot_calculator.dart';
 import '../widgets/booking/booking_slot_models.dart';
 import '../widgets/booking/booking_slot_stream_section.dart';
+import '../widgets/booking/booking_cancellation_policy_note.dart';
 
 export '../widgets/booking/booking_slot_models.dart' show TimeSlotItem;
 
@@ -277,6 +278,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     totalPrice: _totalPrice,
                     hasSelectedSlots: isSlotSelected,
                   ),
+                  const SizedBox(height: VSPSpacing.md),
+                  const BookingCancellationPolicyNote(),
                   const SizedBox(height: VSPSpacing.xl),
                 ],
               ),
