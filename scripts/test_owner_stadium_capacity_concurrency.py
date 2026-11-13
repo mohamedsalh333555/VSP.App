@@ -21,8 +21,18 @@ PRO = "10000000-0000-4000-8000-000000000002"
 RACE = "10000000-0000-4000-8000-000000000003"
 
 FIXTURE = r"""-- Disposable fixture, NEVER run against staging/production.
-CREATE ROLE authenticated NOLOGIN;
-CREATE ROLE anon NOLOGIN;
+-- Roles are global to the local Postgres *cluster* and may have been created
+-- earlier by account-security contracts in the sibling scratch database.
+DO $fixture_roles$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    CREATE ROLE authenticated NOLOGIN;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    CREATE ROLE anon NOLOGIN;
+  END IF;
+END;
+$fixture_roles$;
 CREATE SCHEMA auth;
 GRANT USAGE ON SCHEMA public, auth TO authenticated;
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $auth$
