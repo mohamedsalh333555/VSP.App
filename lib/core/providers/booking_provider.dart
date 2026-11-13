@@ -188,7 +188,8 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return booking;
     } catch (e) {
-      _errorMessage = 'Failed to create booking: $e';
+      // Reuse the domain error translator; never show a raw gateway/RPC body.
+      _errorMessage = BookingListModifier.formatCreationError(e);
       _isLoading = false;
       notifyListeners();
       return null;
@@ -357,7 +358,7 @@ class BookingProvider with ChangeNotifier {
                   _currentBooking!.copyWith(status: BookingStatus.cancelled);
             }
           }
-        } catch (refreshError) {
+        } catch (_) {
           // Cancellation is already confirmed. Keep the record in history with
           // a cancelled status while the next strict sync refreshes refund fields.
           final existingIndex = _userBookings.indexWhere((item) => item.id == bookingId);
@@ -371,7 +372,7 @@ class BookingProvider with ChangeNotifier {
             _currentBooking =
                 _currentBooking!.copyWith(status: BookingStatus.cancelled);
           }
-          debugPrint('Cancellation succeeded but booking refresh failed: $refreshError');
+          debugPrint('Cancelled booking refresh failed (details redacted)');
         }
         await Future.delayed(const Duration(milliseconds: 300));
       } else {
@@ -379,9 +380,7 @@ class BookingProvider with ChangeNotifier {
       }
       return success;
     } catch (e) {
-      _errorMessage = e is Exception
-          ? e.toString().replaceFirst('Exception: ', '').trim()
-          : 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
+      _errorMessage = BookingListModifier.formatCreationError(e);
       return false;
     } finally {
       _cancellingIds.remove(bookingId);
@@ -554,16 +553,16 @@ class BookingProvider with ChangeNotifier {
             _currentBooking = updated;
           }
         }
-      } catch (refreshError) {
-        debugPrint('Match result booking refresh failed: $refreshError');
+      } catch (_) {
+        debugPrint('Match result booking refresh failed (details redacted)');
       }
       if (!success) {
         _errorMessage = 'Failed to submit result or results do not match.';
       }
       notifyListeners();
       return success;
-    } catch (e) {
-      _errorMessage = 'Error submitting result: $e';
+    } catch (_) {
+      _errorMessage = 'تعذر إرسال نتيجة المباراة. أعد المحاولة.';
       notifyListeners();
       return false;
     }
@@ -599,20 +598,18 @@ class BookingProvider with ChangeNotifier {
               _currentBooking = updated;
             }
           }
-        } catch (refreshError) {
-          debugPrint('Payment status refresh failed: $refreshError');
+        } catch (_) {
+          debugPrint('Payment status refresh failed (details redacted)');
         }
       } else {
         _errorMessage = 'تعذر تحديث حالة الدفع';
       }
       notifyListeners();
       return success;
-    } catch (error, stackTrace) {
-      // Payment confirmation is a user-facing owner action. Keep repository
-      // and network details in diagnostics; callers receive a safe failure
-      // result and can restore their loading state without an uncaught error.
-      debugPrint('Booking payment-status update failed: $error');
-      debugPrintStack(stackTrace: stackTrace);
+    } catch (_) {
+      // Payment provider responses and trace metadata may contain account,
+      // card-processing or booking IDs; never send them to device logs.
+      debugPrint('Booking payment-status update failed (details redacted)');
       _errorMessage = 'تعذر تحديث حالة الدفع';
       notifyListeners();
       return false;
@@ -648,8 +645,8 @@ class BookingProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return success;
-    } catch (e) {
-      _errorMessage = e.toString();
+    } catch (_) {
+      _errorMessage = 'تعذر تحديث بيانات الحجز حاليًا.';
       _isLoading = false;
       notifyListeners();
       return false;

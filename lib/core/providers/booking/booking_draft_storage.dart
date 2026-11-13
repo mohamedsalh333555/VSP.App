@@ -19,8 +19,8 @@ class BookingDraftStorage {
       } else {
         await prefs.remove(_draftKey);
       }
-    } catch (e) {
-      VSPLogger.w('Failed to persist booking draft: $e');
+    } catch (_) {
+      VSPLogger.w('Failed to persist booking draft (details redacted)');
     }
   }
 
@@ -39,8 +39,8 @@ class BookingDraftStorage {
           await prefs.remove(_draftKey);
         }
       }
-    } catch (e) {
-      VSPLogger.w('Failed to restore booking draft: $e');
+    } catch (_) {
+      VSPLogger.w('Failed to restore booking draft (details redacted)');
     }
     return null;
   }
@@ -50,8 +50,8 @@ class BookingDraftStorage {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_draftKey);
-    } catch (e) {
-      VSPLogger.w('Failed to clear booking draft: $e');
+    } catch (_) {
+      VSPLogger.w('Failed to clear booking draft (details redacted)');
     }
   }
 }

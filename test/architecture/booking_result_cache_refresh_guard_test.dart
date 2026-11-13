@@ -16,7 +16,7 @@ void main() {
     expect(method, contains('getBookingByIdStrict(bookingId)'));
     expect(method, contains('BookingListModifier.updateBooking(_userBookings, updated)'));
     expect(method, contains('_currentBooking = updated;'));
-    expect(method, contains('catch (refreshError)'));
+    expect(method, contains('catch (_)'));
     expect(method, contains('return success;'));
     expect(method.indexOf('getBookingByIdStrict(bookingId)'),
         lessThan(method.indexOf('return success;')));
