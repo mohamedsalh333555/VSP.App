@@ -1,3 +1,9 @@
+## 2026-11-13 — Migration replay preflight accepted (154/464)
+
+- **71.06** accepted as a **narrow legacy-runner safety guard**: reject non-staging/unapproved targets, duplicate migration prefixes and rollback files, and fail closed if Supabase's official read-only migration-history API reports an already-applied version or cannot return trustworthy history. [Evidence and limits](security/VSP_STAGING_MIGRATION_REPLAY_GUARD_ACCEPTANCE_2026-11-13.md).
+- [Account SQL security CI 43469070268](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43469070268) passed on code/test commit `c4a5b072`, covering isolated synthetic/mocked replay checks. **No staging/production migration or data write occurred**. The GET preflight is non-atomic and does not replace a tracked migration pipeline; full clean rebuild/replay **71.07 remains OPEN**.
+- **618 total / 154 VERIFIED / 464 open**. This is not release readiness; direct main merge remains gated on integration tests, security blockers and branch conflict resolution.
+
 ## 2026-11-13 — Verified badge source tracing accepted (153/465)
 
 - **81.02 and 81.05** accepted as **source-inventory-only**, not deployed or displayed achievements. [Official winner and current roster sources](security/VSP_VERIFIED_TEAM_BADGE_SOURCE_AUDIT_2026-11-13.md) were mapped from deployed RPC and schema with read-only aggregate SQL: 0 venue-owner-completed approved team titles, 0 completed 1v1 champions and 12 teams in Staging.
@@ -323,7 +329,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 ## Fixed scope and accounting
 
 - Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Current inventory: **83 verified; 535 not yet accepted** (618 tasks total). This is not a claim that every remaining task is untouched.
+- Historical inventory snapshot (2026-11-11): **83 verified; 535 not yet accepted** (618 tasks total). This is not a current tally.
 - Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
 - A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
 - New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
