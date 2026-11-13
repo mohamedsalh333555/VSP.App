@@ -1,3 +1,11 @@
+## 2026-11-13 — Staging dependency and migration audits: 109 / 509
+
+- Audited staging SQL metadata and actual Supabase migration history (379 distinct entries), plus deployed `add_team_to_matchup_by_code(uuid,text)` function markers. No server mutation.
+- **8 inventory/diagnostic tasks accepted:** `69.02`, `69.03`, `70.03`, `71.03`, `71.04`, `71.05`, `72.03`, `73.02`. Evidence: [staging relations/migration/credential requirements audit](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md).
+- Key limits: legacy 1v1 table had 0 rows, newer 1v1 player table 16; challenge results had 0 rows. This is a schema/dependency review, **not** migration, duplicate-resolution or data-transfer acceptance. The current matchup RPC exposes the five-team limit marker with no legacy extra-fee marker; this is staging, not a verified production payment decision.
+- Current canonical scoped count: **618 total / 109 VERIFIED / 509 open**. Previously 101/517. Group 56 stays cancelled. Do not infer that real-account, staging device, production security or payment tasks are complete.
+- No `main` merge, production data reads or writes, or Auth settings changes.
+
 ## 2026-11-13 — Staging metadata audit acceptance batch: 101 / 517
 
 - Canonical checklist recount: **618 tasks / 101 VERIFIED / 517 open**; group 56 remains retired. Previous verified count 89, this audit accepted **12 inventory/classification-only items**: `65.01`, `65.03`, `66.01`, `68.01`, `70.01`, `73.01`, `74.01`, `74.02`, `75.01`, `75.02`, `76.02`, `77.01`.
