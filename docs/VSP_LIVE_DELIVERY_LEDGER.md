@@ -1,3 +1,10 @@
+## 2026-11-13 — Source-of-truth and retention decisions accepted (139/479)
+
+- **11 narrowly scoped decision/plan subtasks accepted:** \`61.06\`, \`62.04\`, \`62.06\`, \`63.06\`, \`64.03\`, \`64.06\`, \`65.04\`, \`65.05\`, \`65.07\`, \`68.04\`, \`68.06\`. [Evidence and decisions](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) distinguish final source choices from production data migration. These are **documentation/compatibility decisions, not 11 deployed bug fixes**.
+- New branch code for refund dispatcher, overnight booking and server-hours precedence, legacy notification rendering and stadium description localization is **not accepted** until relevant CI and isolated integration tests pass. Refund scheduler #39 P1 remains HOLD pending project-local identity and worker credential review; do not activate.
+- Canonical scope: **618 total / 139 VERIFIED / 479 open**. No changes to \`main\`, staging/production schemas or financial records.
+
+
 ## 2026-11-13 — Isolated SQL regression and staging view access accepted (128/490)
 
 - **22.06 and 22.07 accepted as isolated validator FUNCTION TESTS only**. [Account SQL security contracts run 43440144002](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43440144002) on code commit `45a45e7` completed successfully, including a negative control requiring the legacy validator to fail and a positive control requiring the patched validator to pass its SQL cases for split-shift and overnight booking windows. The migration **is not applied** to staging/production; real booking inserts, owner/RLS checks, conflict with `court_operating_hours` and end-to-end acceptance are still open.
