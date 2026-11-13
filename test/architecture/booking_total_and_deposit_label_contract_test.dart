@@ -14,6 +14,14 @@ void main() {
       'lib/features/player/screens/booking_confirmation_screen.dart',
     ).readAsStringSync();
 
+    final stadiumBar = File(
+      'lib/features/player/widgets/stadium_details/stadium_bottom_booking_bar.dart',
+    ).readAsStringSync();
+
+    expect(
+      stadiumBar,
+      contains('final hasDeposit = stadium.needsDeposit && stadium.depositAmount > 0.0;'),
+    );
     expect(bar, contains("isArabic ? 'إجمالي الحجز' : 'Booking total'"));
     expect(bar, isNot(contains("isArabic ? 'المبلغ المطلوب' : 'Amount due'")));
     expect(bar, contains('VSPMoneyFormatter.amount(totalPrice)'));
