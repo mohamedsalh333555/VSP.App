@@ -1,3 +1,12 @@
+## 2026-11-13 — Financial/refund read-only source and staging acceptance (124/494)
+
+- **8 scoped audit tasks accepted:** `61.02`, `61.03`, `62.03`, `63.02`, `63.03`, `63.04`, `68.02`, `68.03`. Evidence: [read-only financial, webhook, canonical winner and debt field audit](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md). Source/metadata/staging-aggregate acceptance only, NOT production cleanup, endpoint safety, actual refund delivery or confirmed booking outcome.
+- The canonical **team championship** winner fields for new writes/readers are currently `champion_team_id/name` (crown RPC, get_team_active_league and Flutter model). `winner_team_id/name` remain guarded legacy fields; no migration or deletion. On 2 staging championships, neither ID field is populated; production conflict risk remains unknown.
+- Read-only staging checks: 24 bookings, 0 mismatched populated booking Paymob aliases, 0 duplicate populated identifiers, 0 obvious `is_paid`/status conflicts; 117 users, 0 positive `accumulated_cash_debt`, 0 `cash_booking_banned`, 0 `is_debt_blocked`, 117 nonzero `debt_limit`. These numbers cannot establish production integrity.
+- **P1 blocker discovered (65.02 remains OPEN):** source and staging catalog show three active refund queue consumers, but staging `reconcile_cancellation_refund_queue()` checks only the regular and 1v1 queues, its active ten-minute cron job has no `refund_worker` secret record, and its hardcoded endpoint points to the production project. No refund worker was invoked, secret read or financial state changed. Do not enable or deploy until reviewed environment isolation and worker tests pass.
+- Separate code changes in this branch (maintenance guard SQL proposal, missing-hours handling, blocked/maintenance venue CTA and new tests) remain **UNACCEPTED** pending relevant CI and isolated database/device tests. `main`, production and staging data remain unchanged.
+- Recount: **618 total / 124 VERIFIED / 494 open**. Group 56 retired; no release readiness implied.
+
 ## 2026-11-13 — Operating-hours precedence and maintenance defect reproduction (116/502)
 
 - **66.02–66.06** accepted as **read-only source-precedence analysis, edge-case inventory, deterministic validator test and documented backend-authority decision only**. Evidence: [staging validator reproduction](security/VSP_STAGING_OPERATING_HOURS_GUARD_REPRO_2026-11-13.md) and [GitHub Issue #37](https://github.com/mohamedsalh333555/VSP.App/issues/37#issuecomment-6840270011).

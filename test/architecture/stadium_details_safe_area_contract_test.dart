@@ -11,6 +11,6 @@ void main() {
     expect(source, contains('if (hasStreamIssue)'));
     expect(source, contains('StadiumImageCarousel('));
     expect(source, contains('bottomNavigationBar: StadiumBottomBookingBar('));
-    expect(source, contains('bookingEnabled: stadium.isVerified && !stadium.isBlocked && !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty'));
+    expect(source, contains('bookingEnabled: stadium.isVerified && !stadium.isBlocked && !stadium.isUnderMaintenance && !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty'));
   });
 }

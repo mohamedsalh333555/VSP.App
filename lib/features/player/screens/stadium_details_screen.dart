@@ -140,7 +140,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
         // not only with the route's original widget argument.
         final displayImages = _collectDisplayImages(stadium);
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        final isUnavailable = !stadium.isVerified || stadium.isBlocked ||
+        final isUnavailable = !stadium.isVerified || stadium.isBlocked || stadium.isUnderMaintenance ||
             (snapshot.hasData && snapshot.data!.isEmpty);
         final hasStreamIssue = snapshot.hasError || parseFailed;
 
@@ -260,7 +260,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           ),
           bottomNavigationBar: StadiumBottomBookingBar(
             stadium: stadium,
-            bookingEnabled: stadium.isVerified && !stadium.isBlocked && !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty,
+            bookingEnabled: stadium.isVerified && !stadium.isBlocked && !stadium.isUnderMaintenance && !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty,
           ),
         );
       },
