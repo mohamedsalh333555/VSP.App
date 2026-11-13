@@ -228,6 +228,12 @@ class BookingProvider with ChangeNotifier {
       _activeUserId = userId;
       _activeOwnerId = null;
       _userBookings = [];
+      // The selected booking, public-match cache, and pending owner UI are
+      // tied to the previous identity and cannot follow another session.
+      _currentBooking = null;
+      _publicMatches = [];
+      _userBookingLoadCount = 0;
+      _ownerBookingLoadCount = 0;
       _hasLoadedOwnerBookings = false;
       _ownerBookingsError = null;
       _errorMessage = null;
@@ -239,7 +245,9 @@ class BookingProvider with ChangeNotifier {
     }
     if (requestGeneration != _bookingScopeGeneration) return false;
 
-    _userBookingLoadCount++;
+    // Track only the newest request. Older same-account refreshes are
+    // superseded and cannot leave a stuck loading spinner.
+    _userBookingLoadCount = 1;
     _errorMessage = null;
     notifyListeners();
     try {
@@ -260,8 +268,11 @@ class BookingProvider with ChangeNotifier {
         },
       );
     } finally {
-      if (_userBookingLoadCount > 0) _userBookingLoadCount--;
-      notifyListeners();
+      if (requestGeneration == _bookingScopeGeneration &&
+          _activeUserId == userId) {
+        _userBookingLoadCount = 0;
+        notifyListeners();
+      }
     }
   }
 
@@ -279,6 +290,10 @@ class BookingProvider with ChangeNotifier {
       _activeUserId = null;
       _activeOwnerId = ownerId;
       _userBookings = [];
+      _currentBooking = null;
+      _publicMatches = [];
+      _userBookingLoadCount = 0;
+      _ownerBookingLoadCount = 0;
       _hasLoadedOwnerBookings = false;
       _ownerBookingsError = null;
       _errorMessage = null;
@@ -290,7 +305,7 @@ class BookingProvider with ChangeNotifier {
     }
     if (requestGeneration != _bookingScopeGeneration) return;
 
-    _ownerBookingLoadCount++;
+    _ownerBookingLoadCount = 1;
     _ownerBookingsError = null;
     notifyListeners();
 
@@ -316,8 +331,11 @@ class BookingProvider with ChangeNotifier {
         },
       );
     } finally {
-      if (_ownerBookingLoadCount > 0) _ownerBookingLoadCount--;
-      notifyListeners();
+      if (requestGeneration == _bookingScopeGeneration &&
+          _activeOwnerId == ownerId) {
+        _ownerBookingLoadCount = 0;
+        notifyListeners();
+      }
     }
   }
 

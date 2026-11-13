@@ -76,6 +76,8 @@ void main() {
     responses['user-B']!.complete([_fixtureBooking('user-B')]);
     expect(await newLoad, isTrue);
     expect(provider.userBookings.map((b) => b.createdByUserId), ['user-B']);
+    // A is still pending: its spinner must not be attributed to B.
+    expect(provider.isLoadingUserBookings, isFalse);
 
     responses['user-A']!.complete([_fixtureBooking('user-A')]);
     expect(await oldLoad, isFalse);
@@ -104,7 +106,9 @@ void main() {
 
     final nextScope = provider.loadOwnerBookings('different-owner');
     expect(provider.userBookings, isEmpty);
+    expect(provider.isLoadingUserBookings, isFalse);
     await nextScope;
     expect(provider.userBookings, isEmpty);
+    expect(provider.isLoadingOwnerBookings, isFalse);
   });
 }
