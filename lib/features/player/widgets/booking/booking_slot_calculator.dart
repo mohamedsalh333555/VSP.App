@@ -37,13 +37,13 @@ class BookingSlotCalculator {
       String startStr = '';
       String endStr = '';
 
-      if (features is Map &&
+      if (!stadium.hasServerOperatingHours && features is Map &&
           features.containsKey('workingHours') &&
           features['workingHours'] != null &&
           features['workingHours'] is! Map) {
         return const <TimeSlotItem>[];
       }
-      if (features is Map && features['workingHours'] is Map) {
+      if (!stadium.hasServerOperatingHours && features is Map && features['workingHours'] is Map) {
         startStr = features['workingHours']['start']?.toString() ?? '';
         endStr = features['workingHours']['end']?.toString() ?? '';
       }
@@ -132,6 +132,30 @@ class BookingSlotCalculator {
         return const <TimeSlotItem>[];
       }
 
+      // The server enforces stadiums.is_split_shift and its break_* columns.
+      // Include those explicit fields even when legacy feature JSON is absent.
+      // Conflicting overlapping feature/server breaks fail closed rather than
+      // showing booking slots that may be rejected by the database.
+      if (stadium.isSplitShift) {
+        final rawStart = stadium.breakStartTime;
+        final rawEnd = stadium.breakEndTime;
+        if (rawStart == null || rawEnd == null ||
+            !_isValidTime(rawStart) || !_isValidTime(rawEnd)) {
+          return const <TimeSlotItem>[];
+        }
+        final serverStart = getCumulativeMinutes(rawStart);
+        final serverEnd = getCumulativeMinutes(rawEnd);
+        if (serverStart < startMinutes || serverEnd > endMinutes ||
+            serverEnd <= serverStart) {
+          return const <TimeSlotItem>[];
+        }
+        if (!breakIntervals.any(
+          (interval) => interval[0] == serverStart && interval[1] == serverEnd,
+        )) {
+          breakIntervals.add([serverStart, serverEnd]);
+        }
+      }
+
       // Treat overlapping closures as invalid schedule data, not partial availability.
       breakIntervals.sort((a, b) => a[0].compareTo(b[0]));
       for (var i = 1; i < breakIntervals.length; i++) {
@@ -192,13 +216,13 @@ class BookingSlotCalculator {
     String openStr = '';
     String closeStr = '';
     final features = stadium.features;
-    if (features is Map &&
+    if (!stadium.hasServerOperatingHours && features is Map &&
         features.containsKey('workingHours') &&
         features['workingHours'] != null &&
         features['workingHours'] is! Map) {
       throw FormatException('Invalid stadium working hours');
     }
-    if (features is Map && features['workingHours'] is Map) {
+    if (!stadium.hasServerOperatingHours && features is Map && features['workingHours'] is Map) {
       openStr = features['workingHours']['start']?.toString() ?? '';
       closeStr = features['workingHours']['end']?.toString() ?? '';
     }
