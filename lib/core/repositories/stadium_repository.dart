@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../constants/egypt_governorates.dart';
-import '../models/user_model.dart';
+import 'stadium/owner_stadium_capacity_guard.dart';
 import '../services/logger_service.dart';
 import 'stadium/stadium_payload_builder.dart';
 
@@ -99,37 +99,22 @@ class StadiumRepository {
   Future<String?> addStadium(Map<String, dynamic> stadiumData) async {
     try {
       final sanitizedData = Map<String, dynamic>.from(stadiumData);
-      final String ownerId = sanitizedData['ownerId'] ?? sanitizedData['owner_id'] ?? '';
-
-      // Subscription Plan Gate: Check max stadium limit for owner
-      if (ownerId.isNotEmpty) {
-        try {
-          final userDoc = await _supabase.from('users').select().eq('id', ownerId).maybeSingle();
-          if (userDoc != null) {
-            final userModel = UserModel.fromFirestore(userDoc);
-            final existingStadiums = await _supabase
-                .from('stadiums')
-                .select('id')
-                .eq('owner_id', ownerId)
-                .eq('is_deleted_by_owner', false);
-            final currentCount = (existingStadiums as List).length;
-            if (currentCount >= userModel.maxStadiums) {
-              if (userModel.maxStadiums <= 1) {
-                throw Exception(
-                    'حسابك المجاني يدعم ملعباً واحداً فقط. اشترك في Pro لإضافة حتى 3 ملاعب.'
-                );
-              } else {
-                throw Exception(
-                    'وصلت للحد الأقصى لعدد الملاعب المسموح به في حسابك (${userModel.maxStadiums} ملاعب).'
-                );
-              }
-            }
-          }
-        } catch (e) {
-          if (e.toString().contains('باقتك') || e.toString().contains('الحد الأقصى')) rethrow;
-          VSPLogger.w('Skip stadium count validation error: $e');
-        }
+      final ownerId =
+          (sanitizedData['ownerId'] ?? sanitizedData['owner_id'] ?? '')
+              .toString().trim();
+      if (ownerId.isEmpty) {
+        throw StateError('STADIUM_OWNER_ID_REQUIRED');
       }
+
+      // This pre-flight check must fail closed. A stale cached UserModel,
+      // unreadable user row, or network/RPC error is NOT permission to create
+      // another stadium. The server still needs an atomic quota guard to
+      // prevent direct REST calls and concurrent inserts (Issue #41).
+      final capacity = await _supabase.rpc(
+        'check_owner_stadium_limit',
+        params: {'p_owner_id': ownerId},
+      );
+      OwnerStadiumCapacityGuard.requireAllowed(capacity);
 
       final pgData = StadiumPayloadBuilder.buildInsertPayload(sanitizedData);
 
