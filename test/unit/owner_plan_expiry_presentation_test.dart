@@ -13,6 +13,7 @@ void main() {
     String role = 'owner',
   }) => UserModel(
     uid: 'fixture-owner',
+    email: 'fixture-owner@example.invalid',
     role: role,
     subscriptionPlan: plan,
     trialEndsAt: trial,

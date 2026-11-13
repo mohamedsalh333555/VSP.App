@@ -112,7 +112,7 @@
 - [ ] 01.04 — إصلاح القواعد غير المطبقة
 - [ ] 01.05 — توثيق أدلة المطابقة
 - [ ] 01.06 — اختبار مراجعة نهائي
-- [ ] 01.07 — إعداد مصفوفة تربط القواعد الـ44 بمعيار قبول مستقل لكل قاعدة
+- [x] 01.07 — إعداد مصفوفة تربط القواعد الـ44 بمعيار قبول مستقل لكل قاعدة — [44 independent criteria](UXLP_44_INDEPENDENT_ACCEPTANCE_CRITERIA_2026-11-13.md) (matrix-only; screen-by-screen runtime verification open)
 
 ### 02 — Unify design tokens and components (7)
 

@@ -1,3 +1,10 @@
+## 2026-11-13 — UXLP-44 independent rule acceptance matrix created (161/457)
+
+- **01.07** accepted for the independently testable **44-rule acceptance matrix only**: [UXLP-44 criteria](UXLP_44_INDEPENDENT_ACCEPTANCE_CRITERIA_2026-11-13.md) maps every canonical UXLP rule to a distinct observable pass condition, with locale/state/role/viewport evidence template. **No source-screen, RTL, accessibility, performance or on-device UX rule is declared passed by authoring its acceptance criterion.** Related tasks 01.01–01.06 remain open.
+- Fixed the mandatory `email` fixture argument omitted in the owner expiry presentation widget/domain test after [Flutter CI analyzer failure 43486621098](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43486621098). The owner expiry UI task **25.04 remains open until the latest test job is green**.
+- Owner-stadium limit client guard and candidate DB trigger remain branch-only; test environments are disposable PostgreSQL and mock HTTP. The server trigger candidate was **not applied** to staging or production, and [Issue #41](https://github.com/mohamedsalh333555/VSP.App/issues/41) remains open. [Issue #42](https://github.com/mohamedsalh333555/VSP.App/issues/42) documents a separate default trial duration mismatch. No subscription payment/price changed; no `main` merge.
+- **618 total / 161 accepted scoped deliverables / 457 open.**
+
 ## 2026-11-13 — Owner Free/Pro plan data inventory accepted (160/458)
 
 - **25.01 and 25.02** accepted **as documentation tasks only**. [Staging public-plan comparison](VSP_OWNER_FREE_PRO_ENTITLEMENT_SOURCE_25_01_25_02_2026-11-13.md) records actual `basic` and `pro` table values, feature flags, max stadium counts, trial days, and source files. Observed staging snapshot: Free = 0 EGP/1 stadium, Pro = 1,000 EGP monthly/3 stadiums, annual = 11,000 EGP, Pro trial = 7 days. **No prices or rules changed**, and current staging display does not imply approved production billing. This does not establish player-paid features or functionality of every Pro flag.
