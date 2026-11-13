@@ -1,10 +1,16 @@
-import sys
+import importlib.util
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts"))
-import test_refund_dispatcher_isolated as runner
+SPEC = importlib.util.spec_from_file_location(
+    "vsp_refund_dispatcher_contract_runner",
+    ROOT / "scripts" / "test_refund_dispatcher_isolated.py",
+)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError("Could not load isolated refund runner")
+runner = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(runner)
 
 
 class RefundDispatcherFixtureTest(unittest.TestCase):
