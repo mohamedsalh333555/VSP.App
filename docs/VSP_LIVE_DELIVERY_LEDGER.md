@@ -1,3 +1,8 @@
+## 2026-11-13 — Android release signing configuration audit accepted (156/462)
+
+- **60.07** accepted for a **source/config-only audit**: original-release-signing fail-closed guard, explicit debug-signed QA override, separate Shorebird signing secrets, ignored keystore files and manual build workflow. [Audit and unresolved certificate/Play checks](security/VSP_ANDROID_RELEASE_SIGNING_SOURCE_AUDIT_60_07_2026-11-13.md). No keystore, signature fingerprint, real APK, signing secret, production account or store delivery was accessed; clean release tasks remain OPEN.
+- **618 total / 156 VERIFIED / 462 open.** This does **not** certify a store-ready signed artifact.
+
 ## 2026-11-13 — Role/permission exception register accepted (155/463)
 
 - **78.06** accepted as a narrowly scoped **documentation** outcome: eight source-grounded role/permission exception classes, their necessary boundaries, evidence references and outstanding role tests. [Register](security/VSP_ROLE_PERMISSION_EXCEPTION_REGISTER_78_06_2026-11-13.md). This is neither a new permission grant nor production access validation. No database, account, payment, configuration or production mutation occurred.
