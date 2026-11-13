@@ -1,3 +1,8 @@
+## 2026-11-13 — Release readiness HOLD decision report issued (158/460)
+
+- **60.08** accepted as a report-delivery task **only**: [release readiness and blocker matrix](VSP_RELEASE_READINESS_REPORT_60_08_2026-11-13.md) records the explicit **NOT RELEASE-READY / HOLD** decision, checkpoint evidence, unverified tests, outstanding P0/P1 security/payment gates, performance and signed-APK unknowns. A report being written is not an APK build, E2E acceptance, store submission or production release.
+- The prior 157 accepted tasks are unchanged. **618 total / 158 verified scoped deliverables / 460 open.** New booking Flutter code remains under CI and staging/device validation; no automatic acceptance of 83.01/83.04/83.06, no `main` merge.
+
 ## 2026-11-13 — Isolated final-seat pickup join race accepted (157/461)
 
 - **35.08** accepted as a **two-session native PostgreSQL concurrency contract**, not staging/production E2E. [CI 43473270739](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43473270739) passed, including independent SQL clients attempting the one remaining booking slot; one accepted, one refused with `BOOKING_FULL`, final row/roster counts consistent. [Evidence and open integration conditions](VSP_PICKUP_LAST_SLOT_CONCURRENCY_ACCEPTANCE_35_08.md).

@@ -737,7 +737,7 @@
 - [ ] 60.05 — فحص حجم APK
 - [ ] 60.06 — اختبار بناء الإصدار
 - [x] 60.07 — تدقيق إعدادات التوقيع — [Android signing source audit](security/VSP_ANDROID_RELEASE_SIGNING_SOURCE_AUDIT_60_07_2026-11-13.md) (source/config only; certificate and Play identity unverified)
-- [ ] 60.08 — إصدار تقرير الجاهزية
+- [x] 60.08 — إصدار تقرير الجاهزية — [تقرير قرار الجاهزية: HOLD](VSP_RELEASE_READINESS_REPORT_60_08_2026-11-13.md) (report issued; app remains NOT release-ready)
 - [ ] 60.09 — اختبار بناء APK نظيف من commit الإصدار النهائي
 
 ### 61 — Championship winner/champion fields (7)
