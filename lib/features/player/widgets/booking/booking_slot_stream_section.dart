@@ -9,6 +9,7 @@ import '../../../../data/models.dart';
 import 'booking_slot_calculator.dart';
 import 'booking_slot_card.dart';
 import 'booking_slot_models.dart';
+import 'booking_stream_freshness.dart';
 
 /// Renders the real-time slot grid for [BookingConfirmationScreen].
 ///
@@ -103,7 +104,10 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
       builder: (context, snapshot) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+        // StreamBuilder retains the *previous date's data* when its stream
+        // changes (none -> waiting). Do not offer stale slots while the new
+        // day's availability subscription has not emitted a fresh event.
+        if (BookingStreamFreshness.isAwaitingCurrentStream(snapshot)) {
           return VSPStateView(
             state: VSPUiState.loading,
             title: isArabic ? 'جاري تحميل المواعيد' : 'Loading availability',
