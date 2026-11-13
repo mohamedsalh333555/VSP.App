@@ -15,6 +15,7 @@ import '../widgets/booking/booking_date_selector.dart';
 import '../widgets/booking/booking_financial_summary.dart';
 import '../widgets/booking/booking_slot_calculator.dart';
 import '../widgets/booking/booking_slot_models.dart';
+import '../widgets/booking/booking_initial_selection.dart';
 import '../widgets/booking/booking_slot_stream_section.dart';
 import '../widgets/booking/booking_cancellation_policy_note.dart';
 
@@ -75,10 +76,19 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.selectedDate ?? _operationalBaseDate;
-    if (widget.initialSelectedSlots != null) {
-      _selectedTimeSlots.addAll(widget.initialSelectedSlots!);
-    }
+    // A restored route can contain a past date, forged time keys, nonadjacent
+    // slots or an expired venue schedule. Normalize before showing a total or
+    // enabling a booking button; server availability is checked again on submit.
+    final now = DateTime.now();
+    final initial = BookingInitialSelection.resolve(
+      stadium: widget.stadium,
+      operationalBaseDate: AppDateFormatter.getOperationalDate(now),
+      requestedDate: widget.selectedDate,
+      requestedSlots: widget.initialSelectedSlots,
+      now: now,
+    );
+    _selectedDate = initial.date;
+    _selectedTimeSlots.addAll(initial.slots);
     _isPrivate = true;
     _fetchUserTeam();
   }
