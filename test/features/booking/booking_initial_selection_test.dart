@@ -103,7 +103,24 @@ void main() {
   });
 
   test('venue closure clears an otherwise valid initial selection', () {
-    final blockedVenue = stadium.copyWith(isBlocked: true);
+    final blockedVenue = Stadium(
+      id: 'blocked-fixture',
+      name: 'Blocked Fixture Pitch',
+      location: 'Egypt',
+      imageUrl: '',
+      type: 'Football',
+      size: '5 VS 5',
+      baths: 0,
+      cafeteria: 0,
+      playersPerTeam: 5,
+      totalFieldCapacity: 10,
+      pricePerHour: 300,
+      basePrice: 300,
+      area: '800 m²',
+      openingTime: '16:00',
+      closingTime: '23:00',
+      isBlocked: true,
+    );
     final result = BookingInitialSelection.resolve(
       stadium: blockedVenue,
       operationalBaseDate: today,
