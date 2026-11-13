@@ -159,6 +159,7 @@ class BookingBottomBar extends StatelessWidget {
                   child: Row(
                     children: [
                       IconButton(
+                        tooltip: isArabic ? 'تقليل عدد اللاعبين' : 'Decrease player count',
                         constraints: const BoxConstraints(
                           minWidth: 48,
                           minHeight: 48,
@@ -173,12 +174,24 @@ class BookingBottomBar extends StatelessWidget {
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Text(
-                          '$initialPlayersCount',
-                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        child: Semantics(
+                          label: isArabic
+                              ? 'عدد اللاعبين: $initialPlayersCount'
+                              : 'Player count: $initialPlayersCount',
+                          child: ExcludeSemantics(
+                            child: Text(
+                              '$initialPlayersCount',
+                              style: const TextStyle(
+                                color: VSPColors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       IconButton(
+                        tooltip: isArabic ? 'زيادة عدد اللاعبين' : 'Increase player count',
                         constraints: const BoxConstraints(
                           minWidth: 48,
                           minHeight: 48,
@@ -201,12 +214,26 @@ class BookingBottomBar extends StatelessWidget {
 
           // ── خيار إيجار الكرة ──
           if (hasBallOption) ...[
-            GestureDetector(
+            Semantics(
+              button: true,
+              enabled: isSlotSelected && !isLoading,
+              toggled: displayBallRented,
+              label: isArabic
+                  ? 'إيجار كرة، ${VSPMoneyFormatter.amount(ballPrice)} جنيه'
+                  : 'Ball rental, ${VSPMoneyFormatter.amount(ballPrice)} EGP',
+              hint: !isSlotSelected
+                  ? (isArabic ? 'اختر موعد الحجز أولًا' : 'Select a booking slot first')
+                  : null,
               onTap: isSlotSelected && !isLoading
                   ? () => onBallRentedChanged(!displayBallRented)
                   : null,
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
+              child: ExcludeSemantics(
+                child: GestureDetector(
+                  onTap: isSlotSelected && !isLoading
+                      ? () => onBallRentedChanged(!displayBallRented)
+                      : null,
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
                 duration: VSPDSMotion.navigationSwitch,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
@@ -265,6 +292,7 @@ class BookingBottomBar extends StatelessWidget {
                           : null,
                     ),
                   ],
+                ),
                 ),
               ),
             ),

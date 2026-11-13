@@ -19,10 +19,19 @@ void showBookingCalendarModal({
     useSafeArea: true,
     barrierColor: VSPColors.background.withValues(alpha: 0.8),
     builder: (context) {
-      DateTime tempSelectedDate = initialDate;
-      DateTime currentMonth = DateTime(initialDate.year, initialDate.month);
       final DateTime todayMonth = DateTime(firstBookableDay.year, firstBookableDay.month);
       final DateTime maxMonth = DateTime(firstBookableDay.year, firstBookableDay.month + 3);
+      final DateTime lastBookableDay = DateTime(maxMonth.year, maxMonth.month + 1, 0);
+      final DateTime normalizedInitialDate =
+          DateTime(initialDate.year, initialDate.month, initialDate.day);
+      // A stale parent selection must not let Apply submit an expired or
+      // out-of-window booking day without a valid selection from this dialog.
+      DateTime tempSelectedDate =
+          normalizedInitialDate.isBefore(firstBookableDay) ||
+                  normalizedInitialDate.isAfter(lastBookableDay)
+              ? firstBookableDay
+              : normalizedInitialDate;
+      DateTime currentMonth = DateTime(tempSelectedDate.year, tempSelectedDate.month);
 
       return StatefulBuilder(
         builder: (context, setModalState) {
@@ -32,6 +41,10 @@ void showBookingCalendarModal({
           final availableHeight = mediaQuery.size.height -
               mediaQuery.viewInsets.vertical -
               (VSPSpacing.xl * 2);
+          final firstWeekday = DateTime(currentMonth.year, currentMonth.month, 1).weekday;
+          final leadingCells = firstWeekday - DateTime.monday;
+          final daysInMonth = DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
+          final weekRows = (leadingCells + daysInMonth + 6) ~/ 7;
 
           return Dialog(
             backgroundColor: VSPColors.surface,
@@ -115,21 +128,45 @@ void showBookingCalendarModal({
                       ],
                     ),
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: VSPSpacing.md),
+                  Text(
+                    isArabic
+                        ? 'اختيار التاريخ لا يؤكد توفر المواعيد؛ ستظهر المواعيد بعد اختيار اليوم.'
+                        : 'Selecting a date does not confirm availability; slots appear after choosing a day.',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  Row(
+                    children: List.generate(7, (index) {
+                      final weekday = DateTime(2024, 1, 1 + index); // Monday first.
+                      return Expanded(
+                        child: Text(
+                          DateFormat('E', Localizations.localeOf(context).toString()).format(weekday),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: VSPSpacing.xs),
                   SizedBox(
-                    height: 240,
+                    // Six-week months need more than the previous fixed 240px.
+                    // Keep each target at least 48px high and let the dialog scroll.
+                    height: weekRows * 48.0 + (weekRows - 1) * 4.0,
                     child: GridView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 7,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
+                        mainAxisExtent: 48,
+                        mainAxisSpacing: 4,
+                        crossAxisSpacing: 2,
                       ),
-                      itemCount: DateTime(currentMonth.year, currentMonth.month + 1, 0).day +
-                          (DateTime(currentMonth.year, currentMonth.month, 1).weekday - 1),
+                      itemCount: daysInMonth + leadingCells,
                       itemBuilder: (context, index) {
-                        final firstWeekday = DateTime(currentMonth.year, currentMonth.month, 1).weekday;
-                        final dayOffset = index - (firstWeekday - 1);
+                        final dayOffset = index - leadingCells;
                         if (dayOffset < 0) return const SizedBox();
                         final day = dayOffset + 1;
                         final date = DateTime(currentMonth.year, currentMonth.month, day);

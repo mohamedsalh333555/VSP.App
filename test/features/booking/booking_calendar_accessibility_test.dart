@@ -9,7 +9,12 @@ void main() {
     await initializeDateFormatting();
   });
 
-  Widget host(Locale locale, ValueChanged<DateTime> onDateSelected) =>
+  Widget host(
+    Locale locale,
+    ValueChanged<DateTime> onDateSelected, {
+    DateTime? initialDate,
+    DateTime? operationalBaseDate,
+  }) =>
       MaterialApp(
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -19,8 +24,8 @@ void main() {
             builder: (context) => TextButton(
               onPressed: () => showBookingCalendarModal(
                 context: context,
-                initialDate: DateTime(2026, 11, 13),
-                operationalBaseDate: DateTime(2026, 11, 13),
+                initialDate: initialDate ?? DateTime(2026, 11, 13),
+                operationalBaseDate: operationalBaseDate ?? DateTime(2026, 11, 13),
                 onDateSelected: onDateSelected,
               ),
               child: const Text('Open calendar'),
@@ -73,6 +78,45 @@ void main() {
     expect(dates.length, greaterThan(5));
     expect(dates.where((node) => node.properties.selected == true), hasLength(1));
     expect(dates.where((node) => node.properties.enabled == false), isNotEmpty);
+    semantics.dispose();
+  });
+
+  for (final initialDay in [DateTime(2026, 11, 12), DateTime(2027, 7, 1)]) {
+    testWidgets('stale or out-of-range initial date cannot be applied: $initialDay', (tester) async {
+      final semantics = tester.ensureSemantics();
+      DateTime? selected;
+      await tester.pumpWidget(host(
+        const Locale('en'),
+        (value) => selected = value,
+        initialDate: initialDay,
+      ));
+      await tester.tap(find.text('Open calendar'));
+      await tester.pumpAndSettle();
+
+      final current = find.bySemanticsLabel(RegExp(r'Booking date: Friday, 13 November 2026'));
+      expect(tester.widget<Semantics>(current).properties.selected, isTrue);
+      await tester.tap(find.text('Apply'));
+      await tester.pumpAndSettle();
+      expect(selected, DateTime(2026, 11, 13));
+      semantics.dispose();
+    });
+  }
+
+  testWidgets('six-week month renders last day with full-height touch target', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(host(
+      const Locale('en'),
+      (_) {},
+      initialDate: DateTime(2026, 8, 1),
+      operationalBaseDate: DateTime(2026, 8, 1),
+    ));
+    await tester.tap(find.text('Open calendar'));
+    await tester.pumpAndSettle();
+
+    final lastDay = find.bySemanticsLabel(RegExp(r'Booking date: Monday, 31 August 2026'));
+    expect(lastDay, findsOneWidget);
+    expect(tester.getSize(lastDay).height, greaterThanOrEqualTo(48));
+    expect(tester.takeException(), isNull);
     semantics.dispose();
   });
 }
