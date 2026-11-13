@@ -30,7 +30,7 @@ class StadiumBottomBookingBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final hasDeposit = stadium.depositAmount > 0.0;
+    final hasDeposit = stadium.needsDeposit && stadium.depositAmount > 0.0;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(VSPSpacing.lg, VSPSpacing.md, VSPSpacing.lg, VSPSpacing.lg),
