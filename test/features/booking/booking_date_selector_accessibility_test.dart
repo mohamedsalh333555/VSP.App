@@ -94,6 +94,7 @@ void main() {
       final semanticWidget = tester.widget<Semantics>(control);
       expect(semanticWidget.properties.button, isTrue);
       expect(semanticWidget.properties.onTap, isNotNull);
+      expect(tester.getSize(control).height, greaterThanOrEqualTo(48));
       expect(tester.getSize(find.byType(ListView)).height, greaterThanOrEqualTo(140));
       expect(tester.takeException(), isNull);
       semantics.dispose();

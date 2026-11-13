@@ -53,6 +53,7 @@ class BookingDateSelector extends StatelessWidget {
                 child: GestureDetector(
                   onTap: openCalendar,
                   child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
                 padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.xs),
                 decoration: BoxDecoration(
                   color: VSPColors.surface,
