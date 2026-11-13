@@ -63,9 +63,12 @@ class BookingDateSelector extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(selectedDate),
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                    Flexible(
+                      child: Text(
+                        DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(selectedDate),
+                        softWrap: true,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     const SizedBox(width: VSPSpacing.xs),
                     const Icon(Iconsax.calendar_1_copy, color: VSPColors.textPrimary, size: 18),

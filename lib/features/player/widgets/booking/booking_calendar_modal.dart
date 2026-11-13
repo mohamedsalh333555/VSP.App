@@ -81,9 +81,13 @@ void showBookingCalendarModal({
                               }
                             : null,
                       ),
-                      Text(
-                        DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(currentMonth),
-                        style: Theme.of(context).textTheme.titleLarge,
+                      Expanded(
+                        child: Text(
+                          DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(currentMonth),
+                          textAlign: TextAlign.center,
+                          softWrap: true,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                       ),
                       IconButton(
                         tooltip: isArabic ? 'الشهر التالي' : 'Next month',
@@ -119,8 +123,7 @@ void showBookingCalendarModal({
                         Expanded(
                           child: Text(
                             '${Localizations.localeOf(context).languageCode == 'ar' ? 'تاريخ الحجز: ' : 'Booking Date: '}${DateFormat('EEEE, d MMMM yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate)}',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            softWrap: true,
                             textAlign: TextAlign.center,
                             style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
