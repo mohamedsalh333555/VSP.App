@@ -71,7 +71,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
         }
       }
 
-      BookingType type = BookingType.personal;
+      // A team lookup may finish after the signed-in account changes.\n      // Never create a challenge draft for a different account.\n      if (typeId == 'Challenge Match' &&\n          authProvider.currentUser?.id != uid) {\n        return;\n      }\n\n      BookingType type = BookingType.personal;
       String typeString = 'Personal';
 
       if (typeId == 'Open Join Match') {
@@ -99,25 +99,23 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
       ));
 
       if (!mounted) return;
-      Navigator.pop(context); // Close Bottom Sheet
+      // Keep the navigator before popping; the sheet context is then stale.\n      final navigator = Navigator.of(context);\n      navigator.pop(); // Close Bottom Sheet\n      if (!navigator.mounted) return;
 
       if (type == BookingType.challenge) {
-        Navigator.push(
-          context,
+        navigator.push(
           MaterialPageRoute(
             builder: (_) => ChallengeSelectTeamScreen(stadium: widget.stadium, bookingType: typeString),
           ),
         );
       } else {
-        Navigator.push(
-          context,
+        navigator.push(
           MaterialPageRoute(
             builder: (_) => BookingConfirmationScreen(stadium: widget.stadium, bookingType: typeString),
           ),
         );
       }
-    } catch (e) {
-      debugPrint('Failed to prepare booking type: $e');
+    } catch (_) {
+      debugPrint('Failed to prepare booking type (details redacted)');
       if (mounted) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(

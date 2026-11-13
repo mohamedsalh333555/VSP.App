@@ -32,8 +32,95 @@ class StadiumBottomBookingBar extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final hasDeposit = stadium.needsDeposit && stadium.depositAmount > 0.0;
 
+    final priceDetails = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.pricePerHour,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: VSPColors.textSecondary,
+              ),
+        ),
+        Directionality(
+          textDirection: TextDirection.ltr,
+          // Text.rich respects the user's accessibility text scaling.
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '${_formatAmount(stadium.basePrice)} ',
+                  style: Theme.of(context).textTheme.displayLarge,
+                ),
+                TextSpan(
+                  text: isArabic ? 'ج.م' : 'EGP',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+            softWrap: true,
+          ),
+        ),
+        AnimatedSwitcher(
+          duration: VSPDSMotion.standard,
+          child: hasDeposit
+              ? Row(
+                  key: const ValueKey('deposit'),
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Iconsax.lock_copy,
+                      color: VSPColors.accent,
+                      size: 11,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '${isArabic ? 'عربون: ' : 'Deposit: '}${_formatAmount(stadium.depositAmount)} ${isArabic ? 'ج.م' : 'EGP'}',
+                        softWrap: true,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: VSPColors.accent,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
+                  isArabic ? 'لا يوجد عربون مطلوب' : 'No deposit required',
+                  key: const ValueKey('cash'),
+                  softWrap: true,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: VSPColors.textSecondary,
+                        fontSize: 10,
+                      ),
+                ),
+        ),
+      ],
+    );
+
+    final bookingAction = PrimaryButton(
+      text: isArabic ? 'احجز الآن' : 'Book Now',
+      onPressed: bookingEnabled
+          ? () {
+              unawaited(
+                AnalyticsService.logBookingStarted(venueId: stadium.id),
+              );
+              BookingTypeModal.show(context, stadium);
+            }
+          : null,
+    );
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(VSPSpacing.lg, VSPSpacing.md, VSPSpacing.lg, VSPSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        VSPSpacing.lg,
+        VSPSpacing.md,
+        VSPSpacing.lg,
+        VSPSpacing.lg,
+      ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.only(
@@ -42,85 +129,32 @@ class StadiumBottomBookingBar extends StatelessWidget {
         ),
       ),
       child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Narrow screens and enlarged text need a full-width booking CTA.
+            final enlargedText =
+                MediaQuery.textScalerOf(context).scale(14) > 18;
+            final stackAction = constraints.maxWidth < 360 || enlargedText;
+            if (stackAction) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  priceDetails,
+                  const SizedBox(height: VSPSpacing.sm),
+                  bookingAction,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.pricePerHour,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
-                    ),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: '${_formatAmount(stadium.basePrice)} ',
-                              style: Theme.of(context).textTheme.displayLarge,
-                            ),
-                            TextSpan(
-                              text: isArabic ? 'ج.م' : 'EGP',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    AnimatedSwitcher(
-                      duration: VSPDSMotion.standard,
-                      child: hasDeposit
-                          ? Row(
-                              key: const ValueKey('deposit'),
-                              children: [
-                                const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 11),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${isArabic ? 'عربون: ' : 'Deposit: '}${_formatAmount(stadium.depositAmount)} ${isArabic ? 'ج.م' : 'EGP'}',
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                        color: VSPColors.accent,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                              ],
-                            )
-                          : Row(
-                              key: const ValueKey('cash'),
-                              children: [
-                                Text(
-                                  isArabic ? 'لا يوجد عربون مطلوب' : 'No deposit required',
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                        color: VSPColors.textSecondary,
-                                        fontSize: 10,
-                                      ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: VSPSpacing.lg),
-                Expanded(
-                  child: PrimaryButton(
-                    text: isArabic ? 'احجز الآن' : 'Book Now',
-                    onPressed: bookingEnabled ? () {
-                      unawaited(
-                        AnalyticsService.logBookingStarted(
-                          venueId: stadium.id,
-                        ),
-                      );
-                      BookingTypeModal.show(context, stadium);
-                    } : null,
-                  ),
-                ),
+                Expanded(flex: 3, child: priceDetails),
+                const SizedBox(width: VSPSpacing.md),
+                Expanded(flex: 2, child: bookingAction),
               ],
-            ),          ],
+            );
+          },
         ),
       ),
     );

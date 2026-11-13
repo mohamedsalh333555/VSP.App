@@ -93,8 +93,8 @@ class FacilitiesGrid extends StatelessWidget {
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      // Keep facility labels readable at large text sizes.
+                      softWrap: true,
                     ),
                   ),
                 ],
