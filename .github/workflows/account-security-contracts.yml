@@ -28,6 +28,9 @@ on:
       - 'test/tooling/test_blocked_admin_policy_plan.py'
       - 'test/tooling/test_admin_rpc_guard_plan.py'
       - 'test/tooling/test_account_security_runner.py'
+      - 'scripts/test_owner_stadium_capacity_concurrency.py'
+      - 'test/tooling/test_owner_stadium_capacity_target_guard.py'
+      - 'docs/security/sql/owner_stadium_capacity_guard_candidate.sql'
       - '.github/workflows/account-security-contracts.yml'
   pull_request:
     branches: [main]
@@ -52,6 +55,9 @@ on:
       - 'test/tooling/test_blocked_admin_policy_plan.py'
       - 'test/tooling/test_admin_rpc_guard_plan.py'
       - 'test/tooling/test_account_security_runner.py'
+      - 'scripts/test_owner_stadium_capacity_concurrency.py'
+      - 'test/tooling/test_owner_stadium_capacity_target_guard.py'
+      - 'docs/security/sql/owner_stadium_capacity_guard_candidate.sql'
       - '.github/workflows/account-security-contracts.yml'
 
 concurrency:
@@ -93,6 +99,10 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_blocked_admin_policy_plan.py -v
       - name: Execute SQL authorization suites and negative gate controls
         run: python3 scripts/run_account_security_contracts.py
+      - name: Verify owner stadium quota runner never targets remote PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_owner_stadium_capacity_target_guard.py -v
+      - name: Verify quota candidate in independent local SQL sessions
+        run: python3 scripts/test_owner_stadium_capacity_concurrency.py
       - name: Verify isolated booking validator runner guard and SQL parsing
         run: python3 -m unittest discover -s test/tooling -p test_booking_window_contract_runner.py -v
       - name: Verify booking maintenance and overnight split-break SQL on isolated Postgres
