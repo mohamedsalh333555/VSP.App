@@ -1,3 +1,10 @@
+## 2026-11-13 — Privileged RPC review triage accepted: 111 / 507
+
+- **77.02**: Classified 200 staging authenticated-executable SECURITY DEFINER overloads into financial/payment (21), admin/identity (36), booking/sports write (66) and other/utility (77) for **manual review prioritization**, not exploitability ranking. Source: [risk triage and execution-owner inventory](security/VSP_STAGING_PRIVILEGED_RPC_TRIAGE_2026-11-13.md).
+- **77.03**: Verified the *staging* execution owner of all selected functions is the `postgres` role; callers are distinct from this effective execution role. 12 routines have no direct `auth.uid()/auth.jwt()` textual marker. This is **not** evidence of a vulnerable RPC: the actual authorization may be delegated.
+- Total accepted: **111 / 618**. Remaining: **507**. Only catalog/definition-marker reads; no caller-side RPC invocation, real payment, account mutation, production change or main merge.
+- Authorization, RLS, deployment, consumer and cross-user tests in 77.04–77.11 remain **open**, as do other staging validation tasks.
+
 ## 2026-11-13 — Staging dependency and migration audits: 109 / 509
 
 - Audited staging SQL metadata and actual Supabase migration history (379 distinct entries), plus deployed `add_team_to_matchup_by_code(uuid,text)` function markers. No server mutation.
