@@ -1,3 +1,8 @@
+## 2026-11-13 — Role/permission exception register accepted (155/463)
+
+- **78.06** accepted as a narrowly scoped **documentation** outcome: eight source-grounded role/permission exception classes, their necessary boundaries, evidence references and outstanding role tests. [Register](security/VSP_ROLE_PERMISSION_EXCEPTION_REGISTER_78_06_2026-11-13.md). This is neither a new permission grant nor production access validation. No database, account, payment, configuration or production mutation occurred.
+- **618 total / 155 VERIFIED / 463 open.** Actual real-account auth/RLS/RPC/storage tests and PR #35 release/merge gates remain open.
+
 ## 2026-11-13 — Migration replay preflight accepted (154/464)
 
 - **71.06** accepted as a **narrow legacy-runner safety guard**: reject non-staging/unapproved targets, duplicate migration prefixes and rollback files, and fail closed if Supabase's official read-only migration-history API reports an already-applied version or cannot return trustworthy history. [Evidence and limits](security/VSP_STAGING_MIGRATION_REPLAY_GUARD_ACCEPTANCE_2026-11-13.md).
