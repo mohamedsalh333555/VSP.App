@@ -10,6 +10,7 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/services/analytics_service.dart';
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_ledger_screen.dart';
@@ -292,6 +293,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         return;
       }
       if (ownerId == null) return;
+      if (widget.isHomeVisible) {
+        unawaited(AnalyticsService.logOwnerDashboardViewed(ownerId: ownerId));
+      }
 
       _fetchFinancialSummary(ownerId);
       _loadDashboardAnalytics(ownerId: ownerId);
@@ -326,8 +330,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   }
 
   Future<void> onHomeBecameVisible() async {
-    final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final uid = auth.isOwner ? auth.currentUser?.id : null;
     if (uid == null) return;
+    unawaited(AnalyticsService.logOwnerDashboardViewed(ownerId: uid));
     await _fetchOwnerChampionships(uid);
   }
 
