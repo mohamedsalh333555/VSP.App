@@ -79,6 +79,10 @@ jobs:
         run: python3 scripts/test_refund_dispatcher_isolated.py
       - name: Verify legacy migration runner refuses production and colliding versions
         run: python3 -m unittest discover -s test/tooling -p test_migration_replay_guard.py -v
+      - name: Verify open-join RPC runner refuses remote SQL targets
+        run: python3 -m unittest discover -s test/tooling -p test_accept_join_request_isolated.py -v
+      - name: Verify join consent and authorization in disposable PostgreSQL
+        run: python3 scripts/test_accept_join_request_isolated.py
       - name: Verify an existing contract database cannot be reinitialised
         run: |
           python3 - <<'PY'
