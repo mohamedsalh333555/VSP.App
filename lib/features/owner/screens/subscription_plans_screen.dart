@@ -11,6 +11,8 @@ import '../../../core/utils/app_error_handler.dart';
 import '../../../core/repositories/owner_subscription_repository.dart';
 import '../../../core/services/analytics_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/subscription/owner_plan_expiry_presentation.dart';
+
 
 /// شاشة اشتراك المالكين: استخدام مجاني + Pro المدفوع + تجربة Pro
 class SubscriptionPlansScreen extends StatefulWidget {
@@ -170,6 +172,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final isPro = userModel?.isProPlan == true;
     final isTrialActive = userModel?.isInActiveTrial == true;
     final hasProAccess = isPro || isTrialActive;
+    final expiryState = OwnerPlanExpiryPresentation.stateFor(userModel, DateTime.now());
     final trialDaysRemaining = isTrialActive && userModel?.trialEndsAt != null
         ? userModel!.trialEndsAt!.difference(DateTime.now()).inDays + 1
         : 0;
@@ -290,6 +293,46 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              if (expiryState != OwnerPlanExpiryState.none) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(VSPSpacing.md),
+                  decoration: BoxDecoration(
+                    color: VSPColors.warning.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(VSPRadius.card),
+                    border: Border.all(
+                      color: VSPColors.warning.withValues(alpha: 0.30),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Iconsax.info_circle_copy,
+                        color: VSPColors.warning,
+                        size: 20,
+                      ),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          OwnerPlanExpiryPresentation.message(
+                            expiryState,
+                            isArabic: isArabic,
+                          ),
+                          style: const TextStyle(
+                            color: VSPColors.textPrimary,
+                            fontSize: 12,
+                            height: 1.45,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
