@@ -77,6 +77,35 @@ begin
     raise exception 'FAIL: valid overnight opening must pass';
   end if;
 
+  -- Overnight split-shift break starts on the following CALENDAR date.
+  -- The old validator incorrectly accepted all of these partial overlaps.
+  if public.vsp_validate_stadium_booking_window(
+    '22:00','02:00','00:00','01:00',true,null,v_night_start,v_night_end
+  ) is distinct from false then
+    raise exception 'FAIL: after-midnight split break must block preceding-day overlap';
+  end if;
+
+  if public.vsp_validate_stadium_booking_window(
+    '22:00','02:00','23:45','00:15',true,null,v_night_start,v_night_end
+  ) is distinct from false then
+    raise exception 'FAIL: overnight split break wrapping midnight must block overlap';
+  end if;
+
+  if public.vsp_validate_stadium_booking_window(
+    '22:00','02:00','00:15','01:15',true,null,v_night_start,v_night_end
+  ) is distinct from false then
+    raise exception 'FAIL: late after-midnight break must block overlap';
+  end if;
+
+  -- An earlier daytime break is not a part of a late-night operating shift.
+  if public.vsp_validate_stadium_booking_window(
+    '22:00','02:00','00:00','01:00',true,null,
+    (v_local_day+time '22:00') at time zone 'Africa/Cairo',
+    (v_local_day+time '23:00') at time zone 'Africa/Cairo'
+  ) is distinct from true then
+    raise exception 'FAIL: a slot before overnight break remains available';
+  end if;
+
   if public.vsp_validate_stadium_booking_window(
     '22:00','02:00',null,null,false,null,
     ((v_local_day+1)+time '03:00') at time zone 'Africa/Cairo',

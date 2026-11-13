@@ -70,14 +70,16 @@ begin
      and p_break_start_time is not null
      and p_break_end_time is not null
      and p_break_start_time <> p_break_end_time then
-    v_break_start_ts := v_day + p_break_start_time;
-    v_break_end_ts := v_day + p_break_end_time;
-    if p_break_end_time <= p_break_start_time then
+    -- Anchor the closure break to the OPERATING DAY, not the booking's
+    -- local start date. A 22:00–02:00 shift with a 00:00–01:00 break
+    -- must reject a booking spanning 23:30–00:30 on the previous day.
+    v_break_start_ts := v_open_ts::date + p_break_start_time;
+    if v_break_start_ts < v_open_ts then
+      v_break_start_ts := v_break_start_ts + interval '1 day';
+    end if;
+    v_break_end_ts := v_break_start_ts::date + p_break_end_time;
+    if v_break_end_ts <= v_break_start_ts then
       v_break_end_ts := v_break_end_ts + interval '1 day';
-      if v_local_start < v_break_start_ts then
-        v_break_start_ts := v_break_start_ts - interval '1 day';
-        v_break_end_ts := v_break_end_ts - interval '1 day';
-      end if;
     end if;
     if v_local_start < v_break_end_ts
        and v_local_end > v_break_start_ts then

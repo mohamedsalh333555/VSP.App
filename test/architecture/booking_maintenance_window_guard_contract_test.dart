@@ -25,6 +25,9 @@ void main() {
     expect(migration, contains('v_local_end > v_close_ts'));
     expect(migration, contains('v_local_start < v_break_end_ts'));
     expect(migration, contains('v_local_end > v_break_start_ts'));
+    expect(migration, contains('v_break_start_ts := v_open_ts::date + p_break_start_time'));
+    expect(migration, contains('v_break_end_ts := v_break_start_ts::date + p_break_end_time'));
+    expect(migration, isNot(contains('v_break_start_ts := v_day + p_break_start_time')));
     expect(migration, contains('p_start_time is null'));
   });
 
@@ -38,6 +41,10 @@ void main() {
       'partial overlap with closure',
       'split-shift break overlap',
       'valid overnight opening',
+      'after-midnight split break must block preceding-day overlap',
+      'overnight split break wrapping midnight',
+      'late after-midnight break',
+      'a slot before overnight break',
       'after-hours overnight slot',
       'zero-length booking',
       'null booking start',

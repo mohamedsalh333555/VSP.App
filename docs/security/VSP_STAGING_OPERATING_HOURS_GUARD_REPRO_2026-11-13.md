@@ -4,7 +4,7 @@ Date: 2026-11-13 UTC. **Read-only staging** `vtwgqyxglevcsxwdmhop`. Issue #37 po
 
 ## 66.02 — Source precedence by active consumer
 
-- **Flutter picker**: `lib/features/player/widgets/booking/booking_slot_calculator.dart` reads `stadium.features['workingHours']` first, then `stadium.openingTime/closingTime`. If both absent, it currently falls back to a **default 4:00 PM–3:00 AM**; this is a potential unconfigured-hours UX risk that must not be presented as a backend guarantee. Flutter uses `features['breakTimes']` or the legacy `features['breakTime']` for break exclusions.
+- **Flutter picker**: `lib/features/player/widgets/booking/booking_slot_calculator.dart` reads `stadium.features['workingHours']` first, then `stadium.openingTime/closingTime`. Historically, it fell back to **4:00 PM–3:00 AM** if both were absent; a branch-only client fix now fails closed instead. This fix is not applied to the server and must be tested on current devices. Flutter uses `features['breakTimes']` or the legacy `features['breakTime']` for break exclusions.
 - **Database**: an enabled booking trigger `trg_bookings_operating_window` calls `public.vsp_enforce_booking_operating_window()`. It loads `stadiums.opening_time`, `closing_time`, `break_start_time`, `break_end_time`, `is_split_shift`, `maintenance_until` and delegates to `vsp_validate_stadium_booking_window(...)`; it does **not** consult `court_operating_hours` or Flutter `features.workingHours` for authoritative booking writes.
 - `public.court_operating_hours` exists and references `stadiums(id)`, but has **0 records** in staging and is not used by the inspected guard function.
 

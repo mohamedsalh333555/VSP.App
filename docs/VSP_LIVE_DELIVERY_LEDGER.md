@@ -1,3 +1,8 @@
+## 2026-11-13 — Reproduced split-break midnight bypass; branch-only repair
+
+- Tested the deployed staging `vsp_validate_stadium_booking_window` using synthetic Cairo-local 22:00–02:00 operating times with 23:30–00:30 booking. With a 00:00–01:00 overnight break, the function incorrectly returned **true**, while 23:45–00:15 and 00:15–01:15 breaks also returned **true** for the same overlap; a slot ending after 02:00 correctly returned false. Source: [night-break reproduction](security/VSP_STAGING_OVERNIGHT_SPLIT_BREAK_REPRO_2026-11-13.md).
+- Updated **unapplied** `20261113143000_fix_expired_stadium_maintenance_booking_guard.sql` to anchor breaks to shift opening date, plus SQL negative/positive cases and architecture contracts. No staging/prod function changed. **22.06, 22.07, 66.07 remain OPEN** pending a passing isolated DB run and role-level booking tests. Accepted counter remains **124/618, 494 open**.
+
 ## 2026-11-13 — Financial/refund read-only source and staging acceptance (124/494)
 
 - **8 scoped audit tasks accepted:** `61.02`, `61.03`, `62.03`, `63.02`, `63.03`, `63.04`, `68.02`, `68.03`. Evidence: [read-only financial, webhook, canonical winner and debt field audit](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md). Source/metadata/staging-aggregate acceptance only, NOT production cleanup, endpoint safety, actual refund delivery or confirmed booking outcome.
