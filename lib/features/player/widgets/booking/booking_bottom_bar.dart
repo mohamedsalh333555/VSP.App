@@ -296,6 +296,7 @@ class BookingBottomBar extends StatelessWidget {
                 ),
               ),
             ),
+            ),
             const SizedBox(height: 14),
           ],
 
