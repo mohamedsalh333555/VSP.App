@@ -9,6 +9,18 @@ void main() {
       expect(StadiumPayloadBuilder.formatTimeToHms('16'), '16:00:00');
       expect(StadiumPayloadBuilder.formatTimeToHms('16:30'), '16:30:00');
       expect(StadiumPayloadBuilder.formatTimeToHms('08:15:30'), '08:15:30');
+      expect(StadiumPayloadBuilder.formatTimeToHms('0'), '00:00:00');
+      expect(StadiumPayloadBuilder.formatTimeToHms('23:59:59'), '23:59:59');
+      for (final invalid in <Object>[
+        '25', '24:00', '16:60', '08:15:60', '-1:00', 'noon',
+        '08:15 PM', '8:00:12:45', '08:3.5',
+      ]) {
+        expect(
+          () => StadiumPayloadBuilder.formatTimeToHms(invalid),
+          throwsFormatException,
+          reason: 'Malformed closure time must not become midnight: $invalid',
+        );
+      }
     });
 
     test('only EGP currency is accepted and normalized money stays numeric', () {
@@ -23,6 +35,14 @@ void main() {
       expect(result['base_price'], 350.25);
       expect(result['deposit_amount'], 100);
       expect(result['needs_deposit'], isTrue);
+      expect(
+        () => StadiumPayloadBuilder.buildInsertPayload({
+          'currency': 'EGP',
+          'currency_code': 'USD',
+          'pricePerHour': 200,
+        }),
+        throwsFormatException,
+      );
       for (final currency in <String>['USD', 'EUR', '']) {
         expect(
           () => StadiumPayloadBuilder.buildInsertPayload({

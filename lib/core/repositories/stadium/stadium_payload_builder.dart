@@ -6,9 +6,14 @@ class StadiumPayloadBuilder {
   // Venue prices in the current Egyptian product are EGP-only. Never quietly
   // drop a caller-supplied foreign currency and label its price as EGP.
   static void _requireEgp(Map<String, dynamic> input) {
-    final currency = input['currency'] ?? input['currency_code'];
-    if (currency != null && currency.toString().trim().toUpperCase() != 'EGP') {
-      throw const FormatException('Unsupported stadium currency: only EGP is allowed');
+    for (final field in const <String>['currency', 'currency_code']) {
+      final currency = input[field];
+      if (currency != null &&
+          currency.toString().trim().toUpperCase() != 'EGP') {
+        throw const FormatException(
+          'Unsupported stadium currency: only EGP is allowed',
+        );
+      }
     }
   }
 
@@ -29,23 +34,22 @@ class StadiumPayloadBuilder {
   /// Formats time strings into standard HH:mm:ss format for Postgres TIME column.
   static String? formatTimeToHms(dynamic timeVal) {
     if (timeVal == null) return null;
-    final str = timeVal.toString().trim();
-    if (str.isEmpty) return null;
-    final parts = str.split(':');
-    if (parts.length == 1) {
-      final h = int.tryParse(parts[0]) ?? 0;
-      return '${h.toString().padLeft(2, '0')}:00:00';
-    } else if (parts.length == 2) {
-      final h = int.tryParse(parts[0]) ?? 0;
-      final m = int.tryParse(parts[1]) ?? 0;
-      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:00';
-    } else if (parts.length >= 3) {
-      final h = int.tryParse(parts[0]) ?? 0;
-      final m = int.tryParse(parts[1]) ?? 0;
-      final s = int.tryParse(parts[2]) ?? 0;
-      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    final raw = timeVal.toString().trim();
+    if (raw.isEmpty) return null;
+    // Never silently turn malformed closure times into midnight.
+    final match = RegExp(r'^(\d{1,2})(?::(\d{1,2}))?(?::(\d{1,2}))?$')
+        .firstMatch(raw);
+    if (match == null) {
+      throw const FormatException('Invalid 24-hour venue time');
     }
-    return str;
+    final hour = int.parse(match.group(1)!);
+    final minute = int.parse(match.group(2) ?? '0');
+    final second = int.parse(match.group(3) ?? '0');
+    if (hour > 23 || minute > 59 || second > 59) {
+      throw const FormatException('Venue time outside 24-hour range');
+    }
+    String twoDigits(int value) => value.toString().padLeft(2, '0');
+    return '${twoDigits(hour)}:${twoDigits(minute)}:${twoDigits(second)}';
   }
 
   /// Builds a sanitized map payload for inserting a new stadium into Postgres.

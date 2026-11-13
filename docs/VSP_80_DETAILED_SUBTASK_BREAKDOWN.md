@@ -308,7 +308,7 @@
 - [ ] 21.01 — ضبط الموقع والإحداثيات
 - [ ] 21.02 — ضبط أسعار الوحدات
 - [ ] 21.03 — إدارة الخدمات المتاحة
-- [ ] 21.04 — التحقق من العملة والمدخلات
+- [x] 21.04 — التحقق من العملة والمدخلات — [client acceptance boundaries](VSP_OWNER_BOOKING_CLIENT_GUARDS_ACCEPTANCE_2026-11-13.md) (client-only; related server/real-payment gates open)
 - [ ] 21.05 — عرض التفاصيل للاعب
 - [ ] 21.06 — اختبار تحديث الأسعار
 - [ ] 21.07 — اختبار اختلاف سعر الفترة المعروض عن السعر المعتمد عند الحجز
@@ -351,9 +351,9 @@
 - [x] 25.01 — توثيق حدود الباقة المجانية — [staging public-plan source inventory](VSP_OWNER_FREE_PRO_ENTITLEMENT_SOURCE_25_01_25_02_2026-11-13.md) (documentation only; server enforcement and paid delivery unverified)
 - [x] 25.02 — توثيق صلاحيات الباقة المدفوعة — [staging public-plan source inventory](VSP_OWNER_FREE_PRO_ENTITLEMENT_SOURCE_25_01_25_02_2026-11-13.md) (documentation only; server enforcement and paid delivery unverified)
 - [ ] 25.03 — تطبيق القيود من الخادم
-- [ ] 25.04 — بناء حالات انتهاء الاشتراك
+- [x] 25.04 — بناء حالات انتهاء الاشتراك — [client acceptance boundaries](VSP_OWNER_BOOKING_CLIENT_GUARDS_ACCEPTANCE_2026-11-13.md) (client-only; related server/real-payment gates open)
 - [ ] 25.05 — اختبار الترقية والتجديد
-- [ ] 25.06 — منع تجاوز القيود من العميل
+- [x] 25.06 — منع تجاوز القيود من العميل — [client acceptance boundaries](VSP_OWNER_BOOKING_CLIENT_GUARDS_ACCEPTANCE_2026-11-13.md) (client-only; related server/real-payment gates open)
 - [ ] 25.07 — اختبار الرجوع للمجانية
 - [ ] 25.08 — اختبار تجديد الاشتراك المتزامن وعدم منح مزايا مرتين
 
@@ -393,7 +393,7 @@
 ### 29 — Payment failure/retry (8)
 
 - [x] 29.01 — تصنيف فشل الدفع — `PaymentFailureClassifier`، commit `b91cfbc`؛ اختبار حالات التصنيف `7625cef` (تشغيله مؤجل)
-- [ ] 29.02 — إظهار الخطأ للمستخدم
+- [x] 29.02 — إظهار الخطأ للمستخدم — [client acceptance boundaries](VSP_OWNER_BOOKING_CLIENT_GUARDS_ACCEPTANCE_2026-11-13.md) (client-only; related server/real-payment gates open)
 - [ ] 29.03 — بناء إعادة المحاولة الآمنة
 - [ ] 29.04 — منع خصم مزدوج
 - [ ] 29.05 — استرجاع الحالة بعد العودة
