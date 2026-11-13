@@ -388,7 +388,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             final uid = auth.currentUser?.id;
             if (uid == null) return;
             if (context.mounted) {
-              Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
+              Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid, forceRefresh: true);
             }
             await Future.wait([
               _fetchFinancialSummary(uid),
@@ -592,8 +592,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                   // جدول حجوزات اليوم — يأتي مباشرة بعد الكارت المالي.
                   // ب. كارت جدول مواعيد اليوم بالنقط الملونة أو دعوة لإضافة الملعب الأول
-                  if (stadiums.isEmpty)
+                  if (stadiumProvider.errorMessage != null)
+
+                    _buildOwnerStadiumSyncWarning(context, isArabic, stadiumProvider),
+
+                  if (stadiums.isEmpty && stadiumProvider.isLoading)
+
+                    const Center(child: CircularProgressIndicator())
+
+                  else if (stadiums.isEmpty && stadiumProvider.errorMessage != null)
+
+                    const SizedBox.shrink()
+
+                  else if (stadiums.isEmpty)
+
                     _buildNoStadiumsPrompt(context, isArabic)
+
                   else
                     OwnerTodayPitchScheduleCard(
                       allBookings: allBookings,
@@ -962,6 +976,45 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOwnerStadiumSyncWarning(
+    BuildContext context,
+    bool isArabic,
+    StadiumProvider stadiumProvider,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: VSPColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: VSPColors.error),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'تعذر تحديث ملاعبك. نعرض آخر بيانات موثوقة إن وجدت.'
+                  : 'Could not refresh your pitches. Showing the last trusted data if available.',
+              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              final ownerId = context.read<AuthProvider>().currentUser?.id;
+              if (ownerId != null) {
+                stadiumProvider.listenToOwnerStadiums(ownerId, forceRefresh: true);
+              }
+            },
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
           ),
         ],
       ),

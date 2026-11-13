@@ -9,7 +9,7 @@ import '../services/logger_service.dart';
 import '../services/stadium/stadium_filter_service.dart';
 
 class StadiumProvider with ChangeNotifier {
- final StadiumRepository _databaseService = StadiumRepository();
+ final StadiumRepository _databaseService;
  StreamSubscription? _stadiumSubscription;
  
  List<Stadium> _stadiums = [];
@@ -26,7 +26,8 @@ class StadiumProvider with ChangeNotifier {
  // Reuse one GPS snapshot across pages; refresh obtains a new snapshot.
  Position? _discoveryPagePosition;
 
- StadiumProvider();
+ StadiumProvider({StadiumRepository? repository})
+     : _databaseService = repository ?? StadiumRepository();
  String? _errorMessage;
  String? _selectedGovernorate;
  bool _isGeographicFallback = false;
@@ -136,8 +137,8 @@ class StadiumProvider with ChangeNotifier {
  );
  }
  }
- } catch (e) {
- debugPrint('Error getting GPS location: $e');
+ } catch (_) {
+ debugPrint('GPS location unavailable (details redacted)');
  }
  if (requestGeneration == _discoveryRequestGeneration &&
      requestScopeGeneration == _scopeGeneration &&
@@ -236,7 +237,7 @@ class StadiumProvider with ChangeNotifier {
  notifyListeners();
  } catch (e) {
  if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
-   VSPLogger.e('Failed to fetch stadiums', e);
+   VSPLogger.e('Stadium discovery fetch failed (details redacted)');
    _setError('stadium_load_failed');
  }
  } finally {
@@ -283,13 +284,13 @@ class StadiumProvider with ChangeNotifier {
         if (_listeningOwnerId != ownerId || ownerGeneration != _scopeGeneration) return;
         _stadiums = data;
         _errorMessage = null;
-        _setLoading(false);
+        _isLoading = false;
+        // Every authoritative update must notify, not just the initial load.
+        notifyListeners();
       },
-      onError: (error) {
+      onError: (_) {
         if (_listeningOwnerId != ownerId || ownerGeneration != _scopeGeneration) return;
-        // Preserve the last authoritative snapshot if a realtime refresh fails.
-        // Initial failures still surface because the lists start empty.
-        _setError('Failed to fetch your stadiums: ${error.toString()}');
+        _setError('owner_stadium_sync_failed');
         _setLoading(false);
       },
     );
@@ -300,7 +301,7 @@ class StadiumProvider with ChangeNotifier {
  try {
  return await _databaseService.getStadiumById(stadiumId);
  } catch (e) {
- _setError('Failed to fetch stadium: ${e.toString()}');
+ _setError('stadium_fetch_failed');
  rethrow;
  }
  }
@@ -315,7 +316,7 @@ class StadiumProvider with ChangeNotifier {
  _setLoading(false);
  return stadiumId;
  } catch (e) {
- _setError('Failed to add stadium: ${e.toString()}');
+ _setError('stadium_create_failed');
  _setLoading(false);
  rethrow;
  }
@@ -331,7 +332,7 @@ class StadiumProvider with ChangeNotifier {
  _setLoading(false);
  return success;
  } catch (e) {
- _setError('Failed to update stadium: ${e.toString()}');
+ _setError('stadium_update_failed');
  _setLoading(false);
  rethrow;
  }
@@ -540,7 +541,7 @@ class StadiumProvider with ChangeNotifier {
  return false;
  }
  } catch (e) {
- VSPLogger.e('Error deleting stadium', e);
+ VSPLogger.e('Stadium deletion failed (details redacted)');
  _setError('stadium_delete_failed');
  _setLoading(false);
  return false;
