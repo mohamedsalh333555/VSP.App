@@ -1,0 +1,7 @@
+# VSP — notification canonical body / legacy message consumer trace (67.02)
+
+2026-11-13, read-only staging metadata/aggregates and checked-in source. No notification content or account IDs retrieved.
+
+- Staging \`public.notifications\` has real \`title\`, \`body\`, \`message\`, \`metadata\`, \`created_at\`, \`is_read\` columns. Aggregate **6** notifications: **6** nonempty \`body\`, **3** nonempty \`message\`, **0** message-only, and **1** row where both nonempty fields differ. Do **not** overwrite that row or assume both fields are synonymous for existing messages.
+- \`NotificationRepository._mapToCamelCase\` forwards both \`body\` and \`message\`; \`AppNotification.fromFirestore\` prioritizes a nonblank \`body\` and falls back to \`message\`. \`sendNotification\` and \`restoreNotification\` write canonical \`body\`. The notification center's title/body display uses \`NotificationDisplayTextResolver\` with AR/EN metadata overrides and fallback to the model; it does not update the stored row. Tests are checked into \`test/data/models/notification_models_legacy_test.dart\` and \`test/core/services/notification/notification_display_text_resolver_test.dart\`.
+- **Scoped source trace completed: 67.02.** 67.04 (old template behavior), 67.07 (runtime rendered-row checks) remain open pending Flutter CI and real account fixtures. This audit is not a notification delivery test, FCM producer census, or a production data migration. Use \`body\` for future canonical writes; leave historical \`message\` as read fallback until full reconciliation.

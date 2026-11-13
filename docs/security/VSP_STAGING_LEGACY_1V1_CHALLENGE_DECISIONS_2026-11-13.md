@@ -2,26 +2,26 @@
 
 Date: 2026-11-13. Environment: **Staging** (\`vtwgqyxglevcsxwdmhop\`). All SQL in this review was SELECT-only, returned counts or schema metadata and never included usernames, player identifiers, payments, records, auth tokens or contact data.
 
-## 69.04 — Staging 1v1 data review (scoped)
+## 69.04 — Actual legacy 1v1 data (corrected)
 
-The deployed tables are \`vsp_1v1_registrations\` (older registration ledger), \`vsp_1v1_tournament_players\` (current per-tournament entries), and \`vsp_1v1_tournaments\`.
+The **actual legacy standalone player table** is \`public.vsp_1vs1_players\` (note **1vs1**, not \`1v1\`), previously identified by \`VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md\`. A separate older workflow table \`vsp_1v1_registrations\` is also present; **these are NOT the same table**.
 
-| Check | Staging result |
+| Table / check | Staging |
 |---|---:|
-| \`vsp_1v1_registrations\` rows | 0 |
-| \`vsp_1v1_tournament_players\` rows | 16 |
-| \`vsp_1v1_tournaments\` rows | 2 |
-| Repeated \`(tournament_id,user_id)\` in current players | 0 |
-| Repeated \`user_id\` in legacy registrations | 0 |
-| Shared users between the two systems | 0 |
+| \`vsp_1vs1_players\` standalone legacy player profiles | **0** |
+| \`vsp_1v1_registrations\` older status ledger | **0** |
+| \`vsp_1v1_tournament_players\` current per-tournament records | **16** |
+| \`vsp_1v1_tournaments\` | **2** |
+| Duplicate active \`(tournament_id,user_id)\` keys | **0** |
+| Duplicate old registration \`user_id\` keys | **0** |
 
-A **unique index** \`uq_1v1_tournament_user\` already enforces \`(tournament_id,user_id)\` in the active table. The legacy \`vsp_1v1_registrations\` table has a *partial unique* \`idx_unique_active_registration\` over \`user_id\` where status IN ('pending','approved'), not the same identity semantics. Empty old registration table does not imply it is safe to remove from production. All real-data claims above are staging only.
+The actual legacy \`vsp_1vs1_players\` has \`id\`, \`name\`, avatar and stat columns, **but no \`tournament_id\`, \`user_id\` or \`payment_status\`**; it must not be interpreted as an unpaid registration or merged into a paid roster. The modern table's \`uq_1v1_tournament_user\` index enforces current per-tournament identity. The separate \`vsp_1v1_registrations\` table has \`idx_unique_active_registration\` on \`user_id\` with pending/approved states.
 
-## 69.05–69.06 — Retain, do not merge automatically
+## 69.05–69.06 — Retain standalone legacy players and payment records
 
-**Decision:** keep historical \`vsp_1v1_registrations\` and continue using \`vsp_1v1_tournament_players\` as the confirmed, per-tournament live participant roster. Do not merge registrations by user alone: a user can participate in separate tournaments and payment statuses/orders may differ. Preserve the existing partial-unique legacy state key, and treat \`(tournament_id,user_id)\` as the current unique participant identity.
+**Decision:** retain all three schemas. \`vsp_1vs1_players\` represents historical standalone player statistics, \`vsp_1v1_registrations\` the historical registration workflow, and \`vsp_1v1_tournament_players\` the canonical current per-tournament entries. No direct FK/crosswalk from legacy standalone profile ID to \`users.id\` or current tournament ID is shown by staging metadata. Never join by display name or assign \`payment_status='paid'\` to a legacy stats profile.
 
-Future migration, if required: (1) inventory source lineage, references, payment status and order IDs on a disposable staging clone; (2) compare legacy active rows to current rows by verified tournament and user relationships; (3) quarantine any ambiguity; (4) backfill through an idempotent \`INSERT ... ON CONFLICT (tournament_id,user_id) DO NOTHING\` **only when existing payment and eligibility invariants have been checked**, never silently mark a free or pending player paid; (5) compare per-tournament participant counts, paid amounts, duplicates, RLS visibility and refund claims; (6) retain originals and rollback/cutover switch until a reviewed production rollout. No such data migration has been executed. 69.07 stays open.
+Any future migration requires an owner-reviewed identity crosswalk, financial order confirmation, profile ownership proof, uniqueness and team/tournament role tests. Preserve original stat totals for audit without recrediting medals or prizes. Quarantine ambiguous data, run isolated/test migration and reversible shadow-read, then decide whether historical players should remain archive-only. No backfill or merge was run. 69.07 stays open.
 
 ## 70.02 — Read-only legacy result duplicate review
 

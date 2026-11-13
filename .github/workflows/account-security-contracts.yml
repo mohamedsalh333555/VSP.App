@@ -77,6 +77,8 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_refund_dispatcher_isolated.py -v
       - name: Verify refund dispatcher queue and project guards on isolated PostgreSQL
         run: python3 scripts/test_refund_dispatcher_isolated.py
+      - name: Verify legacy migration runner refuses production and colliding versions
+        run: python3 -m unittest discover -s test/tooling -p test_migration_replay_guard.py -v
       - name: Verify an existing contract database cannot be reinitialised
         run: |
           python3 - <<'PY'

@@ -2,6 +2,7 @@
 -- Run on staging ONLY; returns aggregate counts and never individual identities.
 -- No mutations, account details, money amounts or password/secret values.
 select
+ (select count(*) from public.vsp_1vs1_players) legacy_standalone_1vs1_players,
  (select count(*) from public.vsp_1v1_registrations) legacy_1v1_registrations,
  (select count(*) from public.vsp_1v1_tournament_players) current_tournament_players,
  (select count(*) from public.vsp_1v1_tournaments) tournaments,
@@ -27,5 +28,5 @@ select
 -- Catalog-only: do not expose participant keys.
 select tablename,indexname,indexdef from pg_indexes
 where schemaname='public'
-  and tablename in ('vsp_1v1_registrations','vsp_1v1_tournament_players','challenge_results')
+  and tablename in ('vsp_1vs1_players','vsp_1v1_registrations','vsp_1v1_tournament_players','challenge_results')
 order by tablename,indexname;

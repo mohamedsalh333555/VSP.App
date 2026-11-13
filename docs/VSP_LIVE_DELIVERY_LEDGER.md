@@ -1,6 +1,16 @@
+## 2026-11-13 — Notification body/message consumer trace (146/472)
+
+- `67.02` accepted as a scoped consumer/source trace only. Staging `notifications`: 6 body-populated, 3 message-populated, 1 mismatch; source path prioritizes body while reading message for legacy compatibility. [Details](security/VSP_STAGING_NOTIFICATION_LEGACY_SOURCES_2026-11-13.md). No customer content read or edited.
+- Total **618 / 146 accepted / 472 open**. Runtime render, endpoint and payment tasks remain pending.
+
+## 2026-11-13 — Correct 1vs1 legacy table mapping / migration runner safety
+
+- **Correction to the same 69.04–69.06 audit, no new task count:** Actual standalone legacy table `vsp_1vs1_players` has 0 Staging rows and no user/tournament key, distinct from `vsp_1v1_registrations` (also 0) and active `vsp_1v1_tournament_players` (16). Updated [source-of-truth decision](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md) and SQL audit. Never migrate standalone stats by a nonexistent user ID.
+- Hardened the legacy `scripts/apply_migration_runner.py` to be **staging-only**, require explicit identity/review flags, refuse rollback/unversioned files and duplicate source-version migrations; added isolated unit tests to Account SQL CI. 71.06 stays OPEN pending a passing CI test on the new commit. No migrations ran.
+
 ## 2026-11-13 — Staging legacy 1v1 and challenge result preservation decisions (145/473)
 
-- Read-only Staging aggregate and unique-index review: legacy \`vsp_1v1_registrations=0\`, current tournament players=16 across two tournaments, no repeated current \`(tournament_id,user_id)\` keys, legacy \`challenge_results=0\`, and 20 confirmed booking-side challenge result statuses. Counts do not establish production historical integrity.
+- Read-only Staging aggregate and unique-index review: legacy standalone \`vsp_1vs1_players=0\`, old registration \`vsp_1v1_registrations=0\`, current tournament players=16 across two tournaments, no repeated current \`(tournament_id,user_id)\` keys, legacy \`challenge_results=0\`, and 20 confirmed booking-side challenge result statuses. Counts do not establish production historical integrity.
 - Six **data review and source-retention decision** tasks accepted in a narrow scope: \`69.04\`, \`69.05\`, \`69.06\`, \`70.02\`, \`70.05\`, \`70.06\`. [Evidence and safe-migration plans](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md). No actual merge, payment reconciliation, RLS change or migration; \`69.07\`, \`70.04\`, \`70.07\` remain open.
 - **618 total / 145 VERIFIED / 473 open**. Other recently proposed Flutter and refund dispatcher changes require final CI and staging integration gates before operational acceptance.
 
