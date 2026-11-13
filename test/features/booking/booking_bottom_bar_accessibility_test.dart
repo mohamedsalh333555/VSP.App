@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/booking/booking_bottom_bar.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 
 void main() {
   Widget host({
@@ -15,6 +16,8 @@ void main() {
   }) {
     return MaterialApp(
       locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       home: Scaffold(
         body: Align(
           alignment: Alignment.bottomCenter,
