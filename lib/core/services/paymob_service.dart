@@ -62,7 +62,7 @@ class PaymobService {
       if (response == null) return null;
       return PaymobFeePolicy.fromMap(Map<String, dynamic>.from(response));
     } catch (e) {
-      debugPrint('[PaymobService] Fee policy unavailable: $e');
+      debugPrint('[PaymobService] Fee policy unavailable (details redacted)');
       return null;
     }
   }
@@ -98,7 +98,7 @@ class PaymobService {
       }
       return null;
     } catch (e) {
-      debugPrint('[PaymobService] Checkout error: $e');
+      debugPrint('[PaymobService] Checkout initialization failed (details redacted)');
       return null;
     }
   }

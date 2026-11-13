@@ -223,7 +223,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       if (mounted && !_hasAccountChanged &&
           Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        debugPrint('Payment gateway booking initialization failed: $e');
+        debugPrint('Payment gateway booking initialization failed (details redacted)');
         VSPFeedback.showError(
           context,
           isArabic
@@ -265,7 +265,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           }
         }
       },
-      onError: (err) => debugPrint('Real-time listener error: $err'),
+      onError: (err) => debugPrint('Real-time booking-status listener failed (details redacted)'),
     );
   }
 
@@ -391,7 +391,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
 
     } catch (error) {
-      debugPrint('Paymob checkout initialization failed: $error');
+      debugPrint('Paymob checkout initialization failed (details redacted)');
       if (!mounted || _hasAccountChanged ||
           Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
         return;
@@ -534,7 +534,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           );
         }
       } catch (e) {
-        debugPrint('Paymob Launch notice: $e');
+        debugPrint('Paymob checkout page could not be launched (details redacted)');
         if (mounted && !_hasAccountChanged &&
             Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           if (!_paymentCompleted) _startCountdownTimer();

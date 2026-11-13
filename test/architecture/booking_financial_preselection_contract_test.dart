@@ -16,7 +16,12 @@ void main() {
     expect(summary, contains('hasSelectedSlots\n'));
     expect(summary, contains('يُحسب بعد اختيار الموعد'));
     expect(summary, contains('Calculated after selecting a slot'));
-    expect(summary, contains('(totalPrice - deposit).clamp(0, double.infinity)'));
+    // A negative remainder must never be represented as a valid 0 EGP balance.
+    // Instead, the owner-deposit mismatch is disclosed for correction.
+    expect(summary, contains('Review price and deposit'));
+    expect(summary, contains('deposit > totalPrice'));
+    expect(summary, contains('VSPMoneyFormatter.amount(totalPrice - deposit)'));
+    expect(summary, isNot(contains('(totalPrice - deposit).clamp(0, double.infinity)')));
     expect(screen, contains('hasSelectedSlots: isSlotSelected,'));
   });
 }

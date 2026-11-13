@@ -97,7 +97,7 @@ class PaymentCheckoutCoordinator {
           onConfirmed(booking);
         }
       } catch (e) {
-        debugPrint('Fallback polling notice: $e');
+        debugPrint('Payment status refresh failed (details redacted)');
       } finally {
         isFetching = false;
       }
@@ -137,7 +137,7 @@ class PaymentCheckoutCoordinator {
           onPaid(status);
         }
       } catch (e) {
-        debugPrint('Tournament payment polling notice: $e');
+        debugPrint('Tournament payment status refresh failed (details redacted)');
       } finally {
         isFetching = false;
       }
@@ -169,7 +169,7 @@ class PaymentCheckoutCoordinator {
       try {
         await bookingRepo.releaseBookingLock(booking.id);
       } catch (e) {
-        debugPrint('Error releasing booking lock: $e');
+        debugPrint('Booking lock release failed (details redacted)');
       }
     }
 
@@ -184,7 +184,7 @@ class PaymentCheckoutCoordinator {
             params: {'p_order_reference': orderReference},
           );
         } catch (e) {
-          debugPrint('Error cancelling tournament payment order: $e');
+          debugPrint('Tournament payment order cancellation failed (details redacted)');
         }
       }
     }

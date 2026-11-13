@@ -32,7 +32,12 @@ void main() {
     expect(summary, contains('Upfront Deposit Required'));
     expect(summary, contains('المتبقي عند الملعب'));
     expect(summary, contains('Remaining at Pitch'));
-    expect(summary, contains('(totalPrice - deposit).clamp(0, double.infinity)'));
+    // A negative remainder must never be represented as a valid 0 EGP balance.
+    // Instead, the owner-deposit mismatch is disclosed for correction.
+    expect(summary, contains('Review price and deposit'));
+    expect(summary, contains('deposit > totalPrice'));
+    expect(summary, contains('VSPMoneyFormatter.amount(totalPrice - deposit)'));
+    expect(summary, isNot(contains('(totalPrice - deposit).clamp(0, double.infinity)')));
     expect(screen, contains('_selectedTimeSlots.length * _slotPrice'));
     expect(screen, contains('if (_selectedTimeSlots.isNotEmpty && _isBallRented) total += _ballPrice;'));
   });
