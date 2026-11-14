@@ -72,7 +72,7 @@ class WelcomeOnboardingSlide extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       VSPColors.black80,
-                      Colors.transparent,
+                      VSPColors.transparent,
                       VSPColors.background.withValues(alpha: 0.5),
                       VSPColors.background,
                     ],
@@ -159,14 +159,14 @@ class WelcomeOnboardingSlide extends StatelessWidget {
                               color: VSPColors.surface,
                               borderRadius: BorderRadius.circular(VSPRadius.lg),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.15),
+                                color: VSPColors.white.withValues(alpha: 0.15),
                               ),
                             ),
                             child: Center(
                               child: Text(
                                 _getOwnerButtonText(context),
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: VSPColors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
@@ -202,7 +202,7 @@ class WelcomeOnboardingSlide extends StatelessWidget {
                               child: Text(
                                 _getPlayerButtonText(context),
                                 style: const TextStyle(
-                                  color: Colors.black,
+                                  color: VSPColors.black,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 15,
                                 ),

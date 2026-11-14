@@ -59,7 +59,7 @@ class RefundBadgeWidget extends StatelessWidget {
                 SnackBar(
                   content: Row(
                     children: [
-                      const Icon(Iconsax.tick_circle_copy, color: Colors.white, size: 16),
+                      const Icon(Iconsax.tick_circle_copy, color: VSPColors.white, size: 16),
                       const SizedBox(width: 8),
                       Text(copyToastText),
                     ],

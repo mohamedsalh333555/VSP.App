@@ -55,7 +55,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
     _startCountdown();
 
     _shakeController = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: VSPDSMotion.fadeIn,
       vsync: this,
     );
     _shakeAnim = TweenSequence<double>([
@@ -115,7 +115,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
   Future<void> _verify() async {
     final code = _enteredCode;
-    if (code.length < 6) return;
+    if (code.length < 6 || _isVerifying) return;
 
     HapticFeedback.mediumImpact();
     setState(() {
@@ -124,28 +124,47 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
     });
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final success = await auth.verifyOtp(
-      email: _resolvedEmail ?? '',
-      token: code,
-    );
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    try {
+      final success = await auth.verifyOtp(
+        email: _resolvedEmail ?? '',
+        token: code,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (success) {
-      HapticFeedback.lightImpact();
-      await SecureStorageService.deleteSecure('pending_verification_email');
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('pending_verification_email');
-    } else {
-      HapticFeedback.vibrate();
-      _shakeController.forward(from: 0);
-      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      if (success) {
+        HapticFeedback.lightImpact();
+        setState(() => _isVerifying = false);
+        try {
+          await SecureStorageService.deleteSecure('pending_verification_email');
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('pending_verification_email');
+        } catch (error) {
+          // OTP verification already succeeded; cleanup failure must not
+          // leave the verification action spinning or report a false failure.
+          debugPrint('Pending verification email cleanup failed: $error');
+        }
+      } else {
+        HapticFeedback.vibrate();
+        _shakeController.forward(from: 0);
+        setState(() {
+          _errorMessage = auth.errorMessage ??
+              (isAr
+                  ? 'رمز التفعيل خاطئ أو انتهت صلاحيته. يرجى المحاولة مجدداً'
+                  : 'Invalid or expired code. Please try again.');
+          _isVerifying = false;
+        });
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Email OTP verification failed unexpectedly: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (!mounted) return;
       setState(() {
-        _errorMessage = auth.errorMessage ??
-            (isAr
-                ? 'رمز التفعيل خاطئ أو انتهت صلاحيته. يرجى المحاولة مجدداً'
-                : 'Invalid or expired code. Please try again.');
         _isVerifying = false;
+        _errorMessage = isAr
+            ? 'تعذر التحقق من الرمز الآن. تحقق من الاتصال وحاول مرة أخرى.'
+            : 'Could not verify the code. Check your connection and try again.';
       });
     }
   }
@@ -161,26 +180,38 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
     });
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final success = await auth.resendOtp();
-
-    if (!mounted) return;
-    setState(() => _isResending = false);
-
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    if (success) {
-      _startCountdown();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isAr
-              ? ' تم إرسال رمز تفعيل جديد إلى بريدك الإلكتروني.'
-              : ' A new code has been sent to your email.'),
-          backgroundColor: VSPColors.accent,
-        ),
-      );
-    } else {
-      setState(() => _errorMessage = isAr
-          ? 'فشل إعادة إرسال الرمز. يرجى المحاولة لاحقاً.'
-          : 'Failed to resend OTP. Try again.');
+    try {
+      final success = await auth.resendOtp();
+
+      if (!mounted) return;
+      setState(() => _isResending = false);
+
+      if (success) {
+        _startCountdown();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isAr
+                ? 'تم إرسال رمز تفعيل جديد إلى بريدك الإلكتروني.'
+                : 'A new code has been sent to your email.'),
+            backgroundColor: VSPColors.accent,
+          ),
+        );
+      } else {
+        setState(() => _errorMessage = isAr
+            ? 'فشل إعادة إرسال الرمز. يرجى المحاولة لاحقاً.'
+            : 'Failed to resend OTP. Try again.');
+      }
+    } catch (error, stackTrace) {
+      debugPrint('Email OTP resend failed unexpectedly: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (!mounted) return;
+      setState(() {
+        _isResending = false;
+        _errorMessage = isAr
+            ? 'تعذر إعادة إرسال الرمز الآن. تحقق من الاتصال وحاول مرة أخرى.'
+            : 'Could not resend the code. Check your connection and try again.';
+      });
     }
   }
 
@@ -247,24 +278,31 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                     offset: Offset(_shakeAnim.value, 0),
                     child: child,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      6,
-                      (i) => OtpBox(
-                        controller: _controllers[i],
-                        focusNode: _focusNodes[i],
-                        hasError: _errorMessage != null,
-                        onChanged: (v) => _onDigitChanged(i, v),
-                        onKey: (e) => _onKeyDown(i, e),
-                      ),
-                    ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final boxWidth =
+                          ((constraints.maxWidth - 60) / 6).clamp(32.0, 46.0);
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          6,
+                          (i) => OtpBox(
+                            width: boxWidth,
+                            controller: _controllers[i],
+                            focusNode: _focusNodes[i],
+                            hasError: _errorMessage != null,
+                            onChanged: (v) => _onDigitChanged(i, v),
+                            onKey: (e) => _onKeyDown(i, e),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
 
                 // ── Error ─────────────────────────────────────────────────
                 AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
+                  duration: VSPDSMotion.selection,
                   child: _errorMessage != null
                       ? Padding(
                           padding: const EdgeInsets.only(top: VSPSpacing.md),

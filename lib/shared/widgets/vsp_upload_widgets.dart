@@ -6,25 +6,41 @@ import 'dart:io';
 
 class VspUploadMainCard extends StatelessWidget {
   final String title;
-  final String helper;
+  final String? helper;
   final VoidCallback onTap;
   final bool isLoading;
 
   const VspUploadMainCard({
     super.key,
     required this.title,
-    this.helper = 'JPG, JPEG, PNG less than 10MB',
+    this.helper,
     required this.onTap,
     this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final isArabic = Localizations.maybeLocaleOf(context)?.languageCode == 'ar';
+    final helperText = helper ?? (isArabic
+        ? 'JPG، JPEG، PNG بحجم أقل من 10 ميجابايت'
+        : 'JPG, JPEG, PNG less than 10MB');
+
+    return Semantics(
+      button: true,
+      enabled: !isLoading,
+      label: title,
+      hint: helperText,
       onTap: isLoading ? null : onTap,
-      child: Container(
-        width: double.infinity,
-        height: 160,
+      child: Material(
+        color: VSPColors.transparent,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        child: InkWell(
+          excludeFromSemantics: true,
+          onTap: isLoading ? null : onTap,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          child: Container(
+            width: double.infinity,
+            height: 160,
         decoration: BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -37,11 +53,16 @@ class VspUploadMainCard extends StatelessWidget {
                   children: [
                     const CircularProgressIndicator(color: VSPColors.accent),
                     const SizedBox(height: VSPSpacing.sm),
-                    Text(
-                      'Uploading...',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: VSPColors.textSecondary,
-                          ),
+                    Semantics(
+                      liveRegion: true,
+                      label: isArabic ? 'جارٍ رفع الملف' : 'Uploading file',
+                      child: Text(
+                        isArabic ? 'جارٍ رفع الملف' : 'Uploading file',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: VSPColors.textSecondary,
+                            ),
+                      ),
                     ),
                   ],
                 ),
@@ -62,13 +83,16 @@ class VspUploadMainCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    helper,
+                    helperText,
+                    textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: VSPColors.textSecondary.withValues(alpha: 0.6),
                         ),
                   ),
                 ],
               ),
+          ),
+        ),
       ),
     );
   }
@@ -100,7 +124,7 @@ class VspUploadedItemRow extends StatelessWidget {
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(
-          color: thumbnailUrl != null || imageFile != null
+          color: (thumbnailUrl?.isNotEmpty ?? false) || imageFile != null
               ? VSPColors.accent.withValues(alpha: 0.3)
               : VSPColors.divider,
         ),
@@ -117,7 +141,7 @@ class VspUploadedItemRow extends StatelessWidget {
               image: DecorationImage(
                 image: (!kIsWeb && imageFile != null)
                     ? FileImage(imageFile!)
-                    : (thumbnailUrl != null
+                    : ((thumbnailUrl?.isNotEmpty ?? false)
                             ? NetworkImage(thumbnailUrl!)
                             : const AssetImage('assets/images/logo.png'))
                         as ImageProvider,
@@ -138,7 +162,7 @@ class VspUploadedItemRow extends StatelessWidget {
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: thumbnailUrl != null || imageFile != null
+                        color: (thumbnailUrl?.isNotEmpty ?? false) || imageFile != null
                             ? VSPColors.accent
                             : (isUploading ? VSPColors.warning : VSPColors.textSecondary),
                       ),
@@ -146,26 +170,29 @@ class VspUploadedItemRow extends StatelessWidget {
               ],
             ),
           ),
-          if (thumbnailUrl != null || imageFile != null)
+          if (isUploading)
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.warning),
+            )
+          else if ((thumbnailUrl?.isNotEmpty ?? false) || imageFile != null)
             Row(
               children: [
                 const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 20),
                 if (onDelete != null) ...[
                   const SizedBox(width: 8),
                   IconButton(
+                    tooltip: Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'حذف الملف'
+                        : 'Delete file',
                     icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
                     onPressed: onDelete,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                   ),
                 ],
               ],
-            )
-          else if (isUploading)
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.warning),
             )
           else
             const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 20),

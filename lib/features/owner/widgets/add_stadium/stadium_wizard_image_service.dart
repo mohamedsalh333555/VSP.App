@@ -10,7 +10,6 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 enum StadiumImagePickType { multiple, single16x9 }
 
 class StadiumWizardImageService {
-  static final ImagePicker _imagePicker = ImagePicker();
   static final StorageService _storageService = StorageService();
 
   static Future<StadiumImagePickType?> showImageSourceModal(BuildContext context) async {
@@ -74,7 +73,7 @@ class StadiumWizardImageService {
 
   static Future<List<XFile>> pickMultipleImages() async {
     try {
-      return await _imagePicker.pickMultiImage();
+      return await ImagePickService.pickMultiple();
     } catch (e) {
       debugPrint('Error picking multiple images: $e');
       return [];
@@ -86,11 +85,41 @@ class StadiumWizardImageService {
     required void Function(int progress) onProgress,
     required String ownerId,
   }) async {
-    final imageFile = File(xFile.path);
+    const maxImageBytes = 10 * 1024 * 1024;
+    const allowedMimeTypes = <String>{
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    };
+    const allowedExtensions = <String>{'jpg', 'jpeg', 'png', 'webp'};
     Timer? progressTimer;
 
     try {
-      int currentProgress = 10;
+      final fileName = xFile.name.toLowerCase().trim();
+      final extension =
+          fileName.contains('.') ? fileName.split('.').last : '';
+      final mimeType = xFile.mimeType?.toLowerCase().trim();
+      final hasAllowedType = mimeType?.isNotEmpty == true
+          ? allowedMimeTypes.contains(mimeType)
+          : allowedExtensions.contains(extension);
+      final fileLength = await xFile.length();
+      if (!hasAllowedType ||
+          fileLength <= 0 ||
+          fileLength > maxImageBytes) {
+        debugPrint(
+          'Rejected stadium image before upload: '
+          'type=${mimeType ?? extension}, bytes=$fileLength',
+        );
+        return null;
+      }
+
+      final storageExtension = switch (extension) {
+        'png' => 'png',
+        'webp' => 'webp',
+        _ => 'jpg',
+      };
+      final imageFile = File(xFile.path);
+      var currentProgress = 10;
       progressTimer = Timer.periodic(const Duration(milliseconds: 150), (t) {
         if (currentProgress < 90) {
           currentProgress += 10;
@@ -103,7 +132,8 @@ class StadiumWizardImageService {
       final url = await _storageService.uploadFile(
         file: xFile,
         bucket: 'stadium-images',
-        path: '$ownerId/stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.jpg',
+        path:
+            '$ownerId/stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.$storageExtension',
       );
       progressTimer.cancel();
 
@@ -111,12 +141,13 @@ class StadiumWizardImageService {
         return null;
       }
 
-      // Cleanup cached file from local temp folder after upload
       try {
         if (await imageFile.exists()) {
           await imageFile.delete();
         }
-      } catch (_) {}
+      } catch (_) {
+        // Cache cleanup failure does not invalidate a confirmed upload.
+      }
 
       return url;
     } catch (e) {
@@ -126,11 +157,13 @@ class StadiumWizardImageService {
     }
   }
 
-  static Future<void> deleteUploadedImage(String url) async {
+  static Future<bool> deleteUploadedImage(String url) async {
     try {
       await _storageService.deleteFile(url);
+      return true;
     } catch (e) {
       debugPrint('Error deleting uploaded image: $e');
+      return false;
     }
   }
 }

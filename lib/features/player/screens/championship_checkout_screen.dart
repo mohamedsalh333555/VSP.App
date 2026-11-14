@@ -73,19 +73,23 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       debugPrint('Error loading team members: $e');
     }
 
+    if (!mounted) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     for (final uid in widget.team.memberUids) {
       if (!_teamMembers.any((m) => m['id'] == uid)) {
+        final fallbackIndex = _teamMembers.length + 1;
         _teamMembers.add({
           'id': uid,
-          'name': uid == widget.team.captainId ? widget.team.captainName : 'لاعب ${_teamMembers.length + 1}',
+          'name': uid == widget.team.captainId
+              ? widget.team.captainName
+              : (isArabic ? 'لاعب $fallbackIndex' : 'Player $fallbackIndex'),
           'profile_image_url': '',
         });
       }
     }
 
-    if (!mounted) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final currentUserId = auth.currentUser?.uid;
+    final currentUserId = auth.currentUser?.id;
 
     final effectiveCaptainId = widget.team.captainId.isNotEmpty
         ? widget.team.captainId
@@ -108,8 +112,14 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     if (_offlineGuestNames.contains(name)) return;
 
     final maxPlayers = widget.championship.maxPlayersPerTeam;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (_selectedPlayerIds.length + _offlineGuestNames.length >= maxPlayers) {
-      VSPFeedback.showError(context, 'تجاوزت الحد الأقصى للاعبين (${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: true)})!');
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تجاوزت الحد الأقصى للاعبين (${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: true)})!'
+            : 'The maximum roster size (${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: false)}) has been reached.',
+      );
       return;
     }
 
@@ -121,8 +131,15 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
   Future<void> _pasteFromWhatsApp() async {
     final parsedNames = await RosterParserUtils.showImportSquadDialog(context);
+    if (!mounted) return;
     if (parsedNames.isEmpty) {
-      if (mounted) VSPFeedback.showError(context, 'لم يتم العثور على أسماء واضحة في النص الملصوق.');
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'لم يتم العثور على أسماء واضحة في النص الملصوق.' : 'No clear player names were found in the pasted text.',
+        );
+      }
       return;
     }
 
@@ -146,7 +163,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
         context,
         isArabic
             ? 'تمت إضافة ${ArabicPluralUtils.formatPlayerCount(addedCount, isArabic: true)} من نص التشكيلة بنجاح!'
-            : 'Successfully added $addedCount players from WhatsApp text!',
+            : 'Successfully added $addedCount players from the pasted text!',
       );
     }
   }
@@ -157,13 +174,24 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final minPlayers = widget.championship.minPlayersPerTeam;
     final maxPlayers = widget.championship.maxPlayersPerTeam;
     final totalCount = _selectedPlayerIds.length + _offlineGuestNames.length;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (totalCount < minPlayers) {
-      VSPFeedback.showError(context, 'يرجى اختيار ${ArabicPluralUtils.formatPlayerCount(minPlayers, isArabic: true)} على الأقل للتشكيلة.');
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'يرجى اختيار ${ArabicPluralUtils.formatPlayerCount(minPlayers, isArabic: true)} على الأقل للتشكيلة.'
+            : 'Select at least ${ArabicPluralUtils.formatPlayerCount(minPlayers, isArabic: false)} for the roster.',
+      );
       return;
     }
     if (totalCount > maxPlayers) {
-      VSPFeedback.showError(context, 'التشكيلة تجاوزت الحد الأقصى (${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: true)}).');
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'التشكيلة تجاوزت الحد الأقصى (${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: true)}).'
+            : 'The roster exceeds the maximum of ${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: false)}.',
+      );
       return;
     }
 
@@ -262,7 +290,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
-          isArabic ? 'حدث خطأ أثناء الاشتراك: $e' : 'An error occurred while joining: $e',
+          isArabic ? 'تعذر إكمال الاشتراك في البطولة. حاول مرة أخرى.' : 'Could not complete championship registration. Please try again.',
         );
       }
     } finally {
@@ -359,7 +387,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final captainId = widget.team.captainId.isNotEmpty
         ? widget.team.captainId
-        : (auth.currentUser?.uid ?? '');
+        : (auth.currentUser?.id ?? '');
 
     final minPlayers = widget.championship.minPlayersPerTeam;
     final maxPlayers = widget.championship.maxPlayersPerTeam;
@@ -382,7 +410,10 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        top: false,
+        bottom: false,
+        child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
@@ -468,6 +499,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
             const SizedBox(height: 32),
           ],
         ),
+      ),
       ),
 
       // Sticky primary action

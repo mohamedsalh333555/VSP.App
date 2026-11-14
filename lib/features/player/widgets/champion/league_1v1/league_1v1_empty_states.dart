@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../../core/ui/tokens/vsp_design_tokens.dart';
+import '../../../../../shared/widgets/vsp_empty_state.dart';
 import '../champion_podium_components.dart';
 import '../champion_empty_state.dart';
 
@@ -15,56 +17,16 @@ class League1v1NoGovernorateState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 76,
-              height: 76,
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
-              ),
-              child: const Icon(Iconsax.location_slash_copy, size: 38, color: VSPColors.accent),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isArabic ? 'يرجى تحديد محافظتك من الملف الشخصي' : 'Please set your governorate in profile',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isArabic
-                  ? 'حدد محافظتك لمشاهدة بطولات منطقتك والمشاركة بها'
-                  : 'Set your home governorate to view and join local 1v1 tournaments',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(context, '/edit-profile');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-              icon: const Icon(Iconsax.edit_2_copy, size: 16, color: Colors.black),
-              label: Text(
-                isArabic ? 'تحديد المحافظة الآن' : 'Set Governorate',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return VSPEmptyState(
+      icon: Iconsax.location_slash_copy,
+      title: isArabic
+          ? 'يرجى تحديد محافظتك من الملف الشخصي'
+          : 'Please set your governorate in profile',
+      subtitle: isArabic
+          ? 'حدد محافظتك لمشاهدة بطولات منطقتك والمشاركة بها'
+          : 'Set your home governorate to view and join local 1v1 tournaments',
+      buttonText: isArabic ? 'تحديد المحافظة الآن' : 'Set Governorate',
+      onButtonPressed: () => context.push('/edit-profile'),
     );
   }
 }
@@ -82,7 +44,16 @@ class League1v1NoTournamentState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OneVsOneEmptyState(locationName: locationName);
+    return ChampionEmptyState(
+      icon: Iconsax.user_copy,
+      titleArabic: 'لا توجد بطولة واحد ضد واحد حالياً',
+      titleEnglish: 'No active 1vs1 tournament',
+      descriptionArabic:
+          'لا توجد بطولة واحد ضد واحد نشطة حالياً في $locationName. ترقب إعلان البطولة القادمة.',
+      descriptionEnglish:
+          'There is no active 1v1 tournament in $locationName right now. Stay tuned for the next tournament.',
+      isArabic: isArabic,
+    );
   }
 }
 
@@ -104,33 +75,41 @@ class League1v1GovernorateBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(VSPDSSpacing.md, VSPDSSpacing.xs, VSPDSSpacing.md, VSPDSSpacing.xs),
+      padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.sm, vertical: VSPDSSpacing.xs),
       decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+        color: VSPDSSemanticColors.surface,
+        borderRadius: BorderRadius.circular(VSPDSRadius.lg),
+        border: Border.all(color: VSPDSSemanticColors.accentBorder),
       ),
       child: Row(
         children: [
-          const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 16),
-          const SizedBox(width: 8),
+          const Icon(Iconsax.location_copy, color: VSPDSSemanticColors.accent, size: VSPDSizes.iconSm),
+          const SizedBox(width: VSPDSSpacing.xs),
           Expanded(
             child: Text(
               isArabic
                   ? 'تتصفح بطولات: ${championTranslateItem(context, selectedLocation)}'
                   : 'Viewing: ${championTranslateItem(context, selectedLocation)}',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              style: VSPDSTypography.bodyMedium.copyWith(color: VSPDSSemanticColors.textPrimary, fontWeight: FontWeight.w700),
             ),
           ),
-          InkWell(
-            onTap: onReturnToHomeGov,
-            borderRadius: BorderRadius.circular(VSPRadius.sm),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Text(
-                isArabic ? 'بطولاتي ($userGov)' : 'My City ($userGov)',
-                style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: InkWell(
+              onTap: onReturnToHomeGov,
+              borderRadius: BorderRadius.circular(VSPDSRadius.sm),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: VSPDSSpacing.sm,
+                  vertical: VSPDSSpacing.sm,
+                ),
+                child: Center(
+                  child: Text(
+                    isArabic ? 'بطولاتي (${championTranslateItem(context, userGov)})' : 'My City (${championTranslateItem(context, userGov)})',
+                    style: VSPDSTypography.actionLabel,
+                  ),
+                ),
               ),
             ),
           ),

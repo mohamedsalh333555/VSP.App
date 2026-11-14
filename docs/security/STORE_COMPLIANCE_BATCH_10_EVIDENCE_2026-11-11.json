@@ -1,0 +1,838 @@
+{
+  "date": "2026-11-11",
+  "runtime_code_sha": "f26bd2923d08e702fe72c02805ba63f54dca322e",
+  "review_scope": {
+    "admin_role_policies": 42,
+    "production_policy_corrections": 37,
+    "staging_policy_corrections": 28,
+    "staging_existing_guarded_preserved": 1,
+    "staging_absent": 8,
+    "trigger_correction": 1
+  },
+  "native_ci": {
+    "run": 43012907874,
+    "job": 130496691542,
+    "status": "success",
+    "sql_suites": 7,
+    "weakened_guards_rejected": 11,
+    "python_tests": 24,
+    "exact_policy_catalog": 37,
+    "checks": [
+      "idempotency",
+      "source drift",
+      "inverse/forward",
+      "reviewed alternate preserved",
+      "alternate helper drift rejected",
+      "no fixture accounts",
+      "non-fresh database rejected"
+    ]
+  },
+  "staging_test": {
+    "status": "PASS",
+    "scope": "Synthetic SQL claims and storage metadata; no GoTrue or real upload",
+    "cases": [
+      "blocked admin self-unblock denied",
+      "other owner metadata hidden",
+      "own-file/profile preserved",
+      "authorized founder moderation"
+    ],
+    "remaining_fixture_accounts": 0
+  },
+  "production_readback": [
+    {
+      "schemaname": "public",
+      "tablename": "ai_copilot_audit_events",
+      "policyname": "Admins can view AI Copilot audit",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "app_config",
+      "policyname": "admin_manage_app_config",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "app_settings",
+      "policyname": "app_settings_admin_manage",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "booking_players",
+      "policyname": "booking_players_select_policy",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "championships",
+      "policyname": "championships_admin_manage_all",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "championships",
+      "policyname": "championships_insert",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "chat_messages",
+      "policyname": "chat_messages_select",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "league_settings",
+      "policyname": "Allow admins to manage league_settings",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "match_score_edits",
+      "policyname": "owner_can_read_own_edits",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "owner_documents",
+      "policyname": "owner_documents_admin_delete",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "owner_documents",
+      "policyname": "owner_documents_admin_update",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "owner_documents",
+      "policyname": "owner_documents_owner_insert",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "owner_documents",
+      "policyname": "owner_documents_owner_select",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "platform_business_rules",
+      "policyname": "platform_business_rules_admin_write",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "rate_limit_logs",
+      "policyname": "rate_limit_admin_manage",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "policyname": "Admins full access",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tournament_matches",
+      "policyname": "Admins full access",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tournament_matches",
+      "policyname": "tournament_matches_insert",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tournament_orders",
+      "policyname": "tournament_orders_owner_select",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_registrations",
+      "policyname": "Admins full access",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournament_orders",
+      "policyname": "Service role and atomic functions manage 1v1 orders",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournament_orders",
+      "policyname": "Users and admins can view 1v1 orders",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournament_players",
+      "policyname": "Admins manage tournament players",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournament_players",
+      "policyname": "Anyone can view tournament players",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournaments",
+      "policyname": "Admins manage tournaments",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1vs1_players",
+      "policyname": "admin_manage_1v1_players",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "webhook_logs",
+      "policyname": "webhook_logs_admin_only",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "webhook_logs",
+      "policyname": "webhook_logs_admin_select",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Admin Delete Access for Banner Images",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Admin Modify Access for Banner Images",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Admin Upload Access for Banner Images",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Owner access own documents or Admin",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Owner delete own stadium images",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Owner update own stadium images",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "owner_documents_owner_manage",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "secure_deposit_receipts_read",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "secure_owner_docs_read",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    }
+  ],
+  "staging_readback": [
+    {
+      "schemaname": "public",
+      "tablename": "ai_copilot_audit_events",
+      "policyname": "Admins can view AI Copilot audit",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "app_config",
+      "policyname": "admin_manage_app_config",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "app_settings",
+      "policyname": "app_settings_admin_manage",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "booking_players",
+      "policyname": "booking_players_select_policy",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "championships",
+      "policyname": "championships_admin_manage_all",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "championships",
+      "policyname": "championships_insert",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "chat_messages",
+      "policyname": "chat_messages_select",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "league_settings",
+      "policyname": "Allow admins to manage league_settings",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "match_score_edits",
+      "policyname": "owner_can_read_own_edits",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "owner_documents",
+      "policyname": "owner_documents_admin_delete",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "owner_documents",
+      "policyname": "owner_documents_admin_update",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "owner_documents",
+      "policyname": "owner_documents_owner_insert",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "owner_documents",
+      "policyname": "owner_documents_owner_select",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "platform_business_rules",
+      "policyname": "platform_business_rules_admin_write",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "rate_limit_logs",
+      "policyname": "rate_limit_admin_manage",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "reports",
+      "policyname": "Admins full access",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tournament_matches",
+      "policyname": "Admins full access",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tournament_matches",
+      "policyname": "tournament_matches_insert",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "tournament_orders",
+      "policyname": "tournament_orders_owner_select",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_registrations",
+      "policyname": "Admins full access",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournament_orders",
+      "policyname": "Service role and atomic functions manage 1v1 orders",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournament_orders",
+      "policyname": "Users and admins can view 1v1 orders",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournament_players",
+      "policyname": "Admins manage tournament players",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournament_players",
+      "policyname": "Anyone can view tournament players",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1v1_tournaments",
+      "policyname": "Admins manage tournaments",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "vsp_1vs1_players",
+      "policyname": "admin_manage_1v1_players",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "webhook_logs",
+      "policyname": "webhook_logs_admin_only",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "public",
+      "tablename": "webhook_logs",
+      "policyname": "webhook_logs_admin_select",
+      "present": true,
+      "primary_matches": true,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Admin Delete Access for Banner Images",
+      "present": false,
+      "primary_matches": false,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": null
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Admin Modify Access for Banner Images",
+      "present": false,
+      "primary_matches": false,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": null
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Admin Upload Access for Banner Images",
+      "present": false,
+      "primary_matches": false,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": null
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Owner access own documents or Admin",
+      "present": false,
+      "primary_matches": false,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": null
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Owner delete own stadium images",
+      "present": false,
+      "primary_matches": false,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": null
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Owner update own stadium images",
+      "present": false,
+      "primary_matches": false,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": null
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "owner_documents_owner_manage",
+      "present": true,
+      "primary_matches": false,
+      "reviewed_alternative_matches": true,
+      "metadata_matches": true
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "secure_deposit_receipts_read",
+      "present": false,
+      "primary_matches": false,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": null
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "secure_owner_docs_read",
+      "present": false,
+      "primary_matches": false,
+      "reviewed_alternative_matches": false,
+      "metadata_matches": null
+    }
+  ],
+  "metadata_preserved": {
+    "policy_identity_roles_commands_permissiveness_table_acl": true,
+    "trigger_identity_owner_acl_config": true
+  },
+  "trigger_sha256": "fa7ef1279522dbc7887399f75041c6ab98f2cab27cab99eb5478a2011dfdd9b9",
+  "private_bucket_flags": [
+    {
+      "id": "deposit-receipts",
+      "public": false
+    },
+    {
+      "id": "owner_documents",
+      "public": false
+    },
+    {
+      "id": "verification-documents",
+      "public": false
+    }
+  ],
+  "advisors": {
+    "mktqkddbcddrxjxabdua": {
+      "before": [
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "count": 197
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "count": 1
+        }
+      ],
+      "after": [
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "count": 197
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "count": 1
+        }
+      ]
+    },
+    "vtwgqyxglevcsxwdmhop": {
+      "before": [
+        {
+          "name": "extension_in_public",
+          "count": 4
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "count": 200
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "count": 1
+        }
+      ],
+      "after": [
+        {
+          "name": "extension_in_public",
+          "count": 4
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "count": 200
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "migration_history": {
+    "mktqkddbcddrxjxabdua": [
+      {
+        "version": "20261111115824",
+        "name": "restrict_blocked_admin_table_and_storage_privileges"
+      }
+    ],
+    "vtwgqyxglevcsxwdmhop": [
+      {
+        "version": "20261111113436",
+        "name": "restrict_blocked_admin_table_and_storage_privileges"
+      }
+    ]
+  },
+  "runtime_regression": {
+    "flutter": {
+      "run": 43012907821,
+      "passed": 1142,
+      "skipped": 10,
+      "focused": 54
+    },
+    "android": {
+      "run": 43012907900,
+      "status": "success",
+      "smoke_cases": 2,
+      "permission_gate_cases": 6
+    },
+    "ios": {
+      "run": 43012907858,
+      "status": "success",
+      "unsigned_mb": 43.9,
+      "sdk": "iphoneos26.2",
+      "privacy_manifest_count": 38,
+      "gate_cases": 8
+    },
+    "checkout": {
+      "run": 43012907769,
+      "status": "success",
+      "deno_cases": 39
+    }
+  },
+  "acceptance": {
+    "core_total": 620,
+    "accepted": 82,
+    "pending": 538,
+    "newly_accepted": "80.07 documentation only",
+    "store_ready": false
+  },
+  "limitations": [
+    "No production customer-row or exploit tests",
+    "Only representative behavioral flows, not full RLS/database coverage",
+    "Unsigned iOS build is not signed/store/device approval",
+    "Real-account, provider and store-console acceptance remains open"
+  ]
+}

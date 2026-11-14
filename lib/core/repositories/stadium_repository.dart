@@ -1,12 +1,17 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../constants/egypt_governorates.dart';
-import '../models/user_model.dart';
+import 'stadium/owner_stadium_capacity_guard.dart';
 import '../services/logger_service.dart';
 import 'stadium/stadium_payload_builder.dart';
 
 class StadiumRepository {
-  SupabaseClient get _supabase => Supabase.instance.client;
+  // Optional client injection permits real repository request-flow tests with
+  // a local HTTP stub, without touching staging or production.
+  final SupabaseClient? _client;
+  StadiumRepository({SupabaseClient? client}) : _client = client;
+
+  SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
   // Get all verified stadiums with server-side filtering
   Stream<List<Stadium>> getStadiums({int limit = 50}) {
@@ -21,24 +26,33 @@ class StadiumRepository {
             .toList());
   }
 
-  // Get stadium by ID
+  // Retain the optional legacy lookup for noncritical consumers. Booking
+  // safety flows must use the strict variant to distinguish "not found" from
+  // an unverified result caused by a failed network/auth request.
   Future<Stadium?> getStadiumById(String stadiumId) async {
     try {
-      final response = await _supabase
-          .from('stadiums')
-          .select()
-          .eq('id', stadiumId)
-          .eq('is_deleted_by_owner', false)
-          .eq('is_verified', true)
-          .eq('is_blocked', false)
-          .maybeSingle();
-      if (response != null && response['is_deleted_by_owner'] != true) {
-        return Stadium.fromFirestore(response, response['id'].toString());
-      }
-      return null;
-    } catch (e) {
+      return await getStadiumByIdStrict(stadiumId);
+    } catch (_) {
+      VSPLogger.w('Public stadium lookup failed (details redacted)');
       return null;
     }
+  }
+
+  /// Throws on transport/auth/parser failures, but returns null only when the
+  /// authoritative server query succeeded with no bookable stadium.
+  Future<Stadium?> getStadiumByIdStrict(String stadiumId) async {
+    final response = await _supabase
+        .from('stadiums')
+        .select()
+        .eq('id', stadiumId)
+        .eq('is_deleted_by_owner', false)
+        .eq('is_verified', true)
+        .eq('is_blocked', false)
+        .maybeSingle();
+    if (response != null && response['is_deleted_by_owner'] != true) {
+      return Stadium.fromFirestore(response, response['id'].toString());
+    }
+    return null;
   }
 
   // Get raw stadium data for editing
@@ -76,8 +90,11 @@ class StadiumRepository {
           .map((data) => Stadium.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
           .toList();
       yield initialList;
-    } catch (e) {
-      VSPLogger.w('Initial REST fetch for owner stadiums notice: $e');
+    } catch (_) {
+      VSPLogger.w('Initial owner stadium fetch failed (details redacted)');
+      // Never claim the account has zero stadiums when its initial
+      // authoritative REST query failed.
+      rethrow;
     }
 
     // 2. Realtime Stream updates with error handling
@@ -89,9 +106,9 @@ class StadiumRepository {
             .where((data) => data['is_deleted_by_owner'] != true)
             .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
             .toList())
-        .handleError((error) {
-      VSPLogger.w('Realtime stream error for owner stadiums (handled): $error');
-      return <Stadium>[];
+        .handleError((Object error, StackTrace stack) {
+      VSPLogger.w('Owner stadium stream failed (details redacted)');
+      Error.throwWithStackTrace(error, stack);
     });
   }
 
@@ -99,37 +116,22 @@ class StadiumRepository {
   Future<String?> addStadium(Map<String, dynamic> stadiumData) async {
     try {
       final sanitizedData = Map<String, dynamic>.from(stadiumData);
-      final String ownerId = sanitizedData['ownerId'] ?? sanitizedData['owner_id'] ?? '';
-
-      // Subscription Plan Gate: Check max stadium limit for owner
-      if (ownerId.isNotEmpty) {
-        try {
-          final userDoc = await _supabase.from('users').select().eq('id', ownerId).maybeSingle();
-          if (userDoc != null) {
-            final userModel = UserModel.fromFirestore(userDoc);
-            final existingStadiums = await _supabase
-                .from('stadiums')
-                .select('id')
-                .eq('owner_id', ownerId)
-                .eq('is_deleted_by_owner', false);
-            final currentCount = (existingStadiums as List).length;
-            if (currentCount >= userModel.maxStadiums) {
-              if (userModel.maxStadiums <= 1) {
-                throw Exception(
-                    'حسابك المجاني يدعم ملعباً واحداً فقط. اشترك في Pro لإضافة حتى 3 ملاعب.'
-                );
-              } else {
-                throw Exception(
-                    'وصلت للحد الأقصى لعدد الملاعب المسموح به في حسابك (${userModel.maxStadiums} ملاعب).'
-                );
-              }
-            }
-          }
-        } catch (e) {
-          if (e.toString().contains('باقتك') || e.toString().contains('الحد الأقصى')) rethrow;
-          VSPLogger.w('Skip stadium count validation error: $e');
-        }
+      final ownerId =
+          (sanitizedData['ownerId'] ?? sanitizedData['owner_id'] ?? '')
+              .toString().trim();
+      if (ownerId.isEmpty) {
+        throw StateError('STADIUM_OWNER_ID_REQUIRED');
       }
+
+      // This pre-flight check must fail closed. A stale cached UserModel,
+      // unreadable user row, or network/RPC error is NOT permission to create
+      // another stadium. The server still needs an atomic quota guard to
+      // prevent direct REST calls and concurrent inserts (Issue #41).
+      final capacity = await _supabase.rpc(
+        'check_owner_stadium_limit',
+        params: {'p_owner_id': ownerId},
+      );
+      OwnerStadiumCapacityGuard.requireAllowed(capacity);
 
       final pgData = StadiumPayloadBuilder.buildInsertPayload(sanitizedData);
 
@@ -141,11 +143,11 @@ class StadiumRepository {
       
       VSPLogger.i(' Stadium successfully added to Supabase: ${response['id']}');
       return response['id']?.toString();
-    } catch (e, stack) {
+    } catch (e) {
       if (e.toString().contains('باقتك') || e.toString().contains('الحد الأقصى')) {
         rethrow;
       }
-      VSPLogger.e(' CRITICAL ERROR IN addStadium', e, stack);
+      VSPLogger.e('Stadium creation failed (details redacted)');
       return null;
     }
   }
@@ -167,8 +169,8 @@ class StadiumRepository {
           .select('id, is_verified')
           .maybeSingle();
       return response != null;
-    } catch (e, stack) {
-      VSPLogger.e(' CRITICAL ERROR IN updateStadium', e, stack);
+    } catch (_) {
+      VSPLogger.e('Stadium update failed (details redacted)');
       return false;
     }
   }
@@ -225,6 +227,11 @@ class StadiumRepository {
     double? minPrice,
     double? maxPrice,
     bool? noDepositOnly,
+    List<String>? amenities,
+    String? quickFilter,
+    String? floorType,
+    String? searchQuery,
+    String? sortBy,
   }) async {
     try {
       dynamic query = _supabase
@@ -233,14 +240,18 @@ class StadiumRepository {
           .eq('is_verified', true)
           .eq('is_blocked', false)
           .eq('is_deleted_by_owner', false);
+      final orGroups = <String>[];
 
       // 1. Governorate Filter
       if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
         final String? standardGov = EgyptGovernorates.resolveGoogleName(governorate);
-        if (standardGov != null) {
-          final String arGov = EgyptGovernorates.governorateToArabic[standardGov] ?? standardGov;
-          query = query.or('governorate.eq.$standardGov,governorate.eq.$arGov');
+        if (standardGov == null) {
+          // An unrecognized explicit location is not a nationwide search.
+          // Keep pagination empty rather than silently dropping its scope.
+          return {'items': <Stadium>[], 'lastDoc': startAfter is int ? startAfter : 0};
         }
+        final String arGov = EgyptGovernorates.governorateToArabic[standardGov] ?? standardGov;
+        orGroups.add('or(governorate.eq.$standardGov,governorate.eq.$arGov)');
       }
 
       // 2. Sport Type Filter
@@ -249,20 +260,45 @@ class StadiumRepository {
           .where((s) => s.isNotEmpty && s != 'All')
           .toList();
       if (normalizedSports.isNotEmpty) {
-        query = query.inFilter('type', normalizedSports);
+        final sportExpressions = normalizedSports.map((sport) {
+          final safeSport = sport.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
+          return 'description.ilike.%Sport:$safeSport%,notes.ilike.%Sport:$safeSport%';
+        }).join(',');
+        orGroups.add('or($sportExpressions)');
       } else if (sportType != null && sportType.isNotEmpty && sportType != 'All') {
-        query = query.or('type.ilike.%$sportType%,description.ilike.%|Sport:$sportType%');
+        final safeSport = sportType.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
+        orGroups.add(
+          'or(description.ilike.%Sport:$safeSport%,notes.ilike.%Sport:$safeSport%)',
+        );
       }
 
       // 3. Pitch Size Filter
       final normalizedSizes = (pitchSizes ?? const <String>[])
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
+          .map((value) => int.tryParse(RegExp(r'\d+').firstMatch(value)?.group(0) ?? ''))
+          .whereType<int>()
+          .toSet()
           .toList();
       if (normalizedSizes.isNotEmpty) {
-        query = query.inFilter('size', normalizedSizes);
-      } else if (pitchSize != null && pitchSize.isNotEmpty) {
-        query = query.eq('size', pitchSize);
+        query = query.inFilter('players_per_team', normalizedSizes);
+      } else if (pitchSize != null && pitchSize.isNotEmpty && pitchSize != 'All') {
+        final playerCount = int.tryParse(RegExp(r'\d+').firstMatch(pitchSize)?.group(0) ?? '');
+        if (playerCount != null) query = query.eq('players_per_team', playerCount);
+      }
+
+      // 3b. Floor type and text search are applied before pagination.
+      final cleanFloorType = floorType?.trim() ?? '';
+      if (cleanFloorType.isNotEmpty && cleanFloorType != 'All') {
+        query = query.ilike('features->>floorType', '%$cleanFloorType%');
+      }
+      final cleanSearch = (searchQuery ?? '')
+          .trim()
+          .replaceAll(RegExp(r'[^A-Za-z0-9\u0600-\u06FF\s-]'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' ');
+      if (cleanSearch.isNotEmpty) {
+        orGroups.add(
+          'or(name.ilike.%$cleanSearch%,location.ilike.%$cleanSearch%,'
+          'city.ilike.%$cleanSearch%,governorate.ilike.%$cleanSearch%)',
+        );
       }
 
       // 4. Price Range Filter
@@ -275,17 +311,76 @@ class StadiumRepository {
 
       // 5. No Deposit Filter
       if (noDepositOnly == true) {
-        query = query.eq('needs_deposit', false);
+        orGroups.add('or(needs_deposit.eq.false,deposit_amount.lte.0)');
+      }
+
+      if (quickFilter == 'night_shift') {
+        // closing_time is a PostgreSQL TIME column, not text.
+        orGroups.add(
+          'or(closing_time.lt.06:00:00,'
+          'features->workingHours->>end.ilike.%AM%,'
+          'features->workingHours->>end.ilike.%صباحاً%,'
+          'features->workingHours->>end.ilike.%00:%,'
+          'features->workingHours->>end.ilike.%01:%,'
+          'features->workingHours->>end.ilike.%02:%,'
+          'features->workingHours->>end.ilike.%03:%,'
+          'features->workingHours->>end.ilike.%04:%,'
+          'features->workingHours->>end.ilike.%05:%)',
+        );
+      } else if (quickFilter == 'no_deposit' && noDepositOnly != true) {
+        orGroups.add('or(needs_deposit.eq.false,deposit_amount.lte.0)');
+      }
+
+      // Apply each selected amenity before range pagination.
+      for (final amenity in amenities ?? const <String>[]) {
+        final expression = _amenityOrExpression(amenity);
+        if (expression == null) throw ArgumentError('Unsupported stadium amenity filter');
+        orGroups.add('or($expression)');
       }
       
-      query = query
-          .order('is_featured', ascending: false)
-          .order('created_at', ascending: false);
+      // One nested PostgREST expression combines every OR group with AND semantics.
+      if (orGroups.isNotEmpty) {
+        query = query.or('and(${orGroups.join(',')})');
+      }
+
+      switch (sortBy) {
+        case 'priceLowToHigh':
+          query = query
+              .order('price_per_hour', ascending: true)
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
+          break;
+        case 'priceHighToLow':
+          query = query
+              .order('price_per_hour', ascending: false)
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
+          break;
+        case 'topRated':
+          query = query
+              .order('rating', ascending: false)
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
+          break;
+        default:
+          query = query
+              .order('is_featured', ascending: false)
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
+      }
 
       final int startIndex = (startAfter is int) ? startAfter : 0;
       final int endIndex = startIndex + limit - 1;
       
+      // Debug-only timing for real-device discovery baselines. No location,
+      // search text, account identifiers, or result contents are logged.
+      final queryTimer = Stopwatch()..start();
       final response = await query.range(startIndex, endIndex);
+      queryTimer.stop();
+      VSPLogger.d(
+        'stadium_discovery_query_ms=${queryTimer.elapsedMilliseconds} '
+        'page_size=${response.length}',
+      );
       final items = (response as List)
           .map((doc) => Stadium.fromFirestore(doc as Map<String, dynamic>, doc['id'].toString()))
           .toList();
@@ -294,9 +389,31 @@ class StadiumRepository {
         'items': items,
         'lastDoc': startIndex + items.length,
       };
-    } catch (e) {
-      VSPLogger.e('FAILED TO FETCH STADIUMS', e);
-      return {'items': <Stadium>[], 'lastDoc': null};
+    } catch (_) {
+      VSPLogger.e('Stadium listing failed (details redacted)');
+      rethrow;
+    }
+  }
+
+  String? _amenityOrExpression(String amenity) {
+    switch (amenity.trim().toLowerCase()) {
+      case 'دش وحمام':
+      case 'showers & baths':
+        return 'features->>bathOption.ilike.%yes%,features->>hasShower.eq.true,features->>shower.eq.true';
+      case 'غرف تغيير ملابس':
+      case 'changing rooms':
+        return 'features->>changingRoom.eq.true,features->>changingRooms.eq.true,features->>hasChangingRooms.eq.true';
+      case 'كافتيريا ومشروبات':
+      case 'cafeteria & drinks':
+        return 'features->>cafeteria.gt.0,features->>cafeteria.eq.true,features->>hasCafeteria.eq.true';
+      case 'جراج سيارات':
+      case 'garage & parking':
+        return 'features->>garage.eq.true,features->>hasGarage.eq.true,features->>parking.eq.true';
+      case 'مقاعد':
+      case 'spectator seats':
+        return 'features->>hasSeats.eq.true,features->>seats.gt.0';
+      default:
+        return null;
     }
   }
 
@@ -308,8 +425,8 @@ class StadiumRepository {
         params: {'p_stadium_id': stadiumId},
       );
       return result is Map && result['success'] == true;
-    } catch (e) {
-      VSPLogger.e('Error deleting stadium', e);
+    } catch (_) {
+      VSPLogger.e('Stadium deletion failed (details redacted)');
       rethrow;
     }
   }
@@ -322,8 +439,8 @@ class StadiumRepository {
           .eq('owner_id', ownerId)
           .neq('is_deleted_by_owner', true);
       return (remaining as List).isNotEmpty;
-    } catch (e, stack) {
-      VSPLogger.e('Error checking remaining stadiums for $ownerId', e, stack);
+    } catch (_) {
+      VSPLogger.e('Remaining owner stadium check failed (details redacted)');
       return false;
     }
   }
@@ -334,13 +451,16 @@ class StadiumRepository {
         .from('stadiums')
         .stream(primaryKey: ['id'])
         .eq('id', stadiumId)
+        .map((list) => list
+            .where((data) =>
+                data['is_deleted_by_owner'] != true &&
+                data['is_verified'] == true &&
+                data['is_blocked'] != true)
+            .toList(growable: false))
         .timeout(
           const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
-        .handleError((e) {
-          VSPLogger.w('Handled realtime error in stadium details stream: $e');
-        });
+          onTimeout: (sink) => sink.addError(StateError('stadium_stream_timeout')),
+        );
   }
 
   /// Stream reviews for a stadium
@@ -351,16 +471,27 @@ class StadiumRepository {
         .eq('stadium_id', stadiumId)
         .timeout(
           const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
+          onTimeout: (sink) => sink.addError(StateError('stadium_reviews_stream_timeout')),
         )
         .map((list) {
-          final sorted = List<Map<String, dynamic>>.from(list);
-          sorted.sort((a, b) => DateTime.parse(b['created_at'].toString())
-              .compareTo(DateTime.parse(a['created_at'].toString())));
+          final sorted = List<Map<String, dynamic>>.from(list)
+              .where((review) {
+                final rating = review['rating'];
+                return rating is num &&
+                    rating.isFinite &&
+                    rating >= 1 &&
+                    rating <= 5;
+              })
+              .toList(growable: false);
+          DateTime parsedCreatedAt(Map<String, dynamic> review) {
+            return DateTime.tryParse(review['created_at']?.toString() ?? '') ??
+                DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+          }
+
+          sorted.sort(
+            (a, b) => parsedCreatedAt(b).compareTo(parsedCreatedAt(a)),
+          );
           return sorted;
-        })
-        .handleError((e) {
-          VSPLogger.w('Handled realtime error in stadium reviews stream: $e');
         });
   }
 
@@ -373,13 +504,26 @@ class StadiumRepository {
     required double rating,
     required String comment,
   }) async {
+    final cleanStadiumId = stadiumId.trim();
+    final cleanUserId = userId.trim();
+    final cleanComment = comment.trim();
+    if (cleanStadiumId.isEmpty ||
+        cleanUserId.isEmpty ||
+        _supabase.auth.currentUser?.id != cleanUserId ||
+        !rating.isFinite ||
+        rating != rating.roundToDouble() ||
+        rating < 1 ||
+        rating > 5 ||
+        cleanComment.length > 500) {
+      throw ArgumentError('invalid_review_submission');
+    }
     final response = await _supabase.rpc('submit_stadium_review_atomic', params: {
-      'p_stadium_id': stadiumId,
-      'p_user_id': userId,
-      'p_user_name': userName,
-      'p_user_image_url': userImageUrl,
+      'p_stadium_id': cleanStadiumId,
+      'p_user_id': cleanUserId,
+      'p_user_name': userName.trim(),
+      'p_user_image_url': userImageUrl.trim(),
       'p_rating': rating.round(),
-      'p_comment': comment,
+      'p_comment': cleanComment,
     });
     if (response is Map && response['success'] == false) {
       throw Exception(response['error']?.toString() ?? 'review_submission_failed');
@@ -401,8 +545,8 @@ class StadiumRepository {
       return (res as List)
           .map((d) => Stadium.fromFirestore(d as Map<String, dynamic>, d['id'].toString()))
           .toList();
-    } catch (e, stack) {
-      VSPLogger.e('Error fetching stadiums by IDs: $ids', e, stack);
+    } catch (_) {
+      VSPLogger.e('Stadium batch lookup failed (details redacted)');
       return [];
     }
   }
@@ -417,11 +561,15 @@ class StadiumRepository {
       });
       final List<dynamic> list = response as List? ?? [];
       return list
-          .map((data) => Stadium.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
-          .toList();
-    } catch (e) {
-      VSPLogger.e('FAILED TO FETCH NEARBY STADIUMS', e);
-      return [];
+          .map((data) => Stadium.fromFirestore(
+                data as Map<String, dynamic>,
+                data['id'].toString(),
+              ))
+          .where((stadium) => stadium.isVerified && !stadium.isBlocked)
+          .toList(growable: false);
+    } catch (_) {
+      VSPLogger.e('Nearby stadium lookup failed (details redacted)');
+      rethrow;
     }
   }
 

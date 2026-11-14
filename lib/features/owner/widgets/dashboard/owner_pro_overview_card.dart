@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/owner_financial_calculator.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import 'owner_time_period_dropdown.dart';
 
 /// كارت النظرة العامة للتحليلات للباقة الاحترافية (Pro Overview Analytics)
+@Deprecated('Use OwnerOperationalFinanceCard for the canonical owner finance surface')
 class OwnerProOverviewCard extends StatelessWidget {
   final OwnerFinancialMetrics metrics;
   final String selectedTimePeriod;
@@ -28,7 +30,7 @@ class OwnerProOverviewCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        border: Border.all(color: VSPColors.white.withValues(alpha: 0.08), width: 1),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -58,7 +60,7 @@ class OwnerProOverviewCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                metrics.totalPipeline.toStringAsFixed(0),
+                VSPMoneyFormatter.amount(metrics.totalPipeline),
                 style: const TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.w900,
@@ -72,7 +74,7 @@ class OwnerProOverviewCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
                   isArabic ? 'ج.م إجمالي الإيرادات' : 'EGP Total Revenue',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: VSPColors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -85,9 +87,9 @@ class OwnerProOverviewCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
+                    color: VSPColors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    border: Border.all(color: VSPColors.white.withValues(alpha: 0.05)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +100,7 @@ class OwnerProOverviewCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${metrics.pitchCashRevenue.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
+                        '${VSPMoneyFormatter.amount(metrics.pitchCashRevenue)} ${isArabic ? "ج.م" : "EGP"}',
                         style: const TextStyle(color: VSPColors.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -110,9 +112,9 @@ class OwnerProOverviewCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
+                    color: VSPColors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    border: Border.all(color: VSPColors.white.withValues(alpha: 0.05)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +125,7 @@ class OwnerProOverviewCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${metrics.digitalVspBalance.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
+                        '${VSPMoneyFormatter.amount(metrics.digitalVspBalance)} ${isArabic ? "ج.م" : "EGP"}',
                         style: const TextStyle(color: VSPColors.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -144,7 +146,7 @@ class OwnerProOverviewCard extends StatelessWidget {
                     style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: 8),
-                  Text('•', style: TextStyle(color: Colors.white.withValues(alpha: 0.2))),
+                  Text('•', style: TextStyle(color: VSPColors.white.withValues(alpha: 0.2))),
                   const SizedBox(width: 8),
                   Text(
                     '${metrics.totalHours.toStringAsFixed(1)} ${isArabic ? "ساعات لعب" : "Hours"}',
@@ -160,17 +162,17 @@ class OwnerProOverviewCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
+                    color: VSPColors.white.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(VSPRadius.full),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                    border: Border.all(color: VSPColors.white.withValues(alpha: 0.12)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Iconsax.document_download_copy, size: 13, color: Colors.white70),
+                      const Icon(Iconsax.document_download_copy, size: 13, color: VSPColors.white70),
                       const SizedBox(width: 5),
                       Text(
                         isArabic ? 'كشف الحساب' : 'Export Ledger',
-                        style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w700),
+                        style: const TextStyle(color: VSPColors.white, fontSize: 11.5, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),

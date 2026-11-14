@@ -50,7 +50,7 @@ class TeamOpponentService {
 
       return parseTeamsWithMembers(response as List);
     } catch (e) {
-      debugPrint('Error searching opponent teams: $e');
+      debugPrint('Opponent team search failed (details redacted)');
       return [];
     }
   }
@@ -72,7 +72,7 @@ class TeamOpponentService {
 
       return parseTeamsWithMembers(response as List);
     } catch (e) {
-      debugPrint('Error getting previous opponents: $e');
+      debugPrint('Previous opponent lookup failed (details redacted)');
       return [];
     }
   }
@@ -113,7 +113,7 @@ class TeamOpponentService {
 
       return phones.length >= 5;
     } catch (e) {
-      debugPrint('Error checking team official status: $e');
+      debugPrint('Official team status check failed (details redacted)');
       return false;
     }
   }

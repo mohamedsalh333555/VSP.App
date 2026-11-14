@@ -200,6 +200,7 @@ void main() {
           onConfirmCashPayment: () {},
           onCancelBooking: () {},
           onConfirmBooking: () {},
+          onReportNoShow: () {},
         ),
       ));
       await tester.pump();

@@ -48,6 +48,12 @@ class StadiumWizardValidator {
           ? 'يرجى إدخال سعر حجز الملعب للساعة'
           : 'Please enter stadium hourly price';
     }
+    final hourlyPrice = double.tryParse(price.trim());
+    if (hourlyPrice == null || !hourlyPrice.isFinite || hourlyPrice < 0) {
+      return isArabic
+          ? 'يرجى إدخال سعر صحيح للساعة لا يقل عن صفر.'
+          : 'Enter a valid hourly price of zero or more.';
+    }
 
     if (startTime == null || endTime == null) {
       return isArabic
@@ -55,36 +61,17 @@ class StadiumWizardValidator {
           : 'Please select working hours (start and end)';
     }
 
-    // ── Split-Shift Validation (Strictly Optional) ──
-    if (isSplitShift) {
-      // Break times are optional: if empty or unconfigured, we do not block the user.
-      for (var i = 0; i < breakTimes.length; i++) {
-        final bStart = breakTimes[i]['start'];
-        final bEnd = breakTimes[i]['end'];
-
-        // If times are null/incomplete, treat as optional and ignore without blocking
-        if (bStart == null || bEnd == null) {
-          continue;
-        }
-
-        int t(TimeOfDay time) => time.hour * 60 + time.minute;
-        final start = t(startTime);
-        final end = t(endTime);
-        final bStartMin = t(bStart);
-        final bEndMin = t(bEnd);
-
-        int normEnd = (end <= start) ? end + (24 * 60) : end;
-        int normBStart = (bStartMin < start && end <= start) ? bStartMin + (24 * 60) : bStartMin;
-        int normBEnd = (bEndMin < start && end <= start) ? bEndMin + (24 * 60) : bEndMin;
-
-        bool isBreakInHours = normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd;
-
-        if (!isBreakInHours) {
-          return isArabic
-              ? 'فترة الراحة ${i + 1} يجب أن تكون داخل مواعيد العمل الرسمية (${StadiumWizardTimeUtils.formatTime(startTime, '')} - ${StadiumWizardTimeUtils.formatTime(endTime, '')}).'
-              : 'Break ${i + 1} must be within opening hours (${StadiumWizardTimeUtils.formatTime(startTime, '')} - ${StadiumWizardTimeUtils.formatTime(endTime, '')}).';
-        }
-      }
+    // Empty break rows are optional UI placeholders. Once either endpoint is
+    // entered, the closure interval must be complete and safe.
+    if (!StadiumWizardTimeUtils.isSplitShiftValid(
+      startTime: startTime,
+      endTime: endTime,
+      isSplitShift: isSplitShift,
+      breakTimes: breakTimes,
+    )) {
+      return isArabic
+          ? 'فترة الراحة 1 يجب أن تكون داخل مواعيد العمل الرسمية، مكتملة، وغير متداخلة.'
+          : 'Break 1 must be complete, inside operating hours, and must not overlap another break.';
     }
 
     return null;
@@ -109,21 +96,21 @@ class StadiumWizardValidator {
     }
 
     if (hasBall == true) {
-      final ballPrice = double.tryParse(ballPriceText) ?? 0.0;
-      if (ballPrice < 5.0) {
+      final ballPrice = double.tryParse(ballPriceText.trim());
+      if (ballPrice == null || !ballPrice.isFinite || ballPrice < 5.0) {
         return ballPriceMinError;
       }
     }
 
     if (requireDeposit) {
-      final deposit = double.tryParse(depositText.trim()) ?? 0.0;
-      final price = double.tryParse(priceText.trim()) ?? 0.0;
-      if (deposit <= 0) {
+      final deposit = double.tryParse(depositText.trim());
+      final price = double.tryParse(priceText.trim());
+      if (deposit == null || !deposit.isFinite || deposit <= 0) {
         return isArabic
             ? 'يرجى إدخال مبلغ عربون صحيح أكبر من الصفر عند تفعيل خيار العربون.'
             : 'Please enter a valid deposit amount greater than zero when deposit is required.';
       }
-      if (price > 0 && deposit > (price * 0.5)) {
+      if (price != null && price.isFinite && price > 0 && deposit > (price * 0.5)) {
         return isArabic
             ? 'مبلغ العربون لا يمكن أن يتجاوز 50% من سعر الساعة (${(price * 0.5).toStringAsFixed(0)} ج.م).'
             : 'Deposit amount cannot exceed 50% of the hourly price (${(price * 0.5).toStringAsFixed(0)} EGP).';
@@ -139,12 +126,15 @@ class StadiumWizardValidator {
     required List<Map<String, dynamic>> images,
     required String? stadiumId,
     required String uploadPhotoError,
+    required bool isArabic,
   }) {
-    if (images.isEmpty && stadiumId == null) {
+    if (images.isEmpty) {
       return uploadPhotoError;
     }
     if (images.any((img) => img['isUploading'] == true)) {
-      return 'Please wait for all images to finish uploading.';
+      return isArabic
+          ? 'يرجى الانتظار حتى يكتمل رفع جميع الصور.'
+          : 'Please wait for all images to finish uploading.';
     }
     return null;
   }

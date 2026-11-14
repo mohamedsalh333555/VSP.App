@@ -10,6 +10,7 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/services/analytics_service.dart';
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_ledger_screen.dart';
@@ -45,7 +46,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   String _selectedTimePeriod = 'today';
   StreamSubscription? _champSubscription;
   List<Championship> _ownerChampionships = [];
+  bool _hasChampionshipStreamError = false;
   final Map<String, DateTime> _approvalNoticeSeenUntil = {};
+  String? _activeOwnerScope;
+  bool _hasObservedOwnerScope = false;
+  int _ownerScopeGeneration = 0;
+  int _championshipFetchGeneration = 0;
 
   String? _lastMetricsKey;
   OwnerFinancialMetrics? _cachedMetrics;
@@ -66,8 +72,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   }
 
   String _generateMetricsCacheKey(List<Booking> bookings) {
-    final buffer = StringBuffer('$_selectedTimePeriod:$_selectedStadiumFilter:');
-    for (final b in bookings.take(50)) {
+    final buffer = StringBuffer('$_selectedTimePeriod:$_selectedStadiumFilter:${bookings.length}:');
+    // Every loaded booking contributes to the cache key; truncating at 50 can
+    // leave owner totals stale when records outside the first page change.
+    for (final b in bookings) {
       buffer.write(
         '${b.id}:'
         '${b.effectivePaymentState}:'
@@ -80,45 +88,90 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
 
   Map<String, dynamic>? _financialSummary;
+  int _financialSummaryRequestGeneration = 0;
 
   Future<void> _fetchFinancialSummary(String uid) async {
+    final requestGeneration = ++_financialSummaryRequestGeneration;
+    if (mounted) {
+      // Do not keep presenting a previously verified balance as current while
+      // a new server snapshot is being requested.
+      setState(() => _financialSummary = null);
+    }
     try {
       final summary = await OwnerRepository().getOwnerFinancialSummary(uid);
-      if (mounted) {
-        setState(() {
-          _financialSummary = summary;
-        });
+      if (!mounted ||
+          requestGeneration != _financialSummaryRequestGeneration ||
+          context.read<AuthProvider>().currentUser?.id != uid) {
+        return;
       }
+      setState(() {
+        _financialSummary = summary;
+      });
     } catch (e) {
       VSPLogger.w('Failed to load owner financial summary for dashboard: $e');
+      if (mounted &&
+          requestGeneration == _financialSummaryRequestGeneration &&
+          context.read<AuthProvider>().currentUser?.id == uid) {
+        setState(() => _financialSummary = null);
+      }
     }
   }
 
   Future<void> _fetchOwnerChampionships(String uid) async {
+    final requestGeneration = ++_championshipFetchGeneration;
     try {
       final champs = await TournamentRepository()
           .getChampionships(isOwner: true, ownerId: uid);
-      if (mounted) {
-        setState(() {
-          _ownerChampionships = champs;
-        });
-        _claimApprovedChampionshipHomeNotices(champs);
+      if (!mounted ||
+          requestGeneration != _championshipFetchGeneration ||
+          context.read<AuthProvider>().currentUser?.id != uid) {
+        return;
       }
+      setState(() {
+        _ownerChampionships = champs;
+        _hasChampionshipStreamError = false;
+      });
+      _claimApprovedChampionshipHomeNotices(uid, champs);
     } catch (e) {
       VSPLogger.w('Failed to refresh owner championships for dashboard: $e');
+      if (mounted &&
+          requestGeneration == _championshipFetchGeneration &&
+          context.read<AuthProvider>().currentUser?.id == uid) {
+        setState(() => _hasChampionshipStreamError = true);
+      }
     }
   }
 
-  Future<void> _claimApprovedChampionshipHomeNotices(List<Championship> champs) async {
+  Future<void> _claimApprovedChampionshipHomeNotices(
+    String ownerId,
+    List<Championship> champs,
+  ) async {
     final repo = TournamentRepository();
     final now = DateTime.now().toUtc();
+    final ownerScopeGeneration = _ownerScopeGeneration;
+
     for (final championship in champs) {
       if (!championship.isApproved) continue;
+      if (!mounted ||
+          ownerScopeGeneration != _ownerScopeGeneration ||
+          context.read<AuthProvider>().currentUser?.id != ownerId) {
+        return;
+      }
+
       try {
         final response = await repo.claimOwnerChampionshipApprovalHomeNotice(championship.id);
+
+        // A response from the previous owner must never repopulate the new
+        // account's notice state after an account switch or dashboard rebuild.
+        if (!mounted ||
+            ownerScopeGeneration != _ownerScopeGeneration ||
+            context.read<AuthProvider>().currentUser?.id != ownerId) {
+          return;
+        }
+
         if (response['success'] == true && response['seen_until'] != null) {
           final seenUntil = DateTime.tryParse(response['seen_until'].toString());
-          if (seenUntil != null && seenUntil.isAfter(now) && mounted) {
+          if (seenUntil != null && seenUntil.isAfter(now)) {
             setState(() {
               _approvalNoticeSeenUntil[championship.id] = seenUntil;
             });
@@ -133,12 +186,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   DashboardFilter _currentFilter = DashboardFilter.today();
   DashboardAnalytics _dashboardAnalytics = const DashboardAnalytics();
   bool _isLoadingAnalytics = false;
+  bool _hasLoadedAnalytics = false;
   String? _analyticsError;
+  int _analyticsRequestGeneration = 0;
 
   Future<void> _loadDashboardAnalytics({String? ownerId, DashboardFilter? filter}) async {
     final uid = ownerId ?? Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
     if (uid == null) return;
     final activeFilter = filter ?? _currentFilter;
+    final requestGeneration = ++_analyticsRequestGeneration;
 
     if (mounted) {
       setState(() {
@@ -158,6 +214,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         },
       );
 
+      if (!mounted || requestGeneration != _analyticsRequestGeneration ||
+          context.read<AuthProvider>().currentUser?.id != uid) {
+        return;
+      }
+
       final analytics = DashboardAnalytics.fromJson(
         Map<String, dynamic>.from(response as Map),
       );
@@ -172,16 +233,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       if (mounted) {
         setState(() {
           _dashboardAnalytics = analytics;
+          _hasLoadedAnalytics = true;
           _currentFilter = activeFilter;
           _isLoadingAnalytics = false;
         });
       }
     } catch (e) {
       VSPLogger.w('Failed to load dashboard analytics: $e');
-      if (mounted) {
+      if (mounted && requestGeneration == _analyticsRequestGeneration &&
+          context.read<AuthProvider>().currentUser?.id == uid) {
         setState(() {
           _isLoadingAnalytics = false;
-          _analyticsError = 'تعذر تحميل البيانات، تحقق من الاتصال وحاول مجدداً';
+          _analyticsError = 'failed';
         });
       }
     }
@@ -190,35 +253,87 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthProvider>();
+    final ownerId = auth.isOwner ? auth.currentUser?.id : null;
+    if (_hasObservedOwnerScope && ownerId == _activeOwnerScope) return;
+
+    _hasObservedOwnerScope = true;
+    _activeOwnerScope = ownerId;
+    final generation = ++_ownerScopeGeneration;
+
+    _champSubscription?.cancel();
+    _champSubscription = null;
+    _financialSummaryRequestGeneration++;
+    _analyticsRequestGeneration++;
+    _championshipFetchGeneration++;
+    _financialSummary = null;
+    _ownerChampionships = [];
+    _hasChampionshipStreamError = false;
+    _dashboardAnalytics = const DashboardAnalytics();
+    _currentFilter = DashboardFilter.today();
+    _selectedStadiumFilter = 'all';
+    _selectedTimePeriod = 'today';
+    _cachedMetrics = null;
+    _lastMetricsKey = null;
+    _selectedDashboardTab = 0;
+    _analyticsError = null;
+    _hasLoadedAnalytics = false;
+    _isLoadingAnalytics = true;
+    _approvalNoticeSeenUntil.clear();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.id;
-      if (uid != null) {
-        _fetchFinancialSummary(uid);
-        _loadDashboardAnalytics(ownerId: uid);
-        _fetchOwnerChampionships(uid);
-        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
-        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
-        _champSubscription = TournamentRepository()
-            .getChampionshipsStream(isOwner: true, ownerId: uid)
-            .listen(
-          (champs) {
-            if (!mounted) return;
-            setState(() {
-              _ownerChampionships = champs;
-            });
-          },
-          onError: (e) {
-            VSPLogger.w('Owner championships subscription notice (handled): $e');
-          },
-        );
+      if (!mounted ||
+          generation != _ownerScopeGeneration ||
+          context.read<AuthProvider>().currentUser?.id != ownerId) {
+        return;
       }
+      if (ownerId == null) return;
+      if (widget.isHomeVisible) {
+        unawaited(AnalyticsService.logOwnerDashboardViewed(ownerId: ownerId));
+      }
+
+      _fetchFinancialSummary(ownerId);
+      _loadDashboardAnalytics(ownerId: ownerId);
+      _fetchOwnerChampionships(ownerId);
+      context.read<BookingProvider>().loadOwnerBookings(ownerId);
+      context.read<StadiumProvider>().listenToOwnerStadiums(ownerId);
+
+      _champSubscription = TournamentRepository()
+          .getChampionshipsStream(isOwner: true, ownerId: ownerId)
+          .listen(
+        (champs) {
+          if (!mounted ||
+              generation != _ownerScopeGeneration ||
+              context.read<AuthProvider>().currentUser?.id != ownerId) {
+            return;
+          }
+          setState(() {
+            _ownerChampionships = champs;
+            _hasChampionshipStreamError = false;
+          });
+        },
+        onError: (e) {
+          VSPLogger.w('Owner championships subscription notice (handled): $e');
+          if (mounted &&
+              generation == _ownerScopeGeneration &&
+              context.read<AuthProvider>().currentUser?.id == ownerId) {
+            setState(() => _hasChampionshipStreamError = true);
+          }
+        },
+      );
     });
   }
 
   Future<void> onHomeBecameVisible() async {
-    final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final uid = auth.isOwner ? auth.currentUser?.id : null;
     if (uid == null) return;
+    unawaited(AnalyticsService.logOwnerDashboardViewed(ownerId: uid));
     await _fetchOwnerChampionships(uid);
   }
 
@@ -255,13 +370,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
     final metrics = _getOrCalculateMetrics(allBookings);
 
-    final double availableBalance = (_financialSummary?['success'] == true)
-        ? ((_financialSummary?['available_balance'] as num?)?.toDouble() ?? 0.0)
-        : 0.0;
+    final rawAvailableBalance = _financialSummary?['available_balance'];
+    final parsedAvailableBalance = rawAvailableBalance is num
+        ? rawAvailableBalance.toDouble()
+        : double.tryParse(rawAvailableBalance?.toString() ?? '');
+    final bool balanceVerified = _financialSummary?['success'] == true && parsedAvailableBalance != null;
+    final double availableBalance = parsedAvailableBalance ?? 0.0;
 
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       body: SafeArea(
+        top: false,
         child: RefreshIndicator(
           color: VSPColors.accent,
           backgroundColor: VSPColors.surface,
@@ -269,7 +388,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             final uid = auth.currentUser?.id;
             if (uid == null) return;
             if (context.mounted) {
-              Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
+              Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid, forceRefresh: true);
             }
             await Future.wait([
               _fetchFinancialSummary(uid),
@@ -289,10 +408,42 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 if (_isLoadingAnalytics) ...[
                   const LinearProgressIndicator(
                     minHeight: 2,
-                    backgroundColor: Colors.transparent,
+                    backgroundColor: VSPColors.transparent,
                     valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
                   ),
                   const SizedBox(height: 8),
+                ],
+                if (_hasChampionshipStreamError) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: VSPColors.warning.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                      border: Border.all(color: VSPColors.warning.withValues(alpha: 0.30)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Iconsax.warning_2_copy, size: 15, color: VSPColors.warning),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isArabic
+                                ? 'تعذر تحديث بيانات البطولات. نعرض آخر بيانات تم تحميلها.'
+                                : 'Could not refresh tournament data. Showing the last loaded information.',
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            final uid = auth.currentUser?.id;
+                            if (uid != null) _fetchOwnerChampionships(uid);
+                          },
+                          child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
                 if (_analyticsError != null) ...[
                   Container(
@@ -309,9 +460,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            _analyticsError!,
+                            isArabic
+                                ? 'تعذر تحميل التحليلات. تحقق من الاتصال وحاول مرة أخرى.'
+                                : 'Could not load analytics. Check your connection and retry.',
                             style: const TextStyle(color: VSPColors.error, fontSize: 11.5),
                           ),
+                        ),
+                        TextButton(
+                          onPressed: _isLoadingAnalytics ? null : () => _loadDashboardAnalytics(),
+                          child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
                         ),
                       ],
                     ),
@@ -329,7 +486,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                 // 3. شريط التبديل بين [ التشغيل اليومي ] و [ التحليلات والقرارات ]
                 Container(
-                  height: 42,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: VSPColors.surfaceAlt,
                     borderRadius: BorderRadius.circular(21),
@@ -337,52 +494,57 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   child: Row(
                     children: [
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedDashboardTab = 0);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: _selectedDashboardTab == 0 ? VSPColors.accent : Colors.transparent,
-                              borderRadius: BorderRadius.circular(21),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              isArabic ? 'التشغيل اليومي' : 'Operations',
-                              style: TextStyle(
-                                color: _selectedDashboardTab == 0 ? Colors.black : VSPColors.textSecondary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                        child: Semantics(
+                          button: true,
+                          selected: _selectedDashboardTab == 0,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(21),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _selectedDashboardTab = 0);
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _selectedDashboardTab == 0 ? VSPColors.accent : VSPColors.transparent,
+                                borderRadius: BorderRadius.circular(21),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                isArabic ? 'التشغيل اليومي' : 'Operations',
+                                style: TextStyle(
+                                  color: _selectedDashboardTab == 0 ? VSPColors.black : VSPColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedDashboardTab = 1);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: _selectedDashboardTab == 1 ? VSPColors.proAccent : Colors.transparent,
-                              borderRadius: BorderRadius.circular(21),
-                            ),
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  isArabic ? 'التحليلات الذكية' : 'Insights',
-                                  style: TextStyle(
-                                    color: _selectedDashboardTab == 1 ? Colors.black : VSPColors.textSecondary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
+                        child: Semantics(
+                          button: true,
+                          selected: _selectedDashboardTab == 1,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(21),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _selectedDashboardTab = 1);
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _selectedDashboardTab == 1 ? VSPColors.proAccent : VSPColors.transparent,
+                                borderRadius: BorderRadius.circular(21),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                isArabic ? 'التحليلات الذكية' : 'Insights',
+                                style: TextStyle(
+                                  color: _selectedDashboardTab == 1 ? VSPColors.black : VSPColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -402,6 +564,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   onlinePending: _dashboardAnalytics.revenue.onlinePending,
                   onlineHeld: _dashboardAnalytics.revenue.onlineUnavailable,
                   availableBalance: availableBalance,
+                  balanceVerified: balanceVerified,
                   upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
                   isProOwner: isProOwner,
                   onUpgrade: () => _showProUpgradeSheet(context),
@@ -429,8 +592,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                   // جدول حجوزات اليوم — يأتي مباشرة بعد الكارت المالي.
                   // ب. كارت جدول مواعيد اليوم بالنقط الملونة أو دعوة لإضافة الملعب الأول
-                  if (stadiums.isEmpty)
+                  if (stadiumProvider.errorMessage != null)
+
+                    _buildOwnerStadiumSyncWarning(context, isArabic, stadiumProvider),
+
+                  if (stadiums.isEmpty && stadiumProvider.isLoading)
+
+                    const Center(child: CircularProgressIndicator())
+
+                  else if (stadiums.isEmpty && stadiumProvider.errorMessage != null)
+
+                    const SizedBox.shrink()
+
+                  else if (stadiums.isEmpty)
+
                     _buildNoStadiumsPrompt(context, isArabic)
+
                   else
                     OwnerTodayPitchScheduleCard(
                       allBookings: allBookings,
@@ -597,6 +774,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       selectedTimePeriod: _selectedTimePeriod,
                       selectedStadiumFilter: _selectedStadiumFilter,
                       analytics: _dashboardAnalytics,
+                      isInitialLoading: !_hasLoadedAnalytics && _isLoadingAnalytics,
+                      hasInitialLoadError: !_hasLoadedAnalytics && _analyticsError != null,
                       dashboardFilter: _currentFilter,
                       onCustomRangeSelected: (start, end) {
                         final filter = DashboardFilter.custom(start, end).copyWith(
@@ -752,7 +931,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
               onPressed: () => _showProUpgradeSheet(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -760,9 +939,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 ),
               ),
               child: Text(
-                isArabic
-                    ? 'الترقية للباقة الاحترافية — 1,000 ج.م/شهر'
-                    : 'Upgrade to Pro — 1,000 EGP/month',
+                isArabic ? 'الترقية للباقة الاحترافية' : 'Upgrade to Pro',
                 style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 13.5,
@@ -795,10 +972,49 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(title, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                 Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOwnerStadiumSyncWarning(
+    BuildContext context,
+    bool isArabic,
+    StadiumProvider stadiumProvider,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: VSPColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: VSPColors.error),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'تعذر تحديث ملاعبك. نعرض آخر بيانات موثوقة إن وجدت.'
+                  : 'Could not refresh your pitches. Showing the last trusted data if available.',
+              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              final ownerId = context.read<AuthProvider>().currentUser?.id;
+              if (ownerId != null) {
+                stadiumProvider.listenToOwnerStadiums(ownerId, forceRefresh: true);
+              }
+            },
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
           ),
         ],
       ),
@@ -867,7 +1083,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(VSPRadius.input),

@@ -34,7 +34,12 @@ class BookingDomainRules {
     required bool currentIsDepositPaid,
     required String currentPaymentStatus,
   }) {
-    if (totalPrice <= 0) {
+    if (!totalPrice.isFinite ||
+        !depositPaid.isFinite ||
+        totalPrice <= 0 ||
+        depositPaid < 0) {
+      // Malformed monetary values must never mark a manual booking paid.
+      // Preserve the server-sourced state rather than deriving a new one.
       // No price to compare against — keep existing values
       return (
         isPaid: currentIsPaid,

@@ -104,7 +104,7 @@ class TeamMembersSection extends StatelessWidget {
             radius: 12,
             backgroundColor: VSPColors.accent,
             backgroundImage: imgUrl.isNotEmpty ? NetworkImage(imgUrl) : null,
-            child: imgUrl.isEmpty ? const Icon(Iconsax.crown_copy, color: Colors.black, size: 12) : null,
+            child: imgUrl.isEmpty ? const Icon(Iconsax.crown_copy, color: VSPColors.black, size: 12) : null,
           ),
           const SizedBox(width: VSPSpacing.sm),
           Text(
@@ -120,14 +120,14 @@ class TeamMembersSection extends StatelessWidget {
             ),
             child: Text(
               isArabic ? 'كابتن' : 'C',
-              style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: VSPColors.black, fontSize: 9, fontWeight: FontWeight.bold),
             ),
           ),
           Builder(builder: (_) {
             final captainUid = (team?.captainId.isNotEmpty == true) ? team!.captainId : (currentUser?.uid ?? '');
             if (captainUid.isEmpty) return const SizedBox.shrink();
             return Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsetsDirectional.only(start: 4),
               child: Vsp1v1UserTrophyBadge(
                 userId: captainUid,
                 fontSize: 9,
@@ -166,7 +166,7 @@ class TeamMembersSection extends StatelessWidget {
           ),
           if (user.uid.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsetsDirectional.only(start: 4),
               child: Vsp1v1UserTrophyBadge(
                 userId: user.uid,
                 fontSize: 9,

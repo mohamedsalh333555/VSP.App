@@ -3,29 +3,34 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import 'team_achievement_badges.dart';
+import 'team_achievement_summary.dart';
 
 /// Section showcasing the team's achievements and unlocked badges.
 class TeamAchievementsSection extends StatelessWidget {
   final Team team;
   final bool isArabic;
+  /// Null until the authoritative competition results have been loaded.
+  final TeamAchievementSummary? verifiedSummary;
 
   const TeamAchievementsSection({
     super.key,
     required this.team,
     required this.isArabic,
+    this.verifiedSummary,
   });
 
   @override
   Widget build(BuildContext context) {
     // Exact condition checking matching user requirements
-    final int uniqueOpponentsCount = team.playedOpponents.isNotEmpty
-        ? team.playedOpponents.length
-        : (team.wins + team.draws + team.losses);
+    // Match count cannot prove the number of distinct opposing teams.
+    final int uniqueOpponentsCount = countDistinctTeamOpponents(team.playedOpponents);
 
     final bool isStreak3Unlocked = team.currentWinningStreak >= 3;
     final bool isStreak10Unlocked = team.currentWinningStreak >= 10;
     final bool isExplorerUnlocked = uniqueOpponentsCount >= 5;
-    final bool isChampionUnlocked = team.championshipsWon >= 1;
+    // Official championship badges require verified server-side results.
+    final bool isChampionUnlocked = (verifiedSummary?.stadiumChampionships ?? 0) >= 1;
 
     final badges = [
       {
@@ -52,13 +57,13 @@ class TeamAchievementsSection extends StatelessWidget {
         'isUnlocked': isExplorerUnlocked,
         'progress': '${uniqueOpponentsCount.clamp(0, 5)}/5',
       },
-      {
+      if (verifiedSummary != null) {
         'id': 'champion',
         'name': isArabic ? 'بطل البطولات' : 'Champion',
         'icon': Iconsax.cup_copy,
         'desc': isArabic ? 'الحصول والتتويج بأي بطولة رسمية مع فريقك' : 'Win at least 1 official tournament',
         'isUnlocked': isChampionUnlocked,
-        'progress': '${team.championshipsWon.clamp(0, 1)}/1',
+        'progress': '${verifiedSummary!.stadiumChampionships.clamp(0, 1)}/1',
       },
     ];
 
@@ -93,6 +98,10 @@ class TeamAchievementsSection extends StatelessWidget {
               ),
           ],
         ),
+        if (verifiedSummary != null) ...[
+          const SizedBox(height: VSPSpacing.md),
+          TeamAchievementBadges(summary: verifiedSummary!),
+        ],
         const SizedBox(height: VSPSpacing.md),
         SizedBox(
           height: 118,
@@ -157,7 +166,7 @@ class TeamAchievementsSection extends StatelessWidget {
                               ),
                               child: Icon(
                                 isUnlocked ? Iconsax.tick_circle_copy : Iconsax.lock_1_copy,
-                                color: isUnlocked ? Colors.black : VSPColors.textSecondary,
+                                color: isUnlocked ? VSPColors.black : VSPColors.textSecondary,
                                 size: 10,
                               ),
                             ),
@@ -171,7 +180,7 @@ class TeamAchievementsSection extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: isUnlocked ? Colors.white : VSPColors.textSecondary,
+                          color: isUnlocked ? VSPColors.white : VSPColors.textSecondary,
                           fontSize: 10.5,
                           fontWeight: isUnlocked ? FontWeight.bold : FontWeight.w500,
                         ),
@@ -214,7 +223,7 @@ class TeamAchievementsSection extends StatelessWidget {
               child: Text(
                 name,
                 style: TextStyle(
-                  color: isUnlocked ? Colors.white : VSPColors.textPrimary,
+                  color: isUnlocked ? VSPColors.white : VSPColors.textPrimary,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),

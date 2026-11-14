@@ -26,8 +26,9 @@ class PaymentVerificationModal extends StatefulWidget {
   }) {
     return showDialog(
       context: context,
+      useSafeArea: true,
       barrierDismissible: false,
-      barrierColor: Colors.black.withValues(alpha: 0.85),
+      barrierColor: VSPColors.black.withValues(alpha: 0.85),
       builder: (_) => PaymentVerificationModal(
         bookingId: bookingId,
         isArabic: isArabic,
@@ -85,16 +86,24 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
   @override
   Widget build(BuildContext context) {
     final iconColor = _isProlongedWait ? VSPColors.warning : VSPColors.accent;
+    final mediaQuery = MediaQuery.of(context);
+    final availableHeight = mediaQuery.size.height -
+        mediaQuery.viewInsets.vertical -
+        (VSPSpacing.xl * 2);
 
     return PopScope(
       canPop: false,
       child: Center(
-        child: Material(
-          type: MaterialType.transparency,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl),
-            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl, vertical: VSPSpacing.xxl),
-            decoration: BoxDecoration(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: availableHeight.clamp(0.0, mediaQuery.size.height).toDouble()),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: VSPSpacing.xl),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl),
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl, vertical: VSPSpacing.xxl),
+                decoration: BoxDecoration(
               color: VSPColors.surface,
               borderRadius: BorderRadius.circular(VSPRadius.dialog),
               border: Border.all(
@@ -258,9 +267,11 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
                   ),
                 ],
               ],
+              ),
             ),
           ),
         ),
+      ),
       ),
     );
   }

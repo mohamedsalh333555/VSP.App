@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../ui/tokens/vsp_tokens.dart';
 import '../logger_service.dart';
+import 'notification_filter_service.dart';
 import '../../repositories/booking_repository.dart';
 import '../../repositories/chat_repository.dart';
 import '../../../features/owner/screens/owner_bookings_screen.dart';
@@ -27,20 +28,29 @@ class NotificationUiHelper {
     if (context == null) return;
 
     final String? notifBookingId = message.data['bookingId'] ?? message.data['booking_id'];
+    // Only suppress an alert for the conversation currently visible.
+    // A different chat must still be allowed through the user's preferences.
     if (ChatScreen.activeBookingId != null &&
-        (notifBookingId == ChatScreen.activeBookingId || message.data['type'] == 'chat')) {
+        notifBookingId == ChatScreen.activeBookingId &&
+        message.data['type']?.toString().trim().toLowerCase() == 'chat') {
       return;
     }
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final soundEnabled = prefs.getBool('notif_sound') ?? true;
+      if (!context.mounted) return;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final shouldShow = await NotificationFilterService.shouldShowNotification(
+        message.data['type']?.toString(),
+        prefs: prefs,
+        isOwner: auth.isOwner,
+      );
+      if (!context.mounted || !shouldShow) return;
 
+      final soundEnabled = prefs.getBool('notif_sound') ?? true;
       if (soundEnabled) {
         HapticFeedback.heavyImpact();
       }
-
-      if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -79,6 +89,15 @@ class NotificationUiHelper {
     }
   }
 
+  /// A notification payload is not authorization to open a private booking.
+  /// This client-side check complements (and never replaces) database RLS.
+  static bool canOpenBookingForUser(Booking booking, String? userId) {
+    if (userId == null || userId.trim().isEmpty) return false;
+    return booking.ownerId == userId ||
+        booking.createdByUserId == userId ||
+        booking.joinedUserIds.contains(userId);
+  }
+
   /// Navigates to the chat screen for a given booking ID.
   static Future<void> navigateToChat(BuildContext context, String bookingId, {BookingRepository? repository}) async {
     try {
@@ -88,7 +107,7 @@ class NotificationUiHelper {
 
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final userId = auth.currentUser?.id;
-      if (userId == null) return;
+      if (!canOpenBookingForUser(booking, userId)) return;
 
       final otherUserId = <String>[
         booking.ownerId,
@@ -117,6 +136,11 @@ class NotificationUiHelper {
       );
 
       if (!context.mounted) return;
+      // Recheck the active account after the network call: the user may have
+      // signed out or switched accounts while the chat was being created.
+      if (Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) {
+        return;
+      }
       final conversationId = chat['id']?.toString();
       if (conversationId == null || conversationId.isEmpty) return;
 
@@ -142,6 +166,8 @@ class NotificationUiHelper {
       final booking = await repo.getBookingById(bookingId);
       if (booking != null && context.mounted) {
         final auth = Provider.of<AuthProvider>(context, listen: false);
+        final userId = auth.currentUser?.id;
+        if (!canOpenBookingForUser(booking, userId)) return;
         if (auth.isOwner) {
           Navigator.push(
             context,

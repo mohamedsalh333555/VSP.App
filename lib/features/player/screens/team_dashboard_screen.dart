@@ -1,3 +1,4 @@
+import '../../../core/ui/components/vsp_segmented_control.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import '../../../core/repositories/match_repository.dart';
 import '../../../data/models.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/sharing_service.dart';
+import '../../../core/services/active_team_service.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../../core/services/support_service.dart';
 import '../../../shared/widgets/public_match_card.dart';
@@ -18,6 +20,7 @@ import '../../../shared/widgets/team_card_hero.dart';
 import '../../../core/repositories/league/team_league_repository.dart';
 import '../widgets/league/team_league_tab.dart';
 import 'player_home_screen.dart';
+import '../widgets/team_invitations_sheet.dart';
 
 class TeamDashboardScreen extends StatefulWidget {
   const TeamDashboardScreen({super.key});
@@ -28,15 +31,39 @@ class TeamDashboardScreen extends StatefulWidget {
 
 class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Team? _userTeam;
+  List<Team> _userTeams = <Team>[];
+  bool _isLoadingUserTeam = true;
+  bool _hasUserTeamLoadError = false;
+  String? _activeUserTeamScope;
+  bool _hasObservedUserTeamScope = false;
+  int _userTeamRequestGeneration = 0;
   final ScrollController _scrollController = ScrollController();
-  late final Stream<List<Booking>> _matchesStream;
+  late Stream<List<Booking>> _matchesStream;
   int _selectedMainTab = 0; // 0 = تجميع افتراضياً، 1 = دوري
 
   @override
   void initState() {
     super.initState();
     _matchesStream = MatchRepository().getPublicMatches().asBroadcastStream();
-    _fetchUserTeam();
+  }
+
+  void _refreshMatches() {
+    setState(() {
+      _matchesStream = MatchRepository().getPublicMatches().asBroadcastStream();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userId = context.watch<app_auth.AuthProvider>().currentUser?.id;
+    if (!_hasObservedUserTeamScope || userId != _activeUserTeamScope) {
+      _hasObservedUserTeamScope = true;
+      _activeUserTeamScope = userId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _fetchUserTeamFor(userId);
+      });
+    }
   }
 
   @override
@@ -45,20 +72,128 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchUserTeam() async {
-    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    if (auth.isAuthenticated) {
-      final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
+  Future<void> _fetchUserTeam() {
+    final userId = context.read<app_auth.AuthProvider>().currentUser?.id;
+    return _fetchUserTeamFor(userId);
+  }
+
+  Future<void> _fetchUserTeamFor(String? userId) async {
+    final generation = ++_userTeamRequestGeneration;
+    if (userId == null || userId.isEmpty) {
       if (mounted) {
-        setState(() => _userTeam = team);
-        if (team != null) {
-          final activeLeague = await TeamLeagueRepository().getTeamActiveLeague(team.id);
-          if (mounted && activeLeague != null && (activeLeague.status == 'ongoing' || activeLeague.status == 'open')) {
-            setState(() => _selectedMainTab = 1);
-          }
-        }
+        setState(() {
+          _userTeam = null;
+          _userTeams = <Team>[];
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingUserTeam = true;
+        _hasUserTeamLoadError = false;
+      });
+    }
+    try {
+      final teams = await TeamRepository().getUserTeamsStrict(userId);
+      final activeTeam = await ActiveTeamService.resolve(
+        userId: userId,
+        teams: teams,
+      );
+
+      if (!mounted ||
+          generation != _userTeamRequestGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
+      setState(() {
+        _userTeams = teams;
+        _userTeam = activeTeam;
+        _isLoadingUserTeam = false;
+        _hasUserTeamLoadError = false;
+      });
+
+      if (activeTeam != null) {
+        await _loadActiveLeagueForTeam(activeTeam, userId, generation);
+      }
+    } catch (e) {
+      debugPrint('Error loading user teams: $e');
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
+        setState(() {
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = true;
+        });
       }
     }
+  }
+
+  Future<void> _loadActiveLeagueForTeam(
+    Team team,
+    String userId,
+    int generation,
+  ) async {
+    try {
+      final activeLeague =
+          await TeamLeagueRepository().getTeamActiveLeagueStrict(team.id);
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId &&
+          _userTeam?.id == team.id &&
+          activeLeague != null &&
+          (activeLeague.status == 'ongoing' ||
+              activeLeague.status == 'open')) {
+        setState(() => _selectedMainTab = 1);
+      }
+    } catch (e) {
+      debugPrint('Error loading active team league: $e');
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId &&
+          _userTeam?.id == team.id) {
+        setState(() => _selectedMainTab = 1);
+      }
+    }
+  }
+
+  Future<void> _selectActiveTeam(Team selectedTeam) async {
+    final userId = context.read<app_auth.AuthProvider>().currentUser?.id;
+    if (userId == null ||
+        !_userTeams.any((team) => team.id == selectedTeam.id)) {
+      return;
+    }
+    final previousTeam = _userTeam;
+    final generation = ++_userTeamRequestGeneration;
+    setState(() {
+      _userTeam = selectedTeam;
+      _selectedMainTab = 0;
+    });
+    final saved = await ActiveTeamService.select(
+      userId: userId,
+      teamId: selectedTeam.id,
+      verifiedTeams: _userTeams,
+    );
+    if (!mounted ||
+        context.read<app_auth.AuthProvider>().currentUser?.id != userId ||
+        _userTeam?.id != selectedTeam.id) {
+      return;
+    }
+    if (!saved) {
+      setState(() => _userTeam = previousTeam);
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر حفظ الفريق النشط. حاول مرة تانية.'
+            : 'Could not save the active team. Please try again.',
+      );
+      return;
+    }
+    await _loadActiveLeagueForTeam(selectedTeam, userId, generation);
   }
 
   @override
@@ -75,6 +210,22 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
           style: Theme.of(context).textTheme.displayMedium,
         ),
         actions: [
+          if (_activeUserTeamScope != null)
+            IconButton(
+              tooltip: Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'دعوات الفرق'
+                  : 'Team invitations',
+              icon: const Icon(Iconsax.sms_copy, color: VSPColors.accent),
+              onPressed: () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                useSafeArea: true,
+                builder: (_) => TeamInvitationsSheet(
+                  userId: _activeUserTeamScope!,
+                  onMembershipChanged: _fetchUserTeam,
+                ),
+              ),
+            ),
           if (_userTeam != null)
             IconButton(
               icon: const Icon(Iconsax.share_copy, color: VSPColors.accent),
@@ -92,101 +243,55 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         bottom: false,
         child: Column(
           children: [
-            // Pill Switcher: [ تجميع ] [ دوري ] مطابقة 100% لشاشة الأبطال بدون إيموجي
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              height: 48,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-                border: Border.all(color: VSPColors.divider, width: 0.5),
+            if (_userTeams.length > 1)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: DropdownButtonFormField<String>(
+                  value: _userTeam?.id,
+                  decoration: InputDecoration(
+                    labelText:
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'الفريق النشط'
+                            : 'Active team',
+                    prefixIcon: const Icon(Iconsax.people_copy),
+                  ),
+                  items: _userTeams
+                      .map(
+                        (team) => DropdownMenuItem<String>(
+                          value: team.id,
+                          child: Text(
+                            team.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (teamId) {
+                    if (teamId == null) return;
+                    final selected = _userTeams.firstWhere(
+                      (team) => team.id == teamId,
+                    );
+                    _selectActiveTeam(selected);
+                  },
+                ),
               ),
-              child: Stack(
-                children: [
-                  // Animated background pill for 2 tabs
-                  AnimatedAlign(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeInOut,
-                    alignment: Directionality.of(context) == TextDirection.rtl
-                        ? (_selectedMainTab == 0
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft)
-                        : (_selectedMainTab == 0
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight),
-                    child: FractionallySizedBox(
-                      widthFactor: 0.5,
-                      child: Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent,
-                          borderRadius: BorderRadius.circular(VSPRadius.full),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      // Tab 0: تجميع
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedMainTab = 0);
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
-                            child: Builder(
-                              builder: (context) {
-                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                final label = isArabic ? 'تجميع' : 'Gathering';
-                                return Text(
-                                  label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: _selectedMainTab == 0 ? Colors.black : Colors.white,
-                                        fontWeight: _selectedMainTab == 0 ? FontWeight.w900 : FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Tab 1: دوري
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedMainTab = 1);
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
-                            child: Builder(
-                              builder: (context) {
-                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                final label = isArabic ? 'دوري' : 'League';
-                                return Text(
-                                  label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: _selectedMainTab == 1 ? Colors.black : Colors.white,
-                                        fontWeight: _selectedMainTab == 1 ? FontWeight.w900 : FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+
+            // Pill Switcher: [ تجميع ] [ دوري ] مطابقة 100% لشاشة الأبطال بدون إيموجي
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: VSPSegmentedControl(
+                labels: [
+                  Localizations.localeOf(context).languageCode == 'ar' ? 'تجميع' : 'Gathering',
+                  Localizations.localeOf(context).languageCode == 'ar' ? 'دوري' : 'League',
                 ],
+                selectedIndex: _selectedMainTab,
+                onSelected: (index) {
+                  if (!MediaQuery.disableAnimationsOf(context)) {
+                    HapticFeedback.selectionClick();
+                  }
+                  setState(() => _selectedMainTab = index);
+                },
+                textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 14),
               ),
             ),
 
@@ -198,6 +303,9 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                   TeamLeagueTab(
                     userTeam: _userTeam,
                     onTeamCreated: _fetchUserTeam,
+                    isLoadingUserTeam: _isLoadingUserTeam,
+                    hasUserTeamLoadError: _hasUserTeamLoadError,
+                    onRetryUserTeam: _fetchUserTeam,
                   ),
                 ],
               ),
@@ -212,26 +320,30 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
     return StreamBuilder<List<Booking>>(
       stream: _matchesStream,
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-          return VSPStateView(
-            state: VSPUiState.error,
-            title: isArabic ? 'تعذر تحميل المباريات' : 'Could not load matches',
-            message: isArabic
-                ? 'راجع الاتصال وحاول مرة تانية.'
-                : 'Check your connection and try again.',
-          );
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            (snapshot.data == null || snapshot.data!.isEmpty)) {
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: VSPSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: VSPSpacing.md,
+            ),
             itemCount: 5,
             itemBuilder: (context, index) => const CardSkeleton(),
           );
         }
 
         final bookings = snapshot.data ?? [];
+        if (snapshot.hasError && bookings.isEmpty) {
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر تحميل المباريات' : 'Could not load matches',
+            message: isArabic
+                ? 'راجع الاتصال وحاول مرة تانية.'
+                : 'Check your connection and try again.',
+            onRetry: _refreshMatches,
+          );
+        }
 
         if (bookings.isEmpty) {
           return Center(
@@ -249,17 +361,26 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: () {
-                    playerHomeScreenKey.currentState?.switchToTab(0);
-                  },
-                  child: Text(
-                    AppLocalizations.of(context)!.hostOne,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: VSPColors.accent,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                      decorationColor: VSPColors.accent,
+                Semantics(
+                  button: true,
+                  child: InkWell(
+                    onTap: () {
+                      playerHomeScreenKey.currentState?.switchToTab(0);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: VSPSpacing.md,
+                        vertical: VSPSpacing.sm,
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.hostOne,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: VSPColors.accent,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                          decorationColor: VSPColors.accent,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -268,21 +389,71 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
           );
         }
 
-        return ListView.builder(
-          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
-          itemCount: bookings.length,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-              child: PublicMatchCard(
-                booking: bookings[index],
-                highlighted:
-                    _userTeam != null &&
-                    bookings[index].bookingType == BookingType.team &&
-                    bookings[index].playerTeamId != null,
+        return Column(
+          children: [
+            if (snapshot.hasError)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: VSPColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(
+                    color: VSPColors.warning.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Iconsax.warning_2_copy,
+                      color: VSPColors.warning,
+                      size: 17,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isArabic
+                            ? 'تعذر تحديث المباريات. نعرض آخر بيانات تم تحميلها.'
+                            : 'Could not refresh matches. Showing the last loaded list.',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _refreshMatches,
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
+            Expanded(
+              child: ListView.builder(
+                padding: VSPScrollPadding.forList(
+                  context,
+                  hasFloatingNavBar: true,
+                  top: VSPSpacing.md,
+                ),
+                itemCount: bookings.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                    child: PublicMatchCard(
+                      booking: bookings[index],
+                      highlighted: _userTeam != null &&
+                          bookings[index].bookingType == BookingType.team &&
+                          bookings[index].playerTeamId != null,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );
@@ -292,8 +463,9 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
     VSPFeedback.triggerSuccess();
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
         child: Column(
           mainAxisSize: MainAxisSize.min,

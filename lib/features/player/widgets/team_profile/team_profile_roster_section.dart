@@ -6,11 +6,15 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 class TeamProfileRosterSection extends StatelessWidget {
   final List<UserModel> members;
   final bool isLoading;
+  final bool hasError;
+  final VoidCallback? onRetry;
 
   const TeamProfileRosterSection({
     super.key,
     required this.members,
     required this.isLoading,
+    this.hasError = false,
+    this.onRetry,
   });
 
   @override
@@ -33,17 +37,45 @@ class TeamProfileRosterSection extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
                   ),
                 )
-              : members.isEmpty
+              : hasError && members.isEmpty
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          isArabic ? 'تعذر تحميل قائمة اللاعبين' : 'Could not load team roster',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                        ),
+                        if (onRetry != null)
+                          TextButton(
+                            onPressed: onRetry,
+                            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                          ),
+                      ],
+                    )
+                  : members.isEmpty
                   ? Center(
                       child: Text(
                         isArabic ? 'لا يوجد أعضاء مضافين حالياً' : 'No team members added yet',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                     )
-                  : Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: members.map((member) => _buildMemberChip(member)).toList(),
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (hasError) ...[
+                          Text(isArabic ? 'بعض اللاعبين غير متاحين حالياً' : 'Some players could not be loaded',
+                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                          if (onRetry != null)
+                            TextButton(onPressed: onRetry, child: Text(isArabic ? 'إعادة المحاولة' : 'Retry')),
+                          const SizedBox(height: VSPSpacing.sm),
+                        ],
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: members.map((member) => _buildMemberChip(member)).toList(),
+                        ),
+                      ],
                     ),
         ),
       ],
@@ -58,7 +90,9 @@ class TeamProfileRosterSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: VSPColors.divider),
       ),
-      child: Row(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 240),
+        child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           CircleAvatar(
@@ -72,11 +106,16 @@ class TeamProfileRosterSection extends StatelessWidget {
                 : null,
           ),
           const SizedBox(width: 6),
-          Text(
-            user.name ?? 'Player',
-            style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
+          Flexible(
+            child: Text(
+              (user.name?.trim().isNotEmpty ?? false) ? user.name!.trim() : 'Player',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
+        ),
       ),
     );
   }

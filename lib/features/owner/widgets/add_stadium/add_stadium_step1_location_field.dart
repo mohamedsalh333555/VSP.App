@@ -64,7 +64,7 @@ class AddStadiumStep1LocationField extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: hasLocation ? Colors.white : VSPColors.textSecondary,
+                      color: hasLocation ? VSPColors.white : VSPColors.textSecondary,
                       fontSize: 13,
                       fontWeight: hasLocation ? FontWeight.bold : FontWeight.normal,
                     ),

@@ -168,38 +168,50 @@ class VSPStateView extends StatelessWidget {
 
     if (state == VSPUiState.loading || state == VSPUiState.processing) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(
-              width: VSPDSizes.stateLoadingIndicator,
-              height: VSPDSizes.stateLoadingIndicator,
-              child: CircularProgressIndicator(
-                strokeWidth: VSPDSizes.progressStroke,
-                color: VSPDSSemanticColors.accent,
-              ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(VSPDSSpacing.lg),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: VSPDSAccessibility.stateMaxWidth,
             ),
-            const SizedBox(height: VSPDSSpacing.md),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: VSPDSTypography.stateTitle,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: VSPDSizes.stateLoadingIndicator,
+                  height: VSPDSizes.stateLoadingIndicator,
+                  child: CircularProgressIndicator(
+                    strokeWidth: VSPDSizes.progressStroke,
+                    color: VSPDSSemanticColors.accent,
+                    semanticsLabel:
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'جارٍ التحميل'
+                            : 'Loading',
+                  ),
+                ),
+                const SizedBox(height: VSPDSSpacing.md),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: VSPDSTypography.stateTitle,
+                ),
+                if (message != null) ...[
+                  const SizedBox(height: VSPDSSpacing.xxs),
+                  Text(
+                    message!,
+                    textAlign: TextAlign.center,
+                    style: VSPDSTypography.stateMessage,
+                  ),
+                ],
+              ],
             ),
-            if (message != null) ...[
-              const SizedBox(height: VSPDSSpacing.xxs),
-              Text(
-                message!,
-                textAlign: TextAlign.center,
-                style: VSPDSTypography.stateMessage,
-              ),
-            ],
-          ],
+          ),
         ),
       );
     }
 
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(VSPDSSpacing.lg),
         child: ConstrainedBox(
           constraints: const BoxConstraints(
@@ -225,7 +237,9 @@ class VSPStateView extends StatelessWidget {
                 child: Icon(
                   iconData,
                   color: tint,
-                  size: VSPDSizes.iconXl,
+                  size: state == VSPUiState.empty || state == VSPUiState.disabled
+                      ? VSPDSizes.emptyIconSize
+                      : VSPDSizes.iconXl,
                 ),
               ),
               const SizedBox(height: VSPDSSpacing.md),
@@ -304,20 +318,11 @@ class VSPBottomActionBar extends StatelessWidget {
           VSPDSElevation.medium,
         ],
       ),
-      padding: padding is EdgeInsets
-          ? EdgeInsets.fromLTRB(
-              (padding as EdgeInsets).left,
-              (padding as EdgeInsets).top,
-              (padding as EdgeInsets).right,
-              (padding as EdgeInsets).bottom + safeBottom,
-            )
-          : EdgeInsets.fromLTRB(
-              VSPDSSpacing.md,
-              VSPDSSpacing.sm,
-              VSPDSSpacing.md,
-              VSPDSSpacing.md + safeBottom,
-            ),
-      child: child,
+      padding: padding,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: safeBottom),
+        child: child,
+      ),
     );
   }
 }

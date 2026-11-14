@@ -12,6 +12,7 @@ import '../../../core/utils/app_date_formatter.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../../owner/screens/tournament_brackets_screen.dart';
 import '../widgets/championship_details/championship_bottom_bar.dart';
 import '../widgets/championship_details/championship_details_header.dart';
@@ -36,9 +37,12 @@ class ChampionshipDetailsScreen extends StatefulWidget {
 class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isJoining = false;
+  int _championshipRefreshVersion = 0;
   Team? _myTeam;
-  late final Stream<Championship?> _singleChampionshipStream;
-  late final Stream<List<TournamentMatch>> _matchesStream;
+  String? _teamLookupUserId;
+  int _teamLookupGeneration = 0;
+  late Stream<Championship?> _singleChampionshipStream;
+  late Stream<List<TournamentMatch>> _matchesStream;
 
   @override
   void initState() {
@@ -51,22 +55,27 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     _matchesStream = TournamentRepository()
         .getTournamentMatches(widget.championship.id)
         .asBroadcastStream();
-    _checkUserTeamState();
   }
 
-  Future<void> _checkUserTeamState() async {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userId = Provider.of<AuthProvider>(context).currentUser?.id;
+    if (_teamLookupUserId == userId) return;
+    _teamLookupUserId = userId;
+    _teamLookupGeneration++;
+    _myTeam = null;
+    if (userId != null) _checkUserTeamState(userId, _teamLookupGeneration);
+  }
+
+  Future<void> _checkUserTeamState(String userId, int generation) async {
     try {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      if (auth.currentUser != null) {
-        final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
-        if (team != null && mounted) {
-          setState(() {
-            _myTeam = team;
-          });
-        }
-      }
+      final team = await TeamRepository().getActiveUserTeamStrict(userId);
+      if (!mounted || _teamLookupGeneration != generation ||
+          context.read<AuthProvider>().currentUser?.id != userId) return;
+      setState(() => _myTeam = team);
     } catch (e) {
-      debugPrint('Error checking user team state in championship: $e');
+      debugPrint('Championship team lookup failed (details redacted)');
     }
   }
 
@@ -74,6 +83,20 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _refreshChampionshipData() {
+    if (!mounted) return;
+    setState(() {
+      _championshipRefreshVersion++;
+      final repository = TournamentRepository();
+      _singleChampionshipStream = repository
+          .getSingleChampionshipStream(widget.championship.id)
+          .asBroadcastStream();
+      _matchesStream = repository
+          .getTournamentMatches(widget.championship.id)
+          .asBroadcastStream();
+    });
   }
 
   Future<void> _handleJoin([Championship? liveChamp]) async {
@@ -92,11 +115,13 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     setState(() => _isJoining = true);
 
     try {
-      final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
+      final userId = auth.currentUser!.id;
+      final team = await TeamRepository().getActiveUserTeamStrict(userId);
+      if (!mounted || context.read<AuthProvider>().currentUser?.id != userId) return;
 
       if (team != null &&
           team.captainId.isNotEmpty &&
-          team.captainId != auth.currentUser!.uid) {
+          team.captainId != auth.currentUser!.id) {
         if (mounted) {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           _showErrorDialog(isArabic
@@ -150,7 +175,12 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       }
     } catch (e) {
       if (mounted) {
-        _showErrorDialog(e.toString().replaceAll('Exception: ', ''));
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        _showErrorDialog(
+          isArabic
+              ? 'تعذر التحقق من بيانات فريقك أو التسجيل في البطولة. حاول مرة أخرى.'
+              : 'Could not verify your team or register for the championship. Please retry.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isJoining = false);
@@ -160,7 +190,9 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (context) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         title: Text(
           AppLocalizations.of(context)!.errorLabel,
@@ -187,6 +219,17 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       stream: _singleChampionshipStream,
       initialData: widget.championship,
       builder: (context, snapshot) {
+        if (!snapshot.hasError &&
+            snapshot.connectionState == ConnectionState.active &&
+            snapshot.data == null) {
+          return VSPErrorState(
+            customMessage: isArabic
+                ? 'هذه البطولة لم تعد متاحة.'
+                : 'This championship is no longer available.',
+            onRetry: _refreshChampionshipData,
+            retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
+          );
+        }
         final championship = snapshot.data ?? widget.championship;
         final isTeamRegistered = _myTeam != null && championship.joinedTeams.contains(_myTeam!.id);
         final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
@@ -220,8 +263,54 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
               ),
             ],
           ),
-          body: Column(
+          body: SafeArea(top: false, bottom: true, child: Column(
             children: [
+              if (snapshot.hasError)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(
+                    VSPSpacing.md,
+                    VSPSpacing.sm,
+                    VSPSpacing.md,
+                    0,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: VSPSpacing.md,
+                    vertical: VSPSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: VSPColors.warning.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(
+                      color: VSPColors.warning.withValues(alpha: 0.30),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: VSPColors.warning,
+                        size: 18,
+                      ),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          isArabic
+                              ? 'توقفت التحديثات المباشرة للبطولة. قد تكون البيانات المعروضة قديمة.'
+                              : 'Live championship updates paused. Displayed data may be out of date.',
+                          style: const TextStyle(
+                            color: VSPColors.warning,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _refreshChampionshipData,
+                        child: Text(isArabic ? 'تحديث' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
               if (isTeamRegistered && _myTeam != null) ...[
                 Container(
                   width: double.infinity,
@@ -241,7 +330,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                           isArabic
                               ? 'فريقك [${_myTeam!.name}] مسجّل رسمياً في هذه البطولة '
                               : 'Your team [${_myTeam!.name}] is registered in this tournament ',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ),
                     ],
@@ -269,10 +358,15 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                     ChampionshipMatchesTab(
                       championship: championship,
                       matchesStream: _matchesStream,
+                      refreshVersion: _championshipRefreshVersion,
+                      onRetry: _refreshChampionshipData,
                     ),
 
                     // TAB 2: Top Scorers
-                    ChampionshipTopScorersTab(championshipId: championship.id),
+                    ChampionshipTopScorersTab(
+                      championshipId: championship.id,
+                      onRetry: _refreshChampionshipData,
+                    ),
 
                     // TAB 3: Rules & Details
                     ChampionshipRulesTab(championship: championship),
@@ -315,7 +409,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                 onJoin: () => _handleJoin(championship),
               ),
             ],
-          ),
+          )),
         );
       },
     );

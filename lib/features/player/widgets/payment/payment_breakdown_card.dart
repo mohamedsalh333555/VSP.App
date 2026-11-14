@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/services/paymob_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 
 /// Card showing the full transparent financial breakdown, stadium timing details, and service fees.
@@ -12,6 +13,9 @@ class PaymentBreakdownCard extends StatelessWidget {
   final bool hasDeposit;
   final double amountToPay;
   final bool isArabic;
+  final PaymobFeePolicy? feePolicy;
+  final bool isFeePolicyLoading;
+  final VoidCallback onRetryFeePolicy;
 
   const PaymentBreakdownCard({
     super.key,
@@ -20,16 +24,23 @@ class PaymentBreakdownCard extends StatelessWidget {
     required this.hasDeposit,
     required this.amountToPay,
     required this.isArabic,
+    required this.feePolicy,
+    required this.isFeePolicyLoading,
+    required this.onRetryFeePolicy,
   });
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<PaymobFeePolicy?>(
-      future: PaymobService.fetchFeePolicy(),
-      builder: (context, snapshot) {
-        final policy = snapshot.data;
-        final double serviceFee = policy?.serviceFee(amountToPay) ?? 0;
-        final double totalWithFees = policy?.total(amountToPay) ?? amountToPay;
+    if (isFeePolicyLoading) {
+      return _buildFeePolicyState(context, isLoading: true);
+    }
+    final policy = feePolicy;
+    if (policy == null || !policy.isValidForElectronicCheckout) {
+      return _buildFeePolicyState(context, isLoading: false);
+    }
+
+    final double serviceFee = policy.serviceFee(amountToPay);
+    final double totalWithFees = policy.total(amountToPay);
 
     final String displayStadiumName =
         (bookingDraft.stadiumName.trim().isEmpty || bookingDraft.stadiumName.trim() == 'Mo')
@@ -53,7 +64,7 @@ class PaymentBreakdownCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   displayStadiumName,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
             ],
@@ -83,7 +94,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                 : (hasDeposit
                     ? (isArabic ? 'عربون حجز الملعب' : 'Stadium Deposit')
                     : (isArabic ? 'إجمالي سعر حجز الملعب' : 'Stadium Total Price')),
-            value: '${amountToPay.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
+            value: '${VSPMoneyFormatter.amount(amountToPay)} ${isArabic ? 'ج.م' : 'EGP'}',
             isBold: false,
           ),
           const SizedBox(height: 6),
@@ -92,6 +103,7 @@ class PaymentBreakdownCard extends StatelessWidget {
             value: '${serviceFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
             isBold: false,
             onInfoTap: () => showFeeTransparencyModal(context, isArabic),
+            infoTooltip: isArabic ? 'تفاصيل المصاريف الإدارية' : 'Fee details',
           ),
           const SizedBox(height: 6),
           _buildFeeRow(
@@ -103,19 +115,55 @@ class PaymentBreakdownCard extends StatelessWidget {
             const SizedBox(height: 6),
             _buildFeeRow(
               label: isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
-              value: '${(bookingDraft.totalPrice - amountToPay).toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
+              value: '${VSPMoneyFormatter.amount(bookingDraft.totalPrice - amountToPay)} ${isArabic ? 'ج.م' : 'EGP'}',
             ),
           ],
         ],
       ),
-        );
-      },
+    );
+  }
+
+  Widget _buildFeePolicyState(BuildContext context, {required bool isLoading}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: isLoading ? VSPColors.divider : VSPColors.warning),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isLoading ? Iconsax.timer_1_copy : Iconsax.info_circle_copy,
+            color: isLoading ? VSPColors.textSecondary : VSPColors.warning,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isLoading
+                  ? (isArabic ? 'جارٍ تحميل تفاصيل الرسوم...' : 'Loading fee details...')
+                  : (isArabic
+                      ? 'تعذر التحقق من رسوم الدفع. لن نعرض إجماليًا غير مؤكد؛ أعد المحاولة قبل الدفع.'
+                      : 'Could not verify payment fees. An unconfirmed total is hidden; retry before paying.'),
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            ),
+          ),
+          if (!isLoading)
+            TextButton(
+              onPressed: onRetryFeePolicy,
+              child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+            ),
+        ],
+      ),
     );
   }
 
   static void showFeeTransparencyModal(BuildContext context, bool isArabic) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: VSPColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
@@ -151,15 +199,15 @@ class PaymentBreakdownCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Text(
                     isArabic ? 'تفاصيل المصاريف الإدارية' : 'Administrative Fee Details',
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               Text(
                 isArabic
-                    ? 'تشمل المصاريف الإدارية تأكيد الحجز الفوري، ومصاريف المعاملات البنكية المعتمدة، والدعم الفني المباشر على مدار الساعة.'
-                    : 'Administrative fees cover instant booking confirmation, certified banking processing, and 24/7 customer support.',
+                    ? 'تتكوّن المصاريف الإدارية من رسوم المنصة ورسوم معالجة الدفع الإلكتروني، ويتم حسابها وفق سياسة الرسوم الحالية قبل تأكيد الدفع.'
+                    : 'Administrative fees combine the VSP platform fee and Paymob processing fee, calculated from the current fee policy before checkout.',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.6),
               ),
               const SizedBox(height: 20),
@@ -168,7 +216,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
-                    foregroundColor: Colors.black,
+                    foregroundColor: VSPColors.black,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -188,6 +236,7 @@ class PaymentBreakdownCard extends StatelessWidget {
     required String value,
     bool isBold = false,
     VoidCallback? onInfoTap,
+    String? infoTooltip,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -198,18 +247,21 @@ class PaymentBreakdownCard extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: isBold ? Colors.white : VSPColors.textSecondary,
+                color: isBold ? VSPColors.white : VSPColors.textSecondary,
                 fontSize: isBold ? 13 : 11,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
               ),
             ),
             if (onInfoTap != null) ...[
               const SizedBox(width: 6),
-              GestureDetector(
-                onTap: onInfoTap,
-                child: const Icon(
+              IconButton(
+                tooltip: infoTooltip,
+                onPressed: onInfoTap,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                icon: const Icon(
                   Iconsax.info_circle_copy,
-                  size: 14,
+                  size: 16,
                   color: VSPColors.accent,
                 ),
               ),
@@ -219,7 +271,7 @@ class PaymentBreakdownCard extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: isBold ? VSPColors.accent : Colors.white,
+            color: isBold ? VSPColors.accent : VSPColors.white,
             fontSize: isBold ? 14 : 11,
             fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
           ),

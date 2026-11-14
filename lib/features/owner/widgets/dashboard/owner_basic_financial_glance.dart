@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/owner_financial_calculator.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import 'owner_time_period_dropdown.dart';
 
 /// كبسولة الأرباح للباقة الأساسية (Basic Financial Glance)
+@Deprecated('Use OwnerOperationalFinanceCard for the canonical owner finance surface')
 class OwnerBasicFinancialGlance extends StatelessWidget {
   final OwnerFinancialMetrics metrics;
   final String selectedTimePeriod;
@@ -24,7 +26,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: VSPColors.white.withValues(alpha: 0.08)),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -53,7 +55,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                metrics.totalPipeline.toStringAsFixed(0),
+                VSPMoneyFormatter.amount(metrics.totalPipeline),
                 style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: VSPColors.textPrimary, height: 1),
               ),
               const SizedBox(width: 6),
@@ -73,7 +75,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
+                    color: VSPColors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
                   child: Column(
@@ -85,7 +87,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${metrics.pitchCashRevenue.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
+                        '${VSPMoneyFormatter.amount(metrics.pitchCashRevenue)} ${isArabic ? "ج.م" : "EGP"}',
                         style: const TextStyle(color: VSPColors.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -97,7 +99,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
+                    color: VSPColors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
                   child: Column(
@@ -109,7 +111,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${metrics.digitalVspBalance.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
+                        '${VSPMoneyFormatter.amount(metrics.digitalVspBalance)} ${isArabic ? "ج.م" : "EGP"}',
                         style: const TextStyle(color: VSPColors.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                     ],

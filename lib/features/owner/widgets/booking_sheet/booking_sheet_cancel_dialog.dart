@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 enum ManualBookingCancelDecision {
   refund,
@@ -21,17 +22,21 @@ class BookingSheetCancelDialog {
   }) {
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(title, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
         content: Text(content, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(cancelBtn, style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(confirmBtn, style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
           ),
@@ -48,16 +53,22 @@ class BookingSheetCancelDialog {
   }) async {
     final result = await showDialog<ManualBookingCancelDecision>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
             const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 22),
             const SizedBox(width: 8),
-            Text(
-              isArabic ? 'إلغاء حجز بعربون' : 'Cancel Deposit Booking',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            Expanded(
+              child: Text(
+                isArabic ? 'إلغاء حجز بعربون' : 'Cancel Deposit Booking',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -67,8 +78,8 @@ class BookingSheetCancelDialog {
           children: [
             Text(
               isArabic
-                  ? 'هذا الحجز مسجل به عربون مقبوض بقيمة (${depositAmount.toInt()} ج.م).\nحدد الإجراء لتسوية حساب الدرج والدفتر بدقة:'
-                  : 'This booking has a deposit of (${depositAmount.toInt()} EGP).\nChoose how to reconcile this in your ledger:',
+                  ? 'هذا الحجز مسجل به عربون مقبوض بقيمة (${VSPMoneyFormatter.amount(depositAmount)} ج.م).\nحدد الإجراء لتسوية حساب الدرج والدفتر بدقة:'
+                  : 'This booking has a deposit of (${VSPMoneyFormatter.amount(depositAmount)} EGP).\nChoose how to reconcile this in your ledger:',
               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.4),
             ),
             const SizedBox(height: 16),
@@ -93,12 +104,12 @@ class BookingSheetCancelDialog {
                         children: [
                           Text(
                             isArabic ? 'تم رد العربون للعميل' : 'Refund Deposit to Client',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             isArabic
-                                ? 'تسجيل استرداد وخصم ${depositAmount.toInt()} ج.م من الدفتر'
+                                ? 'تسجيل استرداد وخصم ${VSPMoneyFormatter.amount(depositAmount)} ج.م من الدفتر'
                                 : 'Deducts deposit from daily cash ledger',
                             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                           ),
@@ -131,7 +142,7 @@ class BookingSheetCancelDialog {
                         children: [
                           Text(
                             isArabic ? 'احتساب العربون كشرط جزائي' : 'Keep Deposit as Penalty',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -151,6 +162,7 @@ class BookingSheetCancelDialog {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, ManualBookingCancelDecision.abort),
             child: Text(
               isArabic ? 'تراجع وعدم الإلغاء' : 'Keep Booking',

@@ -58,19 +58,30 @@ class AuthRegistrationService {
           'is_email_verified': firebaseUser.emailConfirmedAt != null,
         };
 
-        final registrationCompleted =
-            await _userRepository.completeRegistrationFlags(firebaseUser.id, profileData);
-        if (!registrationCompleted) {
-          return (
-            success: false,
-            user: null,
-            userModel: null,
-            error: 'REGISTRATION_COMPLETION_FAILED'
-          );
+        final isEmailConfirmed = firebaseUser.emailConfirmedAt != null;
+
+        // When email confirmation is enabled Supabase intentionally returns a
+        // user without an authenticated session. The insert trigger has already
+        // persisted the submitted profile metadata, but an unauthenticated
+        // client must not call the completion RPC yet. Doing so used to turn a
+        // successful signup into REGISTRATION_COMPLETION_FAILED.
+        if (isEmailConfirmed) {
+          final registrationCompleted =
+              await _userRepository.completeRegistrationFlags(firebaseUser.id, profileData);
+          if (!registrationCompleted) {
+            return (
+              success: false,
+              user: null,
+              userModel: null,
+              error: 'REGISTRATION_COMPLETION_FAILED'
+            );
+          }
         }
 
         UserModel? userModel;
-        final existingData = await _userRepository.getUserData(firebaseUser.id);
+        final existingData = isEmailConfirmed
+            ? await _userRepository.getUserData(firebaseUser.id)
+            : null;
         if (existingData != null) {
           userModel = UserModel.fromFirestore(existingData);
           if (!userModel.isRegistrationComplete) {
@@ -86,7 +97,7 @@ class AuthRegistrationService {
             position: userData?['position'] ?? 'GK',
             governorate: userData?['governorate'] ?? governorate,
             isRegistrationComplete: true,
-            isEmailVerified: true,
+            isEmailVerified: isEmailConfirmed,
             dateOfBirth: userData?['date_of_birth'] != null
                 ? DateTime.tryParse(userData!['date_of_birth'])
                 : null,
@@ -206,7 +217,8 @@ class AuthRegistrationService {
     required UserModel? currentUserModel,
     required String verificationStatus,
   }) async {
-    if (authUser == null || currentUserModel == null) {
+    if (authUser == null || currentUserModel == null ||
+        currentUserModel.uid != authUser.id) {
       return (success: false, userModel: null);
     }
 
@@ -229,12 +241,12 @@ class AuthRegistrationService {
         'p_additional_data': updatedAdditional,
       });
 
-      if (response is Map && response['success'] != true) {
-        VSPLogger.w('submit_owner_verification returned error: ${response['error']}');
+      if (response is! Map || response['success'] != true) {
+        VSPLogger.w('Owner registration completion was not confirmed.');
         return (success: false, userModel: null);
       }
 
-      final bool authoritativeHasStadium = response is Map && response['has_stadium'] == true;
+      final bool authoritativeHasStadium = response['has_stadium'] == true;
 
       final updatedModel = currentUserModel.copyWith(
         verificationStatus: verificationStatus,
@@ -245,24 +257,32 @@ class AuthRegistrationService {
 
       return (success: true, userModel: updatedModel);
     } catch (e) {
-      VSPLogger.e('completeOwnerRegistration failed', e);
+      VSPLogger.w('Owner registration completion failed (${e.runtimeType}).');
       return (success: false, userModel: null);
     }
   }
 
-  /// Aborts uncompleted registration and purges the row.
+  /// Requests cancellation; the server rechecks completion under a row lock.
   Future<void> abortRegistration(User? authUser, UserModel? userModel) async {
     final uid = authUser?.id;
     if (uid != null) {
-      if (userModel?.isRegistrationComplete != true) {
+      if (userModel == null || userModel.uid != uid) {
+        VSPLogger.w('Incomplete-account cleanup skipped: profile identity is not confirmed.');
+        return;
+      }
+      if (!userModel.isRegistrationComplete) {
         try {
-          await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
-          VSPLogger.i('abortRegistration: Incomplete account purged for UID: $uid');
+          final result = await _supabase.rpc('cancel_incomplete_registration_atomic', params: {'p_user_id': uid});
+          if (result is! Map || result['success'] != true) {
+            VSPLogger.w('Incomplete-account cleanup was not confirmed.');
+            return;
+          }
+          VSPLogger.i('Incomplete-account cleanup confirmed.');
         } catch (e) {
-          VSPLogger.w('abortRegistration RPC error: $e');
-          try {
-            await _authService.deleteAccount(uid);
-          } catch (_) {}
+          VSPLogger.w('Incomplete-account cleanup failed (${e.runtimeType}).');
+          // Do not fall back to unconditional deletion after a network failure.
+          // The first request may have completed, or another device may have
+          // finished registration while this request was in flight.
         }
       } else {
         VSPLogger.w('abortRegistration called on a completed account.');

@@ -37,6 +37,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
   late Championship _currentChampionship;
   bool _isLoading = false;
   List<Team> _teams = [];
+  bool _hasTeamsLoadError = false;
   List<String> _lastJoinedTeams = [];
   StreamSubscription? _champSubscription;
 
@@ -66,14 +67,25 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
 
   Future<void> _fetchTeams(List<String> ids) async {
     if (ids.isEmpty) {
-      if (mounted) setState(() => _teams = []);
+      if (mounted) {
+        setState(() {
+          _teams = [];
+          _hasTeamsLoadError = false;
+        });
+      }
       return;
     }
     try {
       final teams = await TournamentRepository().getTeamsByIds(ids);
-      if (mounted) setState(() => _teams = teams);
+      if (mounted) {
+        setState(() {
+          _teams = teams;
+          _hasTeamsLoadError = false;
+        });
+      }
     } catch (e) {
       debugPrint('Error fetching teams in dashboard: $e');
+      if (mounted) setState(() => _hasTeamsLoadError = true);
     }
   }
 
@@ -105,8 +117,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     setState(() => _isLoading = true);
     try {
       final teams = await TournamentRepository().getTeamsByIds(_currentChampionship.joinedTeams);
-      setState(() => _isLoading = false);
       if (!mounted) return;
+      setState(() => _isLoading = false);
 
       final unpaidTeams = teams.where((t) => !_currentChampionship.paidTeams.contains(t.id)).toList();
       if (unpaidTeams.isNotEmpty) {
@@ -133,8 +145,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         );
       }
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
+        setState(() => _isLoading = false);
         AppErrorHandler.showError(context, e);
       }
     }
@@ -169,7 +181,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       }
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+        AppErrorHandler.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -181,6 +193,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
@@ -189,7 +202,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             const SizedBox(width: 8),
             Text(
               isAr ? 'بدء المنافسة رسميًا' : 'Kickoff Competition',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
         ),
@@ -208,7 +221,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
             ),
             child: Text(isAr ? 'تأكيد الانطلاق' : 'Confirm Kickoff', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -230,7 +243,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       }
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+        AppErrorHandler.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -307,7 +320,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       }
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+        AppErrorHandler.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -348,7 +361,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       }
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+        AppErrorHandler.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -367,7 +380,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         title: Text(
@@ -459,8 +472,11 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             ),
         ],
       ),
-      body: Column(
-        children: [
+      body: SafeArea(
+        top: false,
+        bottom: true,
+        child: Column(
+          children: [
           TournamentOverviewCard(
             championship: _currentChampionship,
             onRecordPrizeDelivery: () {
@@ -487,7 +503,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 ),
                 const Spacer(),
                 if (_currentChampionship.status == 'open' && _currentChampionship.joinedTeams.length < _currentChampionship.maxTeams)
-                  GestureDetector(
+                  InkWell(
+                    borderRadius: BorderRadius.circular(VSPRadius.full),
                     onTap: () {
                       showTournamentManualTeamSheet(
                         context,
@@ -503,27 +520,34 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                         },
                       );
                     },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: VSPColors.accent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(VSPRadius.full),
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: VSPSize.touchTarget,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            AppLocalizations.of(context)!.addTeam,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: VSPColors.accent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                ),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: VSPColors.accent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(VSPRadius.full),
+                            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 14),
+                              const SizedBox(width: 4),
+                              Text(
+                                AppLocalizations.of(context)!.addTeam,
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: VSPColors.accent,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -532,16 +556,37 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           ),
 
           Expanded(
-            child: _teams.isEmpty
+            child: _hasTeamsLoadError
                 ? Center(
-                    child: Text(
-                      Localizations.localeOf(context).languageCode == 'ar'
-                          ? 'لا توجد فرق مشاركة حتى الآن'
-                          : 'No teams joined yet',
-                      style: const TextStyle(color: VSPColors.textSecondary),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'تعذر تحميل الفرق المشاركة.'
+                              : 'Could not load participating teams.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                        TextButton(
+                          onPressed: () => _fetchTeams(_currentChampionship.joinedTeams),
+                          child: Text(
+                            Localizations.localeOf(context).languageCode == 'ar' ? 'إعادة المحاولة' : 'Retry',
+                          ),
+                        ),
+                      ],
                     ),
                   )
-                : ListView.builder(
+                : _teams.isEmpty
+                    ? Center(
+                        child: Text(
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'لا توجد فرق مشاركة حتى الآن'
+                              : 'No teams joined yet',
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                      )
+                    : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: _teams.length,
                     itemBuilder: (context, index) {
@@ -577,7 +622,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             onStartTournament: _handleStartTournament,
             onActivateCompetition: _handleActivateCompetition,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -55,6 +55,7 @@ class _SignupScreenState extends State<SignupScreen> {
  }
 
  Future<void> _fetchAutoLocation() async {
+ if (!mounted) return;
  setState(() => _isFetchingLocation = true);
  try {
  await Provider.of<AuthProvider>(context, listen: false).updateUserLocation(force: true);
@@ -148,23 +149,49 @@ class _SignupScreenState extends State<SignupScreen> {
       dateOfBirth: _dateOfBirth,
     );
 
-    final success = await authProvider.signUp(
-      email: email,
-      password: password,
-      role: role,
-      userData: userData,
-    );
-
-    debugPrint("[DEBUG_SIGNUP] signUp result=$success error=${authProvider.errorMessage}");
+    var success = false;
+    try {
+      success = await authProvider.signUp(
+        email: email,
+        password: password,
+        role: role,
+        userData: userData,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Signup request failed unexpectedly: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (mounted) {
+        final isAr = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isAr
+              ? 'تعذر إكمال إنشاء الحساب حالياً. حاول مرة أخرى.'
+              : 'We could not complete account creation. Please try again.',
+        );
+      }
+    }
 
     if (!mounted) return;
 
     if (success) {
-      await SecureStorageService.writeSecure('pending_verification_email', email);
+      try {
+        await SecureStorageService.writeSecure('pending_verification_email', email);
+      } catch (error, stackTrace) {
+        debugPrint('Signup succeeded but pending verification email could not be stored: $error');
+        debugPrintStack(stackTrace: stackTrace);
+        if (mounted) {
+          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isAr
+                ? 'تم إنشاء الحساب، لكن تعذر حفظ بيانات التحقق على الجهاز. تحقق من بريدك الإلكتروني قبل إعادة التسجيل.'
+                : 'Your account was created, but verification details could not be saved on this device. Check your email before trying to register again.',
+          );
+        }
+      }
     } else if (mounted) {
       final isAr = Localizations.localeOf(context).languageCode == 'ar';
       final errorMsg = SignupValidationService.formatSignupError(authProvider.errorMessage, isArabic: isAr);
-      debugPrint("[DEBUG_SIGNUP] Showing error toast: $errorMsg");
       VSPFeedback.showError(context, errorMsg);
     }
 
@@ -213,7 +240,7 @@ class _SignupScreenState extends State<SignupScreen> {
  left: VSPSpacing.lg, 
  right: VSPSpacing.lg, 
  top: 0, 
- bottom: MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + VSPSpacing.lg,
+ bottom: MediaQuery.viewInsetsOf(context).bottom + VSPSpacing.lg,
  ),
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,9 +336,12 @@ class _SignupScreenState extends State<SignupScreen> {
  child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
  )
  else
- GestureDetector(
- onTap: _fetchAutoLocation,
- child: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
+ IconButton(
+ onPressed: _fetchAutoLocation,
+ tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'تحديد الموقع تلقائياً' : 'Detect location automatically',
+ constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+ padding: EdgeInsets.zero,
+ icon: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
  ),
  ],
  ),

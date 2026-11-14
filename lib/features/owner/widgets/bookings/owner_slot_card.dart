@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -54,12 +55,17 @@ class OwnerSlotCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Text(
-              isAr ? 'غير متاح للحجز' : 'Not bookable',
-              style: const TextStyle(
-                color: VSPColors.textSecondary,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: Text(
+                isAr ? 'غير متاح للحجز' : 'Not bookable',
+                style: const TextStyle(
+                  color: VSPColors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
               ),
             ),
           ],
@@ -83,7 +89,7 @@ class OwnerSlotCard extends StatelessWidget {
         height: 54,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isNowSlot ? VSPColors.accent.withValues(alpha: 0.08) : Colors.transparent,
+          color: isNowSlot ? VSPColors.accent.withValues(alpha: 0.08) : VSPColors.transparent,
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
             color: isNowSlot
@@ -102,16 +108,20 @@ class OwnerSlotCard extends StatelessWidget {
               size: 22,
             ),
             const SizedBox(width: 12),
-            Text(
-              isBreak
-                  ? l10n.breakTime
-                  : (isPast ? (isAr ? 'موعد منقضي' : 'Expired Slot') : (isAr ? 'متاح للحجز' : 'Available')),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.35) : VSPColors.textSecondary,
-                    fontWeight: isNowSlot ? FontWeight.bold : FontWeight.w600,
-                  ),
+            Expanded(
+              child: Text(
+                isBreak
+                    ? l10n.breakTime
+                    : (isPast ? (isAr ? 'موعد منقضي' : 'Expired Slot') : (isAr ? 'متاح للحجز' : 'Available')),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.35) : VSPColors.textSecondary,
+                      fontWeight: isNowSlot ? FontWeight.bold : FontWeight.w600,
+                    ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -146,7 +156,7 @@ class OwnerSlotCard extends StatelessWidget {
         color: isManual ? VSPColors.surface : VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: isManual ? VSPColors.accent.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.08),
+          color: isManual ? VSPColors.accent.withValues(alpha: 0.25) : VSPColors.white.withValues(alpha: 0.08),
           width: 1,
         ),
       ),
@@ -223,11 +233,11 @@ class OwnerSlotCard extends StatelessWidget {
                       } else if (isPartiallyPaid) {
                         badgeLabel = isCompleted
                             ? (isAr
-                                ? 'متبقي للتحصيل ${remaining.toStringAsFixed(0)} ج.م'
-                                : 'Past due ${remaining.toStringAsFixed(0)} EGP')
+                                ? 'متبقي للتحصيل ${VSPMoneyFormatter.amount(remaining)} ج.م'
+                                : 'Past due ${VSPMoneyFormatter.amount(remaining)} EGP')
                             : (isAr
-                                ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م'
-                                : 'Rem. ${remaining.toStringAsFixed(0)} EGP');
+                                ? 'متبقي ${VSPMoneyFormatter.amount(remaining)} ج.م'
+                                : 'Rem. ${VSPMoneyFormatter.amount(remaining)} EGP');
                         badgeColor = isCompleted ? VSPColors.warning : VSPColors.info;
                       } else if (isCompleted) {
                         badgeLabel = isAr ? 'تحصيل متأخر' : 'Collection overdue';
@@ -269,7 +279,7 @@ class OwnerSlotCard extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                '${cardPrice.toInt()} ${isAr ? "ج.م" : "EGP"}',
+                '${VSPMoneyFormatter.amount(cardPrice)} ${isAr ? "ج.م" : "EGP"}',
                 style: const TextStyle(
                   color: VSPColors.accent,
                   fontWeight: FontWeight.bold,
@@ -278,7 +288,14 @@ class OwnerSlotCard extends StatelessWidget {
               ),
             );
           }),
-          const Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 14),
+          Transform.flip(
+            flipX: Directionality.of(context) == TextDirection.rtl,
+            child: const Icon(
+              Iconsax.arrow_right_1_copy,
+              color: VSPColors.textSecondary,
+              size: 14,
+            ),
+          ),
         ],
       ),
     );

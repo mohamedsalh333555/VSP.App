@@ -146,20 +146,18 @@ class StorageService {
  }
  }
 
- Future<String?> uploadProfilePicture({required XFile file, required String userId, String? oldImageUrl}) async {
+ Future<String?> uploadProfilePicture({required XFile file, required String userId}) async {
+ final rawExtension = p.extension(file.name).toLowerCase();
+ final safeExtension = ['.jpg', '.jpeg', '.png', '.webp', '.heic'].contains(rawExtension)
+     ? rawExtension
+     : '.jpg';
  // Upload first so a failed replacement never destroys the currently visible photo.
  final uploadedUrl = await uploadFile(
  file: file,
  bucket: 'profile-pictures',
- path: '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+ path: '$userId/profile_${DateTime.now().millisecondsSinceEpoch}$safeExtension',
  );
  if (uploadedUrl == null || uploadedUrl.isEmpty) return null;
-
- if (oldImageUrl != null &&
-     oldImageUrl.isNotEmpty &&
-     oldImageUrl != uploadedUrl) {
-   await deleteFile(oldImageUrl);
- }
  return uploadedUrl;
  }
 

@@ -8,6 +8,7 @@ import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/tournament/wizard/tournament_basics_step.dart';
@@ -196,7 +197,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       final t = widget.tournament!;
       _nameController.text = t.name;
       _selectedSport = t.sportType;
-      _feeController.text = t.entryFee.toInt().toString();
+      _feeController.text = VSPMoneyFormatter.amount(t.entryFee);
       _selectedType = t.type;
       _selectedTeams = t.maxTeams.toString();
       _numberOfGroups = t.numberOfGroups;
@@ -205,7 +206,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       _startDate = t.startDate;
       _endDate = t.endDate;
       _durationController.text = t.matchDuration.toString();
-      _prizeController.text = t.grandPrize.toInt().toString();
+      _prizeController.text = VSPMoneyFormatter.amount(t.grandPrize);
     } else {
       if (widget.preselectedType != null) {
         _selectedType = widget.preselectedType!;
@@ -218,7 +219,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   void _loadOwnerSports() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.uid ?? auth.userModel?.uid;
+    final uid = auth.currentUser?.id ?? auth.userModel?.uid;
     if (uid != null) {
       _stadiumSubscription?.cancel();
       _stadiumSubscription = StadiumRepository().getOwnerStadiums(uid).listen((stadiums) {
@@ -265,7 +266,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         data: Theme.of(pickerCtx).copyWith(
           colorScheme: const ColorScheme.dark(
             primary: VSPColors.accent,
-            onPrimary: Colors.black,
+            onPrimary: VSPColors.black,
             surface: VSPColors.surface,
             onSurface: VSPColors.textPrimary,
           ),
@@ -417,7 +418,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         final isAr = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
-          isAr ? 'حدث خطأ غير متوقع: $e' : 'Error: $e',
+          isAr ? 'تعذر إنشاء البطولة. راجع البيانات وحاول مرة أخرى.' : 'Could not create the tournament. Review the details and try again.',
         );
       }
     } finally {
@@ -464,7 +465,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
               padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
               physics: const BouncingScrollPhysics(),
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
+                duration: VSPDSMotion.indicatorTransition,
                 child: _currentStep == 0
                     ? TournamentBasicsStep(
                         nameController: _nameController,

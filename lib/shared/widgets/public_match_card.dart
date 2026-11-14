@@ -11,6 +11,8 @@ import '../../core/repositories/match_repository.dart';
 import '../../core/services/sharing_service.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/utils/vsp_feedback.dart';
+import '../../core/utils/vsp_money_formatter.dart';
+import '../../core/services/logger_service.dart';
 import '../../data/models.dart';
 import 'match_card/manage_participants_modal.dart';
 import '../../features/player/widgets/collective_match_invite_sheet.dart';
@@ -30,103 +32,185 @@ class PublicMatchCard extends StatefulWidget {
 class _PublicMatchCardState extends State<PublicMatchCard> {
  bool _isLoading = false;
 
- void _rejectRequest(BuildContext context, String? userId) async {
- if (userId == null) return;
- setState(() => _isLoading = true);
- try {
- await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
- } catch (e) {
- if (!mounted) return;
- VSPFeedback.showError(this.context, e.toString());
- } finally {
- if (mounted) {
- setState(() => _isLoading = false);
- }
- }
- }
+   Future<void> _rejectRequest(BuildContext context, String? userId) async {
+    if (userId == null || _isLoading) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() => _isLoading = true);
+    try {
+      final success = await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
+      if (!context.mounted) return;
+      if (success) {
+        VSPFeedback.showSuccess(
+          context,
+          isArabic ? 'تم إلغاء طلب الانضمام.' : 'Join request cancelled.',
+        );
+      } else {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إلغاء طلب الانضمام. حاول مرة أخرى.'
+              : 'Could not cancel the join request. Try again.',
+        );
+      }
+    } catch (e, stack) {
+      VSPLogger.e('Failed to cancel public match join request', e, stack);
+      if (!context.mounted) return;
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر إلغاء طلب الانضمام. تحقق من الاتصال وحاول مرة أخرى.'
+            : 'Could not cancel the join request. Check your connection and try again.',
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
- Future<void> _handleShare(Booking booking) async {
-   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-   if (booking.isOpenJoin) {
-     final credentials = await MatchRepository().getCollectiveInviteCredentials(booking.id);
-     if (!mounted) return;
-     final token = credentials?['invite_token']?.toString();
-     final code = credentials?['invite_code']?.toString();
-     final active = credentials?['active'] == true || credentials?['status'] == 'confirmed';
-     if (token == null || token.isEmpty || code == null || code.isEmpty || !active) {
-       VSPFeedback.showInfo(context, isArabic ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.' : 'The invite can be shared after the booking is confirmed.');
-       return;
-     }
-     await SharingService.shareCollectiveInvite(
-       inviteToken: token, inviteCode: code, stadiumName: booking.stadiumName,
-       date: booking.formattedDate + ' - ' + booking.formattedTimeRange,
-       hostName: booking.hostName ?? (isArabic ? 'المنشئ' : 'Host'),
-     );
-     return;
-   }
-   await SharingService.shareMatch(
-     bookingId: booking.id,
-     teamName: booking.playerTeamName ?? booking.hostName ?? AppLocalizations.of(context)!.vspTeam,
-     stadiumName: booking.stadiumName,
-     date: booking.formattedDate + ' at ' + booking.formattedTimeRange,
-   );
- }
- void _handleJoin(BuildContext context, String? userId) async {
- if (userId == null) {
- ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.loginFirst)));
- return;
- }
- setState(() => _isLoading = true);
- try {
- final success = await MatchRepository().joinPublicMatch(widget.booking.id, userId);
- if (!context.mounted) return;
- if (success) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- VSPFeedback.showSuccess(context, isArabic ? 'تم انضمامك للمباراة وتأكيد مكانك بنجاح.' : 'Joined match successfully.');
- } else {
- VSPFeedback.showError(context, AppLocalizations.of(context)!.joinFailed);
- }
- } catch (e) {
- if (context.mounted) {
- VSPFeedback.showError(context, e.toString());
- }
- } finally {
- if (mounted) {
- setState(() => _isLoading = false);
- }
- }
- }
+  Future<void> _handleShare(Booking booking) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    try {
+      if (booking.isOpenJoin) {
+        final credentials = await MatchRepository().getCollectiveInviteCredentials(booking.id);
+        if (!mounted) return;
+        final token = credentials?['invite_token']?.toString();
+        final code = credentials?['invite_code']?.toString();
+        final active = credentials?['active'] == true || credentials?['status'] == 'confirmed';
+        if (token == null || token.isEmpty || code == null || code.isEmpty || !active) {
+          VSPFeedback.showInfo(
+            context,
+            isArabic
+                ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.'
+                : 'The invite can be shared after the booking is confirmed.',
+          );
+          return;
+        }
+        await SharingService.shareCollectiveInvite(
+          inviteToken: token,
+          inviteCode: code,
+          stadiumName: booking.stadiumName,
+          date: booking.formattedDate + ' - ' + booking.formattedTimeRange,
+          hostName: booking.hostName ?? (isArabic ? 'المنشئ' : 'Host'),
+        );
+        return;
+      }
+      await SharingService.shareMatch(
+        bookingId: booking.id,
+        teamName: booking.playerTeamName ??
+            booking.hostName ??
+            AppLocalizations.of(context)!.vspTeam,
+        stadiumName: booking.stadiumName,
+        date: booking.formattedDate + ' at ' + booking.formattedTimeRange,
+      );
+    } catch (e, stack) {
+      VSPLogger.e('Failed to share public match invitation', e, stack);
+      if (!mounted) return;
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذرت مشاركة الدعوة. حاول مرة أخرى.'
+            : 'Could not share the invitation. Try again.',
+      );
+    }
+  }
 
- Future<void> _handleLeave(BuildContext context, String? userId) async {
-   if (userId == null || _isLoading) return;
-   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-   final confirmed = await showDialog<bool>(
-     context: context, barrierDismissible: false,
-     builder: (dialogContext) => AlertDialog(
-       title: Text(isArabic ? 'مغادرة المباراة؟' : 'Leave match?'),
-       content: Text(isArabic ? 'هل أنت متأكد أنك تريد مغادرة المباراة؟ سيتم إتاحة مكانك للاعبين الآخرين.' : 'Are you sure you want to leave this match? Your place will become available to other players.'),
-       actions: [
-         TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: Text(isArabic ? 'إلغاء' : 'Cancel')),
-         FilledButton(style: FilledButton.styleFrom(backgroundColor: VSPColors.error), onPressed: () => Navigator.of(dialogContext).pop(true), child: Text(isArabic ? 'تأكيد المغادرة' : 'Confirm leave')),
-       ],
-     ),
-   );
-   if (confirmed != true || !mounted) return;
-   setState(() => _isLoading = true);
-   try {
-     final success = widget.booking.isOpenJoin
+  Future<void> _handleJoin(BuildContext context, String? userId) async {
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.loginFirst)),
+      );
+      return;
+    }
+    if (_isLoading) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() => _isLoading = true);
+    try {
+      final success = await MatchRepository().joinPublicMatch(widget.booking.id, userId);
+      if (!context.mounted) return;
+      if (success) {
+        VSPFeedback.showSuccess(
+          context,
+          isArabic
+              ? 'تم انضمامك للمباراة وتأكيد مكانك بنجاح.'
+              : 'Joined match successfully.',
+        );
+      } else {
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.joinFailed);
+      }
+    } catch (e, stack) {
+      VSPLogger.e('Public match join failed', e, stack);
+      if (!context.mounted) return;
+      final code = e.toString().toLowerCase();
+      final message = code.contains('time_conflict')
+          ? (isArabic
+              ? 'لديك حجز أو مباراة أخرى في نفس الموعد.'
+              : 'You already have a booking or match at this time.')
+          : code.contains('match_is_full')
+              ? (isArabic ? 'اكتمل عدد اللاعبين في المباراة.' : 'This match is full.')
+              : code.contains('already_joined')
+                  ? (isArabic ? 'أنت منضم بالفعل إلى هذه المباراة.' : 'You have already joined this match.')
+                  : (isArabic
+                      ? 'تعذر الانضمام للمباراة. تحقق من الاتصال وحاول مرة أخرى.'
+                      : 'Could not join the match. Check your connection and try again.');
+      VSPFeedback.showError(context, message);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleLeave(BuildContext context, String? userId) async {
+    if (userId == null || _isLoading) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      useSafeArea: true,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(isArabic ? 'مغادرة المباراة؟' : 'Leave match?'),
+        content: Text(
+          isArabic
+              ? 'هل أنت متأكد أنك تريد مغادرة المباراة؟ سيتم إتاحة مكانك للاعبين الآخرين.'
+              : 'Are you sure you want to leave this match? Your place will become available to other players.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: VSPColors.error),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(isArabic ? 'تأكيد المغادرة' : 'Confirm leave'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final success = widget.booking.isOpenJoin
           ? await MatchRepository().leavePrivateCollectiveMatch(widget.booking.id, userId)
           : await MatchRepository().leavePublicMatch(widget.booking.id, userId);
-     if (!context.mounted) return;
-     if (success) VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.leaveSuccess);
-     else VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
-   } catch (e) {
-     if (context.mounted) VSPFeedback.showError(context, e.toString());
-   } finally {
-     if (mounted) setState(() => _isLoading = false);
-   }
- }
- void _manageParticipants(BuildContext context) {
+      if (!context.mounted) return;
+      if (success) {
+        VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.leaveSuccess);
+      } else {
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
+      }
+    } catch (e, stack) {
+      VSPLogger.e('Public match leave failed', e, stack);
+      if (!context.mounted) return;
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر مغادرة المباراة. تحقق من الاتصال وحاول مرة أخرى.'
+            : 'Could not leave the match. Check your connection and try again.',
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+void _manageParticipants(BuildContext context) {
     if (widget.booking.isOpenJoin) {
       CollectiveMatchInviteSheet.showForBooking(context, bookingId: widget.booking.id, initialBooking: widget.booking);
       return;
@@ -138,7 +222,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  return Text(
  text,
  style: const TextStyle(
- color: Colors.white,
+ color: VSPColors.white,
  fontSize: 13,
  fontWeight: FontWeight.bold,
  ),
@@ -172,7 +256,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  Text(
  headerTitle,
  style: TextStyle(
- color: Colors.white.withValues(alpha: 0.5),
+ color: VSPColors.white.withValues(alpha: 0.5),
  fontSize: 9.5,
  fontWeight: FontWeight.w600,
  ),
@@ -187,7 +271,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  value,
  maxLines: 1,
  overflow: TextOverflow.ellipsis,
- style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+ style: const TextStyle(color: VSPColors.white, fontSize: 11, fontWeight: FontWeight.bold),
  ),
  ),
  ),
@@ -195,26 +279,34 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  );
  }
 
- Widget _buildDivider() => Container(width: 1, height: 22, color: Colors.white10);
+ Widget _buildDivider() => Container(width: 1, height: 22, color: VSPColors.white10);
 
  Widget _buildRawButton({required String label, required Color color, required VoidCallback? onTap, bool isOutlined = false}) {
- return AbsorbPointer(
+ return Semantics(
+ button: true,
+                excludeSemantics: true,
+ enabled: !_isLoading && onTap != null,
+ label: label,
+ onTap: _isLoading ? null : onTap,
+ child: AbsorbPointer(
  absorbing: _isLoading,
  child: GestureDetector(
+ excludeFromSemantics: true,
  onTap: _isLoading ? null : onTap,
  child: Container(
  height: 48.0,
  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
  decoration: BoxDecoration(
- color: isOutlined ? Colors.transparent : color,
+ color: isOutlined ? VSPColors.transparent : color,
  borderRadius: BorderRadius.circular(VSPRadius.button),
  border: isOutlined ? Border.all(color: color, width: 1.5) : null,
  boxShadow: isOutlined ? null : [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3))],
  ),
  child: Center(
  child: _isLoading 
- ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)) 
- : Text(label, style: TextStyle(color: isOutlined ? color : Colors.black, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
+ ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: VSPColors.black, strokeWidth: 2)) 
+ : Text(label, style: TextStyle(color: isOutlined ? color : VSPColors.black, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
+ ),
  ),
  ),
  ),
@@ -266,7 +358,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          if (booking.isOpenJoin) {
+          if (booking.isOpenJoin && !isEnded && !isCancelled) {
             CollectiveMatchInviteSheet.showForBooking(
               context,
               bookingId: booking.id,
@@ -286,10 +378,10 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       decoration: BoxDecoration(
         color: VSPColors.surface, 
         borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: widget.highlighted ? VSPColors.accent : Colors.white.withValues(alpha: 0.08), width: 1),
+        border: Border.all(color: widget.highlighted ? VSPColors.accent : VSPColors.white.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
+            color: VSPColors.black.withValues(alpha: 0.25),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -303,12 +395,12 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
  _buildTypeBadge(PublicMatchCardFormatter.getLocalizedBookingType(booking.bookingType, isArabic: isArabic)),
-  if (isHost)
-  _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
-  else if (isCancelled)
+  if (isCancelled)
   _buildStatusBadge(isArabic ? 'ملغاة' : 'Cancelled', VSPColors.error)
   else if (isEnded)
   _buildStatusBadge(isArabic ? 'انتهت' : 'Ended', VSPColors.textSecondary)
+  else if (isHost)
+  _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
   else if (hasJoined)
   _buildStatusBadge(AppLocalizations.of(context)!.joined, VSPColors.info)
   else if (isPending)
@@ -338,19 +430,19 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.start,
  children: [
- Text(booking.hostName ?? booking.playerTeamName ?? AppLocalizations.of(context)!.host, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+ Text(booking.hostName ?? booking.playerTeamName ?? AppLocalizations.of(context)!.host, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
  Text(booking.stadiumName, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
  ],
  ),
  ),
  if (!booking.isOpenJoin || isHost)
-  IconButton(visualDensity: VisualDensity.compact, icon: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 18), onPressed: () => _handleShare(booking)),
+  IconButton( icon: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 18), onPressed: () => _handleShare(booking)),
  ],
  ),
  const SizedBox(height: 12),
  Container(
  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
- decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
+ decoration: BoxDecoration(color: VSPColors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
  child: Row(
  mainAxisAlignment: MainAxisAlignment.spaceAround,
  children: [
@@ -362,7 +454,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
    Iconsax.wallet_1_copy,
    booking.isOpenJoin ? (isArabic ? 'إجمالي الحجز' : 'TOTAL') : (isArabic ? 'رسوم الفرد' : 'PER PLAYER'),
    booking.isOpenJoin
-       ? booking.totalPrice.toInt().toString() + ' ' + AppLocalizations.of(context)!.egCurrency
+       ? VSPMoneyFormatter.amount(booking.totalPrice) + ' ' + AppLocalizations.of(context)!.egCurrency
        : entryFee + ' ' + AppLocalizations.of(context)!.egCurrency,
  ),
  ],

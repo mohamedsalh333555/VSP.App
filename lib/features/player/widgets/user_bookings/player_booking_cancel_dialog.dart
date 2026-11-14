@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -12,30 +14,22 @@ class PlayerBookingCancelDialog {
 
   static Future<void> show(BuildContext context, Booking booking) {
     final l10n = AppLocalizations.of(context)!;
+    final initiatingUserId =
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    if (initiatingUserId == null) return Future<void>.value();
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    // 1. تحديد بيانات وسيلة الدفع والاسترداد
+    // The cancellation RPC/Paymob worker calculates the actual refundable
+    // amount from completed transactions. Do not guess it from total_price.
     final paymentMethod = booking.paymentMethod;
-
-    // 2. هل دُفع أي مبلغ إلكتروني فعلاً؟
-    //    - حجز كاش صافي (مفيش عربون أونلاين): مبلغ الاسترداد = صفر
-    //    - حجز هجين (عربون + كاش): الاسترداد = العربون المدفوع أونلاين فقط
-    //    - حجز أونلاين كامل: الاسترداد = المبلغ المدفوع كاملاً
-    final bool isPureCash = paymentMethod.toLowerCase() == 'cash' &&
-        (booking.depositPaid <= 0 && !booking.isDepositPaid);
-
-    final double actualRefundAmount;
-    if (isPureCash) {
-      // كاش صافي — اللاعب ما دفعش حاجة أونلاين
-      actualRefundAmount = 0.0;
-    } else if (booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice) {
-      // هجين — الاسترداد = العربون الإلكتروني فقط
-      actualRefundAmount = booking.depositPaid;
-    } else {
-      // أونلاين كامل — الاسترداد = ما دُفع
-      actualRefundAmount = booking.refundAmount ??
-          (booking.depositPaid > 0 ? booking.depositPaid : booking.totalPrice);
-    }
+    final paymentStatus = booking.paymentStatus.toLowerCase();
+    final hasPaidAmount = booking.isPaid ||
+        booking.isDepositPaid ||
+        booking.depositPaid > 0 ||
+        ['paid', 'refund_pending', 'refunded'].contains(paymentStatus);
+    final isPureCash = paymentMethod.toLowerCase() == 'cash' && !hasPaidAmount;
+    final amountConfirmed = booking.refundAmount != null || !hasPaidAmount;
+    final actualRefundAmount = booking.refundAmount ?? 0.0;
 
     // 3. تحديد قناة الاسترداد والمدة المتوقعة
     //    لو كاش صافي — قناة الاسترداد لا تُعرض (مبلغها صفر)
@@ -51,16 +45,22 @@ class PlayerBookingCancelDialog {
           ? RefundEta.businessDays
           : (refundChannel == RefundChannel.wallet ? RefundEta.minutes : RefundEta.immediate),
       refundAmount: actualRefundAmount,
+      amountConfirmed: amountConfirmed,
+      hasNoPaidAmount: !hasPaidAmount,
       isPureCashNoDeposit: isPureCash,
     );
 
-    final amountFormatted = isPureCash
-        ? (isArabic ? 'لا يوجد مبلغ مدفوع إلكترونياً' : 'No online payment made')
-        : '${refundInfo.refundAmount.toStringAsFixed(0)} ${isArabic ? 'جنيه' : l10n.egCurrency}';
+    final amountFormatted = !hasPaidAmount
+        ? (isArabic ? 'لا يوجد مبلغ مدفوع' : 'No amount paid')
+        : (amountConfirmed
+            ? '${VSPMoneyFormatter.amount(refundInfo.refundAmount)} ${isArabic ? 'جنيه' : l10n.egCurrency}'
+            : (isArabic ? 'سيتم التأكيد بعد الإلغاء' : 'Confirmed after cancellation'));
 
     return showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogCtx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VSPRadius.xl)),
@@ -86,6 +86,7 @@ class PlayerBookingCancelDialog {
             context: context,
             dialogCtx: dialogCtx,
             booking: booking,
+            initiatingUserId: initiatingUserId,
             refundInfo: refundInfo,
             l10n: l10n,
             isArabic: isArabic,
@@ -100,6 +101,7 @@ class _CancelDialogActions extends StatelessWidget {
   final BuildContext context;
   final BuildContext dialogCtx;
   final Booking booking;
+  final String initiatingUserId;
   final RefundInfo refundInfo;
   final AppLocalizations l10n;
   final bool isArabic;
@@ -108,6 +110,7 @@ class _CancelDialogActions extends StatelessWidget {
     required this.context,
     required this.dialogCtx,
     required this.booking,
+    required this.initiatingUserId,
     required this.refundInfo,
     required this.l10n,
     required this.isArabic,
@@ -115,32 +118,51 @@ class _CancelDialogActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext _) {
+    final isNarrow = MediaQuery.sizeOf(dialogCtx).width < 400;
+    final keepButton = PrimaryButton(
+          text: l10n.keepBooking,
+          height: 48,
+          color: VSPColors.surfaceAlt,
+          textColor: VSPColors.textPrimary,
+          onPressed: () => Navigator.pop(dialogCtx),
+        );
+        final cancelButton = PrimaryButton(
+          text: l10n.cancel,
+          height: 48,
+          color: VSPColors.error,
+          textColor: VSPColors.background,
+          onPressed: _performCancellation,
+        );
+
+    // AlertDialog measures its actions intrinsically. LayoutBuilder is not
+    // supported in that slot, so use the available screen width instead.
+    // Stack actions on narrow screens to preserve readable labels and 48dp targets.
+    if (isNarrow) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          keepButton,
+          const SizedBox(height: VSPSpacing.sm),
+          cancelButton,
+        ],
+      );
+    }
+
     return Row(
       children: [
-        Expanded(
-          child: PrimaryButton(
-            text: l10n.keepBooking,
-            height: 48,
-            color: VSPColors.surfaceAlt,
-            textColor: VSPColors.textPrimary,
-            onPressed: () => Navigator.pop(dialogCtx),
-          ),
-        ),
+        Expanded(child: keepButton),
         const SizedBox(width: VSPSpacing.md),
-        Expanded(
-          child: PrimaryButton(
-            text: l10n.cancel,
-            height: 48,
-            color: VSPColors.error,
-            textColor: VSPColors.background,
-            onPressed: _performCancellation,
-          ),
-        ),
+        Expanded(child: cancelButton),
       ],
     );
   }
 
   Future<void> _performCancellation() async {
+    if (!context.mounted ||
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+            initiatingUserId) {
+      return;
+    }
     final provider = Provider.of<BookingProvider>(context, listen: false);
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(SnackBar(
@@ -149,6 +171,14 @@ class _CancelDialogActions extends StatelessWidget {
     ));
     Navigator.pop(dialogCtx);
     final success = await provider.cancelBooking(booking.id);
+    // The dialog has been dismissed while the cancellation request was in
+    // flight. Do not use its route's messenger if the owning screen was also
+    // removed or the initiating account changed.
+    if (!context.mounted ||
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+            initiatingUserId) {
+      return;
+    }
     if (success) {
       final successMsg = isArabic
           ? refundInfo.refundSuccessText()

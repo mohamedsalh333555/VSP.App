@@ -15,11 +15,13 @@ class ForgotPasswordDialog {
     final resetEmailController = TextEditingController();
     return showDialog(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
         bool isLoading = false;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
+              scrollable: true,
               backgroundColor: VSPColors.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -54,6 +56,7 @@ class ForgotPasswordDialog {
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
                         child: Text(
                           AppLocalizations.of(context)!.cancel,
                           style: const TextStyle(color: VSPColors.textSecondary),
@@ -73,23 +76,23 @@ class ForgotPasswordDialog {
                                 }
                                 setDialogState(() => isLoading = true);
                                 final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                                final success = await authProvider.resetPassword(email);
+                                await authProvider.resetPassword(email);
                                 if (!dialogContext.mounted) return;
                                 Navigator.pop(dialogContext);
                                 if (context.mounted) {
-                                  if (success) {
-                                    VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.resetPasswordSuccess);
-                                  } else {
-                                    VSPFeedback.showError(
-                                      context,
-                                      authProvider.errorMessage ?? AppLocalizations.of(context)!.resetPasswordError,
-                                    );
-                                  }
+                                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                                  VSPFeedback.showSuccess(
+                                    context,
+                                    isArabic
+                                        ? 'لو البريد مسجل عندنا، هتوصلك رسالة استعادة خلال دقائق.'
+                                        : 'If the email is registered, a recovery message will arrive shortly.',
+                                  );
                                 }
                               },
                         style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(0, 48),
                           backgroundColor: VSPColors.accent,
-                          foregroundColor: Colors.black,
+                          foregroundColor: VSPColors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(VSPRadius.md),
                           ),
@@ -98,7 +101,7 @@ class ForgotPasswordDialog {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                               )
                             : Text(
                                 AppLocalizations.of(context)!.submit,

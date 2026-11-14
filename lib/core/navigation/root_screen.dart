@@ -31,6 +31,7 @@ class _RootScreenState extends State<RootScreen> {
  bool _deepLinkChecked = false;
  // ignore: unused_field
  bool _loadingTimedOut = false;
+ String? _loadingUserId;
 
  @override
  void initState() {
@@ -38,6 +39,7 @@ class _RootScreenState extends State<RootScreen> {
  _initRemoteConfig();
  // Trigger location check and pending deep link check after first frame
  WidgetsBinding.instance.addPostFrameCallback((_) {
+ if (!mounted) return;
  final auth = Provider.of<AuthProvider>(context, listen: false);
  // معالجة الرابط العميق المعلق بعد نجاح التحقق والدخول
  if (auth.isAuthenticated && auth.userModel != null) {
@@ -45,16 +47,37 @@ class _RootScreenState extends State<RootScreen> {
  _handlePendingDeepLink();
  }
 
- // Safety Net: If user is authenticated but userModel never loads within
- // 5 seconds (e.g. Firestore offline), show a Connection Error screen.
- if (auth.isAuthenticated && auth.userModel == null) {
- _loadingTimeout = Timer(const Duration(seconds: 5), () {
- if (mounted && auth.userModel == null) {
- setState(() => _loadingTimedOut = true);
- }
  });
  }
- });
+
+ @override
+ void didChangeDependencies() {
+   super.didChangeDependencies();
+   final auth = Provider.of<AuthProvider>(context);
+   final userId = auth.currentUser?.id;
+
+   if (!auth.isAuthenticated || auth.userModel != null || userId == null) {
+     _loadingTimeout?.cancel();
+     _loadingTimeout = null;
+     _loadingUserId = null;
+     if (_loadingTimedOut) _loadingTimedOut = false;
+     return;
+   }
+
+   if (_loadingUserId == userId && _loadingTimeout != null) return;
+
+   _loadingTimeout?.cancel();
+   _loadingUserId = userId;
+   _loadingTimedOut = false;
+   _loadingTimeout = Timer(const Duration(seconds: 5), () {
+     if (!mounted) return;
+     final currentAuth = Provider.of<AuthProvider>(context, listen: false);
+     if (currentAuth.currentUser?.id == userId &&
+         currentAuth.isAuthenticated &&
+         currentAuth.userModel == null) {
+       setState(() => _loadingTimedOut = true);
+     }
+   });
  }
 
  // دالة استرجاع وتوجيه المستخدم للرابط العميق المعلق بشكل آمن ومتوافق مع جميع الهياكل
@@ -94,10 +117,11 @@ class _RootScreenState extends State<RootScreen> {
  context: context,
  barrierDismissible: false,
  builder: (dialogContext) => AlertDialog(
+      scrollable: true,
  backgroundColor: VSPColors.surface,
  title: Text(
  l10n.updateRequired,
- style: const TextStyle(color: Colors.white),
+ style: const TextStyle(color: VSPColors.white),
  ),
  content: Text(
  l10n.updateAvailableMessage,
@@ -145,9 +169,18 @@ class _RootScreenState extends State<RootScreen> {
  // Never choose the Player shell until the authenticated profile has resolved; this prevents an owner/player flicker.
  if (auth.isAuthenticated && auth.userModel == null) {
    if (_loadingTimedOut) return const OfflineErrorScreen();
-   return const VSPScaffold(
+   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+   return VSPScaffold(
      backgroundColor: VSPColors.background,
-     body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+     body: SafeArea(
+       child: VSPStateView(
+         state: VSPUiState.loading,
+         title: isArabic ? 'جارٍ تجهيز حسابك' : 'Preparing your account',
+         message: isArabic
+             ? 'نحمّل بيانات حسابك قبل فتح الصفحة الرئيسية.'
+             : 'Loading your account details before opening the home screen.',
+       ),
+     ),
    );
  }
 
@@ -165,7 +198,7 @@ class _RootScreenState extends State<RootScreen> {
 
  return AnnotatedRegion<SystemUiOverlayStyle>(
  value: SystemUiOverlayStyle.light.copyWith(
- statusBarColor: Colors.transparent,
+ statusBarColor: VSPColors.transparent,
  ),
  child: auth.isOwner ? const OwnerMainScreen() : PlayerHomeScreen(key: playerHomeScreenKey),
  );
@@ -183,8 +216,9 @@ class MaintenanceScreen extends StatelessWidget {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  return VSPScaffold(
  backgroundColor: VSPColors.background,
- body: Center(
- child: Padding(
+ body: SafeArea(
+ child: Center(
+ child: SingleChildScrollView(
  padding: const EdgeInsets.all(VSPSpacing.xl),
  child: Column(
  mainAxisAlignment: MainAxisAlignment.center,
@@ -207,6 +241,7 @@ class MaintenanceScreen extends StatelessWidget {
  const SizedBox(height: VSPSpacing.xl),
  CircularProgressIndicator(color: VSPColors.accent.withValues(alpha: 0.5)),
  ],
+ ),
  ),
  ),
  ),

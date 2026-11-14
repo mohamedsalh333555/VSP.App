@@ -76,7 +76,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
+                  color: VSPColors.white.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(VSPRadius.input),
                   border: Border.all(color: VSPColors.divider),
                 ),
@@ -230,7 +230,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
                   if (index < stadiums.length) {
                     return Container(
                       width: 260,
-                      margin: const EdgeInsets.only(right: VSPSpacing.md),
+                      margin: const EdgeInsetsDirectional.only(end: VSPSpacing.md),
                       child: StadiumCard(
                         stadium: stadiums[index],
                         isOwnerView: true,
@@ -251,7 +251,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
                   } else {
                     return Container(
                       width: 240,
-                      margin: const EdgeInsets.only(right: VSPSpacing.md),
+                      margin: const EdgeInsetsDirectional.only(end: VSPSpacing.md),
                       child: _buildAddStadiumCard(context, stadiums.length),
                     );
                   }

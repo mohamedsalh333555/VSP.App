@@ -38,7 +38,7 @@ class TournamentAutoScheduleModalSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => TournamentAutoScheduleModalSheet(
         championship: championship,
         roundIndex: roundIndex,
@@ -85,13 +85,20 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
     );
 
     return Container(
+      constraints: BoxConstraints(
+        // The modal route already applies keyboard/system insets. This is
+        // only a preferred height cap; parent constraints enforce the actual
+        // available viewport on compact and keyboard-open layouts.
+        maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+      ),
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 20),
       decoration: const BoxDecoration(
         color: VSPColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
@@ -107,13 +114,13 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
-                child: const Icon(Iconsax.magic_star_copy, color: Colors.black, size: 14),
+                child: const Icon(Iconsax.magic_star_copy, color: VSPColors.black, size: 14),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   isArabic ? 'الجدولة التلقائية (${widget.roundName})' : 'Auto Schedule (${widget.roundName})',
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -132,7 +139,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
             isArabic
                 ? 'كيف تريد توزيع مباريات الدور (${widget.matches.length} مباراة)؟'
                 : 'How to divide ${widget.matches.length} matches?',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 12),
           Row(
@@ -150,7 +157,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                 child: GestureDetector(
                   onTap: () => setState(() => _daysCount = d),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: VSPDSMotion.selection,
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
                     decoration: BoxDecoration(
@@ -163,7 +170,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                       children: [
                         Icon(
                           Iconsax.calendar_1_copy,
-                          color: isSelected ? Colors.black : VSPColors.accent,
+                          color: isSelected ? VSPColors.black : VSPColors.accent,
                           size: 16,
                         ),
                         const SizedBox(height: 6),
@@ -171,7 +178,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                           title,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isSelected ? Colors.black : Colors.white,
+                            color: isSelected ? VSPColors.black : VSPColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -181,7 +188,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                           subtitle,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isSelected ? Colors.black87 : VSPColors.textSecondary,
+                            color: isSelected ? VSPColors.black87 : VSPColors.textSecondary,
                             fontSize: 10,
                           ),
                         ),
@@ -227,7 +234,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                             Text(
                               DateFormat('yyyy-MM-dd').format(_selectedDate),
                               style: const TextStyle(
-                                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                  color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 12),
                             ),
                             const Icon(Iconsax.calendar_1_copy, color: VSPColors.accent, size: 14),
                           ],
@@ -263,7 +270,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                             Text(
                               _selectedTime.format(context),
                               style: const TextStyle(
-                                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                  color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 12),
                             ),
                             const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 14),
                           ],
@@ -287,7 +294,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                   const SizedBox(width: 8),
                   Text(
                     isArabic ? 'مدة المباراة / الفاصل:' : 'Match Duration:',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ],
               ),
@@ -348,7 +355,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                 for (final bullet in summaryBullets) ...[
                   Text(
                     bullet,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+                    style: const TextStyle(color: VSPColors.white70, fontSize: 12, height: 1.4),
                   ),
                   const SizedBox(height: 4),
                 ],
@@ -364,32 +371,48 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
               text: isArabic ? 'تأكيد وحفظ الجدولة التلقائية ' : 'Save Auto-Schedule ',
               onPressed: () async {
                 Navigator.pop(context);
-                final success = await TournamentRepository().autoScheduleRoundMatches(
-                  championshipId: widget.championship.id,
-                  roundIndex: widget.roundIndex,
-                  matches: widget.matches,
-                  startDate: _selectedDate,
-                  startTime: _selectedTime,
-                  daysCount: _daysCount,
-                  matchDurationMinutes: _selectedMatchDuration,
-                );
+                try {
+                  final success =
+                      await TournamentRepository().autoScheduleRoundMatches(
+                    championshipId: widget.championship.id,
+                    roundIndex: widget.roundIndex,
+                    matches: widget.matches,
+                    startDate: _selectedDate,
+                    startTime: _selectedTime,
+                    daysCount: _daysCount,
+                    matchDurationMinutes: _selectedMatchDuration,
+                  );
 
-                if (success && context.mounted) {
-                  widget.onScheduleSaved();
-                  VSPFeedback.showSuccess(
+                  if (success && context.mounted) {
+                    widget.onScheduleSaved();
+                    VSPFeedback.showSuccess(
+                      context,
+                      isArabic
+                          ? 'تم جدولة جميع مباريات ${widget.roundName} تلقائياً بنجاح!'
+                          : 'Auto-scheduled all ${widget.roundName} matches successfully!',
+                    );
+                  } else if (!success && context.mounted) {
+                    VSPFeedback.showError(
+                      context,
+                      isArabic
+                          ? 'حدث خطأ أثناء الجدولة التلقائية. حاول مرة أخرى.'
+                          : 'Could not auto-schedule matches. Please try again.',
+                    );
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  VSPFeedback.showError(
                     context,
                     isArabic
-                        ? ' تم جدولة جميع مباريات ${widget.roundName} تلقائياً بنجاح!'
-                        : ' Auto-scheduled all ${widget.roundName} matches successfully!',
+                        ? 'حدث خطأ أثناء حفظ الجدولة التلقائية. حاول مرة أخرى.'
+                        : 'An error occurred while saving the auto-schedule. Please try again.',
                   );
-                } else if (!success && context.mounted) {
-                  VSPFeedback.showError(
-                      context, isArabic ? 'حدث خطأ أثناء الجدولة التلقائية' : 'Error auto-scheduling matches');
                 }
               },
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

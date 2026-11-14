@@ -28,6 +28,15 @@ void main() {
       expect(ChallengeTeamService.isFairPlayEligible(null), isFalse);
     });
 
+    test('normalizeChallengeCode accepts current and legacy safe formats', () {
+      expect(ChallengeTeamService.normalizeChallengeCode(' 12345678 '), '12345678');
+      expect(ChallengeTeamService.normalizeChallengeCode('vsp-7k9a2'), 'VSP-7K9A2');
+      expect(ChallengeTeamService.normalizeChallengeCode('   '), isNull);
+      expect(ChallengeTeamService.normalizeChallengeCode('Code with spaces'), isNull);
+      expect(ChallengeTeamService.normalizeChallengeCode('A' * 33), isNull);
+      expect(ChallengeTeamService.normalizeChallengeCode('abc;drop'), isNull);
+    });
+
     test('evaluateH2HHype returns youDominate when user team has more wins', () {
       final hype = ChallengeTeamService.evaluateH2HHype(yourWins: 5, theirWins: 2);
       expect(hype, equals(H2HHypeType.youDominate));

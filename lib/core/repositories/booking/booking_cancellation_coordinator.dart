@@ -27,7 +27,20 @@ class BookingCancellationCoordinator {
       return 'هذا الحجز ملغي بالفعل مسبقاً.';
     }
     if (serverMsg != null && serverMsg.trim().isNotEmpty) {
-      return serverMsg.trim();
+      final clean = serverMsg.trim();
+      final lower = clean.toLowerCase();
+      final exposesInternals = [
+        'postgrest',
+        'sqlstate',
+        'relation ',
+        'schema ',
+        'column ',
+        'constraint ',
+        'function ',
+        'stack trace',
+        'exception:',
+      ].any(lower.contains);
+      if (!exposesInternals && clean.length <= 180) return clean;
     }
     return 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
   }
@@ -40,21 +53,33 @@ class BookingCancellationCoordinator {
     if (booking == null) {
       throw Exception('بيانات الحجز غير متوفرة.');
     }
+    if (bookingId.trim().isEmpty) {
+      throw ArgumentError('معرّف الحجز مطلوب لإتمام الإلغاء.');
+    }
+    if (booking.id != bookingId) {
+      throw ArgumentError('معرّف الحجز لا يطابق بيانات الحجز المطلوب إلغاؤه.');
+    }
 
     try {
       final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
 
       if (isManual) {
         try {
-          await _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
+          final manualResult = await _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
             'p_booking_id': bookingId,
             'p_owner_id': booking.ownerId,
             'p_refund_deposit': false,
           });
+          if (manualResult is! Map || manualResult['success'] != true) {
+            throw Exception(sanitizeCancellationError(
+              null,
+              manualResult is Map ? manualResult['message']?.toString() : null,
+            ));
+          }
         } catch (e) {
           // Never fall back to a direct bookings UPDATE: cancellation must pass
           // the server-side authorization/state/financial rules atomically.
-          VSPLogger.e('Owner manual booking cancellation RPC failed', e);
+          VSPLogger.e('Owner manual booking cancellation RPC failed (details redacted)');
           rethrow;
         }
       } else {
@@ -68,8 +93,26 @@ class BookingCancellationCoordinator {
             });
             final data = res.data;
             if (data is Map && data['success'] == true) {
-              VSPLogger.i('Paymob refund processed successfully for booking: $bookingId');
+              VSPLogger.i('Paymob refund processed successfully (booking ID redacted)');
               paymobProcessed = true;
+            } else if (data is Map &&
+                data['refund_pending'] == true &&
+                data['manual_review'] != true) {
+              // The refund Edge Function can return success:false after it has
+              // already cancelled the booking and queued/manualized the refund.
+              // Confirm the persisted booking state before reporting cancellation success.
+              final persisted = await _supabase
+                  .from('bookings')
+                  .select('status,payment_status')
+                  .eq('id', bookingId)
+                  .maybeSingle();
+              if (persisted != null && persisted['status'] == 'cancelled') {
+                VSPLogger.w('Booking cancelled; refund remains pending (booking ID redacted)');
+                paymobProcessed = true;
+              } else {
+                final msg = data['message']?.toString();
+                throw Exception(sanitizeCancellationError(null, msg));
+              }
             } else {
               final msg = data is Map ? data['message']?.toString() : null;
               throw Exception(sanitizeCancellationError(null, msg));
@@ -79,14 +122,16 @@ class BookingCancellationCoordinator {
             if (fnErr is Exception && !fnErr.toString().contains('FunctionException') && !fnErr.toString().contains('invoke failed')) {
               rethrow;
             }
-            VSPLogger.w('process_paymob_refund invoke failed, falling back to atomic RPC: $fnErr');
+            VSPLogger.w('Refund edge function unavailable; using atomic fallback (details redacted)');
             final rpcRes = await _supabase.rpc('cancel_booking_with_refund_atomic', params: {
               'p_booking_id': bookingId,
               'p_user_id': _supabase.auth.currentUser?.id,
               'p_reason': 'User requested cancellation from app',
             });
-            if (rpcRes is Map && rpcRes['success'] == false) {
-              throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
+            if (rpcRes is! Map || rpcRes['success'] != true) {
+              throw Exception(sanitizeCancellationError(
+                null, rpcRes is Map ? rpcRes['message']?.toString() : null,
+              ));
             }
           }
         } else {
@@ -95,8 +140,10 @@ class BookingCancellationCoordinator {
             'p_user_id': _supabase.auth.currentUser?.id,
             'p_reason': 'User requested cancellation from app',
           });
-          if (rpcRes is Map && rpcRes['success'] == false) {
-            throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
+          if (rpcRes is! Map || rpcRes['success'] != true) {
+            throw Exception(sanitizeCancellationError(
+                null, rpcRes is Map ? rpcRes['message']?.toString() : null,
+              ));
           }
         }
       }
@@ -115,7 +162,7 @@ class BookingCancellationCoordinator {
             bookingId: bookingId,
           );
         } catch (e) {
-          VSPLogger.w('Failed to send cancellation notifications: $e');
+          VSPLogger.w('Cancellation notification dispatch failed (details redacted)');
         }
       }
 
@@ -130,13 +177,13 @@ class BookingCancellationCoordinator {
             bookingId: bookingId,
           );
         } catch (e) {
-          VSPLogger.w('Failed to send owner cancellation notification: $e');
+          VSPLogger.w('Owner cancellation notification dispatch failed (details redacted)');
         }
       }
 
       return true;
     } catch (e) {
-      debugPrint('Error cancelling booking: $e');
+      debugPrint('Booking cancellation failed (details redacted)');
       // Never expose raw PostgREST/SQL exceptions to the player.
       throw Exception(sanitizeCancellationError(e));
     }

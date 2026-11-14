@@ -12,6 +12,17 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
   final String currentUserRole;
   final UserRepository? _userRepository;
   final bool isArabic;
+  String? _futureQuery;
+  Future<List<UserModel>>? _searchFuture;
+
+  Future<List<UserModel>> _resultsFor(String value) {
+    if (_searchFuture == null || _futureQuery != value) {
+      _futureQuery = value;
+      _searchFuture = _searchUsers(value);
+    }
+    return _searchFuture!;
+  }
+
 
   UserSearchDelegate({
     required this.currentUserId,
@@ -44,6 +55,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
   List<Widget>? buildActions(BuildContext context) {
     return [
       IconButton(
+        tooltip: isArabic ? 'مسح البحث' : 'Clear search',
         icon: const Icon(Iconsax.close_circle_copy),
         onPressed: () {
           query = '';
@@ -73,7 +85,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return FutureBuilder<List<UserModel>>(
-      future: _searchUsers(query),
+      future: _resultsFor(query),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(

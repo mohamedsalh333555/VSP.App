@@ -9,35 +9,66 @@ import '../../../../shared/widgets/primary_button.dart';
 void showBookingCalendarModal({
   required BuildContext context,
   required DateTime initialDate,
+  required DateTime operationalBaseDate,
   required ValueChanged<DateTime> onDateSelected,
 }) {
   final l10n = AppLocalizations.of(context)!;
+  final firstBookableDay = DateTime(operationalBaseDate.year, operationalBaseDate.month, operationalBaseDate.day);
   showDialog(
     context: context,
+    useSafeArea: true,
     barrierColor: VSPColors.background.withValues(alpha: 0.8),
     builder: (context) {
-      DateTime tempSelectedDate = initialDate;
-      DateTime currentMonth = DateTime(initialDate.year, initialDate.month);
-      final DateTime todayMonth = DateTime(DateTime.now().year, DateTime.now().month);
-      final DateTime maxMonth = DateTime(DateTime.now().year, DateTime.now().month + 3);
+      final DateTime todayMonth = DateTime(firstBookableDay.year, firstBookableDay.month);
+      final DateTime maxMonth = DateTime(firstBookableDay.year, firstBookableDay.month + 3);
+      final DateTime lastBookableDay = DateTime(maxMonth.year, maxMonth.month + 1, 0);
+      final DateTime normalizedInitialDate =
+          DateTime(initialDate.year, initialDate.month, initialDate.day);
+      // A stale parent selection must not let Apply submit an expired or
+      // out-of-window booking day without a valid selection from this dialog.
+      DateTime tempSelectedDate =
+          normalizedInitialDate.isBefore(firstBookableDay) ||
+                  normalizedInitialDate.isAfter(lastBookableDay)
+              ? firstBookableDay
+              : normalizedInitialDate;
+      DateTime currentMonth = DateTime(tempSelectedDate.year, tempSelectedDate.month);
 
       return StatefulBuilder(
         builder: (context, setModalState) {
+          final mediaQuery = MediaQuery.of(context);
+          final isRtl = Directionality.of(context) == TextDirection.rtl;
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          final availableHeight = mediaQuery.size.height -
+              mediaQuery.viewInsets.vertical -
+              (VSPSpacing.xl * 2);
+          final firstWeekday = DateTime(currentMonth.year, currentMonth.month, 1).weekday;
+          final leadingCells = firstWeekday - DateTime.monday;
+          final daysInMonth = DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
+          final weekRows = (leadingCells + daysInMonth + 6) ~/ 7;
+
           return Dialog(
             backgroundColor: VSPColors.surface,
-            insetPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: VSPSpacing.md,
+              vertical: VSPSpacing.xl,
+            ),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-            child: Padding(
-              padding: const EdgeInsets.all(VSPSpacing.md),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: availableHeight.clamp(0.0, mediaQuery.size.height).toDouble(),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
+                        tooltip: isArabic ? 'الشهر السابق' : 'Previous month',
                         icon: Icon(
-                          Iconsax.arrow_left_2_copy,
+                          isRtl ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
                           color: currentMonth.isAfter(todayMonth)
                               ? VSPColors.textSecondary
                               : VSPColors.textSecondary.withValues(alpha: 0.25),
@@ -50,13 +81,18 @@ void showBookingCalendarModal({
                               }
                             : null,
                       ),
-                      Text(
-                        DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(currentMonth),
-                        style: Theme.of(context).textTheme.titleLarge,
+                      Expanded(
+                        child: Text(
+                          DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(currentMonth),
+                          textAlign: TextAlign.center,
+                          softWrap: true,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                       ),
                       IconButton(
+                        tooltip: isArabic ? 'الشهر التالي' : 'Next month',
                         icon: Icon(
-                          Iconsax.arrow_right_1_copy,
+                          isRtl ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                           color: currentMonth.isBefore(maxMonth)
                               ? VSPColors.textSecondary
                               : VSPColors.textSecondary.withValues(alpha: 0.25),
@@ -84,52 +120,91 @@ void showBookingCalendarModal({
                       children: [
                         const Icon(Iconsax.calendar_1_copy, color: VSPColors.accent, size: 18),
                         const SizedBox(width: 8),
-                        Text(
-                          '${Localizations.localeOf(context).languageCode == 'ar' ? 'تاريخ الحجز: ' : 'Booking Date: '}${DateFormat('EEEE, d MMMM yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate)}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        Expanded(
+                          child: Text(
+                            '${Localizations.localeOf(context).languageCode == 'ar' ? 'تاريخ الحجز: ' : 'Booking Date: '}${DateFormat('EEEE, d MMMM yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate)}',
+                            softWrap: true,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: VSPSpacing.md),
+                  Text(
+                    isArabic
+                        ? 'اختيار التاريخ لا يؤكد توفر المواعيد؛ ستظهر المواعيد بعد اختيار اليوم.'
+                        : 'Selecting a date does not confirm availability; slots appear after choosing a day.',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  Row(
+                    children: List.generate(7, (index) {
+                      final weekday = DateTime(2024, 1, 1 + index); // Monday first.
+                      return Expanded(
+                        child: Text(
+                          DateFormat('E', Localizations.localeOf(context).toString()).format(weekday),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: VSPSpacing.xs),
                   SizedBox(
-                    height: 240,
+                    // Six-week months need more than the previous fixed 240px.
+                    // Keep each target at least 48px high and let the dialog scroll.
+                    height: weekRows * 48.0 + (weekRows - 1) * 4.0,
                     child: GridView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 7,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
+                        mainAxisExtent: 48,
+                        mainAxisSpacing: 4,
+                        crossAxisSpacing: 2,
                       ),
-                      itemCount: DateTime(currentMonth.year, currentMonth.month + 1, 0).day +
-                          (DateTime(currentMonth.year, currentMonth.month, 1).weekday - 1),
+                      itemCount: daysInMonth + leadingCells,
                       itemBuilder: (context, index) {
-                        final firstWeekday = DateTime(currentMonth.year, currentMonth.month, 1).weekday;
-                        final dayOffset = index - (firstWeekday - 1);
+                        final dayOffset = index - leadingCells;
                         if (dayOffset < 0) return const SizedBox();
                         final day = dayOffset + 1;
                         final date = DateTime(currentMonth.year, currentMonth.month, day);
                         final isSelected = date.year == tempSelectedDate.year &&
                             date.month == tempSelectedDate.month &&
                             date.day == tempSelectedDate.day;
-                        final isPastDate = date.isBefore(
-                          DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0),
-                        );
+                        final isPastDate = date.isBefore(firstBookableDay);
 
-                        return InkWell(
-                          onTap: isPastDate
-                              ? null
-                              : () {
-                                  setModalState(() {
-                                    tempSelectedDate = date;
-                                  });
-                                },
-                          child: Container(
+                        final readableDate = DateFormat(
+                          'EEEE, d MMMM yyyy',
+                          Localizations.localeOf(context).toString(),
+                        ).format(date);
+                        void selectDay() {
+                          setModalState(() {
+                            tempSelectedDate = date;
+                          });
+                        }
+
+                        return Semantics(
+                          button: true,
+                          enabled: !isPastDate,
+                          selected: isSelected,
+                          label: isArabic
+                              ? 'تاريخ الحجز: $readableDate'
+                              : 'Booking date: $readableDate',
+                          onTap: isPastDate ? null : selectDay,
+                          child: ExcludeSemantics(
+                            child: InkWell(
+                              onTap: isPastDate ? null : selectDay,
+                              child: Container(
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? VSPColors.accent
-                                  : (isPastDate ? VSPColors.surfaceAlt : Colors.transparent),
+                                  : (isPastDate ? VSPColors.surfaceAlt : VSPColors.transparent),
                               shape: BoxShape.circle,
                             ),
                             child: Text(
@@ -141,6 +216,8 @@ void showBookingCalendarModal({
                                         ? VSPColors.textSecondary.withValues(alpha: 0.5)
                                         : VSPColors.textSecondary),
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
                               ),
                             ),
                           ),
@@ -172,8 +249,9 @@ void showBookingCalendarModal({
                     ],
                   ),
                 ],
+                  ),
+                ),
               ),
-            ),
           );
         },
       );

@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/location_service.dart';
 
 /// Helper to purge local wizard and booking draft cache keys on user logout.
 class AuthDraftCleaner {
@@ -6,6 +7,11 @@ class AuthDraftCleaner {
 
   /// Removes temp and user-scoped draft keys from shared preferences.
   static Future<void> clearSessionDrafts(String? uid) async {
+    try {
+      await LocationService.clearCachedLocation();
+    } catch (_) {
+      // Location invalidation already ran; still attempt the other session cleanup.
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
       final allKeys = prefs.getKeys();

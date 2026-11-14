@@ -6,6 +6,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../services/matchup_dashboard_service.dart';
 import '../widgets/matchup/matchup_record_result_card.dart';
 import '../widgets/matchup/matchup_results_timeline.dart';
@@ -31,6 +32,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   List<MatchupStandingsItem> _standings = [];
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _hasLoadError = false;
 
   // Form State for Recording Result
   String? _selectedTeamAId;
@@ -44,7 +46,10 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   }
 
   Future<void> _loadMatchupData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasLoadError = false;
+    });
     try {
       final teams = await _matchupRepo.getMatchupTeams(widget.bookingId);
       final results = await _matchupRepo.getMatchupResults(widget.bookingId);
@@ -55,6 +60,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
           _teams = teams;
           _results = results;
           _standings = standings;
+          _hasLoadError = false;
           if (_teams.length >= 2) {
             _selectedTeamAId ??= _teams[0].teamId;
             _selectedTeamBId ??= _teams[1].teamId;
@@ -65,15 +71,20 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     } catch (e) {
       debugPrint('Error loading matchup data: $e');
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _hasLoadError = true;
+        });
       }
     }
   }
 
   Future<void> _submitMatchResult() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final validationError = MatchupDashboardService.validateResultSubmission(
       teamAId: _selectedTeamAId,
       teamBId: _selectedTeamBId,
+      isArabic: isArabic,
     );
 
     if (validationError != null) {
@@ -96,12 +107,18 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
       );
 
       if (!mounted) return;
-      VSPFeedback.showSuccess(context, 'تم تسجيل نتيجة المباراة وتحديث الترتيب بنجاح!');
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم تسجيل نتيجة المباراة وتحديث الترتيب بنجاح!' : 'Match result recorded and standings updated successfully!',
+      );
       await _loadMatchupData();
     } catch (e) {
       debugPrint('Error submitting match result: $e');
       if (mounted) {
-        VSPFeedback.showError(context, 'فشل تسجيل النتيجة: $e');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر تسجيل النتيجة. حاول مرة أخرى.' : 'Could not record the result. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -109,46 +126,60 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   }
 
   Future<void> _closeMatchup() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (!MatchupDashboardService.canCloseMatchup(_results.length)) {
-      VSPFeedback.showWarning(context, 'يجب تسجيل نتيجة مباراة واحدة على الأقل قبل إغلاق المواجهة');
+      VSPFeedback.showWarning(
+        context,
+        isArabic ? 'يجب تسجيل نتيجة مباراة واحدة على الأقل قبل إغلاق المواجهة' : 'Record at least one match result before closing the matchup.',
+      );
       return;
     }
 
     final confirm = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: const Text('إغلاق المواجهة؟', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text(
-          'بعد إغلاق المواجهة لن تتمكن من إضافة نتائج جديدة لهذه الجلسة وسيتم اعتماد الترتيب النهائي.',
-          style: TextStyle(color: VSPColors.textSecondary),
+        title: Text(isArabic ? 'إغلاق المواجهة؟' : 'Close matchup?', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
+        content: Text(
+          isArabic
+              ? 'بعد إغلاق المواجهة لن تتمكن من إضافة نتائج جديدة لهذه الجلسة وسيتم اعتماد الترتيب النهائي.'
+              : 'After closing, no more results can be added to this session and the final standings will be locked.',
+          style: const TextStyle(color: VSPColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('تراجع', style: TextStyle(color: VSPColors.textSecondary)),
+            child: Text(isArabic ? 'تراجع' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error),
-            child: const Text('إغلاق المواجهة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(isArabic ? 'إغلاق المواجهة' : 'Close matchup', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
     setState(() => _isSubmitting = true);
     try {
       await _matchupRepo.closeMatchup(widget.bookingId);
       if (!mounted) return;
-      VSPFeedback.showSuccess(context, 'تم إغلاق المواجهة واعتماد النتائج النهائية بنجاح!');
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم إغلاق المواجهة واعتماد النتائج النهائية بنجاح!' : 'Matchup closed and final standings confirmed!',
+      );
       Navigator.pop(context);
     } catch (e) {
       debugPrint('Error closing matchup: $e');
       if (mounted) {
-        VSPFeedback.showError(context, 'تعذر إغلاق المواجهة: $e');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر إغلاق المواجهة. حاول مرة أخرى.' : 'Could not close the matchup. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -160,9 +191,54 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (_isLoading) {
-      return const VSPScaffold(
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل المواجهة' : 'Loading matchup',
+            message: isArabic ? 'نحدّث تفاصيل المواجهة والإحصائيات.' : 'Fetching matchup details and statistics.',
+          ),
+        ),
+      );
+    }
+
+    if (_hasLoadError) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        appBar: AppBar(
+          backgroundColor: VSPColors.background,
+          elevation: 0,
+          leading: const VSPBackButton(),
+          title: Text(isArabic ? 'لوحة المواجهات الحية' : 'Live Matchup Dashboard'),
+        ),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 42),
+                  const SizedBox(height: VSPSpacing.md),
+                  Text(
+                    isArabic ? 'تعذر تحميل بيانات المواجهة.' : 'Could not load matchup data.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.textPrimary),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  PrimaryButton(
+                    text: isArabic ? 'إعادة المحاولة' : 'Retry',
+                    onPressed: _loadMatchupData,
+                    height: 48,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       );
     }
 
@@ -178,7 +254,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(top: false, bottom: true, child: SingleChildScrollView(
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,7 +304,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
             const SizedBox(height: VSPSpacing.lg),
           ],
         ),
-      ),
+      )),
     );
   }
 }

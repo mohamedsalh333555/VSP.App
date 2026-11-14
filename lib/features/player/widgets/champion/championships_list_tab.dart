@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../data/models.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../screens/championship_details_screen.dart';
 import '../championship_card.dart';
 import 'champion_empty_state.dart';
+import 'champion_podium_components.dart';
 
 class ChampionshipsListTab extends StatefulWidget {
   final Stream<List<Championship>>? championshipsStream;
@@ -80,6 +82,39 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
     widget.onRetry();
   }
 
+  Widget _buildStaleDataWarning(bool isArabic) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'نعرض آخر بيانات متاحة؛ تعذر التحديث اللحظي.'
+                  : 'Showing the latest available data; live updates are unavailable.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _handleRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -87,13 +122,19 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
     final userGovRaw = auth.userModel?.governorate ?? auth.governorate;
     final userGov = EgyptGovernorates.resolveGoogleName(userGovRaw) ?? userGovRaw;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final isDifferentGov = userGov.isNotEmpty && widget.selectedLocation.toLowerCase() != userGov.toLowerCase();
+    final isDifferentGov = userGov.isNotEmpty &&
+        widget.selectedLocation != 'All' &&
+        widget.selectedLocation.toLowerCase() != userGov.toLowerCase();
 
     return StreamBuilder<List<Championship>>(
       stream: _stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل البطولات' : 'Loading championships',
+            message: isArabic ? 'نحدّث البطولات المتاحة في منطقتك.' : 'Fetching championships available in your area.',
+          );
         }
         if (snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)) {
           return Center(
@@ -106,8 +147,8 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
                   const SizedBox(height: 12),
                   Text(
                     isArabic
-                        ? 'تعذر التحديث اللحظي، اسحب للأسفل للتحديث'
-                        : 'Realtime update unavailable, pull to refresh',
+                        ? 'تعذر تحميل البطولات. حاول مرة أخرى.'
+                        : 'Could not load tournaments. Please try again.',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                   ),
@@ -130,6 +171,8 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
 
         return Column(
           children: [
+            if (snapshot.hasError)
+              _buildStaleDataWarning(isArabic),
             // Quick return banner if browsing a different governorate
             if (isDifferentGov)
               Container(
@@ -146,8 +189,10 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        isArabic ? 'تتصفح بطولات: ${widget.selectedLocation}' : 'Viewing: ${widget.selectedLocation}',
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        isArabic
+                            ? 'تتصفح بطولات: ${championTranslateItem(context, widget.selectedLocation)}'
+                            : 'Viewing: ${championTranslateItem(context, widget.selectedLocation)}',
+                        style: const TextStyle(color: VSPColors.white, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                     InkWell(
@@ -156,7 +201,9 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         child: Text(
-                          isArabic ? 'بطولاتي ($userGov)' : 'My City ($userGov)',
+                          isArabic
+                              ? 'بطولاتي (${championTranslateItem(context, userGov)})'
+                              : 'My City (${championTranslateItem(context, userGov)})',
                           style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -169,9 +216,7 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
             Expanded(
               child: championships.isEmpty
                   ? ChampionshipsEmptyState(
-                      locationName: isArabic
-                          ? (EgyptGovernorates.governorateToArabic[widget.selectedLocation] ?? widget.selectedLocation)
-                          : widget.selectedLocation,
+                      locationName: championTranslateItem(context, widget.selectedLocation),
                       showReturnButton: isDifferentGov,
                       onReturn: () => widget.onLocationChanged(userGov),
                     )

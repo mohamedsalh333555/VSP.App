@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
@@ -28,7 +29,7 @@ class ChallengeResultActions extends StatelessWidget {
     required String? myTeamId,
   }) {
     final l10n = AppLocalizations.of(context)!;
-    final currentTeamId = myTeamId ?? booking.playerTeamId;
+    final currentTeamId = myTeamId;
     if (currentTeamId == null) return const SizedBox.shrink();
 
     final isHome = currentTeamId == booking.playerTeamId;
@@ -37,6 +38,16 @@ class ChallengeResultActions extends StatelessWidget {
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
       final outcome = booking.finalOutcome;
+      // A confirmed flag without a final outcome is inconsistent data.
+      // Never label it as a loss just because the outcome is missing.
+      if (outcome == null) {
+        return buildStatusBadge(
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'النتيجة غير متاحة'
+              : 'Result unavailable',
+          VSPColors.warning,
+        );
+      }
       if (outcome == MatchOutcome.draw) {
         return buildStatusBadge(l10n.draw, VSPColors.info);
       }
@@ -49,15 +60,35 @@ class ChallengeResultActions extends StatelessWidget {
     }
 
     if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
+      final submittedTeamId = booking.resultSubmittedByTeamId;
+      final hasSubmissionDetails = submittedTeamId != null &&
+          submittedTeamId.isNotEmpty &&
+          booking.pendingOutcome != null;
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      final submittedByMe = submittedTeamId == currentTeamId;
+      final canSubmitNow = !booking.endTime.isAfter(VSPTimeService.now);
       return buildStatusBadge(
-        Localizations.localeOf(context).languageCode == 'ar'
-            ? 'في انتظار تطابق النتيجة'
-            : 'Waiting for matching result',
+        !hasSubmissionDetails
+            ? (isArabic ? 'جارٍ تحديث حالة النتيجة' : 'Syncing result status')
+            : submittedByMe
+                ? (isArabic
+                    ? 'في انتظار نتيجة الفريق الآخر'
+                    : 'Waiting for the other team result')
+                : canSubmitNow
+                    ? (isArabic
+                        ? 'الفريق الآخر سجّل نتيجته، سجّل نتيجتك'
+                        : 'Opponent submitted; record your result')
+                    : (isArabic
+                        ? 'الفريق الآخر سجّل نتيجته، انتظر انتهاء المباراة'
+                        : 'Opponent submitted; wait until the match ends'),
         VSPColors.warning,
       );
     }
 
-    if (booking.endTime.isBefore(DateTime.now())) {
+    // Only bookings without a submitted result can prompt submission.
+    // Unknown or disputed statuses must not be presented as "Submit result".
+    if (booking.matchResultStatus == MatchResultStatus.noResult &&
+        !booking.endTime.isAfter(VSPTimeService.now)) {
       return buildStatusBadge(l10n.submitResult, VSPColors.warning);
     }
 
@@ -87,13 +118,12 @@ class ChallengeResultActions extends StatelessWidget {
   }
 
   Widget _openResultModal(BuildContext context, String teamId) {
-    final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return VSPAnimatedButton(
       text: isArabic ? 'تسجيل نتيجتي' : 'Record my result',
       color: VSPColors.accent,
-      textColor: Colors.black,
+      textColor: VSPColors.black,
       onPressed: () {
         showDialog(
           context: context,
@@ -111,8 +141,7 @@ class ChallengeResultActions extends StatelessWidget {
                 review: review,
               );
 
-              if (!context.mounted) return;
-              Navigator.of(dialogContext).pop();
+              if (!context.mounted) return false;
 
               if (success) {
                 VSPFeedback.showSuccess(
@@ -121,14 +150,10 @@ class ChallengeResultActions extends StatelessWidget {
                       ? 'تم تسجيل نتيجتك. لن تُعتمد المباراة إلا عند تطابق النتيجتين.'
                       : 'Your result was recorded. The match is finalized only when both results match.',
                 );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(provider.errorMessage ?? l10n.resultFailed),
-                    backgroundColor: VSPColors.error,
-                  ),
-                );
               }
+              // MatchResultModal owns failure feedback. Showing another
+              // snackbar here would duplicate the same error for the user.
+              return success;
             },
           ),
         );
@@ -139,10 +164,21 @@ class ChallengeResultActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final currentTeamId = myTeamId ?? booking.playerTeamId;
-    if (currentTeamId == null) return const SizedBox.shrink();
+    final currentTeamId = myTeamId;
+    // Only the two teams participating in this booking may be offered
+    // result submission. The server remains the final authorization gate.
+    if (currentTeamId == null ||
+        (currentTeamId != booking.playerTeamId &&
+            currentTeamId != booking.opponentTeamId)) {
+      return const SizedBox.shrink();
+    }
 
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
+      // The repository rejects early submissions. Do not offer an action
+      // that cannot succeed until the match has actually ended.
+      if (booking.endTime.isAfter(VSPTimeService.now)) {
+        return const SizedBox.shrink();
+      }
       return _openResultModal(context, currentTeamId);
     }
 
@@ -150,6 +186,8 @@ class ChallengeResultActions extends StatelessWidget {
       final submittedByMe =
           booking.resultSubmittedByTeamId == currentTeamId;
       final pending = booking.pendingOutcome;
+      final hasSubmissionDetails =
+          booking.resultSubmittedByTeamId?.isNotEmpty == true && pending != null;
 
       String outcomeText(MatchOutcome? outcome) {
         if (outcome == MatchOutcome.draw) {
@@ -193,8 +231,12 @@ class ChallengeResultActions extends StatelessWidget {
                 const SizedBox(width: VSPSpacing.sm),
                 Expanded(
                   child: Text(
-                    submittedByMe
+                    !hasSubmissionDetails
                         ? (isArabic
+                            ? 'جارٍ تحديث حالة النتيجة'
+                            : 'Syncing result status')
+                        : submittedByMe
+                            ? (isArabic
                             ? 'تم تسجيل نتيجتك. في انتظار نتيجة الفريق المنافس.'
                             : 'Your result is recorded. Waiting for the opponent.')
                         : (isArabic
@@ -209,7 +251,9 @@ class ChallengeResultActions extends StatelessWidget {
                 ),
               ],
             ),
-            if (!submittedByMe) ...[
+            if (hasSubmissionDetails &&
+                !submittedByMe &&
+                !booking.endTime.isAfter(VSPTimeService.now)) ...[
               const SizedBox(height: VSPSpacing.xs),
               Text(
                 isArabic
@@ -229,6 +273,12 @@ class ChallengeResultActions extends StatelessWidget {
     }
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
+      if (booking.finalOutcome == null) {
+        return buildStatusBadge(
+          isArabic ? 'النتيجة غير متاحة حاليًا' : 'Result currently unavailable',
+          VSPColors.warning,
+        );
+      }
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(
@@ -253,8 +303,8 @@ class ChallengeResultActions extends StatelessWidget {
             Expanded(
               child: Text(
                 isArabic
-                    ? 'تم اعتماد النتيجة وتحديث ترتيب الفرق.'
-                    : 'Result confirmed and team standings updated.',
+                    ? 'تم اعتماد النتيجة. يمكنك مراجعة ترتيب الفرق.'
+                    : 'Result confirmed. You can check the team standings.',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontWeight: FontWeight.w700,

@@ -44,13 +44,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
  void _handleLogin() async {
+ if (_isLoading) return;
  // Basic Validation
- if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+ final email = _emailController.text.trim().toLowerCase();
+ final isValidEmail = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
+ if (!isValidEmail || _passwordController.text.isEmpty) {
  HapticFeedback.heavyImpact();
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
  VSPFeedback.showError(
  context,
- isAr ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور' : 'Please enter email and password',
+ isAr ? 'اكتب بريد إلكتروني صحيح وكلمة المرور' : 'Enter a valid email and password',
  );
  return;
  }
@@ -60,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
  
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
  final success = await authProvider.signIn(
- email: _emailController.text.trim(),
+ email: email,
  password: _passwordController.text
  );
  
@@ -87,11 +90,11 @@ class _LoginScreenState extends State<LoginScreen> {
  Widget build(BuildContext context) {
  return AnnotatedRegion<SystemUiOverlayStyle>(
  value: const SystemUiOverlayStyle(
- statusBarColor: Colors.transparent,
+ statusBarColor: VSPColors.transparent,
  statusBarIconBrightness: Brightness.light,
  systemNavigationBarColor: VSPColors.background,
  systemNavigationBarIconBrightness: Brightness.light,
- systemNavigationBarDividerColor: Colors.transparent,
+ systemNavigationBarDividerColor: VSPColors.transparent,
  ),
  child: VSPScaffold(
  backgroundColor: VSPColors.background,
@@ -110,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
  ),
  child: BackdropFilter(
  filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
- child: Container(color: Colors.transparent),
+ child: Container(color: VSPColors.transparent),
  ),
  ),
  ),
@@ -123,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
  left: 24.0, 
  right: 24.0, 
  top: 0, 
- bottom: MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 24,
+ bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
  ),
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
  
   const SizedBox(height: 12),
   Align(
-  alignment: Alignment.centerRight,
+  alignment: AlignmentDirectional.centerEnd,
   child: TextButton(
   onPressed: () => ForgotPasswordDialog.show(context),
   child: Text(

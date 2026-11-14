@@ -31,6 +31,7 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddPlayerSheet(
         requiredGovernorate: currentTeam?.governorate ?? auth.userModel?.governorate?.trim(),
@@ -48,18 +49,20 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
       // Capture messenger before the async gap
       final messenger = ScaffoldMessenger.of(context);
       try {
-        await TeamRepository().addMemberToTeam(
-          currentTeam.id,
-          user.uid,
-          user.profileImageUrl ?? '',
+        await TeamRepository().inviteTeamMember(currentTeam.id, user.uid);
+        // Invitation is not membership. Do not show the player on the active
+        // roster until they accept and the server commits the membership.
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'تم إرسال دعوة للاعب. سينضم للفريق بعد موافقته.'
+                  : 'Invitation sent. The player joins after accepting.',
+            ),
+            backgroundColor: VSPColors.accent,
+          ),
         );
-        if (mounted) {
-          setState(() {
-            if (!teamMembers.any((m) => m.uid == user.uid)) {
-              teamMembers.add(user);
-            }
-          });
-        }
       } catch (e) {
         if (!mounted) return;
         final errorMsg = e.toString().replaceAll('Exception:', '').trim();
@@ -138,12 +141,26 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
           SnackBar(content: Text(l10n.enterTeamNameError), backgroundColor: VSPColors.error));
       return;
     }
-    if (user == null) return;
+    if (user == null) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Your session has expired. Please sign in again.',
+      );
+      return;
+    }
 
     isSavingValue = true;
     setState(() {});
     try {
       final logoUrl = await _uploadLogoIfSelected(user.uid);
+      if (!mounted) return;
+      if (selectedLogo != null && (logoUrl == null || logoUrl.isEmpty)) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        throw Exception(
+          isArabic ? 'تعذر رفع شعار الفريق. لم يتم إنشاء الفريق؛ حاول مرة أخرى.' : 'Team logo upload failed. The team was not created; please try again.',
+        );
+      }
       final payload = TeamManagementService.buildCreateTeamPayload(
         name: teamName,
         sportType: selectedSport,
@@ -152,16 +169,45 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
         members: teamMembers,
       );
 
-      final teamId = await TeamRepository().createTeam(payload);
+      final repository = TeamRepository();
+      final teamId = await repository.createTeam(payload);
+      final failedInvitations = repository.failedInvitationUserIds.length;
 
       if (teamId != null && mounted) {
-        await reloadTeam();
+        var refreshFailed = false;
+        try {
+          await reloadTeam();
+        } catch (refreshError) {
+          refreshFailed = true;
+          debugPrint('Team was created, but the team view could not be refreshed: $refreshError');
+        }
         if (mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.teamCreatedSuccess), backgroundColor: VSPColors.accent));
+            SnackBar(
+              content: Text(
+                failedInvitations > 0
+                    ? (isArabic
+                        ? 'تم إنشاء الفريق، لكن فشل إرسال $failedInvitations دعوة. افتح الفريق وأعد إرسال الدعوات.'
+                        : 'Team created, but $failedInvitations invitation(s) failed. Open the team and resend them.')
+                    : refreshFailed
+                        ? (isArabic
+                            ? 'تم إنشاء الفريق، لكن تعذر تحديث العرض. أعد فتح الصفحة لرؤية الفريق.'
+                            : 'Team created, but the view could not refresh. Reopen the page to see it.')
+                        : l10n.teamCreatedSuccess,
+              ),
+              backgroundColor: (refreshFailed || failedInvitations > 0)
+                  ? VSPColors.warning
+                  : VSPColors.accent,
+            ),
+          );
         }
       } else if (mounted) {
-        VSPFeedback.showError(context, 'فشل إنشاء الفريق. يرجى إعادة المحاولة.');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'فشل إنشاء الفريق. يرجى إعادة المحاولة.' : 'Team creation failed. Please try again.',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -179,11 +225,27 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
   // ── Update team ───────────────────────────────────────────────────────────
   Future<void> handleUpdateTeam(Team team) async {
     final l10n = AppLocalizations.of(context)!;
+    final user = Provider.of<AuthProvider>(context, listen: false).userModel;
+    if (user == null || user.uid.trim().isEmpty) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'تعذر التحقق من حسابك. سجّل الدخول مرة أخرى.' : 'Your account could not be verified. Please sign in again.',
+      );
+      return;
+    }
+
     isSavingValue = true;
     setState(() {});
     try {
-      final user = Provider.of<AuthProvider>(context, listen: false).userModel;
-      final logoUrl = await _uploadLogoIfSelected(user?.uid ?? 'unknown');
+      final logoUrl = await _uploadLogoIfSelected(user.uid);
+      if (!mounted) return;
+      if (selectedLogo != null && (logoUrl == null || logoUrl.isEmpty)) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        throw Exception(
+          isArabic ? 'تعذر رفع شعار الفريق. لم يتم حفظ التعديلات؛ حاول مرة أخرى.' : 'Team logo upload failed. Changes were not saved; please try again.',
+        );
+      }
 
       final payload = TeamManagementService.buildUpdateTeamPayload(
         name: teamNameText,
@@ -194,7 +256,10 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
         members: teamMembers,
       );
 
-      await TeamRepository().updateTeam(team.id, payload);
+      final updated = await TeamRepository().updateTeam(team.id, payload);
+      if (!updated) {
+        throw StateError('Team update was not confirmed by the server');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

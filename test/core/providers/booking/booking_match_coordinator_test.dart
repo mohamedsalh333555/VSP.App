@@ -60,7 +60,7 @@ void main() {
       fakeRepo.errorToThrow = Exception('Network error');
       final res = await coordinator.leavePublicMatch(bookingId: 'b1', userId: 'u1');
       expect(res.success, isFalse);
-      expect(res.error, contains('Network error'));
+      expect(res.error, 'match_action_failed');
     });
 
     test('fetchPublicMatches returns list from stream', () async {

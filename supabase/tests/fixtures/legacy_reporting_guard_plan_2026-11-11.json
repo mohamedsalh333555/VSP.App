@@ -1,0 +1,108 @@
+{
+  "observed_at": "2026-11-11",
+  "routine_count": 7,
+  "variants": [
+    {
+      "signature": "public.delete_user_permanently(uuid)",
+      "before_sha256": "64dd87f828ee60cefd6f311936ebdffa7d0d3e25f80b6a1880832cd979fb6fdd",
+      "after_sha256": "308b0a51098870cf24758e8ef0a93fa762209697e306828305eae3928dccf77c",
+      "old_fragment": "select role into v_caller_role from public.users where id=v_caller_id;",
+      "new_fragment": "select role into v_caller_role from public.users where id=v_caller_id AND COALESCE(is_blocked, false) = false;",
+      "begin_offset": null,
+      "injection": null,
+      "origins": [
+        "production",
+        "staging"
+      ]
+    },
+    {
+      "signature": "public.get_admin_metrics()",
+      "before_sha256": "2c8310062beefd83c686cc51bb3d5d96308c04007ec701cd1e5ccdcd33a4220d",
+      "after_sha256": "4db1da30ec8f5eac9b5a98ce8e4613ded4bd934d297c14a38d698462448127c8",
+      "old_fragment": null,
+      "new_fragment": null,
+      "begin_offset": 122,
+      "injection": "\n  PERFORM public.require_active_admin_actor();\n",
+      "origins": [
+        "production",
+        "staging"
+      ]
+    },
+    {
+      "signature": "public.get_admin_quick_metrics()",
+      "before_sha256": "1dd4e0e99c2b2efa0c4c2a6184c4b9dcda6b7b519a9daaeb6992aca065206de9",
+      "after_sha256": "d840061ebf1980880c74c44a24ede968da17c56a92af8e3569ee0790d97d2495",
+      "old_fragment": null,
+      "new_fragment": null,
+      "begin_offset": 131,
+      "injection": "\n  PERFORM public.require_active_admin_actor();\n",
+      "origins": [
+        "production",
+        "staging"
+      ]
+    },
+    {
+      "signature": "public.get_owner_ai_operational_insights(uuid,text)",
+      "before_sha256": "12aa16c3e3e28437a001b7021a9700851d1a1c2f89a6a9c98bfa5a8d2fd334d5",
+      "after_sha256": "35807dc4720df6d6905ce4db4284919ef8f000be84fc53de139856c94a761a01",
+      "old_fragment": null,
+      "new_fragment": null,
+      "begin_offset": 687,
+      "injection": "\n  PERFORM public.require_owner_or_active_admin_actor(p_owner_id);\n",
+      "origins": [
+        "production",
+        "staging"
+      ]
+    },
+    {
+      "signature": "public.get_owner_ai_stadium_comparison(uuid,text)",
+      "before_sha256": "d6f02e965c4ac28295249c5f223bf5bf66556e7a9d93a96004c0c808930c6777",
+      "after_sha256": "393eee207d06ff1414e1c0684eb0d80788312af5be3b62fcc7fdfb81c3495995",
+      "old_fragment": null,
+      "new_fragment": null,
+      "begin_offset": 285,
+      "injection": "\n  PERFORM public.require_owner_or_active_admin_actor(p_owner_id);\n",
+      "origins": [
+        "production"
+      ]
+    },
+    {
+      "signature": "public.get_owner_financial_summary(uuid)",
+      "before_sha256": "447a40bdb491b027c55b69c6d6af67821bf9b211d5e564aed426c9517d979e41",
+      "after_sha256": "85c8cc84ebe85f49c96eb14e9b097f56da92b047ab554ad03f586f0e356a3553",
+      "old_fragment": null,
+      "new_fragment": null,
+      "begin_offset": 590,
+      "injection": "\n  PERFORM public.require_owner_or_active_admin_actor(p_owner_id);\n",
+      "origins": [
+        "production",
+        "staging"
+      ]
+    },
+    {
+      "signature": "public.get_tournament_financial_summary(uuid)",
+      "before_sha256": "9362d88ed0e91f06f9ed196c35ae8e17e460ca0ab54bf6662e79e27200693f3f",
+      "after_sha256": "acbd64a586e55aa185dafbb92e93d667e493b714ef66929fd93daf39c3312207",
+      "old_fragment": "v_is_admin := coalesce(v_role in ('admin','co_founder','cofounder','super_admin'), false);",
+      "new_fragment": "v_is_admin := coalesce(v_role in ('admin','co_founder','cofounder','super_admin'), false) AND public.is_admin_or_cofounder(v_caller);",
+      "begin_offset": null,
+      "injection": null,
+      "origins": [
+        "production",
+        "staging"
+      ]
+    },
+    {
+      "signature": "public.get_owner_ai_stadium_comparison(uuid,text)",
+      "before_sha256": "b0f16387460c2cef93526c5cc9bf16bf642205ceb937f674b843c73207c7ce4b",
+      "after_sha256": "42e39290f39eaec55ddcb621028602d2d7d76d9a8f6e5bce1fe35d1f2718552d",
+      "old_fragment": null,
+      "new_fragment": null,
+      "begin_offset": 285,
+      "injection": "\n  PERFORM public.require_owner_or_active_admin_actor(p_owner_id);\n",
+      "origins": [
+        "staging"
+      ]
+    }
+  ]
+}

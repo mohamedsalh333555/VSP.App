@@ -6,8 +6,19 @@ class TournamentRoundScheduleCalculator {
 
   /// Determines whether a tournament round is locked from automatic rescheduling.
   /// A round is locked if any match has already started or has a recorded score/winner.
-  static bool isRoundLocked(List<TournamentMatch> matches) {
-    return matches.any((m) => m.winnerId != null || m.homeScore != null);
+  static bool isRoundLocked(
+    List<TournamentMatch> matches, {
+    DateTime? now,
+  }) {
+    final referenceTime = now ?? DateTime.now();
+    return matches.any((match) {
+      final hasRecordedResult = match.winnerId != null ||
+          match.homeScore != null ||
+          match.awayScore != null;
+      final hasStarted = match.scheduledTime != null &&
+          !match.scheduledTime!.isAfter(referenceTime);
+      return hasRecordedResult || hasStarted;
+    });
   }
 
   /// Calculates available day division options based on total matches in the round.

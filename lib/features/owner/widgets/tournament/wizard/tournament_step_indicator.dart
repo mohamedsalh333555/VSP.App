@@ -22,8 +22,11 @@ class TournamentStepIndicator extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Stack(
-        children: [
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final labelWidth = (constraints.maxWidth - 16) / 3;
+          return Stack(
+            children: [
           // Background Connecting Lines
           Positioned(
             left: 28 / 2 + 12,
@@ -68,11 +71,11 @@ class TournamentStepIndicator extends StatelessWidget {
                     ),
                     child: Center(
                       child: i < currentStep
-                          ? const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 16)
+                          ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.black, size: 16)
                           : Text(
                               '${i + 1}',
                               style: TextStyle(
-                                color: isActive ? Colors.black : VSPColors.textSecondary,
+                                color: isActive ? VSPColors.black : VSPColors.textSecondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -80,19 +83,28 @@ class TournamentStepIndicator extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    labels[i],
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
-                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 10,
-                        ),
+                  SizedBox(
+                    width: labelWidth,
+                    child: Text(
+                      labels[i],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      softWrap: true,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
+                            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 10,
+                          ),
+                    ),
                   ),
                 ],
               );
             }),
           ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

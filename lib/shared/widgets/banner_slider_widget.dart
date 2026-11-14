@@ -125,7 +125,7 @@ class _BannerSliderWidgetState extends State<BannerSliderWidget> {
       final nextIndex = (_currentIndex + 1) % _banners.length;
       _pageController.animateToPage(
         nextIndex,
-        duration: const Duration(milliseconds: 600),
+        duration: VSPDSMotion.bannerTransition,
         curve: Curves.easeInOutCubic,
       );
     });
@@ -270,7 +270,7 @@ class _BannerSliderWidgetState extends State<BannerSliderWidget> {
 
   Widget _buildBannerCard(AppBanner banner) {
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         onTap: () => _handleBannerTap(banner),
         borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -284,7 +284,7 @@ class _BannerSliderWidgetState extends State<BannerSliderWidget> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.25),
+                color: VSPColors.black25,
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -339,9 +339,9 @@ class _BannerSliderWidgetState extends State<BannerSliderWidget> {
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
                         colors: [
-                          Colors.black.withValues(alpha: 0.85),
-                          Colors.black.withValues(alpha: 0.3),
-                          Colors.transparent,
+                          VSPColors.black85,
+                          VSPColors.black30,
+                          VSPColors.transparent,
                         ],
                         stops: const [0.0, 0.7, 1.0],
                       ),
@@ -349,7 +349,7 @@ class _BannerSliderWidgetState extends State<BannerSliderWidget> {
                     child: Text(
                       banner.title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         shadows: [
@@ -378,13 +378,13 @@ class _BannerSliderWidgetState extends State<BannerSliderWidget> {
       children: List.generate(_banners.length, (index) {
         final isActive = index == _currentIndex;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+          duration: VSPDSMotion.indicatorTransition,
           curve: Curves.easeInOut,
           margin: const EdgeInsets.symmetric(horizontal: 3),
           height: 4,
           width: isActive ? 20 : 6,
           decoration: BoxDecoration(
-            color: isActive ? VSPColors.accent : Colors.white.withValues(alpha: 0.25),
+            color: isActive ? VSPColors.accent : VSPColors.white25,
             borderRadius: BorderRadius.circular(VSPRadius.full),
             boxShadow: isActive
                 ? [

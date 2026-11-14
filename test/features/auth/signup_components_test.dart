@@ -22,12 +22,20 @@ void main() {
     testWidgets('SignupPasswordStrengthBar displays strength percentage and progress indicator', (tester) async {
       await tester.pumpWidget(
         buildTestApp(
-          const SignupPasswordStrengthBar(password: 'weak'),
+          const SignupPasswordStrengthBar(password: ''),
         ),
       );
 
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
       expect(find.text('0%'), findsOneWidget);
+      expect(find.text('Weak'), findsOneWidget);
+
+      await tester.pumpWidget(
+        buildTestApp(
+          const SignupPasswordStrengthBar(password: 'weak'),
+        ),
+      );
+      expect(find.text('20%'), findsOneWidget);
       expect(find.text('Weak'), findsOneWidget);
 
       await tester.pumpWidget(

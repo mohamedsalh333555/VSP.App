@@ -20,7 +20,7 @@ abstract final class VSPDSColors {
   static const Color zinc800 = Color(0xFF27272A);
   static const Color zinc750 = Color(0xFF323238);
 
-  static const Color voltGreen = Color(0xFF9FDF02);
+  static const Color voltGreen = zinc400; // Legacy alias: neutral, no neon green.
   static const Color black = Color(0xFF000000);
   static const Color transparent = Color(0x00000000);
   static const Color white = Color(0xFFFFFFFF);
@@ -39,9 +39,9 @@ abstract final class VSPDSColors {
   static const Color bronze = Color(0xFFCD7F32);
 
   // Alpha primitives derived from the same palette.
-  static const Color voltGreenSoft = Color(0x1F9FDF02);
-  static const Color voltGreenMuted = Color(0x339FDF02);
-  static const Color voltGreenBorder = Color(0x409FDF02);
+  static const Color voltGreenSoft = white10;
+  static const Color voltGreenMuted = white15;
+  static const Color voltGreenBorder = white24;
 
   static const Color white05 = Color(0x0DFFFFFF);
   static const Color white10 = Color(0x1AFFFFFF);
@@ -50,14 +50,34 @@ abstract final class VSPDSColors {
   static const Color white08 = Color(0x14FFFFFF);
   static const Color white24 = Color(0x3DFFFFFF);
   static const Color white38 = Color(0x61FFFFFF);
+  static const Color white02 = Color(0x05FFFFFF);
+  static const Color white04 = Color(0x0AFFFFFF);
+  static const Color white06 = Color(0x0FFFFFFF);
+  static const Color white50 = Color(0x80FFFFFF);
+  static const Color white54 = Color(0x8AFFFFFF);
+  static const Color white03 = Color(0x08FFFFFF);
+  static const Color white20 = Color(0x33FFFFFF);
+  static const Color white25 = Color(0x40FFFFFF);
 
+  static const Color black10 = Color(0x1A000000);
+  static const Color black15 = Color(0x26000000);
+  static const Color black26 = Color(0x42000000);
+  static const Color black45 = Color(0x73000000);
+  static const Color black54 = Color(0x8A000000);
+  static const Color black87 = Color(0xDE000000);
+  static const Color black55 = Color(0x8C000000);
+  static const Color black60 = Color(0x99000000);
+  static const Color black25 = Color(0x40000000);
+  static const Color black30 = Color(0x4D000000);
+  static const Color black85 = Color(0xD9000000);
+  static const Color white70 = Color(0xB3FFFFFF);
   static const Color black80 = Color(0xCC000000);
 
   static const Color glassSurface = Color(0x73141417);
   static const Color glassSurfaceAlt = Color(0x991C1C20);
   static const Color glassBorder = Color(0x26FFFFFF);
-  static const Color glassBorderAccent = Color(0x409FDF02);
-  static const Color glassGlow = Color(0x1F9FDF02);
+  static const Color glassBorderAccent = white24;
+  static const Color glassGlow = zinc800; // Charcoal; legacy glow consumers now use a neutral tone.
 }
 
 abstract final class VSPDSSemanticColors {
@@ -76,10 +96,13 @@ abstract final class VSPDSSemanticColors {
   static const Color textMuted = VSPDSColors.gray500;
 
   static const Color border = Color(0xFF262626);
+  static const Color borderMedium = Color(0x33262626);
   static const Color borderSubtle = VSPDSColors.white05;
 
   static const Color error = VSPDSColors.red500;
   static const Color warning = VSPDSColors.amber500;
+  static const Color warningSoft = Color(0x1AF59E0B);
+  static const Color warningBorder = Color(0x4DF59E0B);
   static const Color info = VSPDSColors.blue500;
   static const Color success = VSPDSColors.voltGreen;
 
@@ -109,6 +132,7 @@ abstract final class VSPDSSpacing {
   static const double listGap = sm;
 
   // The existing design uses 20px for text-field horizontal padding.
+  static const double compact = 20.0;
   static const double inputHorizontal = 20.0;
   static const double navigationBottomPadding = 6.0;
 }
@@ -127,7 +151,7 @@ abstract final class VSPDSizes {
   static const double compactButtonHeight = 48.0;
 
   static const double statusIcon = 14.0;
-  static const double textButtonMinHeight = 44.0;
+  static const double textButtonMinHeight = 48.0;
   static const double buttonProgress = 22.0;
   static const double progressStroke = 2.0;
   static const double navigationItemHeight = 58.0;
@@ -230,8 +254,8 @@ abstract final class VSPDSElevation {
 
 abstract final class VSPDSComponentEffects {
   static const BoxShadow buttonShadow = BoxShadow(
-    color: Color(0x2E9FDF02),
-    blurRadius: 12.0,
+    color: VSPDSColors.zinc800,
+    blurRadius: 0.0,
     offset: Offset(0, 4),
   );
 
@@ -248,9 +272,15 @@ abstract final class VSPDSComponentEffects {
     spreadRadius: 1.0,
   );
 
+  static const BoxShadow networkBannerShadow = BoxShadow(
+    color: Color(0x59000000),
+    blurRadius: 12.0,
+    offset: Offset(0, 4),
+  );
+
   static const BoxShadow glassShadow = BoxShadow(
     color: VSPDSColors.glassGlow,
-    blurRadius: 16.0,
+    blurRadius: 0.0,
     spreadRadius: 0.0,
     offset: Offset(0, 4),
   );
@@ -553,13 +583,28 @@ abstract final class VSPDSTypography {
 }
 
 abstract final class VSPDSMotion {
-  // [PROPOSED] centralized timings; current screen behavior remains unchanged
-  // until individual components are migrated to these tokens.
+  static const Duration segmentedSelection = Duration(milliseconds: 220);
+  static const Duration reveal = Duration(milliseconds: 500);
+  static const Duration successReveal = Duration(milliseconds: 800);
+  static const Duration celebrationReveal = Duration(milliseconds: 900);
+  static const Duration splashReveal = Duration(milliseconds: 1000);
+
+  // Canonical motion tokens. Preserve established timings unless an explicit UX decision changes them.
+  static const Duration press = Duration(milliseconds: 120);
   static const Duration fast = Duration(milliseconds: 150);
+  static const Duration microInteraction = Duration(milliseconds: 160);
+  static const Duration selection = Duration(milliseconds: 200);
   static const Duration standard = Duration(milliseconds: 250);
+  static const Duration indicatorTransition = Duration(milliseconds: 300);
+  static const Duration fadeIn = Duration(milliseconds: 400);
+  static const Duration bannerTransition = Duration(milliseconds: 600);
+  static const int staggerStepMilliseconds = 50;
+  static Duration staggerDelay(int index) =>
+      Duration(milliseconds: index * staggerStepMilliseconds);
   static const Duration emphasis = Duration(milliseconds: 350);
   static const Duration shimmer = Duration(milliseconds: 1400);
   static const Duration navigationSwitch = Duration(milliseconds: 180);
+  static const Duration buttonDebounce = Duration(milliseconds: 1500);
 
   static const Curve standardCurve = Curves.easeOutCubic;
 }
@@ -581,15 +626,25 @@ abstract final class VSPDSAccessibility {
   static const double minimumTapTarget = VSPDSizes.touchTarget;
   static const double focusStroke = VSPDSBorders.focus;
   static const double stateMaxWidth = 420.0;
-  static const double progressStroke = 2.5;
+  static const double progressStroke = VSPDSizes.progressStroke;
   static const bool supportsReducedMotion = true;
 }
 
-abstract final class VSPDSBottomNavMetrics {
+/// Single geometry source for both player and owner bottom navigation.
+abstract final class VSPBottomNavMetrics {
   static const double height = 64.0;
   static const double bottomMargin = 12.0;
   static const double contentClearance = 8.0;
   static const double fabBottomOffset = height + bottomMargin;
+}
+
+/// Legacy name retained as a value-only compatibility alias during migration.
+@Deprecated('Use VSPBottomNavMetrics')
+abstract final class VSPDSBottomNavMetrics {
+  static const double height = VSPBottomNavMetrics.height;
+  static const double bottomMargin = VSPBottomNavMetrics.bottomMargin;
+  static const double contentClearance = VSPBottomNavMetrics.contentClearance;
+  static const double fabBottomOffset = VSPBottomNavMetrics.fabBottomOffset;
 }
 
 abstract final class VSPDSGlass {
@@ -617,8 +672,8 @@ abstract final class VSPDSScrollPadding {
   }) {
     final safeBottom = MediaQuery.of(context).padding.bottom;
     if (hasFloatingNavBar) {
-      return VSPDSBottomNavMetrics.height +
-          VSPDSBottomNavMetrics.bottomMargin +
+      return VSPBottomNavMetrics.height +
+          VSPBottomNavMetrics.bottomMargin +
           safeBottom +
           extra;
     }
@@ -650,7 +705,7 @@ abstract final class VSPDSGradients {
     center: Alignment(-0.4, -0.2),
     radius: 1.2,
     colors: <Color>[
-      VSPDSColors.voltGreenSoft,
+      VSPDSColors.zinc950,
       VSPDSColors.zinc950,
     ],
     stops: <double>[0.0, 0.7],

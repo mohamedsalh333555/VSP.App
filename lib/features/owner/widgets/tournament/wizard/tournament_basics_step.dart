@@ -88,7 +88,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
       onTap: () => widget.onTypeChanged(type),
       borderRadius: BorderRadius.circular(VSPRadius.lg),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: VSPDSMotion.selection,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isSelected ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surface,
@@ -109,7 +109,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
                   Text(
                     title,
                     style: TextStyle(
-                      color: isSelected ? VSPColors.accent : Colors.white,
+                      color: isSelected ? VSPColors.accent : VSPColors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -150,7 +150,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
 
   Widget _buildLabel(BuildContext context, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: VSPSpacing.xs, left: 4),
+      padding: const EdgeInsetsDirectional.only(bottom: VSPSpacing.xs, start: 4),
       child: Text(text, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500)),
     );
   }
@@ -180,7 +180,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
         autofocus: autofocus,
         cursorColor: VSPColors.accent,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: enabled ? Colors.white : VSPColors.textSecondary,
+          color: enabled ? VSPColors.white : VSPColors.textSecondary,
           fontWeight: FontWeight.bold,
         ),
         decoration: InputDecoration(
@@ -257,7 +257,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
               size: 16,
             ),
           isExpanded: true,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white, fontWeight: FontWeight.w600),
           items: items.map((item) {
             String label = item;
             if (isAr) {
@@ -315,7 +315,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
                       Text(
                         _getFormatTitle(widget.selectedType, isAr),
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: VSPColors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -349,7 +349,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
             children: [
               Text(
                 isAr ? 'اختر نظام البطولة' : 'Choose Tournament Format',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
               if (widget.preselectedType != null || widget.isEditing)
                 GestureDetector(
@@ -432,7 +432,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
         ),
         if (!_isFeeEditable)
           Padding(
-            padding: const EdgeInsets.only(top: 4, right: 4, left: 4),
+            padding: const EdgeInsetsDirectional.only(top: 4, end: 4, start: 4),
             child: Text(
               isAr ? 'الرسوم مقفولة بعد بدء تسجيل الفرق' : 'Entry fee is locked after registration starts',
               style: const TextStyle(color: VSPColors.warning, fontSize: 11),

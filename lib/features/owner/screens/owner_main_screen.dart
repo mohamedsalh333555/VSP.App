@@ -28,6 +28,8 @@ class OwnerMainScreen extends StatefulWidget {
 
 class OwnerMainScreenState extends State<OwnerMainScreen> {
  int _currentIndex = 0;
+ String? _activeOwnerId;
+ bool _hasObservedOwner = false;
  late final ConfettiController _confettiController;
  StreamSubscription? _celebrationSubscription;
 
@@ -39,6 +41,18 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  }
 
  @override
+ void didChangeDependencies() {
+ super.didChangeDependencies();
+ final ownerId = context.watch<AuthProvider>().isOwner
+     ? context.read<AuthProvider>().currentUser?.id
+     : null;
+ if (_hasObservedOwner && ownerId == _activeOwnerId) return;
+ _hasObservedOwner = true;
+ _activeOwnerId = ownerId;
+ _currentIndex = 0;
+ }
+
+ @override
  void dispose() {
  _confettiController.dispose();
  _celebrationSubscription?.cancel();
@@ -47,9 +61,10 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
 
  void _startCelebrationListener() {
  WidgetsBinding.instance.addPostFrameCallback((_) {
+ if (!mounted) return;
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
  _celebrationSubscription = authProvider.celebrationEvents.listen((_) {
- _triggerCelebration();
+ if (mounted) _triggerCelebration();
  });
  });
  }
@@ -63,6 +78,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  context: context,
  barrierDismissible: false,
  builder: (ctx) => AlertDialog(
+      scrollable: true,
  backgroundColor: VSPColors.surface,
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -74,7 +90,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  Expanded(
  child: Text(
  isAr ? "تم توثيق الحساب! " : "Account Verified! ",
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+ style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
  ),
  ),
  ],
@@ -131,7 +147,10 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  return VSPScaffold(
  extendBody: true,
  backgroundColor: VSPColors.background,
- body: VSPAmbientBackground(
+ body: SafeArea(
+ top: true,
+ bottom: false,
+ child: VSPAmbientBackground(
  showTopGlow: true,
  showBottomGlow: true,
  child: Stack(
@@ -155,12 +174,13 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  shouldLoop: false,
  colors: const [
  VSPColors.accent,
- Colors.white,
+ VSPColors.white,
  VSPColors.accentGlow,
  ],
  ),
  ),
  ],
+ ),
  ),
  ),
  bottomNavigationBar: OwnerBottomNavBar(

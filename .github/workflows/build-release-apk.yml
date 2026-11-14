@@ -3,12 +3,10 @@ name: Build Android Release APK
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-# Build installable APKs using the original VSP Android release signing identity.
+# Final-phase gate: run manually only after source work and consolidated validation are complete.
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 jobs:
   build-release-apk:
@@ -77,6 +75,13 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
+      # Validate the exact checked-out commit before attempting a signed APK.
+      - name: Flutter static analysis
+        run: flutter analyze --no-pub --no-fatal-infos
+
+      - name: Flutter unit and widget tests
+        run: flutter test --no-pub
+
       - name: Configure original Android release signing
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -90,7 +95,9 @@ jobs:
             echo "::error::Original signing key secrets are missing. Add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD using the exact original VSP release keystore."
             exit 1
           fi
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/vsp-release-key.jks
+          # Android resolves storeFile relative to android/app/build.gradle.kts.
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/vsp-release-key.jks
+          test -s android/app/vsp-release-key.jks
           cat > android/key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
           keyPassword=$ANDROID_KEY_PASSWORD

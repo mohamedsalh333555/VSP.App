@@ -14,6 +14,7 @@ class MatchupStandingsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
       decoration: BoxDecoration(
         color: VSPColors.surface,
@@ -24,20 +25,24 @@ class MatchupStandingsTable extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Iconsax.ranking_copy, color: VSPColors.accent, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'جدول ترتيب المواجهة الحية',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              const Icon(Iconsax.ranking_copy, color: VSPColors.accent, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isArabic ? 'جدول ترتيب المواجهة الحية' : 'Live matchup standings',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
-            'حساب النقاط: (فوز = 3 نقاط | تعادل = 1 نقطة)',
-            style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+          Text(
+            isArabic ? 'حساب النقاط: (فوز = 3 نقاط | تعادل = 1 نقطة)' : 'Points: Win = 3 | Draw = 1',
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
           ),
           const Divider(color: VSPColors.divider, height: 24),
           ListView.separated(
@@ -62,7 +67,7 @@ class MatchupStandingsTable extends StatelessWidget {
                     child: Text(
                       '${index + 1}',
                       style: TextStyle(
-                        color: isLeader ? Colors.black : Colors.white,
+                        color: isLeader ? VSPColors.black : VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -72,15 +77,23 @@ class MatchupStandingsTable extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.teamName,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Text(
-                    'لعب: ${item.matchesPlayed} | ف: ${item.wins} | ت: ${item.draws} | خ: ${item.losses}',
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      isArabic
+                          ? 'لعب: ${item.matchesPlayed} | ف: ${item.wins} | ت: ${item.draws} | خ: ${item.losses}'
+                          : 'P: ${item.matchesPlayed} | W: ${item.wins} | D: ${item.draws} | L: ${item.losses}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -88,7 +101,7 @@ class MatchupStandingsTable extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${item.points} نقطة',
+                      isArabic ? '${item.points} نقطة' : '${item.points} pts',
                       style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),

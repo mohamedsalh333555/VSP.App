@@ -23,10 +23,11 @@ void main() {
       expect(payload.containsKey('city'), isFalse);
       expect(payload.containsKey('governorate'), isFalse);
       expect(payload['bio'], equals('Strongest amateur football team'));
-      expect(payload['preferred_formation'], equals('3-1-1'));
-      expect(payload['elo_rating'], equals(1200));
       expect(payload['points'], equals(0));
-      expect(payload['is_active'], isTrue);
+      expect(payload['is_official'], isFalse);
+      expect(payload.containsKey('preferred_formation'), isFalse);
+      expect(payload.containsKey('elo_rating'), isFalse);
+      expect(payload.containsKey('is_active'), isFalse);
     });
 
     test('buildUpdatePayload extracts only provided fields', () {

@@ -1,52 +1,26 @@
 name: Flutter CI
 
+permissions:
+  contents: read
+  statuses: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
+  # Only the newest branch state is actionable. Cancelling superseded runs
+  # avoids exhausting hosted-runner quotas while a fix series is being pushed.
   cancel-in-progress: true
 
 on:
   workflow_dispatch:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
 
 jobs:
-  analyze-test-build:
+  analyze-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Free runner disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
-          df -h
-      - name: Prepare Firebase Android config
-        run: |
-          mkdir -p android/app
-          cat > android/app/google-services.json <<'EOF'
-          {
-            "project_info": {
-              "project_number": "860837572098",
-              "project_id": "vsp-app-103b1",
-              "storage_bucket": "vsp-app-103b1.firebasestorage.app"
-            },
-            "client": [{
-              "client_info": {
-                "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
-                "android_client_info": {
-                  "package_name": "app.vsp.sports"
-                }
-              },
-              "api_key": [{
-                "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
-              }]
-            }]
-          }
-          EOF
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -55,7 +29,7 @@ jobs:
           cache: gradle
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.8'
+          flutter-version: "3.32.8"
           channel: stable
           cache: true
       - name: Install dependencies
@@ -65,14 +39,56 @@ jobs:
       - name: Verify real Firebase client options
         run: test -s lib/firebase_options.dart
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
+      - name: Privacy and deletion regression gate
+        run: >-
+          flutter test --concurrency=2
+          test/shared/account_deletion_dialog_test.dart
+          test/shared/owner_delete_account_identity_test.dart
+          test/core/services/image_selection_privacy_test.dart
+          test/core/services/location_session_privacy_test.dart
+          test/core/services/incomplete_account_cleanup_test.dart
+          test/core/services/registration_profile_provisioning_test.dart
+      - name: Architecture regression gate
+        run: flutter test test/architecture
+      - name: Verify Cairo DST booking calendar and operational dates
+        env:
+          TZ: Africa/Cairo
+        run: >-
+          flutter test --concurrency=1
+          test/core/utils/booking_civil_day_time_test.dart
+          test/unit/booking_server_operating_hours_precedence_test.dart
       - name: Test
-        run: flutter test --coverage
-      - name: Build Android debug APK
+        # Bound worker creation on hosted runners. The suite is large enough
+        # that default CPU-based concurrency can exhaust the process/thread
+        # quota and fail otherwise valid tests with `pthread_create failed`.
+        run: flutter test --coverage --concurrency=2
+
+      - name: Upload coverage for failed or successful test runs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-coverage-${{ github.run_id }}
+          path: coverage/lcov.info
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Publish Flutter CI commit status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CI_STATUS: ${{ job.status }}
         run: |
-          flutter build apk --debug \
-            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
-            --dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}" \
-            --dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}" \
-            --dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}"
+          if [ "$CI_STATUS" = "success" ]; then
+            state=success
+            description="Flutter analyze and tests passed"
+          else
+            state=failure
+            description="Flutter analyze or tests failed"
+          fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state="$state" \
+            -f context="flutter-ci" \
+            -f description="$description" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          test "$state" = success

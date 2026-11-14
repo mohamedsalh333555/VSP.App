@@ -83,6 +83,8 @@ class Stadium {
  maintenanceUntil != null && maintenanceUntil!.isAfter(DateTime.now());
 
  // Working Hours (Standardized)
+ // True only when the live row supplied both authoritative SQL time columns.
+ final bool hasServerOperatingHours;
  final String openingTime; 
  final String closingTime;
  final bool isSplitShift;
@@ -126,6 +128,7 @@ class Stadium {
  this.maintenanceUntil,
  this.maintenanceReason,
  this.lastEmergencyClosureAt,
+ this.hasServerOperatingHours = false,
  this.openingTime = '08:00 AM',
  this.closingTime = '12:00 AM',
  this.isSplitShift = false,
@@ -267,13 +270,17 @@ class Stadium {
  contractUrl: data['contractUrl'] ?? data['contract_url'],
  ownerIdUrl: data['ownerIdUrl'] ?? data['owner_id_url'],
  isVerified: data['isVerified'] ?? data['is_verified'] ?? false,
+ // Administrative venue blocking is read-only in the public model. It must
+ // travel from the live database snapshot to the booking-availability gate.
+ isBlocked: (data['is_blocked'] ?? data['isBlocked']) == true,
  isFeatured: data['isFeatured'] ?? data['is_featured'] ?? false,
  ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
+ hasServerOperatingHours: data['opening_time'] != null && data['closing_time'] != null,
  openingTime: (data['opening_time'] ?? data['openingTime'] ?? data['features']?['workingHours']?['start'])?.toString() ?? '',
  closingTime: (data['closing_time'] ?? data['closingTime'] ?? data['features']?['workingHours']?['end'])?.toString() ?? '',
- isSplitShift: data['features']?['isSplitShift'] ?? false,
- breakStartTime: data['features']?['breakTime']?['start'],
- breakEndTime: data['features']?['breakTime']?['end'],
+ isSplitShift: (data['is_split_shift'] ?? data['isSplitShift'] ?? data['features']?['isSplitShift']) == true,
+ breakStartTime: (data['break_start_time'] ?? data['breakStartTime'] ?? data['features']?['breakTime']?['start'])?.toString(),
+ breakEndTime: (data['break_end_time'] ?? data['breakEndTime'] ?? data['features']?['breakTime']?['end'])?.toString(),
  lat: (data['lat'] is num) ? (data['lat'] as num).toDouble() : double.tryParse(data['lat']?.toString() ?? ''),
  lng: (data['lng'] is num) ? (data['lng'] as num).toDouble() : double.tryParse(data['lng']?.toString() ?? ''),
  depositAmount: parsedDeposit,

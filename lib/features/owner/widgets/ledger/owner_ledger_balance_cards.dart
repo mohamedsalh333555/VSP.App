@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 /// Card displaying withdrawable digital balance and payout action.
 class OwnerDigitalBalanceCard extends StatelessWidget {
@@ -56,7 +57,7 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                 ],
               ),
               Text(
-                '${digitalBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
+                '${VSPMoneyFormatter.amount(digitalBalance)} ${isAr ? "ج.م" : "EGP"}',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontWeight: FontWeight.w900,
@@ -86,8 +87,8 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       isAr
-                          ? 'مباريات قادمة مؤكدة: ${upcomingOnlineRevenue!.toStringAsFixed(0)} ج.م (تتاح للسحب بعد انتهاء موعد اللعب)'
-                          : 'Upcoming confirmed: ${upcomingOnlineRevenue!.toStringAsFixed(0)} EGP (available after match)',
+                          ? 'مباريات قادمة مؤكدة: ${VSPMoneyFormatter.amount(upcomingOnlineRevenue!)} ج.م (تتاح للسحب بعد انتهاء موعد اللعب)'
+                          : 'Upcoming confirmed: ${VSPMoneyFormatter.amount(upcomingOnlineRevenue!)} EGP (available after match)',
                       style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                     ),
                   ),
@@ -109,7 +110,7 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     isAr ? 'طلب تسوية وسحب الرصيد' : 'Request Payout Settlement',
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12.5),
+                    style: const TextStyle(color: VSPColors.black, fontWeight: FontWeight.bold, fontSize: 12.5),
                   ),
                 ),
               ),
@@ -129,8 +130,8 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
     }
     if (totalWithdrawn != null && totalWithdrawn! > 0) {
       parts.add(isAr
-          ? 'بعد خصم ${totalWithdrawn!.toStringAsFixed(0)} ج.م تم سحبها مسبقاً'
-          : 'after ${totalWithdrawn!.toStringAsFixed(0)} EGP previously withdrawn');
+          ? 'بعد خصم ${VSPMoneyFormatter.amount(totalWithdrawn!)} ج.م تم سحبها مسبقاً'
+          : 'after ${VSPMoneyFormatter.amount(totalWithdrawn!)} EGP previously withdrawn');
     }
     final hint = parts.join(' — ');
     return Align(
@@ -182,7 +183,7 @@ class OwnerPitchCashCard extends StatelessWidget {
             ],
           ),
           Text(
-            '${pitchCash.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
+            '${VSPMoneyFormatter.amount(pitchCash)} ${isAr ? "ج.م" : "EGP"}',
             style: const TextStyle(
               color: VSPColors.textPrimary,
               fontWeight: FontWeight.w900,

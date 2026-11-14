@@ -6,6 +6,7 @@ import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'stadium_wizard_draft_service.dart';
 import 'stadium_wizard_payload_builder.dart';
+import 'stadium_wizard_image_service.dart';
 
 /// Service executing create or update operations for the stadium wizard.
 class StadiumWizardSubmitService {
@@ -42,24 +43,96 @@ class StadiumWizardSubmitService {
     required bool isSplitShift,
     required List<Map<String, TimeOfDay?>> breakTimes,
     required List<Map<String, dynamic>> images,
+    required Set<String> removedExistingImageUrls,
     required double? latitude,
     required double? longitude,
     required String? uid,
   }) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (auth.userModel?.isBlocked == true) {
-      VSPFeedback.showError(context, "Your account is blocked. You cannot save or submit stadium details.");
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'حسابك موقوف، ولا يمكنك حفظ بيانات الملعب أو إرسالها.'
+            : 'Your account is blocked. You cannot save or submit stadium details.',
+      );
       return false;
     }
 
     try {
       final uploadedUrls = images
-          .where((img) => img['url'] != null)
-          .map((img) => img['url'] as String)
-          .toList();
+          .map((img) => img['url'])
+          .whereType<String>()
+          .map((url) => url.trim())
+          .where((url) => url.isNotEmpty)
+          .toSet()
+          .toList(growable: false);
       final user = auth.currentUser;
 
       if (user == null) {
-        VSPFeedback.showError(context, "Authentication lost. Please login again.");
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Authentication lost. Please login again.',
+        );
+        return false;
+      }
+
+      if (uid != null && uid.isNotEmpty && uid != user.uid) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تغيّر الحساب أثناء إعداد الملعب. أعد فتح النموذج من الحساب الحالي.'
+              : 'The account changed while this stadium was being prepared. Reopen the form from the current account.',
+        );
+        return false;
+      }
+
+      final pricePerHour = double.tryParse(priceText.trim());
+      final capacity = int.tryParse(capacityText.trim());
+      final depositAmount =
+          requireDeposit ? double.tryParse(depositText.trim()) : 0.0;
+      final ballPrice = hasBall ? double.tryParse(ballPriceText.trim()) : 0.0;
+      final hasValidCoordinates =
+          (latitude == null && longitude == null) ||
+          (latitude != null &&
+              longitude != null &&
+              latitude.isFinite &&
+              longitude.isFinite &&
+              latitude >= -90 &&
+              latitude <= 90 &&
+              longitude >= -180 &&
+              longitude <= 180);
+      final hasValidCommercialValues =
+          pricePerHour != null &&
+          pricePerHour.isFinite &&
+          pricePerHour >= 0 &&
+          capacity != null &&
+          capacity > 0 &&
+          depositAmount != null &&
+          depositAmount.isFinite &&
+          depositAmount >= 0 &&
+          (!requireDeposit || depositAmount <= pricePerHour * 0.5) &&
+          ballPrice != null &&
+          ballPrice.isFinite &&
+          (!hasBall || ballPrice >= 5);
+
+      if (!hasValidCommercialValues || !hasValidCoordinates) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'راجع السعر والسعة والعربون وسعر الكرة والموقع قبل الحفظ.'
+              : 'Review the price, capacity, deposit, ball price, and location before saving.',
+        );
+        return false;
+      }
+
+      if (uploadedUrls.isEmpty) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'أضف صورة واحدة على الأقل للملعب قبل الإرسال.'
+              : 'Add at least one stadium image before submitting.',
+        );
         return false;
       }
 
@@ -75,7 +148,7 @@ class StadiumWizardSubmitService {
         length: length,
         width: width,
         hasBall: hasBall,
-        ballPrice: double.tryParse(ballPriceText) ?? 0.0,
+        ballPrice: ballPrice,
         startTime: startTime,
         endTime: endTime,
         isSplitShift: isSplitShift,
@@ -88,10 +161,10 @@ class StadiumWizardSubmitService {
           name: name,
           location: location,
           governorate: governorate,
-          pricePerHour: double.tryParse(priceText.trim()) ?? 0.0,
-          capacity: int.tryParse(capacityText.trim()) ?? 5,
+          pricePerHour: pricePerHour,
+          capacity: capacity,
           requireDeposit: requireDeposit,
-          depositAmount: double.tryParse(depositText.trim()) ?? 0.0,
+          depositAmount: depositAmount,
           uploadedUrls: uploadedUrls,
           notes: notes,
           features: stadiumFeatures,
@@ -101,14 +174,32 @@ class StadiumWizardSubmitService {
           longitude: longitude,
         );
         await databaseService.updateStadium(stadiumId, updatePayload);
+        var cleanupFailed = false;
+        for (final removedUrl in removedExistingImageUrls) {
+          final deleted =
+              await StadiumWizardImageService.deleteUploadedImage(removedUrl);
+          cleanupFailed = cleanupFailed || !deleted;
+        }
+        if (cleanupFailed) {
+          if (context.mounted) {
+            VSPFeedback.showError(
+              context,
+              isArabic
+                  ? 'تم حفظ بيانات الملعب، لكن تعذر حذف بعض الصور القديمة. اضغط حفظ مرة تانية لإعادة المحاولة.'
+                  : 'Stadium details were saved, but some old photos could not be deleted. Save again to retry.',
+            );
+          }
+          return false;
+        }
+        removedExistingImageUrls.clear();
       } else {
         final newId = await databaseService.createStadium(
           name: name.trim(),
           location: location.trim(),
           governorate: governorate,
-          pricePerHour: double.tryParse(priceText.trim()) ?? 0.0,
-          seatsCapacity: int.tryParse(capacityText.trim()) ?? 5,
-          depositAmount: requireDeposit ? (double.tryParse(depositText.trim()) ?? 0.0) : 0.0,
+          pricePerHour: pricePerHour,
+          seatsCapacity: capacity,
+          depositAmount: depositAmount,
           needsDeposit: requireDeposit,
           imageUrl: uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
           images: uploadedUrls,
@@ -116,7 +207,9 @@ class StadiumWizardSubmitService {
           lat: latitude,
           lng: longitude,
           notes: notes.trim().isEmpty
-              ? "We ensure a professional environment. Please arrive on time. Respect the facility and equipment. Late arrival may result in reduced playing time."
+              ? (isArabic
+                  ? 'نحرص على توفير بيئة احترافية. يرجى الحضور في الموعد المحدد والمحافظة على الملعب ومعداته. قد يؤدي التأخر إلى تقليل وقت اللعب.'
+                  : 'We ensure a professional environment. Please arrive on time. Respect the facility and equipment. Late arrival may result in reduced playing time.')
               : notes.trim(),
           features: stadiumFeatures,
         );
@@ -135,24 +228,35 @@ class StadiumWizardSubmitService {
       }
 
       if (context.mounted) {
-        if (stadiumId == null) {
-          await StadiumWizardDraftService.clearDraft(uid);
-          await UserRepository().updateOnboardingConfirmed(user.uid, true);
-          await auth.updateProfile({
-            'hasStadium': true,
-            'is_onboarding_confirmed': true,
-          });
+        var profileSyncFailed = false;
+        try {
+          if (stadiumId == null) {
+            await StadiumWizardDraftService.clearDraft(uid);
+            await UserRepository().updateOnboardingConfirmed(user.uid, true);
+            await auth.updateProfile({
+              'hasStadium': true,
+              'is_onboarding_confirmed': true,
+            });
+          }
+          await auth.refreshProfile();
+        } catch (syncError, stackTrace) {
+          profileSyncFailed = true;
+          debugPrint('Stadium was saved, but owner profile synchronization failed: $syncError');
+          debugPrintStack(stackTrace: stackTrace);
         }
-        await auth.refreshProfile();
 
         if (!context.mounted) return true;
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showSuccess(
-          context,
-          stadiumId == null
-              ? (isArabic ? 'تم إرسال بيانات الملعب للمراجعة.' : 'Stadium submitted for review.')
-              : (isArabic ? 'تم إرسال التعديلات للمراجعة.' : 'Changes submitted for review.'),
-        );
+        final successMessage = stadiumId == null
+            ? (isArabic ? 'تم حفظ بيانات الملعب وإرسالها للمراجعة.' : 'Stadium details were saved and submitted for review.')
+            : (isArabic ? 'تم حفظ التعديلات وإرسالها للمراجعة.' : 'Changes were saved and submitted for review.');
+        final syncWarning = isArabic
+            ? 'تم حفظ الملعب، لكن تعذر تحديث بعض بيانات الحساب. أعد فتح التطبيق أو سجّل الدخول مرة أخرى.'
+            : 'The stadium was saved, but some account details could not be refreshed. Reopen the app or sign in again.';
+        if (profileSyncFailed) {
+          VSPFeedback.showError(context, syncWarning);
+        } else {
+          VSPFeedback.showSuccess(context, successMessage);
+        }
         Navigator.pop(context);
         return true;
       }

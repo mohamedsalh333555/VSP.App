@@ -24,7 +24,20 @@ class LoginSocialAuthRow extends StatelessWidget {
     HapticFeedback.mediumImpact();
     onLoadingChanged(true);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.signInWithApple(isLoginOnly: true);
+    bool success;
+    try {
+      success = await authProvider.signInWithApple(isLoginOnly: true);
+    } catch (_) {
+      if (!context.mounted) return;
+      onLoadingChanged(false);
+      HapticFeedback.vibrate();
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isAr ? 'تعذر تسجيل الدخول عبر Apple. حاول مرة أخرى.' : 'Apple Sign-In could not be completed. Please try again.',
+      );
+      return;
+    }
 
     if (!context.mounted) return;
     onLoadingChanged(false);
@@ -46,7 +59,20 @@ class LoginSocialAuthRow extends StatelessWidget {
     HapticFeedback.mediumImpact();
     onLoadingChanged(true);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.signInWithGoogle(isLoginOnly: true);
+    bool success;
+    try {
+      success = await authProvider.signInWithGoogle(isLoginOnly: true);
+    } catch (_) {
+      if (!context.mounted) return;
+      onLoadingChanged(false);
+      HapticFeedback.vibrate();
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isAr ? 'تعذر تسجيل الدخول عبر Google. حاول مرة أخرى.' : 'Google Sign-In could not be completed. Please try again.',
+      );
+      return;
+    }
 
     if (!context.mounted) return;
     onLoadingChanged(false);

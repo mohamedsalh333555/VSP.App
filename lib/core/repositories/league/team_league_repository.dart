@@ -264,36 +264,48 @@ class TeamLeagueRepository {
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
-  /// Fetches configured entry fee per team from league_settings table
+  /// Compatibility wrapper retaining the historical 30 EGP fallback.
   Future<double> getTeamLeagueEntryFee() async {
     try {
-      final res = await _supabase
-          .from('league_settings')
-          .select('setting_value')
-          .eq('setting_key', 'team_league_entry_fee')
-          .maybeSingle();
-      if (res != null && res['setting_value'] != null) {
-        return double.tryParse(res['setting_value'].toString()) ?? 30.0;
-      }
+      return await getTeamLeagueEntryFeeStrict();
     } catch (e) {
       debugPrint('Notice getting team league entry fee: $e');
+      return 30.0;
+    }
+  }
+
+  /// Strict configured fee lookup for UI flows that must surface read failures.
+  Future<double> getTeamLeagueEntryFeeStrict() async {
+    final res = await _supabase
+        .from('league_settings')
+        .select('setting_value')
+        .eq('setting_key', 'team_league_entry_fee')
+        .maybeSingle();
+    if (res != null && res['setting_value'] != null) {
+      return double.tryParse(res['setting_value'].toString()) ?? 30.0;
     }
     return 30.0;
   }
 
-  /// Fetches the active private team league for a given team
+  /// Compatibility wrapper for callers that historically use null as fallback.
   Future<TeamLeagueData?> getTeamActiveLeague(String teamId) async {
     try {
-      final res = await _supabase.rpc(
-        'get_team_active_league',
-        params: {'p_team_id': teamId},
-      );
-      if (res == null) return null;
-      return TeamLeagueData.fromJson(Map<String, dynamic>.from(res as Map));
+      return await getTeamActiveLeagueStrict(teamId);
     } catch (e) {
       debugPrint('Error getting team active league: $e');
       return null;
     }
+  }
+
+  /// Strict active-league lookup; null means no active league, exceptions mean
+  /// the backend could not verify the state.
+  Future<TeamLeagueData?> getTeamActiveLeagueStrict(String teamId) async {
+    final res = await _supabase.rpc(
+      'get_team_active_league',
+      params: {'p_team_id': teamId},
+    );
+    if (res == null) return null;
+    return TeamLeagueData.fromJson(Map<String, dynamic>.from(res as Map));
   }
 
   /// Creates a new private team league with 4 to 8 teams and flexible payment options

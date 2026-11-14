@@ -16,18 +16,20 @@ class VSPSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final placeholder = Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: VSPColors.inputFill,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+    );
+    if (MediaQuery.disableAnimationsOf(context)) return placeholder;
     return Shimmer.fromColors(
       baseColor: VSPColors.inputFill,
       highlightColor: VSPColors.surfaceAlt,
-      period: const Duration(milliseconds: 1400),
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: VSPColors.inputFill,
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
-      ),
+      period: VSPDSMotion.shimmer,
+      child: placeholder,
     );
   }
 }
@@ -39,7 +41,7 @@ class CardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.85,
-      margin: const EdgeInsets.only(right: 16),
+      margin: const EdgeInsetsDirectional.only(end: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: VSPColors.surface,

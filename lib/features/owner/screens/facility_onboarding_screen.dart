@@ -7,11 +7,13 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import 'add_stadium_wizard.dart';
 import '../services/facility_onboarding_service.dart';
 import '../widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../shared/widgets/stadium_card.dart';
 
 class FacilityOnboardingScreen extends StatefulWidget {
@@ -24,6 +26,8 @@ class FacilityOnboardingScreen extends StatefulWidget {
 class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
   Stream<List<Stadium>>? _stadiumsStream;
   String? _cachedUid;
+  bool _isCompletingLater = false;
+  bool _isContinuingToDocuments = false;
 
   Stream<List<Stadium>> _getStadiumsStream(String uid) {
     if (_stadiumsStream != null && _cachedUid == uid) {
@@ -32,6 +36,14 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     _cachedUid = uid;
     _stadiumsStream = StadiumRepository().getOwnerStadiums(uid);
     return _stadiumsStream!;
+  }
+
+  void _retryStadiums() {
+    final uid = _cachedUid;
+    if (uid == null || uid.isEmpty) return;
+    setState(() {
+      _stadiumsStream = StadiumRepository().getOwnerStadiums(uid);
+    });
   }
 
   /// يتحقق من الباقة ويفتح Wizard أو يعرض Bottom Sheet الترقية
@@ -58,6 +70,74 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
 
     if (!context.mounted) return;
     await FacilityUpgradeBottomSheet.show(context, isAr: isAr, user: user);
+  }
+
+  Future<void> _completeOnboardingLater(
+    AuthProvider authProvider,
+    bool isAr,
+  ) async {
+    if (_isCompletingLater) return;
+    final uid = authProvider.currentUser?.id ?? authProvider.userModel?.uid;
+    if (uid == null || uid.isEmpty) {
+      VSPFeedback.showError(
+        context,
+        isAr ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Your sign-in session ended. Please sign in again.',
+      );
+      return;
+    }
+
+    setState(() => _isCompletingLater = true);
+    try {
+      await UserRepository().updateOnboardingConfirmed(uid, true);
+      await authProvider.updateProfile({'is_onboarding_confirmed': true});
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      context.go('/owner');
+    } catch (_) {
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isAr ? 'تعذر حفظ اختيارك الآن. حاول مرة أخرى.' : 'Could not save your choice. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCompletingLater = false);
+    }
+  }
+
+  Future<void> _continueToDocuments(
+    AuthProvider authProvider,
+    bool isAr,
+  ) async {
+    if (_isContinuingToDocuments) return;
+    final uid = authProvider.currentUser?.id ?? authProvider.userModel?.uid;
+    if (uid == null || uid.isEmpty) {
+      VSPFeedback.showError(
+        context,
+        isAr ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Your sign-in session ended. Please sign in again.',
+      );
+      return;
+    }
+
+    setState(() => _isContinuingToDocuments = true);
+    try {
+      final updatedAdditional =
+          FacilityOnboardingService.buildOnboardingConfirmedPayload(
+        authProvider.userModel?.additionalData,
+      );
+      await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
+      await authProvider.updateProfile({'additionalData': updatedAdditional});
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      context.go('/documentation');
+    } catch (_) {
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isAr ? 'تعذر حفظ التقدم الآن. حاول مرة أخرى.' : 'Could not save your progress. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isContinuingToDocuments = false);
+    }
   }
 
   double _calculateOnboardingProgress(Stadium? stadium) {
@@ -88,10 +168,23 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
           stream: _getStadiumsStream(uid),
           builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
- return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+ return VSPStateView(
+   state: VSPUiState.loading,
+   title: isAr ? 'جارٍ تحميل ملاعبك' : 'Loading your stadiums',
+   message: isAr ? 'نحدّث قائمة الملاعب المرتبطة بحسابك.' : 'Fetching the stadiums linked to your account.',
+ );
  }
  if (snapshot.hasError) {
  VSPLogger.w('FacilityOnboardingScreen stream notice (gracefully handled): ${snapshot.error}');
+   if (snapshot.data == null || snapshot.data!.isEmpty) {
+     return VSPErrorState(
+       customMessage: isAr
+           ? 'تعذر تحميل ملاعبك الآن. تحقق من الاتصال ثم أعد المحاولة.'
+           : 'Could not load your stadiums. Check your connection and try again.',
+       retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
+       onRetry: _retryStadiums,
+     );
+   }
  }
  final stadiums = snapshot.data ?? [];
  final hasStadiums = stadiums.isNotEmpty;
@@ -127,7 +220,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  ),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
+ foregroundColor: VSPColors.black,
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  ),
@@ -140,18 +233,9 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () async {
-                  final uid = authProvider.currentUser?.uid ?? authProvider.userModel?.uid;
-                  if (uid != null) {
-                    await UserRepository().updateOnboardingConfirmed(uid, true);
-                  }
-                  await authProvider.updateProfile({
-                    'is_onboarding_confirmed': true,
-                  });
-                  if (context.mounted) {
-                    context.go('/owner');
-                  }
-                },
+                onPressed: _isCompletingLater
+                    ? null
+                    : () => _completeOnboardingLater(authProvider, isAr),
                 child: Text(
                   isAr ? 'هضيف الملعب بعدين' : "I'll add stadium later",
                   style: const TextStyle(
@@ -178,6 +262,35 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.center,
  children: [
+ if (snapshot.hasError)
+   Container(
+     width: double.infinity,
+     margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+     padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+     decoration: BoxDecoration(
+       color: VSPColors.warning.withValues(alpha: 0.10),
+       borderRadius: BorderRadius.circular(VSPRadius.md),
+       border: Border.all(color: VSPColors.warning.withValues(alpha: 0.30)),
+     ),
+     child: Row(
+       children: [
+         const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+         const SizedBox(width: VSPSpacing.sm),
+         Expanded(
+           child: Text(
+             isAr
+                 ? 'تعذر تحديث قائمة الملاعب. نعرض آخر بيانات تم تحميلها.'
+                 : 'Could not refresh stadiums. Showing the last loaded data.',
+             style: const TextStyle(color: VSPColors.warning, fontSize: 11.5),
+           ),
+         ),
+         TextButton(
+           onPressed: _retryStadiums,
+           child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+         ),
+       ],
+     ),
+   ),
  const SizedBox(height: 16),
  Text(
  isAr ? 'ملاعبك المضافة' : 'Your Stadiums',
@@ -210,7 +323,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  Text(
  isAr ? 'تقدم إكتمال ملفك الرياضي' : 'Profile Completion',
  style: const TextStyle(
- color: Colors.white,
+ color: VSPColors.white,
  fontSize: 13,
  fontWeight: FontWeight.bold,
  ),
@@ -247,8 +360,8 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  const SizedBox(height: 8),
  Text(
  isAr
- ? 'أحسنت! قطعنا $progressPct% من الإعداد. تابع رفع الوثائق لتصل لـ 100% وتفعل شارة المالك الموثوق '
- : '$progressPct% complete! Finish uploading documents to reach 100% and earn your Verified Badge ',
+ ? 'اكتمل $progressPct% من بيانات ملعبك. تابع رفع الوثائق المطلوبة لإرسالها للمراجعة.'
+ : '$progressPct% of your stadium profile is complete. Upload the required documents to submit them for review.',
  style: const TextStyle(
  color: VSPColors.textSecondary,
  fontSize: 11,
@@ -295,8 +408,16 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  itemBuilder: (context, index) {
  return StadiumCard(
  stadium: stadiums[index],
- isOwnerView: false,
+ isOwnerView: true,
  onTap: () {
+ Navigator.push(
+ context,
+ MaterialPageRoute(
+ builder: (_) => AddStadiumWizard(stadiumId: stadiums[index].id),
+ ),
+ );
+ },
+ onEditTap: () {
  Navigator.push(
  context,
  MaterialPageRoute(
@@ -316,14 +437,14 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  child: ElevatedButton.icon(
  // Gate: Check subscription before allowing second stadium
  onPressed: () => _onAddAnotherStadium(context, stadiums, isAr),
- icon: const Icon(Iconsax.add_circle_copy, color: Colors.white),
+ icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.white),
  label: Text(
  isAr ? 'إضافة ملعب آخر' : 'Add another stadium',
  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
  ),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.surfaceAlt,
- foregroundColor: Colors.white,
+ foregroundColor: VSPColors.white,
  side: const BorderSide(color: VSPColors.divider),
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -335,26 +456,12 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  SizedBox(
  width: double.infinity, height: 56,
  child: ElevatedButton(
- onPressed: () async {
- final uid = authProvider.currentUser?.uid;
- final updatedAdditional =
- FacilityOnboardingService.buildOnboardingConfirmedPayload(
- authProvider.userModel?.additionalData,
- );
- if (uid != null) {
- await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
- }
- await authProvider.updateProfile({
- 'additionalData': updatedAdditional,
- });
- if (!context.mounted) return;
- // FIX: Use GoRouter instead of Navigator.push to keep
- // redirect logic consistent and avoid broken GoRouter state
- context.go('/documentation');
- },
+ onPressed: _isContinuingToDocuments
+     ? null
+     : () => _continueToDocuments(authProvider, isAr),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
+ foregroundColor: VSPColors.black,
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  ),

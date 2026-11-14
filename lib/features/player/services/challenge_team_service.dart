@@ -16,6 +16,15 @@ class ChallengeTeamService {
     return team.fairPlayScore >= minFairPlayScore;
   }
 
+  /// Normalize untrusted invite input without guessing which historical code
+  /// format is still recognized by the server. Restrict the transport size and
+  /// alphabet; all eligibility, expiry and consent checks remain server-side.
+  static String? normalizeChallengeCode(String value) {
+    final code = value.trim().toUpperCase();
+    if (code.isEmpty || code.length > 32) return null;
+    return RegExp(r'^[A-Z0-9-]+$').hasMatch(code) ? code : null;
+  }
+
   /// Evaluates head-to-head statistics and determines the competitive sentiment.
   static H2HHypeType evaluateH2HHype({
     required int yourWins,

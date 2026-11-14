@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../core/services/active_team_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/booking/booking_bottom_bar.dart';
@@ -14,7 +16,9 @@ import '../widgets/booking/booking_date_selector.dart';
 import '../widgets/booking/booking_financial_summary.dart';
 import '../widgets/booking/booking_slot_calculator.dart';
 import '../widgets/booking/booking_slot_models.dart';
+import '../widgets/booking/booking_initial_selection.dart';
 import '../widgets/booking/booking_slot_stream_section.dart';
+import '../widgets/booking/booking_cancellation_policy_note.dart';
 
 export '../widgets/booking/booking_slot_models.dart' show TimeSlotItem;
 
@@ -23,6 +27,8 @@ class BookingConfirmationScreen extends StatefulWidget {
   final DateTime? selectedDate;
   final String bookingType; // 'Personal', 'Team', 'Challenge'
   final Team? opponentTeam;
+  /// The code returned by a verified opposing-team lookup for this route.
+  final String? verifiedChallengeCode;
   final List<String>? initialSelectedSlots;
 
   const BookingConfirmationScreen({
@@ -31,6 +37,7 @@ class BookingConfirmationScreen extends StatefulWidget {
     this.selectedDate,
     this.bookingType = 'Personal',
     this.opponentTeam,
+    this.verifiedChallengeCode,
     this.initialSelectedSlots,
   });
 
@@ -44,36 +51,54 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   bool _isBallRented = false;
   bool _isPrivate = true;
   bool _isLoading = false;
+  bool _isLoadingUserTeam = true;
+  bool _hasUserTeamLoadError = false;
+  int _userTeamRequestGeneration = 0;
   final int _currentPlayers = 1;
   int _initialPlayersCount = 1;
   String? _userTeamId;
   String? _userTeamName;
   List<TimeSlotItem> _timeSlots = [];
   bool _isSlotsInitialized = false;
+  String? _activeBookingUserId;
+  String? _activeVerifiedChallengeCode;
+  bool _hasObservedBookingUser = false;
 
   DateTime get _operationalBaseDate =>
       AppDateFormatter.getOperationalDate(DateTime.now());
 
   bool get _isOpenJoin => BookingConfirmationHandler.isOpenJoin(widget.bookingType);
+  bool get _requiresTeamContext => widget.bookingType.toLowerCase().contains('team') ||
+      BookingConfirmationHandler.isChallenge(widget.bookingType);
 
   double get _slotPrice => widget.stadium.basePrice / 2;
   double get _ballPrice => widget.stadium.ballPrice > 0 ? widget.stadium.ballPrice : 0;
 
   double get _totalPrice {
     double total = _selectedTimeSlots.length * _slotPrice;
-    if (_isBallRented) total += _ballPrice;
+    if (_selectedTimeSlots.isNotEmpty && _isBallRented) total += _ballPrice;
     return total;
   }
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.selectedDate ?? _operationalBaseDate;
-    if (widget.initialSelectedSlots != null) {
-      _selectedTimeSlots.addAll(widget.initialSelectedSlots!);
-    }
+    // A restored route can contain a past date, forged time keys, nonadjacent
+    // slots or an expired venue schedule. Normalize before showing a total or
+    // enabling a booking button; server availability is checked again on submit.
+    final now = DateTime.now();
+    final initial = BookingInitialSelection.resolve(
+      stadium: widget.stadium,
+      operationalBaseDate: AppDateFormatter.getOperationalDate(now),
+      requestedDate: widget.selectedDate,
+      requestedSlots: widget.initialSelectedSlots,
+      now: now,
+    );
+    _selectedDate = initial.date;
+    _selectedTimeSlots.addAll(initial.slots);
+    _activeVerifiedChallengeCode = widget.verifiedChallengeCode;
     _isPrivate = true;
-    _fetchUserTeam();
+    // Team context is loaded when the authenticated account is known.
   }
 
   @override
@@ -83,17 +108,87 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       _isSlotsInitialized = true;
       _generateDynamicTimeSlots();
     }
+
+    final auth = context.watch<AuthProvider>();
+    final userId = auth.isOwner ? null : auth.currentUser?.id;
+    if (!_hasObservedBookingUser || _activeBookingUserId != userId) {
+      final accountSwitched = _hasObservedBookingUser;
+      _hasObservedBookingUser = true;
+      _activeBookingUserId = userId;
+      // Invalidates old team-read completions synchronously; never show
+      // a previous captain's team or selected slots to the new account.
+      ++_userTeamRequestGeneration;
+      _userTeamId = null;
+      _userTeamName = null;
+      _hasUserTeamLoadError = false;
+      _isLoadingUserTeam = userId != null;
+      if (accountSwitched) {
+        _selectedTimeSlots.clear();
+        _activeVerifiedChallengeCode = null;
+        _isBallRented = false;
+        _isLoading = false;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _activeBookingUserId != userId) return;
+        _fetchUserTeamFor(userId);
+      });
+    }
   }
 
-  Future<void> _fetchUserTeam() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userId = authProvider.currentUser?.uid;
-    if (userId != null) {
-      final team = await TeamRepository().getUserTeam(userId);
+  Future<void> _fetchUserTeam() {
+    final userId = context.read<AuthProvider>().currentUser?.id;
+    return _fetchUserTeamFor(userId);
+  }
+
+  Future<void> _fetchUserTeamFor(String? userId) async {
+    if (userId != null && context.read<AuthProvider>().currentUser?.id != userId) return;
+    final generation = ++_userTeamRequestGeneration;
+    if (userId == null) {
       if (mounted) {
+        setState(() {
+          _isLoadingUserTeam = false;
+          _userTeamId = null;
+          _userTeamName = null;
+          _hasUserTeamLoadError = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted && !_isLoadingUserTeam) {
+      setState(() {
+        _isLoadingUserTeam = true;
+        _hasUserTeamLoadError = false;
+      });
+    }
+    try {
+      // Challenge/team checkout must use the account's explicit active team,
+      // not whichever membership the database happens to return first.
+      final teams = await TeamRepository().getUserTeamsStrict(userId);
+      final team = await ActiveTeamService.resolve(
+        userId: userId,
+        teams: teams,
+      );
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<AuthProvider>().currentUser?.id == userId) {
         setState(() {
           _userTeamId = team?.id;
           _userTeamName = team?.name;
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = false;
+        });
+      }
+    } catch (_) {
+      debugPrint('Booking team context unavailable (details redacted)');
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<AuthProvider>().currentUser?.id == userId) {
+        setState(() {
+          _userTeamId = null;
+          _userTeamName = null;
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = true;
         });
       }
     }
@@ -110,6 +205,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   void _onTimeSlotTap(String slotKey, List<Booking> existingBookings) {
+    final auth = context.read<AuthProvider>();
+    if (_isLoading || auth.isOwner || auth.currentUser?.id == null ||
+        auth.currentUser?.id != _activeBookingUserId) return;
     setState(() {
       final updated = BookingSlotCalculator.calculateNewSelectedSlots(
         slotKey: slotKey,
@@ -119,17 +217,58 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         selectedDate: _selectedDate,
         existingBookings: existingBookings,
       );
-      _selectedTimeSlots.clear();
-      _selectedTimeSlots.addAll(updated);
+      _selectedTimeSlots
+        ..clear()
+        ..addAll(updated);
+      if (_selectedTimeSlots.isEmpty) _isBallRented = false;
     });
   }
 
   Future<void> _handleBookingConfirmation() async {
+    final auth = context.read<AuthProvider>();
+    final initiatingUserId = auth.currentUser?.id;
+    if (initiatingUserId == null || auth.isOwner ||
+        initiatingUserId != _activeBookingUserId) {
+      VSPFeedback.showError(
+        context,
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? 'سجّل الدخول كلاعب قبل تأكيد الحجز.'
+            : 'Sign in as a player before confirming a booking.',
+      );
+      return;
+    }
+    // Reject rapid repeat taps while the first confirmation is running.
+    if (_isLoading || _selectedTimeSlots.isEmpty) return;
+    if (_requiresTeamContext && _isLoadingUserTeam) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showInfo(
+        context,
+        isArabic ? 'جارٍ التحقق من بيانات فريقك. حاول بعد لحظات.' : 'Your team is still being verified. Try again in a moment.',
+      );
+      return;
+    }
+    if (_requiresTeamContext && _userTeamId == null) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      if (_hasUserTeamLoadError) {
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر التحقق من بيانات فريقك. أعد المحاولة الآن.' : 'Could not verify your team. Retrying now.',
+        );
+        await _fetchUserTeam();
+      } else {
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'يجب أن تنضم إلى فريق قبل إنشاء هذا الحجز.' : 'Join a team before creating this booking.',
+        );
+      }
+      return;
+    }
     await BookingConfirmationHandler.run(
       context: context,
       stadium: widget.stadium,
       bookingType: widget.bookingType,
       opponentTeam: widget.opponentTeam,
+      verifiedChallengeCode: _activeVerifiedChallengeCode,
       selectedTimeSlots: List.unmodifiable(_selectedTimeSlots),
       selectedDate: _selectedDate,
       timeSlots: _timeSlots,
@@ -140,8 +279,17 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       currentPlayers: _currentPlayers,
       userTeamId: _userTeamId,
       userTeamName: _userTeamName,
-      onLoadingChanged: (loading) => setState(() => _isLoading = loading),
-      onSlotsCleared: () => setState(() => _selectedTimeSlots.clear()),
+      onLoadingChanged: (loading) {
+        if (!mounted || _activeBookingUserId != initiatingUserId) return;
+        setState(() => _isLoading = loading);
+      },
+      onSlotsCleared: () {
+        if (!mounted || _activeBookingUserId != initiatingUserId) return;
+        setState(() {
+          _selectedTimeSlots.clear();
+          _isBallRented = false;
+        });
+      },
     );
   }
 
@@ -169,9 +317,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             selectedDate: _selectedDate,
             operationalBaseDate: _operationalBaseDate,
             onDateChanged: (date) {
+              // Do not mutate the booking date while confirmation is in flight.
+              if (_isLoading) return;
               setState(() {
                 _selectedDate = date;
                 _selectedTimeSlots.clear();
+                _isBallRented = false;
               });
             },
           ),
@@ -187,6 +338,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     stadiumId: widget.stadium.id,
                     stadium: widget.stadium,
                     selectedDate: _selectedDate,
+                    viewerUserId: _activeBookingUserId,
                     timeSlots: _timeSlots,
                     selectedTimeSlots: List.unmodifiable(_selectedTimeSlots),
                     onSlotTap: _onTimeSlotTap,
@@ -195,7 +347,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   BookingFinancialSummary(
                     stadium: widget.stadium,
                     totalPrice: _totalPrice,
+                    hasSelectedSlots: isSlotSelected,
+                     isOpenJoin: _isOpenJoin,
                   ),
+                  const SizedBox(height: VSPSpacing.md),
+                  const BookingCancellationPolicyNote(),
                   const SizedBox(height: VSPSpacing.xl),
                 ],
               ),
@@ -212,13 +368,16 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         onPlayersCountChanged: (count) => setState(() => _initialPlayersCount = count),
         hasBallOption: hasBallOption,
         isBallRented: _isBallRented,
-        onBallRentedChanged: (val) => setState(() => _isBallRented = val),
+        onBallRentedChanged: (val) {
+          if (!isSlotSelected || _isLoading) return;
+          setState(() => _isBallRented = val);
+        },
         ballPrice: _ballPrice,
         totalPrice: _totalPrice,
         depositAmount: deposit,
         needsDeposit: widget.stadium.needsDeposit,
         isSlotSelected: isSlotSelected,
-        isLoading: _isLoading,
+        isLoading: _isLoading || (_requiresTeamContext && _isLoadingUserTeam),
         onConfirmPressed: _handleBookingConfirmation,
       ),
     );

@@ -72,6 +72,7 @@ class StadiumWizardMediaCoordinator {
       'file': null,
       'url': null,
       'isUploading': true,
+      'isNewUpload': true,
       'progress': 10,
       'statusLabel': progressLabel,
     };
@@ -95,11 +96,17 @@ class StadiumWizardMediaCoordinator {
       ownerId: ownerId,
       onProgress: (progress) {
         imageEntry['progress'] = progress;
-        onStateChanged();
+        if (context.mounted) onStateChanged();
       },
     );
 
-    if (!context.mounted) return;
+    if (!context.mounted) {
+      if (url != null && url.isNotEmpty) {
+        await StadiumWizardImageService.deleteUploadedImage(url);
+      }
+      images.remove(imageEntry);
+      return;
+    }
 
     if (url == null) {
       images.remove(imageEntry);
@@ -122,12 +129,20 @@ class StadiumWizardMediaCoordinator {
   static Future<void> deleteImage({
     required Map<String, dynamic> image,
     required List<Map<String, dynamic>> images,
+    required Set<String> removedExistingImageUrls,
     required String? stadiumId,
     required String? uid,
     required VoidCallback onStateChanged,
   }) async {
-    if (image['url'] != null) {
-      await StadiumWizardImageService.deleteUploadedImage(image['url']!);
+    // Existing stadium images remain referenced by the persisted record until
+    // the edit is successfully saved; never delete them while the wizard is open.
+    final imageUrl = image['url']?.toString().trim();
+    if (imageUrl?.isNotEmpty == true && image['isNewUpload'] == true) {
+      final deleted = await StadiumWizardImageService.deleteUploadedImage(imageUrl!);
+      if (!deleted) return;
+    } else if (stadiumId != null && imageUrl?.isNotEmpty == true) {
+      // Defer deleting persisted media until the record update succeeds.
+      removedExistingImageUrls.add(imageUrl!);
     }
     images.remove(image);
     onStateChanged();

@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -88,12 +89,12 @@ class FacilitiesGrid extends StatelessWidget {
                     child: Text(
                       f.label,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      // Keep facility labels readable at large text sizes.
+                      softWrap: true,
                     ),
                   ),
                 ],
@@ -112,6 +113,38 @@ class StadiumInformationTab extends StatelessWidget {
 
   const StadiumInformationTab({super.key, required this.stadium});
 
+  // Localize only standalone, known facility/rule labels. Do not rewrite
+  // arbitrary owner-written prose or persist translated text to the database.
+  static String localizeKnownDescriptionLabels(String description, {required bool isArabic}) {
+    if (description.isEmpty) return description;
+    const englishToArabic = <String, String>{
+      'cleanliness': 'الحفاظ على النظافة',
+      'no smoking': 'ممنوع التدخين',
+      'punctuality': 'الالتزام بالمواعيد',
+    };
+    const arabicToEnglish = <String, String>{
+      'الحفاظ على النظافة': 'Cleanliness',
+      'ممنوع التدخين': 'No Smoking',
+      'الالتزام بالمواعيد': 'Punctuality',
+      'الالتزام بالمواعد': 'Punctuality',
+    };
+    return description.split('\n').map((line) {
+      final trimmed = line.trim();
+      final label = trimmed.replaceFirst(RegExp(r'^[•-]\s*'), '').trim();
+      // Translate only full stock labels. Owner prose is never rewritten.
+      final translation = isArabic
+          ? englishToArabic[label.toLowerCase()]
+          : arabicToEnglish[label];
+      if (translation == null) return line;
+      final prefix = trimmed.startsWith('•')
+          ? '• '
+          : (trimmed.startsWith('-') ? '- ' : '');
+      final leading = line.substring(0, line.length - line.trimLeft().length);
+      return '$leading$prefix$translation';
+    }).join('\n');
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -121,13 +154,7 @@ class StadiumInformationTab extends StatelessWidget {
         : (isArabic ? 'ملعب بدون اسم' : 'Unnamed Pitch');
 
     String rawDesc = stadium.description.isNotEmpty ? stadium.description : l10n.noDescription;
-    if (!isArabic && rawDesc.isNotEmpty) {
-      rawDesc = rawDesc
-          .replaceAll('الالتزام بالمواعد', '• Punctuality')
-          .replaceAll('الالتزام بالمواعيد', '• Punctuality')
-          .replaceAll('الحفاظ على النظافة', '• Cleanliness')
-          .replaceAll('ممنوع التدخين', '• No Smoking');
-    }
+    rawDesc = localizeKnownDescriptionLabels(rawDesc, isArabic: isArabic);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(VSPSpacing.md),
@@ -158,64 +185,132 @@ class StadiumInformationTab extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Iconsax.star_copy, color: VSPColors.accent, size: 14),
-                    const SizedBox(width: 5),
-                    Text(
-                      stadium.rating.toStringAsFixed(1),
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${stadium.reviewsCount})',
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                    ),
-                  ],
+                  children: stadium.reviewsCount > 0
+                      ? [
+                          const Icon(
+                            Iconsax.star_copy,
+                            color: VSPColors.accent,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            stadium.rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              color: VSPColors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '(${stadium.reviewsCount})',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ]
+                      : [
+                          const Icon(
+                            Iconsax.star_copy,
+                            color: VSPColors.textSecondary,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            isArabic ? 'لسه مفيش تقييمات' : 'No ratings yet',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: VSPSpacing.md),
 
-          // Location Badge: Guaranteed working maps launch
-          GestureDetector(
-            onTap: () async {
-              try {
-                final String query = (stadium.lat != null && stadium.lng != null)
-                    ? '${stadium.lat},${stadium.lng}'
-                    : Uri.encodeComponent('${stadium.name} ${stadium.location} ${stadium.governorate ?? ''}'.trim());
-                final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
-                await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
-              } catch (e) {
-                debugPrint('Error launching maps: $e');
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.xl),
-                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    EgyptGovernorates.formatSmartLocation(
-                      rawAddress: stadium.area.isNotEmpty
-                          ? stadium.area
-                          : (stadium.location.isNotEmpty ? stadium.location : stadium.address),
-                      administrativeArea: stadium.governorate,
+          // Location badge opens the stadium in the external maps app.
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: (MediaQuery.sizeOf(context).width - 64).clamp(0.0, double.infinity).toDouble(),
+            ),
+            child: Tooltip(
+              message: Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'فتح الموقع على الخريطة'
+                  : 'Open location in maps',
+              child: Material(
+                color: VSPColors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(VSPRadius.xl),
+                  onTap: () async {
+                    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                    try {
+                      final String query = (stadium.lat != null && stadium.lng != null)
+                          ? '${stadium.lat},${stadium.lng}'
+                          : Uri.encodeComponent('${stadium.name} ${stadium.location} ${stadium.governorate ?? ''}'.trim());
+                      final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+                      final launched = await launchUrl(
+                        googleMapsUrl,
+                        mode: LaunchMode.externalApplication,
+                      );
+                      if (!launched && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isArabic
+                                ? 'تعذر فتح تطبيق الخرائط.'
+                                : 'Could not open the maps app.'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint('Error launching maps: $e');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isArabic
+                                ? 'تعذر فتح الموقع. حاول مرة أخرى.'
+                                : 'Could not open this location. Please try again.'),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.xl),
+                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                     ),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: VSPColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            EgyptGovernorates.formatSmartLocation(
+                              rawAddress: stadium.area.isNotEmpty
+                                  ? stadium.area
+                                  : (stadium.location.isNotEmpty ? stadium.location : stadium.address),
+                              administrativeArea: stadium.governorate,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: VSPColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                          ),
                         ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -235,7 +330,7 @@ class StadiumInformationTab extends StatelessWidget {
               children: [
                 Text(
                   l10n.informationStadium,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.white),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -269,7 +364,7 @@ class StadiumInformationTab extends StatelessWidget {
                     Text(
                       isArabic ? 'المرافق والخدمات' : 'Amenities & Services',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
                       ),
@@ -317,7 +412,7 @@ class StadiumInformationTab extends StatelessWidget {
                               Text(
                                 isArabic ? 'تأجير كرة مباراة' : 'Match Ball Rental',
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: VSPColors.white,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -343,7 +438,9 @@ class StadiumInformationTab extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            isArabic ? '+${stadium.ballPrice.toInt()} ج.م' : '+${stadium.ballPrice.toInt()} EGP',
+                            isArabic
+                                ? '+${VSPMoneyFormatter.amount(stadium.ballPrice)} ج.م'
+                                : '+${VSPMoneyFormatter.amount(stadium.ballPrice)} EGP',
                             style: const TextStyle(
                               color: VSPColors.accent,
                               fontWeight: FontWeight.w900,

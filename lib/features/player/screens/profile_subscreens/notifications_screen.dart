@@ -32,38 +32,97 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _playerChallengeResults = true;
 
   bool _isLoading = true;
+  String? _settingsUserId;
 
   @override
-  void initState() {
-    super.initState();
-    _loadSettings();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userId = context.watch<AuthProvider>().currentUser?.id ?? '';
+    if (_settingsUserId != userId) {
+      _settingsUserId = userId;
+      _isLoading = true;
+      _loadSettings(userId);
+    }
   }
 
-  Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
+  // Preferences are per account. Never import the old unscoped keys: they
+  // could belong to a different user of the same shared device.
+  String _prefKey(String userId, String key) => 'vsp_user_${userId}_$key';
+
+  Future<void> _loadSettings(String userId) async {
+    if (userId.isEmpty) {
+      if (!mounted || _settingsUserId != userId) return;
+      // didChangeDependencies already triggers a build. Do not call setState
+      // synchronously from that lifecycle when the account signs out.
+      _generalNotifications = true;
+      _soundAlerts = true;
+      _chatNotifications = true;
+      _ownerNewBookings = true;
+      _ownerPayouts = true;
+      _ownerDailySchedule = true;
+      _playerBookingConfirmations = true;
+      _playerTeamTransfers = true;
+      _playerMatchReminders = true;
+      _playerChallengeResults = true;
+      _isLoading = false;
+      return;
+    }
+    SharedPreferences prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      // Storage may be unavailable on the device; keep safe defaults
+      // and let the user reopen settings later rather than spin forever.
+      if (!mounted || _settingsUserId != userId) return;
+      setState(() => _isLoading = false);
+      return;
+    }
+    // A slow read for the previous account must not overwrite the next
+    // account's settings after logout or account switching.
+    if (!mounted || _settingsUserId != userId) return;
+    bool read(String key) => prefs.getBool(_prefKey(userId, key)) ?? true;
     setState(() {
-      _generalNotifications = prefs.getBool('notif_general') ?? true;
-      _soundAlerts = prefs.getBool('notif_sound') ?? true;
-      _chatNotifications = prefs.getBool('notif_chat') ?? true;
-
-      // Owner
-      _ownerNewBookings = prefs.getBool('notif_owner_new_bookings') ?? true;
-      _ownerPayouts = prefs.getBool('notif_owner_payouts') ?? true;
-      _ownerDailySchedule = prefs.getBool('notif_owner_daily_schedule') ?? true;
-
-      // Player
-      _playerBookingConfirmations = prefs.getBool('notif_cash_bookings') ?? true;
-      _playerTeamTransfers = prefs.getBool('notif_team_transfers') ?? true;
-      _playerMatchReminders = prefs.getBool('notif_match_reminders') ?? true;
-      _playerChallengeResults = prefs.getBool('notif_challenge_results') ?? true;
-
+      _generalNotifications = read('notif_general');
+      _soundAlerts = read('notif_sound');
+      _chatNotifications = read('notif_chat');
+      _ownerNewBookings = read('notif_owner_new_bookings');
+      _ownerPayouts = read('notif_owner_payouts');
+      _ownerDailySchedule = read('notif_owner_daily_schedule');
+      _playerBookingConfirmations = read('notif_cash_bookings');
+      _playerTeamTransfers = read('notif_team_transfers');
+      _playerMatchReminders = read('notif_match_reminders');
+      _playerChallengeResults = read('notif_challenge_results');
       _isLoading = false;
     });
   }
 
   Future<void> _saveSetting(String key, bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(key, value);
+    final userId = _settingsUserId;
+    if (userId == null || userId.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Do not persist a delayed toggle under a different account.
+      if (!mounted || _settingsUserId != userId) return;
+      final saved = await prefs.setBool(_prefKey(userId, key), value);
+      if (!saved && mounted && _settingsUserId == userId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? 'تعذر حفظ تفضيل الإشعارات.'
+                : 'Could not save notification preference.',
+          )),
+        );
+      }
+    } catch (_) {
+      if (!mounted || _settingsUserId != userId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'تعذر حفظ تفضيل الإشعارات.'
+              : 'Could not save notification preference.',
+        )),
+      );
+    }
   }
 
   @override
@@ -76,7 +135,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         title: Text(
@@ -87,9 +146,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
         centerTitle: true,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
-          : SingleChildScrollView(
+      body: SafeArea(
+        top: false,
+        child: _isLoading
+            ? VSPStateView(
+                state: VSPUiState.loading,
+                title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل الإشعارات' : 'Loading notifications',
+                message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث تفضيلات الإشعارات.' : 'Fetching notification preferences.',
+              )
+            : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -238,6 +303,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ],
               ),
             ),
+      ),
     );
   }
 
@@ -290,7 +356,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           onChanged: onChanged,
           activeColor: VSPColors.accent,
           activeTrackColor: VSPColors.accent.withValues(alpha: 0.3),
-          inactiveThumbColor: Colors.white.withValues(alpha: 0.8),
+          inactiveThumbColor: VSPColors.white.withValues(alpha: 0.8),
           inactiveTrackColor: VSPColors.surfaceAlt,
         ),
       ],

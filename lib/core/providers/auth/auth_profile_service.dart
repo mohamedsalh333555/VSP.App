@@ -156,14 +156,12 @@ class AuthProfileService {
 
     try {
       final uid = authUser.id;
-      final oldUrl = currentUserModel?.profileImageUrl;
 
       // Upload the selected file on every platform. Never substitute a stock image
       // for the user's actual profile photo.
       final String? url = await _storage.uploadProfilePicture(
         file: file,
         userId: uid,
-        oldImageUrl: oldUrl,
       );
       if (url == null) throw 'Upload returned null';
 
@@ -171,6 +169,10 @@ class AuthProfileService {
     } catch (e) {
       return (success: false, imageUrl: null, error: 'Failed to upload profile image: $e');
     }
+  }
+
+  Future<bool> deleteProfilePhoto(String url) {
+    return _storage.deleteFile(url);
   }
 
   /// Toggles favorite stadium id in user profile.
@@ -292,14 +294,14 @@ class AuthProfileService {
 
       try {
         final res = await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
-        if (res is Map && res['success'] == false) {
+        if (res is! Map || res['success'] != true) {
           return (
             success: false,
-            error: res['message']?.toString() ?? 'تعذر حذف الحساب.',
+            error: 'لم يتم تأكيد حذف الحساب. حاول مرة أخرى أو تواصل مع الدعم.',
           );
         }
       } catch (rpcErr) {
-        VSPLogger.e('Secure account deletion RPC failed; no partial deletion performed', rpcErr);
+        VSPLogger.e('Secure account deletion RPC failed (${rpcErr.runtimeType})');
         return (
           success: false,
           error: 'تعذر حذف الحساب بأمان الآن. لم يتم حذف أي جزء من الحساب. حاول مرة أخرى لاحقاً أو تواصل مع الدعم.',
@@ -308,7 +310,7 @@ class AuthProfileService {
 
       return (success: true, error: null);
     } catch (e) {
-      return (success: false, error: 'حدث خطأ أثناء محاولة حذف الحساب: $e');
+      return (success: false, error: 'تعذر حذف الحساب الآن. تحقق من الاتصال وحاول مرة أخرى.');
     }
   }
 

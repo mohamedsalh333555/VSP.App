@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/location_service.dart';
 import 'auth/auth_account_coordinator.dart';
 import 'auth/auth_coordinators.dart';
 import 'auth/auth_location_coordinator.dart';
@@ -38,7 +39,7 @@ class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _isInitializing = true;
   String? _errorMessage;
-  bool _isFetchingUser = false;
+  int _userFetchGeneration = 0;
   bool _dataFetchError = false;
   bool _isGhostUser = false;
   bool _preserveError = false;
@@ -116,6 +117,17 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return;
     }
+    if (user?.id != _supabaseUser?.id) {
+      // Invalidate any profile fetch started for the previous auth identity.
+      _userFetchGeneration++;
+      _c.location.clear();
+      unawaited(LocationService.clearCachedLocation().catchError((Object _) {}));
+      _c.realtime.stopRealtimeUserListener();
+      _userModel = null;
+      _form.userType = null;
+      _isGhostUser = false;
+      _dataFetchError = false;
+    }
     _supabaseUser = user;
     if (!_preserveError) {
       _errorMessage = null;
@@ -159,16 +171,40 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _fetchUserData(User user) async {
-    if (_isFetchingUser) return;
-    _isFetchingUser = true;
+    if (_userModel?.uid != user.id) {
+      _userModel = null;
+      _form.userType = null;
+      _isGhostUser = false;
+      _dataFetchError = false;
+    }
+    final requestGeneration = ++_userFetchGeneration;
     _isLoading = true;
     notifyListeners();
 
-    final result = await _c.sessionSync.fetchUserData(
-      user: user,
-      currentUserType: _form.userType,
-    );
-    _isFetchingUser = false;
+    late final dynamic result;
+    try {
+      result = await _c.sessionSync.fetchUserData(
+        user: user,
+        currentUserType: _form.userType,
+      ).timeout(const Duration(seconds: 25));
+    } catch (_) {
+      if (requestGeneration == _userFetchGeneration &&
+          _supabaseUser?.id == user.id) {
+        _isLoading = false;
+        _isInitializing = false;
+        _dataFetchError = true;
+        notifyListeners();
+      }
+      return;
+    }
+
+    // A slower response from a previous account must never replace the active
+    // account's profile or realtime subscriptions.
+    if (requestGeneration != _userFetchGeneration ||
+        _supabaseUser?.id != user.id) {
+      return;
+    }
+
     _isLoading = false;
     _isInitializing = false;
 
@@ -189,9 +225,14 @@ class AuthProvider with ChangeNotifier {
       _c.sessionSync.updateFcmToken(user.id);
       _c.realtime.startRealtimeUserListener(
         userId: user.id,
-        getUserModel: () => _userModel,
-        getFirebaseUser: () => _supabaseUser,
+        getUserModel: () =>
+            _supabaseUser?.id == user.id && _userModel?.uid == user.id
+                ? _userModel
+                : null,
+        getFirebaseUser: () =>
+            _supabaseUser?.id == user.id ? _supabaseUser : null,
         onUserUpdated: (newModel) {
+          if (_supabaseUser?.id != user.id || newModel.uid != user.id) return;
           _userModel = newModel;
           notifyListeners();
         },
@@ -202,20 +243,40 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> retryDataFetch() async {
-    if (_supabaseUser == null) return;
+    final user = _supabaseUser;
+    if (user == null) return;
+    final requestGeneration = ++_userFetchGeneration;
     _isLoading = true;
     _dataFetchError = false;
     notifyListeners();
 
-    final model = await _c.sessionSync.retryDataFetch(_supabaseUser!.id);
-    _isLoading = false;
-    if (model != null) {
-      _userModel = model;
-      _dataFetchError = false;
-    } else {
-      _dataFetchError = true;
+    try {
+      final model = await _c.sessionSync.retryDataFetch(user.id).timeout(
+        const Duration(seconds: 20),
+      );
+      if (requestGeneration != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return;
+      }
+
+      _isLoading = false;
+      if (model != null && model.uid == user.id) {
+        _userModel = model;
+        _dataFetchError = false;
+      } else {
+        _dataFetchError = true;
+      }
+      notifyListeners();
+    } catch (_) {
+      // Only the active request may change the visible loading/error state.
+      if (requestGeneration == _userFetchGeneration &&
+          _supabaseUser?.id == user.id) {
+        _isLoading = false;
+        _dataFetchError = true;
+        notifyListeners();
+      }
+      rethrow;
     }
-    notifyListeners();
   }
 
   void setUserType(String type) {
@@ -336,16 +397,36 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await AuthSignOutHandler.performSignOut(
-      user: _supabaseUser,
-      userModelUid: _userModel?.uid,
-      authService: _authService,
-      notificationService: _c.sessionSync.notificationService,
-      onClearRealtime: _c.realtime.stopRealtimeUserListener,
-    );
+    final signingOutUser = _supabaseUser;
+    final signingOutUid = _userModel?.uid;
+    // Invalidate any in-flight profile/retry request *before* awaiting logout.
+    // A late response must not repopulate the previous account's state.
+    final signOutGeneration = ++_userFetchGeneration;
+    _c.location.clear();
+    try {
+      await AuthSignOutHandler.performSignOut(
+        user: signingOutUser,
+        userModelUid: signingOutUid,
+        authService: _authService,
+        notificationService: _c.sessionSync.notificationService,
+        onClearRealtime: _c.realtime.stopRealtimeUserListener,
+      );
+    } catch (_) {
+      // The provider still holds the session if logout fails. Future profile
+      // requests use a newer generation; the UI may offer retry.
+      rethrow;
+    }
+    // Do not clear a newer session established while sign-out was in flight.
+    if (signOutGeneration != _userFetchGeneration ||
+        _supabaseUser?.id != signingOutUser?.id) {
+      return;
+    }
     _supabaseUser = null;
     _userModel = null;
     _form.userType = null;
+    _isGhostUser = false;
+    _isLoading = false;
+    _isInitializing = false;
     _dataFetchError = false;
     _errorMessage = null;
     reset();
@@ -377,64 +458,122 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> updateProfile(Map<String, dynamic> data) async {
-    if (_supabaseUser == null) return false;
+    final user = _supabaseUser;
+    if (user == null) return false;
+    final requestGeneration = ++_userFetchGeneration;
     _isLoading = true;
     notifyListeners();
-    final updated = await _c.profile.updateProfile(
-      authUser: _supabaseUser,
-      currentUserModel: _userModel,
-      userType: _form.userType,
-      data: data,
-    );
-    if (updated != null) _userModel = updated;
-    _isLoading = false;
-    notifyListeners();
-    return updated != null;
+    try {
+      final updated = await _c.profile.updateProfile(
+        authUser: user,
+        currentUserModel: _userModel,
+        userType: _form.userType,
+        data: data,
+      ).timeout(const Duration(seconds: 25));
+      // An older profile write must never overwrite a newer session.
+      if (requestGeneration != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return false;
+      }
+      if (updated != null && updated.uid == user.id) {
+        _userModel = updated;
+      }
+      return updated != null && updated.uid == user.id;
+    } catch (_) {
+      // Keep the existing profile if the server rejects or times out.
+      return false;
+    } finally {
+      if (requestGeneration == _userFetchGeneration &&
+          _supabaseUser?.id == user.id) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    }
   }
 
   Future<bool> completeOwnerRegistration({
     required String verificationStatus,
   }) async {
-    final model = await _c.account.completeOwnerRegistration(
-      authUser: _supabaseUser,
-      currentUserModel: _userModel,
-      verificationStatus: verificationStatus,
-    );
-    if (model != null) {
-      _userModel = model;
-      notifyListeners();
-      return true;
+    final user = _supabaseUser;
+    if (user == null) return false;
+    final generation = _userFetchGeneration;
+    try {
+      final model = await _c.account.completeOwnerRegistration(
+        authUser: user,
+        currentUserModel: _userModel,
+        verificationStatus: verificationStatus,
+      ).timeout(const Duration(seconds: 25));
+      if (generation != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return false;
+      }
+      if (model != null && model.uid == user.id) {
+        _userModel = model;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
     }
-    return false;
   }
 
   Future<void> toggleFavoriteStadium(String stadiumId) async {
-    if (_userModel == null) return;
-    final updated = await _c.profile.toggleFavoriteStadium(
-      authUser: _supabaseUser,
-      currentUserModel: _userModel,
-      userType: _form.userType,
-      stadiumId: stadiumId,
-    );
-    if (updated != null) {
-      _userModel = updated;
-      notifyListeners();
+    final user = _supabaseUser;
+    final model = _userModel;
+    if (user == null || model == null || stadiumId.trim().isEmpty) return;
+    final generation = _userFetchGeneration;
+    try {
+      final updated = await _c.profile.toggleFavoriteStadium(
+        authUser: user,
+        currentUserModel: model,
+        userType: _form.userType,
+        stadiumId: stadiumId,
+      ).timeout(const Duration(seconds: 25));
+      if (generation != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return;
+      }
+      if (updated != null && updated.uid == user.id) {
+        _userModel = updated;
+        notifyListeners();
+      }
+    } catch (_) {
+      // Preserve the previous favorite state; the caller can retry.
     }
   }
 
-  Future<void> updateProfilePhoto(XFile file) async {
-    if (_supabaseUser == null) return;
-    await _runAuthAction(() async {
+  Future<bool> updateProfilePhoto(XFile file) async {
+    final user = _supabaseUser;
+    if (user == null) return false;
+    final generation = ++_userFetchGeneration;
+    _isLoading = true;
+    notifyListeners();
+    try {
       final res = await _c.profile.updateProfilePhoto(
-        authUser: _supabaseUser,
+        authUser: user,
         currentUserModel: _userModel,
         file: file,
-      );
-      if (res.success && res.updatedModel != null) {
-        _userModel = res.updatedModel;
+      ).timeout(const Duration(seconds: 40));
+      if (generation != _userFetchGeneration ||
+          _supabaseUser?.id != user.id) {
+        return false;
       }
-      return (success: res.success, error: res.error);
-    });
+      if (res.success && res.updatedModel != null &&
+          res.updatedModel!.uid == user.id) {
+        _userModel = res.updatedModel;
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    } finally {
+      if (generation == _userFetchGeneration &&
+          _supabaseUser?.id == user.id) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    }
   }
 
   Future<bool> completeSocialRegistration({

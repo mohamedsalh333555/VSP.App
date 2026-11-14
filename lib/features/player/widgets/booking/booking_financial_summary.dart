@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -10,11 +11,15 @@ import '../../../../l10n/app_localizations.dart';
 class BookingFinancialSummary extends StatelessWidget {
   final Stadium stadium;
   final double totalPrice;
+  final bool hasSelectedSlots;
+  final bool isOpenJoin;
 
   const BookingFinancialSummary({
     super.key,
     required this.stadium,
     required this.totalPrice,
+    required this.hasSelectedSlots,
+    this.isOpenJoin = false,
   });
 
   @override
@@ -25,6 +30,24 @@ class BookingFinancialSummary extends StatelessWidget {
     final isCashLocked = (authProvider.userModel?.noShowCount ?? 0) >= 2;
     final deposit = stadium.depositAmount;
 
+    // Collective bookings require full online payment, not a venue cash promise.
+    if (isOpenJoin) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.divider),
+        ),
+        child: Text(
+          isArabic
+              ? 'الحجز التجميعي يتطلب سداد القيمة كاملة أونلاين بعد التحقق من بيانات الحجز.'
+              : 'Collective bookings require full online payment after the booking details are verified.',
+          style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, height: 1.4),
+        ),
+      );
+    }
     if (isCashLocked) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +67,7 @@ class BookingFinancialSummary extends StatelessWidget {
                     const Icon(Iconsax.card_pos_copy, color: VSPColors.accent, size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      isArabic ? "الدفع الإلكتروني المقترح" : "Smart Online Payment",
+                      isArabic ? "الدفع الإلكتروني المطلوب" : "Online Payment Required",
                       style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ],
@@ -52,9 +75,9 @@ class BookingFinancialSummary extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   isArabic
-                      ? "الحجز النقدي مقيد مؤقتاً - يرجى الدفع أونلاين بالفيزا أو المحفظة لتأكيد مكانك فوراً واستعادة تقييمك."
-                      : "Cash booking is temporarily restricted - Pay online via card or mobile wallet to confirm your spot immediately and restore your rating.",
-                  style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
+                      ? "الحجز النقدي مقيد وفق سجل الحضور. أكمل الدفع الإلكتروني بعد التحقق من شروط الحجز."
+                      : "Cash booking is restricted based on attendance history. Use electronic payment after booking eligibility is verified.",
+                  style: const TextStyle(color: VSPColors.white, fontSize: 12, height: 1.4),
                 ),
               ],
             ),
@@ -82,7 +105,7 @@ class BookingFinancialSummary extends StatelessWidget {
                   style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 Text(
-                  '${deposit.toInt()} ${l10n.egCurrency}',
+                  '${VSPMoneyFormatter.amount(deposit)} ${l10n.egCurrency}',
                   style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ],
@@ -96,7 +119,11 @@ class BookingFinancialSummary extends StatelessWidget {
                   style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
                 Text(
-                  '${(totalPrice - deposit).clamp(0, double.infinity).toInt()} ${l10n.egCurrency}',
+                  !hasSelectedSlots
+                      ? (isArabic ? 'يُحسب بعد اختيار الموعد' : 'Calculated after selecting a slot')
+                      : (!totalPrice.isFinite || !deposit.isFinite || deposit > totalPrice)
+                          ? (isArabic ? 'راجع السعر والعربون' : 'Review price and deposit')
+                          : '${VSPMoneyFormatter.amount(totalPrice - deposit)} ${l10n.egCurrency}',
                   style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12),
                 ),
               ],
@@ -120,10 +147,10 @@ class BookingFinancialSummary extends StatelessWidget {
           Expanded(
             child: Text(
               isArabic
-                  ? 'طريقة الدفع: كاش بالكامل عند الحضور للملعب (بدون عربون مسبق)'
-                  : 'Payment: 100% Cash at the pitch (No deposit required)',
+                  ? 'وسيلة الدفع هتتحدد بعد التحقق من الموقع وشروط الحجز. المبلغ النهائي بيتأكد قبل الدفع.'
+                  : 'Payment methods depend on location and booking rules. The final amount is verified before payment.',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),

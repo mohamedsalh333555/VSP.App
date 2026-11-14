@@ -15,7 +15,7 @@ class BookingMatchCoordinator {
   /// Fetches public matches stream snapshot.
   Future<List<Booking>> fetchPublicMatches() async {
     final stream = _matchRepository.getPublicMatches();
-    final matches = await stream.first;
+    final matches = await stream.first.timeout(const Duration(seconds: 12));
     return List<Booking>.from(matches);
   }
 
@@ -41,7 +41,10 @@ class BookingMatchCoordinator {
       final success = await _matchRepository.leavePublicMatch(bookingId, userId);
       return (success: success, error: null);
     } catch (e) {
-      return (success: false, error: 'Error leaving match: $e');
+      return (
+        success: false,
+        error: BookingCategorizationService.formatPublicMatchError(e),
+      );
     }
   }
 }

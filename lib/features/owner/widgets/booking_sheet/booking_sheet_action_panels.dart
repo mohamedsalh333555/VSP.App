@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -65,11 +67,11 @@ class BookingSheetPastPanel extends StatelessWidget {
 
     final String cashBtnText = isHybrid
         ? (isArabic
-            ? 'تأكيد استلام المتبقي (${remainingCash.toInt()} ج.م) كاش '
-            : 'Confirm Remaining (${remainingCash.toInt()} EGP) Cash ')
+            ? 'تأكيد استلام المتبقي (${VSPMoneyFormatter.amount(remainingCash)} ج.م) كاش '
+            : 'Confirm Remaining (${VSPMoneyFormatter.amount(remainingCash)} EGP) Cash ')
         : (isArabic
-            ? 'تأكيد استلام كامل المبلغ (${booking.totalPrice.toInt()} ج.م) كاش '
-            : 'Confirm Full Cash (${booking.totalPrice.toInt()} EGP) ');
+            ? 'تأكيد استلام كامل المبلغ (${VSPMoneyFormatter.amount(booking.totalPrice)} ج.م) كاش '
+            : 'Confirm Full Cash (${VSPMoneyFormatter.amount(booking.totalPrice)} EGP) ');
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -84,7 +86,7 @@ class BookingSheetPastPanel extends StatelessWidget {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                     )
                   : const Icon(Iconsax.money_send_copy, size: 18),
               label: Text(
@@ -93,7 +95,7 @@ class BookingSheetPastPanel extends StatelessWidget {
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(VSPRadius.md),
                 ),
@@ -103,14 +105,12 @@ class BookingSheetPastPanel extends StatelessWidget {
           ),
           const SizedBox(height: 10),
         ],
-        if (isPendingCash) ...[
+        if (isPendingCash && onReportNoShow != null) ...[
           SizedBox(
             width: double.infinity,
             height: VSPSize.buttonHeight,
             child: ElevatedButton.icon(
-              onPressed: isSaving
-                  ? null
-                  : (onReportNoShow ?? () => BookingSheetWhatsAppUtils.launchWhatsAppSupport(booking, isArabic)),
+              onPressed: isSaving ? null : onReportNoShow,
               icon: isSaving
                   ? const SizedBox(
                       width: 18,
@@ -201,11 +201,11 @@ class BookingSheetCashPanel extends StatelessWidget {
     final isHybrid = booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice;
     final String cashBtnText = isHybrid
         ? (isArabic
-            ? 'تأكيد استلام المتبقي (${remainingCash.toInt()} ج.م) كاش بالملعب '
-            : 'Confirm Remaining (${remainingCash.toInt()} EGP) Cash at Pitch ')
+            ? 'تأكيد استلام المتبقي (${VSPMoneyFormatter.amount(remainingCash)} ج.م) كاش بالملعب '
+            : 'Confirm Remaining (${VSPMoneyFormatter.amount(remainingCash)} EGP) Cash at Pitch ')
         : (isArabic
-            ? 'تأكيد استلام كامل المبلغ (${booking.totalPrice.toInt()} ج.م) كاش بالملعب '
-            : 'Confirm Full Cash (${booking.totalPrice.toInt()} EGP) at Pitch ');
+            ? 'تأكيد استلام كامل المبلغ (${VSPMoneyFormatter.amount(booking.totalPrice)} ج.م) كاش بالملعب '
+            : 'Confirm Full Cash (${VSPMoneyFormatter.amount(booking.totalPrice)} EGP) at Pitch ');
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -219,7 +219,7 @@ class BookingSheetCashPanel extends StatelessWidget {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                   )
                 : const Icon(Iconsax.money_send_copy, size: 18),
             label: Text(
@@ -228,7 +228,7 @@ class BookingSheetCashPanel extends StatelessWidget {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(VSPRadius.md)),
               elevation: 2,
@@ -242,14 +242,40 @@ class BookingSheetCashPanel extends StatelessWidget {
               child: SizedBox(
                 height: VSPSize.buttonHeight,
                 child: OutlinedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     final phone = booking.playerPhone ?? '';
                     if (phone.isNotEmpty) {
-                      launchUrl(Uri.parse(
-                          'https://wa.me/${phone.replaceAll('+', '').replaceAll(' ', '')}'));
+                      try {
+                        final launched = await launchUrl(
+                          Uri.parse(
+                            'https://wa.me/${phone.replaceAll('+', '').replaceAll(' ', '')}',
+                          ),
+                          mode: LaunchMode.externalApplication,
+                        );
+                        if (!launched && context.mounted) {
+                          VSPFeedback.showError(
+                            context,
+                            isArabic
+                                ? 'تعذر فتح واتساب لهذا الرقم.'
+                                : 'Could not open WhatsApp for this number.',
+                          );
+                        }
+                      } catch (_) {
+                        if (context.mounted) {
+                          VSPFeedback.showError(
+                            context,
+                            isArabic
+                                ? 'تعذر فتح واتساب لهذا الرقم.'
+                                : 'Could not open WhatsApp for this number.',
+                          );
+                        }
+                      }
                     } else {
-                      BookingSheetWhatsAppUtils.launchWhatsAppSupport(
-                          booking, isArabic);
+                      await BookingSheetWhatsAppUtils.launchWhatsAppSupport(
+                        booking,
+                        isArabic,
+                        context: context,
+                      );
                     }
                   },
                   icon: const Icon(Iconsax.message_copy, size: 16),
@@ -362,7 +388,10 @@ class BookingSheetDefaultPanel extends StatelessWidget {
                       : () {
                           if (isEdit && isUpcomingOnlinePaid && booking != null) {
                             BookingSheetWhatsAppUtils.launchWhatsAppSupport(
-                                booking!, isArabic);
+                              booking!,
+                              isArabic,
+                              context: context,
+                            );
                           } else {
                             Navigator.pop(context);
                           }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/services/analytics_service.dart';
+import '../widgets/booking/booking_status_presentation.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 
@@ -13,6 +16,7 @@ import 'chat_screen.dart';
 import 'player_home_screen.dart';
 import 'bookings_screen.dart';
 import '../../../core/utils/vsp_match_invite_formatter.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
  final Booking booking;
@@ -35,13 +39,21 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  @override
  void initState() {
  super.initState();
+ if (BookingStatusPresentation.isConfirmed(widget.booking.status)) {
+   unawaited(
+     AnalyticsService.logBookingCompleted(
+       bookingId: widget.booking.id,
+       paymentMethod: widget.booking.paymentMethod,
+     ),
+   );
+ }
 
  // 1. Setup Confetti
  _confettiController = ConfettiController(duration: const Duration(seconds: 3));
 
  // 2. Setup Checkmark Animation
  _checkController = AnimationController(
- duration: const Duration(milliseconds: 800),
+ duration: VSPDSMotion.successReveal,
  vsync: this,
  );
  _scaleAnimation = CurvedAnimation(
@@ -52,7 +64,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
  // 3. Trigger Confetti & Haptics
  Future.delayed(const Duration(milliseconds: 500), () {
- if (mounted) {
+ if (mounted && BookingStatusPresentation.isConfirmed(widget.booking.status)) {
  _confettiController.play();
  HapticFeedback.heavyImpact();
  }
@@ -84,6 +96,9 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Widget build(BuildContext context) {
  final l10n = AppLocalizations.of(context)!;
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+ final isBookingConfirmed = BookingStatusPresentation.isConfirmed(widget.booking.status);
+ final bookingStatusHeading = BookingStatusPresentation.heading(widget.booking.status, isArabic: isArabic);
+ final confirmationColor = isBookingConfirmed ? VSPColors.accent : VSPColors.warning;
 
  final shortRef = widget.booking.id.length >= 8 
  ? widget.booking.id.substring(0, 8).toUpperCase() 
@@ -92,15 +107,21 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  final isDeposit = widget.booking.paymentStatus == 'partially_paid' ||
      (widget.booking.depositPaid > 0 && widget.booking.depositPaid < widget.booking.totalPrice);
 
- final paymentMethodText = widget.booking.paymentMethod.toLowerCase() == 'cash'
+ final paymentPendingVerification =
+     widget.booking.paymentMethod.toLowerCase() != 'cash' &&
+     (widget.booking.status == BookingStatus.pending ||
+         widget.booking.paymentStatus.toLowerCase() == 'pending');
+ final paymentMethodText = paymentPendingVerification
+     ? (isArabic ? 'الدفع قيد التحقق' : 'Payment pending verification')
+     : widget.booking.paymentMethod.toLowerCase() == 'cash'
  ? (isArabic ? 'دفع نقداً' : 'Cash')
  : isDeposit
      ? (isArabic ? 'دفع عربون إلكتروني' : 'Online Deposit')
      : (isArabic ? 'دفع إلكتروني كامل' : 'Full Online Payment');
 
  final formattedPriceAndPayment = isArabic
- ? '${widget.booking.totalPrice.toInt()} ج.م • $paymentMethodText'
- : '${widget.booking.totalPrice.toInt()} EGP • $paymentMethodText';
+ ? '${VSPMoneyFormatter.amount(widget.booking.totalPrice)} ج.م • $paymentMethodText'
+ : '${VSPMoneyFormatter.amount(widget.booking.totalPrice)} EGP • $paymentMethodText';
 
  return PopScope(
  canPop: false,
@@ -141,14 +162,14 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  border: Border.all(color: VSPColors.accent, width: 3.5),
  color: VSPColors.accent.withValues(alpha: 0.1),
  ),
- child: const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 48),
+ child: Icon(isBookingConfirmed ? Iconsax.tick_circle_copy : Iconsax.clock_copy, color: confirmationColor, size: 48),
  ),
  ),
  const SizedBox(height: 20),
  
  // Title
  Text(
- l10n.bookingSuccess,
+ bookingStatusHeading,
  textAlign: TextAlign.center,
  style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 22),
  ),
@@ -158,17 +179,17 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Container(
    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
    decoration: BoxDecoration(
-     color: VSPColors.accentSoft,
+     color: confirmationColor.withValues(alpha: 0.12),
      borderRadius: BorderRadius.circular(VSPRadius.full),
-     border: Border.all(color: VSPColors.borderAccent),
+     border: Border.all(color: confirmationColor.withValues(alpha: 0.35)),
    ),
    child: Row(
      mainAxisSize: MainAxisSize.min,
      children: [
-       const Icon(Iconsax.verify_copy, color: VSPColors.accent, size: 15),
+       Icon(isBookingConfirmed ? Iconsax.verify_copy : Iconsax.clock_copy, color: confirmationColor, size: 15),
        const SizedBox(width: 6),
        Text(
-         isArabic ? 'الحجز مؤكد' : 'Booking confirmed',
+         bookingStatusHeading,
          style: const TextStyle(
            color: VSPColors.accent,
            fontWeight: FontWeight.w800,
@@ -220,7 +241,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  _buildDetailRow(
  Iconsax.card_pos_copy, 
  isArabic ? 'العربون المدفوع أونلاين' : 'Online Deposit Paid', 
- isArabic ? '${widget.booking.depositPaid.toInt()} ج.م ' : '${widget.booking.depositPaid.toInt()} EGP ',
+ isArabic ? '${VSPMoneyFormatter.amount(widget.booking.depositPaid)} ج.م ' : '${VSPMoneyFormatter.amount(widget.booking.depositPaid)} EGP ',
  ),
  if (widget.booking.totalPrice > widget.booking.depositPaid) ...[
  const Divider(color: VSPColors.divider, height: 16),
@@ -228,8 +249,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Iconsax.money_send_copy, 
  isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch', 
  isArabic 
- ? '${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} ج.م ' 
- : '${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} EGP ',
+ ? '${VSPMoneyFormatter.amount(widget.booking.totalPrice - widget.booking.depositPaid)} ج.م '
+ : '${VSPMoneyFormatter.amount(widget.booking.totalPrice - widget.booking.depositPaid)} EGP ',
  ),
  const Divider(color: VSPColors.divider, height: 16),
  Container(
@@ -247,8 +268,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Expanded(
  child: Text(
  isArabic
- ? 'تنبيه: تم سداد العربون فقط. يرجى سداد المبلغ المتبقي (${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} ج.م) نقداً عند شباك الملعب.'
- : 'Notice: Deposit only paid. Please pay the remaining balance (${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} EGP) in cash at the pitch.',
+ ? 'تنبيه: تم سداد العربون فقط. يرجى سداد المبلغ المتبقي (${VSPMoneyFormatter.amount(widget.booking.totalPrice - widget.booking.depositPaid)} ج.م) نقداً عند شباك الملعب.'
+ : 'Notice: Deposit only paid. Please pay the remaining balance (${VSPMoneyFormatter.amount(widget.booking.totalPrice - widget.booking.depositPaid)} EGP) in cash at the pitch.',
  style: const TextStyle(color: VSPColors.accent, fontSize: 11.5, fontWeight: FontWeight.bold),
  ),
  ),
@@ -273,8 +294,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Expanded(
  child: Text(
  isArabic
- ? 'تنبيه: يلزم سداد كامل المبلغ (${widget.booking.totalPrice.toInt()} ج.م) نقداً عند شباك الملعب قبل النزول.'
- : 'Notice: Full payment (${widget.booking.totalPrice.toInt()} EGP) must be paid in cash at the pitch before the match.',
+ ? 'تنبيه: يلزم سداد كامل المبلغ (${VSPMoneyFormatter.amount(widget.booking.totalPrice)} ج.م) نقداً عند شباك الملعب قبل النزول.'
+ : 'Notice: Full payment (${VSPMoneyFormatter.amount(widget.booking.totalPrice)} EGP) must be paid in cash at the pitch before the match.',
  style: const TextStyle(color: VSPColors.warning, fontSize: 11.5, fontWeight: FontWeight.bold),
  ),
  ),
@@ -329,17 +350,17 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  ),
  ],
  ),
- InkWell(
- onTap: _copyLink,
- borderRadius: BorderRadius.circular(VSPRadius.xs),
- child: Container(
- padding: const EdgeInsets.all(8),
- decoration: BoxDecoration(
- color: VSPColors.accent,
- borderRadius: BorderRadius.circular(VSPRadius.xs),
+ IconButton(
+ onPressed: _copyLink,
+ tooltip: isArabic ? 'نسخ مرجع الحجز' : 'Copy booking reference',
+ constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+ padding: EdgeInsets.zero,
+ style: IconButton.styleFrom(
+ backgroundColor: VSPColors.accent,
+ foregroundColor: VSPColors.background,
+ shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xs)),
  ),
- child: const Icon(Iconsax.copy_copy, color: VSPColors.background, size: 16),
- ),
+ icon: const Icon(Iconsax.copy_copy, size: 16),
  ),
  ],
  ),

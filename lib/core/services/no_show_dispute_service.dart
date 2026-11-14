@@ -10,6 +10,7 @@ import '../../main.dart';
 import '../repositories/notification_repository.dart';
 import '../utils/vsp_feedback.dart';
 import 'logger_service.dart';
+import 'image_pick_service.dart';
 
 /// Service managing player absence (No-Show) reporting and GPS / Geotagged selfie dispute verification.
 class NoShowDisputeService {
@@ -191,8 +192,7 @@ class NoShowDisputeService {
 
           if (useSelfie == true) {
             try {
-              final ImagePicker picker = ImagePicker();
-              final XFile? selfieFile = await picker.pickImage(
+              final XFile? selfieFile = await ImagePickService.pickRaw(
                 source: ImageSource.camera,
                 imageQuality: 75,
               );

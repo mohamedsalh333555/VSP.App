@@ -16,20 +16,32 @@ class TeamProfileStatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildStatCard(context, team.points.toString(), l10n.points),
-        _buildStatCard(context, totalMembersCount.toString(), l10n.members),
-        _buildStatCard(context, team.championshipsWon.toString(), l10n.trophies),
-        _buildStatCard(context, team.wins.toString(), l10n.wins),
-      ],
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    // Flexible layout for narrow screens and larger accessibility text.
+    // Raw trophy counts are intentionally not presented as verified titles.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = MediaQuery.textScalerOf(context).scale(1.0);
+        final columns = constraints.maxWidth >= 520 && scale <= 1.3 ? 4 : 2;
+        final availableWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 320.0;
+        final safeColumns = availableWidth < 180 ? 1 : columns;
+        final itemWidth = (availableWidth - (safeColumns - 1) * 8) / safeColumns;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            SizedBox(width: itemWidth, child: _buildStatCard(context, team.wins.toString(), l10n.wins)),
+            SizedBox(width: itemWidth, child: _buildStatCard(context, team.draws.toString(), isArabic ? 'تعادل' : 'Draws')),
+            SizedBox(width: itemWidth, child: _buildStatCard(context, team.losses.toString(), isArabic ? 'خسارة' : 'Losses')),
+            SizedBox(width: itemWidth, child: _buildStatCard(context, totalMembersCount.toString(), l10n.members)),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildStatCard(BuildContext context, String value, String label) {
     return Container(
-      width: 80,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -38,17 +50,24 @@ class TeamProfileStatsGrid extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: VSPColors.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
+          Semantics(
+            label: '$label: $value',
+            child: ExcludeSemantics(
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: VSPColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: VSPColors.textSecondary,

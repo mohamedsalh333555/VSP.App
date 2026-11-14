@@ -25,7 +25,8 @@ class VspCopilotSheet extends StatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      backgroundColor: VSPColors.transparent,
       builder: (ctx) => VspCopilotSheet(isArabic: isArabic),
     );
   }
@@ -70,7 +71,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: VSPDSMotion.indicatorTransition,
           curve: Curves.easeOut,
         );
       }
@@ -105,14 +106,26 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
       return;
     }
 
-    final response = await widget.copilotService.sendMessage(
-      message: text,
-      governorate: userGov,
-    );
+    try {
+      final response = await widget.copilotService.sendMessage(
+        message: text,
+        governorate: userGov,
+      );
 
-    if (mounted) {
+      if (!mounted) return;
       setState(() {
         _messages.add(response);
+        _isLoading = false;
+      });
+      _scrollToBottom();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(CopilotMessage.assistant(
+          widget.isArabic
+              ? 'تعذر إرسال الرسالة الآن. تحقق من الاتصال وحاول مرة أخرى.'
+              : 'The message could not be sent. Check your connection and try again.',
+        ));
         _isLoading = false;
       });
       _scrollToBottom();
@@ -121,10 +134,13 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final media = MediaQuery.of(context);
+    // The scroll-controlled modal route already applies keyboard insets and
+    // constrains the sheet to the available viewport. Keep a preferred height
+    // only; avoid offsetting/shrinking the same keyboard inset a second time.
+    final sheetHeight = media.size.height * 0.78;
     return Container(
-      height: MediaQuery.of(context).size.height * 0.78,
-      margin: EdgeInsets.only(bottom: bottomInset),
+      height: sheetHeight,
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.bottomSheet)),
@@ -220,13 +236,13 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                 bottomRight: Radius.circular(isUser ? 2 : VSPRadius.input),
               ),
               border: Border.all(
-                color: isUser ? Colors.transparent : VSPColors.borderLight,
+                color: isUser ? VSPColors.transparent : VSPColors.borderLight,
               ),
             ),
             child: Text(
               msg.text,
               style: TextStyle(
-                color: isUser ? Colors.black : VSPColors.textPrimary,
+                color: isUser ? VSPColors.black : VSPColors.textPrimary,
                 fontSize: 13.5,
                 height: 1.4,
                 fontWeight: isUser ? FontWeight.w600 : FontWeight.normal,
@@ -252,7 +268,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
         itemBuilder: (context, i) {
           final s = stadiums[i];
           return Material(
-            color: Colors.transparent,
+            color: VSPColors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(VSPRadius.md),
               onTap: () => _handleStadiumTap(s),
@@ -298,7 +314,10 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                           '${s.pricePerHour.toInt()} ${widget.isArabic ? "ج.م/ساعة" : "EGP/hr"}',
                           style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
-                        const Icon(Iconsax.arrow_right_3_copy, size: 10, color: VSPColors.textMuted),
+                        Transform.flip(
+                          flipX: widget.isArabic,
+                          child: const Icon(Iconsax.arrow_right_3_copy, size: 10, color: VSPColors.textMuted),
+                        ),
                       ],
                     ),
                   ],
@@ -313,7 +332,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
 
   Widget _buildLoadingBubble() {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
@@ -321,18 +340,18 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
           borderRadius: BorderRadius.circular(VSPRadius.input),
           border: Border.all(color: VSPColors.borderLight),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
+            const SizedBox(
               width: 14,
               height: 14,
               child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
-              'كابتن VSP يبحث الآن...',
-              style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+              widget.isArabic ? 'كابتن VSP يبحث الآن...' : 'VSP Captain is searching...',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
             ),
           ],
         ),

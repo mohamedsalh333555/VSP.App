@@ -152,8 +152,11 @@ void main() {
         now: now,
       );
 
-      expect(categorized.upcoming.length, 1);
-      expect(categorized.upcoming.first.id, 'b_future');
+      expect(categorized.upcoming.length, 2);
+      expect(
+        categorized.upcoming.map((booking) => booking.id),
+        containsAll(['b_future', 'b_pending']),
+      );
       expect(categorized.history.length, 1);
       expect(categorized.history.first.id, 'b_past');
     });
@@ -197,7 +200,9 @@ void main() {
       expect(BookingCategorizationService.formatPublicMatchError('time_conflict detected'), 'time_conflict');
       expect(BookingCategorizationService.formatPublicMatchError('Error: match_is_full'), 'match_is_full');
       expect(BookingCategorizationService.formatPublicMatchError('already_joined error'), 'already_joined');
-      expect(BookingCategorizationService.formatPublicMatchError('Exception: Network timeout'), 'Network timeout');
+      expect(BookingCategorizationService.formatPublicMatchError('Exception: Network timeout'), 'match_action_failed');
+      expect(BookingCategorizationService.formatPublicMatchError('HOST_CANNOT_LEAVE'), 'host_cannot_leave');
+      expect(BookingCategorizationService.formatPublicMatchError('LEAVE_BLOCKED'), 'leave_blocked');
     });
   });
 }

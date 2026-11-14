@@ -59,6 +59,7 @@ class ChampionPodiumItem extends StatelessWidget {
   final bool isCenter;
   final String? pointsLabel;
   final bool isMyTeam;
+  final VoidCallback? onTap;
 
   const ChampionPodiumItem({
     super.key,
@@ -72,6 +73,7 @@ class ChampionPodiumItem extends StatelessWidget {
     this.isCenter = false,
     this.pointsLabel,
     this.isMyTeam = false,
+    this.onTap,
   });
 
   @override
@@ -83,10 +85,18 @@ class ChampionPodiumItem extends StatelessWidget {
     final ptsText = pointsLabel ?? AppLocalizations.of(context)!.pts;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Container(
-      height: height,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: BoxDecoration(
+    return Semantics(
+      button: onTap != null,
+      label: onTap == null
+          ? null
+          : (isArabic ? 'فتح تفاصيل فريق $name' : 'Open $name team details'),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(
@@ -107,7 +117,7 @@ class ChampionPodiumItem extends StatelessWidget {
               ]
             : const [VSPShadow.subtle],
       ),
-      child: Column(
+          child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Top Crown / Medal Icon & Optional My Team Badge
@@ -125,7 +135,7 @@ class ChampionPodiumItem extends StatelessWidget {
                   ),
                   child: Text(
                     isArabic ? 'فريقك' : 'Your Team',
-                    style: const TextStyle(color: Colors.black, fontSize: 8.5, fontWeight: FontWeight.w900),
+                    style: const TextStyle(color: VSPColors.black, fontSize: 8.5, fontWeight: FontWeight.w900),
                   ),
                 ),
               ],
@@ -162,7 +172,7 @@ class ChampionPodiumItem extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Colors.white,
+                    color: VSPColors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: isCenter ? 13 : 11,
                   ),
@@ -179,7 +189,7 @@ class ChampionPodiumItem extends StatelessWidget {
             child: Text(
               '$points $ptsText',
               style: VSPTypography.numericStyle.copyWith(
-                color: isCenter ? VSPColors.accent : Colors.white70,
+                color: isCenter ? VSPColors.accent : VSPColors.white70,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),
@@ -198,13 +208,15 @@ class ChampionPodiumItem extends StatelessWidget {
             child: Text(
               '$rank',
               style: VSPTypography.numericStyle.copyWith(
-                color: isCenter ? Colors.black : Colors.white,
+                color: isCenter ? VSPColors.black : VSPColors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: isCenter ? 18 : 13,
               ),
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }

@@ -1,0 +1,130 @@
+name: Account SQL security contracts
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/tests/**'
+      - 'scripts/run_account_security_contracts.py'
+      - 'scripts/apply_migration_runner.py'
+      - 'test/tooling/test_migration_replay_guard.py'
+      - 'scripts/test_booking_window_function_isolated.py'
+      - 'scripts/test_accept_join_request_isolated.py'
+      - 'scripts/test_accept_join_request_concurrency.py'
+      - 'scripts/test_team_invitation_isolated.py'
+      - 'scripts/test_matchup_fee_migration_rebuild.py'
+      - 'scripts/test_reject_join_request_isolated.py'
+      - 'scripts/test_refund_dispatcher_isolated.py'
+      - 'test/tooling/test_booking_window_contract_runner.py'
+      - 'test/tooling/test_accept_join_request_isolated.py'
+      - 'test/tooling/test_accept_join_request_concurrency.py'
+      - 'test/tooling/test_team_invitation_isolated.py'
+      - 'test/tooling/test_matchup_fee_migration_rebuild.py'
+      - 'test/tooling/test_reject_join_request_isolated.py'
+      - 'test/tooling/test_refund_dispatcher_isolated.py'
+      - 'scripts/admin_rpc_guard_plan.py'
+      - 'scripts/blocked_admin_policy_plan.py'
+      - 'test/tooling/test_blocked_admin_policy_plan.py'
+      - 'test/tooling/test_admin_rpc_guard_plan.py'
+      - 'test/tooling/test_account_security_runner.py'
+      - 'scripts/test_owner_stadium_capacity_concurrency.py'
+      - 'test/tooling/test_owner_stadium_capacity_target_guard.py'
+      - 'docs/security/sql/owner_trial_365_day_default_candidate.sql'
+      - 'scripts/test_owner_trial_default_isolated.py'
+      - 'test/tooling/test_owner_trial_default_target_guard.py'
+      - 'docs/security/sql/owner_stadium_capacity_guard_candidate.sql'
+      - 'docs/security/sql/stadium_moderation_write_guard_candidate.sql'
+      - '.github/workflows/account-security-contracts.yml'
+
+concurrency:
+  group: account-sql-contracts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_DB: vsp_security_contracts
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: vsp_ephemeral_ci_only
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      VSP_CONTRACT_ISOLATED: '1'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: vsp_security_contracts
+      PGUSER: postgres
+      PGPASSWORD: vsp_ephemeral_ci_only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify runner refuses non-isolated targets
+        run: python3 -m unittest discover -s test/tooling -p test_account_security_runner.py -v
+      - name: Verify source fingerprint planner
+        run: python3 -m unittest discover -s test/tooling -p test_admin_rpc_guard_plan.py -v
+      - name: Verify scoped policy planner
+        run: python3 -m unittest discover -s test/tooling -p test_blocked_admin_policy_plan.py -v
+      - name: Execute SQL authorization suites and negative gate controls
+        run: python3 scripts/run_account_security_contracts.py
+      - name: Verify owner stadium quota runner never targets remote PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_owner_stadium_capacity_target_guard.py -v
+      - name: Verify quota candidate in independent local SQL sessions
+        run: python3 scripts/test_owner_stadium_capacity_concurrency.py
+      - name: Verify owner trial default test cannot reach hosted databases
+        run: python3 -m unittest discover -s test/tooling -p test_owner_trial_default_target_guard.py -v
+      - name: Verify explicit seven-day trial after source-checked default removal on isolated SQL
+        run: python3 scripts/test_owner_trial_default_isolated.py
+      - name: Verify isolated booking validator runner guard and SQL parsing
+        run: python3 -m unittest discover -s test/tooling -p test_booking_window_contract_runner.py -v
+      - name: Verify booking maintenance and overnight split-break SQL on isolated Postgres
+        run: python3 scripts/test_booking_window_function_isolated.py
+      - name: Verify refund dispatcher runner refuses remote databases
+        run: python3 -m unittest discover -s test/tooling -p test_refund_dispatcher_isolated.py -v
+      - name: Verify refund dispatcher queue and project guards on isolated PostgreSQL
+        run: python3 scripts/test_refund_dispatcher_isolated.py
+      - name: Verify legacy migration runner refuses production and colliding versions
+        run: python3 -m unittest discover -s test/tooling -p test_migration_replay_guard.py -v
+      - name: Verify open-join RPC runner refuses remote SQL targets
+        run: python3 -m unittest discover -s test/tooling -p test_accept_join_request_isolated.py -v
+      - name: Verify join consent and authorization in disposable PostgreSQL
+        run: python3 scripts/test_accept_join_request_isolated.py
+      - name: Verify concurrency runner cannot target remote PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_accept_join_request_concurrency.py -v
+      - name: Verify two independent SQL clients cannot join the same final pickup slot
+        run: python3 scripts/test_accept_join_request_concurrency.py
+      - name: Verify team invitation runner cannot target hosted PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_team_invitation_isolated.py -v
+      - name: Verify invitation authorization and expiry on isolated PostgreSQL
+        run: python3 scripts/test_team_invitation_isolated.py
+      - name: Verify matchup fee migration rebuild target guard
+        run: python3 -m unittest discover -s test/tooling -p test_matchup_fee_migration_rebuild.py -v
+      - name: Rebuild and replay matchup fee migration on isolated PostgreSQL
+        run: python3 scripts/test_matchup_fee_migration_rebuild.py
+      - name: Verify reject-join runner refuses remote SQL
+        run: python3 -m unittest discover -s test/tooling -p test_reject_join_request_isolated.py -v
+      - name: Verify reject-join ownership on isolated PostgreSQL
+        run: python3 scripts/test_reject_join_request_isolated.py
+      - name: Verify an existing contract database cannot be reinitialised
+        run: |
+          python3 - <<'PY'
+          import subprocess, sys
+          result = subprocess.run([sys.executable, 'scripts/run_account_security_contracts.py'],
+                                  text=True, capture_output=True)
+          if result.returncode == 0 or 'CONTRACT_DATABASE_NOT_FRESH' not in result.stderr:
+              raise SystemExit('Fresh-database protection failed')
+          print('PASS: existing database refused before fixture installation')
+          PY

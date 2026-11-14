@@ -28,57 +28,126 @@ class CategorizedOwnerBookings {
 class BookingCategorizationService {
   const BookingCategorizationService._();
 
+  // Realtime merges can deliver equal-time records in a different order.
+  // Stabilize secondary ordering so bookings do not jump between cards.
+  static int _compareNextBooking(Booking a, Booking b) {
+    final byTime = a.startTime.compareTo(b.startTime);
+    return byTime != 0 ? byTime : a.id.compareTo(b.id);
+  }
+
+  static int _compareHistoryBooking(Booking a, Booking b) {
+    final byEnd = b.endTime.compareTo(a.endTime);
+    if (byEnd != 0) return byEnd;
+    final byCreated = b.createdAt.compareTo(a.createdAt);
+    return byCreated != 0 ? byCreated : a.id.compareTo(b.id);
+  }
+
+  static bool _isConfirmedLifecycleStatus(BookingStatus status) =>
+      status == BookingStatus.confirmed || status == BookingStatus.upcoming;
+
+  static bool _hasPaymentProgress(Booking booking) {
+    const activePaymentStates = {
+      'partially_paid',
+      'fully_paid',
+      'refund_pending',
+      'refund_failed',
+      'refunded',
+    };
+    return booking.isPaid ||
+        booking.isDepositPaid ||
+        booking.depositPaid > 0 ||
+        activePaymentStates.contains(
+          booking.effectivePaymentState.toLowerCase().trim(),
+        );
+  }
+
   /// Categorizes player bookings into upcoming, pending (recent grace period), and history.
+  ///
+  /// Returned lists are deterministic: the next actionable booking appears
+  /// first, while history is newest first. The input list is never mutated.
   static CategorizedUserBookings categorizeUserBookings({
     required List<Booking> bookings,
     required DateTime now,
   }) {
     final upcoming = bookings
-        .where((b) =>
-            b.status == BookingStatus.confirmed &&
-            b.endTime.isAfter(now))
-        .toList();
+        .where(
+          (b) =>
+              _isConfirmedLifecycleStatus(b.status) &&
+              b.endTime.isAfter(now),
+        )
+        .toList()
+      ..sort(_compareNextBooking);
 
     final tenMinutesAgo = now.subtract(const Duration(minutes: 10));
     final pending = bookings.where((b) {
       final isFuture = b.endTime.isAfter(now);
+      // A confirmed booking can overlap a pending checkout without sharing
+      // its exact start time. Ignore the same booking ID when lists are merged.
       final hasConfirmedSameSlot = upcoming.any(
         (u) =>
-            u.status == BookingStatus.confirmed &&
+            u.id != b.id &&
             u.stadiumId == b.stadiumId &&
-            u.startTime == b.startTime,
+            u.startTime.isBefore(b.endTime) &&
+            u.endTime.isAfter(b.startTime),
       );
       if (hasConfirmedSameSlot || !isFuture) return false;
       if (b.status != BookingStatus.pending) return false;
-      // Cash bookings remain pending until owner confirms/collects
+      // Cash bookings remain pending until owner confirms/collects.
       if (b.isCash) return true;
-      // Online unpaid checkouts have 10-minute payment grace period
+      // A booking with captured money or an in-flight refund must remain
+      // visible until its lifecycle is resolved, even after checkout grace.
+      if (_hasPaymentProgress(b)) return true;
+      // Online unpaid checkouts have a 10-minute payment grace period.
       final isRecent = b.createdAt.isAfter(tenMinutesAgo);
-      return !b.isPaid && isRecent;
-    }).toList();
+      return isRecent;
+    }).toList()
+      ..sort(_compareNextBooking);
 
     final history = bookings.where((b) {
-      if (b.status == BookingStatus.completed || b.status == BookingStatus.noShow) return true;
-      if (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)) return true;
-      if (b.status == BookingStatus.pending && b.endTime.isBefore(now)) return true;
+      if (b.status == BookingStatus.completed ||
+          b.status == BookingStatus.noShow ||
+          b.status == BookingStatus.expired) {
+        return true;
+      }
+      if (_isConfirmedLifecycleStatus(b.status) &&
+          !b.endTime.isAfter(now)) {
+        return true;
+      }
+      if (b.status == BookingStatus.pending) {
+        // A pending checkout displaced by a confirmed booking is historical,
+        // even if its own checkout grace period has not elapsed.
+        final displaced = upcoming.any(
+          (u) => u.id != b.id &&
+              u.stadiumId == b.stadiumId &&
+              u.startTime.isBefore(b.endTime) &&
+              u.endTime.isAfter(b.startTime),
+        );
+        if (displaced) return true;
+        // Expired payment grace periods should not remain in the active list.
+        // Keep these records in history rather than making them disappear.
+        if (!b.endTime.isAfter(now)) return true;
+        if (!b.isCash && !_hasPaymentProgress(b) &&
+            !b.createdAt.isAfter(tenMinutesAgo)) {
+          return true;
+        }
+      }
       if (b.status == BookingStatus.cancelled) {
-        // Exclude abandoned checkouts where no money was ever paid
-        final bool isAbandonedCheckout =
+        // Exclude abandoned checkouts where no money was ever paid.
+        final isAbandonedCheckout =
             b.cancellationReason == 'Cancelled by user during payment checkout' ||
-            (b.cancellationReason?.toLowerCase().contains('checkout') ?? false);
-        final bool hasPaidMoney = b.depositPaid > 0 ||
-            b.isDepositPaid ||
-            b.isPaid ||
-            b.paymentStatus == 'paid' ||
-            b.paymentStatus == 'refunded' ||
-            b.paymentStatus == 'refund_pending';
+                (b.cancellationReason
+                        ?.toLowerCase()
+                        .contains('checkout') ??
+                    false);
+        final hasPaidMoney = _hasPaymentProgress(b);
         if (isAbandonedCheckout && !hasPaidMoney) {
-          return false; // Do not show fake abandoned drafts in player history
+          return false;
         }
         return true;
       }
       return false;
-    }).toList();
+    }).toList()
+      ..sort(_compareHistoryBooking);
 
     return CategorizedUserBookings(
       upcoming: upcoming,
@@ -92,16 +161,35 @@ class BookingCategorizationService {
     required List<Booking> bookings,
     required DateTime now,
   }) {
+    final tenMinutesAgo = now.subtract(const Duration(minutes: 10));
     final upcoming = bookings
-        .where((b) => (b.status == BookingStatus.confirmed || (b.status == BookingStatus.pending && b.isCash)) && b.endTime.isAfter(now))
-        .toList();
+        .where((b) {
+          if (!b.endTime.isAfter(now)) return false;
+          if (_isConfirmedLifecycleStatus(b.status)) return true;
+          if (b.status != BookingStatus.pending) return false;
+          return b.isCash ||
+              _hasPaymentProgress(b) ||
+              b.createdAt.isAfter(tenMinutesAgo);
+        })
+        .toList()
+      ..sort(_compareNextBooking);
 
     final history = bookings
-        .where((b) =>
-            b.status == BookingStatus.completed ||
-            b.status == BookingStatus.cancelled ||
-            b.endTime.isBefore(now))
-        .toList();
+        .where((b) {
+          if (b.status == BookingStatus.completed ||
+              b.status == BookingStatus.cancelled ||
+              b.status == BookingStatus.noShow ||
+              b.status == BookingStatus.expired ||
+              !b.endTime.isAfter(now)) {
+            return true;
+          }
+          return b.status == BookingStatus.pending &&
+              !b.isCash &&
+              !_hasPaymentProgress(b) &&
+              !b.createdAt.isAfter(tenMinutesAgo);
+        })
+        .toList()
+      ..sort(_compareHistoryBooking);
 
     return CategorizedOwnerBookings(
       upcoming: upcoming,
@@ -116,15 +204,21 @@ class BookingCategorizationService {
     required Set<String> cancellingIds,
   }) {
     final result = List<Booking>.from(incomingBookings);
-    final manualBookings = currentBookings.where((b) =>
-        b.paymentTransactionId?.startsWith('MANUAL') == true &&
-        b.status != BookingStatus.cancelled &&
-        !cancellingIds.contains(b.id)).toList();
+    final manualBookings = currentBookings
+        .where(
+          (b) =>
+              b.paymentTransactionId?.startsWith('MANUAL') == true &&
+              b.status != BookingStatus.cancelled &&
+              b.status != BookingStatus.expired &&
+              !cancellingIds.contains(b.id),
+        )
+        .toList();
 
     for (final mb in manualBookings) {
-      if (!result.any((b) =>
-          b.id == mb.id ||
-          (b.startTime.isAtSameMomentAs(mb.startTime) && b.stadiumId == mb.stadiumId))) {
+      // The backend may return the same manual booking after synchronization.
+      // Do not hide a distinct manual booking merely because its start time
+      // matches another booking; overlapping records need explicit resolution.
+      if (!result.any((b) => b.id == mb.id)) {
         result.add(mb);
       }
     }
@@ -140,8 +234,14 @@ class BookingCategorizationService {
       return 'match_is_full';
     } else if (errorStr.contains('already_joined')) {
       return 'already_joined';
+    } else if (errorStr.contains('HOST_CANNOT_LEAVE') ||
+        errorStr.contains('لا يمكن لمضيف المباراة المغادرة')) {
+      return 'host_cannot_leave';
+    } else if (errorStr.contains('LEAVE_BLOCKED') ||
+        errorStr.contains('لا يمكن مغادرة مباراة منتهية')) {
+      return 'leave_blocked';
     } else {
-      return errorStr.replaceAll('Exception: ', '');
+      return 'match_action_failed';
     }
   }
 }

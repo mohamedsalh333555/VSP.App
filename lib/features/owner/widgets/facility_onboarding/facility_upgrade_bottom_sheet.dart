@@ -27,7 +27,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
     await showModalBottomSheet(
       context: context,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       isScrollControlled: true,
       builder: (ctx) => FacilityUpgradeBottomSheet(isAr: isAr, user: user),
     );
@@ -35,9 +35,17 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final availableHeight = (media.size.height -
+            media.padding.top -
+            media.padding.bottom -
+            24)
+        .clamp(0.0, media.size.height)
+        .toDouble();
+
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
+        maxHeight: availableHeight,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
@@ -50,9 +58,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
         24,
         20,
         24,
-        MediaQuery.of(context).padding.bottom > 0
-            ? MediaQuery.of(context).padding.bottom + 16
-            : 36,
+        media.padding.bottom + 16,
       ),
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -88,7 +94,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
             isAr ? 'ترقية الباقة لإضافة ملاعب أخرى' : 'Upgrade Plan to Add More Stadiums',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.white,
               fontSize: 19,
               fontWeight: FontWeight.w900,
             ),
@@ -105,8 +111,8 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
               final int currentMax = user.maxStadiums;
               return Text(
                 isAr
-                    ? 'باقتك الحالية تتيح تشغيل حتى $currentMax ${currentMax == 1 ? 'ملعب واحد فقط' : 'ملاعب'}.\n\nللإضافة والتوسع حتى 3 ملاعب كاملة، يرجى الترقية للباقة الاحترافية.'
-                    : 'Your current plan allows operating up to $currentMax ${currentMax == 1 ? 'stadium only' : 'stadiums'}.\n\nTo operate up to 3 full stadiums, please upgrade to the Pro Plan.',
+                    ? 'باقتك الحالية تتيح تشغيل حتى $currentMax ${currentMax == 1 ? 'ملعب واحد فقط' : 'ملاعب'}.\n\nراجع حدود ومزايا وأسعار الباقة الاحترافية المحدثة قبل الاشتراك.'
+                    : 'Your current plan allows operating up to $currentMax ${currentMax == 1 ? 'stadium only' : 'stadiums'}.\n\nReview the current Pro limits, features, and prices before subscribing.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: VSPColors.textSecondary,
@@ -131,21 +137,21 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
               children: [
                 _FeatureRow(
                   icon: Iconsax.buildings_copy,
-                  text: isAr ? 'إضافة وتشغيل حتى 3 ملاعب كاملة' : 'Operate up to 3 full stadiums',
+                  text: isAr ? 'عرض حد الملاعب المتاح في الباقة' : 'View the plan stadium limit',
                 ),
                 const SizedBox(height: 8),
                 _FeatureRow(
                   icon: Iconsax.chart_1_copy,
                   text: isAr
-                      ? 'أولوية الظهور في نتائج البحث للاعبين'
-                      : 'Priority search boost in governorate results',
+                      ? 'عرض المزايا المتاحة فعليًا'
+                      : 'View the currently available features',
                 ),
                 const SizedBox(height: 8),
                 _FeatureRow(
                   icon: Iconsax.headphones_copy,
                   text: isAr
-                      ? 'دعم فني وأولوية تشغيلية على مدار الساعة'
-                      : '24/7 Priority owner support',
+                      ? 'مراجعة السعر وشروط التجديد قبل الدفع'
+                      : 'Review price and renewal terms before payment',
                 ),
               ],
             ),
@@ -154,9 +160,9 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
 
           // ─── Subscribe Button ───
           PrimaryButton(
-            text: isAr ? ' اشترك الآن في الباقة الاحترافية' : ' Upgrade to Pro Now',
+            text: isAr ? 'عرض تفاصيل الباقة الاحترافية' : 'View Pro plan details',
             color: VSPColors.proAccent,
-            textColor: Colors.black,
+            textColor: VSPColors.black,
             onPressed: () async {
               // Capture navigator reference before pop to avoid deactivation issues
               final navigator = Navigator.of(context);

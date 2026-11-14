@@ -1,7 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'booking_calendar_modal.dart';
 
@@ -21,6 +23,18 @@ class BookingDateSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toString();
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final textScaler = MediaQuery.textScalerOf(context);
+    final dayChipHeight = math.max(70.0, textScaler.scale(70));
+    final dayChipWidth = math.max(60.0, textScaler.scale(60));
+
+    void openCalendar() => showBookingCalendarModal(
+      context: context,
+      initialDate: selectedDate,
+      operationalBaseDate: operationalBaseDate,
+      onDateSelected: onDateChanged,
+    );
 
     return Container(
       color: VSPColors.background,
@@ -30,13 +44,16 @@ class BookingDateSelector extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-            child: GestureDetector(
-              onTap: () => showBookingCalendarModal(
-                context: context,
-                initialDate: selectedDate,
-                onDateSelected: onDateChanged,
-              ),
-              child: Container(
+            child: Semantics(
+              button: true,
+              label: isArabic ? 'فتح تقويم الحجز' : 'Open booking calendar',
+              hint: DateFormat('MMMM yyyy', locale).format(selectedDate),
+              onTap: openCalendar,
+              child: ExcludeSemantics(
+                child: GestureDetector(
+                  onTap: openCalendar,
+                  child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
                 padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.xs),
                 decoration: BoxDecoration(
                   color: VSPColors.surface,
@@ -46,40 +63,63 @@ class BookingDateSelector extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      DateFormat('MMMM, yyyy', Localizations.localeOf(context).toString()).format(selectedDate),
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                    Flexible(
+                      child: Text(
+                        DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(selectedDate),
+                        softWrap: true,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     const SizedBox(width: VSPSpacing.xs),
                     const Icon(Iconsax.calendar_1_copy, color: VSPColors.textPrimary, size: 18),
                   ],
+                ),
+                  ),
                 ),
               ),
             ),
           ),
           const SizedBox(height: VSPSpacing.md),
           Padding(
-            padding: const EdgeInsets.only(left: VSPSpacing.md),
+            padding: const EdgeInsetsDirectional.only(start: VSPSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(l10n.selectDate, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                const SizedBox(height: VSPSpacing.xs),
+                Text(
+                  Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'اختيار اليوم لا يعني توفر مواعيد؛ المواعيد تظهر بعد الاختيار.'
+                      : 'Selecting a date does not guarantee availability; slots appear after selection.',
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                ),
                 const SizedBox(height: VSPSpacing.sm),
                 SizedBox(
-                  height: 70,
+                  height: dayChipHeight,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: 14,
                     itemBuilder: (context, index) {
-                      final date = operationalBaseDate.add(Duration(days: index));
-                      final isSelected = date.day == selectedDate.day && date.month == selectedDate.month;
-                      return GestureDetector(
+                      final date = AppDateFormatter.addCivilDays(operationalBaseDate, index);
+                      final isSelected = date.year == selectedDate.year &&
+                          date.month == selectedDate.month &&
+                          date.day == selectedDate.day;
+                      final readableDate = DateFormat('EEEE, d MMMM yyyy', locale).format(date);
+                      return Semantics(
+                        button: true,
+                        selected: isSelected,
+                        label: isArabic
+                            ? 'تاريخ الحجز: $readableDate'
+                            : 'Booking date: $readableDate',
                         onTap: () => onDateChanged(date),
-                        child: Container(
-                          width: 60,
-                          margin: const EdgeInsets.only(right: VSPSpacing.sm),
+                        child: ExcludeSemantics(
+                          child: GestureDetector(
+                            onTap: () => onDateChanged(date),
+                            child: Container(
+                          width: dayChipWidth,
+                          margin: const EdgeInsetsDirectional.only(end: VSPSpacing.sm),
                           decoration: BoxDecoration(
-                            color: isSelected ? VSPColors.accent : Colors.transparent,
+                            color: isSelected ? VSPColors.accent : VSPColors.transparent,
                             borderRadius: BorderRadius.circular(VSPRadius.md),
                             border: Border.all(
                               color: isSelected ? VSPColors.accent : VSPColors.divider,
@@ -105,6 +145,8 @@ class BookingDateSelector extends StatelessWidget {
                                 ),
                               ),
                             ],
+                          ),
+                            ),
                           ),
                         ),
                       );

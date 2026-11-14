@@ -17,7 +17,7 @@ class SuspendedAccountScreen extends StatelessWidget {
 
  return VSPScaffold(
  backgroundColor: VSPColors.background,
- body: Center(
+ body: SafeArea(top: true, bottom: true, child: Center(
  child: SingleChildScrollView(
  padding: const EdgeInsets.all(VSPSpacing.xl),
  child: Column(
@@ -30,15 +30,20 @@ class SuspendedAccountScreen extends StatelessWidget {
  shape: BoxShape.circle,
  border: Border.all(color: VSPColors.error.withValues(alpha: 0.2)),
  ),
+ child: Semantics(
+ label: isAr ? 'الحساب معلّق' : 'Account suspended',
+ image: true,
  child: const Icon(
  Iconsax.close_circle_copy,
  color: VSPColors.error,
  size: 56,
  ),
  ),
+ ),
  const SizedBox(height: VSPSpacing.xl),
  Text(
  isAr ? 'تم تعليق الحساب' : 'Account Suspended',
+ textAlign: TextAlign.center,
  style: const TextStyle(
  color: VSPColors.error,
  fontSize: 22,
@@ -75,20 +80,47 @@ class SuspendedAccountScreen extends StatelessWidget {
  elevation: 0,
  ),
  onPressed: () async {
- final user = auth.userModel;
+ // Do not prefill the user's phone number, UID or name into a
+ // third-party messaging app. Support can request details after consent.
  final message = isAr
- ? 'مرحباً فريق دعم VSP \nأريد الاستفسار بخصوص تعليق حسابي.\nالاسم: ${user?.name ?? "غير متوفر"}\nمعرف الحساب (UID): ${user?.uid ?? auth.currentUser?.id ?? "N/A"}\nرقم الهاتف: ${user?.phone ?? "N/A"}'
- : 'Hi VSP Support \nI would like to inquire about my suspended account.\nName: ${user?.name ?? "N/A"}\nUID: ${user?.uid ?? auth.currentUser?.id ?? "N/A"}\nPhone: ${user?.phone ?? "N/A"}';
+ ? 'مرحباً فريق دعم VSP، أريد الاستفسار عن تعليق حسابي.'
+ : 'Hello VSP Support, I would like help with my suspended account.';
 
  try {
  final settings = await AppSettingsRepository().getSettings();
  if (!context.mounted) return;
- final supportNumber = settings.whatsappNumber.isNotEmpty
- ? settings.whatsappNumber
- : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
- await VSPLauncherUtils.openWhatsApp(context, phone: supportNumber, message: message);
+ final supportNumber = settings.whatsappNumber.trim().isNotEmpty
+ ? settings.whatsappNumber.trim()
+ : settings.supportPhone.trim();
+ if (supportNumber.isEmpty) {
+   ScaffoldMessenger.of(context).showSnackBar(
+     SnackBar(
+       content: Text(
+         isAr
+             ? 'بيانات التواصل مع الدعم غير متاحة حاليًا.'
+             : 'Support contact details are currently unavailable.',
+       ),
+     ),
+   );
+   return;
+ }
+ await VSPLauncherUtils.openWhatsApp(
+   context,
+   phone: supportNumber,
+   message: message,
+ );
  } catch (e) {
- debugPrint('Could not launch WhatsApp support: $e');
+ debugPrint('Could not launch WhatsApp support.');
+ if (!context.mounted) return;
+ ScaffoldMessenger.of(context).showSnackBar(
+ SnackBar(
+ content: Text(
+ isAr
+ ? 'تعذر فتح الدعم الآن. يرجى المحاولة مرة أخرى.'
+ : 'Unable to open support right now. Please try again.',
+ ),
+ ),
+ );
  }
  },
  icon: const Icon(Iconsax.headphones_copy, color: VSPColors.background),
@@ -104,7 +136,21 @@ class SuspendedAccountScreen extends StatelessWidget {
  const SizedBox(height: VSPSpacing.md),
  TextButton(
  onPressed: () async {
+ try {
  await auth.signOut();
+ } catch (e) {
+ debugPrint('Could not sign out suspended account.');
+ if (!context.mounted) return;
+ ScaffoldMessenger.of(context).showSnackBar(
+ SnackBar(
+ content: Text(
+ isAr
+ ? 'تعذر تسجيل الخروج. يرجى المحاولة مرة أخرى.'
+ : 'Unable to sign out. Please try again.',
+ ),
+ ),
+ );
+ }
  },
  style: TextButton.styleFrom(
  foregroundColor: VSPColors.textSecondary,
@@ -121,7 +167,7 @@ class SuspendedAccountScreen extends StatelessWidget {
  ],
  ),
  ),
- ),
+ )),
  );
  }
 }

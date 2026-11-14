@@ -37,63 +37,124 @@ class OwnerScheduleSlotsBuilder {
   }) {
     List<Map<String, dynamic>> slots = [];
     try {
-      final int startH = AppDateFormatter.parseTimeToHour(selectedStadium.openingTime);
-      final int endH = AppDateFormatter.parseTimeToHour(selectedStadium.closingTime);
-      final int breakStartMin = selectedStadium.isSplitShift
-          ? AppDateFormatter.parseTimeToMinutes(selectedStadium.breakStartTime)
-          : -1;
-      final int breakEndMin = selectedStadium.isSplitShift
-          ? AppDateFormatter.parseTimeToMinutes(selectedStadium.breakEndTime)
-          : -1;
+      final int startMinutes =
+          AppDateFormatter.parseTimeToMinutes(selectedStadium.openingTime);
+      final int closingMinutes =
+          AppDateFormatter.parseTimeToMinutes(selectedStadium.closingTime);
+      final int endMinutes = closingMinutes <= startMinutes
+          ? closingMinutes + 1440
+          : closingMinutes;
+      final breakIntervals = <List<int>>[];
+      final features = selectedStadium.features;
+      final isOvernightSchedule = endMinutes > 1440;
 
-      int currentH = startH;
-      int currentM = 0;
+      int toOperationalMinutes(String value) {
+        final minutes = AppDateFormatter.parseTimeToMinutes(value);
+        return isOvernightSchedule && minutes < startMinutes
+            ? minutes + 1440
+            : minutes;
+      }
+
+      if (features is Map && features.containsKey('breakTimes') &&
+          features['breakTimes'] != null &&
+          features['breakTimes'] is! List) {
+        throw const FormatException('Invalid closure list');
+      }
+      if (features is Map && features['breakTimes'] is List) {
+        for (final item in features['breakTimes'] as List) {
+          if (item is! Map) {
+            throw const FormatException('Invalid closure interval');
+          }
+          final startText = item['start']?.toString() ?? '';
+          final endText = item['end']?.toString() ?? '';
+          if (startText.isEmpty || endText.isEmpty) {
+            throw const FormatException('Incomplete closure interval');
+          }
+          final breakStart = toOperationalMinutes(startText);
+          final breakEnd = toOperationalMinutes(endText);
+          if (breakEnd <= breakStart ||
+              breakStart < startMinutes ||
+              breakEnd > endMinutes) {
+            throw const FormatException('Closure outside operating hours');
+          }
+          breakIntervals.add([breakStart, breakEnd]);
+        }
+      }
+
+      // Legacy compatibility for stadiums with one break stored on the model.
+      if (breakIntervals.isEmpty && selectedStadium.isSplitShift) {
+        final startText = selectedStadium.breakStartTime ?? '';
+        final endText = selectedStadium.breakEndTime ?? '';
+        if (startText.isNotEmpty && endText.isNotEmpty) {
+          final breakStart = toOperationalMinutes(startText);
+          final breakEnd = toOperationalMinutes(endText);
+          if (breakEnd <= breakStart ||
+              breakStart < startMinutes ||
+              breakEnd > endMinutes) {
+            throw const FormatException('Invalid legacy closure interval');
+          }
+          breakIntervals.add([breakStart, breakEnd]);
+        } else {
+          throw const FormatException('Incomplete legacy closure interval');
+        }
+      }
+
+      // Invalid or overlapping closures must not turn into bookable time.
+      breakIntervals.sort((a, b) => a[0].compareTo(b[0]));
+      for (var i = 1; i < breakIntervals.length; i++) {
+        if (breakIntervals[i][0] < breakIntervals[i - 1][1]) {
+          throw const FormatException('Overlapping closure intervals');
+        }
+      }
+
+      var currentOperationalMinutes = startMinutes;
       int safeguard = 0;
-      bool is24h = (startH == endH && safeguard == 0);
 
       final isArSlot = Localizations.localeOf(context).languageCode == 'ar';
-      while (safeguard < 48) {
+      while (safeguard < 48 && currentOperationalMinutes + 30 <= endMinutes) {
+        final currentSlotStart = currentOperationalMinutes;
+        final currentSlotEnd = currentSlotStart + 30;
+        final currentSlotMin = currentSlotStart % 1440;
+        final currentH = currentSlotMin ~/ 60;
+        final currentM = currentSlotMin % 60;
         final timeStr = AppDateFormatter.formatHourMin(currentH, currentM, isArSlot);
-        if (safeguard > 0 && currentH == endH && currentM == 0 && !is24h) break;
 
-        bool isBreak = false;
-        if (selectedStadium.isSplitShift && breakStartMin != -1 && breakEndMin != -1) {
-          final int currentSlotMin = currentH * 60 + currentM;
-          if (breakStartMin < breakEndMin) {
-            isBreak = currentSlotMin >= breakStartMin && currentSlotMin < breakEndMin;
-          } else {
-            isBreak = currentSlotMin >= breakStartMin || currentSlotMin < breakEndMin;
-          }
-        }
-        bool isOvernightSlot = (startH > endH && (currentH < startH || currentH < 12));
-        DateTime slotDate = selectedDate;
-        if (isOvernightSlot && currentH < 12) {
-          slotDate = selectedDate.add(const Duration(days: 1));
-        }
-        String dayNameStr = DateFormat('EEEE', isArSlot ? 'ar' : 'en').format(slotDate);
-        String nightLabel = isOvernightSlot ? (isArSlot ? 'سهرة $dayNameStr' : '$dayNameStr Night') : '';
+        final isBreak = breakIntervals.any(
+          (interval) => currentSlotStart < interval[1] && currentSlotEnd > interval[0],
+        );
+        final dayOffset = currentOperationalMinutes ~/ 1440;
+        final isOvernightSlot = dayOffset > 0;
+        final slotDate = selectedDate.add(Duration(days: dayOffset));
+        final dayNameStr = DateFormat('EEEE', isArSlot ? 'ar' : 'en').format(slotDate);
+        final nightLabel = isOvernightSlot
+            ? (isArSlot ? 'سهرة $dayNameStr' : '$dayNameStr Night')
+            : '';
 
         final slotTime = DateTime(slotDate.year, slotDate.month, slotDate.day, currentH, currentM);
-        final currentSlotMin = currentH * 60 + currentM;
 
-        final booking = dayBookings.cast<Booking?>().firstWhere(
-          (b) {
-            if (b == null) return false;
-            final bStart = b.startTime.toLocal();
-            final bEnd = b.endTime.toLocal();
-            final bStartMin = bStart.hour * 60 + bStart.minute;
-            int bEndMin = bEnd.hour * 60 + bEnd.minute;
-            // Normalize for overnight bookings (crossing midnight)
-            if (bEndMin <= bStartMin) bEndMin += 1440;
-            // Normalize currentSlotMin for post-midnight slots
-            int normalizedSlotMin = currentSlotMin;
-            if (normalizedSlotMin < bStartMin && bEndMin > 1440) {
-              normalizedSlotMin += 1440;
-            }
-            return normalizedSlotMin >= bStartMin && normalizedSlotMin < bEndMin;
-          },
-          orElse: () => null,
-        );
+        // An invalid interval must not mask a valid booking in the same slot.
+        // Multiple active bookings for one slot indicate a conflict rather
+        // than a legitimately free interval.
+        final slotEnd = slotTime.add(const Duration(minutes: 30));
+        final matchingBookings = dayBookings.where((b) {
+          if (b.status == BookingStatus.cancelled ||
+              b.status == BookingStatus.expired) {
+            return false;
+          }
+          final bookingStart = b.startTime.toLocal();
+          final bookingEnd = b.endTime.toLocal();
+          return bookingEnd.isAfter(bookingStart) &&
+              bookingEnd.isAfter(slotTime) &&
+              bookingStart.isBefore(slotEnd);
+        }).toList();
+        // The same booking may be repeated by a paginated or merged source.
+        // Only distinct booking IDs represent a genuine overlap conflict.
+        final distinctBookingIds = matchingBookings.map((b) => b.id).toSet();
+        if (distinctBookingIds.length > 1) {
+          throw const FormatException('Overlapping active bookings');
+        }
+        final Booking? booking =
+            matchingBookings.isEmpty ? null : matchingBookings.first;
         if (isBreak) {
           slots.add({
             'time': timeStr,
@@ -133,15 +194,16 @@ class OwnerScheduleSlotsBuilder {
           });
         }
 
-        currentM += 30;
-        if (currentM >= 60) {
-          currentM = 0;
-          currentH = (currentH + 1) % 24;
-        }
+        currentOperationalMinutes += 30;
         safeguard++;
       }
     } catch (_) {
-      slots.clear();
+      // Do not let an invalid operating-hours configuration masquerade as a
+      // legitimate day with no working hours. The screen converts this
+      // sentinel into a retryable configuration error state.
+      return <Map<String, dynamic>>[
+        <String, dynamic>{'type': 'configuration_error'},
+      ];
     }
     return slots;
   }

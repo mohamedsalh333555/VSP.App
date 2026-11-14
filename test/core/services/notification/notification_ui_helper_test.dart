@@ -1,10 +1,14 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vsp_application/core/services/notification/notification_ui_helper.dart';
+import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/core/repositories/booking_repository.dart';
+import 'package:vsp_application/core/services/notification/notification_ui_helper.dart';
 import 'package:vsp_application/data/models.dart';
+
+import '../../../helpers/test_owner_auth_provider.dart';
 
 class MockBookingRepo implements BookingRepository {
   final Booking? returnBooking;
@@ -25,62 +29,119 @@ void main() {
   });
 
   group('NotificationUiHelper Tests', () {
-    testWidgets('showInAppAlert renders floating SnackBar with message details', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () {
-                  NotificationUiHelper.showInAppAlert(
-                    context: context,
-                    message: const RemoteMessage(
-                      notification: RemoteNotification(
-                        title: 'Test Notification Title',
-                        body: 'Test Notification Body Content',
-                      ),
-                      data: {'type': 'system'},
-                    ),
-                  );
-                },
-                child: const Text('Trigger Alert'),
+    testWidgets(
+      'showInAppAlert renders floating SnackBar with message details',
+      (tester) async {
+        await tester.pumpWidget(
+          ChangeNotifierProvider<AuthProvider>.value(
+            value: TestOwnerAuthProvider(),
+            child: MaterialApp(
+              home: Scaffold(
+                body: Builder(
+                  builder: (context) => ElevatedButton(
+                    onPressed: () {
+                      NotificationUiHelper.showInAppAlert(
+                        context: context,
+                        message: const RemoteMessage(
+                          notification: RemoteNotification(
+                            title: 'Test Notification Title',
+                            body: 'Test Notification Body Content',
+                          ),
+                          data: {'type': 'system'},
+                        ),
+                      );
+                    },
+                    child: const Text('Trigger Alert'),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        );
+
+        await tester.tap(find.text('Trigger Alert'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.text('Test Notification Title'), findsOneWidget);
+        expect(find.text('Test Notification Body Content'), findsOneWidget);
+      },
+    );
+
+    test('notification booking access requires an actual participant', () {
+      final booking = Booking(
+        id: 'booking-1',
+        stadiumId: 'stadium-1',
+        ownerId: 'owner-1',
+        stadiumName: 'Test Stadium',
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 100,
+        paymentMethod: 'cash',
+        status: BookingStatus.confirmed,
+        createdAt: DateTime.utc(2030, 12, 1),
+        createdByUserId: 'player-1',
+        joinedUserIds: const ['player-2'],
+        startTime: DateTime.utc(2030, 12, 10, 18),
+        endTime: DateTime.utc(2030, 12, 10, 19),
+        bookingType: BookingType.personal,
       );
-
-      await tester.tap(find.text('Trigger Alert'));
-      await tester.pump(); // Start animation
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.text('Test Notification Title'), findsOneWidget);
-      expect(find.text('Test Notification Body Content'), findsOneWidget);
+      expect(
+        NotificationUiHelper.canOpenBookingForUser(booking, 'owner-1'),
+        isTrue,
+      );
+      expect(
+        NotificationUiHelper.canOpenBookingForUser(booking, 'player-1'),
+        isTrue,
+      );
+      expect(
+        NotificationUiHelper.canOpenBookingForUser(booking, 'player-2'),
+        isTrue,
+      );
+      expect(
+        NotificationUiHelper.canOpenBookingForUser(booking, 'stranger'),
+        isFalse,
+      );
+      expect(
+        NotificationUiHelper.canOpenBookingForUser(booking, null),
+        isFalse,
+      );
     });
 
-    testWidgets('navigateToChat and navigateToBooking gracefully handle null bookings', (tester) async {
-      final mockRepo = MockBookingRepo(returnBooking: null);
+    testWidgets(
+      'navigateToChat and navigateToBooking gracefully handle null bookings',
+      (tester) async {
+        final mockRepo = MockBookingRepo(returnBooking: null);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () {
-                  NotificationUiHelper.navigateToChat(context, 'invalid_id', repository: mockRepo);
-                  NotificationUiHelper.navigateToBooking(context, 'invalid_id', repository: mockRepo);
-                },
-                child: const Text('Test Navigation'),
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () {
+                    NotificationUiHelper.navigateToChat(
+                      context,
+                      'invalid_id',
+                      repository: mockRepo,
+                    );
+                    NotificationUiHelper.navigateToBooking(
+                      context,
+                      'invalid_id',
+                      repository: mockRepo,
+                    );
+                  },
+                  child: const Text('Test Navigation'),
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.text('Test Navigation'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Test Navigation'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Test Navigation'), findsOneWidget);
-    });
+        expect(find.text('Test Navigation'), findsOneWidget);
+      },
+    );
   });
 }

@@ -50,6 +50,7 @@ class BookingConfirmationHandler {
     required Stadium stadium,
     required String bookingType,
     required Team? opponentTeam,
+    String? verifiedChallengeCode,
     required List<String> selectedTimeSlots,
     required DateTime selectedDate,
     required List<TimeSlotItem> timeSlots,
@@ -63,13 +64,49 @@ class BookingConfirmationHandler {
     required ValueChanged<bool> onLoadingChanged,
     required VoidCallback onSlotsCleared,
   }) async {
+    if (selectedTimeSlots.isEmpty ||
+        selectedTimeSlots.any((slot) => slot.trim().isEmpty)) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'اختار موعد الحجز الأول قبل التأكيد.'
+            : 'Select at least one booking time slot before confirming.',
+      );
+      onLoadingChanged(false);
+      return;
+    }
+
+    // A deep link or stale booking screen must not bypass venue blocking.
+    if (stadium.isBlocked) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'الملعب غير متاح للحجز حاليًا.'
+            : 'This venue is currently unavailable for booking.',
+      );
+      onSlotsCleared();
+      onLoadingChanged(false);
+      return;
+    }
+
     onLoadingChanged(true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.currentUser?.id;
     final currentUserModel = authProvider.userModel;
-    if (currentUserModel == null) {
+    if (currentUserModel == null || userId == null ||
+        currentUserModel.uid != userId || !currentUserModel.isPlayer ||
+        authProvider.isOwner) {
       onLoadingChanged(false);
       return;
+    }
+    bool isSameUser() {
+      if (!context.mounted) return false;
+      final active = Provider.of<AuthProvider>(context, listen: false);
+      return active.currentUser?.id == userId &&
+          active.userModel?.isPlayer == true && !active.isOwner;
     }
 
     final nav = Navigator.of(context);
@@ -84,6 +121,10 @@ class BookingConfirmationHandler {
       final (position, resolvedGovernorate) =
           await LocationService().getThrottledLocation(force: true);
       if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
 
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (resolvedGovernorate == 'mock_location_detected') {
@@ -126,25 +167,35 @@ class BookingConfirmationHandler {
               : 'Notice: Cash booking is reserved for in-governorate players ($playerName vs $stadiumName). You can confirm instantly via online payment or deposit.';
         }
       }
-    } catch (e) {
-      VSPLogger.w('Location verification fallback to online-preferred: $e');
+    } catch (_) {
+      VSPLogger.w('Location verification fallback to online-preferred (details redacted)');
       isCrossGovernorate = true;
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      crossGovMessage = isArabic
+          ? 'تعذر التحقق من موقعك حالياً. لتأكيد الحجز، يرجى اختيار الدفع الإلكتروني أو دفع العربون.'
+          : 'We could not verify your location right now. Please use online payment or pay the deposit to confirm your booking.';
+    }
+
+    if (!context.mounted) return;
+    if (!isSameUser()) {
+      onLoadingChanged(false);
+      return;
     }
 
     // ── Pre-confirmation double-check ────────────────────────────────────────
     try {
-      List<Booking> currentBookings = [];
-      try {
-        currentBookings = await bookingProvider
-            .getBookingsForStadium(stadium.id, selectedDate)
-            .first
-            .timeout(const Duration(seconds: 4));
-      } catch (_) {
-        final repo = SupabaseBookingRepository();
-        currentBookings = await repo.fetchStadiumBookingsDirectly(stadium.id, selectedDate);
-      }
+      // Always query the authoritative booking-slot RPC at confirmation time.
+      // The polling stream can retain a previously verified snapshot after a
+      // refresh error, so its first event is not suitable for final validation.
+      final currentBookings = await SupabaseBookingRepository()
+          .fetchStadiumBookingsDirectly(stadium.id, selectedDate)
+          .timeout(const Duration(seconds: 10));
 
       if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
 
       final sortedCheck = List<String>.from(selectedTimeSlots)
         ..sort((a, b) => BookingSlotCalculator.getSlotDateTime(
@@ -157,11 +208,61 @@ class BookingConfirmationHandler {
               selectedDate: selectedDate,
             )));
 
-      final isConflict = BookingSlotCalculator.isSlotBooked(
-        slotKey: sortedCheck.first,
-        stadium: stadium,
-        selectedDate: selectedDate,
-        existingBookings: currentBookings,
+      final selectedStarts = sortedCheck.map(
+        (slot) => BookingSlotCalculator.getSlotDateTime(
+          slotKey: slot,
+          stadium: stadium,
+          selectedDate: selectedDate,
+        ),
+      ).toList();
+      // Do not pass a temporarily closed slot into any payment path, even if
+      // it came from a stale deep link. The server validates again on write.
+      if (selectedStarts.any((start) =>
+          BookingSlotCalculator.isVenueSlotClosed(
+            stadium: stadium, slotStart: start))) {
+        onSlotsCleared();
+        onLoadingChanged(false);
+        if (context.mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isArabic
+                ? 'الموعد داخل فترة إغلاق الملعب. اختر موعدًا آخر.'
+                : 'Selected slot is within a venue closure. Choose another time.',
+          );
+        }
+        return;
+      }
+
+      // Initial route selections and stale selections may bypass the UI
+      // range picker. Never turn non-adjacent keys into a longer interval
+      // that silently reserves unselected times.
+      if (!BookingSlotCalculator.areContiguousHalfHourStarts(selectedStarts) ||
+          selectedStarts.any((start) => !start.isAfter(DateTime.now()))) {
+        onSlotsCleared();
+        onLoadingChanged(false);
+        if (context.mounted) {
+          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isAr
+                ? 'المواعيد المحددة غير متصلة أو انتهت. اختر مواعيد متتالية متاحة.'
+                : 'Selected times are expired or not consecutive. Choose available consecutive slots.',
+          );
+        }
+        return;
+      }
+
+      // Every selected half-hour must still be free at confirmation time.
+      // Checking only the first slot allowed a later slot in a multi-slot
+      // booking to be taken between selection and submission.
+      final isConflict = sortedCheck.any(
+        (slotKey) => BookingSlotCalculator.isSlotBooked(
+          slotKey: slotKey,
+          stadium: stadium,
+          selectedDate: selectedDate,
+          existingBookings: currentBookings,
+        ),
       );
 
       if (isConflict) {
@@ -179,8 +280,28 @@ class BookingConfirmationHandler {
         }
         return;
       }
-    } catch (e, stack) {
-      VSPLogger.e('Error checking slot availability before booking', e, stack);
+    } catch (_) {
+      VSPLogger.e('Slot availability validation failed (details redacted)');
+      if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
+      onLoadingChanged(false);
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من إتاحة الموعد حالياً. لم يتم إرسال الحجز؛ حاول مرة أخرى.'
+            : 'Could not verify this time slot right now. No booking was submitted; please try again.',
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+    if (!isSameUser()) {
+      onLoadingChanged(false);
+      return;
     }
 
     HapticFeedback.mediumImpact();
@@ -216,6 +337,24 @@ class BookingConfirmationHandler {
       bType = BookingType.personal;
     }
 
+    // This challenge must carry the exact verified opponent code. Never
+    // borrow a stale code from another draft, captain, or logged-in account.
+    if (bType == BookingType.challenge &&
+        (verifiedChallengeCode == null ||
+            verifiedChallengeCode.trim().isEmpty)) {
+      onLoadingChanged(false);
+      if (context.mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'لا يوجد كود تحدي مُتحقق منه. ارجع وتحقق من كود الفريق المنافس.'
+              : 'No verified challenge code. Return and verify the opposing team code.',
+        );
+      }
+      return;
+    }
+
     final depositAmount = stadium.depositAmount;
     final fieldCapacity = stadium.totalFieldCapacity > 0
         ? stadium.totalFieldCapacity
@@ -249,7 +388,9 @@ class BookingConfirmationHandler {
       instapay: stadium.features is Map ? stadium.features['instapay'] : null,
       vodafoneCash: stadium.features is Map ? stadium.features['vodafoneCash'] : null,
       binanceId: stadium.features is Map ? stadium.features['binanceId'] : null,
-      challengeCode: bookingProvider.currentDraft?.challengeCode,
+      challengeCode: bType == BookingType.challenge
+          ? verifiedChallengeCode
+          : null,
       idempotencyKey: const Uuid().v4(),
     );
 
@@ -305,8 +446,34 @@ class BookingConfirmationHandler {
     // any additional booking must be paid in full online. This is mirrored
     // by the database trigger as the final authority.
     final directRepo = SupabaseBookingRepository();
-    final existingUserBookings = await directRepo.getUserBookingsDirectly(currentUserModel.uid);
+    List<Booking> existingUserBookings;
+    try {
+      // This read gates a payment policy. Never interpret a query failure as
+      // an empty booking history, or an active cash booking could be bypassed.
+      existingUserBookings =
+          await directRepo.getUserBookingsDirectlyStrict(userId);
+    } catch (_) {
+      VSPLogger.e('Cash booking payment-policy verification failed (details redacted)');
+      if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
+      onLoadingChanged(false);
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من حجوزاتك الحالية. لم يتم إرسال الحجز؛ حاول مرة أخرى.'
+            : 'Could not verify your current bookings. No booking was submitted; please try again.',
+      );
+      return;
+    }
     if (!context.mounted) return;
+    if (!isSameUser()) {
+      onLoadingChanged(false);
+      return;
+    }
 
     final hasActiveCashBooking = existingUserBookings.any((b) =>
         b.paymentMethod.toLowerCase() == 'cash' &&
@@ -316,9 +483,12 @@ class BookingConfirmationHandler {
 
     if (hasActiveCashBooking) {
       HapticFeedback.lightImpact();
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       VSPFeedback.showInfo(
         context,
-        'عندك حجز كاش قائم، فالحجز الجديد لازم يتدفع بالكامل أونلاين.',
+        isArabic
+            ? 'عندك حجز كاش قائم، فالحجز الجديد لازم يتدفع بالكامل أونلاين.'
+            : 'You have an active cash booking, so this booking must be paid in full online.',
       );
 
       final forcedFullDraft = draft.copyWith(

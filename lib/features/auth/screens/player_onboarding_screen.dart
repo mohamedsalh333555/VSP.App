@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../../shared/widgets/vsp_terms_checkbox.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +16,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/services/analytics_service.dart';
 import '../services/signup_validation_service.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 
@@ -47,6 +49,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
     Future.microtask(() => _fetchAutoLocation());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final displayName = auth.userModel?.name ?? auth.currentUser?.userMetadata?['name'] as String?;
       if (displayName != null && displayName.trim().isNotEmpty) {
@@ -59,10 +62,13 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
   }
 
   Future<void> _fetchAutoLocation() async {
+    if (!mounted) return;
     setState(() => _isFetchingLocation = true);
     try {
       final result = await Provider.of<AuthProvider>(context, listen: false).determineGPSGovernorate(force: true);
-      if (result != null && EgyptGovernorates.allGovernorates.contains(result) && mounted) {
+      if (!mounted) return;
+
+      if (result != null && EgyptGovernorates.allGovernorates.contains(result)) {
         setState(() {
           _selectedGovernorate = result;
           _isLocationFallbackActive = false;
@@ -72,6 +78,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
         HapticFeedback.lightImpact();
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLocationFallbackActive = true);
       HapticFeedback.lightImpact();
     } finally {
@@ -86,7 +93,8 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
       minYear: 1940,
       maxYear: DateTime.now().year - 18,
     );
-    if (picked != null) setState(() => _dateOfBirth = picked);
+    if (!mounted || picked == null) return;
+    setState(() => _dateOfBirth = picked);
   }
 
   @override
@@ -144,6 +152,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
       if (!mounted) return;
 
       if (success) {
+        unawaited(AnalyticsService.logSignupCompleted(role: 'player'));
         HapticFeedback.lightImpact();
         if (mounted) {
           context.go('/');
@@ -341,9 +350,12 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
         if (_isFetchingLocation)
           const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
         else
-          GestureDetector(
-            onTap: _fetchAutoLocation,
-            child: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
+          IconButton(
+            onPressed: _fetchAutoLocation,
+            tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'تحديد الموقع تلقائياً' : 'Detect location automatically',
+            constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+            padding: EdgeInsets.zero,
+            icon: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
           ),
       ],
     );
@@ -392,7 +404,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
           items: govs
               .map<DropdownMenuItem<String>>((v) => DropdownMenuItem<String>(
                     value: v,
-                    child: Text(v, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                    child: Text(v, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white)),
                   ))
               .toList(),
         ),
@@ -411,10 +423,12 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
     final l10n = AppLocalizations.of(context)!;
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       barrierDismissible: false,
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
         child: AlertDialog(
+          scrollable: true,
           backgroundColor: VSPColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
           title: Text(l10n.cancelRegistrationTitle, style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
@@ -422,11 +436,12 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
+              style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
               child: Text(l10n.continueRegistration, style: const TextStyle(color: VSPColors.accent)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white, elevation: 0),
+              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: VSPColors.white, elevation: 0, minimumSize: const Size(0, 48)),
               child: Text(l10n.cancelAndSignOut),
             ),
           ],

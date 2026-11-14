@@ -79,9 +79,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         body: Stack(
           children: [
             // Subtle Background Glow
-            Positioned(
+            PositionedDirectional(
               top: -100,
-              right: -100,
+              end: -100,
               child: Container(
                 width: 300,
                 height: 300,

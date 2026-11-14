@@ -44,6 +44,24 @@ class BookingDraft {
   final String? challengeCode;
   final String? idempotencyKey;
 
+  /// Local draft validation. Server must independently validate prices,
+  /// availability, identity and booking permissions before persisting.
+  List<String> validate() {
+    final errors = <String>[];
+    if (stadiumId.trim().isEmpty) errors.add('stadiumId');
+    if (ownerId.trim().isEmpty) errors.add('ownerId');
+    if (!endTime.isAfter(startTime)) errors.add('timeRange');
+    if (!totalPrice.isFinite || totalPrice < 0) errors.add('totalPrice');
+    if (!depositPaid.isFinite || depositPaid < 0) errors.add('depositPaid');
+    if (depositPaid > totalPrice) errors.add('depositExceedsTotal');
+    if (playersPerTeam <= 0) errors.add('playersPerTeam');
+    if (totalFieldCapacity <= 0) errors.add('totalFieldCapacity');
+    if (currentPlayers < 0 || currentPlayers > totalFieldCapacity) {
+      errors.add('currentPlayers');
+    }
+    return errors;
+  }
+
   // Backward compatibility getter
   int get maxPlayers => totalFieldCapacity;
 
@@ -164,6 +182,16 @@ class BookingDraft {
     );
   }
 
+  /// Use this at submission boundaries to reject invalid drafts before
+  /// serialization. The server must still enforce its own invariants.
+  Map<String, dynamic> toValidatedMap() {
+    final errors = validate();
+    if (errors.isNotEmpty) {
+      throw FormatException('Invalid booking draft: ${errors.join(', ')}');
+    }
+    return toMap();
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'stadiumId': stadiumId,
@@ -193,9 +221,11 @@ class BookingDraft {
       'max_players': totalFieldCapacity, // backward compatibility key
       'playerPhone': playerPhone,
       'notes': notes,
+      'isPaid': isPaid,
       'deposit_paid': depositPaid,
       'is_deposit_paid': isDepositPaid,
       'payment_status': paymentStatus,
+      'needs_deposit': needsDeposit,
       'instapay': instapay,
       'vodafoneCash': vodafoneCash,
       'binanceId': binanceId,
@@ -206,72 +236,142 @@ class BookingDraft {
 
   factory BookingDraft.fromMap(Map<String, dynamic> map) {
     BookingType parsedType = BookingType.personal;
-    final rawType = map['bookingType']?.toString();
+    final rawType = map['bookingType'] ?? map['booking_type'];
     if (rawType != null) {
-      for (final val in BookingType.values) {
-        if (val.name == rawType || val.toString() == rawType) {
-          parsedType = val;
-          break;
-        }
+      final normalized = rawType.toString().toLowerCase()
+          .replaceAll('bookingtype.', '')
+          .replaceAll('_', '')
+          .replaceAll('-', '')
+          .replaceAll(' ', '');
+      final matches = BookingType.values.where(
+        (value) => value.name.toLowerCase() == normalized,
+      );
+      if (matches.isNotEmpty) {
+        parsedType = matches.first;
+      } else if (normalized == 'openjoinmatch') {
+        parsedType = BookingType.openJoin;
+      } else if (normalized == 'challengematch') {
+        parsedType = BookingType.challenge;
+      } else {
+        // Never turn an unrecognized challenge/team booking into a personal
+        // booking when restoring a saved draft.
+        throw FormatException('Unknown booking type: $rawType');
       }
     }
 
-    DateTime parsedStart = DateTime.now();
-    if (map['startTime'] != null) {
-      parsedStart = DateTime.tryParse(map['startTime'].toString()) ?? DateTime.now();
+    // A restored draft must never silently become a booking for "now".
+    // Missing or malformed timestamps require the user to select a slot again.
+    DateTime parseRequiredTime(String key) {
+      final value = map[key] ??
+          (key == 'startTime' ? map['start_time'] : map['end_time']);
+      if (value is DateTime) return value;
+      if (value == null) {
+        throw FormatException('Booking draft is missing $key');
+      }
+      final parsed = DateTime.tryParse(value.toString());
+      if (parsed == null) {
+        throw FormatException('Booking draft has invalid $key');
+      }
+      return parsed;
     }
 
-    DateTime parsedEnd = parsedStart.add(const Duration(hours: 1));
-    if (map['endTime'] != null) {
-      parsedEnd = DateTime.tryParse(map['endTime'].toString()) ?? parsedEnd;
+    final parsedStart = parseRequiredTime('startTime');
+    final parsedEnd = parseRequiredTime('endTime');
+    if (!parsedEnd.isAfter(parsedStart)) {
+      throw const FormatException('Booking draft has an invalid time range');
     }
 
-    final rawTotalPrice = map['totalPrice'] ?? 0.0;
-    final double parsedTotalPrice = (rawTotalPrice is num)
-        ? rawTotalPrice.toDouble()
-        : (double.tryParse(rawTotalPrice.toString()) ?? 0.0);
+    double parseAmount(dynamic value, double fallback, String field) {
+      if (value == null) return fallback;
+      final amount = value is num
+          ? value.toDouble()
+          : double.tryParse(value.toString().trim());
+      if (amount == null || !amount.isFinite || amount < 0) {
+        throw FormatException('Booking draft has invalid $field');
+      }
+      return amount;
+    }
 
-    final rawDeposit = map['deposit_paid'] ?? map['depositPaid'] ?? 0.0;
-    final double parsedDeposit = (rawDeposit is num)
-        ? rawDeposit.toDouble()
-        : (double.tryParse(rawDeposit.toString()) ?? 0.0);
+    final parsedTotalPrice = parseAmount(
+      map['totalPrice'] ?? map['total_price'], 0, 'totalPrice',
+    );
+    final parsedDeposit = parseAmount(
+      map['deposit_paid'] ?? map['depositPaid'], 0, 'depositPaid',
+    );
+    // A restored draft must obey the same financial invariant as a newly
+    // constructed draft. Never resume checkout with an excessive deposit.
+    if (parsedDeposit > parsedTotalPrice) {
+      throw const FormatException('Booking draft deposit exceeds total price');
+    }
 
-    final int ppt = map['players_per_team'] ?? map['playersPerTeam'] ?? 5;
-    final int tfc = map['total_field_capacity'] ??
-        map['totalFieldCapacity'] ??
-        map['max_players'] ??
-        (ppt * 2);
+    int parseCount(dynamic value, int fallback, String field) {
+      if (value == null) return fallback;
+      if (value is int) return value;
+      if (value is num) {
+        final number = value.toDouble();
+        if (number.isFinite && number == number.truncateToDouble()) {
+          return number.toInt();
+        }
+      } else if (value is String) {
+        final parsed = int.tryParse(value.trim());
+        if (parsed != null) return parsed;
+      }
+      // Do not silently round 5.5 players to 5 or replace malformed saved
+      // counts with defaults. The user must correct the corrupted draft.
+      throw FormatException('Booking draft has invalid $field');
+    }
 
-    return BookingDraft(
-      stadiumId: map['stadiumId']?.toString() ?? '',
-      stadiumName: map['stadiumName']?.toString() ?? '',
+    final int ppt = parseCount(
+      map['players_per_team'] ?? map['playersPerTeam'], 5, 'playersPerTeam',
+    );
+    final int tfc = parseCount(
+      map['total_field_capacity'] ??
+          map['totalFieldCapacity'] ??
+          map['max_players'],
+      ppt * 2, 'totalFieldCapacity',
+    );
+
+    final currentPlayers = parseCount(
+      map['currentPlayers'] ?? map['current_players'], 1, 'currentPlayers',
+    );
+    if (ppt <= 0 || tfc <= 0 ||
+        currentPlayers < 0 || currentPlayers > tfc) {
+      throw const FormatException('Booking draft has invalid player capacity');
+    }
+    final stadiumId = map['stadiumId'] ?? map['stadium_id'];
+    final ownerId = map['ownerId'] ?? map['owner_id'];
+    if (stadiumId is! String || stadiumId.trim().isEmpty ||
+        ownerId is! String || ownerId.trim().isEmpty) {
+      throw const FormatException('Booking draft is missing stadium or owner identity');
+    }
+    final restored = BookingDraft(
+      stadiumId: stadiumId.trim(),
+      stadiumName: (map['stadiumName'] ?? map['stadium_name'])?.toString() ?? '',
       stadiumImageUrl: map['stadiumImageUrl']?.toString() ?? '',
-      ownerId: map['ownerId']?.toString() ?? '',
+      ownerId: ownerId.trim(),
       startTime: parsedStart,
       endTime: parsedEnd,
       bookingType: parsedType,
-      playerTeamId: map['playerTeamId']?.toString(),
+      playerTeamId: (map['playerTeamId'] ?? map['player_team_id'])?.toString(),
       playerTeamName: map['playerTeamName']?.toString(),
       playerTeamLogoUrl: map['playerTeamLogoUrl']?.toString(),
       hostName: map['hostName']?.toString(),
       hostAvatarUrl: map['hostAvatarUrl']?.toString(),
-      opponentTeamId: map['opponentTeamId']?.toString(),
+      opponentTeamId: (map['opponentTeamId'] ?? map['opponent_team_id'])?.toString(),
       opponentTeamName: map['opponentTeamName']?.toString(),
       opponentTeamLogoUrl: map['opponentTeamLogoUrl']?.toString(),
       isPrivate: map['isPrivate'] == true,
       rentBall: map['rentBall'] == true,
       totalPrice: parsedTotalPrice,
       currency: map['currency']?.toString() ?? 'EGP',
-      paymentMethod: map['paymentMethod']?.toString(),
-      paymentTransactionId: map['paymentTransactionId']?.toString(),
-      currentPlayers: map['currentPlayers'] is int
-          ? map['currentPlayers']
-          : (int.tryParse(map['currentPlayers']?.toString() ?? '') ?? 1),
+      paymentMethod: (map['paymentMethod'] ?? map['payment_method'])?.toString(),
+      paymentTransactionId: (map['paymentTransactionId'] ?? map['payment_transaction_id'])?.toString(),
+      currentPlayers: currentPlayers,
       playersPerTeam: ppt,
       totalFieldCapacity: tfc,
       playerPhone: map['playerPhone']?.toString(),
       notes: map['notes']?.toString(),
-      isPaid: map['isPaid'] == true,
+      isPaid: map['isPaid'] == true || map['is_paid'] == true,
       depositPaid: parsedDeposit,
       isDepositPaid: map['is_deposit_paid'] == true || map['isDepositPaid'] == true,
       paymentStatus: map['payment_status']?.toString() ?? map['paymentStatus']?.toString(),
@@ -280,7 +380,21 @@ class BookingDraft {
       vodafoneCash: map['vodafoneCash']?.toString(),
       binanceId: map['binanceId']?.toString(),
       challengeCode: map['challengeCode']?.toString(),
-      idempotencyKey: map['idempotencyKey']?.toString(),
+      idempotencyKey: () {
+        final value = map['idempotencyKey'] ?? map['idempotency_key'];
+        if (value == null) return null;
+        if (value is! String || value.trim().isEmpty ||
+            value.trim().length > 128 ||
+            !RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(value.trim())) {
+          throw const FormatException('Booking draft has invalid idempotency key');
+        }
+        return value.trim();
+      }(),
     );
+    final errors = restored.validate();
+    if (errors.isNotEmpty) {
+      throw FormatException('Invalid restored booking draft: ${errors.join(', ')}');
+    }
+    return restored;
   }
 }

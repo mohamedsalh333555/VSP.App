@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
@@ -39,19 +40,25 @@ class OngoingMatchBanner extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const Icon(Iconsax.timer_start_copy, color: VSPColors.accent, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                isArabic ? 'المباراة جارية الآن ' : 'Match Ongoing Now ',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+          Expanded(
+            child: Row(
+              children: [
+                const Icon(Iconsax.timer_start_copy, color: VSPColors.accent, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isArabic ? 'المباراة جارية الآن' : 'Match Ongoing Now',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: VSPColors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           ElevatedButton.icon(
             onPressed: isSaving ? null : onExtendMatch,
@@ -62,10 +69,10 @@ class OngoingMatchBanner extends StatelessWidget {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              foregroundColor: VSPColors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              minimumSize: const Size(48, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
             ),
           ),
         ],
@@ -104,18 +111,33 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
               ),
               onPressed: () async {
+                final initiatingOwnerId =
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+                if (initiatingOwnerId == null || initiatingOwnerId != booking.ownerId) {
+                  return;
+                }
                 final pickedDate = await showDatePicker(
                   context: context,
                   initialDate: booking.startTime.add(const Duration(days: 1)),
                   firstDate: DateTime.now(),
                   lastDate: DateTime.now().add(const Duration(days: 60)),
                 );
-                if (pickedDate == null || !context.mounted) return;
+                if (pickedDate == null ||
+                    !context.mounted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+                        initiatingOwnerId) {
+                  return;
+                }
                 final pickedTime = await showTimePicker(
                   context: context,
                   initialTime: TimeOfDay.fromDateTime(booking.startTime),
                 );
-                if (pickedTime == null || !context.mounted) return;
+                if (pickedTime == null ||
+                    !context.mounted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+                        initiatingOwnerId) {
+                  return;
+                }
                 final newStart = DateTime(
                   pickedDate.year,
                   pickedDate.month,
@@ -132,7 +154,12 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                   newStartTime: newStart,
                   newEndTime: newEnd,
                 );
-                if (ok && context.mounted) {
+                if (!context.mounted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+                        initiatingOwnerId) {
+                  return;
+                }
+                if (ok) {
                   VSPFeedback.showSuccess(
                     context,
                     isArabic
@@ -140,9 +167,40 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                         : 'Reschedule proposal sent to player ',
                   );
                   if (booking.playerPhone != null && booking.playerPhone!.isNotEmpty) {
-                    launchUrl(Uri.parse('tel:${booking.playerPhone}'));
+                    try {
+                      final launched = await launchUrl(
+                        Uri.parse('tel:${booking.playerPhone}'),
+                      );
+                      if (!launched && context.mounted) {
+                        VSPFeedback.showError(
+                          context,
+                          isArabic
+                              ? 'تعذر فتح تطبيق الاتصال.'
+                              : 'Could not open the phone app.',
+                        );
+                      }
+                    } catch (_) {
+                      if (context.mounted) {
+                        VSPFeedback.showError(
+                          context,
+                          isArabic
+                              ? 'تعذر فتح تطبيق الاتصال.'
+                              : 'Could not open the phone app.',
+                        );
+                      }
+                    }
                   }
-                  Navigator.pop(context);
+                  if (context.mounted) Navigator.pop(context);
+                } else {
+                  final provider =
+                      Provider.of<BookingProvider>(context, listen: false);
+                  VSPFeedback.showError(
+                    context,
+                    isArabic
+                        ? (provider.errorMessage ??
+                            'تعذر إرسال اقتراح الموعد الجديد. حاول مرة أخرى.')
+                        : 'Could not send the reschedule proposal. Please try again.',
+                  );
                 }
               },
             ),
@@ -161,9 +219,16 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
               ),
               onPressed: () async {
+                final initiatingOwnerId =
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+                if (initiatingOwnerId == null || initiatingOwnerId != booking.ownerId) {
+                  return;
+                }
                 final confirmed = await showDialog<bool>(
                   context: context,
+                  useSafeArea: true,
                   builder: (dialogContext) => AlertDialog(
+                    scrollable: true,
                     backgroundColor: VSPColors.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(VSPRadius.dialog),
@@ -193,35 +258,44 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                         onPressed: () => Navigator.pop(dialogContext, true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: VSPColors.error,
-                          foregroundColor: Colors.white,
+                          foregroundColor: VSPColors.white,
                         ),
                         child: Text(isArabic ? 'تأكيد الإغلاق' : 'Confirm Closure'),
                       ),
                     ],
                   ),
                 );
-                if (confirmed != true || !context.mounted) return;
+                if (confirmed != true ||
+                    !context.mounted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+                        initiatingOwnerId) {
+                  return;
+                }
 
                 final res = await Provider.of<BookingProvider>(context, listen: false)
                     .requestEmergencyClosure(
                   stadiumId: booking.stadiumId,
                   ownerId: booking.ownerId,
-                  reason: 'عطل طارئ وصيانة بالملعب',
+                  reason: isArabic ? 'عطل طارئ وصيانة بالملعب' : 'Emergency fault and stadium maintenance',
                   durationHours: 24,
                 );
-                if (context.mounted) {
+                if (context.mounted &&
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id ==
+                        initiatingOwnerId) {
                   if (res['success'] == true) {
                     VSPFeedback.showSuccess(
                       context,
                       isArabic
-                          ? 'تم إغلاق الملعب مؤقتاً وتحويل طلبات الاسترداد للأدمن '
-                          : 'Stadium temporarily closed for emergency ',
+                          ? 'تم إغلاق الملعب مؤقتاً لمدة 24 ساعة.'
+                          : 'The stadium has been temporarily closed for 24 hours.', 
                     );
                     Navigator.pop(context);
                   } else {
                     VSPFeedback.showError(
                       context,
-                      res['message'] ?? 'فشل طلب الإغلاق الطارئ',
+                      isArabic
+                          ? 'تعذر تنفيذ الإغلاق الطارئ. حاول مرة أخرى.'
+                          : 'Could not complete the emergency closure. Please try again.',
                     );
                   }
                 }

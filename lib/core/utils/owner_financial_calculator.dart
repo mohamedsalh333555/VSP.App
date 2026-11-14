@@ -39,7 +39,10 @@ class OwnerFinancialCalculator {
     required String stadiumFilter,
   }) {
     final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final yesterdayStart = DateTime(now.year, now.month, now.day - 1);
+    final weekStart = DateTime(now.year, now.month, now.day - (now.weekday - 1));
+    final nextWeekStart = DateTime(weekStart.year, weekStart.month, weekStart.day + 7);
 
     final List<Booking> filteredBookings = allBookings.where((b) {
       if (b.status == BookingStatus.cancelled) return false;
@@ -49,13 +52,11 @@ class OwnerFinancialCalculator {
       final bDate = b.operationalDate ?? bStartLocal;
 
       if (timePeriod == 'today') {
-        return bDate.year == now.year && bDate.month == now.month && bDate.day == now.day;
+        return bDate.year == todayStart.year && bDate.month == todayStart.month && bDate.day == todayStart.day;
       } else if (timePeriod == 'yesterday') {
-        return bDate.year == yesterday.year && bDate.month == yesterday.month && bDate.day == yesterday.day;
+        return bDate.year == yesterdayStart.year && bDate.month == yesterdayStart.month && bDate.day == yesterdayStart.day;
       } else if (timePeriod == 'week') {
-        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        return bDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bDate.isBefore(endOfWeek);
+        return !bDate.isBefore(weekStart) && bDate.isBefore(nextWeekStart);
       } else if (timePeriod == 'month') {
         return bDate.year == now.year && bDate.month == now.month;
       }
@@ -69,14 +70,21 @@ class OwnerFinancialCalculator {
     double totalHours = 0.0;
 
     for (final b in filteredBookings) {
-      final double totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
-      digitalVspBalance += b.digitalAmountPaid;
-      pitchCashRevenue += b.pitchCashCollected;
-      pendingReceivables += b.pendingReceivable;
+      final double totalPrice = b.totalPrice.isFinite && b.totalPrice > 0
+          ? b.totalPrice
+          : (b.depositPaid.isFinite && b.depositPaid > 0 ? b.depositPaid : 0.0);
+      // Bad upstream numeric values must not corrupt dashboard totals.
+      final digital = b.digitalAmountPaid;
+      final cash = b.pitchCashCollected;
+      final pending = b.pendingReceivable;
+      if (digital.isFinite && digital > 0) digitalVspBalance += digital;
+      if (cash.isFinite && cash > 0) pitchCashRevenue += cash;
+      if (pending.isFinite && pending > 0) pendingReceivables += pending;
       totalPipeline += totalPrice;
 
       final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
-      totalHours += diffMinutes > 0 ? (diffMinutes / 60.0) : 1.0;
+      // Invalid or zero-length bookings must never inflate occupancy hours.
+      if (diffMinutes > 0) totalHours += diffMinutes / 60.0;
     }
 
     return OwnerFinancialMetrics(
@@ -93,10 +101,10 @@ class OwnerFinancialCalculator {
   /// استنتاج مصدر الدفع من وسيلة الدفع (Fallback Helper)
   static String inferSourceFromMethod(String method) {
     final m = method.toLowerCase().trim();
-    if (m.contains('cash') || m.contains('كاش')) return 'cash';
+    if (m.contains('vodafone') || m.contains('فودافون')) return 'vodafone_cash';
+    if (m.contains('instapay') || m.contains('انستاباي')) return 'instapay';
     if (m.contains('paymob') || m.contains('card') || m.contains('online')) return 'paymob';
-    if (m.contains('instapay')) return 'instapay';
-    if (m.contains('vodafone')) return 'vodafone_cash';
+    if (m.contains('cash') || m.contains('كاش')) return 'cash';
     return 'pending';
   }
 }

@@ -49,7 +49,7 @@ class VSPAmbientBackground extends StatelessWidget {
                           colors: [
                             effectiveGlowColor.withValues(alpha: 0.20),
                             effectiveGlowColor.withValues(alpha: 0.08),
-                            Colors.transparent,
+                            VSPColors.transparent,
                           ],
                           stops: const [0.0, 0.45, 1.0],
                         ),
@@ -70,7 +70,7 @@ class VSPAmbientBackground extends StatelessWidget {
                           colors: [
                             effectiveGlowColor.withValues(alpha: 0.15),
                             effectiveGlowColor.withValues(alpha: 0.05),
-                            Colors.transparent,
+                            VSPColors.transparent,
                           ],
                           stops: const [0.0, 0.45, 1.0],
                         ),

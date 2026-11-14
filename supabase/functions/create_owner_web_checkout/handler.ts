@@ -1,0 +1,413 @@
+import type { CheckoutDependencies } from "../_shared/checkout_dependencies.ts";
+
+const ALLOWED_ORIGINS = new Set([
+  "https://vspapp.online",
+  "https://www.vspapp.online",
+]);
+const MAX_BODY_BYTES = 16384;
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  return {
+    ...(origin && ALLOWED_ORIGINS.has(origin)
+      ? { "Access-Control-Allow-Origin": origin }
+      : {}),
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+  };
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+function normalizePhone(raw: string): string | null {
+  const digits = String(raw || "").replace(/\D/g, "");
+  if (/^20(1\d{9,10})$/.test(digits)) return "+" + digits;
+  if (/^0(1\d{9,10})$/.test(digits)) return "+2" + digits;
+  if (/^1\d{9,10}$/.test(digits)) return "+20" + digits;
+  return null;
+}
+
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}$/;
+
+export function createHandler(deps: CheckoutDependencies) {
+  const { createClient, env, fetch } = deps;
+  return async (req: Request): Promise<Response> => {
+    const origin = req.headers.get("origin");
+    const json = (req: Request, data: unknown, status = 200) =>
+      new Response(JSON.stringify(data), {
+        status,
+        headers: {
+          ...getCorsHeaders(req.headers.get("origin")),
+          "Content-Type": "application/json",
+        },
+      });
+
+    if (req.method === "OPTIONS") {
+      return new Response("ok", {
+        headers: { ...getCorsHeaders(origin), "Content-Length": "2" },
+      });
+    }
+    if (req.method !== "POST") {
+      return json(req, { error: "METHOD_NOT_ALLOWED" }, 405);
+    }
+
+    // Block non-allowed origins (for browser-originated requests)
+    if (origin && !ALLOWED_ORIGINS.has(origin)) {
+      return json(req, { error: "FORBIDDEN_ORIGIN" }, 403);
+    }
+
+    try {
+      const supabaseUrl = env("SUPABASE_URL") || "";
+      const serviceKey = env("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+      if (!supabaseUrl || !serviceKey) {
+        return json(req, { error: "SERVER_CONFIGURATION_UNAVAILABLE" }, 503);
+      }
+
+      const supabase = createClient(supabaseUrl, serviceKey);
+
+      const authHeader = req.headers.get("Authorization") || "";
+      if (!authHeader.startsWith("Bearer ")) {
+        return json(req, {
+          error: "UNAUTHORIZED",
+          message: "Authorization required",
+        }, 401);
+      }
+      const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+      const { data: { user: callerUser }, error: authError } = await supabase
+        .auth.getUser(token);
+      if (authError || !callerUser) {
+        return json(req, {
+          error: "UNAUTHORIZED",
+          message: "Invalid or expired token",
+        }, 401);
+      }
+
+      // Verify caller is a verified owner or administrator
+      const { data: userProfile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", callerUser.id)
+        .maybeSingle();
+
+      const allowedRoles = [
+        "owner",
+        "stadium_owner",
+        "admin",
+        "super_admin",
+        "co_founder",
+        "cofounder",
+      ];
+      if (!userProfile || !allowedRoles.includes(userProfile.role)) {
+        return json(req, {
+          error: "FORBIDDEN_NOT_AN_OWNER",
+          message: "Only facility owners can checkout subscription plans.",
+        }, 403);
+      }
+
+      const paymobSecretKey = env("PAYMOB_SECRET_KEY") || "";
+      const paymobPublicKey = env("PAYMOB_PUBLIC_KEY") || "";
+      const cardIntegration = Number(env("PAYMOB_INTEGRATION_ID_CARD") || 0);
+      const walletIntegration = Number(
+        env("PAYMOB_INTEGRATION_ID_WALLET") || 0,
+      );
+      const turnstileSecret = env("TURNSTILE_SECRET_KEY") || "";
+
+      if (
+        !paymobSecretKey || !paymobPublicKey || !cardIntegration ||
+        !walletIntegration
+      ) {
+        return json(req, { error: "PAYMENT_CONFIGURATION_UNAVAILABLE" }, 503);
+      }
+
+      const declared = Number(req.headers.get("content-length") || "0");
+      if (declared > MAX_BODY_BYTES) {
+        return json(req, { error: "REQUEST_TOO_LARGE" }, 413);
+      }
+      const rawBody = await req.text();
+      if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
+        return json(req, { error: "REQUEST_TOO_LARGE" }, 413);
+      }
+      let body: any;
+      try {
+        body = JSON.parse(rawBody);
+      } catch {
+        return json(req, { error: "INVALID_JSON" }, 400);
+      }
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return json(req, { error: "INVALID_JSON" }, 400);
+      }
+
+      const rawName = typeof body?.name === "string" ? body.name : "";
+      const name = rawName.normalize("NFKC").trim().replace(
+        /[\u0000-\u001F\u007F]/g,
+        "",
+      );
+      const email = String(body?.email || "").trim().toLowerCase();
+      const phone = normalizePhone(String(body?.phone || ""));
+      const planCode = String(body?.plan_code || "").trim().toLowerCase();
+      const billingPeriod = String(body?.billing_period || "monthly").trim()
+        .toLowerCase();
+      const turnstileToken = typeof body?.turnstile_token === "string"
+        ? body.turnstile_token.trim()
+        : (typeof body?.captcha_token === "string"
+          ? body.captcha_token.trim()
+          : "");
+
+      // Input validation
+      if (name.length < 2 || name.length > 100 || name !== rawName) {
+        return json(req, { error: "INVALID_INPUT" }, 400);
+      }
+      if (!EMAIL_RE.test(email) || email.length > 254) {
+        return json(req, { error: "Valid email address required" }, 400);
+      }
+      if (!phone) return json(req, { error: "INVALID_INPUT" }, 400);
+      if (planCode !== "pro") {
+        return json(
+          req,
+          { error: "Only Pro is available for web payment" },
+          400,
+        );
+      }
+      if (!["monthly", "annual"].includes(billingPeriod)) {
+        return json(req, { error: "INVALID_INPUT" }, 400);
+      }
+      if (turnstileSecret) {
+        if (!turnstileToken) {
+          return json(req, { error: "SECURITY_VERIFICATION_FAILED" }, 403);
+        }
+        const captchaBody = new URLSearchParams();
+        captchaBody.set("secret", turnstileSecret);
+        captchaBody.set("response", turnstileToken);
+        const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]
+          ?.trim();
+        if (clientIp) captchaBody.set("remoteip", clientIp);
+        const captchaRes = await fetch(
+          "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: captchaBody,
+          },
+        );
+        const captchaData = await captchaRes.json().catch(() => null);
+        const hostnameOk = !captchaData?.hostname ||
+          ["vspapp.online", "www.vspapp.online"].includes(
+            String(captchaData.hostname),
+          );
+        const actionOk = !captchaData?.action ||
+          String(captchaData.action) === "owner_checkout";
+        if (
+          !captchaRes.ok || captchaData?.success !== true || !hostnameOk ||
+          !actionOk
+        ) {
+          return json(req, { error: "SECURITY_VERIFICATION_FAILED" }, 403);
+        }
+      }
+
+      // Control characters check in name
+      if (/[\u0000-\u001F\u007F]/.test(name)) {
+        return json(req, { error: "Invalid characters in name" }, 400);
+      }
+
+      const { data: plan, error: planError } = await supabase
+        .from("subscription_plans")
+        .select("code,name_ar,name_en,monthly_price,yearly_price,max_stadiums")
+        .eq("code", planCode).eq("is_active", true).maybeSingle();
+
+      if (planError || !plan) {
+        return json(req, { error: "Subscription plan unavailable" }, 503);
+      }
+
+      const baseAmount = round2(
+        Number(
+          billingPeriod === "annual" ? plan.yearly_price : plan.monthly_price,
+        ),
+      );
+      if (!Number.isFinite(baseAmount) || baseAmount <= 0) {
+        return json(req, { error: "Invalid subscription price" }, 503);
+      }
+
+      const { data: feeConfig, error: feeError } = await supabase
+        .from("platform_fee_config")
+        .select(
+          "subscription_vsp_rate,subscription_paymob_rate,subscription_paymob_fixed_fee",
+        )
+        .eq("id", 1).maybeSingle();
+
+      if (feeError || !feeConfig) {
+        return json(req, { error: "Subscription fee policy unavailable" }, 503);
+      }
+
+      const vspRate = Number(feeConfig.subscription_vsp_rate);
+      const paymobRate = Number(feeConfig.subscription_paymob_rate);
+      const fixedFee = Number(feeConfig.subscription_paymob_fixed_fee);
+
+      if (
+        ![vspRate, paymobRate, fixedFee].every(Number.isFinite) ||
+        vspRate < 0 || paymobRate < 0 || paymobRate >= 1 || fixedFee < 0
+      ) {
+        return json(req, { error: "Subscription fee policy invalid" }, 503);
+      }
+
+      const vspFee = round2(baseAmount * vspRate);
+      const paymobFee = round2(baseAmount * paymobRate + fixedFee);
+      const grossAmount = round2(baseAmount + vspFee + paymobFee);
+      const durationDays = billingPeriod === "annual" ? 365 : 30;
+      const claimExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString();
+
+      const { data: order, error: orderError } = await supabase
+        .from("owner_subscription_orders")
+        .insert({
+          owner_id: callerUser.id,
+          plan_code: plan.code,
+          billing_period: billingPeriod,
+          amount: baseAmount,
+          vsp_fee_amount: vspFee,
+          paymob_fee_amount: paymobFee,
+          gross_amount: grossAmount,
+          duration_days: durationDays,
+          status: "pending",
+          checkout_name: name,
+          checkout_email: email,
+          checkout_phone: phone,
+          payment_source: "web",
+          claim_expires_at: claimExpiresAt,
+        })
+        .select(
+          "id,amount,vsp_fee_amount,paymob_fee_amount,gross_amount,plan_code,billing_period",
+        )
+        .single();
+
+      if (orderError || !order) {
+        console.error("Failed to create web subscription order", {
+          code: orderError?.code || "UNKNOWN",
+        });
+        return json(req, { error: "Could not create payment order" }, 500);
+      }
+
+      const firstName = name.split(/\s+/)[0] || "VSP";
+      const lastName = name.split(/\s+/).slice(1).join(" ") || "Owner";
+      const webhookUrl = supabaseUrl + "/functions/v1/paymob_webhook";
+      const redirectUrl =
+        "https://vspapp.online/payment-callback?subscription_order_id=" +
+        encodeURIComponent(order.id);
+      const amountCents = Math.round(grossAmount * 100);
+
+      const intentionPayload = {
+        amount: amountCents,
+        currency: "EGP",
+        payment_methods: [cardIntegration, walletIntegration],
+        items: [{
+          name: plan.name_en || "VSP Pro Subscription",
+          amount: amountCents,
+          description: billingPeriod === "annual"
+            ? "VSP Pro annual owner subscription"
+            : "VSP Pro monthly owner subscription",
+          quantity: 1,
+        }],
+        billing_data: {
+          apartment: "NA",
+          floor: "NA",
+          street: "NA",
+          building: "NA",
+          city: "Aswan",
+          state: "Aswan",
+          country: "EG",
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: phone,
+          email,
+        },
+        special_reference: "OWNER_SUB_" + order.id,
+        expiration: 3600,
+        notification_url: webhookUrl,
+        redirection_url: redirectUrl,
+      };
+
+      const paymobResponse = await fetch(
+        "https://accept.paymob.com/v1/intention/",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": "Token " + paymobSecretKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(intentionPayload),
+        },
+      );
+      const paymobData = await paymobResponse.json().catch(() => ({}));
+
+      if (!paymobResponse.ok || !paymobData?.client_secret) {
+        console.error("Paymob web intention failed", {
+          status: paymobResponse.status,
+        });
+        await supabase.from("owner_subscription_orders").update({
+          status: "cancelled",
+        }).eq("id", order.id).eq("status", "pending");
+        return json(
+          req,
+          { error: "Payment provider could not start checkout" },
+          502,
+        );
+      }
+
+      const intentionId = String(paymobData.id || "");
+      const paymobOrderId = String(
+        paymobData.intention_order_id ||
+          paymobData.payment_methods?.[0]?.order_id || "",
+      );
+      if (!/^[1-9][0-9]*$/.test(paymobOrderId)) {
+        return json(
+          req,
+          { error: "PAYMENT_ORDER_CORRELATION_UNAVAILABLE" },
+          502,
+        );
+      }
+      const { data: linkedOrder, error: linkError } = await supabase.from(
+        "owner_subscription_orders",
+      )
+        .update({
+          paymob_intention_id: intentionId || null,
+          paymob_order_id: paymobOrderId || null,
+        })
+        .eq("id", order.id).eq("status", "pending").select("id").maybeSingle();
+      if (linkError || !linkedOrder) {
+        console.error("Owner checkout correlation could not be saved", {
+          code: linkError?.code || "ORDER_NOT_PENDING",
+        });
+        return json(
+          req,
+          { error: "PAYMENT_ORDER_CORRELATION_UNAVAILABLE" },
+          503,
+        );
+      }
+
+      const checkoutUrl =
+        "https://accept.paymob.com/unifiedcheckout/?publicKey=" +
+        encodeURIComponent(paymobPublicKey) + "&clientSecret=" +
+        encodeURIComponent(String(paymobData.client_secret));
+
+      return json(req, {
+        success: true,
+        order_id: order.id,
+        base_amount: baseAmount,
+        vsp_fee: vspFee,
+        paymob_fee: paymobFee,
+        gross_amount: grossAmount,
+        amount: grossAmount,
+        plan_code: order.plan_code,
+        billing_period: order.billing_period,
+        checkout_url: checkoutUrl,
+      });
+    } catch (error) {
+      console.error("create_owner_web_checkout failed", {
+        reason: error instanceof Error ? error.name : "unknown",
+      });
+      return json(req, { error: "CHECKOUT_START_FAILED" }, 500);
+    }
+  };
+}

@@ -60,7 +60,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               Expanded(
                 child: Text(
                   isArabic ? 'اكتملت مواجهات دور المجموعات!' : 'Group Stage Completed!',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
             ],
@@ -94,7 +94,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                   if (context.mounted) {
                     VSPFeedback.showError(
                       context,
-                      isArabic ? 'حدث خطأ أثناء تصعيد المتأهلين: $e' : 'Error advancing qualifiers: $e',
+                      isArabic ? 'تعذر تصعيد الفرق المتأهلة. حاول تحديث الجدول ثم أعد المحاولة.' : 'Could not advance the qualifiers. Refresh the bracket and try again.',
                     );
                   }
                 }
@@ -120,37 +120,48 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         if (snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)) {
           return VSPScaffold(
             backgroundColor: VSPColors.background,
-            appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
-            body: Center(
+            appBar: AppBar(backgroundColor: VSPColors.transparent, elevation: 0, leading: const VSPBackButton()),
+            body: SafeArea(top: false, bottom: true, child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Iconsax.refresh_copy, color: VSPColors.warning, size: 36),
                   const SizedBox(height: 12),
-                  const Text(
-                    'تعذر التحديث اللحظي، اسحب للأسفل للتحديث',
-                    style: TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+                  Text(
+                    isArabic
+                        ? 'تعذر تحميل جدول البطولة. حاول إعادة المحاولة.'
+                        : 'Could not load the tournament bracket. Please try again.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () => setState(() => _refreshKey++),
                     icon: const Icon(Iconsax.refresh_copy, size: 18),
-                    label: const Text('إعادة المحاولة'),
+                    label: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VSPColors.accent,
-                      foregroundColor: Colors.black,
+                      foregroundColor: VSPColors.black,
                     ),
                   ),
                 ],
               ),
-            ),
+            )),
           );
         }
 
         if (!snapshot.hasData) {
-          return const VSPScaffold(
+          return VSPScaffold(
             backgroundColor: VSPColors.background,
-            body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+            body: SafeArea(
+              top: false,
+              bottom: true,
+              child: VSPStateView(
+                state: VSPUiState.loading,
+                title: isArabic ? 'جارٍ تحميل المباريات' : 'Loading matches',
+                message: isArabic ? 'نحمّل جدول مباريات البطولة.' : 'Fetching the tournament match schedule.',
+              ),
+            ),
           );
         }
 
@@ -158,8 +169,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         if (matches.isEmpty) {
           return VSPScaffold(
             backgroundColor: VSPColors.background,
-            appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
-            body: Center(child: Text(l10n.noBracketsYet, style: const TextStyle(color: VSPColors.textSecondary))),
+            appBar: AppBar(backgroundColor: VSPColors.transparent, elevation: 0, leading: const VSPBackButton()),
+            body: SafeArea(top: false, bottom: true, child: Center(child: Text(l10n.noBracketsYet, style: const TextStyle(color: VSPColors.textSecondary)))),
           );
         }
 
@@ -189,7 +200,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
           child: VSPScaffold(
             backgroundColor: VSPColors.background,
             appBar: AppBar(
-              backgroundColor: Colors.transparent,
+              backgroundColor: VSPColors.transparent,
               elevation: 0,
               centerTitle: true,
               leading: const VSPBackButton(),
@@ -222,7 +233,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                 ],
               ),
             ),
-            body: TabBarView(
+            body: SafeArea(top: false, bottom: true, child: TabBarView(
               children: [
                 if (isStandingsEligible)
                   RefreshIndicator(
@@ -234,8 +245,17 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (snapshot.hasError)
+                            _TournamentBracketStaleWarning(
+                              isArabic: isArabic,
+                              onRetry: _refreshMatches,
+                            ),
                           if (canAdvanceGroups) _buildAdvanceGroupsBanner(context, isArabic),
-                          ChampionshipStandingsSection(championship: widget.championship),
+                          ChampionshipStandingsSection(
+                            championship: widget.championship,
+                            refreshVersion: _refreshKey,
+                            onRetry: _refreshMatches,
+                          ),
                         ],
                       ),
                     ),
@@ -246,7 +266,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                   final showOwnerBanner = widget.isOwner;
                   final showAdvanceGroups = roundIdx == 99 && canAdvanceGroups;
                   final headerOffset = (showChampion ? 1 : 0) + (showOwnerBanner ? 1 : 0) + (showAdvanceGroups ? 1 : 0);
-                  final totalItems = headerOffset + roundMatches.length;
+                  final totalItems =
+                      headerOffset + roundMatches.length + (snapshot.hasError ? 1 : 0);
                   final roundName = _getRoundLabel(context, roundIdx, sortedRounds.length);
 
                   return ListView.builder(
@@ -254,6 +275,13 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                     itemCount: totalItems,
                     itemBuilder: (context, index) {
                       var currentIndex = index;
+                      if (snapshot.hasError && currentIndex == 0) {
+                        return _TournamentBracketStaleWarning(
+                          isArabic: isArabic,
+                          onRetry: _refreshMatches,
+                        );
+                      }
+                      if (snapshot.hasError) currentIndex--;
                       if (showChampion) {
                         if (currentIndex == 0) {
                           final winnerName = roundMatches.first.winnerId == roundMatches.first.homeTeamId
@@ -297,7 +325,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                   );
                 }),
               ],
-            ),
+            )),
           ),
         );
       },
@@ -333,5 +361,48 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         }
         return 'Round ${roundIndex + 1}';
     }
+  }
+}
+
+class _TournamentBracketStaleWarning extends StatelessWidget {
+  final bool isArabic;
+  final VoidCallback onRetry;
+
+  const _TournamentBracketStaleWarning({
+    required this.isArabic,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+      child: Container(
+        padding: const EdgeInsets.all(VSPSpacing.md),
+        decoration: BoxDecoration(
+          color: VSPColors.warning.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+            const SizedBox(width: VSPSpacing.sm),
+            Expanded(
+              child: Text(
+                isArabic
+                    ? 'تعذر تحديث الجدول. المعروض آخر بيانات تم تحميلها.'
+                    : 'Could not refresh the bracket. Showing the last loaded data.',
+                style: const TextStyle(color: VSPColors.textSecondary),
+              ),
+            ),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

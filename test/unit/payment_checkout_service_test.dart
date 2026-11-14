@@ -40,6 +40,51 @@ void main() {
       expect(amount, 400.0);
     });
 
+    test('rejects invalid amounts before requesting a payment session', () {
+      for (final amount in <double>[
+        -1,
+        0,
+        double.nan,
+        double.infinity,
+        double.negativeInfinity,
+      ]) {
+        expect(
+          () => PaymentCheckoutService.calculateBasePayableAmount(
+            needsDeposit: false,
+            depositPaid: 0,
+            totalPrice: amount,
+          ),
+          throwsArgumentError,
+          reason: 'totalPrice=$amount',
+        );
+      }
+      for (final deposit in <double>[
+        -1,
+        401,
+        double.nan,
+        double.infinity,
+        double.negativeInfinity,
+      ]) {
+        expect(
+          () => PaymentCheckoutService.calculateBasePayableAmount(
+            needsDeposit: true,
+            depositPaid: deposit,
+            totalPrice: 400,
+          ),
+          throwsArgumentError,
+          reason: 'depositPaid=$deposit',
+        );
+      }
+      expect(
+        PaymentCheckoutService.calculateBasePayableAmount(
+          needsDeposit: true,
+          depositPaid: 400,
+          totalPrice: 400,
+        ),
+        400,
+      );
+    });
+
     test('getIntegrationId returns wallet vs card integration ID accurately', () {
       expect(
         PaymentCheckoutService.getIntegrationId('wallet'),
@@ -47,6 +92,24 @@ void main() {
       );
       expect(
         PaymentCheckoutService.getIntegrationId('card'),
+        AppConfig.paymobCardIntegrationId,
+      );
+    });
+
+    test('unsupported payment methods never silently select card checkout', () {
+      for (final method in <String>['', 'cash', 'instapay', 'unknown']) {
+        expect(
+          () => PaymentCheckoutService.getIntegrationId(method),
+          throwsArgumentError,
+          reason: 'method=$method',
+        );
+      }
+      expect(
+        PaymentCheckoutService.getIntegrationId(' WALLET '),
+        AppConfig.paymobWalletIntegrationId,
+      );
+      expect(
+        PaymentCheckoutService.getIntegrationId(' CARD '),
         AppConfig.paymobCardIntegrationId,
       );
     });
@@ -83,6 +146,43 @@ void main() {
       expect(fallbackBookingRef, 'BK_1700000000000');
     });
 
+    test('blank checkout booking references use a nonempty fallback', () {
+      for (final bookingId in <String?>[null, '', '   ']) {
+        expect(
+          PaymentCheckoutService.generatePaymentReference(
+            isTournamentPayment: false,
+            bookingId: bookingId,
+            timestampMs: 1700000000000,
+          ),
+          'BK_1700000000000',
+        );
+      }
+      expect(
+        PaymentCheckoutService.generatePaymentReference(
+          isTournamentPayment: false,
+          bookingId: '  booking-123  ',
+          timestampMs: 1700000000000,
+        ),
+        'booking-123',
+      );
+      expect(
+        PaymentCheckoutService.generatePaymentReference(
+          isTournamentPayment: true,
+          bookingId: '  LEAGUE_abc  ',
+          timestampMs: 1700000000000,
+        ),
+        'LEAGUE_abc',
+      );
+      expect(
+        PaymentCheckoutService.generatePaymentReference(
+          isTournamentPayment: true,
+          playerTeamId: '   ',
+          timestampMs: 1700000000000,
+        ),
+        'TOURN_TEAM_1700000000000',
+      );
+    });
+
     test('shouldCleanupStaleBookings allows cleanup only on non-tournament and new bookings', () {
       expect(
         PaymentCheckoutService.shouldCleanupStaleBookings(
@@ -108,11 +208,63 @@ void main() {
     });
 
     test('isPaymentConfirmed accepts server-paid and confirmed partially_paid states', () {
-      expect(PaymentCheckoutService.isPaymentConfirmed(paymentStatus: 'paid'), isTrue);
+      expect(PaymentCheckoutService.isPaymentConfirmed(paymentStatus: 'paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed', paymentStatus: 'paid'), isTrue);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: '', paymentStatus: 'paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'cancelled', paymentStatus: 'paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'paid'), isFalse);
       expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed', paymentStatus: 'partially_paid'), isTrue);
       expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'partially_paid'), isFalse);
       expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'pending'), isFalse);
       expect(PaymentCheckoutService.isPaymentConfirmed(status: null, paymentStatus: null), isFalse);
+    });
+
+    test('reconciliation conflicts never report successful checkout', () {
+      for (final state in <String>[
+        'unpaid',
+        'refund_pending',
+        'refunded',
+        'refund_failed',
+      ]) {
+        expect(
+          PaymentCheckoutService.isPaymentConfirmed(
+            status: 'confirmed',
+            paymentStatus: 'paid',
+            paymentReconcileState: state,
+          ),
+          isFalse,
+          reason: 'reconcile=$state',
+        );
+      }
+      for (final state in <String>['fully_paid', 'partially_paid']) {
+        expect(
+          PaymentCheckoutService.isPaymentConfirmed(
+            status: 'confirmed',
+            paymentStatus: 'paid',
+            paymentReconcileState: state,
+          ),
+          isTrue,
+          reason: 'reconcile=$state',
+        );
+      }
+    });
+
+    test('refund lifecycle overrides stale fully paid reconciliation', () {
+      for (final status in <String>[
+        'refund_pending',
+        'refunded',
+        'refund_failed',
+      ]) {
+        expect(
+          PaymentCheckoutService.isPaymentConfirmed(
+            status: 'confirmed',
+            paymentStatus: status,
+            paymentReconcileState: 'fully_paid',
+          ),
+          isFalse,
+          reason: 'paymentStatus=$status',
+        );
+      }
     });
 
     test('preparePendingDraft sets status to pending and method to paymob', () {

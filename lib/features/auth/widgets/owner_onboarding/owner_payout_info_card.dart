@@ -60,6 +60,7 @@ class OwnerPayoutInfoCard extends StatelessWidget {
           CustomTextField(
             controller: instapayController,
             hintText: 'username@instapay',
+            keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             prefixIcon: Iconsax.wallet_1_copy,
           ),
@@ -77,6 +78,7 @@ class OwnerPayoutInfoCard extends StatelessWidget {
           CustomTextField(
             controller: bankController,
             hintText: 'EGxxxxxxxxxxxxxxxxxxxxxx',
+            textDirection: TextDirection.ltr,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => onSubmitted(),
             prefixIcon: Iconsax.card_copy,

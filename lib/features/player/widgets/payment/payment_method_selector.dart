@@ -75,7 +75,7 @@ class PaymentMethodSelector extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isArabic ? 'دفع آمن 100%' : '100% Secure',
+                      isArabic ? 'بوابة Paymob' : 'Paymob Gateway',
                       style: const TextStyle(
                         color: VSPColors.accent,
                         fontSize: 10.5,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/core/providers/booking_provider.dart';
+import 'package:vsp_application/core/providers/auth_provider.dart';
+import '../../helpers/test_owner_auth_provider.dart';
 import 'package:vsp_application/core/repositories/booking/booking_cancellation_coordinator.dart';
 import 'package:vsp_application/core/repositories/booking_repository.dart';
 import 'package:vsp_application/data/models/booking_models.dart';
@@ -27,6 +29,9 @@ class SuccessfulMockBookingRepository implements BookingRepository {
   Future<bool> cancelBooking(String bookingId) async {
     return true;
   }
+
+  @override
+  Future<Booking?> getBookingByIdStrict(String bookingId) async => null;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -75,11 +80,21 @@ void main() {
       );
       expect(msg, equals(custom));
     });
+
+    test('does not expose internal database details', () {
+      final msg = BookingCancellationCoordinator.sanitizeCancellationError(
+        null,
+        'PostgrestException: relation private_bookings does not exist',
+      );
+      expect(msg, contains('تعذر إلغاء الحجز'));
+      expect(msg, isNot(contains('private_bookings')));
+    });
   });
 
   group('BookingProvider Cancellation Error Handling', () {
     test('sets errorMessage and returns false on failure', () async {
       const expectedError = 'لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات';
+      const safeError = 'لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات (إلا خلال أول 20 دقيقة من الحجز).';
       final mockRepo = FailingMockBookingRepository(expectedError);
       final provider = BookingProvider(repository: mockRepo);
 
@@ -88,7 +103,7 @@ void main() {
       final result = await provider.cancelBooking('test_booking_123');
 
       expect(result, isFalse);
-      expect(provider.errorMessage, equals(expectedError));
+      expect(provider.errorMessage, equals(safeError));
     });
 
     test('returns true and clears cancellingIds on success', () async {
@@ -133,12 +148,15 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('ar'),
-            home: Scaffold(
+            home: ChangeNotifierProvider<AuthProvider>.value(
+              value: TestOwnerAuthProvider(),
+              child: Scaffold(
               body: Builder(
                 builder: (ctx) => ElevatedButton(
                   onPressed: () => PlayerBookingCancelDialog.show(ctx, testBooking),
                   child: const Text('Open Dialog'),
                 ),
+              ),
               ),
             ),
           ),
@@ -167,8 +185,12 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
-      // Verify that the error SnackBar with the server's exact message is displayed
-      expect(find.text(serverError), findsOneWidget);
+      // A recognized business policy is mapped to safe canonical copy, never
+      // echoed verbatim from an arbitrary server exception.
+      expect(
+        find.text('لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات (إلا خلال أول 20 دقيقة من الحجز).'),
+        findsOneWidget,
+      );
     });
   });
 }

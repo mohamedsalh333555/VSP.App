@@ -38,6 +38,13 @@ class BookingReconciliationService {
     String? review,
   }) async {
     try {
+      // Reject unrelated team IDs before issuing any result RPC. The database
+      // still enforces the authenticated captain's permissions.
+      if (teamId.isEmpty ||
+          (teamId != booking.playerTeamId &&
+              teamId != booking.opponentTeamId)) {
+        return false;
+      }
       if (BookingDomainRules.isResultSubmissionTimeLocked(booking.endTime, DateTime.now())) {
         throw Exception('Cannot submit results before the match officially ends.');
       }
@@ -62,34 +69,53 @@ class BookingReconciliationService {
               'p_outcome': outcome.name,
             });
 
-      if (result is Map && result['success'] == false) {
-        if (result['error'] == 'RESULT_DISPUTED') {
-          if (rating != null && rating > 0) {
-            await _submitRating(
-              booking: booking,
-              userId: user.id,
-              rating: rating,
-              review: review ?? '',
-            );
-          }
+      if (result is! Map || result['success'] != true) {
+        if (result is Map && result['error'] == 'RESULT_DISPUTED') {
+          await _submitRatingBestEffort(
+            booking: booking,
+            userId: user.id,
+            rating: rating,
+            review: review,
+          );
           return false;
         }
-        throw Exception(result['error']?.toString() ?? 'RESULT_SUBMISSION_FAILED');
+        throw Exception(result is Map
+            ? (result['error']?.toString() ?? 'RESULT_SUBMISSION_FAILED')
+            : 'INVALID_RESULT_RESPONSE');
       }
 
-      if (rating != null && rating > 0) {
-        await _submitRating(
-          booking: booking,
-          userId: user.id,
-          rating: rating,
-          review: review ?? '',
-        );
-      }
+      // The match result is already committed by the atomic RPC.
+      // A separate review failure must not make the UI suggest resubmission.
+      await _submitRatingBestEffort(
+        booking: booking,
+        userId: user.id,
+        rating: rating,
+        review: review,
+      );
 
       return true;
     } catch (e) {
-      debugPrint('Error submitting match result: $e');
+      debugPrint('Match result submission failed (details redacted)');
       return false;
+    }
+  }
+
+  Future<void> _submitRatingBestEffort({
+    required Booking booking,
+    required String userId,
+    required double? rating,
+    required String? review,
+  }) async {
+    if (rating == null || rating <= 0) return;
+    try {
+      await _submitRating(
+        booking: booking,
+        userId: userId,
+        rating: rating,
+        review: review ?? '',
+      );
+    } catch (error) {
+      debugPrint('Post-match stadium review failed (details redacted)');
     }
   }
 
@@ -107,8 +133,10 @@ class BookingReconciliationService {
       'p_rating': rating.toInt(),
       'p_comment': review,
     });
-    if (result is Map && result['success'] == false) {
-      throw Exception(result['error']?.toString() ?? 'REVIEW_SUBMISSION_FAILED');
+    if (result is! Map || result['success'] != true) {
+      throw Exception(result is Map
+          ? (result['error']?.toString() ?? 'REVIEW_SUBMISSION_FAILED')
+          : 'INVALID_REVIEW_RESPONSE');
     }
   }
 

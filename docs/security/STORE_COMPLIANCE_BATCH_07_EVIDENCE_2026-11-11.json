@@ -1,0 +1,461 @@
+{
+  "observed_at": "2026-11-11",
+  "source_commit": "379adb4c50aaee40c74221ff054bca5f9fc3fdb2",
+  "reviewed_admin_routines": 40,
+  "patched_admin_routines": 32,
+  "staging_negative_attempts": 192,
+  "stage_readback": [
+    {
+      "signature": "public.activate_vsp_pro(text,text,integer)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_add_1v1_cash_player_atomic(uuid,text,uuid,numeric)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_approve_1v1_registration_atomic(uuid,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_approve_championship_atomic(uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_approve_owner_atomic(uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_create_1v1_tournament_atomic(text,integer,numeric,timestamp with time zone,text,numeric)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_create_owner_with_stadium_atomic(text,text,text,text,text,numeric)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_finalize_1v1_tournament_atomic(uuid,uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_get_1v1_round_scores(uuid,integer)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_publish_legacy_1v1_standings_atomic(jsonb)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_record_payout_settlement_atomic(uuid,numeric,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_register_owner_on_behalf(text,text,text,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reject_1v1_registration_atomic(uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reject_championship_atomic(uuid,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reject_owner_atomic(uuid,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reset_1v1_round_atomic()",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reset_no_show_count_atomic(uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_save_1v1_tournament_players_atomic(uuid,jsonb)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_set_1v1_registration_open_atomic(boolean)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_set_maintenance_mode_atomic(boolean)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_set_owner_subscription_atomic(uuid,text,integer)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_settle_owner_cash_debt_atomic(uuid,numeric,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_toggle_user_block(uuid,boolean)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_1v1_player_stats_atomic(uuid,integer,integer,integer,integer,integer,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_1v1_tournament_atomic(uuid,text,integer,numeric,timestamp with time zone,text,numeric)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_1v1_tournament_status_atomic(uuid,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_1v1_tournament_status(uuid,text,uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_booking_safe_atomic(uuid,jsonb)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_championship_status_atomic(uuid,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_upgrade_owner_subscription_atomic(uuid,text,integer)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_wipe_1v1_data_atomic()",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.create_owner_on_behalf(text,text,text,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    }
+  ],
+  "production_readback": [
+    {
+      "signature": "public.activate_vsp_pro(text,text,integer)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_add_1v1_cash_player_atomic(uuid,text,uuid,numeric)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_approve_1v1_registration_atomic(uuid,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_approve_championship_atomic(uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_approve_owner_atomic(uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_create_1v1_tournament_atomic(text,integer,numeric,timestamp with time zone,text,numeric)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_create_owner_with_stadium_atomic(text,text,text,text,text,numeric)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_finalize_1v1_tournament_atomic(uuid,uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_get_1v1_round_scores(uuid,integer)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_publish_legacy_1v1_standings_atomic(jsonb)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_record_payout_settlement_atomic(uuid,numeric,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_register_owner_on_behalf(text,text,text,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reject_1v1_registration_atomic(uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reject_championship_atomic(uuid,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reject_owner_atomic(uuid,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reset_1v1_round_atomic()",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_reset_no_show_count_atomic(uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_save_1v1_tournament_players_atomic(uuid,jsonb)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_set_1v1_registration_open_atomic(boolean)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_set_maintenance_mode_atomic(boolean)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_set_owner_subscription_atomic(uuid,text,integer)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_settle_owner_cash_debt_atomic(uuid,numeric,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_toggle_user_block(uuid,boolean)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_1v1_player_stats_atomic(uuid,integer,integer,integer,integer,integer,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_1v1_tournament_atomic(uuid,text,integer,numeric,timestamp with time zone,text,numeric)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_1v1_tournament_status_atomic(uuid,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_1v1_tournament_status(uuid,text,uuid)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_booking_safe_atomic(uuid,jsonb)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_update_championship_status_atomic(uuid,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_upgrade_owner_subscription_atomic(uuid,text,integer)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.admin_wipe_1v1_data_atomic()",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    },
+    {
+      "signature": "public.create_owner_on_behalf(text,text,text,text,text)",
+      "present": true,
+      "definer": true,
+      "fingerprint_matches": true
+    }
+  ],
+  "production_metadata_preserved": true,
+  "native_ci": {
+    "run": 42965386816,
+    "job": 130341288584,
+    "status": "success",
+    "suites": 6,
+    "mutants": 7,
+    "python_target_tests": 9,
+    "python_planner_tests": 9
+  },
+  "advisors": {
+    "prodAdvisorsBefore07": [
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "count": 197
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "count": 1
+      }
+    ],
+    "prodAdvisorsAfter07": [
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "count": 197
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "count": 1
+      }
+    ],
+    "stageAdvisorsBefore07": [
+      {
+        "name": "extension_in_public",
+        "count": 4
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "count": 200
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "count": 1
+      }
+    ],
+    "stageAdvisorsAfter07": [
+      {
+        "name": "extension_in_public",
+        "count": 4
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "count": 200
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "count": 1
+      }
+    ]
+  },
+  "limits": [
+    "Production business-flow mutations not executed",
+    "Full native positive admin flows cover only three representative RPCs",
+    "Real Google OAuth not executed",
+    "Core acceptance remains 81/620"
+  ]
+}

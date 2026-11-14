@@ -10,16 +10,34 @@ class BookingMapper {
 
   static double _parseDouble(dynamic val, [double fallback = 0.0]) {
     if (val == null) return fallback;
-    if (val is num) return val.toDouble();
-    if (val is String) return double.tryParse(val) ?? fallback;
+    if (val is num) {
+      final parsed = val.toDouble();
+      return parsed.isFinite ? parsed : fallback;
+    }
+    if (val is String) {
+      final parsed = double.tryParse(val.trim());
+      return parsed != null && parsed.isFinite ? parsed : fallback;
+    }
     return fallback;
   }
 
   static int _parseInt(dynamic val, [int fallback = 0]) {
     if (val == null) return fallback;
-    if (val is num) return val.toInt();
-    if (val is String) return int.tryParse(val) ?? fallback;
+    if (val is num) {
+      final parsed = val.toDouble();
+      return parsed.isFinite ? parsed.toInt() : fallback;
+    }
+    if (val is String) return int.tryParse(val.trim()) ?? fallback;
     return fallback;
+  }
+
+  static MatchOutcome? _parseMatchOutcome(dynamic value) {
+    final normalized = value?.toString().trim();
+    for (final outcome in MatchOutcome.values) {
+      if (outcome.name == normalized) return outcome;
+    }
+    VSPLogger.w('BookingMapper: unknown match outcome "$value"; ignoring invalid value.');
+    return null;
   }
 
   /// Deserializes database record map into a strongly typed Booking object.
@@ -44,12 +62,37 @@ class BookingMapper {
         data['max_players'],
         ppt * 2);
 
+    // Financial values are server-owned. Corrupt non-finite/negative values
+    // must not be shown as a zero-cost or unpaid booking.
+    double parseRequiredNonnegativeAmount(dynamic value, String field) {
+      if (value == null) return 0;
+      final parsed = value is num
+          ? value.toDouble()
+          : double.tryParse(value.toString().trim());
+      if (parsed == null || !parsed.isFinite || parsed < 0) {
+        throw FormatException('Booking "$id" has invalid $field');
+      }
+      return parsed;
+    }
+
+    final totalPrice = parseRequiredNonnegativeAmount(
+      data['totalPrice'] ?? data['total_price'], 'total_price',
+    );
+    final depositPaid = parseRequiredNonnegativeAmount(
+      data['deposit_paid'] ?? data['depositPaid'], 'deposit_paid',
+    );
+    if (depositPaid > totalPrice) {
+      throw FormatException('Booking "$id" deposit exceeds total price');
+    }
+
     final BookingType parsedBookingType = () {
       final val =
           bookingTypeVal
               ?.toString()
               .toLowerCase()
+              .replaceAll('bookingtype.', '')
               .replaceAll('_', '')
+              .replaceAll('-', '')
               .replaceAll(' ', '') ??
           '';
       if (val == 'openjoin' || val == 'openjoinmatch') {
@@ -67,7 +110,12 @@ class BookingMapper {
       if (val == 'maintenance') {
         return BookingType.maintenance;
       }
-      return BookingType.personal;
+      if (val == '' || val == 'personal') {
+        return BookingType.personal;
+      }
+      // Unknown types must not silently become personal reservations: doing
+      // so can misrepresent team/challenge bookings and their permissions.
+      throw FormatException('Booking "$id" has unsupported booking_type: $bookingTypeVal');
     }();
 
     // [H-06]: Required DB fields — missing values must cause a parse failure,
@@ -93,6 +141,18 @@ class BookingMapper {
       );
     }
 
+    final parsedStartTime = startTimeVal is DateTime
+        ? startTimeVal.toLocal()
+        : DateTime.parse(startTimeVal.toString()).toLocal();
+    final parsedEndTime = endTimeVal is DateTime
+        ? endTimeVal.toLocal()
+        : DateTime.parse(endTimeVal.toString()).toLocal();
+    if (!parsedEndTime.isAfter(parsedStartTime)) {
+      throw FormatException(
+        'Booking "$id" has an invalid time range: end_time must be after start_time.',
+      );
+    }
+
     return Booking(
       id: id,
       stadiumId: data['stadiumId'] ?? data['stadium_id'] ?? '',
@@ -100,15 +160,11 @@ class BookingMapper {
       stadiumImageUrl:
           data['stadiumImageUrl'] ?? data['stadium_image_url'] ?? '',
       ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
-      startTime: startTimeVal is DateTime
-          ? startTimeVal.toLocal()
-          : DateTime.parse(startTimeVal.toString()).toLocal(),
-      endTime: endTimeVal is DateTime
-          ? endTimeVal.toLocal()
-          : DateTime.parse(endTimeVal.toString()).toLocal(),
+      startTime: parsedStartTime,
+      endTime: parsedEndTime,
       operationalDate: opDateVal != null
           ? (opDateVal is DateTime
-                ? opDateVal
+                ? DateTime(opDateVal.year, opDateVal.month, opDateVal.day)
                 : DateTime.tryParse(opDateVal.toString()))
           : null,
       bookingType: parsedBookingType,
@@ -118,37 +174,47 @@ class BookingMapper {
           data['playerTeamLogoUrl'] ?? data['player_team_logo_url'],
       hostName: data['hostName'] ?? data['host_name'],
       hostAvatarUrl: data['hostAvatarUrl'] ?? data['host_avatar_url'],
-      opponentTeamId: (bookingTypeVal == 'challenge')
+      opponentTeamId: (parsedBookingType == BookingType.challenge ||
+              parsedBookingType == BookingType.team)
           ? (data['opponentTeamId'] ?? data['opponent_team_id'])
           : null,
-      opponentTeamName: (bookingTypeVal == 'challenge')
+      opponentTeamName: (parsedBookingType == BookingType.challenge ||
+              parsedBookingType == BookingType.team)
           ? (data['opponentTeamName'] ?? data['opponent_team_name'])
           : null,
       opponentTeamLogoUrl:
           data['opponentTeamLogoUrl'] ?? data['opponent_team_logo_url'],
       isPrivate: data['isPrivate'] ?? data['is_private'] ?? false,
       rentBall: data['rentBall'] ?? data['rent_ball'] ?? false,
-      totalPrice: _parseDouble(data['totalPrice'] ?? data['total_price'], 0.0),
+      totalPrice: totalPrice,
       currency: data['currency'] ?? 'EGP',
       paymentMethod: data['paymentMethod'] ?? data['payment_method'] ?? 'card',
       paymentTransactionId:
           data['paymentTransactionId'] ?? data['payment_transaction_id'],
       status: () {
-        if (statusVal == 'upcoming') return BookingStatus.confirmed;
-        final normalizedStatus = statusVal?.toString().toLowerCase().trim().replaceAll('-', '_');
+        final normalizedStatus = statusVal
+            ?.toString()
+            .toLowerCase()
+            .trim()
+            .replaceAll('-', '_');
+        if (normalizedStatus == 'upcoming') return BookingStatus.confirmed;
         if (normalizedStatus == 'no_show' || normalizedStatus == 'noshow') {
           return BookingStatus.noShow;
         }
-        final matched = BookingStatus.values.where((e) => e.name == normalizedStatus);
+        // The enum is camelCase (noShow) while server status can be
+        // snake_case. Normalize both sides without altering the wire value.
+        final matched = BookingStatus.values.where(
+          (e) => e.name.toLowerCase().replaceAll('_', '') ==
+              normalizedStatus?.replaceAll('_', ''),
+        );
         if (matched.isNotEmpty) {
           return matched.first;
         }
-        // [H-06]: Unknown status logged with telemetry and safely defaulted to pending.
-        VSPLogger.w(
-          '[H-06] BookingMapper: Booking "$id" has unknown status "$statusVal". '
-          'Defaulting to BookingStatus.pending per Stage 11 state consistency invariant.',
+        // An unknown server state must not be represented as an unpaid draft:
+        // that could expose retry/cancellation actions for a paid reservation.
+        throw FormatException(
+          'Booking "$id" has unsupported status: $statusVal',
         );
-        return BookingStatus.pending;
       }(),
       createdByUserId:
           data['createdByUserId'] ??
@@ -183,24 +249,26 @@ class BookingMapper {
           data['resultSubmittedByTeamId'] ??
           data['result_submitted_by_team_id'],
       matchResultStatus: MatchResultStatus.values.firstWhere(
-        (e) => e.name == matchResultStatusVal,
+        (e) => e.name == matchResultStatusVal?.toString().trim(),
         orElse: () => MatchResultStatus.noResult,
       ),
       pendingOutcome: pendingOutcomeVal != null
-          ? MatchOutcome.values.firstWhere((e) => e.name == pendingOutcomeVal)
+          ? _parseMatchOutcome(pendingOutcomeVal)
           : null,
       finalOutcome: finalOutcomeVal != null
-          ? MatchOutcome.values.firstWhere((e) => e.name == finalOutcomeVal)
+          ? _parseMatchOutcome(finalOutcomeVal)
           : null,
       requiresAdminIntervention:
           data['requiresAdminIntervention'] ??
           data['requires_admin_intervention'] ??
           false,
-      currentPlayers: (parsedBookingType == BookingType.challenge)
+      currentPlayers: (parsedBookingType == BookingType.challenge ||
+              parsedBookingType == BookingType.team)
           ? 0
           : _parseInt(data['currentPlayers'] ?? data['current_players'], 1),
       playersPerTeam: ppt,
-      totalFieldCapacity: (parsedBookingType == BookingType.challenge)
+      totalFieldCapacity: (parsedBookingType == BookingType.challenge ||
+              parsedBookingType == BookingType.team)
           ? 0
           : tfc,
       manualPlayerCount: (parsedBookingType == BookingType.openJoin)
@@ -227,9 +295,11 @@ class BookingMapper {
       cancellationReason:
           (data['cancellation_reason'] ?? data['cancellationReason'])
               ?.toString(),
-      depositPaid: _parseDouble(
-          data['deposit_paid'] ?? data['depositPaid'], 0.0),
+      depositPaid: depositPaid,
       isDepositPaid: data['is_deposit_paid'] ?? data['isDepositPaid'] ?? false,
+      needsDeposit: data['needs_deposit'] ?? data['needsDeposit'] ?? false,
+      depositAmount: _parseDouble(
+          data['deposit_amount'] ?? data['depositAmount'], 0.0),
       instapay: data['instapay'] ?? data['insta_pay'],
       vodafoneCash: data['vodafoneCash'] ?? data['vodafone_cash'],
       binanceId: data['binanceId'] ?? data['binance_id'],
@@ -389,6 +459,8 @@ class BookingMapper {
       'notes': booking.notes,
       'deposit_paid': booking.depositPaid,
       'is_deposit_paid': booking.isDepositPaid,
+      'needs_deposit': booking.needsDeposit,
+      'deposit_amount': booking.depositAmount,
       'instapay': booking.instapay,
       'vodafone_cash': booking.vodafoneCash,
       'vodafoneCash': booking.vodafoneCash,

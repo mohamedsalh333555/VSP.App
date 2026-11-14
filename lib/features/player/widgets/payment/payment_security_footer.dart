@@ -36,7 +36,7 @@ class PaymentSecurityFooter extends StatelessWidget {
           Text(
             isArabic ? 'جاري إصدار وتأكيد تذكرة الحجز... ' : 'Issuing your booking ticket... ',
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.white,
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
@@ -55,8 +55,8 @@ class PaymentSecurityFooter extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             isArabic
-                ? 'جميع المعاملات تشفير آمن 100% ومحمية بواسطة بوابة الدفع المعتمدة.'
-                : '100% secure encrypted payment via licensed Payment Gateway.',
+                ? 'تتم معالجة الدفع عبر بوابة Paymob. أدخل بيانات الدفع داخل صفحة الدفع الرسمية فقط.'
+                : 'Payments are processed through Paymob. Enter payment details only on the official checkout page.',
             textAlign: TextAlign.center,
             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
           ),

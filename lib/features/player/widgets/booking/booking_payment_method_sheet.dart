@@ -7,6 +7,7 @@ import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../screens/booking_success_screen.dart';
 import '../../screens/payment_gateway_screen.dart';
@@ -28,6 +29,18 @@ void showBookingPaymentMethodSheet({
 
   final config = Provider.of<RemoteConfigService>(context, listen: false);
   final isOnlineEnabled = config.isFeatureEnabled('online_payment_enabled', defaultValue: true);
+
+  // A stadium-required deposit is a booking condition, not an optional payment
+  // preference. Never expose cash as a fallback when online checkout is disabled.
+  if (requiresDeposit && depositAmount > 0 && !isOnlineEnabled) {
+    VSPFeedback.showError(
+      context,
+      isArabic
+          ? 'الملعب يشترط دفع عربون لتأكيد الحجز، لكن الدفع الإلكتروني غير متاح حالياً. حاول مرة أخرى لاحقاً.'
+          : 'This stadium requires an online deposit to confirm the booking, but online payment is currently unavailable. Please try again later.',
+    );
+    return;
+  }
 
   // Collective bookings are always fully paid online by the host.
   // Keep this guard here as a second line of defense if this sheet is reused.
@@ -81,9 +94,14 @@ void showBookingPaymentMethodSheet({
                 20,
                 MediaQuery.of(ctx).padding.bottom > 0 ? 8 : 20,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(ctx).size.height * 0.82,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                   Container(
                     width: 36,
                     height: 4,
@@ -130,12 +148,12 @@ void showBookingPaymentMethodSheet({
                       leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
                       title: Text(
                         isArabic ? 'دفع كامل المبلغ أونلاين' : 'Pay Full Amount Online',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
                         isArabic
-                            ? 'سداد ${totalPrice.toInt()} ج.م كاملاً بالفيزا/المحفظة (المتبقي بالملعب: 0 ج.م)'
-                            : 'Pay full ${totalPrice.toInt()} EGP online (Remaining at pitch: 0 EGP)',
+                            ? 'سداد ${VSPMoneyFormatter.amount(totalPrice)} ج.م كاملاً بالفيزا/المحفظة (المتبقي بالملعب: 0 ج.م)'
+                            : 'Pay full ${VSPMoneyFormatter.amount(totalPrice)} EGP online (Remaining at pitch: 0 EGP)',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                       onTap: isNavigating
@@ -166,8 +184,8 @@ void showBookingPaymentMethodSheet({
                       ),
                       subtitle: Text(
                         isArabic
-                            ? 'سداد ${depositAmount.toInt()} ج.م عربون لتأكيد الحجز + سداد المتبقي (${(totalPrice - depositAmount).toInt()} ج.م) كاش بالملعب'
-                            : 'Pay ${depositAmount.toInt()} EGP deposit now + pay remaining (${(totalPrice - depositAmount).toInt()} EGP) in cash',
+                            ? 'سداد ${VSPMoneyFormatter.amount(depositAmount)} ج.م عربون لتأكيد الحجز + سداد المتبقي (${VSPMoneyFormatter.amount(totalPrice - depositAmount)} ج.م) كاش بالملعب'
+                            : 'Pay ${VSPMoneyFormatter.amount(depositAmount)} EGP deposit now + pay remaining (${VSPMoneyFormatter.amount(totalPrice - depositAmount)} EGP) in cash',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                       onTap: isNavigating
@@ -199,7 +217,7 @@ void showBookingPaymentMethodSheet({
                         leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
                         title: Text(
                           isArabic ? 'دفع إلكتروني كامل' : 'Full Online Payment',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           isArabic ? 'سداد بالفيزا / فودافون كاش / إنستاباي' : 'Pay via Visa / Vodafone Cash / InstaPay',
@@ -236,7 +254,7 @@ void showBookingPaymentMethodSheet({
                       title: Text(
                         isArabic ? 'دفع نقدي بالكامل في الملعب' : 'Pay Full Cash at Pitch',
                         style: TextStyle(
-                          color: isCrossGovernorate ? VSPColors.textSecondary : Colors.white,
+                          color: isCrossGovernorate ? VSPColors.textSecondary : VSPColors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -280,22 +298,35 @@ void showBookingPaymentMethodSheet({
                                   nav.pushReplacement(
                                     MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)),
                                   );
-                                } else if (bookingProvider.errorMessage != null && sheetContext.mounted) {
+                                } else if (sheetContext.mounted) {
                                   HapticFeedback.vibrate();
                                   setSheetState(() => isNavigating = false);
-                                  VSPFeedback.showError(sheetContext, bookingProvider.errorMessage!);
+                                  VSPFeedback.showError(
+                                    sheetContext,
+                                    isArabic
+                                        ? 'تعذر تأكيد الحجز النقدي. لم يتم تأكيد الحجز؛ حاول مرة أخرى.'
+                                        : 'Could not confirm the cash booking. It has not been confirmed; please retry.',
+                                  );
                                 }
-                              } catch (e) {
+                              } catch (e, stackTrace) {
+                                debugPrint('Cash booking confirmation failed: $e\n$stackTrace');
                                 HapticFeedback.vibrate();
                                 if (sheetContext.mounted) {
                                   setSheetState(() => isNavigating = false);
-                                  VSPFeedback.showError(sheetContext, e.toString().replaceAll('Exception: ', ''));
+                                  VSPFeedback.showError(
+                                    sheetContext,
+                                    isArabic
+                                        ? 'تعذر تأكيد الحجز حالياً. حاول مرة أخرى.'
+                                        : 'Could not confirm the booking right now. Please try again.',
+                                  );
                                 }
                               }
                             },
                     ),
                   ],
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           );

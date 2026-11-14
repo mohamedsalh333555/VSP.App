@@ -1,0 +1,4233 @@
+{
+  "observed_at": "2026-11-11",
+  "scope": "Schema/function/policy metadata only; no customer rows",
+  "project": "vtwgqyxglevcsxwdmhop",
+  "tables": [
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "instance_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "aud",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "role",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "email",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "encrypted_password",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "email_confirmed_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "invited_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "confirmation_token",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "confirmation_sent_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "recovery_token",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "recovery_sent_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "email_change_token_new",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "email_change",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "email_change_sent_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "last_sign_in_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "raw_app_meta_data",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "raw_user_meta_data",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "is_super_admin",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "phone",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "NULL::character varying"
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "phone_confirmed_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "phone_change",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "''::character varying"
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "phone_change_token",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": "''::character varying"
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "phone_change_sent_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "confirmed_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "LEAST(email_confirmed_at, phone_confirmed_at)"
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "email_change_token_current",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": "''::character varying"
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "email_change_confirm_status",
+      "type": "smallint",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "banned_until",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "reauthentication_token",
+      "type": "character varying(255)",
+      "not_null": false,
+      "default_sql": "''::character varying"
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "reauthentication_sent_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "is_sso_user",
+      "type": "boolean",
+      "not_null": true,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "deleted_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "auth",
+      "table_name": "users",
+      "column_name": "is_anonymous",
+      "type": "boolean",
+      "not_null": true,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "booking_players",
+      "column_name": "booking_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "booking_players",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "booking_players",
+      "column_name": "joined_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "stadium_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "stadium_name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "stadium_image_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "owner_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "created_by_user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "start_time",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "end_time",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "booking_type",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "player_team_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "player_team_name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "player_team_logo_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "host_name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "host_avatar_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "opponent_team_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "opponent_team_name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "opponent_team_logo_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "is_private",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "true"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "rent_ball",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "total_price",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "currency",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'EGP'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "payment_method",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'cash'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "payment_transaction_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "status",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'confirmed'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "is_paid",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "payment_status",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "player_phone",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "notes",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "home_score",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "away_score",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "result_submitted_by_team_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "match_result_status",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'noResult'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "pending_outcome",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "final_outcome",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "requires_admin_intervention",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "current_players",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "1"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "max_players",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "10"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "deposit_receipt_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "receipt_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "elo_processed",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "deposit_paid",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "0.0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "is_deposit_paid",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "joined_user_ids",
+      "type": "uuid[]",
+      "not_null": false,
+      "default_sql": "'{}'::uuid[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "paymob_order_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "paymob_transaction_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "payment_gateway_logs",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": "'{}'::jsonb"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "is_verified_by_owner",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "absent_team_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "is_dispute_approved",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "dispute_photo_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "payment_hold_released",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "result_submitted_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "pending_user_ids",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "'{}'::text[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "platform_fee",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "0.0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "is_official_match",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "true"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "operational_date",
+      "type": "date",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "unread_counts",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": "'{}'::jsonb"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "last_message",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "last_message_time",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "deleted_for_users",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "'{}'::text[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "cancelled_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "refund_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "payment_reference",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "initial_players_count",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "1"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "total_field_capacity",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "10"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "challenge_status",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "paymob_txn_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "webhook_processed_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "webhook_verified",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "deposit_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "needs_deposit",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "reschedule_status",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'none'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "proposed_start_time",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "proposed_end_time",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "emergency_cancel_status",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'none'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "emergency_reason",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "emergency_downtime_hours",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "cancellation_reason",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "locked_until",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "matchup_mode",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "matchup_closed_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "refund_transaction_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "refunded_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "refund_payment_method",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "vsp_commission",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": "0.00"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "gateway_fee",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": "0.00"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "qr_hash",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "qr_expires_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "qr_scanned_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "payment_reconcile_state",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'unpaid'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "payment_source",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "idempotency_key",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "gross_amount_charged",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "manual_player_count",
+      "type": "integer",
+      "not_null": true,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "collective_invite_token",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "collective_invite_code",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "bookings",
+      "column_name": "collective_invite_active",
+      "type": "boolean",
+      "not_null": true,
+      "default_sql": "true"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "championship_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "team_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "captain_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "captain_snapshot",
+      "type": "jsonb",
+      "not_null": true,
+      "default_sql": "'{}'::jsonb"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "registration_status",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "payment_status",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "base_amount",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": "0.00"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "gross_amount",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": "0.00"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "currency",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'EGP'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "notes",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championship_registrations",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "name",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "type",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "sport_type",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'Football'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "logo_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "start_date",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "end_date",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "entry_fee",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "grand_prize",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "max_teams",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "16"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "owner_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "governorate",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "rules",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "payment_methods",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "'{cash}'::text[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "max_players_per_team",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "11"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "min_players_per_team",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "5"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "winning_points",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "3"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "draw_points",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "1"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "loss_points",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "match_duration",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "30"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "is_back_and_forth",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "trophy_medals",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "true"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "red_card_suspension",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "true"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "fair_play_scoring",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "status",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'open'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "champion_team_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "champion_team_name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "paid_teams",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "'{}'::uuid[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "joined_teams",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "'{}'::text[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "is_approved",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "winner_team_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "winner_team_name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "number_of_groups",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "1"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "qualifying_per_group",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "2"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "is_two_legs",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "creation_payment_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "creation_fee_paid",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "champion_user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "settings",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": "'{}'::jsonb"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "prize_pool",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": "0.00"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "prize_delivered",
+      "type": "boolean",
+      "not_null": true,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "prize_delivered_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "prize_delivered_by",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "prize_delivery_notes",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "template_type",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "registration_locked_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "match_interval_days",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "7"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "paid_by_creator_count",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "1"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "stadium_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "registration_closes_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "currency",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'EGP'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "rejection_reason",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "rejected_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "rejected_by",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "championships",
+      "column_name": "owner_approval_home_seen_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "booking_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "sender_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "sender_name",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "text",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "is_read",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "is_edited",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "deleted_for_users",
+      "type": "uuid[]",
+      "not_null": false,
+      "default_sql": "'{}'::uuid[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "chat_messages",
+      "column_name": "conversation_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "title",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "body",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "type",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "is_read",
+      "type": "boolean",
+      "not_null": true,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "booking_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "metadata",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "notifications",
+      "column_name": "message",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "owner_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "checkout_email",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "status",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "plan_code",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "billing_period",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "vsp_fee_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "paymob_fee_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "gross_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "paid_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "payment_source",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'app'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "paymob_order_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "paymob_transaction_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "checkout_phone",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "paymob_intention_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "claim_expires_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "checkout_name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_subscription_orders",
+      "column_name": "duration_days",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_trial_ledger",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_trial_ledger",
+      "column_name": "email",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_trial_ledger",
+      "column_name": "phone",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_trial_ledger",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_trial_ledger",
+      "column_name": "first_trial_started_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_trial_ledger",
+      "column_name": "original_trial_ends_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "owner_trial_ledger",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "reporter_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "target_id",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "target_type",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "reason",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "details",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "status",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "context_type",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "context_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "booking_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reports",
+      "column_name": "conversation_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reviews",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reviews",
+      "column_name": "stadium_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reviews",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reviews",
+      "column_name": "rating",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reviews",
+      "column_name": "review_text",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reviews",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reviews",
+      "column_name": "user_name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "reviews",
+      "column_name": "user_image_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "owner_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "name",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "location",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "governorate",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "price_per_hour",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "base_price",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "seats_capacity",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "image_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "images",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "'{}'::text[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "rating",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "4.5"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "reviews_count",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "notes",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "is_verified",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "true"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "is_featured",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "is_blocked",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "opening_time",
+      "type": "time without time zone",
+      "not_null": false,
+      "default_sql": "'08:00:00'::time without time zone"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "closing_time",
+      "type": "time without time zone",
+      "not_null": false,
+      "default_sql": "'00:00:00'::time without time zone"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "is_split_shift",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "break_start_time",
+      "type": "time without time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "break_end_time",
+      "type": "time without time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "lat",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "lng",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "needs_deposit",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "deposit_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "0.0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "city",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "description",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "features",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": "'{}'::jsonb"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "players_per_team",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "5"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "total_field_capacity",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "10"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "is_deleted_by_owner",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "maintenance_until",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "maintenance_reason",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "stadiums",
+      "column_name": "last_emergency_closure_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "table_name",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "record_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "action",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "changed_by",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": "auth.uid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "changed_by_role",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "old_data",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "new_data",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "changed_fields",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "system_audit_logs",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "championship_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "payment_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "paymob_transaction_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "amount",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "status",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "retry_count",
+      "type": "integer",
+      "not_null": true,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "error_message",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "currency",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'EGP'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "failure_reason",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "processed_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "processing_started_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_cancellation_refund_queue",
+      "column_name": "locked_until",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "championship_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "team_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "amount",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": "30"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "payment_status",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "order_reference",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "paymob_transaction_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "paid_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "paid_teams_count",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "1"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "gross_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_league_payments",
+      "column_name": "paymob_order_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_members",
+      "column_name": "team_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_members",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "team_members",
+      "column_name": "joined_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "name",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "captain_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "captain_phone",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "active_invite_code",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "invite_code_expires_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "logo_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "points",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "wins",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "draws",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "losses",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "matches_played",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "current_winning_streak",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "championships_won",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "last_reset_year",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "2026"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "primary_color",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'#FFFFFF'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "secondary_color",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'#000000'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "captain_image_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "''::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "beaten_opponents",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "'{}'::text[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "played_opponents",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "'{}'::text[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "unlocked_badges",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "'{explorer}'::text[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "governorate",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'Cairo'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "sport_type",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'Football'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "price_per_person",
+      "type": "double precision",
+      "not_null": false,
+      "default_sql": "50.0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "date",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'Upcoming'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "stadium",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'TBD'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "captain_name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'Captain'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "is_official",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "attendance_score",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "100.0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "verified_badge",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "true"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "has_1v1_champion",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "teams",
+      "column_name": "bio",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "order_reference",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "championship_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "team_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "captain_user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "amount",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "payment_status",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "player_ids",
+      "type": "uuid[]",
+      "not_null": false,
+      "default_sql": "ARRAY[]::uuid[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "guest_names",
+      "type": "text[]",
+      "not_null": false,
+      "default_sql": "ARRAY[]::text[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "paymob_transaction_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "registration_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "idempotency_key",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "base_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "platform_fee_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "0.00"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "gateway_fee_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "0.00"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "gross_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "currency",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'EGP'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "fee_policy_version",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "tournament_orders",
+      "column_name": "paymob_order_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_blocks",
+      "column_name": "blocker_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_blocks",
+      "column_name": "blocked_user_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_blocks",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_device_tokens",
+      "column_name": "token",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_device_tokens",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_device_tokens",
+      "column_name": "platform",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'android'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_device_tokens",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "user_device_tokens",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "role",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'player'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "is_blocked",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "email",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "name",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "phone",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "profile_image_url",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "position",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "governorate",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "is_registration_complete",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "is_email_verified",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "has_stadium",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "is_identity_verified",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "favorite_stadiums",
+      "type": "uuid[]",
+      "not_null": false,
+      "default_sql": "'{}'::uuid[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "verification_status",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "last_warning",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "date_of_birth",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "p2p_instapay",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "p2p_vodafone",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "p2p_bank",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "additional_data",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": "'{}'::jsonb"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "cash_booking_banned",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "completed_online_bookings_count",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "no_show_count",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "subscription_plan",
+      "type": "text",
+      "not_null": false,
+      "default_sql": "'free_trial'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "trial_ends_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "(timezone('utc'::text, now()) + '365 days'::interval)"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "subscription_expires_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "total_platform_fees",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "fcm_token",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "last_seen",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "terms_accepted_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "is_onboarding_confirmed",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "accumulated_cash_debt",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "0.00"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "debt_limit",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": "500.00"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "users",
+      "column_name": "is_debt_blocked",
+      "type": "boolean",
+      "not_null": false,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "tournament_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "order_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "paymob_transaction_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "amount",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "currency",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'EGP'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "status",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "retry_count",
+      "type": "integer",
+      "not_null": true,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "failure_reason",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "processed_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "processing_started_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_cancellation_refund_queue",
+      "column_name": "locked_until",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "tournament_id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "amount",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "order_reference",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "payment_status",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'pending'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "paymob_transaction_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "refund_retry_count",
+      "type": "integer",
+      "not_null": false,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "refund_last_attempt_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "refund_next_retry_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "expires_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "(timezone('utc'::text, now()) + '00:30:00'::interval)"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "gross_amount",
+      "type": "numeric",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournament_orders",
+      "column_name": "paymob_order_id",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "name",
+      "type": "text",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "target_player_count",
+      "type": "integer",
+      "not_null": true,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "status",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'draft'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "created_by",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "published_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "scheduled_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "champion_user_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "entry_fee",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "prize_pool",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "prize_delivered",
+      "type": "boolean",
+      "not_null": true,
+      "default_sql": "false"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "prize_delivered_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "prize_delivered_by",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "prize_delivery_notes",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "timezone('utc'::text, now())"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "governorate",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'Cairo'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "prize_delivery_details",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "prize_delivery_scheduled_at",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "prize_amount",
+      "type": "numeric",
+      "not_null": true,
+      "default_sql": "0"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "vsp_1v1_tournaments",
+      "column_name": "champion_player_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "id",
+      "type": "uuid",
+      "not_null": true,
+      "default_sql": "gen_random_uuid()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "type",
+      "type": "text",
+      "not_null": true,
+      "default_sql": "'direct'::text"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "booking_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "participant_ids",
+      "type": "uuid[]",
+      "not_null": true,
+      "default_sql": "'{}'::uuid[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "title",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "last_message",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "last_message_time",
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "unread_counts",
+      "type": "jsonb",
+      "not_null": false,
+      "default_sql": "'{}'::jsonb"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "deleted_for_users",
+      "type": "uuid[]",
+      "not_null": false,
+      "default_sql": "'{}'::uuid[]"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "created_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "updated_at",
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "default_sql": "now()"
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "context_type",
+      "type": "text",
+      "not_null": false,
+      "default_sql": null
+    },
+    {
+      "schema_name": "public",
+      "table_name": "conversations",
+      "column_name": "context_id",
+      "type": "uuid",
+      "not_null": false,
+      "default_sql": null
+    }
+  ],
+  "functions": [
+    {
+      "proname": "uid",
+      "definition": "CREATE OR REPLACE FUNCTION auth.uid()\n RETURNS uuid\n LANGUAGE sql\n STABLE\nAS $function$\n  select \n  coalesce(\n    nullif(current_setting('request.jwt.claim.sub', true), ''),\n    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')\n  )::uuid\n$function$\n"
+    },
+    {
+      "proname": "role",
+      "definition": "CREATE OR REPLACE FUNCTION auth.role()\n RETURNS text\n LANGUAGE sql\n STABLE\nAS $function$\n  select \n  coalesce(\n    nullif(current_setting('request.jwt.claim.role', true), ''),\n    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')\n  )::text\n$function$\n"
+    },
+    {
+      "proname": "jwt",
+      "definition": "CREATE OR REPLACE FUNCTION auth.jwt()\n RETURNS jsonb\n LANGUAGE sql\n STABLE\nAS $function$\n  select \n    coalesce(\n        nullif(current_setting('request.jwt.claim', true), ''),\n        nullif(current_setting('request.jwt.claims', true), '')\n    )::jsonb\n$function$\n"
+    },
+    {
+      "proname": "is_admin_or_cofounder",
+      "definition": "CREATE OR REPLACE FUNCTION public.is_admin_or_cofounder(p_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$ select exists(select 1 from public.users where id=p_user_id and coalesce(is_blocked,false)=false and role in ('admin','co_founder','cofounder','super_admin')); $function$\n"
+    },
+    {
+      "proname": "set_user_role_on_signup",
+      "definition": "CREATE OR REPLACE FUNCTION public.set_user_role_on_signup(p_role text, p_user_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_uid uuid := coalesce(p_user_id, auth.uid());\n  v_user record;\n  v_ledger record;\nBEGIN\n  IF v_uid IS NULL THEN\n    RETURN jsonb_build_object('success', false, 'error', 'NO_USER_ID');\n  END IF;\n\n  IF auth.role() <> 'service_role' THEN\n    IF auth.uid() IS NULL THEN\n      RETURN jsonb_build_object('success', false, 'error', 'AUTHENTICATION_REQUIRED');\n    END IF;\n    IF v_uid IS DISTINCT FROM auth.uid()\n       AND NOT public.is_admin_or_cofounder(auth.uid()) THEN\n      RETURN jsonb_build_object('success', false, 'error', 'UNAUTHORIZED');\n    END IF;\n  END IF;\n\n  SELECT id, email, phone, role, is_registration_complete\n  INTO v_user\n  FROM public.users\n  WHERE id = v_uid;\n\n  IF NOT FOUND THEN\n    RETURN jsonb_build_object('success', false, 'error', 'USER_NOT_FOUND');\n  END IF;\n\n  IF coalesce(v_user.is_registration_complete, false) THEN\n    RETURN jsonb_build_object('success', false, 'error', 'REGISTRATION_ALREADY_COMPLETE');\n  END IF;\n\n  IF p_role NOT IN ('player', 'owner') THEN\n    RETURN jsonb_build_object('success', false, 'error', 'INVALID_ROLE');\n  END IF;\n\n  PERFORM set_config('vsp.system_override', 'true', true);\n\n  IF p_role = 'owner' THEN\n    -- Existing identity: preserve its original one-time trial entitlement.\n    SELECT *\n    INTO v_ledger\n    FROM public.owner_trial_ledger\n    WHERE lower(trim(email)) = lower(trim(v_user.email))\n       OR (phone IS NOT NULL AND v_user.phone IS NOT NULL AND phone = v_user.phone)\n    LIMIT 1;\n\n    IF FOUND THEN\n      IF v_ledger.original_trial_ends_at > now() THEN\n        UPDATE public.users\n        SET role = 'owner',\n            subscription_plan = 'free_trial',\n            trial_ends_at = v_ledger.original_trial_ends_at,\n            subscription_expires_at = NULL\n        WHERE id = v_uid AND coalesce(is_registration_complete, false) = false;\n      ELSE\n        UPDATE public.users\n        SET role = 'owner',\n            subscription_plan = 'expired',\n            trial_ends_at = v_ledger.original_trial_ends_at,\n            subscription_expires_at = NULL\n        WHERE id = v_uid AND coalesce(is_registration_complete, false) = false;\n      END IF;\n    ELSE\n      -- New owner: trial is available but is NOT started until the explicit CTA.\n      UPDATE public.users\n      SET role = 'owner',\n          subscription_plan = 'expired',\n          trial_ends_at = NULL,\n          subscription_expires_at = NULL\n      WHERE id = v_uid AND coalesce(is_registration_complete, false) = false;\n    END IF;\n  ELSE\n    UPDATE public.users\n    SET role = 'player'\n    WHERE id = v_uid AND coalesce(is_registration_complete, false) = false;\n  END IF;\n\n  RETURN jsonb_build_object(\n    'success', true,\n    'role', p_role,\n    'trial_ends_at', (\n      SELECT trial_ends_at FROM public.users WHERE id = v_uid\n    )\n  );\nEND;\n$function$\n"
+    },
+    {
+      "proname": "delete_user_permanently",
+      "definition": "CREATE OR REPLACE FUNCTION public.delete_user_permanently(p_user_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_is_sr boolean := (coalesce(auth.jwt()->>'role','')='service_role');\n  v_caller_id uuid := auth.uid();\n  v_caller_role text;\n  v_target record;\n  v_team record;\n  v_new_cap record;\n  v_cnt int;\n  v_auth_cnt int := 0;\n  v_now timestamptz := timezone('utc',now());\nbegin\n  if not v_is_sr then\n    if v_caller_id is null then return jsonb_build_object('success',false,'error','AUTHENTICATION_REQUIRED'); end if;\n    if p_user_id is distinct from v_caller_id then\n      select role into v_caller_role from public.users where id=v_caller_id;\n      if coalesce(v_caller_role,'') not in ('admin','co_founder','cofounder','super_admin') then return jsonb_build_object('success',false,'error','UNAUTHORIZED'); end if;\n    end if;\n  end if;\n\n  select * into v_target from public.users where id=p_user_id for update;\n  if not found then return jsonb_build_object('success',false,'error','USER_NOT_FOUND'); end if;\n  if v_target.role in ('co_founder','cofounder','super_admin') then return jsonb_build_object('success',false,'error','PROTECTED_ACCOUNT'); end if;\n  if v_caller_id=p_user_id and coalesce(v_caller_role,'') in ('admin','co_founder','cofounder') then return jsonb_build_object('success',false,'error','CANNOT_DELETE_SELF'); end if;\n  if coalesce(v_target.accumulated_cash_debt,0)>0 then return jsonb_build_object('success',false,'error','OUTSTANDING_DEBT'); end if;\n\n  select count(*) into v_cnt\n  from public.bookings b\n  where (b.created_by_user_id=p_user_id or b.user_id=p_user_id\n    or (b.joined_user_ids is not null and p_user_id=any(b.joined_user_ids))\n    or exists(select 1 from public.booking_players bp where bp.booking_id=b.id and bp.user_id=p_user_id))\n    and b.status in ('confirmed','pending') and b.start_time>=timezone('utc',now());\n  if v_cnt>0 then return jsonb_build_object('success',false,'error','ACTIVE_BOOKINGS'); end if;\n\n  select count(*) into v_cnt\n  from public.championship_registrations cr\n  join public.championships c on c.id=cr.championship_id\n  where c.status in ('open','ongoing')\n    and cr.captain_id=p_user_id\n    and cr.registration_status in ('confirmed','approved','pending');\n  if v_cnt>0 then return jsonb_build_object('success',false,'error','ACTIVE_CHAMPIONSHIPS'); end if;\n\n  select count(*) into v_cnt\n  from public.vsp_1v1_tournament_orders o\n  join public.vsp_1v1_tournaments t on t.id=o.tournament_id\n  where o.user_id=p_user_id\n    and ((o.payment_status in ('pending','refund_requested','refund_failed_manual_review'))\n      or (o.payment_status='paid' and t.status in ('draft','registration_open','in_progress')));\n  if v_cnt>0 then return jsonb_build_object('success',false,'error','ACTIVE_1V1_FINANCIAL_OBLIGATION'); end if;\n\n  select count(*) into v_cnt\n  from public.vsp_1v1_cancellation_refund_queue q\n  where q.user_id=p_user_id and q.status not in ('refunded','failed_over_capacity','failed_manual_review');\n  if v_cnt>0 then return jsonb_build_object('success',false,'error','PENDING_REFUND'); end if;\n\n  select count(*) into v_cnt\n  from public.tournament_orders o\n  join public.championships c on c.id=o.championship_id\n  where o.captain_user_id=p_user_id\n    and (o.payment_status in ('pending','refund_pending','refund_failed_manual_review')\n      or (o.payment_status='paid' and c.status in ('open','ongoing')));\n  if v_cnt>0 then return jsonb_build_object('success',false,'error','ACTIVE_TOURNAMENT_PAYMENT'); end if;\n\n  select count(*) into v_cnt\n  from public.team_league_payments p\n  join public.championships c on c.id=p.championship_id\n  where p.user_id=p_user_id and p.payment_status='pending';\n  if v_cnt>0 then return jsonb_build_object('success',false,'error','ACTIVE_LEAGUE_PAYMENT'); end if;\n  select count(*) into v_cnt\n  from public.team_league_payments p\n  join public.championships c on c.id=p.championship_id\n  where p.user_id=p_user_id and p.payment_status='paid' and c.status in ('open','ongoing');\n  if v_cnt>0 then return jsonb_build_object('success',false,'error','ACTIVE_LEAGUE_PAYMENT'); end if;\n\n  select count(*) into v_cnt from public.owner_subscription_orders where owner_id=p_user_id and status='pending';\n  if v_cnt>0 then return jsonb_build_object('success',false,'error','PENDING_SUBSCRIPTION_PAYMENT'); end if;\n\n  select count(*) into v_cnt\n  from public.team_league_cancellation_refund_queue q\n  where q.user_id=p_user_id and q.status not in ('refunded','failed_over_capacity','failed_manual_review');\n  if v_cnt>0 then return jsonb_build_object('success',false,'error','PENDING_REFUND'); end if;\n\n  if coalesce(v_target.role,'') in ('owner','pitch_owner','stadium_owner') then\n    select count(*) into v_cnt from public.stadiums where owner_id=p_user_id and is_active=true;\n    if v_cnt>0 then return jsonb_build_object('success',false,'error','ACTIVE_OWNER_STADIUMS'); end if;\n  end if;\n\n  for v_team in select id from public.teams where captain_id=p_user_id for update loop\n    select tm.user_id,u.name,u.phone,u.profile_image_url into v_new_cap\n    from public.team_members tm join public.users u on u.id=tm.user_id\n    where tm.team_id=v_team.id and tm.user_id<>p_user_id order by tm.joined_at asc limit 1;\n    if found then\n      update public.teams set captain_id=v_new_cap.user_id,captain_name=coalesce(v_new_cap.name,'كابتن الفريق'),captain_phone=coalesce(v_new_cap.phone,''),captain_image_url=v_new_cap.profile_image_url,updated_at=v_now where id=v_team.id;\n      delete from public.team_members where team_id=v_team.id and user_id=p_user_id;\n    else\n      delete from public.teams where id=v_team.id;\n    end if;\n  end loop;\n\n  delete from public.team_members where user_id=p_user_id;\n  delete from public.notifications where user_id=p_user_id;\n  delete from public.reviews where user_id=p_user_id;\n  delete from public.reports where reporter_id=p_user_id or (target_type='user' and target_id=p_user_id::text);\n  delete from public.chat_messages where sender_id=p_user_id;\n  delete from public.user_device_tokens where user_id=p_user_id;\n  delete from public.user_blocks where blocker_id=p_user_id or blocked_user_id=p_user_id;\n\n  if v_caller_id is not null and v_caller_id<>p_user_id then\n    insert into public.system_audit_logs(action,table_name,record_id,old_data,changed_by,changed_by_role,created_at)\n    values('admin_permanent_delete_user','users',p_user_id,jsonb_build_object('email',v_target.email,'role',v_target.role,'name',v_target.name),v_caller_id,v_caller_role,v_now);\n  end if;\n\n  delete from auth.users where id=p_user_id;\n  get diagnostics v_auth_cnt=row_count;\n  delete from public.users where id=p_user_id;\n  return jsonb_build_object('success',true,'message','تم حذف الحساب نهائياً.','auth_user_deleted',(v_auth_cnt>0),'server_time',v_now);\nend;\n$function$\n"
+    },
+    {
+      "proname": "trg_fn_protect_user_sensitive_fields",
+      "definition": "CREATE OR REPLACE FUNCTION public.trg_fn_protect_user_sensitive_fields()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n    v_is_system_override boolean := (current_setting('vsp.system_override', true) = 'true');\n    v_jwt_role           text := COALESCE(auth.jwt() ->> 'role', auth.role(), '');\n    v_caller_id          uuid := auth.uid();\n    v_is_admin           boolean := false;\nBEGIN\n    IF v_is_system_override THEN\n        RETURN NEW;\n    END IF;\n\n    IF v_jwt_role = 'service_role' THEN\n        RETURN NEW;\n    END IF;\n\n    IF v_caller_id IS NULL AND v_jwt_role = '' AND session_user IN ('postgres', 'supabase_admin') THEN\n        RETURN NEW;\n    END IF;\n\n    IF v_caller_id IS NOT NULL THEN\n        SELECT (role IN ('admin', 'co_founder', 'cofounder', 'super_admin'))\n        INTO v_is_admin\n        FROM public.users\n        WHERE id = v_caller_id;\n    END IF;\n\n    IF COALESCE(v_is_admin, false) THEN \n        RETURN NEW; \n    END IF;\n\n    IF OLD.role IS DISTINCT FROM NEW.role\n       OR OLD.subscription_plan IS DISTINCT FROM NEW.subscription_plan\n       OR OLD.subscription_expires_at IS DISTINCT FROM NEW.subscription_expires_at\n       OR OLD.trial_ends_at IS DISTINCT FROM NEW.trial_ends_at\n       OR OLD.total_platform_fees IS DISTINCT FROM NEW.total_platform_fees\n       OR OLD.cash_booking_banned IS DISTINCT FROM NEW.cash_booking_banned\n       OR OLD.no_show_count IS DISTINCT FROM NEW.no_show_count\n       OR OLD.is_identity_verified IS DISTINCT FROM NEW.is_identity_verified\n       OR OLD.is_email_verified IS DISTINCT FROM NEW.is_email_verified\n       OR OLD.verification_status IS DISTINCT FROM NEW.verification_status\n       OR OLD.is_blocked IS DISTINCT FROM NEW.is_blocked\n       OR OLD.has_stadium IS DISTINCT FROM NEW.has_stadium\n       OR OLD.is_registration_complete IS DISTINCT FROM NEW.is_registration_complete\n       OR OLD.is_onboarding_confirmed IS DISTINCT FROM NEW.is_onboarding_confirmed\n       OR OLD.accumulated_cash_debt IS DISTINCT FROM NEW.accumulated_cash_debt\n       OR OLD.debt_limit IS DISTINCT FROM NEW.debt_limit\n       OR OLD.is_debt_blocked IS DISTINCT FROM NEW.is_debt_blocked THEN\n        RAISE EXCEPTION 'PERMISSION_DENIED: Account security, financial state, and lifecycle fields are server-authoritative.'\n          USING errcode = '42501', detail = 'UNAUTHORIZED_USER_SENSITIVE_UPDATE';\n    END IF;\n\n    RETURN NEW;\nEND;\n$function$\n"
+    },
+    {
+      "proname": "vsp_guard_sensitive_owner_profile_changes",
+      "definition": "CREATE OR REPLACE FUNCTION public.vsp_guard_sensitive_owner_profile_changes()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_caller uuid := auth.uid();\n  v_recent_password_auth boolean := false;\nbegin\n  if TG_OP <> 'UPDATE' then\n    return NEW;\n  end if;\n\n  if v_caller is null or v_caller <> OLD.id then\n    return NEW;\n  end if;\n\n  if (NEW.phone is distinct from OLD.phone)\n     or (NEW.p2p_instapay is distinct from OLD.p2p_instapay)\n     or (NEW.p2p_vodafone is distinct from OLD.p2p_vodafone)\n     or (NEW.p2p_bank is distinct from OLD.p2p_bank) then\n\n    select exists (\n      select 1\n      from jsonb_array_elements(\n        coalesce(auth.jwt()->'amr', '[]'::jsonb)\n      ) as amr\n      where amr->>'method' = 'password'\n        and (amr->>'timestamp') ~ '^[0-9]+$'\n        and to_timestamp((amr->>'timestamp')::double precision) >= now() - interval '10 minutes'\n    )\n    into v_recent_password_auth;\n\n    if not v_recent_password_auth then\n      raise exception 'recent_password_verification_required';\n    end if;\n  end if;\n\n  return NEW;\nend;\n$function$\n"
+    }
+  ],
+  "users_policies": [
+    {
+      "policyname": "users_admin_manage_all",
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "qual": "is_admin_or_cofounder(( SELECT ( SELECT auth.uid() AS uid) AS uid))",
+      "with_check": "is_admin_or_cofounder(( SELECT ( SELECT auth.uid() AS uid) AS uid))"
+    },
+    {
+      "policyname": "users_delete_policy",
+      "cmd": "DELETE",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "qual": "(( SELECT ( SELECT ( SELECT auth.uid() AS uid) AS uid) AS uid) = id)",
+      "with_check": null
+    },
+    {
+      "policyname": "users_insert_policy",
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "qual": null,
+      "with_check": "(id = auth.uid())"
+    },
+    {
+      "policyname": "users_select_policy",
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "qual": "((id = auth.uid()) OR is_admin_or_cofounder(auth.uid()))",
+      "with_check": null
+    },
+    {
+      "policyname": "users_update_policy",
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "qual": "(( SELECT ( SELECT ( SELECT auth.uid() AS uid) AS uid) AS uid) = id)",
+      "with_check": "(( SELECT ( SELECT ( SELECT auth.uid() AS uid) AS uid) AS uid) = id)"
+    }
+  ],
+  "limitations": [
+    "Not a full migration replay",
+    "Only ID keys and users->auth FK in executable fixture",
+    "Unrelated FKs/triggers omitted",
+    "JWT claims injected for SQL authorization tests; no real GoTrue session proof"
+  ]
+}

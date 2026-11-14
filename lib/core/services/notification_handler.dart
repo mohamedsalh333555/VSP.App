@@ -3,6 +3,7 @@ import '../repositories/booking_repository.dart';
 import '../repositories/notification_repository.dart';
 import 'logger_service.dart';
 import 'no_show_dispute_service.dart';
+import '../utils/vsp_money_formatter.dart';
 
 /// Centralized factory for creating and sending notifications based on the VSP Notification Matrix.
 class NotificationHandler {
@@ -11,6 +12,22 @@ class NotificationHandler {
   static set notificationRepo(NotificationRepository repo) {
     _notificationRepo = repo;
     NoShowDisputeService.notificationRepo = repo;
+  }
+
+  static Map<String, dynamic> _localizedCopy({
+    required String titleAr,
+    required String titleEn,
+    required String bodyAr,
+    required String bodyEn,
+    Map<String, dynamic>? metadata,
+  }) {
+    return {
+      ...?metadata,
+      'title_ar': titleAr,
+      'title_en': titleEn,
+      'body_ar': bodyAr,
+      'body_en': bodyEn,
+    };
   }
 
   // --------------------------------------------------------------------------
@@ -31,6 +48,12 @@ class NotificationHandler {
       type: 'booking_confirmed',
       bookingId: bookingId,
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'تم تأكيد الحجز',
+        titleEn: 'Booking confirmed',
+        bodyAr: 'تم حجز $stadiumName في $timeSlot.',
+        bodyEn: 'You booked $stadiumName at $timeSlot.',
+      ),
     );
     await _notificationRepo.sendNotification(userId, notif);
   }
@@ -50,6 +73,12 @@ class NotificationHandler {
       type: 'booking_new',
       bookingId: bookingId,
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'حجز جديد',
+        titleEn: 'New booking',
+        bodyAr: 'قام $playerName بحجز $stadiumName في $timeSlot.',
+        bodyEn: '$playerName just booked $stadiumName at $timeSlot.',
+      ),
     );
     await _notificationRepo.sendNotification(ownerId, notif);
   }
@@ -69,6 +98,12 @@ class NotificationHandler {
       type: 'booking_cancelled',
       bookingId: bookingId,
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'تم إلغاء الحجز',
+        titleEn: 'Booking cancelled',
+        bodyAr: 'قام $playerName بإلغاء حجزه في $stadiumName عند $timeSlot.',
+        bodyEn: '$playerName cancelled their booking for $stadiumName at $timeSlot.',
+      ),
     );
     await _notificationRepo.sendNotification(ownerId, notif);
   }
@@ -85,6 +120,12 @@ class NotificationHandler {
       body: 'Your booking for $stadiumName at $timeSlot was cancelled by the stadium owner.',
       type: 'booking_cancelled',
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'تم إلغاء الحجز',
+        titleEn: 'Booking cancelled',
+        bodyAr: 'ألغى مسؤول الملعب حجزك في $stadiumName عند $timeSlot.',
+        bodyEn: 'Your booking for $stadiumName at $timeSlot was cancelled by the stadium owner.',
+      ),
     );
     await _notificationRepo.sendNotification(userId, notif);
   }
@@ -107,6 +148,12 @@ class NotificationHandler {
       type: 'public_match_joined',
       bookingId: bookingId,
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'انضم لاعب جديد',
+        titleEn: 'A player joined',
+        bodyAr: 'انضم $playerName إلى مباراتك في $stadiumName.',
+        bodyEn: '$playerName joined your match at $stadiumName.',
+      ),
     );
     await _notificationRepo.sendNotification(hostId, notif);
   }
@@ -125,6 +172,12 @@ class NotificationHandler {
         type: 'match_full',
         bookingId: bookingId,
         createdAt: DateTime.now(),
+        metadata: _localizedCopy(
+          titleAr: 'اكتمل عدد اللاعبين',
+          titleEn: 'Match is full',
+          bodyAr: 'اكتمل عدد لاعبي المباراة في $stadiumName وأصبحت جاهزة للعب.',
+          bodyEn: 'The match at $stadiumName is fully booked and ready to play!',
+        ),
       );
       await _notificationRepo.sendNotification(uid, notif);
     }
@@ -141,6 +194,35 @@ class NotificationHandler {
       body: 'Your request to join the match at $stadiumName was declined.',
       type: 'join_request_declined',
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'تم رفض طلب الانضمام',
+        titleEn: 'Join request declined',
+        bodyAr: 'تم رفض طلبك للانضمام إلى المباراة في $stadiumName.',
+        bodyEn: 'Your request to join the match at $stadiumName was declined.',
+      ),
+    );
+    await _notificationRepo.sendNotification(playerId, notif);
+  }
+
+  /// Notify a player that the host accepted their open-match join request.
+  static Future<void> notifyJoinRequestAccepted({
+    required String playerId,
+    required String stadiumName,
+    required String bookingId,
+  }) async {
+    final notif = AppNotification(
+      id: '',
+      title: 'Join Request Accepted',
+      body: 'Your request to join the match at $stadiumName was accepted.',
+      type: 'join_request_accepted',
+      bookingId: bookingId,
+      createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'تم قبول طلب الانضمام',
+        titleEn: 'Join request accepted',
+        bodyAr: 'تم قبول طلبك للانضمام إلى المباراة في $stadiumName.',
+        bodyEn: 'Your request to join the match at $stadiumName was accepted.',
+      ),
     );
     await _notificationRepo.sendNotification(playerId, notif);
   }
@@ -163,6 +245,12 @@ class NotificationHandler {
       type: 'challenge_confirmed',
       bookingId: bookingId,
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'مباراة تحدي جديدة! ⚔️',
+        titleEn: 'New challenge match! ⚔️',
+        bodyAr: 'تم تثبيت مباراة تحدي بين فريقك وفريق $challengerTeamName في ملعب $stadiumName!',
+        bodyEn: 'A challenge match between your team and $challengerTeamName is confirmed at $stadiumName!',
+      ),
     );
     await _notificationRepo.sendNotification(opponentCaptainId, notif);
   }
@@ -182,6 +270,12 @@ class NotificationHandler {
       body: 'Congratulations! Your stadium "$stadiumName" has been verified and is now live.',
       type: 'stadium_approved',
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'تم اعتماد الملعب',
+        titleEn: 'Stadium approved',
+        bodyAr: 'مبروك! تم التحقق من ملعبك وأصبح متاحاً للاعبين.',
+        bodyEn: 'Congratulations! Your stadium "$stadiumName" has been verified and is now live.',
+      ),
     );
     await _notificationRepo.sendNotification(ownerId, notif);
   }
@@ -196,6 +290,12 @@ class NotificationHandler {
       body: 'Your documents need attention. Please re-upload them to complete your verification.',
       type: 'stadium_verification_needed',
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'تحديث مستندات التحقق',
+        titleEn: 'Verification documents need attention',
+        bodyAr: 'تحتاج مستنداتك إلى مراجعة. أعد رفعها لاستكمال التحقق.',
+        bodyEn: 'Your documents need attention. Please re-upload them to complete your verification.',
+      ),
     );
     await _notificationRepo.sendNotification(ownerId, notif);
   }
@@ -215,13 +315,19 @@ class NotificationHandler {
         type: 'chat',
         bookingId: bookingId,
         createdAt: DateTime.now(),
-        metadata: {
+        metadata: _localizedCopy(
+          titleAr: 'رسالة جديدة من $senderName',
+          titleEn: 'New message from $senderName',
+          bodyAr: messageText,
+          bodyEn: messageText,
+          metadata: {
           'priority': 'high',
           'content_available': true,
           'sound': 'default',
           'android_channel_id': 'vsp_p2p_alerts',
           'vibration_pattern': [0, 500, 200, 500],
-        },
+          },
+        ),
       );
       await _notificationRepo.sendNotification(uid, notif);
     }
@@ -240,12 +346,18 @@ class NotificationHandler {
       body: 'انضم فريق "$teamName" إلى بطولة "$tournamentName".',
       type: 'tournament_joined',
       createdAt: DateTime.now(),
-      metadata: {
+      metadata: _localizedCopy(
+        titleAr: 'انضم فريق جديد إلى بطولتك',
+        titleEn: 'A new team joined your tournament',
+        bodyAr: 'انضم فريق "$teamName" إلى بطولة "$tournamentName".',
+        bodyEn: 'Team "$teamName" joined "$tournamentName".',
+        metadata: {
         'championship_id': championshipId,
         'team_name': teamName,
         'tournament_name': tournamentName,
         'sound': 'default',
-      },
+        },
+      ),
     );
     await _notificationRepo.sendNotification(ownerId, notif);
   }
@@ -260,16 +372,22 @@ class NotificationHandler {
     final notif = AppNotification(
       id: '',
       title: 'تم استلام دفعة مالية ',
-      body: 'تم استلام مبلغ ${amount.toStringAsFixed(0)} ج.م من $userName.',
+      body: 'تم استلام مبلغ ${VSPMoneyFormatter.amount(amount)} ج.م من $userName.',
       type: 'payment_received',
       bookingId: bookingId,
       createdAt: DateTime.now(),
-      metadata: {
-        'amount': amount,
-        'userName': userName,
-        'bookingId': bookingId,
-        'sound': 'default',
-      },
+      metadata: _localizedCopy(
+        titleAr: 'تم استلام دفعة مالية',
+        titleEn: 'Payment received',
+        bodyAr: 'تم استلام مبلغ ${VSPMoneyFormatter.amount(amount)} ج.م من $userName.',
+        bodyEn: 'A payment of ${VSPMoneyFormatter.amount(amount)} EGP was received from $userName.',
+        metadata: {
+          'amount': amount,
+          'userName': userName,
+          'bookingId': bookingId,
+          'sound': 'default',
+        },
+      ),
     );
     await _notificationRepo.sendNotification(recipientId, notif);
   }
@@ -287,13 +405,19 @@ class NotificationHandler {
     final notif = AppNotification(
       id: '',
       title: 'Payment Reminder ',
-      body: 'You have a pending cash payment of ${amount.toStringAsFixed(0)} EGP for $stadiumName. Please settle it at the stadium at your earliest convenience.',
+      body: 'You have a pending cash payment of ${VSPMoneyFormatter.amount(amount)} EGP for $stadiumName. Please settle it at the stadium at your earliest convenience.',
       type: 'debt_reminder',
       createdAt: DateTime.now(),
-      metadata: {
-        'amount': amount,
-        'stadiumName': stadiumName,
-      },
+      metadata: _localizedCopy(
+        titleAr: 'تذكير بسداد المستحقات',
+        titleEn: 'Payment reminder',
+        bodyAr: 'لديك مبلغ نقدي مستحق بقيمة ${VSPMoneyFormatter.amount(amount)} ج.م لصالح $stadiumName. يرجى سداده في الملعب.',
+        bodyEn: 'You have a pending cash payment of ${VSPMoneyFormatter.amount(amount)} EGP for $stadiumName. Please settle it at the stadium.',
+        metadata: {
+          'amount': amount,
+          'stadiumName': stadiumName,
+        },
+      ),
     );
     await _notificationRepo.sendNotification(userId, notif);
   }
@@ -314,6 +438,12 @@ class NotificationHandler {
       type: 'match_result_pending',
       bookingId: bookingId,
       createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'انتهت المباراة',
+        titleEn: 'Match finished',
+        bodyAr: 'سجّل النتيجة النهائية لتحديث ترتيب فريقك.',
+        bodyEn: 'Please submit the final result to update your team\'s global ranking.',
+      ),
     );
     await _notificationRepo.sendNotification(teamCaptainId, notif);
   }
@@ -356,6 +486,12 @@ class NotificationHandler {
         type: 'booking_cancelled',
         bookingId: bookingId,
         createdAt: DateTime.now(),
+        metadata: _localizedCopy(
+          titleAr: 'تم إلغاء المباراة',
+          titleEn: 'Match cancelled',
+          bodyAr: 'تم إلغاء المباراة في $stadiumName عند $timeSlot بواسطة المنظم.',
+          bodyEn: 'The match at $stadiumName ($timeSlot) has been cancelled by the host.',
+        ),
       );
       await _notificationRepo.sendNotification(uid, notif);
     }

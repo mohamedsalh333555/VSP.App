@@ -75,7 +75,7 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
                       children: [
                         Text(
                           'ضد $opponentName',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -99,7 +99,7 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
                     child: Text(
                       '$teamWins - $opponentWins',
                       style: TextStyle(
-                        color: teamWins > opponentWins ? VSPColors.success : Colors.white,
+                        color: teamWins > opponentWins ? VSPColors.success : VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),

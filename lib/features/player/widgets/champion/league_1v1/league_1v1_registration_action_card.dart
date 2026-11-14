@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../../shared/widgets/primary_button.dart';
 import '../champion_podium_components.dart';
 
@@ -93,7 +94,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            height: 42,
+            height: 48,
             child: OutlinedButton(
               onPressed: isCancellingRegistration ? null : onCancelRegistration,
               style: OutlinedButton.styleFrom(
@@ -166,7 +167,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            height: 44,
+            height: 48,
             child: OutlinedButton.icon(
               onPressed: onSwitchToUserGov,
               style: OutlinedButton.styleFrom(
@@ -190,11 +191,14 @@ class League1v1RegistrationActionCard extends StatelessWidget {
       return PrimaryButton(
         text: isProcessingPayment
             ? (isArabic ? 'جاري فتح بوابة الدفع...' : 'Opening payment...')
-            : (isArabic ? 'سداد الاشتراك والانضمام (${entryFee.toStringAsFixed(0)} ج.م)' : 'Pay & Join (${entryFee.toStringAsFixed(0)} EGP)'),
+            : (isArabic
+                ? 'سداد الاشتراك والانضمام (${VSPMoneyFormatter.amount(entryFee)} ج.م)'
+                : 'Pay & Join (${VSPMoneyFormatter.amount(entryFee)} EGP)'),
         height: 50,
         color: VSPColors.accent,
-        textColor: Colors.black,
-        onPressed: isProcessingPayment ? () {} : onJoinPressed,
+        textColor: VSPColors.black,
+        isLoading: isProcessingPayment,
+        onPressed: isProcessingPayment ? null : onJoinPressed,
       );
     }
     return Container(

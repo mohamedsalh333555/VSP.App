@@ -56,11 +56,14 @@ void showTournamentScoreModal(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     builder: (sheetContext) {
       return Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(sheetContext).size.height * 0.92,
+          // The scroll-controlled modal route already applies keyboard
+          // and system insets. This is only a preferred height cap; the route's
+          // parent constraints determine the actual available viewport.
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.92,
         ),
         decoration: const BoxDecoration(
           color: VSPColors.background,
@@ -120,9 +123,13 @@ void showTournamentScoreModal(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            isArabic ? 'تسجيل نتيجة وهدافي المباراة ' : 'Submit Score & Goal Scorers ',
-                            style: Theme.of(modalContext).textTheme.displaySmall,
+                          Expanded(
+                            child: Text(
+                              isArabic ? 'تسجيل نتيجة وهدافي المباراة' : 'Submit Score & Goal Scorers',
+                              style: Theme.of(modalContext).textTheme.displaySmall,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           IconButton(
                             icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
@@ -353,7 +360,7 @@ void showTournamentScoreModal(
                             const SizedBox(height: 6),
                             TextField(
                               controller: reasonController,
-                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                              style: const TextStyle(color: VSPColors.white, fontSize: 13),
                               decoration: InputDecoration(
                                 hintText: isArabic
                                     ? 'مثال: تصحيح خطأ كتابي في نتيجة المباراة'
@@ -373,9 +380,7 @@ void showTournamentScoreModal(
                         20,
                         12,
                         20,
-                        MediaQuery.of(sheetContext).padding.bottom +
-                            MediaQuery.of(sheetContext).viewInsets.bottom +
-                            16,
+                        MediaQuery.paddingOf(sheetContext).bottom + 16,
                       ),
                       decoration: const BoxDecoration(
                         border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
@@ -398,6 +403,7 @@ void showTournamentScoreModal(
                               onPressed: !isValidToSubmit
                                   ? null
                                   : () async {
+                                      if (isSubmitting) return;
                                       setModalState(() => isSubmitting = true);
                                       try {
                                         final finalWinnerId = (homeScore == awayScore)
@@ -455,8 +461,11 @@ void showTournamentScoreModal(
                                                 : 'Match score, goal scorers saved & $finalWinnerName advanced successfully.',
                                           );
                                         }
-                                      } catch (e) {
-                                        setModalState(() => isSubmitting = false);
+                                      } catch (e, stackTrace) {
+                                        debugPrint('Tournament score submission failed: $e\n$stackTrace');
+                                        if (sheetContext.mounted) {
+                                          setModalState(() => isSubmitting = false);
+                                        }
                                         if (sheetContext.mounted) {
                                           VSPFeedback.showError(
                                             sheetContext,
@@ -478,5 +487,5 @@ void showTournamentScoreModal(
         ),
       );
     },
-  );
+  ).whenComplete(reasonController.dispose);
 }
