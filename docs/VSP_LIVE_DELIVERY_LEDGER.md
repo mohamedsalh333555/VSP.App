@@ -1,3 +1,9 @@
+## 2026-11-14 — Owner stadium media recovery and cover selection (198/420)
+
+- Accepted **20.05** for the owner wizard's storage failure UI. The coordinator removes the transient uploading row and shows a retryable error on either a null storage response or a thrown upload error. A direct widget test covers both cases and checks the state callback. [Evidence and limits](VSP_STADIUM_IMAGE_UPLOAD_FAILURE_ACCEPTANCE_2026-11-14.md).
+- Accepted **20.03** for explicit gallery cover selection. The new control moves the chosen photo first; the widget test verifies the saved draft order and the primary `imageUrl` in the update payload. [Evidence and limits](VSP_STADIUM_COVER_SELECTION_ACCEPTANCE_2026-11-14.md). [Flutter CI 43644752625](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43644752625) covers both image tests on this head.
+- **618 total / 198 accepted / 420 open.** This does not claim a live Storage outage, content inspection or player-side rendering.
+
 ## 2026-11-14 — Team discovery, search and profile route (196/422)
 
 - Accepted **15.01, 15.02, 15.03** within the loaded rankings UI. A widget test supplies two synthetic teams, verifies the Aswan/football selection excludes a Cairo/basketball team, checks a no-result search and a matching search, changes the location/sport filter, and taps the card to pass the selected team ID to its details route. The normal route still constructs `TeamProfileScreen`; [evidence and scope](VSP_TEAM_DISCOVERY_ACCEPTANCE_2026-11-14.md), [Flutter CI 43642905483](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43642905483).
