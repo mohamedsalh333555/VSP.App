@@ -26,24 +26,33 @@ class StadiumRepository {
             .toList());
   }
 
-  // Get stadium by ID
+  // Retain the optional legacy lookup for noncritical consumers. Booking
+  // safety flows must use the strict variant to distinguish "not found" from
+  // an unverified result caused by a failed network/auth request.
   Future<Stadium?> getStadiumById(String stadiumId) async {
     try {
-      final response = await _supabase
-          .from('stadiums')
-          .select()
-          .eq('id', stadiumId)
-          .eq('is_deleted_by_owner', false)
-          .eq('is_verified', true)
-          .eq('is_blocked', false)
-          .maybeSingle();
-      if (response != null && response['is_deleted_by_owner'] != true) {
-        return Stadium.fromFirestore(response, response['id'].toString());
-      }
-      return null;
-    } catch (e) {
+      return await getStadiumByIdStrict(stadiumId);
+    } catch (_) {
+      VSPLogger.w('Public stadium lookup failed (details redacted)');
       return null;
     }
+  }
+
+  /// Throws on transport/auth/parser failures, but returns null only when the
+  /// authoritative server query succeeded with no bookable stadium.
+  Future<Stadium?> getStadiumByIdStrict(String stadiumId) async {
+    final response = await _supabase
+        .from('stadiums')
+        .select()
+        .eq('id', stadiumId)
+        .eq('is_deleted_by_owner', false)
+        .eq('is_verified', true)
+        .eq('is_blocked', false)
+        .maybeSingle();
+    if (response != null && response['is_deleted_by_owner'] != true) {
+      return Stadium.fromFirestore(response, response['id'].toString());
+    }
+    return null;
   }
 
   // Get raw stadium data for editing

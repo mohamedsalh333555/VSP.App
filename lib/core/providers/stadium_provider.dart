@@ -332,7 +332,7 @@ class StadiumProvider with ChangeNotifier {
  Future<Stadium?> getStadiumById(String stadiumId) async {
     final operationScope = _scopeGeneration;
     try {
-      final stadium = await _databaseService.getStadiumById(stadiumId);
+      final stadium = await _databaseService.getStadiumByIdStrict(stadiumId);
       if (operationScope != _scopeGeneration) return null;
       return stadium;
     } catch (_) {
