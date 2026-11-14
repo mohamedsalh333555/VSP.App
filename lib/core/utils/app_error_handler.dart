@@ -35,6 +35,29 @@ class AppErrorHandler {
     final combined = '$code $message $details'.toLowerCase();
 
     // ── Domain Business Rule Codes ──
+    // Preserve the known cancellation policy without ever reflecting a raw
+    // PostgREST/Exception message. The 20-minute grace period is part of the
+    // current rule and must not be hidden in the error copy.
+    if (combined.contains('cannot_cancel_within_6_hours') ||
+        combined.contains('cannot_cancel_within_2_hours') ||
+        combined.contains('6 ساعات') ||
+        combined.contains('ساعتين')) {
+      return isArabic
+          ? 'لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات (إلا خلال أول 20 دقيقة من الحجز).'
+          : 'You cannot cancel less than 6 hours before kickoff (except within the first 20 minutes after booking).';
+    }
+    if (combined.contains('cannot_cancel_completed_booking')) {
+      return isArabic
+          ? 'عذراً، لا يمكن إلغاء حجز لمباراة مكتملة تم حضورها بالفعل.'
+          : 'A completed match booking cannot be cancelled.';
+    }
+    if (combined.contains('already_cancelled')) {
+      return isArabic
+          ? 'هذا الحجز ملغي بالفعل مسبقاً.'
+          : 'This booking has already been cancelled.';
+    }
+
+
     if (combined.contains('slot_locked_or_taken') ||
         combined.contains('slot already booked') ||
         combined.contains('double_booking') ||
