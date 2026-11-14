@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT / "supabase/migrations/20261114230000_fix_team_roster_order.sql"
+MIGRATION = ROOT / "supabase/migrations/20261114212217_fix_team_roster_order.sql"
 CONTRACT = ROOT / "supabase/tests/team_roster_order_isolated_contract.sql"
 DATABASE = "vsp_roster_order_contracts"
 
