@@ -22,20 +22,7 @@ class ChallengeTeamService {
   static String? normalizeChallengeCode(String value) {
     final code = value.trim().toUpperCase();
     if (code.isEmpty || code.length > 32) return null;
-    return RegExp(r'^[A-Z0-9-]+
-  static H2HHypeType evaluateH2HHype({
-    required int yourWins,
-    required int theirWins,
-  }) {
-    if (yourWins > theirWins) {
-      return H2HHypeType.youDominate;
-    } else if (yourWins < theirWins) {
-      return H2HHypeType.timeForRevenge;
-    }
-    return H2HHypeType.seriesTied;
-  }
-}
-).hasMatch(code) ? code : null;
+    return RegExp(r'^[A-Z0-9-]+$').hasMatch(code) ? code : null;
   }
 
   /// Evaluates head-to-head statistics and determines the competitive sentiment.
