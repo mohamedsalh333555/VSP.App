@@ -276,8 +276,43 @@ VALUES('{RACE}','race-{number}');
         print("PASS: independent concurrent direct INSERTs serialize to one winner",
               flush=True)
 
-        # Source-equivalent moderator-write bypass is demonstrated before the
-        # candidate trigger, using synthetic data only (not customer venues).
+        # Reproduce the actual production function's privilege confusion on
+        # this isolated database. SECURITY DEFINER is owned by postgres;
+        # current_user is therefore postgres even when an authenticated venue
+        # owner invoked UPDATE via PostgREST-equivalent SQL.
+        ok(SCRATCH, """
+CREATE OR REPLACE FUNCTION public.protect_stadium_sensitive_fields()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $legacy_moderation$
+BEGIN
+  IF current_user IN ('postgres', 'service_role') THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.rating IS DISTINCT FROM OLD.rating
+     OR NEW.reviews_count IS DISTINCT FROM OLD.reviews_count
+     OR NEW.is_blocked IS DISTINCT FROM OLD.is_blocked THEN
+    RAISE EXCEPTION 'LEGACY_MODERATION_SHOULD_BLOCK_OWNER';
+  END IF;
+  RETURN NEW;
+END;
+$legacy_moderation$;
+CREATE TRIGGER trg_protect_stadium_sensitive_fields
+BEFORE UPDATE ON public.stadiums
+FOR EACH ROW EXECUTE FUNCTION public.protect_stadium_sensitive_fields();
+""")
+        guard_owner = ok(SCRATCH, """
+SELECT pg_get_userbyid(proowner)
+FROM pg_proc
+WHERE oid = 'public.protect_stadium_sensitive_fields()'::regprocedure;
+""")
+        if guard_owner != "postgres":
+            raise RuntimeError("Disposable SECURITY DEFINER owner mismatch")
+
+        # Source-equivalent production bypass: the legacy protection trigger
+        # is installed and still permits an authenticated owner's forged
+        # rating/review write because its privileged early return always fires.
         ok(SCRATCH, as_owner(PRO, """
 UPDATE public.stadiums SET rating=4.9, reviews_count=450,
   is_blocked=false WHERE name='pro-1';
@@ -292,7 +327,7 @@ FROM public.stadiums WHERE name='pro-1';
 UPDATE public.stadiums SET rating=0, reviews_count=0, is_verified=false
 WHERE name='pro-1';
 """)
-        print("PASS: ownership-only baseline permits forged rating/review count",
+        print("PASS: production-style SECURITY DEFINER early bypass permits forged rating/review count",
               flush=True)
 
         ok(SCRATCH, MODERATION_CANDIDATE.read_text(encoding="utf-8"))
