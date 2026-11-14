@@ -63,7 +63,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final userId = context.watch<app_auth.AuthProvider>().currentUser?.id;
+    final auth = context.watch<app_auth.AuthProvider>();
+    final userId = auth.isOwner ? null : auth.currentUser?.id;
     if (!_hasObservedUserId || userId != _activeUserId) {
       if (_hasObservedUserId) {
         // Keep private opponent and captain-code state bound to one session.
@@ -101,7 +102,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     int? requestGeneration,
   }) async {
     final generation = requestGeneration ?? ++_teamRequestGeneration;
-    final uid = expectedUserId ?? context.read<app_auth.AuthProvider>().currentUser?.id;
+    final auth = context.read<app_auth.AuthProvider>();
+    final uid = auth.isOwner ? null : (expectedUserId ?? auth.currentUser?.id);
     if (mounted) {
       setState(() {
         _isLoadingUserTeam = true;
@@ -176,7 +178,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       return;
     }
     final auth = context.read<app_auth.AuthProvider>();
-    final uid = auth.currentUser?.id;
+    final uid = auth.isOwner ? null : auth.currentUser?.id;
     if (uid == null) {
       VSPFeedback.showError(
         context,
@@ -296,7 +298,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       );
       return;
     }
-    final lookupUserId = context.read<app_auth.AuthProvider>().currentUser?.id;
+    final lookupAuth = context.read<app_auth.AuthProvider>();
+    final lookupUserId = lookupAuth.isOwner ? null : lookupAuth.currentUser?.id;
     if (lookupUserId == null) {
       VSPFeedback.showError(
         context,

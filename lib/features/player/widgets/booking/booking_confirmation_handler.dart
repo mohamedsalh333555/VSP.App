@@ -96,12 +96,18 @@ class BookingConfirmationHandler {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.currentUser?.id;
     final currentUserModel = authProvider.userModel;
-    if (currentUserModel == null || userId == null || currentUserModel.uid != userId) {
+    if (currentUserModel == null || userId == null ||
+        currentUserModel.uid != userId || !currentUserModel.isPlayer ||
+        authProvider.isOwner) {
       onLoadingChanged(false);
       return;
     }
-    bool isSameUser() =>
-        Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId;
+    bool isSameUser() {
+      if (!context.mounted) return false;
+      final active = Provider.of<AuthProvider>(context, listen: false);
+      return active.currentUser?.id == userId &&
+          active.userModel?.isPlayer == true && !active.isOwner;
+    }
 
     final nav = Navigator.of(context);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
