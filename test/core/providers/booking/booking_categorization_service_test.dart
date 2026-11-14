@@ -124,6 +124,39 @@ void main() {
       expect(ids(result.history), ['refunded']);
     });
 
+    test('equal start times keep a stable order across realtime permutations',
+        () {
+      final sameSlotB = booking('booking-b', status: BookingStatus.confirmed,
+          stadiumId: 'pitch-b');
+      final sameSlotA = booking('booking-a', status: BookingStatus.confirmed,
+          stadiumId: 'pitch-a');
+      final pendingB = booking('pending-b', stadiumId: 'pending-stadium-b');
+      final pendingA = booking('pending-a', stadiumId: 'pending-stadium-a');
+      final orderOne = BookingCategorizationService.categorizeUserBookings(
+        bookings: [sameSlotB, pendingB, sameSlotA, pendingA],
+        now: now,
+      );
+      final orderTwo = BookingCategorizationService.categorizeUserBookings(
+        bookings: [pendingA, sameSlotA, pendingB, sameSlotB],
+        now: now,
+      );
+      expect(ids(orderOne.upcoming), ['booking-a', 'booking-b']);
+      expect(ids(orderTwo.upcoming), ids(orderOne.upcoming));
+      expect(ids(orderOne.pending), ['pending-a', 'pending-b']);
+      expect(ids(orderTwo.pending), ids(orderOne.pending));
+    });
+
+    test('equal history times sort by booking ID without moving input order',
+        () {
+      final b = booking('history-b', status: BookingStatus.completed);
+      final a = booking('history-a', status: BookingStatus.completed);
+      final sorted = BookingCategorizationService.categorizeUserBookings(
+        bookings: [b, a], now: now,
+      );
+      expect(ids(sorted.history), ['history-a', 'history-b']);
+      expect(ids([b, a]), ['history-b', 'history-a']);
+    });
+
     test('history ordered newest end first and input is unchanged', () {
       final older = booking('older', status: BookingStatus.completed,
           end: now.subtract(const Duration(days: 2)));
@@ -159,6 +192,18 @@ void main() {
           bookings: records, now: now);
       expect(ids(result.upcoming), ['cash', 'paid', 'deposit']);
       expect(result.history, isEmpty);
+    });
+
+    test('owner upcoming and history ties remain deterministic', () {
+      final b = booking('b', status: BookingStatus.confirmed, stadiumId: 'b');
+      final a = booking('a', status: BookingStatus.confirmed, stadiumId: 'a');
+      final histB = booking('hist-b', status: BookingStatus.completed);
+      final histA = booking('hist-a', status: BookingStatus.completed);
+      final result = BookingCategorizationService.categorizeOwnerBookings(
+        bookings: [b, histB, a, histA], now: now,
+      );
+      expect(ids(result.upcoming), ['a', 'b']);
+      expect(ids(result.history), ['hist-a', 'hist-b']);
     });
 
     test('ended pending paid booking is historical', () {

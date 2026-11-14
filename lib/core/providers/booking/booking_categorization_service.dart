@@ -28,6 +28,20 @@ class CategorizedOwnerBookings {
 class BookingCategorizationService {
   const BookingCategorizationService._();
 
+  // Realtime merges can deliver equal-time records in a different order.
+  // Stabilize secondary ordering so bookings do not jump between cards.
+  static int _compareNextBooking(Booking a, Booking b) {
+    final byTime = a.startTime.compareTo(b.startTime);
+    return byTime != 0 ? byTime : a.id.compareTo(b.id);
+  }
+
+  static int _compareHistoryBooking(Booking a, Booking b) {
+    final byEnd = b.endTime.compareTo(a.endTime);
+    if (byEnd != 0) return byEnd;
+    final byCreated = b.createdAt.compareTo(a.createdAt);
+    return byCreated != 0 ? byCreated : a.id.compareTo(b.id);
+  }
+
   static bool _isConfirmedLifecycleStatus(BookingStatus status) =>
       status == BookingStatus.confirmed || status == BookingStatus.upcoming;
 
@@ -62,7 +76,7 @@ class BookingCategorizationService {
               b.endTime.isAfter(now),
         )
         .toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+      ..sort(_compareNextBooking);
 
     final tenMinutesAgo = now.subtract(const Duration(minutes: 10));
     final pending = bookings.where((b) {
@@ -87,7 +101,7 @@ class BookingCategorizationService {
       final isRecent = b.createdAt.isAfter(tenMinutesAgo);
       return isRecent;
     }).toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+      ..sort(_compareNextBooking);
 
     final history = bookings.where((b) {
       if (b.status == BookingStatus.completed ||
@@ -133,11 +147,7 @@ class BookingCategorizationService {
       }
       return false;
     }).toList()
-      ..sort((a, b) {
-        final byEnd = b.endTime.compareTo(a.endTime);
-        if (byEnd != 0) return byEnd;
-        return b.createdAt.compareTo(a.createdAt);
-      });
+      ..sort(_compareHistoryBooking);
 
     return CategorizedUserBookings(
       upcoming: upcoming,
@@ -162,7 +172,7 @@ class BookingCategorizationService {
               b.createdAt.isAfter(tenMinutesAgo);
         })
         .toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+      ..sort(_compareNextBooking);
 
     final history = bookings
         .where((b) {
@@ -179,11 +189,7 @@ class BookingCategorizationService {
               !b.createdAt.isAfter(tenMinutesAgo);
         })
         .toList()
-      ..sort((a, b) {
-        final byEnd = b.endTime.compareTo(a.endTime);
-        if (byEnd != 0) return byEnd;
-        return b.createdAt.compareTo(a.createdAt);
-      });
+      ..sort(_compareHistoryBooking);
 
     return CategorizedOwnerBookings(
       upcoming: upcoming,
