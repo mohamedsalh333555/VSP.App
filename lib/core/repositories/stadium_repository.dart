@@ -245,10 +245,13 @@ class StadiumRepository {
       // 1. Governorate Filter
       if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
         final String? standardGov = EgyptGovernorates.resolveGoogleName(governorate);
-        if (standardGov != null) {
-          final String arGov = EgyptGovernorates.governorateToArabic[standardGov] ?? standardGov;
-          orGroups.add('or(governorate.eq.$standardGov,governorate.eq.$arGov)');
+        if (standardGov == null) {
+          // An unrecognized explicit location is not a nationwide search.
+          // Keep pagination empty rather than silently dropping its scope.
+          return {'items': <Stadium>[], 'lastDoc': startAfter is int ? startAfter : 0};
         }
+        final String arGov = EgyptGovernorates.governorateToArabic[standardGov] ?? standardGov;
+        orGroups.add('or(governorate.eq.$standardGov,governorate.eq.$arGov)');
       }
 
       // 2. Sport Type Filter
