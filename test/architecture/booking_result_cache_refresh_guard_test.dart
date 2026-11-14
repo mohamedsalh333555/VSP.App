@@ -18,7 +18,11 @@ void main() {
     expect(method, contains('_currentBooking = updated;'));
     expect(method, contains('catch (_)'));
     expect(method, contains('return success;'));
+    // An early success return is intentionally allowed when the account
+    // switched while the RPC was outstanding. For the active account, the
+    // normal exit must follow the strict reconciliation read.
+    expect(method, contains('operationScope != _bookingScopeGeneration'));
     expect(method.indexOf('getBookingByIdStrict(bookingId)'),
-        lessThan(method.indexOf('return success;')));
+        lessThan(method.lastIndexOf('return success;')));
   });
 }
