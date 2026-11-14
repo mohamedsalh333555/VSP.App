@@ -1,3 +1,14 @@
+Warning: truncated output (original token count: 33469)
+Total output lines: 993
+
+## 2026-11-14 — Team invitations and active challenge-team checkout accepted (180/438)
+
+- Accepted **17.01–17.06 and 17.08** for the pending invitation UI, accept/decline behavior, membership refresh, duplicate response prevention, captain/recipient/expiry/governorate guards, and rejection of expired or wrong-recipient invitations.
+- Accepted **18.04** after team/challenge checkout stopped using an arbitrary first membership and now resolves the account-scoped active team from the strict verified membership list.
+- Evidence: [acceptance scope and boundaries](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md). Flutter CI [43589094180](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43589094180) passed analyzer and **1,394 tests with 11 skipped**. Account SQL run [43589094157](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43589094157) passed the guarded disposable PostgreSQL invitation contract. iOS compliance and owner checkout security were also green on the same head.
+- **17.07 remains open** because isolated identities and widget interactions are not a real two-account/two-session Supabase journey. **18.01 remains open** pending live membership-query evidence. No hosted DB, Auth, payment, price or permission mutation; no APK or `main` merge.
+- **618 total / 180 accepted / 438 open.**
+
 ## 2026-11-14 — Booking-history isolation and active-team selection accepted (172/446)
 
 - Accepted **16.07** for client/provider booking-history isolation across account and role switches. Delayed reads, cancellation results, detail loads, mutation results and shared-ID action locks are bound to the initiating account and covered by direct race/contract tests.
@@ -361,119 +372,7 @@ Updated 2026-11-11. This ledger is the source of truth for **execution progress*
 - All three changed staging RPC bodies read back and matched repository function bodies exactly. All three transactional staging SQL suites passed after final deployment; no actual two-device/JWT concurrency claim.
 - [71.02 comparison](security/MIGRATION_CONTENT_COMPARISON_2026-11-11.md): 314 forward SQL files, 19 collision groups / 79 files / 296 pairs, zero byte-identical pairs; eight rollback files excluded. All pair byte results independently cross-checked. Does not establish safe replay or execution order.
 - Eight app improvements plus two staging trigger repairs in batches 03/04; no additional feature count for tests/tooling. Production not changed. Privileged profile insertion proved only on synthetic staging fixtures; production table grants remain pending approved remediation and client coordination.
-- Release remains NOT READY: external client inventory and production approval/rollout, provider sandbox and actual identities, full deletion/retention, iOS and store-console acceptance remain open. This is a batch verification receipt, not closure of 542 tasks.
-
-## 2026-11-11 — Fourth implementation batch: server-owned profile provisioning
-
-- [Four additional application corrections and verification boundaries](security/STORE_COMPLIANCE_BATCH_04_2026-11-11.md): direct profile INSERT/DELETE removed from authenticated clients, atomic server provisioning uses real Auth state and existing owner trial policy; no phantom local profile/role/completion.
-- New source includes 14 Flutter cases. All three staging rollback scripts passed after deployment, including existing 17 lifecycle/chat and 11 sensitive-update checks. Final app source 906846f checks passed; exact runs/counts in the receipt above.
-- Production grants inspected read-only; no production exploit/mutation. Applying these changes there requires explicit review/approval and coordination with all external clients.
-- Accounting: **77 accepted / 543 not fully accepted / 620**; one new inventory closure (76.01), no automatic full journey closures from these partial corrections.
-
-## 2026-11-11 — Accepted inventory task 76.01
-
-- **77 accepted / 543 not fully accepted / 620 total**: 76 historical accepted checklist entries plus one newly accepted inventory task. This is a documentation/audit result, not one additional shipped feature.
-- **76.01 VERIFIED**: all nine public views inventoried in each environment using read-only schema metadata, definitions and SELECT privileges; current count supersedes the historical “four” in task text. [Evidence and limits](security/VIEW_INVENTORY_2026-11-11.md). Remaining 76.xx permission design, runtime isolation and release acceptance stay open.
-
-## 2026-11-11 — Third compliance batch: account cancellation and chat authorization
-
-- [Exact changes and evidence](security/STORE_COMPLIANCE_BATCH_03_2026-11-11.md): **4 application corrections + 2 staging security trigger-binding repairs**. Application commit `3662402`.
-- Application checks: Flutter 42939496320 SUCCESS — 1128 passed, 10 skipped (40 focused privacy/deletion cases also included in full suite); Android 42939496341 SUCCESS including actual APK gate and six Python tests; checkout 42939496233 SUCCESS — 39 isolated cases.
-- Staging: new atomic cancellation RPC and conversation membership guard deployed. 17 rollback-fixture checks passed before/after deployment and after trigger repairs. Eleven trigger enforcement/allowed-edit checks passed. No real-token multi-device race claim; explicit registration completion-first case is verified.
-- **76 historical accepted / 544 not fully accepted / 620 unchanged.** Partial SEC-01/02/04/07 and Phase 9 consistency evidence; no full-baseline subtask silently closed.
-- Staging binding drift was verified and repaired against existing function definitions. Production inspected read-only for those definitions; no production mutation/main merge. Remaining: direct profile INSERT/DELETE audit, full environment parity, full deletion/privacy retention, actual OAuth/device/payment/iOS/store acceptance.
-
-## 2026-11-11 — Second store compliance implementation batch
-
-- [Ten app corrections, exact scope and evidence](security/STORE_COMPLIANCE_BATCH_02_2026-11-11.md); application source checkpoint `e862fbb`. Code, tests and APK permission gate updated; no schema or production mutation.
-- **Final checks SUCCESS at e862fbb**: Flutter CI 42930897576 — 32 focused cases and 1120 passed, 10 skipped in the full suite; Android smoke and compiled APK permission gate 42930890192, including six Python gate tests; Owner checkout security 42930897573 — 39 isolated cases. No broad media/storage/advertising permissions or mandatory camera/GPS in the verified APK. Earlier failures, corrections and cancelled superseded runs remain documented.
-- Contributions: partial 03.02/03.04/03.05, 04.06, 05.04, 12.03, 20.02; SEC-01/03/04/08 and Phase 9 failure/race handling. These checks do not close every screen or live upload/deletion acceptance condition.
-- **Core accounting unchanged: 76 historically accepted / 544 not fully accepted / 620 total.** Ten defects corrected is not ten closed baseline subtasks. One introduced dialog layout regression and test-fixture/timing corrections were fixed and recorded without inflating the delivered improvement count.
-- Remaining: actual photo upload/camera/device variants, valid multi-account staging journeys, atomic server cleanup/deletion and retention, OAuth/web deletion, payment sandbox, iOS/archive/store metadata. Current data safety/readiness is not certified.
-
-## 2026-11-11 — Unified plan, first security implementation batch
-
-- Code commit: `00b530fcf5de6ed44324c36f0e623dc572ba7e18`; [seven concrete corrections and evidence](security/STORE_COMPLIANCE_BATCH_01_2026-11-11.md). No new full baseline-subtask closure: **76 historical accepted / 544 not fully accepted / 620 total**. This batch is code execution, not seven documentation closures.
-- Existing task contributions: 25.03/25.06 and 30.03/30.05/30.07/30.08, 79/80; SEC-01/03/04/06/08/10 and INT-03/REL-03. They remain IN_PROGRESS until their complete scope, including real staging identities/provider sandbox, is proven.
-- **Final checks SUCCESS at `daae560e`**: Flutter CI 42924535090 — 1088 passed, 10 skipped, including all 26 deletion tests; Owner checkout security 42924534900 — 39 isolated request/payment tests; Android E2E Smoke 42924534915. Isolated tests use mocked DB/provider transport, not real payments or real JWT identities. Initial failed test fixtures/assertions and their fixes are retained in the linked report.
-- Staging checkout/status functions updated with verify_jwt=true; source readback matches; four actual no-auth/invalid-token requests rejected 401 and two CORS preflights passed. Webhook source change was not deployed; no live signed callback acceptance claimed.
-- No production, prices, subscription model, migration or main merge changed. APK/iOS archive not built. Full CODE_DONE/BLOCKED counts still require row-by-row reconciliation; no guessed totals.
-- Added and ran read-only `python3 scripts/verify_task_accounting.py`: 620 unique IDs, 82 parents, 76 accepted historical checklist entries, 544 not accepted, zero ID/counter errors. It does not certify the evidence behind historical acceptance or close any task automatically.
-
-## Fixed scope and accounting
-
-- Baseline: **82 parent items, 620 subtasks** from `VSP_80_DETAILED_SUBTASK_BREAKDOWN.md`. Never silently increase this denominator.
-- Historical inventory snapshot (2026-11-11): **83 verified; 535 not yet accepted** (618 tasks total). This is not a current tally.
-- Each task has exactly one state: `TODO`, `IN_PROGRESS`, `CODE_DONE`, `VERIFIED`, `BLOCKED`. Only `VERIFIED` reduces the final-release remaining count; `CODE_DONE` increases the visible implementation counter.
-- A commit is **not** a task. Multiple commits fixing the same behavior count as one candidate implementation. Unmapped bug fixes are logged as **defects**, not new baseline tasks.
-- New scope requires a separate `CHANGE_REQUEST` with rationale, acceptance criteria and owner approval before adding to the denominator.
-- Each batch must publish: baseline total, verified, code-done-awaiting-verification, untouched/in-progress, blocked, new defects, and commit links. No unsubstantiated estimates or completion dates.
-- Do not claim a task is `CODE_DONE` unless its full acceptance scope is implemented; partial work stays `IN_PROGRESS`.
-- No `main` merge or production DB/payment/permission changes without the agreed release gates and approvals.
-
-## Closed task register
-
-| Task ID | State | Evidence | Scope |
-|---|---|---|---|
-| 27.01 | VERIFIED (documentation deliverable) | [Booking status inventory](VSP_BOOKING_STATUS_INVENTORY_27_01.md), commit `4ece7f6` | All declared Dart booking states and mapper normalization inventoried; backend behavior remains under 27.02–27.08 |
-| 27.02 | VERIFIED (contract deliverable) | [Transition contract](VSP_BOOKING_TRANSITIONS_27_02.md), commit `f3ddb3d` | Allowed/disallowed edges defined; server enforcement remains under 27.03 |
-| 28.01 | VERIFIED (documentation deliverable) | [Booking creation lifecycle](VSP_BOOKING_CREATION_LIFECYCLE_28_01.md), commit `0ec3794` | Lifecycle stages, statuses and follow-on gates defined; runtime enforcement remains separate |
-| 29.01 | CODE_DONE (verification deferred) | `lib/core/utils/payment_failure_classifier.dart` `b91cfbc`, test `7625cef` | Payment failure categories and uncertainty flags implemented; integration into payment screens and live verification belong to 29.02–29.08 |
-| 28.02 | VERIFIED (documentation deliverable) | [Cancellation cutoffs](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md), commit `870a599` | Client-visible 6-hour cutoff and 20-minute grace documented; server boundary verification still open |
-| 16.02 | VERIFIED | Categorization tests, CI `42825931860` | Pending/upcoming/history, grace boundary, payment progress, overlap displacement and ordering |
-| 16.03 | VERIFIED | Player details widget test `d18af67`, CI `42827626171` | Booking reference, exact total/deposit/remainder, payment/refund state and Arabic cancellation reason |
-| 16.04 | VERIFIED | Realtime lifecycle tests, CI `42825931860` | Initial load, updates, cancellation, reconnect retention and transport-error preservation |
-| 16.05 | VERIFIED | Categorization/cancellation tests, CI `42825931860` | Abandoned unpaid checkout hidden; refunded cancellation retained in history |
-
-**Current audited counter: 76 / 620 completed, 544 remaining.** Phase 10 closes 14 analytics/instrumentation subtasks; booking-history tasks 16.02–16.05 add four current-head verified closures. Historical closures remain recorded below. A documentation task can close with reviewed source evidence; runtime tasks require their own acceptance evidence.
-
-## Existing implementation evidence — not yet full-task completion
-
-| Task ID | State | Concrete evidence | Outstanding acceptance |
-|---|---|---|---|
-| 27.03 | IN_PROGRESS | Shared Dart guard `BookingStatusExtension.canTransitionTo` in `lib/data/models/booking_enums.dart`, commit `034c817` | Wire all client mutation paths, enforce on server and test forbidden transitions |
-| 22.04 | IN_PROGRESS | BookingSlotCalculator excludes configured closure intervals and rejects invalid closure schedules: `6e3f60f`, `f937035`, `25644ce` | Confirm all booking entry points, server enforcement, holidays and real-device behavior |
-| 22.07 | IN_PROGRESS | Overnight booking date computation: `3c717eb`; slot time range guard: `79c8858` | DST boundaries and device acceptance tests |
-| 26.05 | IN_PROGRESS | Client availability filter ignores cancelled/expired bookings: `cb7dd106` | Confirm server re-availability and race safety |
-| 26.06 | IN_PROGRESS | UTC overlap comparison and overnight date correction: `3c717eb` | Timezone tests and server checks |
-| 51.01–51.07 | TODO | Booking selection safety fixes: `3545c78`, `d27e671`, `654bcd9` | Map to individual conversion subtasks only after examining their acceptance definitions |
-
-## Unmapped defects repaired (not extra subtasks)
-
-| Defect | Evidence | Status |
-|---|---|---|
-| Shared time parser syntax corruption | `a1139f3` | CODE_CHANGED; compile not yet checked |
-| Duplicate/trailing formatter source | `6336135` | CODE_CHANGED; compile not yet checked |
-| Owner split-shift schedule input parsing | `04c7935` | CODE_CHANGED; UI acceptance pending |
-
-## Batch — 2026-11-08: booking deserialization
-
-| Candidate task | State | Implementation evidence | Remaining acceptance |
-|---|---|---|---|
-| 27.04 | IN_PROGRESS | Canonical upcoming normalization `f5bea6e`, tolerant result-state parsing `d9aef63` | Compare all server status writers/readers; verify client/server state parity |
-| 36.01–36.07 | IN_PROGRESS (partial) | Unknown match outcomes no longer throw in booking mapper `1847042` | End-to-end result lifecycle, deduplication and timing still required |
-| 34.01–34.13 | IN_PROGRESS (partial) | Challenge opponent metadata retained for normalized and legacy types `de074bf`, `626cd64` | Challenge invitation lifecycle and server checks remain open |
-
-**Batch accounting:** 5 source commits, 0 fully closed subtasks. No additional scope items; all changes map to existing baseline categories. Current audited count remains **25 completed / 595 remaining / 620 total**. Flutter compilation and integration checks pending.
-
-## Batch — booking data integrity (current turn)
-
-Five code commits in `lib/data/models/booking_mapper.dart`:
-- `b41a971`: reject bookings whose end time is not after start time.
-- `31f1d42`: normalize hyphenated booking type aliases.
-- `4c8744d`: normalize operational date objects to calendar-day values.
-- `711d5ab`: reject NaN/infinite monetary values while deserializing.
-- `13cee29`: reject non-finite numeric counters and trim numeric strings.
-
-**Progress classification:** these are implementation improvements to booking integrity and legacy data handling, **not** five fully completed baseline subtasks. Tasks 27.04, 28.01, and 62 remain in progress or open until their full acceptance scope is satisfied. No new tasks added. Counter remains **25/620 complete, 595 remaining**. Flutter analyze and end-to-end acceptance deferred.
-
-## Batch — 2026-11-08: lifecycle contract coverage
-
-Added `test/data/models/booking_status_transition_contract_test.dart` covering all enum edges and idempotent repeats (`9d3a25e`, import fix `e8b24f2`). Test is written but **not run**; task 27.05 remains open because backend repeated requests are not covered. No false closure.
-
-## Batch — payment failure classification
-
-Task 29.01 marked code-complete with eight typed failure categories, classification by provider text/HTTP status, and explicit reconciliation-required flags. Tests added but not run. This classifier is not wired into payment flows yet and must never itself authorize a charge. Commit `b91cfbc`, test `7625cef`, counter update `62d3950`.
+- Release remains NOT READY: extern…3469 tokens truncated… typed failure categories, classification by provider text/HTTP status, and explicit reconciliation-required flags. Tests added but not run. This classifier is not wired into payment flows yet and must never itself authorize a charge. Commit `b91cfbc`, test `7625cef`, counter update `62d3950`.
 
 ## Batch — user-facing payment feedback and booking draft validation
 
