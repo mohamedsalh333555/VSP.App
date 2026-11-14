@@ -40,6 +40,7 @@ class StadiumProvider with ChangeNotifier {
  List<Stadium> get stadiums => _isFilterActive ? _filteredStadiums : _stadiums;
 
  void toggleQuickFilter(String filterKey) {
+ if (_listeningOwnerId != null) return; // Owner data must be kept intact.
  if (_activeQuickFilter == filterKey) {
  _activeQuickFilter = null;
  } else {
@@ -350,6 +351,7 @@ class StadiumProvider with ChangeNotifier {
 
  // Filter stadiums by governorate
  void applyGovernorateFilter(String? governorate) {
+ if (_listeningOwnerId != null) return;
  if (_selectedGovernorate == governorate) return;
  
  _selectedGovernorate = governorate;
@@ -380,6 +382,7 @@ class StadiumProvider with ChangeNotifier {
 
  // Apply complex filters with server-side pagination support
  void applyFilters(Map<String, dynamic> filters) {
+ if (_listeningOwnerId != null) return;
  _currentFilters = filters;
  _isFilterActive = true;
  _stadiums = [];
@@ -503,7 +506,7 @@ class StadiumProvider with ChangeNotifier {
 
  // Sort stadiums by distance
   void sortByDistance(Position? userPosition) {
-    if (userPosition == null) return;
+    if (_listeningOwnerId != null || userPosition == null) return;
     StadiumFilterService.sortStadiumsByDistance(_stadiums, userPosition.latitude, userPosition.longitude);
     if (_isFilterActive) {
       StadiumFilterService.sortStadiumsByDistance(_filteredStadiums, userPosition.latitude, userPosition.longitude);
@@ -513,6 +516,7 @@ class StadiumProvider with ChangeNotifier {
 
  // Reset all filters
  Future<void> clearFilters() async {
+ if (_listeningOwnerId != null) return;
  _isFilterActive = false;
  _currentFilters = null;
  _filteredStadiums = [];

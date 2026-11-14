@@ -79,6 +79,27 @@ void main() {
     expect(provider.stadiums.single.id, 'pitch-2');
   });
 
+  test('player filters cannot erase the current owner stadiums', () async {
+    final fixture = _OwnerStreamFixture();
+    final provider = StadiumProvider(repository: fixture);
+    addTearDown(() async {
+      provider.dispose();
+      await fixture.close();
+    });
+
+    provider.listenToOwnerStadiums('owner-A');
+    fixture.emit('owner-A', [_stadium('owned-pitch', 'owner-A')]);
+    await Future<void>.delayed(Duration.zero);
+    expect(provider.stadiums.single.id, 'owned-pitch');
+
+    provider.applyGovernorateFilter('Cairo');
+    provider.applyFilters({'location': 'Aswan'});
+    provider.toggleQuickFilter('no_deposit');
+    await provider.clearFilters();
+    expect(provider.stadiums.single.id, 'owned-pitch');
+    expect(provider.errorMessage, isNull);
+  });
+
   test('switching owners discards the prior owner stadium snapshot', () async {
     final source = _OwnerStreamFixture();
     final provider = StadiumProvider(repository: source);
