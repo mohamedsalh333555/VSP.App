@@ -15,7 +15,8 @@ void main() {
     ]) {
       final i = source.indexOf(tag);
       expect(i, greaterThanOrEqualTo(0));
-      expect(source.substring(i, i + 210),
+      final end = i + 210 < source.length ? i + 210 : source.length;
+      expect(source.substring(i, end),
           contains('Error.throwWithStackTrace(error, stack);'));
     }
     expect(source, contains('TimeoutException(\'Match details realtime timeout\')'));
