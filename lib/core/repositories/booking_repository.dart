@@ -235,10 +235,11 @@ class SupabaseBookingRepository implements BookingRepository {
 
       // Idempotent confirmation must not collect twice or send duplicate
       // receipts. Inconsistent paid flags require authoritative repair.
-      if (booking.isPaid &&
-          (booking.paymentStatus == 'paid' ||
-              booking.paymentStatus == 'fully_paid')) {
-        return true;
+      if (booking.isPaid) {
+        // A settled authoritative read is idempotent. A contradictory paid
+        // flag/status must fail closed rather than create a second settlement.
+        return booking.paymentStatus == 'paid' ||
+            booking.paymentStatus == 'fully_paid';
       }
       if (booking.paymentStatus == 'paid' ||
           booking.paymentStatus == 'fully_paid') {
@@ -252,6 +253,7 @@ class SupabaseBookingRepository implements BookingRepository {
         depositPaid: booking.depositPaid,
         paymentMethod: booking.paymentMethod,
         paymentStatus: booking.paymentStatus,
+        isPaid: booking.isPaid,
       );
       if (cashDue == null) return false;
       // A zero balance is sent to the RPC only to reconcile a complete

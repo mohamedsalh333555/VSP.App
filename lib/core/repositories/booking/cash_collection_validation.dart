@@ -11,8 +11,9 @@ class CashCollectionValidation {
     required double depositPaid,
     required String paymentMethod,
     required String paymentStatus,
+    bool isPaid = false,
   }) {
-    if (paymentMethod.toLowerCase().trim() != 'cash') return null;
+    if (isPaid || paymentMethod.toLowerCase().trim() != 'cash') return null;
     if (const {
       'paid',
       'fully_paid',
