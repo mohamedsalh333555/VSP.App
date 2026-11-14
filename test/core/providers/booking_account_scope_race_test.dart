@@ -62,6 +62,24 @@ Booking _fixtureBooking(String userId) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('disposing provider invalidates a pending player snapshot', () async {
+    SharedPreferences.setMockInitialValues({});
+    final responses = <String, Completer<List<Booking>>>{
+      'user-A': Completer<List<Booking>>(),
+    };
+    final started = <String, Completer<void>>{
+      'user-A': Completer<void>(),
+    };
+    final provider = BookingProvider(
+      repository: _DelayedBookingRepository(responses, started),
+    );
+    final pending = provider.loadUserBookings('user-A');
+    await started['user-A']!.future.timeout(const Duration(seconds: 5));
+    provider.dispose();
+    responses['user-A']!.complete([_fixtureBooking('user-A')]);
+    expect(await pending, isFalse);
+  });
+
   test('delayed user A bookings never replace user B after account switch',
       () async {
     SharedPreferences.setMockInitialValues({});

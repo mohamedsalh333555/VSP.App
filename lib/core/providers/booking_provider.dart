@@ -772,6 +772,10 @@ class BookingProvider with ChangeNotifier {
 
   @override
   void dispose() {
+    // Invalidate all pending reads, mutations and scoped draft restores.
+    // No old Future may notify a ChangeNotifier after it has been disposed.
+    _bookingScopeGeneration++;
+    _draftRestoreGeneration++;
     _syncCoordinator.dispose();
     super.dispose();
   }
