@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
@@ -223,8 +224,9 @@ class BookingQueryCoordinator {
             sink.add(upcoming);
           },
         )
-        .handleError((error) {
+        .handleError((Object error, StackTrace stack) {
           VSPLogger.w('Upcoming booking realtime failed (details redacted)');
+          Error.throwWithStackTrace(error, stack);
         });
   }
 
@@ -274,8 +276,9 @@ class BookingQueryCoordinator {
             sink.add(history);
           },
         )
-        .handleError((error) {
+        .handleError((Object error, StackTrace stack) {
           VSPLogger.w('Booking history realtime failed (details redacted)');
+          Error.throwWithStackTrace(error, stack);
         });
   }
 
@@ -362,10 +365,13 @@ class BookingQueryCoordinator {
         .eq('id', bookingId)
         .timeout(
           const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
+          onTimeout: (sink) => sink.addError(
+            TimeoutException('Match details realtime timeout'),
+          ),
         )
-        .handleError((e) {
+        .handleError((Object error, StackTrace stack) {
           VSPLogger.w('Match detail realtime failed (details redacted)');
+          Error.throwWithStackTrace(error, stack);
         });
   }
 }
