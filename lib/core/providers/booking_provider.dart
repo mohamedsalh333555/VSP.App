@@ -195,11 +195,20 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      final submittedDraftGeneration = _draftRestoreGeneration;
       final booking = await _repository.createBooking(_currentDraft!, userId);
       if (operationScope != _bookingScopeGeneration) return booking;
       _currentBooking = booking;
       BookingListModifier.insertBooking(_userBookings, booking);
-      _currentDraft = null; // Clear draft after successful creation
+      // Successful creation must invalidate both the in-memory draft and its
+      // persisted copy. Otherwise restart can offer to submit it again.
+      // Do not destroy a newer draft edited while the RPC was in progress.
+      if (submittedDraftGeneration == _draftRestoreGeneration) {
+        _draftRestoreGeneration++;
+        _currentDraft = null;
+        _draftOwnerUserId = null;
+        unawaited(BookingDraftStorage.clear());
+      }
 
       _isLoading = false;
       notifyListeners();
