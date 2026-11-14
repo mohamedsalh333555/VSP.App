@@ -1,14 +1,17 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vsp_application/core/repositories/team_repository.dart';
+import 'package:vsp_application/core/services/active_team_service.dart';
 
 void main() {
   test('loads every membership and returns deterministic team ordering',
       () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     const userId = '10000000-0000-4000-8000-000000000001';
     const teamA = '20000000-0000-4000-8000-000000000001';
     const teamB = '20000000-0000-4000-8000-000000000002';
@@ -75,6 +78,13 @@ void main() {
         'Aswan Stars',
         'Zamalek Juniors',
       ]);
+      expect(await ActiveTeamService.select(
+        userId: userId,
+        teamId: teamA,
+        verifiedTeams: teams,
+      ), isTrue);
+      expect((await TeamRepository(client: supabase)
+          .getActiveUserTeamStrict(userId))?.id, teamA);
     } finally {
       supabase.dispose();
     }

@@ -47,7 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   _teamFutureUserId = userId;
   _teamFuture = userId == null
       ? Future<Team?>.value(null)
-      : TeamRepository().getUserTeamStrict(userId);
+      : TeamRepository().getActiveUserTeamStrict(userId);
  }
 
  Future<void> _shareTeamCard(String teamName) async {
@@ -91,9 +91,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   if (uid == null) return;
   Team? team;
   try {
-    team = await TeamRepository().getUserTeamStrict(uid);
+    team = await TeamRepository().getActiveUserTeamStrict(uid);
   } catch (_) {
-    if (mounted) {
+    if (mounted && auth.currentUser?.id == uid) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       VSPFeedback.showError(
         context,
@@ -104,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     return;
   }
-  if (!mounted) return;
+  if (!mounted || auth.currentUser?.id != uid) return;
   if (team != null) {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
   } else {
@@ -116,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (_) => const CreateTeamSheet(),
     );
   }
-  if (mounted) {
+  if (mounted && auth.currentUser?.id == uid) {
     _refreshTeam(uid);
     setState(() {});
   }

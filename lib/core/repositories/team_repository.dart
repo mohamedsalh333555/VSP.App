@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../constants/egypt_governorates.dart';
 import '../services/logger_service.dart';
+import '../services/active_team_service.dart';
 import 'team/team_opponent_service.dart';
 import 'team/team_payload_builder.dart';
 import 'team/team_roster_coordinator.dart';
@@ -122,6 +123,13 @@ class TeamRepository {
      return byName != 0 ? byName : a.id.compareTo(b.id);
    });
    return teams;
+ }
+
+ /// Resolves the account's saved active team against fresh memberships.
+ /// A saved ID alone never grants access to a team that the user has left.
+ Future<Team?> getActiveUserTeamStrict(String userId) async {
+   final teams = await getUserTeamsStrict(userId);
+   return ActiveTeamService.resolve(userId: userId, teams: teams);
  }
 
  Future<Team?> getUserTeam(String userId) async {

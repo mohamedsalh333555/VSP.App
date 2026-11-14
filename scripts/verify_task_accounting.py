@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only consistency check for VSP's fixed 620-subtask execution scope.
+"""Read-only consistency check for VSP's active 618-subtask execution scope.
 
 This checks inventory/accounting only. It never promotes code or tests to VERIFIED.
 """
@@ -17,14 +17,18 @@ def main():
     ids = [task_id for _, task_id in rows]
     plan_ids = re.findall(r"^- (\d{2}\.\d{2}) —", plan, re.M)
     errors = []
-    if len(ids) != 620 or len(set(ids)) != 620:
-        errors.append("The fixed scope must contain exactly 620 unique subtask IDs.")
+    if len(ids) != 618 or len(set(ids)) != 618:
+        errors.append("The active scope must contain exactly 618 unique subtask IDs.")
     if len(plan_ids) != len(ids) or set(plan_ids) != set(ids):
         errors.append("The execution plan loses, duplicates, or adds core subtask IDs.")
     if len({task_id.split('.')[0] for task_id in ids}) != 82:
-        errors.append("Expected 82 original parent items.")
+        errors.append("Expected 82 active parent items.")
+    if any(task_id.startswith("56.") for task_id in ids + plan_ids):
+        errors.append("Cancelled group 56 must not reappear in the active scope.")
+    if not all(f"83.{index:02d}" in ids for index in range(1, 8)):
+        errors.append("The seven screenshot-triage tasks in group 83 are missing.")
     accepted = sum(mark == "x" for mark, _ in rows)
-    match = re.search(r"Current inventory: \*\*(\d+) verified; (\d+) not yet accepted", ledger)
+    match = re.search(r"^## .*?\((\d+)/(\d+)\)\s*$", ledger, re.M)
     if not match or tuple(map(int, match.groups())) != (accepted, len(ids) - accepted):
         errors.append("Ledger current inventory does not match the detailed checklist.")
     result = {
