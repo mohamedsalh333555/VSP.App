@@ -39,6 +39,8 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   bool _isJoining = false;
   int _championshipRefreshVersion = 0;
   Team? _myTeam;
+  String? _teamLookupUserId;
+  int _teamLookupGeneration = 0;
   late Stream<Championship?> _singleChampionshipStream;
   late Stream<List<TournamentMatch>> _matchesStream;
 
@@ -53,24 +55,27 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     _matchesStream = TournamentRepository()
         .getTournamentMatches(widget.championship.id)
         .asBroadcastStream();
-    _checkUserTeamState();
   }
 
-  Future<void> _checkUserTeamState() async {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userId = Provider.of<AuthProvider>(context).currentUser?.id;
+    if (_teamLookupUserId == userId) return;
+    _teamLookupUserId = userId;
+    _teamLookupGeneration++;
+    _myTeam = null;
+    if (userId != null) _checkUserTeamState(userId, _teamLookupGeneration);
+  }
+
+  Future<void> _checkUserTeamState(String userId, int generation) async {
     try {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      if (auth.currentUser != null) {
-        final userId = auth.currentUser!.id;
-        final team = await TeamRepository().getUserTeamStrict(userId);
-        if (!mounted || context.read<AuthProvider>().currentUser?.id != userId) return;
-        if (team != null && mounted) {
-          setState(() {
-            _myTeam = team;
-          });
-        }
-      }
+      final team = await TeamRepository().getActiveUserTeamStrict(userId);
+      if (!mounted || _teamLookupGeneration != generation ||
+          context.read<AuthProvider>().currentUser?.id != userId) return;
+      setState(() => _myTeam = team);
     } catch (e) {
-      debugPrint('Error checking user team state in championship: $e');
+      debugPrint('Championship team lookup failed (details redacted)');
     }
   }
 
@@ -111,7 +116,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
 
     try {
       final userId = auth.currentUser!.id;
-      final team = await TeamRepository().getUserTeamStrict(userId);
+      final team = await TeamRepository().getActiveUserTeamStrict(userId);
       if (!mounted || context.read<AuthProvider>().currentUser?.id != userId) return;
 
       if (team != null &&
