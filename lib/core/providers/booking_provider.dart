@@ -239,6 +239,8 @@ class BookingProvider with ChangeNotifier {
       // tied to the previous identity and cannot follow another session.
       _currentBooking = null;
       _publicMatches = [];
+      _isLoadingPublicMatches = false;
+      _hasMoreMatches = true;
       _userBookingLoadCount = 0;
       _ownerBookingLoadCount = 0;
       _hasLoadedOwnerBookings = false;
@@ -300,6 +302,8 @@ class BookingProvider with ChangeNotifier {
       _isLoading = false;
       _currentBooking = null;
       _publicMatches = [];
+      _isLoadingPublicMatches = false;
+      _hasMoreMatches = true;
       _userBookingLoadCount = 0;
       _ownerBookingLoadCount = 0;
       _hasLoadedOwnerBookings = false;
@@ -426,6 +430,7 @@ class BookingProvider with ChangeNotifier {
     required DateTime newStartTime,
     required DateTime newEndTime,
   }) async {
+    final operationScope = _bookingScopeGeneration;
     if (_rescheduleRequestIds.contains(bookingId)) return false;
     _rescheduleRequestIds.add(bookingId);
     _errorMessage = null;
@@ -436,16 +441,19 @@ class BookingProvider with ChangeNotifier {
         newStartTime: newStartTime,
         newEndTime: newEndTime,
       );
+      if (operationScope != _bookingScopeGeneration) return success;
       if (!success) {
         _errorMessage = 'تعذر إرسال اقتراح الموعد الجديد حالياً.';
       }
       return success;
     } catch (_) {
-      _errorMessage = 'تعذر إرسال اقتراح الموعد الجديد حالياً.';
+      if (operationScope == _bookingScopeGeneration) {
+        _errorMessage = 'تعذر إرسال اقتراح الموعد الجديد حالياً.';
+      }
       return false;
     } finally {
       _rescheduleRequestIds.remove(bookingId);
-      notifyListeners();
+      if (operationScope == _bookingScopeGeneration) notifyListeners();
     }
   }
 
@@ -454,6 +462,7 @@ class BookingProvider with ChangeNotifier {
     required String bookingId,
     required bool accept,
   }) async {
+    final operationScope = _bookingScopeGeneration;
     if (_rescheduleResponseIds.contains(bookingId)) return false;
     _rescheduleResponseIds.add(bookingId);
     _errorMessage = null;
@@ -463,18 +472,21 @@ class BookingProvider with ChangeNotifier {
         bookingId: bookingId,
         accept: accept,
       );
+      if (operationScope != _bookingScopeGeneration) return success;
       if (!success && !accept) {
         _errorMessage = 'تعذر رفض الموعد المقترح حالياً.';
       }
       return success;
     } catch (_) {
-      _errorMessage = accept
-          ? 'تعذر قبول الموعد المقترح حالياً.'
-          : 'تعذر رفض الموعد المقترح حالياً.';
+      if (operationScope == _bookingScopeGeneration) {
+        _errorMessage = accept
+            ? 'تعذر قبول الموعد المقترح حالياً.'
+            : 'تعذر رفض الموعد المقترح حالياً.';
+      }
       return false;
     } finally {
       _rescheduleResponseIds.remove(bookingId);
-      notifyListeners();
+      if (operationScope == _bookingScopeGeneration) notifyListeners();
     }
   }
 
@@ -485,13 +497,14 @@ class BookingProvider with ChangeNotifier {
     required String reason,
     required int durationHours,
   }) async {
+    final operationScope = _bookingScopeGeneration;
     final res = await _repository.requestEmergencyClosure(
       stadiumId: stadiumId,
       ownerId: ownerId,
       reason: reason,
       durationHours: durationHours,
     );
-    notifyListeners();
+    if (operationScope == _bookingScopeGeneration) notifyListeners();
     return res;
   }
 
@@ -502,6 +515,7 @@ class BookingProvider with ChangeNotifier {
 
   /// Fetch public matches directly from the unified active stream
   Future<void> fetchPublicMatches({bool isRefresh = false}) async {
+    final operationScope = _bookingScopeGeneration;
     if (_isLoadingPublicMatches) return;
     if (isRefresh) {
       _isLoadingPublicMatches = true;
@@ -509,18 +523,25 @@ class BookingProvider with ChangeNotifier {
     }
 
     try {
-      _publicMatches = await _matchCoordinator.fetchPublicMatches();
+      final matches = await _matchCoordinator.fetchPublicMatches();
+      if (operationScope != _bookingScopeGeneration) return;
+      _publicMatches = matches;
       _hasMoreMatches = false;
-    } catch (e) {
-      _errorMessage = 'تعذر تحميل المباريات حالياً.';
+    } catch (_) {
+      if (operationScope == _bookingScopeGeneration) {
+        _errorMessage = 'تعذر تحميل المباريات حالياً.';
+      }
     } finally {
-      _isLoadingPublicMatches = false;
-      notifyListeners();
+      if (operationScope == _bookingScopeGeneration) {
+        _isLoadingPublicMatches = false;
+        notifyListeners();
+      }
     }
   }
 
   /// Join a public match
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
+    final operationScope = _bookingScopeGeneration;
     final actionKey = '$bookingId|$userId';
     if (!_joiningMatchKeys.add(actionKey)) return false;
     _errorMessage = null;
@@ -529,16 +550,19 @@ class BookingProvider with ChangeNotifier {
         bookingId: bookingId,
         userId: userId,
       );
-      _errorMessage = res.error;
+      if (operationScope == _bookingScopeGeneration) {
+        _errorMessage = res.error;
+      }
       return res.success;
     } finally {
       _joiningMatchKeys.remove(actionKey);
-      notifyListeners();
+      if (operationScope == _bookingScopeGeneration) notifyListeners();
     }
   }
 
   /// Leave a public match
   Future<bool> leavePublicMatch(String bookingId, String userId) async {
+    final operationScope = _bookingScopeGeneration;
     final actionKey = '$bookingId|$userId';
     if (!_leavingMatchKeys.add(actionKey)) return false;
     _errorMessage = null;
@@ -547,11 +571,13 @@ class BookingProvider with ChangeNotifier {
         bookingId: bookingId,
         userId: userId,
       );
-      _errorMessage = res.error;
+      if (operationScope == _bookingScopeGeneration) {
+        _errorMessage = res.error;
+      }
       return res.success;
     } finally {
       _leavingMatchKeys.remove(actionKey);
-      notifyListeners();
+      if (operationScope == _bookingScopeGeneration) notifyListeners();
     }
   }
 
@@ -591,6 +617,7 @@ class BookingProvider with ChangeNotifier {
       } catch (_) {
         debugPrint('Match result booking refresh failed (details redacted)');
       }
+      if (operationScope != _bookingScopeGeneration) return success;
       if (!success) {
         _errorMessage = 'Failed to submit result or results do not match.';
       }
@@ -640,7 +667,9 @@ class BookingProvider with ChangeNotifier {
         } catch (_) {
           debugPrint('Payment status refresh failed (details redacted)');
         }
-      } else {
+      }
+      if (operationScope != _bookingScopeGeneration) return success;
+      if (!success) {
         _errorMessage = 'تعذر تحديث حالة الدفع';
       }
       notifyListeners();
@@ -668,6 +697,7 @@ class BookingProvider with ChangeNotifier {
     required double depositPaid,
     required String paymentStatus,
   }) async {
+    final operationScope = _bookingScopeGeneration;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -682,13 +712,17 @@ class BookingProvider with ChangeNotifier {
         depositPaid: depositPaid,
         paymentStatus: paymentStatus,
       );
-      _isLoading = false;
-      notifyListeners();
+      if (operationScope == _bookingScopeGeneration) {
+        _isLoading = false;
+        notifyListeners();
+      }
       return success;
     } catch (_) {
-      _errorMessage = 'تعذر تحديث بيانات الحجز حاليًا.';
-      _isLoading = false;
-      notifyListeners();
+      if (operationScope == _bookingScopeGeneration) {
+        _errorMessage = 'تعذر تحديث بيانات الحجز حاليًا.';
+        _isLoading = false;
+        notifyListeners();
+      }
       return false;
     }
   }
