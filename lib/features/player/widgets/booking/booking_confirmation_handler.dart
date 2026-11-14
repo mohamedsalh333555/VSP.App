@@ -160,8 +160,8 @@ class BookingConfirmationHandler {
               : 'Notice: Cash booking is reserved for in-governorate players ($playerName vs $stadiumName). You can confirm instantly via online payment or deposit.';
         }
       }
-    } catch (e) {
-      VSPLogger.w('Location verification fallback to online-preferred: $e');
+    } catch (_) {
+      VSPLogger.w('Location verification fallback to online-preferred (details redacted)');
       isCrossGovernorate = true;
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       crossGovMessage = isArabic
@@ -273,8 +273,8 @@ class BookingConfirmationHandler {
         }
         return;
       }
-    } catch (e, stack) {
-      VSPLogger.e('Error checking slot availability before booking', e, stack);
+    } catch (_) {
+      VSPLogger.e('Slot availability validation failed (details redacted)');
       if (!context.mounted) return;
       if (!isSameUser()) {
         onLoadingChanged(false);
@@ -425,8 +425,8 @@ class BookingConfirmationHandler {
       // an empty booking history, or an active cash booking could be bypassed.
       existingUserBookings =
           await directRepo.getUserBookingsDirectlyStrict(userId);
-    } catch (e, stack) {
-      VSPLogger.e('Could not verify existing bookings before payment routing', e, stack);
+    } catch (_) {
+      VSPLogger.e('Cash booking payment-policy verification failed (details redacted)');
       if (!context.mounted) return;
       if (!isSameUser()) {
         onLoadingChanged(false);
