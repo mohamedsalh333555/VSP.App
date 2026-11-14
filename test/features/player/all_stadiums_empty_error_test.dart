@@ -58,6 +58,7 @@ void main() {
     WidgetTester tester,
     StadiumProvider provider, {
     Locale locale = const Locale('en'),
+    Widget Function(Stadium)? detailsBuilder,
   }) async {
     await tester.pumpWidget(
       MultiProvider(
@@ -69,7 +70,10 @@ void main() {
           locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: const AllStadiumsScreen(initialGovernorate: 'Cairo'),
+          home: AllStadiumsScreen(
+            initialGovernorate: 'Cairo',
+            detailsBuilder: detailsBuilder,
+          ),
         ),
       ),
     );
@@ -135,6 +139,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Partial Pitch'), findsOneWidget);
     expect(find.text('No Stadiums Found'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tapping a result opens details for the selected stadium', (tester) async {
+    final repository = _ListingRepository();
+    final provider = StadiumProvider(repository: repository);
+    addTearDown(provider.dispose);
+    String? openedId;
+    await showListing(tester, provider, detailsBuilder: (stadium) {
+      openedId = stadium.id;
+      return Scaffold(body: Text('Details: ${stadium.id}'));
+    });
+
+    final stadium = Stadium.fromFirestore({
+      'id': 'chosen-stadium',
+      'name': 'Chosen Stadium',
+      'governorate': 'Cairo',
+      'is_verified': true,
+      'is_blocked': false,
+      'is_deleted_by_owner': false,
+    }, 'chosen-stadium');
+    repository.request('Cairo', 0).complete({'items': [stadium], 'lastDoc': 1});
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Chosen Stadium'));
+    await tester.pumpAndSettle();
+    expect(openedId, 'chosen-stadium');
+    expect(find.text('Details: chosen-stadium'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -22,11 +22,13 @@ export '../services/stadium_filter_sort_service.dart' show StadiumSortOption;
 class AllStadiumsScreen extends StatefulWidget {
   final String? initialGovernorate;
   final String? initialSearchQuery;
+  final Widget Function(Stadium)? detailsBuilder;
 
   const AllStadiumsScreen({
     super.key,
     this.initialGovernorate,
     this.initialSearchQuery,
+    this.detailsBuilder,
   });
 
   @override
@@ -359,7 +361,8 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => StadiumDetailsScreen(stadium: stadium),
+                                      builder: (_) => widget.detailsBuilder?.call(stadium) ??
+                                          StadiumDetailsScreen(stadium: stadium),
                                     ),
                                   );
                                 },
