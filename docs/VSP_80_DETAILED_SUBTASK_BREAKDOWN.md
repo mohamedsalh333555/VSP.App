@@ -895,10 +895,10 @@
 - [x] 76.01 — جرد عروض SECURITY DEFINER الأربعة
 - [x] 76.02 — تحديد صلاحيات القراءة — [فحص staging بالقراءة فقط](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
 - [x] 76.03 — تحويل العرض أو حمايته [اختبارات وظائف الحجوزات/عروض Staging](security/VSP_VIEW_AND_BOOKING_WINDOW_ACCEPTANCE_2026-11-13.md) (قبول محدود، دون تطبيق الإصلاح على Staging)
-- [ ] 76.04 — اختبار الوصول المسموح
-- [ ] 76.05 — اختبار منع التسريب
+- [x] 76.04 — اختبار الوصول المسموح — [فحص أدوار staging بصلاحيات SQL](security/VSP_STAGING_VIEW_ROLE_MATRIX_ACCEPTANCE_2026-11-14.md) (قراءة موضعية؛ بيانات نتائج البطولات فارغة)
+- [x] 76.05 — اختبار منع التسريب — [فحص عزل اشتراكات مالكَين ومنع المجهول واللاعب](security/VSP_STAGING_VIEW_ROLE_MATRIX_ACCEPTANCE_2026-11-14.md) (لا يغطي كل تسريبات النظام)
 - [x] 76.06 — توثيق النتيجة [اختبارات وظائف الحجوزات/عروض Staging](security/VSP_VIEW_AND_BOOKING_WINDOW_ACCEPTANCE_2026-11-13.md) (قبول محدود، دون تطبيق الإصلاح على Staging)
-- [ ] 76.07 — اختبار سلوك العروض مع مستخدمين من أدوار مختلفة
+- [x] 76.07 — اختبار سلوك العروض مع مستخدمين من أدوار مختلفة — [مصفوفة anon/player/owner/admin على staging](security/VSP_STAGING_VIEW_ROLE_MATRIX_ACCEPTANCE_2026-11-14.md) (محاكاة دور وجلسة SQL؛ لا تثبت رحلة JWT حقيقية)
 
 ### 77 — 198 callable SECURITY DEFINER RPCs (11)
 

@@ -1,3 +1,8 @@
+## 2026-11-14 — Staging view role checks (186/432)
+
+- Accepted **76.04, 76.05 and 76.07** at a bounded staging SQL role-check scope for the four formerly privileged views. A transaction-scoped `anon` role saw 2 public courts, 2 active plans, 0 clean-sheet rows, and had no SELECT grant on `owner_subscription_status`. A player saw 0 owner rows; two separate owners each saw exactly their own row (1/1, 0 foreign); an admin saw 12 owner rows as authorized; authenticated with no identity saw 0 owner rows. Public courts exposed 0 blocked/deleted rows in the anonymous sample. [Evidence and limits](security/VSP_STAGING_VIEW_ROLE_MATRIX_ACCEPTANCE_2026-11-14.md).
+- **618 total / 186 accepted / 432 open.** All statements were `BEGIN READ ONLY` and `ROLLBACK`; no real JWT sign-in or nonempty tournament fixture was tested. Broader cross-account privacy journeys, 198 privileged RPCs, production deployment and release checks remain open.
+
 ## 2026-11-14 — Matchup fee rebuild and rollback test (183/435)
 
 - Accepted **72.04 and 72.07** with a bounded disposable PostgreSQL contract: install the legacy paid-sixth-team function, install the five-team replacement under a savepoint, roll back to the previous definition, then install and replay the five-team definition. The test adds a fifth team and rejects a sixth even with a paid legacy-fee row, preserving its invite code. It checks `anon`/`authenticated` EXECUTE grants and refuses remote database targets. [Evidence and boundaries](security/VSP_MATCHUP_FEE_REBUILD_ROLLBACK_ACCEPTANCE_2026-11-14.md); code commit `fad6bfaa`; [Account SQL CI 43618848409](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43618848409).
