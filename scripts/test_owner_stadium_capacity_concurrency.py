@@ -352,12 +352,22 @@ WHERE name='pro-1';
 """))
         print("PASS: owner venue edits and re-review remain available", flush=True)
 
-        # Quota guard intentionally ignores archived rows; the moderation
-        # trigger must still reject the live is_verified=true column default
-        # and direct explicit approval flags on any insert.
-        deny(SCRATCH, as_owner(FREE, f"""
+        # New legitimate owner rows default to unverified, even when older
+        # staging/production schemas originally defaulted verified=true.
+        # Explicit self-verification and forged ratings still fail closed.
+        ok(SCRATCH, as_owner(FREE, f"""
 INSERT INTO public.stadiums(owner_id,name,is_deleted_by_owner)
 VALUES('{FREE}', 'unapproved-default-insert', true);
+"""))
+        verified_flag = ok(SCRATCH, """
+SELECT is_verified::text FROM public.stadiums
+WHERE name='unapproved-default-insert';
+""")
+        if verified_flag != "false":
+            raise RuntimeError("New owner venue must default to unverified")
+        deny(SCRATCH, as_owner(FREE, f"""
+INSERT INTO public.stadiums(owner_id,name,is_deleted_by_owner,is_verified)
+VALUES('{FREE}', 'forged-owner-verification', true,true);
 """), "STADIUM_MODERATION_FIELD_FORBIDDEN")
         deny(SCRATCH, as_owner(FREE, f"""
 INSERT INTO public.stadiums(owner_id,name,is_deleted_by_owner,is_verified,rating)
@@ -367,7 +377,7 @@ VALUES('{FREE}', 'forged-insert', true,false,5);
 INSERT INTO public.stadiums(owner_id,name,is_deleted_by_owner,is_verified)
 VALUES('{FREE}', 'properly-unverified-archive', true,false);
 """))
-        print("PASS: direct owner insert cannot publish venue/forge rating", flush=True)
+        print("PASS: owner default unverified; explicit approval/rating forgery denied", flush=True)
 
         # Admin approval remains possible. Test as an independent JWT subject
         # with a real admin policy in the disposable test database.

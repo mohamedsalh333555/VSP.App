@@ -2,6 +2,13 @@
 -- This is an isolated PostgreSQL test candidate, not an approved migration.
 -- Preserve admin/co-founder moderation and legitimate owner re-review/soft-delete.
 -- Also review grants, update policies and existing functions before rollout.
+-- The inspected staging table defaults is_verified to TRUE. Without a
+-- synchronized default, a legitimate owner INSERT that omits the flag would
+-- be rejected by the guard. Change only the default: existing rows and
+-- manually granted approvals remain untouched. This is NOT deployed.
+ALTER TABLE public.stadiums
+  ALTER COLUMN is_verified SET DEFAULT false;
+
 CREATE OR REPLACE FUNCTION public.guard_stadium_moderation_fields()
 RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER
