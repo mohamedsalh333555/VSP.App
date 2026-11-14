@@ -1,3 +1,8 @@
+## 2026-11-14 — Stadium list empty and partial-data behavior (191/427)
+
+- Accepted **14.05 and 14.07** with the actual `AllStadiumsScreen` widget and an injected delayed repository: a zero-result Cairo search shows an actionable empty state and resetting filters makes a new nationwide request; a malformed response shows a safe Arabic error without exposing the payload, then retry replaces it with an empty state; a stadium missing optional fields still renders a list card. [Test scope and boundaries](VSP_STADIUM_EMPTY_AND_PARTIAL_DATA_ACCEPTANCE_2026-11-14.md), source commit `af39c4b2`, [Flutter CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43622235834).
+- **618 total / 191 accepted / 427 open.** No external venue data or user account was changed. Navigation to details, full booking eligibility and all malformed API variants remain open.
+
 ## 2026-11-14 — Governorate discovery and public visibility (189/429)
 
 - Accepted **14.03 and 14.08** after fixing the repository's unrecognized explicit-governorate fallback. It now returns an empty page without querying the nationwide list. A mocked HTTP request asserts the Aswan governorate and verified/not-blocked/not-deleted predicates are sent to the server. A read-only `anon` staging count found 2 visible Cairo stadiums and 0 unverified, blocked or owner-deleted rows. [Scope and evidence](VSP_STADIUM_GOVERNORATE_VISIBILITY_ACCEPTANCE_2026-11-14.md); code commit `1943b8ae`; [Flutter CI run 43619831953](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43619831953).
