@@ -1,3 +1,11 @@
+## 2026-11-14 — Booking order and history browsing accepted (181/437)
+
+- Accepted **16.06** for deterministic player booking order and browsing the history section. The direct `bookings_screen_test.dart` exercises two future bookings in reversed input order, checks their visible order, scrolls to a completed historical booking and verifies its card. The categorization tests cover stable ties, newest history first and owner order without mutating the source list. [Evidence and boundaries](VSP_BOOKING_ORDER_BROWSING_ACCEPTANCE_16_06_2026-11-14.md).
+- The latest branch commit `f3136c49` passed [Flutter CI 43598491150](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43598491150), [Android smoke 43598491260](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43598491260), iOS compliance, Account SQL and Owner checkout checks. Android smoke covers onboarding/login rather than the history screen itself.
+- The same branch fixes the profile card and championship details/join path to resolve the account's saved active team from verified memberships and clears stale team presentation on account switch. These are **CODE_DONE**, covered by the direct repository active-selection test and Flutter CI, but do not close **18.01**, live tournament registration, or cross-account staging journeys.
+- The execution-plan inventory and read-only counter check now agree on the active 618 IDs after the owner's group-56 cancellation and group-83 addition. `python3 scripts/verify_task_accounting.py` returns 181 accepted, 437 open, no errors.
+- **618 total / 181 accepted / 437 open.** No staging/production database mutation, prices, payment backend, `main` merge or APK release.
+
 Warning: truncated output (original token count: 33469)
 Total output lines: 993
 
