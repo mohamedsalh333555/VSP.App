@@ -7,7 +7,7 @@ void main() {
     final details = File(
       'lib/features/player/screens/stadium_details_screen.dart',
     ).readAsStringSync();
-    expect(details, contains('bookingEnabled: stadium.isVerified && !stadium.isBlocked && !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty'));
+    expect(details, contains('bookingEnabled: resolved.canBook'));
     expect(details, contains('final hasStreamIssue = snapshot.hasError || parseFailed;'));
     expect(details, contains('final isUnavailable = !stadium.isVerified || stadium.isBlocked ||'));
     expect(details, contains('onRetry: () => setState(_subscribeToStadium),'));

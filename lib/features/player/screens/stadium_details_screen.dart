@@ -11,6 +11,7 @@ import '../widgets/stadium_details/stadium_image_carousel.dart';
 import '../widgets/stadium_details/stadium_information_tab.dart';
 import '../widgets/stadium_details/stadium_pitch_conditions_tab.dart';
 import '../widgets/stadium_details/stadium_ratings_tab.dart';
+import '../widgets/stadium_details/stadium_snapshot_resolver.dart';
 
 /// Screen displaying complete details for a stadium including image carousel, facilities, conditions, and reviews.
 class StadiumDetailsScreen extends StatefulWidget {
@@ -24,6 +25,7 @@ class StadiumDetailsScreen extends StatefulWidget {
 class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late Stream<List<Map<String, dynamic>>> _stadiumStream;
+  final StadiumSnapshotResolver _snapshotResolver = StadiumSnapshotResolver();
 
   void _subscribeToStadium() {
     _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
@@ -128,17 +130,15 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     final l10n = AppLocalizations.of(context)!;
 
     return StreamBuilder<List<Map<String, dynamic>>>(
+      key: ValueKey(widget.stadium.id),
       stream: _stadiumStream,
       builder: (context, snapshot) {
-        Stadium stadium = widget.stadium;
-        var parseFailed = false;
-        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          try {
-            stadium = Stadium.fromFirestore(snapshot.data!.first, widget.stadium.id);
-          } catch (_) {
-            parseFailed = true;
-          }
-        }
+        final resolved = _snapshotResolver.resolve(
+          routeStadium: widget.stadium,
+          snapshot: snapshot,
+        );
+        final stadium = resolved.stadium;
+        final parseFailed = resolved.parseFailed;
         // Derive the gallery from the same resolved stadium snapshot used by
         // the information tabs. This keeps images in sync with live DB updates,
         // not only with the route's original widget argument.
@@ -147,6 +147,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
         final isUnavailable = !stadium.isVerified || stadium.isBlocked ||
             (snapshot.hasData && snapshot.data!.isEmpty);
         final hasStreamIssue = snapshot.hasError || parseFailed;
+        final isRefreshing = snapshot.connectionState == ConnectionState.waiting;
 
         if (isUnavailable) {
           return VSPScaffold(
@@ -177,6 +178,18 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
             bottom: false,
             child: Column(
               children: [
+                if (isRefreshing)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      VSPSpacing.md, VSPSpacing.sm, VSPSpacing.md, 0,
+                    ),
+                    child: Text(
+                      isArabic
+                          ? 'جارٍ التحقق من أحدث بيانات الملعب قبل الحجز.'
+                          : 'Checking the latest venue details before booking.',
+                      style: const TextStyle(color: VSPColors.textSecondary),
+                    ),
+                  ),
                 if (stadium.isUnderMaintenance)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -297,7 +310,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           ),
           bottomNavigationBar: StadiumBottomBookingBar(
             stadium: stadium,
-            bookingEnabled: stadium.isVerified && !stadium.isBlocked && !hasStreamIssue && snapshot.hasData && snapshot.data!.isNotEmpty,
+            bookingEnabled: resolved.canBook,
           ),
         );
       },
