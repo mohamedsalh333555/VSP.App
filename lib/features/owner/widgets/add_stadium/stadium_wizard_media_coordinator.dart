@@ -151,7 +151,7 @@ class StadiumWizardMediaCoordinator {
     onStateChanged();
 
     if (stadiumId == null) {
-      StadiumWizardDraftService.saveImages(uid, images);
+      await StadiumWizardDraftService.saveImages(uid, images);
     }
   }
 
@@ -163,12 +163,14 @@ class StadiumWizardMediaCoordinator {
     required String? stadiumId,
     required String? uid,
     required VoidCallback onStateChanged,
+    Future<bool> Function(String)? deleteUploaded,
   }) async {
     // Existing stadium images remain referenced by the persisted record until
     // the edit is successfully saved; never delete them while the wizard is open.
     final imageUrl = image['url']?.toString().trim();
     if (imageUrl?.isNotEmpty == true && image['isNewUpload'] == true) {
-      final deleted = await StadiumWizardImageService.deleteUploadedImage(imageUrl!);
+      final deleted = await (deleteUploaded?.call(imageUrl!) ??
+          StadiumWizardImageService.deleteUploadedImage(imageUrl!));
       if (!deleted) return;
     } else if (stadiumId != null && imageUrl?.isNotEmpty == true) {
       // Defer deleting persisted media until the record update succeeds.
@@ -177,7 +179,7 @@ class StadiumWizardMediaCoordinator {
     images.remove(image);
     onStateChanged();
     if (stadiumId == null) {
-      StadiumWizardDraftService.saveImages(uid, images);
+      await StadiumWizardDraftService.saveImages(uid, images);
     }
   }
 }
