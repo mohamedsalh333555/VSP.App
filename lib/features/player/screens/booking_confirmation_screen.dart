@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../core/services/active_team_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -161,7 +162,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       });
     }
     try {
-      final team = await TeamRepository().getUserTeamStrict(userId);
+      // Challenge/team checkout must use the account's explicit active team,
+      // not whichever membership the database happens to return first.
+      final teams = await TeamRepository().getUserTeamsStrict(userId);
+      final team = await ActiveTeamService.resolve(
+        userId: userId,
+        teams: teams,
+      );
       if (mounted &&
           generation == _userTeamRequestGeneration &&
           context.read<AuthProvider>().currentUser?.id == userId) {
