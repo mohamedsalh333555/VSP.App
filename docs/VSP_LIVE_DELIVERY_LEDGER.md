@@ -1,3 +1,14 @@
+## 2026-11-14 — Team discovery, search and profile route (196/422)
+
+- Accepted **15.01, 15.02, 15.03** within the loaded rankings UI. A widget test supplies two synthetic teams, verifies the Aswan/football selection excludes a Cairo/basketball team, checks a no-result search and a matching search, changes the location/sport filter, and taps the card to pass the selected team ID to its details route. The normal route still constructs `TeamProfileScreen`; [evidence and scope](VSP_TEAM_DISCOVERY_ACCEPTANCE_2026-11-14.md), [Flutter CI 43642905483](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43642905483).
+- **618 total / 196 accepted / 422 open.** The widget fixture does not establish complete public-team pagination, live account eligibility or a real device journey.
+
+## 2026-11-14 — Stadium details route and private team roster (193/425)
+
+- Accepted **14.06** for a `StadiumCard` tap in the actual `AllStadiumsScreen`, verifying the selected venue ID reaches the detail route. The route's test builder avoids external network access; normal app navigation still constructs `StadiumDetailsScreen`. [Evidence and limits](VSP_STADIUM_NAVIGATION_AND_TEAM_ROSTER_ACCEPTANCE_2026-11-14.md); [Flutter CI 43642905483](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43642905483).
+- Accepted **15.04** at the private roster RPC boundary. The deployed staging function used nonexistent `team_members.id`, causing member calls to fail. A new migration orders by `joined_at,user_id`; isolated PostgreSQL tests pass member/admin positive and outsider/anon negative cases. Applied on staging as recorded version `20261114212217`; read-only role checks there returned **10** member-visible rows, **0** to a nonmember and no anonymous EXECUTE grant. [Account SQL CI 43642533456](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43642533456). No personal fields were returned to the investigation.
+- **618 total / 193 accepted / 425 open.** No production schema/data or pricing changes. Actual device navigation, all team-profile data surfaces and broader cross-account tests remain open.
+
 ## 2026-11-14 — Stadium list empty and partial-data behavior (191/427)
 
 - Accepted **14.05 and 14.07** with the actual `AllStadiumsScreen` widget and an injected delayed repository: a zero-result Cairo search shows an actionable empty state and resetting filters makes a new nationwide request; a malformed response shows a safe Arabic error without exposing the payload, then retry replaces it with an empty state; a stadium missing optional fields still renders a list card. [Test scope and boundaries](VSP_STADIUM_EMPTY_AND_PARTIAL_DATA_ACCEPTANCE_2026-11-14.md), source commit `af39c4b2`, [Flutter CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43622235834).
