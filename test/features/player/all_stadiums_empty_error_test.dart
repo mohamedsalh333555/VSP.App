@@ -82,7 +82,7 @@ void main() {
     addTearDown(provider.dispose);
     await showListing(tester, provider);
 
-    repository.request('Cairo', 0).complete({'items': [], 'lastDoc': 0});
+    repository.request('Cairo', 0).complete({'items': <Stadium>[], 'lastDoc': 0});
     await tester.pumpAndSettle();
     expect(find.text('No Stadiums Found'), findsOneWidget);
     expect(find.text('Reset Filters'), findsOneWidget);
@@ -90,7 +90,7 @@ void main() {
     await tester.tap(find.text('Reset Filters'));
     await tester.pump();
     expect(repository.requests['All'], hasLength(1));
-    repository.request('All', 0).complete({'items': [], 'lastDoc': 0});
+    repository.request('All', 0).complete({'items': <Stadium>[], 'lastDoc': 0});
     await tester.pumpAndSettle();
     expect(find.text('No Stadiums Found'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -111,7 +111,7 @@ void main() {
     await tester.tap(find.text('إعادة المحاولة'));
     await tester.pump();
     expect(repository.requests['Cairo'], hasLength(2));
-    repository.request('Cairo', 1).complete({'items': [], 'lastDoc': 0});
+    repository.request('Cairo', 1).complete({'items': <Stadium>[], 'lastDoc': 0});
     await tester.pumpAndSettle();
     expect(find.text('لم يتم العثور على ملاعب'), findsOneWidget);
     expect(tester.takeException(), isNull);
