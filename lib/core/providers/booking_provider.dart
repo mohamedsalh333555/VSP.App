@@ -119,7 +119,7 @@ class BookingProvider with ChangeNotifier {
     _draftRestoreGeneration++;
     _draftOwnerUserId = BookingDraftStorage.currentAuthenticatedUserId();
     _currentDraft = draft;
-    BookingDraftStorage.save(draft, userId: _draftOwnerUserId);
+    BookingDraftStorage.save(draft, userId: _draftOwnerUserId ?? '');
     notifyListeners();
   }
 
@@ -167,7 +167,7 @@ class BookingProvider with ChangeNotifier {
         maxPlayers: maxPlayers,
         challengeCode: challengeCode,
       );
-      BookingDraftStorage.save(_currentDraft, userId: _draftOwnerUserId);
+      BookingDraftStorage.save(_currentDraft, userId: _draftOwnerUserId ?? '');
       notifyListeners();
     }
   }

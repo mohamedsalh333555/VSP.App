@@ -39,6 +39,16 @@ void main() {
     expect(prefs.getString('vsp_draft_booking'), isNull);
   });
 
+  test('startup without authenticated identity does not consume another valid scoped draft',
+      () async {
+    await BookingDraftStorage.save(_draft('private'), userId: 'user-A');
+    expect(await BookingDraftStorage.restore(userId: ''), isNull);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('vsp_draft_booking'), isNotNull);
+    expect((await BookingDraftStorage.restore(userId: 'user-A'))?.stadiumName,
+        'private');
+  });
+
   test('legacy unscoped draft is rejected instead of being assigned to user B',
       () async {
     final prefs = await SharedPreferences.getInstance();
