@@ -18,7 +18,8 @@ void main() {
     expect(check, contains('.timeout(const Duration(seconds: 10))'));
     expect(check, isNot(contains('.getBookingsForStadium(')));
     expect(check, contains('if (isConflict)'));
-    expect(check, contains('Error checking slot availability before booking'));
+    expect(check, contains('Slot availability validation failed (details redacted)'));
+    expect(check, isNot(contains('Error checking slot availability before booking')));
     expect(check, contains('لم يتم إرسال الحجز'));
   });
 }
