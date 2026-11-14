@@ -18,6 +18,18 @@ void main() {
     expect(source, contains('!mounted || _activeBookingUserId != initiatingUserId'));
   });
 
+  test('team and challenge checkout resolves the verified active membership', () {
+    final source = File('lib/features/player/screens/booking_confirmation_screen.dart')
+        .readAsStringSync();
+    expect(source, contains('TeamRepository().getUserTeamsStrict(userId)'));
+    expect(source, contains('ActiveTeamService.resolve('));
+    expect(source, contains('userId: userId,'));
+    expect(source, contains('teams: teams,'));
+    expect(source, isNot(contains('TeamRepository().getUserTeamStrict(userId)')));
+    expect(source, contains('userTeamId: _userTeamId'));
+    expect(source, contains('userTeamName: _userTeamName'));
+  });
+
   test('booking availability resubscribes when player identity changes', () {
     final source = File(
       'lib/features/player/widgets/booking/booking_slot_stream_section.dart',
