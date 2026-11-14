@@ -330,45 +330,63 @@ class StadiumProvider with ChangeNotifier {
 
  // Get stadium by ID
  Future<Stadium?> getStadiumById(String stadiumId) async {
- try {
- return await _databaseService.getStadiumById(stadiumId);
- } catch (e) {
- _setError('stadium_fetch_failed');
- rethrow;
- }
- }
+    final operationScope = _scopeGeneration;
+    try {
+      final stadium = await _databaseService.getStadiumById(stadiumId);
+      if (operationScope != _scopeGeneration) return null;
+      return stadium;
+    } catch (_) {
+      if (operationScope != _scopeGeneration) return null;
+      _setError('stadium_fetch_failed');
+      rethrow;
+    }
+  }
 
- // Add stadium (Owner)
+  // Add stadium (Owner)
  Future<String?> addStadium(Stadium stadium) async {
- _setError(null);
- _setLoading(true);
+    final operationScope = _scopeGeneration;
+    final ownerAtStart = _listeningOwnerId;
+    _setError(null);
+    _setLoading(true);
 
- try {
- String? stadiumId = await _databaseService.addStadium(stadium.toFirestore());
- _setLoading(false);
- return stadiumId;
- } catch (e) {
- _setError('stadium_create_failed');
- _setLoading(false);
- rethrow;
- }
- }
+    try {
+      final stadiumId = await _databaseService.addStadium(stadium.toFirestore());
+      if (operationScope != _scopeGeneration) {
+        // A same-owner refresh can preserve the write result. A different
+        // account must not receive a previous owner's created venue ID.
+        return ownerAtStart == _listeningOwnerId ? stadiumId : null;
+      }
+      _setLoading(false);
+      return stadiumId;
+    } catch (_) {
+      if (operationScope != _scopeGeneration) return null;
+      _setError('stadium_create_failed');
+      _setLoading(false);
+      rethrow;
+    }
+  }
 
- // Update stadium
+  // Update stadium
  Future<bool> updateStadium(String stadiumId, Map<String, dynamic> data) async {
- _setError(null);
- _setLoading(true);
+    final operationScope = _scopeGeneration;
+    final ownerAtStart = _listeningOwnerId;
+    _setError(null);
+    _setLoading(true);
 
- try {
- bool success = await _databaseService.updateStadium(stadiumId, data);
- _setLoading(false);
- return success;
- } catch (e) {
- _setError('stadium_update_failed');
- _setLoading(false);
- rethrow;
- }
- }
+    try {
+      final success = await _databaseService.updateStadium(stadiumId, data);
+      if (operationScope != _scopeGeneration) {
+        return ownerAtStart == _listeningOwnerId && success;
+      }
+      _setLoading(false);
+      return success;
+    } catch (_) {
+      if (operationScope != _scopeGeneration) return false;
+      _setError('stadium_update_failed');
+      _setLoading(false);
+      rethrow;
+    }
+  }
 
   List<Stadium> filterByLocation(String location) =>
       StadiumFilterService.filterByLocation(_stadiums, location);
@@ -562,33 +580,38 @@ class StadiumProvider with ChangeNotifier {
 
  // Phase 2: Stadium Deletion Safeguard
  Future<bool> deleteStadium(String stadiumId) async {
- _setError(null);
- _setLoading(true);
+    final operationScope = _scopeGeneration;
+    final ownerAtStart = _listeningOwnerId;
+    _setError(null);
+    _setLoading(true);
 
- try {
- bool success = await _databaseService.deleteStadium(stadiumId);
- if (success) {
- // Remove from local list if present
- _stadiums.removeWhere((s) => s.id == stadiumId);
- if (_isFilterActive) {
- _filteredStadiums.removeWhere((s) => s.id == stadiumId);
- }
- _setLoading(false);
- return true;
- } else {
- _setError('Failed to delete stadium safely. Check your connection.');
- _setLoading(false);
- return false;
- }
- } catch (e) {
- VSPLogger.e('Stadium deletion failed (details redacted)');
- _setError('stadium_delete_failed');
- _setLoading(false);
- return false;
- }
- }
+    try {
+      final success = await _databaseService.deleteStadium(stadiumId);
+      if (operationScope != _scopeGeneration) {
+        return ownerAtStart == _listeningOwnerId && success;
+      }
+      if (success) {
+        // Do not mutate another owner's cached venue with this operation.
+        _stadiums.removeWhere((s) => s.id == stadiumId);
+        if (_isFilterActive) {
+          _filteredStadiums.removeWhere((s) => s.id == stadiumId);
+        }
+        _setLoading(false);
+        return true;
+      }
+      _setError('Failed to delete stadium safely. Check your connection.');
+      _setLoading(false);
+      return false;
+    } catch (_) {
+      if (operationScope != _scopeGeneration) return false;
+      VSPLogger.e('Stadium deletion failed (details redacted)');
+      _setError('stadium_delete_failed');
+      _setLoading(false);
+      return false;
+    }
+  }
 
- @override
+  @override
  void dispose() {
  // Invalidate in-flight discovery and owner-stream callbacks before canceling.
  _scopeGeneration++;

@@ -31,6 +31,22 @@ class _OwnerStreamFixture extends StadiumRepository {
   }
 }
 
+class _PendingOwnerWrites extends _OwnerStreamFixture {
+  final deletion = Completer<bool>();
+  final creation = Completer<String?>();
+  final modification = Completer<bool>();
+
+  @override
+  Future<bool> deleteStadium(String stadiumId) => deletion.future;
+
+  @override
+  Future<String?> addStadium(Map<String, dynamic> stadiumData) => creation.future;
+
+  @override
+  Future<bool> updateStadium(
+      String stadiumId, Map<String, dynamic> data) => modification.future;
+}
+
 Stadium _stadium(String id, String ownerId) => Stadium(
       id: id,
       name: id,
@@ -118,6 +134,56 @@ void main() {
     provider.toggleQuickFilter('no_deposit');
     await provider.clearFilters();
     expect(provider.stadiums.single.id, 'owned-pitch');
+    expect(provider.errorMessage, isNull);
+  });
+
+  test('owner A delayed deletion cannot remove owner B cached venue', () async {
+    final backend = _PendingOwnerWrites();
+    final provider = StadiumProvider(repository: backend);
+    addTearDown(() async {
+      provider.dispose();
+      await backend.close();
+    });
+
+    provider.listenToOwnerStadiums('owner-A');
+    backend.emit('owner-A', [_stadium('shared-id', 'owner-A')]);
+    await Future<void>.delayed(Duration.zero);
+    final pending = provider.deleteStadium('shared-id');
+
+    provider.listenToOwnerStadiums('owner-B');
+    backend.emit('owner-B', [_stadium('shared-id', 'owner-B')]);
+    await Future<void>.delayed(Duration.zero);
+    backend.deletion.complete(true);
+
+    expect(await pending, isFalse);
+    expect(provider.stadiums.single.ownerId, 'owner-B');
+    expect(provider.errorMessage, isNull);
+  });
+
+  test('stale create and edit results cannot be displayed to another owner',
+      () async {
+    final backend = _PendingOwnerWrites();
+    final provider = StadiumProvider(repository: backend);
+    addTearDown(() async {
+      provider.dispose();
+      await backend.close();
+    });
+
+    provider.listenToOwnerStadiums('owner-A');
+    backend.emit('owner-A', [_stadium('owner-A-pitch', 'owner-A')]);
+    await Future<void>.delayed(Duration.zero);
+    final oldAdd = provider.addStadium(_stadium('new-pitch', 'owner-A'));
+    final oldEdit = provider.updateStadium('owner-A-pitch', {'name': 'Edited'});
+
+    provider.listenToOwnerStadiums('owner-B');
+    backend.emit('owner-B', [_stadium('owner-B-pitch', 'owner-B')]);
+    await Future<void>.delayed(Duration.zero);
+    backend.creation.complete('old-A-created');
+    backend.modification.complete(true);
+
+    expect(await oldAdd, isNull);
+    expect(await oldEdit, isFalse);
+    expect(provider.stadiums.single.id, 'owner-B-pitch');
     expect(provider.errorMessage, isNull);
   });
 
