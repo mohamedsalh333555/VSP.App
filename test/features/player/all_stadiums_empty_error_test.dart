@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/core/providers/stadium_provider.dart';
 import 'package:vsp_application/core/repositories/stadium_repository.dart';
+import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/features/player/screens/all_stadiums_screen.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
@@ -38,6 +40,17 @@ class _ListingRepository extends StadiumRepository {
       requests[governorate]![index];
 }
 
+class _AnonymousAuth extends ChangeNotifier implements AuthProvider {
+  @override
+  bool get isOwner => false;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.isGetter) return null;
+    return super.noSuchMethod(invocation);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -47,8 +60,11 @@ void main() {
     Locale locale = const Locale('en'),
   }) async {
     await tester.pumpWidget(
-      ChangeNotifierProvider<StadiumProvider>.value(
-        value: provider,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<StadiumProvider>.value(value: provider),
+          ChangeNotifierProvider<AuthProvider>(create: (_) => _AnonymousAuth()),
+        ],
         child: MaterialApp(
           locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -98,6 +114,27 @@ void main() {
     repository.request('Cairo', 1).complete({'items': [], 'lastDoc': 0});
     await tester.pumpAndSettle();
     expect(find.text('لم يتم العثور على ملاعب'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('missing optional venue fields do not break the results list', (tester) async {
+    final repository = _ListingRepository();
+    final provider = StadiumProvider(repository: repository);
+    addTearDown(provider.dispose);
+    await showListing(tester, provider);
+
+    final partial = Stadium.fromFirestore({
+      'id': 'partial-venue',
+      'name': 'Partial Pitch',
+      'governorate': 'Cairo',
+      'is_verified': true,
+      'is_blocked': false,
+      'is_deleted_by_owner': false,
+    }, 'partial-venue');
+    repository.request('Cairo', 0).complete({'items': [partial], 'lastDoc': 1});
+    await tester.pumpAndSettle();
+    expect(find.text('Partial Pitch'), findsOneWidget);
+    expect(find.text('No Stadiums Found'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
