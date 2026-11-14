@@ -40,6 +40,19 @@ class BookingProvider with ChangeNotifier {
   final Set<String> _joiningMatchKeys = {};
   final Set<String> _leavingMatchKeys = {};
   int _draftRestoreGeneration = 0;
+  // Unlike booking refreshes, identity transitions invalidate action locks.
+  // An old Future must not unlock a new account's action with the same ID.
+  int _actionIdentityGeneration = 0;
+
+  void _resetActionLocksForIdentityChange() {
+    _actionIdentityGeneration++;
+    _cancellingIds.clear();
+    _updatingPaymentIds.clear();
+    _rescheduleRequestIds.clear();
+    _rescheduleResponseIds.clear();
+    _joiningMatchKeys.clear();
+    _leavingMatchKeys.clear();
+  }
 
   // Getters - _userBookings is the Single Source of Truth (SSOT)
   List<Booking> get userBookings =>
@@ -257,6 +270,7 @@ class BookingProvider with ChangeNotifier {
       // operation. Otherwise a late user-A callback may appear on user-B UI.
       _activeUserId = userId;
       _activeOwnerId = null;
+      _resetActionLocksForIdentityChange();
       _userBookings = [];
       _isLoading = false;
       // The selected booking, public-match cache, and pending owner UI are
@@ -333,6 +347,7 @@ class BookingProvider with ChangeNotifier {
       final clearOldDraft = _activeOwnerId != null || _activeUserId != null;
       _activeUserId = null;
       _activeOwnerId = ownerId;
+      _resetActionLocksForIdentityChange();
       _userBookings = [];
       _isLoading = false;
       _currentBooking = null;
@@ -395,6 +410,7 @@ class BookingProvider with ChangeNotifier {
   /// Cancel a booking
   Future<bool> cancelBooking(String bookingId) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     // Prevent duplicate cancellation RPCs from rapid taps or concurrent callers.
     if (_cancellingIds.contains(bookingId)) return false;
     _cancellingIds.add(bookingId);
@@ -460,8 +476,10 @@ class BookingProvider with ChangeNotifier {
       }
       return false;
     } finally {
-      _cancellingIds.remove(bookingId);
-      if (operationScope == _bookingScopeGeneration) notifyListeners();
+      if (actionIdentity == _actionIdentityGeneration) {
+        _cancellingIds.remove(bookingId);
+        if (operationScope == _bookingScopeGeneration) notifyListeners();
+      }
     }
   }
 
@@ -472,6 +490,7 @@ class BookingProvider with ChangeNotifier {
     required DateTime newEndTime,
   }) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     if (_rescheduleRequestIds.contains(bookingId)) return false;
     _rescheduleRequestIds.add(bookingId);
     _errorMessage = null;
@@ -493,8 +512,10 @@ class BookingProvider with ChangeNotifier {
       }
       return false;
     } finally {
-      _rescheduleRequestIds.remove(bookingId);
-      if (operationScope == _bookingScopeGeneration) notifyListeners();
+      if (actionIdentity == _actionIdentityGeneration) {
+        _rescheduleRequestIds.remove(bookingId);
+        if (operationScope == _bookingScopeGeneration) notifyListeners();
+      }
     }
   }
 
@@ -504,6 +525,7 @@ class BookingProvider with ChangeNotifier {
     required bool accept,
   }) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     if (_rescheduleResponseIds.contains(bookingId)) return false;
     _rescheduleResponseIds.add(bookingId);
     _errorMessage = null;
@@ -526,8 +548,10 @@ class BookingProvider with ChangeNotifier {
       }
       return false;
     } finally {
-      _rescheduleResponseIds.remove(bookingId);
-      if (operationScope == _bookingScopeGeneration) notifyListeners();
+      if (actionIdentity == _actionIdentityGeneration) {
+        _rescheduleResponseIds.remove(bookingId);
+        if (operationScope == _bookingScopeGeneration) notifyListeners();
+      }
     }
   }
 
@@ -583,6 +607,7 @@ class BookingProvider with ChangeNotifier {
   /// Join a public match
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     final actionKey = '$bookingId|$userId';
     if (!_joiningMatchKeys.add(actionKey)) return false;
     _errorMessage = null;
@@ -596,14 +621,17 @@ class BookingProvider with ChangeNotifier {
       }
       return res.success;
     } finally {
-      _joiningMatchKeys.remove(actionKey);
-      if (operationScope == _bookingScopeGeneration) notifyListeners();
+      if (actionIdentity == _actionIdentityGeneration) {
+        _joiningMatchKeys.remove(actionKey);
+        if (operationScope == _bookingScopeGeneration) notifyListeners();
+      }
     }
   }
 
   /// Leave a public match
   Future<bool> leavePublicMatch(String bookingId, String userId) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     final actionKey = '$bookingId|$userId';
     if (!_leavingMatchKeys.add(actionKey)) return false;
     _errorMessage = null;
@@ -617,8 +645,10 @@ class BookingProvider with ChangeNotifier {
       }
       return res.success;
     } finally {
-      _leavingMatchKeys.remove(actionKey);
-      if (operationScope == _bookingScopeGeneration) notifyListeners();
+      if (actionIdentity == _actionIdentityGeneration) {
+        _leavingMatchKeys.remove(actionKey);
+        if (operationScope == _bookingScopeGeneration) notifyListeners();
+      }
     }
   }
 
@@ -675,6 +705,7 @@ class BookingProvider with ChangeNotifier {
   /// Update payment status
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     // Serialize updates for one booking to avoid conflicting payment writes.
     if (!_updatingPaymentIds.add(bookingId)) return false;
     _errorMessage = null;
@@ -724,7 +755,9 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return false;
     } finally {
-      _updatingPaymentIds.remove(bookingId);
+      if (actionIdentity == _actionIdentityGeneration) {
+        _updatingPaymentIds.remove(bookingId);
+      }
     }
   }
 
@@ -785,6 +818,7 @@ class BookingProvider with ChangeNotifier {
     // No old Future may notify a ChangeNotifier after it has been disposed.
     _bookingScopeGeneration++;
     _draftRestoreGeneration++;
+    _actionIdentityGeneration++;
     _syncCoordinator.dispose();
     super.dispose();
   }

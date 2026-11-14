@@ -10,12 +10,23 @@ class _DelayedBookingRepository extends Fake implements BookingRepository {
   final Map<String, Completer<List<Booking>>> responses;
   final Map<String, Completer<void>> started;
   final Completer<bool>? cancellation;
+  final List<Completer<bool>>? cancellationQueue;
+  int cancellationCalls = 0;
 
-  _DelayedBookingRepository(this.responses, this.started, {this.cancellation});
+  _DelayedBookingRepository(
+    this.responses,
+    this.started, {
+    this.cancellation,
+    this.cancellationQueue,
+  });
 
   @override
-  Future<bool> cancelBooking(String bookingId) =>
-      cancellation?.future ?? Future<bool>.value(false);
+  Future<bool> cancelBooking(String bookingId) {
+    final callIndex = cancellationCalls++;
+    return cancellationQueue != null
+        ? cancellationQueue![callIndex].future
+        : (cancellation?.future ?? Future<bool>.value(false));
+  }
 
   @override
   Future<Booking?> getBookingByIdStrict(String bookingId) async =>
@@ -147,6 +158,60 @@ void main() {
     expect(provider.userBookings, hasLength(1));
     expect(provider.userBookings.single.createdByUserId, 'user-B');
     expect(provider.errorMessage, isNull);
+  });
+
+  test('old cancel lock never hides or unlocks new account action for shared ID',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final responses = <String, Completer<List<Booking>>>{
+      'user-A': Completer<List<Booking>>(),
+      'user-B': Completer<List<Booking>>(),
+    };
+    final started = <String, Completer<void>>{
+      'user-A': Completer<void>(),
+      'user-B': Completer<void>(),
+    };
+    final oldDone = Completer<bool>();
+    final newDone = Completer<bool>();
+    final repo = _DelayedBookingRepository(
+      responses,
+      started,
+      cancellationQueue: [oldDone, newDone],
+    );
+    final provider = BookingProvider(repository: repo);
+    addTearDown(provider.dispose);
+
+    final loadA = provider.loadUserBookings('user-A');
+    await started['user-A']!.future;
+    responses['user-A']!.complete([_fixtureBooking('user-A')]);
+    expect(await loadA, isTrue);
+    final pendingA = provider.cancelBooking('booking-user-A');
+    expect(provider.userBookings, isEmpty);
+
+    final loadB = provider.loadUserBookings('user-B');
+    await started['user-B']!.future;
+    responses['user-B']!.complete([
+      _fixtureBooking('user-B').copyWith(id: 'booking-user-A'),
+    ]);
+    expect(await loadB, isTrue);
+    // B is a different member of the same match; A's cancellation spinner
+    // must never hide the shared booking in the second session.
+    expect(provider.userBookings.single.createdByUserId, 'user-B');
+
+    final pendingB = provider.cancelBooking('booking-user-A');
+    expect(repo.cancellationCalls, 2);
+    expect(provider.userBookings, isEmpty);
+
+    oldDone.complete(true);
+    expect(await pendingA, isTrue);
+    // A's finally must not unlock the still-running B action.
+    expect(provider.userBookings, isEmpty);
+    expect(await provider.cancelBooking('booking-user-A'), isFalse);
+    expect(repo.cancellationCalls, 2);
+
+    newDone.complete(false);
+    expect(await pendingB, isFalse);
+    expect(provider.userBookings.single.createdByUserId, 'user-B');
   });
 
   test('switch to owner clears the previous player bookings immediately',
