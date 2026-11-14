@@ -197,6 +197,7 @@ class BookingProvider with ChangeNotifier {
   /// Create booking after successful payment
   Future<Booking?> createBookingFromDraft(String userId) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     if (_currentDraft == null) {
       _errorMessage = 'No booking draft available';
       notifyListeners();
@@ -210,7 +211,9 @@ class BookingProvider with ChangeNotifier {
     try {
       final submittedDraftGeneration = _draftRestoreGeneration;
       final booking = await _repository.createBooking(_currentDraft!, userId);
-      if (operationScope != _bookingScopeGeneration) return booking;
+      if (operationScope != _bookingScopeGeneration) {
+        return actionIdentity == _actionIdentityGeneration ? booking : null;
+      }
       _currentBooking = booking;
       BookingListModifier.insertBooking(_userBookings, booking);
       // Successful creation must invalidate both the in-memory draft and its
@@ -239,13 +242,16 @@ class BookingProvider with ChangeNotifier {
   /// Create booking directly with a draft (alternative method)
   Future<Booking?> createBooking(BookingDraft draft, String userId) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final booking = await _repository.createBooking(draft, userId);
-      if (operationScope != _bookingScopeGeneration) return booking;
+      if (operationScope != _bookingScopeGeneration) {
+        return actionIdentity == _actionIdentityGeneration ? booking : null;
+      }
       _currentBooking = booking;
       BookingListModifier.insertBooking(_userBookings, booking);
 
@@ -419,13 +425,17 @@ class BookingProvider with ChangeNotifier {
 
     try {
       final success = await _repository.cancelBooking(bookingId);
-      if (operationScope != _bookingScopeGeneration) return success;
+      if (operationScope != _bookingScopeGeneration) {
+            return actionIdentity == _actionIdentityGeneration && success;
+          }
       if (success) {
         // Keep the cancelled booking in history so a pending/confirmed refund
         // remains visible and trackable from the user's booking record.
         try {
           final updatedBooking = await _repository.getBookingByIdStrict(bookingId);
-          if (operationScope != _bookingScopeGeneration) return success;
+          if (operationScope != _bookingScopeGeneration) {
+            return actionIdentity == _actionIdentityGeneration && success;
+          }
           if (updatedBooking != null) {
             BookingListModifier.updateBooking(_userBookings, updatedBooking);
             if (_currentBooking?.id == bookingId) {
@@ -449,7 +459,9 @@ class BookingProvider with ChangeNotifier {
             }
           }
         } catch (_) {
-          if (operationScope != _bookingScopeGeneration) return success;
+          if (operationScope != _bookingScopeGeneration) {
+            return actionIdentity == _actionIdentityGeneration && success;
+          }
           // Cancellation is already confirmed. Keep the record in history with
           // a cancelled status while the next strict sync refreshes refund fields.
           final existingIndex = _userBookings.indexWhere((item) => item.id == bookingId);
@@ -501,7 +513,9 @@ class BookingProvider with ChangeNotifier {
         newStartTime: newStartTime,
         newEndTime: newEndTime,
       );
-      if (operationScope != _bookingScopeGeneration) return success;
+      if (operationScope != _bookingScopeGeneration) {
+        return actionIdentity == _actionIdentityGeneration && success;
+      }
       if (!success) {
         _errorMessage = 'تعذر إرسال اقتراح الموعد الجديد حالياً.';
       }
@@ -535,9 +549,13 @@ class BookingProvider with ChangeNotifier {
         bookingId: bookingId,
         accept: accept,
       );
-      if (operationScope != _bookingScopeGeneration) return success;
-      if (!success && !accept) {
-        _errorMessage = 'تعذر رفض الموعد المقترح حالياً.';
+      if (operationScope != _bookingScopeGeneration) {
+        return actionIdentity == _actionIdentityGeneration && success;
+      }
+      if (!success) {
+        _errorMessage = accept
+            ? 'تعذر قبول الموعد المقترح حالياً.'
+            : 'تعذر رفض الموعد المقترح حالياً.';
       }
       return success;
     } catch (_) {
@@ -563,12 +581,19 @@ class BookingProvider with ChangeNotifier {
     required int durationHours,
   }) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     final res = await _repository.requestEmergencyClosure(
       stadiumId: stadiumId,
       ownerId: ownerId,
       reason: reason,
       durationHours: durationHours,
     );
+    if (actionIdentity != _actionIdentityGeneration) {
+      return {
+        'success': false,
+        'message': 'تغير الحساب أثناء الطلب. أعد المحاولة من حسابك الحالي.',
+      };
+    }
     if (operationScope == _bookingScopeGeneration) notifyListeners();
     return res;
   }
@@ -622,9 +647,9 @@ class BookingProvider with ChangeNotifier {
         userId: userId,
       );
       if (operationScope == _bookingScopeGeneration) {
-        _errorMessage = res.error;
+        _errorMessage = res.success ? null : (res.error ?? 'تعذر الانضمام للمباراة حاليًا. أعد المحاولة.');
       }
-      return res.success;
+      return actionIdentity == _actionIdentityGeneration && res.success;
     } finally {
       if (actionIdentity == _actionIdentityGeneration) {
         _joiningMatchKeys.remove(actionKey);
@@ -646,9 +671,9 @@ class BookingProvider with ChangeNotifier {
         userId: userId,
       );
       if (operationScope == _bookingScopeGeneration) {
-        _errorMessage = res.error;
+        _errorMessage = res.success ? null : (res.error ?? 'تعذر مغادرة المباراة حاليًا. أعد المحاولة.');
       }
-      return res.success;
+      return actionIdentity == _actionIdentityGeneration && res.success;
     } finally {
       if (actionIdentity == _actionIdentityGeneration) {
         _leavingMatchKeys.remove(actionKey);
@@ -666,6 +691,7 @@ class BookingProvider with ChangeNotifier {
     String? review,
   }) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     _errorMessage = null;
 
     try {
@@ -676,14 +702,18 @@ class BookingProvider with ChangeNotifier {
         rating: rating,
         review: review,
       );
-      if (operationScope != _bookingScopeGeneration) return success;
+      if (operationScope != _bookingScopeGeneration) {
+          return actionIdentity == _actionIdentityGeneration && success;
+        }
 
       // A disputed submission may also change the server-side booking state
       // even when the RPC reports no finalized result. Refresh on both paths.
       // A read failure must never change the original submission outcome.
       try {
         final updated = await _repository.getBookingByIdStrict(bookingId);
-        if (operationScope != _bookingScopeGeneration) return success;
+        if (operationScope != _bookingScopeGeneration) {
+          return actionIdentity == _actionIdentityGeneration && success;
+        }
         if (updated != null) {
           BookingListModifier.updateBooking(_userBookings, updated);
           if (_currentBooking?.id == bookingId) {
@@ -693,7 +723,9 @@ class BookingProvider with ChangeNotifier {
       } catch (_) {
         debugPrint('Match result booking refresh failed (details redacted)');
       }
-      if (operationScope != _bookingScopeGeneration) return success;
+      if (operationScope != _bookingScopeGeneration) {
+          return actionIdentity == _actionIdentityGeneration && success;
+        }
       if (!success) {
         _errorMessage = 'Failed to submit result or results do not match.';
       }
@@ -716,7 +748,9 @@ class BookingProvider with ChangeNotifier {
     _errorMessage = null;
     try {
       final success = await _repository.updatePaymentStatus(bookingId, isPaid);
-      if (operationScope != _bookingScopeGeneration) return success;
+      if (operationScope != _bookingScopeGeneration) {
+          return actionIdentity == _actionIdentityGeneration && success;
+        }
       if (success) {
         BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
         if (_currentBooking?.id == bookingId) {
@@ -731,7 +765,9 @@ class BookingProvider with ChangeNotifier {
         // than treating the optimistic flag as authoritative.
         try {
           final updated = await _repository.getBookingByIdStrict(bookingId);
-          if (operationScope != _bookingScopeGeneration) return success;
+          if (operationScope != _bookingScopeGeneration) {
+          return actionIdentity == _actionIdentityGeneration && success;
+        }
           if (updated != null) {
             final index = _userBookings.indexWhere((b) => b.id == bookingId);
             if (index >= 0) {
@@ -745,7 +781,9 @@ class BookingProvider with ChangeNotifier {
           debugPrint('Payment status refresh failed (details redacted)');
         }
       }
-      if (operationScope != _bookingScopeGeneration) return success;
+      if (operationScope != _bookingScopeGeneration) {
+          return actionIdentity == _actionIdentityGeneration && success;
+        }
       if (!success) {
         _errorMessage = 'تعذر تحديث حالة الدفع';
       }
@@ -777,6 +815,7 @@ class BookingProvider with ChangeNotifier {
     required String paymentStatus,
   }) async {
     final operationScope = _bookingScopeGeneration;
+    final actionIdentity = _actionIdentityGeneration;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -795,7 +834,7 @@ class BookingProvider with ChangeNotifier {
         _isLoading = false;
         notifyListeners();
       }
-      return success;
+      return actionIdentity == _actionIdentityGeneration && success;
     } catch (_) {
       if (operationScope == _bookingScopeGeneration) {
         _errorMessage = 'تعذر تحديث بيانات الحجز حاليًا.';

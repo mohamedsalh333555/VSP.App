@@ -154,7 +154,7 @@ void main() {
     expect(provider.userBookings.single.createdByUserId, 'user-B');
 
     cancellation.complete(true);
-    expect(await oldCancel, isTrue);
+    expect(await oldCancel, isFalse); // Previous account cannot present success.
     expect(provider.userBookings, hasLength(1));
     expect(provider.userBookings.single.createdByUserId, 'user-B');
     expect(provider.errorMessage, isNull);
@@ -203,7 +203,7 @@ void main() {
     expect(provider.userBookings, isEmpty);
 
     oldDone.complete(true);
-    expect(await pendingA, isTrue);
+    expect(await pendingA, isFalse); // Old account result is suppressed.
     // A's finally must not unlock the still-running B action.
     expect(provider.userBookings, isEmpty);
     expect(await provider.cancelBooking('booking-user-A'), isFalse);
