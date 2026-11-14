@@ -26,6 +26,8 @@ class BookingConfirmationScreen extends StatefulWidget {
   final DateTime? selectedDate;
   final String bookingType; // 'Personal', 'Team', 'Challenge'
   final Team? opponentTeam;
+  /// The code returned by a verified opposing-team lookup for this route.
+  final String? verifiedChallengeCode;
   final List<String>? initialSelectedSlots;
 
   const BookingConfirmationScreen({
@@ -34,6 +36,7 @@ class BookingConfirmationScreen extends StatefulWidget {
     this.selectedDate,
     this.bookingType = 'Personal',
     this.opponentTeam,
+    this.verifiedChallengeCode,
     this.initialSelectedSlots,
   });
 
@@ -57,6 +60,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   List<TimeSlotItem> _timeSlots = [];
   bool _isSlotsInitialized = false;
   String? _activeBookingUserId;
+  String? _activeVerifiedChallengeCode;
   bool _hasObservedBookingUser = false;
 
   DateTime get _operationalBaseDate =>
@@ -91,6 +95,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     );
     _selectedDate = initial.date;
     _selectedTimeSlots.addAll(initial.slots);
+    _activeVerifiedChallengeCode = widget.verifiedChallengeCode;
     _isPrivate = true;
     // Team context is loaded when the authenticated account is known.
   }
@@ -118,6 +123,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       _isLoadingUserTeam = userId != null;
       if (accountSwitched) {
         _selectedTimeSlots.clear();
+        _activeVerifiedChallengeCode = null;
         _isBallRented = false;
         _isLoading = false;
       }
@@ -255,6 +261,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       stadium: widget.stadium,
       bookingType: widget.bookingType,
       opponentTeam: widget.opponentTeam,
+      verifiedChallengeCode: _activeVerifiedChallengeCode,
       selectedTimeSlots: List.unmodifiable(_selectedTimeSlots),
       selectedDate: _selectedDate,
       timeSlots: _timeSlots,

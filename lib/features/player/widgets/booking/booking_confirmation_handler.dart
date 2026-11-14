@@ -50,6 +50,7 @@ class BookingConfirmationHandler {
     required Stadium stadium,
     required String bookingType,
     required Team? opponentTeam,
+    String? verifiedChallengeCode,
     required List<String> selectedTimeSlots,
     required DateTime selectedDate,
     required List<TimeSlotItem> timeSlots,
@@ -330,6 +331,24 @@ class BookingConfirmationHandler {
       bType = BookingType.personal;
     }
 
+    // This challenge must carry the exact verified opponent code. Never
+    // borrow a stale code from another draft, captain, or logged-in account.
+    if (bType == BookingType.challenge &&
+        (verifiedChallengeCode == null ||
+            verifiedChallengeCode.trim().isEmpty)) {
+      onLoadingChanged(false);
+      if (context.mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'لا يوجد كود تحدي مُتحقق منه. ارجع وتحقق من كود الفريق المنافس.'
+              : 'No verified challenge code. Return and verify the opposing team code.',
+        );
+      }
+      return;
+    }
+
     final depositAmount = stadium.depositAmount;
     final fieldCapacity = stadium.totalFieldCapacity > 0
         ? stadium.totalFieldCapacity
@@ -363,7 +382,9 @@ class BookingConfirmationHandler {
       instapay: stadium.features is Map ? stadium.features['instapay'] : null,
       vodafoneCash: stadium.features is Map ? stadium.features['vodafoneCash'] : null,
       binanceId: stadium.features is Map ? stadium.features['binanceId'] : null,
-      challengeCode: bookingProvider.currentDraft?.challengeCode,
+      challengeCode: bType == BookingType.challenge
+          ? verifiedChallengeCode
+          : null,
       idempotencyKey: const Uuid().v4(),
     );
 

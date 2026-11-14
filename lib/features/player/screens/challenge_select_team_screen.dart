@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
 import '../../../core/providers/auth_provider.dart' as app_auth;
-import '../../../core/providers/booking_provider.dart';
 import '../../../core/services/active_team_service.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -226,13 +225,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         return;
       }
 
-      context.read<BookingProvider>().updateDraft(
-        opponentTeamId: verifiedOpponent.id,
-        opponentTeamName: verifiedOpponent.name,
-        playerTeamId: team.id,
-        playerTeamName: team.name,
-        challengeCode: verifiedCode,
-      );
+      // Pass the server-verified code with this specific challenge route.
+      // updateDraft() could silently do nothing when no draft existed yet,
+      // causing a paid challenge booking to lose its opponent consent token.
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -240,6 +235,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             stadium: widget.stadium,
             bookingType: widget.bookingType,
             opponentTeam: verifiedOpponent,
+            verifiedChallengeCode: verifiedCode,
           ),
         ),
       );
