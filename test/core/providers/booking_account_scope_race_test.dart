@@ -9,8 +9,17 @@ import 'package:vsp_application/data/models.dart';
 class _DelayedBookingRepository extends Fake implements BookingRepository {
   final Map<String, Completer<List<Booking>>> responses;
   final Map<String, Completer<void>> started;
+  final Completer<bool>? cancellation;
 
-  _DelayedBookingRepository(this.responses, this.started);
+  _DelayedBookingRepository(this.responses, this.started, {this.cancellation});
+
+  @override
+  Future<bool> cancelBooking(String bookingId) =>
+      cancellation?.future ?? Future<bool>.value(false);
+
+  @override
+  Future<Booking?> getBookingByIdStrict(String bookingId) async =>
+      _fixtureBooking('user-A');
 
   @override
   Future<List<Booking>> getUserBookingsDirectly(String userId) {
@@ -82,6 +91,44 @@ void main() {
     responses['user-A']!.complete([_fixtureBooking('user-A')]);
     expect(await oldLoad, isFalse);
     expect(provider.userBookings.map((b) => b.createdByUserId), ['user-B']);
+  });
+
+  test('late cancellation from account A cannot insert a booking into B',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final responses = <String, Completer<List<Booking>>>{
+      'user-A': Completer<List<Booking>>(),
+      'user-B': Completer<List<Booking>>(),
+    };
+    final started = <String, Completer<void>>{
+      'user-A': Completer<void>(),
+      'user-B': Completer<void>(),
+    };
+    final cancellation = Completer<bool>();
+    final provider = BookingProvider(
+      repository: _DelayedBookingRepository(
+        responses, started, cancellation: cancellation,
+      ),
+    );
+    addTearDown(provider.dispose);
+
+    final loadA = provider.loadUserBookings('user-A');
+    await started['user-A']!.future.timeout(const Duration(seconds: 5));
+    responses['user-A']!.complete([_fixtureBooking('user-A')]);
+    expect(await loadA, isTrue);
+
+    final oldCancel = provider.cancelBooking('booking-user-A');
+    final loadB = provider.loadUserBookings('user-B');
+    await started['user-B']!.future.timeout(const Duration(seconds: 5));
+    responses['user-B']!.complete([_fixtureBooking('user-B')]);
+    expect(await loadB, isTrue);
+    expect(provider.userBookings.single.createdByUserId, 'user-B');
+
+    cancellation.complete(true);
+    expect(await oldCancel, isTrue);
+    expect(provider.userBookings, hasLength(1));
+    expect(provider.userBookings.single.createdByUserId, 'user-B');
+    expect(provider.errorMessage, isNull);
   });
 
   test('switch to owner clears the previous player bookings immediately',

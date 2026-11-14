@@ -168,6 +168,7 @@ class BookingProvider with ChangeNotifier {
 
   /// Create booking after successful payment
   Future<Booking?> createBookingFromDraft(String userId) async {
+    final operationScope = _bookingScopeGeneration;
     if (_currentDraft == null) {
       _errorMessage = 'No booking draft available';
       notifyListeners();
@@ -180,6 +181,7 @@ class BookingProvider with ChangeNotifier {
 
     try {
       final booking = await _repository.createBooking(_currentDraft!, userId);
+      if (operationScope != _bookingScopeGeneration) return booking;
       _currentBooking = booking;
       BookingListModifier.insertBooking(_userBookings, booking);
       _currentDraft = null; // Clear draft after successful creation
@@ -188,6 +190,7 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return booking;
     } catch (e) {
+      if (operationScope != _bookingScopeGeneration) return null;
       // Reuse the domain error translator; never show a raw gateway/RPC body.
       _errorMessage = BookingListModifier.formatCreationError(e);
       _isLoading = false;
@@ -198,12 +201,14 @@ class BookingProvider with ChangeNotifier {
 
   /// Create booking directly with a draft (alternative method)
   Future<Booking?> createBooking(BookingDraft draft, String userId) async {
+    final operationScope = _bookingScopeGeneration;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final booking = await _repository.createBooking(draft, userId);
+      if (operationScope != _bookingScopeGeneration) return booking;
       _currentBooking = booking;
       BookingListModifier.insertBooking(_userBookings, booking);
 
@@ -211,6 +216,7 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return booking;
     } catch (e) {
+      if (operationScope != _bookingScopeGeneration) return null;
       _errorMessage = BookingListModifier.formatCreationError(e);
       _isLoading = false;
       notifyListeners();
@@ -228,6 +234,7 @@ class BookingProvider with ChangeNotifier {
       _activeUserId = userId;
       _activeOwnerId = null;
       _userBookings = [];
+      _isLoading = false;
       // The selected booking, public-match cache, and pending owner UI are
       // tied to the previous identity and cannot follow another session.
       _currentBooking = null;
@@ -290,6 +297,7 @@ class BookingProvider with ChangeNotifier {
       _activeUserId = null;
       _activeOwnerId = ownerId;
       _userBookings = [];
+      _isLoading = false;
       _currentBooking = null;
       _publicMatches = [];
       _userBookingLoadCount = 0;
@@ -341,6 +349,7 @@ class BookingProvider with ChangeNotifier {
 
   /// Cancel a booking
   Future<bool> cancelBooking(String bookingId) async {
+    final operationScope = _bookingScopeGeneration;
     // Prevent duplicate cancellation RPCs from rapid taps or concurrent callers.
     if (_cancellingIds.contains(bookingId)) return false;
     _cancellingIds.add(bookingId);
@@ -349,11 +358,13 @@ class BookingProvider with ChangeNotifier {
 
     try {
       final success = await _repository.cancelBooking(bookingId);
+      if (operationScope != _bookingScopeGeneration) return success;
       if (success) {
         // Keep the cancelled booking in history so a pending/confirmed refund
         // remains visible and trackable from the user's booking record.
         try {
           final updatedBooking = await _repository.getBookingByIdStrict(bookingId);
+          if (operationScope != _bookingScopeGeneration) return success;
           if (updatedBooking != null) {
             BookingListModifier.updateBooking(_userBookings, updatedBooking);
             if (_currentBooking?.id == bookingId) {
@@ -377,6 +388,7 @@ class BookingProvider with ChangeNotifier {
             }
           }
         } catch (_) {
+          if (operationScope != _bookingScopeGeneration) return success;
           // Cancellation is already confirmed. Keep the record in history with
           // a cancelled status while the next strict sync refreshes refund fields.
           final existingIndex = _userBookings.indexWhere((item) => item.id == bookingId);
@@ -398,11 +410,13 @@ class BookingProvider with ChangeNotifier {
       }
       return success;
     } catch (e) {
-      _errorMessage = BookingListModifier.formatCreationError(e);
+      if (operationScope == _bookingScopeGeneration) {
+        _errorMessage = BookingListModifier.formatCreationError(e);
+      }
       return false;
     } finally {
       _cancellingIds.remove(bookingId);
-      notifyListeners();
+      if (operationScope == _bookingScopeGeneration) notifyListeners();
     }
   }
 
@@ -549,6 +563,7 @@ class BookingProvider with ChangeNotifier {
     double? rating,
     String? review,
   }) async {
+    final operationScope = _bookingScopeGeneration;
     _errorMessage = null;
 
     try {
@@ -559,12 +574,14 @@ class BookingProvider with ChangeNotifier {
         rating: rating,
         review: review,
       );
+      if (operationScope != _bookingScopeGeneration) return success;
 
       // A disputed submission may also change the server-side booking state
       // even when the RPC reports no finalized result. Refresh on both paths.
       // A read failure must never change the original submission outcome.
       try {
         final updated = await _repository.getBookingByIdStrict(bookingId);
+        if (operationScope != _bookingScopeGeneration) return success;
         if (updated != null) {
           BookingListModifier.updateBooking(_userBookings, updated);
           if (_currentBooking?.id == bookingId) {
@@ -580,6 +597,7 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return success;
     } catch (_) {
+      if (operationScope != _bookingScopeGeneration) return false;
       _errorMessage = 'تعذر إرسال نتيجة المباراة. أعد المحاولة.';
       notifyListeners();
       return false;
@@ -588,11 +606,13 @@ class BookingProvider with ChangeNotifier {
 
   /// Update payment status
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
+    final operationScope = _bookingScopeGeneration;
     // Serialize updates for one booking to avoid conflicting payment writes.
     if (!_updatingPaymentIds.add(bookingId)) return false;
     _errorMessage = null;
     try {
       final success = await _repository.updatePaymentStatus(bookingId, isPaid);
+      if (operationScope != _bookingScopeGeneration) return success;
       if (success) {
         BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
         if (_currentBooking?.id == bookingId) {
@@ -607,6 +627,7 @@ class BookingProvider with ChangeNotifier {
         // than treating the optimistic flag as authoritative.
         try {
           final updated = await _repository.getBookingByIdStrict(bookingId);
+          if (operationScope != _bookingScopeGeneration) return success;
           if (updated != null) {
             final index = _userBookings.indexWhere((b) => b.id == bookingId);
             if (index >= 0) {
@@ -625,6 +646,7 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return success;
     } catch (_) {
+      if (operationScope != _bookingScopeGeneration) return false;
       // Payment provider responses and trace metadata may contain account,
       // card-processing or booking IDs; never send them to device logs.
       debugPrint('Booking payment-status update failed (details redacted)');
