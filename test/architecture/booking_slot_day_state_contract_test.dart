@@ -9,7 +9,7 @@ void main() {
     ).readAsStringSync();
 
     expect(source, contains('if (widget.timeSlots.isEmpty) {'));
-    expect(source, contains('لا توجد فترات حجز محددة لهذا اليوم'));
+    expect(source, contains('ساعات العمل غير مكتملة'));
     expect(source, contains('final allSlotsBooked = widget.timeSlots.every('));
     expect(source, contains('if (allSlotsBooked) {'));
     expect(source, contains('كل المواعيد محجوزة'));

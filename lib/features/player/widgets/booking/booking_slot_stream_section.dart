@@ -157,13 +157,17 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
         }
 
         if (widget.timeSlots.isEmpty) {
+          // Dynamic slots are generated from the venue's operating hours,
+          // independent of the selected date. No generated slots means the
+          // venue schedule is missing or invalid, NOT that today's bookings
+          // have been checked and all slots are occupied.
           return VSPStateView(
-            state: VSPUiState.empty,
+            state: VSPUiState.error,
             icon: Iconsax.clock_copy,
-            title: isArabic ? 'لا توجد مواعيد متاحة' : 'No available time slots',
+            title: isArabic ? 'جدول مواعيد الملعب غير متاح' : 'Venue schedule unavailable',
             message: isArabic
-                ? 'لا توجد فترات حجز محددة لهذا اليوم. جرّب يومًا آخر أو تواصل مع الملعب.'
-                : 'No booking time slots are configured for this day. Try another date or contact the venue.',
+                ? 'ساعات العمل غير مكتملة أو جدول الملعب بحاجة لتحديث. لا يمكن تأكيد موعد حاليًا؛ تواصل مع إدارة الملعب.'
+                : 'Venue operating hours are missing or invalid. A booking time cannot be verified; contact the venue.',
           );
         }
         final now = VSPTimeService.now;

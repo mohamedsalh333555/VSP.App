@@ -12,8 +12,10 @@ void main() {
     expect(start, greaterThanOrEqualTo(0));
     expect(end, greaterThan(start));
     final emptyState = source.substring(start, end);
-    expect(emptyState, contains('لا توجد فترات حجز محددة لهذا اليوم'));
-    expect(emptyState, contains('No booking time slots are configured for this day'));
+    expect(emptyState, contains('ساعات العمل غير مكتملة'));
+    expect(emptyState, contains('Venue operating hours are missing or invalid'));
+    expect(emptyState, contains('state: VSPUiState.error'));
+    expect(emptyState, isNot(contains('state: VSPUiState.empty')));
     expect(emptyState, isNot(contains('الملعب لا يفتح مواعيد للحجز')));
   });
 
