@@ -582,10 +582,15 @@ class BookingProvider with ChangeNotifier {
   Future<void> fetchPublicMatches({bool isRefresh = false}) async {
     final operationScope = _bookingScopeGeneration;
     if (_isLoadingPublicMatches) return;
+    // Initial reads and subsequent retries need the same visible loading
+    // state. A failed refresh is not an authoritative empty feed.
+    _isLoadingPublicMatches = true;
+    _errorMessage = null;
     if (isRefresh) {
-      _isLoadingPublicMatches = true;
-      notifyListeners();
+      _publicMatches = [];
+      _hasMoreMatches = true;
     }
+    notifyListeners();
 
     try {
       final matches = await _matchCoordinator.fetchPublicMatches();
