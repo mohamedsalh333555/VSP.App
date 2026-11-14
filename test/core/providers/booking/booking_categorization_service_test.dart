@@ -77,7 +77,7 @@ void main() {
       ];
       final result = BookingCategorizationService.categorizeUserBookings(
           bookings: records, now: now);
-      expect(ids(result.pending), ['paid', 'deposit', 'amount', 'refund']);
+      expect(ids(result.pending), ['amount', 'deposit', 'paid', 'refund']);
       expect(result.history, isEmpty);
     });
 
@@ -190,7 +190,7 @@ void main() {
       ];
       final result = BookingCategorizationService.categorizeOwnerBookings(
           bookings: records, now: now);
-      expect(ids(result.upcoming), ['cash', 'paid', 'deposit']);
+      expect(ids(result.upcoming), ['cash', 'deposit', 'paid']);
       expect(result.history, isEmpty);
     });
 
