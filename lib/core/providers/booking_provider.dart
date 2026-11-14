@@ -18,6 +18,7 @@ class BookingProvider with ChangeNotifier {
   List<Booking> _publicMatches = []; // Dedicated list for paginated matches
   Booking? _currentBooking;
   BookingDraft? _currentDraft;
+  String? _draftOwnerUserId;
   String? _activeOwnerId;
   String? _activeUserId;
   // Every booking-list request owns a generation. Older async work must never
@@ -88,24 +89,26 @@ class BookingProvider with ChangeNotifier {
     _repository = repository ?? SupabaseBookingRepository();
     _syncCoordinator = BookingSyncCoordinator(_repository);
     _matchCoordinator = matchCoordinator ?? BookingMatchCoordinator();
-    _restoreDraft();
+    // Do not restore before authentication has established an identity.
   }
 
   Future<void> _clearDraftOnAccountScopeChange() async {
     _draftRestoreGeneration++;
     _currentDraft = null;
+    _draftOwnerUserId = null;
     await BookingDraftStorage.clear();
   }
 
-  Future<void> _restoreDraft({String? userId}) async {
+  Future<void> _restoreDraft({required String userId}) async {
     final generation = ++_draftRestoreGeneration;
     final scopeGeneration = _bookingScopeGeneration;
     final restored = await BookingDraftStorage.restore(userId: userId);
     if (generation != _draftRestoreGeneration ||
         scopeGeneration != _bookingScopeGeneration ||
-        (userId != null && _activeUserId != userId) ||
+        _activeUserId != userId ||
         _currentDraft != null) return;
     if (restored != null) {
+      _draftOwnerUserId = userId;
       _currentDraft = restored;
       notifyListeners();
     }
@@ -114,8 +117,9 @@ class BookingProvider with ChangeNotifier {
   /// Set the current booking draft (used between screens)
   void setDraft(BookingDraft draft) {
     _draftRestoreGeneration++;
+    _draftOwnerUserId = BookingDraftStorage.currentAuthenticatedUserId();
     _currentDraft = draft;
-    BookingDraftStorage.save(draft);
+    BookingDraftStorage.save(draft, userId: _draftOwnerUserId);
     notifyListeners();
   }
 
@@ -138,6 +142,12 @@ class BookingProvider with ChangeNotifier {
     String? challengeCode,
   }) {
     if (_currentDraft != null) {
+      final currentUser = BookingDraftStorage.currentAuthenticatedUserId();
+      if (_draftOwnerUserId == null || _draftOwnerUserId != currentUser) {
+        // A draft from an unverified or previous session is never editable.
+        clearDraft();
+        return;
+      }
       _draftRestoreGeneration++;
       _currentDraft = BookingListModifier.applyDraftUpdates(
         _currentDraft!,
@@ -157,7 +167,7 @@ class BookingProvider with ChangeNotifier {
         maxPlayers: maxPlayers,
         challengeCode: challengeCode,
       );
-      BookingDraftStorage.save(_currentDraft);
+      BookingDraftStorage.save(_currentDraft, userId: _draftOwnerUserId);
       notifyListeners();
     }
   }
@@ -166,6 +176,7 @@ class BookingProvider with ChangeNotifier {
   void clearDraft() {
     _draftRestoreGeneration++;
     _currentDraft = null;
+    _draftOwnerUserId = null;
     BookingDraftStorage.clear();
     notifyListeners();
   }
@@ -254,10 +265,17 @@ class BookingProvider with ChangeNotifier {
       if (clearOldDraft) {
         await _clearDraftOnAccountScopeChange();
         if (requestGeneration != _bookingScopeGeneration) return false;
-      } else if (_currentDraft == null) {
-        // Re-check persisted ownership after login if constructor restoration
-        // ran before authentication was ready.
-        unawaited(_restoreDraft(userId: userId));
+      } else {
+        if (_currentDraft != null && _draftOwnerUserId != userId) {
+          // The first established account must not inherit an unscoped or
+          // earlier in-memory checkout draft.
+          _draftRestoreGeneration++;
+          _currentDraft = null;
+          _draftOwnerUserId = null;
+          unawaited(BookingDraftStorage.clear());
+        } else if (_currentDraft == null) {
+          unawaited(_restoreDraft(userId: userId));
+        }
       }
     }
     if (requestGeneration != _bookingScopeGeneration) return false;
@@ -325,6 +343,7 @@ class BookingProvider with ChangeNotifier {
         // A venue owner must never inherit a player's draft on first login.
         _draftRestoreGeneration++;
         _currentDraft = null;
+        _draftOwnerUserId = null;
         unawaited(BookingDraftStorage.clear());
       }
     }

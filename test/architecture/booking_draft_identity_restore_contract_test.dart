@@ -17,6 +17,8 @@ void main() {
     expect(storage, contains('body is! Map<String, dynamic>'));
     expect(storage, contains('await prefs.remove(_draftKey);'));
     expect(provider, contains('_restoreDraft(userId: userId)'));
+    expect(provider, contains('_draftOwnerUserId != userId'));
+    expect(provider, isNot(contains('_matchCoordinator = matchCoordinator ?? BookingMatchCoordinator();\n    _restoreDraft();')));
     expect(provider, contains('scopeGeneration != _bookingScopeGeneration'));
     expect(provider, contains('unawaited(BookingDraftStorage.clear())'));
   });

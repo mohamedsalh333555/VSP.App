@@ -14,6 +14,10 @@ class BookingDraftStorage {
 
   const BookingDraftStorage._();
 
+  /// Read the authenticated account safely without requiring Supabase to
+  /// be initialized by isolated tests or startup bootstrap.
+  static String? currentAuthenticatedUserId() => _authUserId();
+
   static String? _authUserId() {
     try {
       return Supabase.instance.client.auth.currentUser?.id;
@@ -60,10 +64,15 @@ class BookingDraftStorage {
       final map = json.decode(jsonStr) as Map<String, dynamic>;
       final savedAccount = map['account_id'];
       final body = map['draft'];
-      if (scope == null ||
-          scope.trim().isEmpty ||
-          savedAccount != scope ||
-          body is! Map<String, dynamic>) {
+      if (scope == null || scope.trim().isEmpty) {
+        // An authenticated account might not be ready during startup.
+        // Keep valid scoped data for later sign-in, but expose none of it.
+        if (savedAccount is! String || body is! Map<String, dynamic>) {
+          await prefs.remove(_draftKey);
+        }
+        return null;
+      }
+      if (savedAccount != scope || body is! Map<String, dynamic>) {
         // Reject both legacy unscoped records and another user's draft.
         await prefs.remove(_draftKey);
         return null;
