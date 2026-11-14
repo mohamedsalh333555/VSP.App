@@ -1,0 +1,5 @@
+# Anonymous privileged RPC execution — 77.05
+
+On 14 November 2026 in **vsp-staging**, a read-only `pg_proc`/`pg_namespace`/`has_function_privilege` query found 308 `public` SECURITY DEFINER functions, 200 executable by `authenticated`, and **0** executable by `anon` (including the 200). The same aggregate ran under `BEGIN READ ONLY; SET LOCAL ROLE anon` and still found 0 callable functions. An attempted `anon` call to `public.add_team_to_matchup_by_code(null::uuid,null::text)` raised `insufficient_privilege`, caught in a transaction-scoped test block. The transaction rolled back. Only counts were returned; no user rows, secrets or RPC results were read.
+
+**Accepted scope:** current staging SQL EXECUTE privileges for the privileged function inventory and one representative direct permission-denial call. This is not proof that each authenticated call correctly enforces record ownership, that future grants preserve these results, or that production matches staging. Tasks 77.04 and 77.06–77.11, real JWT journeys, cross-account tests and release security gates remain open. No function body or deployed grant was changed.

@@ -1,3 +1,8 @@
+## 2026-11-14 — Anonymous privileged RPC checks (187/431)
+
+- Accepted **77.05** for a staging `anon` EXECUTE permission check across all 308 `public` SECURITY DEFINER functions: 0 callable as `anon` (200 callable as `authenticated`). A transaction-scoped `anon` attempt to call `add_team_to_matchup_by_code(uuid,text)` was denied before the function could run. [Evidence and limits](security/VSP_STAGING_ANON_PRIVILEGED_RPC_ACCEPTANCE_2026-11-14.md). No data writes or schema changes.
+- **618 total / 187 accepted / 431 open.** Authenticated caller ownership, spoofed parameter and real-JWT checks remain 77.06–77.11 and 79.xx; this one test does not establish their safety.
+
 ## 2026-11-14 — Staging view role checks (186/432)
 
 - Accepted **76.04, 76.05 and 76.07** at a bounded staging SQL role-check scope for the four formerly privileged views. A transaction-scoped `anon` role saw 2 public courts, 2 active plans, 0 clean-sheet rows, and had no SELECT grant on `owner_subscription_status`. A player saw 0 owner rows; two separate owners each saw exactly their own row (1/1, 0 foreign); an admin saw 12 owner rows as authorized; authenticated with no identity saw 0 owner rows. Public courts exposed 0 blocked/deleted rows in the anonymous sample. [Evidence and limits](security/VSP_STAGING_VIEW_ROLE_MATRIX_ACCEPTANCE_2026-11-14.md).
