@@ -21,6 +21,7 @@ class TeamsRankingTab extends StatefulWidget {
   final String selectedSport;
   final VoidCallback onRetry;
   final TeamRepository? teamRepository;
+  final Widget Function(Team team)? teamProfileBuilder;
 
   const TeamsRankingTab({
     super.key,
@@ -29,6 +30,7 @@ class TeamsRankingTab extends StatefulWidget {
     required this.selectedSport,
     required this.onRetry,
     this.teamRepository,
+    this.teamProfileBuilder,
   });
 
   @override
@@ -80,7 +82,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
   void _openTeamProfile(BuildContext context, Team team) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => TeamProfileScreen(team: team),
+        builder: (_) => widget.teamProfileBuilder?.call(team) ?? TeamProfileScreen(team: team),
       ),
     );
   }

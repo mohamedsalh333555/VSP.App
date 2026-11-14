@@ -77,4 +77,35 @@ void main() {
     expect(find.text('Cairo Hoops'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('ranking card opens the selected team profile', (tester) async {
+    final team = _team('aswan-team', 'Nile Stars', 'Aswan', 'Football');
+    String? openedTeamId;
+    await tester.pumpWidget(ChangeNotifierProvider<AuthProvider>(
+      create: (_) => _AnonymousAuth(),
+      child: MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: TeamsRankingTab(
+            teamsStream: Stream.value([team]),
+            selectedLocation: 'Aswan',
+            selectedSport: 'Football',
+            onRetry: () {},
+            teamProfileBuilder: (selected) {
+              openedTeamId = selected.id;
+              return Scaffold(body: Text('Team profile: ${selected.id}'));
+            },
+          ),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nile Stars'));
+    await tester.pumpAndSettle();
+    expect(openedTeamId, 'aswan-team');
+    expect(find.text('Team profile: aswan-team'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
