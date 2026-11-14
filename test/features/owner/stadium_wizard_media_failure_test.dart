@@ -51,6 +51,8 @@ void main() {
       expect(sawUploadingPlaceholder, isTrue);
       expect(find.text('Failed to upload photo.'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
     });
   }
 }
