@@ -108,6 +108,9 @@ begin
      or (select status from public.team_membership_invitations where id = expired_invite) <> 'pending' then
     raise exception 'FAIL: expired invitation changed membership or status';
   end if;
+  update public.team_membership_invitations
+  set status = 'cancelled', responded_at = now()
+  where id = expired_invite;
 
   -- Declining records the recipient decision without adding membership.
   insert into public.team_membership_invitations(
