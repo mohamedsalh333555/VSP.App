@@ -18,7 +18,14 @@ import 'player_home_screen.dart';
 
 /// Screen displaying player bookings divided into pending, upcoming, and history with full match lifecycle actions.
 class BookingsScreen extends StatefulWidget {
-  const BookingsScreen({super.key});
+  const BookingsScreen({
+    super.key,
+    this.loadTeamIds,
+    this.loadCaptainTeamIds,
+  });
+
+  final Future<Set<String>> Function(String userId)? loadTeamIds;
+  final Future<Set<String>> Function(String userId)? loadCaptainTeamIds;
 
   @override
   State<BookingsScreen> createState() => _BookingsScreenState();
@@ -65,8 +72,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
         return;
       }
       final teamRepository = TeamRepository();
-      final teamIds = await teamRepository.getUserTeamIdsStrict(userId);
-      final captainTeamIds = await teamRepository.getUserCaptainTeamIdsStrict(userId);
+      final teamIds = widget.loadTeamIds != null
+          ? await widget.loadTeamIds!(userId)
+          : await teamRepository.getUserTeamIdsStrict(userId);
+      final captainTeamIds = widget.loadCaptainTeamIds != null
+          ? await widget.loadCaptainTeamIds!(userId)
+          : await teamRepository.getUserCaptainTeamIdsStrict(userId);
       if (mounted &&
           generation == _userScopeGeneration &&
           context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
