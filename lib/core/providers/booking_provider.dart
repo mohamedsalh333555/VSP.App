@@ -600,7 +600,11 @@ class BookingProvider with ChangeNotifier {
 
   /// Get a specific booking
   Future<Booking?> getBookingById(String bookingId) async {
-    return await _repository.getBookingById(bookingId);
+    final actionIdentity = _actionIdentityGeneration;
+    final booking = await _repository.getBookingById(bookingId);
+    // A delayed lookup from a logged-out account must never be returned to
+    // the next authenticated user's booking detail screen.
+    return actionIdentity == _actionIdentityGeneration ? booking : null;
   }
 
   /// Fetch public matches directly from the unified active stream
@@ -832,6 +836,9 @@ class BookingProvider with ChangeNotifier {
       );
       if (operationScope == _bookingScopeGeneration) {
         _isLoading = false;
+        if (!success) {
+          _errorMessage = 'تعذر تحديث بيانات الحجز حاليًا.';
+        }
         notifyListeners();
       }
       return actionIdentity == _actionIdentityGeneration && success;
