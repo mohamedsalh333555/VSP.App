@@ -1,3 +1,10 @@
+## 2026-11-14 — Booking-history isolation and active-team selection accepted (172/446)
+
+- Accepted **16.07** for client/provider booking-history isolation across account and role switches. Delayed reads, cancellation results, detail loads, mutation results and shared-ID action locks are bound to the initiating account and covered by direct race/contract tests.
+- Accepted **18.02, 18.03, 18.05 and 18.06** for selecting only a verified membership, persisting the choice per account, clearing/falling back from a deleted or left team, and switching teams without leaking the choice to another account on the same device.
+- Evidence: [acceptance boundaries and tests](VSP_BOOKING_HISTORY_ACTIVE_TEAM_ACCEPTANCE_2026-11-14.md). Flutter CI [43586678490](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43586678490) passed analyzer, privacy/deletion, architecture, Cairo booking-date checks and the full suite (**1389 passed, 11 skipped**). Android, iOS, account SQL and owner checkout jobs also passed on the same head.
+- This is not server-RLS or real multi-device staging acceptance. **618 total / 172 accepted / 446 open.** No production/staging mutation, payment/pricing/permission change or `main` merge.
+
 ## 2026-11-13 — Payment timeout client simulation accepted (167/451)
 
 - **29.06** accepted specifically for **client-side webhook timeout, cancellation and recovery timer tests**, using the direct `PaymentCheckoutCoordinator` unit test and source inspection of `PaymentGatewayScreen`. See [detailed acceptance and limits](VSP_PAYMENT_TIMEOUT_CLIENT_ACCEPTANCE_29_06_2026-11-13.md) and [Flutter CI 43501718030](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43501718030) (1288 passed, 11 skipped). This simulated callback/cancel behavior; **not** live Paymob sandbox, a financial success claim, a 5-minute device test, or proof of no double charging. Tasks 29.03–29.05, 29.07–29.08 and 30.02–30.08 remain open.
