@@ -236,10 +236,10 @@
 - 72.01 — حصر migrations رسوم الفريق الإضافي — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4` **[قبول تاريخي — يحتاج ربط نوع دليله]**
 - 72.02 — تحديد الاعتماديات — [اعتماديات وحد الفرق](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md)، commit `bf0a7b8` **[قبول تاريخي — يحتاج ربط نوع دليله]**
 - 72.03 — مراجعة ترتيب التنفيذ **[مفتوح — تسوية الحالة مطلوبة]**
-- 72.04 — اختبار إعادة البناء **[مفتوح — تسوية الحالة مطلوبة]**
+- 72.04 — اختبار إعادة البناء — [اختبار موضعي معزول](security/VSP_MATCHUP_FEE_REBUILD_ROLLBACK_ACCEPTANCE_2026-11-14.md) **[مقبول بالنطاق الموثق]**
 - 72.05 — معالجة التباين **[مفتوح — تسوية الحالة مطلوبة]**
 - 72.06 — توثيق القرار — [اعتماديات وحد الفرق](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md)، commit `bf0a7b8` **[قبول تاريخي — يحتاج ربط نوع دليله]**
-- 72.07 — اختبار rollback آمن لترتيب migrations الخاص بالرسوم **[مفتوح — تسوية الحالة مطلوبة]**
+- 72.07 — اختبار rollback آمن لترتيب migrations الخاص بالرسوم — [اختبار موضعي معزول](security/VSP_MATCHUP_FEE_REBUILD_ROLLBACK_ACCEPTANCE_2026-11-14.md) **[مقبول بالنطاق الموثق]**
 
 ### B02 — المهام
 

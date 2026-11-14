@@ -1,3 +1,8 @@
+## 2026-11-14 — Matchup fee rebuild and rollback test (183/435)
+
+- Accepted **72.04 and 72.07** with a bounded disposable PostgreSQL contract: install the legacy paid-sixth-team function, install the five-team replacement under a savepoint, roll back to the previous definition, then install and replay the five-team definition. The test adds a fifth team and rejects a sixth even with a paid legacy-fee row, preserving its invite code. It checks `anon`/`authenticated` EXECUTE grants and refuses remote database targets. [Evidence and boundaries](security/VSP_MATCHUP_FEE_REBUILD_ROLLBACK_ACCEPTANCE_2026-11-14.md); code commit `fad6bfaa`; [Account SQL CI 43618848409](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43618848409).
+- **618 total / 183 accepted / 435 open.** Task 72.05 still needs deployment-history and data reconciliation; 71.07 still requires full clean migration rebuild; 57.07 cannot be verified from this integration's 403 branch-protection read. This is not a staging or production migration, deployed rollback, or permission to merge `main`.
+
 ## 2026-11-14 — Stadium detail refresh and booking gate (181/437)
 
 - Commits `e669ac1c` and `cd744482` preserve the last successfully parsed venue details through a malformed row, stream error or retry, while blocking booking until an active, valid row for the same venue is received. Switching venues clears the cached details and keys the stream by venue ID. A refresh has its own progress message rather than claiming a failure while it is still loading.

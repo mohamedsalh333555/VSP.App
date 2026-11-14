@@ -856,10 +856,10 @@
 - [x] 72.01 — حصر migrations رسوم الفريق الإضافي — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
 - [x] 72.02 — تحديد الاعتماديات — [اعتماديات وحد الفرق](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md)، commit `bf0a7b8`
 - [x] 72.03 — مراجعة ترتيب التنفيذ — [دليل الفحص الموثق](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md) (تحقق موضعي من metadata/ترتيب الإصدارات دون تعديل بيانات)
-- [ ] 72.04 — اختبار إعادة البناء
+- [x] 72.04 — اختبار إعادة البناء — [إعادة بناء موضعية في PostgreSQL مؤقت](security/VSP_MATCHUP_FEE_REBUILD_ROLLBACK_ACCEPTANCE_2026-11-14.md) (مسار دالة الرسوم فقط؛ لا يشمل إعادة بناء جميع migrations)
 - [ ] 72.05 — معالجة التباين
 - [x] 72.06 — توثيق القرار — [اعتماديات وحد الفرق](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md)، commit `bf0a7b8`
-- [ ] 72.07 — اختبار rollback آمن لترتيب migrations الخاص بالرسوم
+- [x] 72.07 — اختبار rollback آمن لترتيب migrations الخاص بالرسوم — [اختبار transaction/savepoint على PostgreSQL مؤقت](security/VSP_MATCHUP_FEE_REBUILD_ROLLBACK_ACCEPTANCE_2026-11-14.md) (لا يثبت rollback نشر قائم أو استرجاع بيانات فعلية)
 
 ### 73 — Leaked password protection (6)
 
