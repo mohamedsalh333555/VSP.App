@@ -252,7 +252,7 @@ class UserRepository {
           'created_at': DateTime.now().toUtc().toIso8601String(),
         });
       }
-    } catch (e, stack) {
+    } catch (_) {
       VSPLogger.e(
         'User moderation status update failed (details redacted)',
       );
@@ -316,7 +316,7 @@ class UserRepository {
       if (response is Map && response['success'] == false) {
         throw Exception(response['error']?.toString() ?? 'Failed to update verification document');
       }
-    } catch (e, stack) {
+    } catch (_) {
       VSPLogger.e('Owner verification document update failed (details redacted)');
       rethrow;
     }
@@ -337,7 +337,7 @@ class UserRepository {
         },
       );
       return response is Map ? response['success'] != false : true;
-    } catch (e, stack) {
+    } catch (_) {
       VSPLogger.e('User onboarding status update failed (details redacted)');
       return false;
     }
@@ -355,7 +355,7 @@ class UserRepository {
         },
       );
       return response is Map ? response['success'] != false : true;
-    } catch (e, stack) {
+    } catch (_) {
       VSPLogger.e('User onboarding confirmation failed (details redacted)');
       return false;
     }
@@ -384,7 +384,7 @@ class UserRepository {
       return (response as List)
           .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
           .toList();
-    } catch (e, stack) {
+    } catch (_) {
       VSPLogger.e('User search failed (details redacted)');
       return [];
     }
@@ -401,7 +401,7 @@ class UserRepository {
           .select('id, name, profile_image_url, position')
           .inFilter('id', ids);
       return List<Map<String, dynamic>>.from(rows as List<dynamic>);
-    } catch (e, stack) {
+    } catch (_) {
       VSPLogger.e('User summary fetch failed (details redacted)');
       return [];
     }
