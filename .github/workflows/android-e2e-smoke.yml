@@ -6,19 +6,10 @@ permissions:
 
 concurrency:
   group: android-e2e-smoke-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 on:
   workflow_dispatch:
-  push:
-    branches: [uxlp-44-implementation]
-    paths:
-      - "integration_test/**"
-      - "lib/**"
-      - "android/**"
-      - "scripts/verify_android_media_permissions.py"
-      - "pubspec.yaml"
-      - ".github/workflows/android-e2e-smoke.yml"
   pull_request:
     branches: [main]
     paths:

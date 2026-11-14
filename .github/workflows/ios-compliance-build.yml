@@ -5,9 +5,6 @@ permissions:
 
 on:
   workflow_dispatch:
-  push:
-    branches: [uxlp-44-implementation]
-    paths: ['ios/**', 'lib/**', 'assets/**', 'pubspec.*', 'l10n.yaml', 'scripts/verify_ios_bundle.py', 'test/tooling/test_ios_bundle_gate.py', '.github/workflows/ios-compliance-build.yml']
   pull_request:
     branches: [main]
     paths: ['ios/**', 'lib/**', 'assets/**', 'pubspec.*', 'l10n.yaml', 'scripts/verify_ios_bundle.py', 'test/tooling/test_ios_bundle_gate.py', '.github/workflows/ios-compliance-build.yml']

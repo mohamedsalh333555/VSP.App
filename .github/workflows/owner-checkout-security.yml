@@ -2,15 +2,6 @@ name: Owner checkout security
 
 on:
   workflow_dispatch:
-  push:
-    branches: [uxlp-44-implementation]
-    paths:
-      - "supabase/functions/_shared/**"
-      - "supabase/functions/create_owner_web_checkout/**"
-      - "supabase/functions/get_owner_web_checkout_status/**"
-      - "supabase/functions/paymob_webhook/**"
-      - "supabase/functions/tests/**"
-      - ".github/workflows/owner-checkout-security.yml"
   pull_request:
     branches: [main]
     paths:

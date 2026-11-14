@@ -5,39 +5,6 @@ permissions:
 
 on:
   workflow_dispatch:
-  push:
-    branches: [uxlp-44-implementation]
-    paths:
-      - 'supabase/migrations/**'
-      - 'supabase/tests/**'
-      - 'scripts/run_account_security_contracts.py'
-      - 'scripts/apply_migration_runner.py'
-      - 'test/tooling/test_migration_replay_guard.py'
-      - 'scripts/test_booking_window_function_isolated.py'
-      - 'scripts/test_accept_join_request_isolated.py'
-      - 'scripts/test_accept_join_request_concurrency.py'
-      - 'scripts/test_team_invitation_isolated.py'
-      - 'scripts/test_reject_join_request_isolated.py'
-      - 'scripts/test_refund_dispatcher_isolated.py'
-      - 'test/tooling/test_booking_window_contract_runner.py'
-      - 'test/tooling/test_accept_join_request_isolated.py'
-      - 'test/tooling/test_accept_join_request_concurrency.py'
-      - 'test/tooling/test_team_invitation_isolated.py'
-      - 'test/tooling/test_reject_join_request_isolated.py'
-      - 'test/tooling/test_refund_dispatcher_isolated.py'
-      - 'scripts/admin_rpc_guard_plan.py'
-      - 'scripts/blocked_admin_policy_plan.py'
-      - 'test/tooling/test_blocked_admin_policy_plan.py'
-      - 'test/tooling/test_admin_rpc_guard_plan.py'
-      - 'test/tooling/test_account_security_runner.py'
-      - 'scripts/test_owner_stadium_capacity_concurrency.py'
-      - 'test/tooling/test_owner_stadium_capacity_target_guard.py'
-      - 'docs/security/sql/owner_trial_365_day_default_candidate.sql'
-      - 'scripts/test_owner_trial_default_isolated.py'
-      - 'test/tooling/test_owner_trial_default_target_guard.py'
-      - 'docs/security/sql/owner_stadium_capacity_guard_candidate.sql'
-      - 'docs/security/sql/stadium_moderation_write_guard_candidate.sql'
-      - '.github/workflows/account-security-contracts.yml'
   pull_request:
     branches: [main]
     paths:
