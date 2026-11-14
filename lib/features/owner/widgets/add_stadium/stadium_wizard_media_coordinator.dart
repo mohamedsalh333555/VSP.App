@@ -62,6 +62,7 @@ class StadiumWizardMediaCoordinator {
     required VoidCallback onStateChanged,
     int? currentIndex,
     int? totalCount,
+    Future<String?> Function(XFile, String, void Function(int))? uploadImage,
   }) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final progressLabel = (currentIndex != null && totalCount != null && totalCount > 1)
@@ -91,14 +92,24 @@ class StadiumWizardMediaCoordinator {
       return;
     }
 
-    final url = await StadiumWizardImageService.uploadImageFile(
-      xFile: xFile,
-      ownerId: ownerId,
-      onProgress: (progress) {
+    String? url;
+    try {
+      void updateProgress(int progress) {
         imageEntry['progress'] = progress;
         if (context.mounted) onStateChanged();
-      },
-    );
+      }
+
+      url = uploadImage != null
+          ? await uploadImage(xFile, ownerId, updateProgress)
+          : await StadiumWizardImageService.uploadImageFile(
+              xFile: xFile,
+              ownerId: ownerId,
+              onProgress: updateProgress,
+            );
+    } catch (_) {
+      // Upload failures have the same visible recovery path as a null result.
+      url = null;
+    }
 
     if (!context.mounted) {
       if (url != null && url.isNotEmpty) {
