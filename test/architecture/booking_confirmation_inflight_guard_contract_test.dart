@@ -19,10 +19,15 @@ void main() {
     final source = File(
       'lib/features/player/screens/booking_confirmation_screen.dart',
     ).readAsStringSync();
-    expect(
-      source,
-      contains('void _onTimeSlotTap(String slotKey, List<Booking> existingBookings) {\n    if (_isLoading) return;'),
-    );
+    final slotStart = source.indexOf(
+        'void _onTimeSlotTap(String slotKey, List<Booking> existingBookings) {');
+    final slotEnd = source.indexOf('Future<void> _handleBookingConfirmation()', slotStart);
+    expect(slotStart, greaterThanOrEqualTo(0));
+    expect(slotEnd, greaterThan(slotStart));
+    final slotHandler = source.substring(slotStart, slotEnd);
+    expect(slotHandler, contains('if (_isLoading || auth.isOwner'));
+    expect(slotHandler,
+        contains('auth.currentUser?.id != _activeBookingUserId) return;'));
     expect(
       source,
       contains('onDateChanged: (date) {\n              // Do not mutate the booking date while confirmation is in flight.\n              if (_isLoading) return;'),
