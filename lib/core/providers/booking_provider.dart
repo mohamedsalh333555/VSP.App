@@ -97,10 +97,14 @@ class BookingProvider with ChangeNotifier {
     await BookingDraftStorage.clear();
   }
 
-  Future<void> _restoreDraft() async {
+  Future<void> _restoreDraft({String? userId}) async {
     final generation = ++_draftRestoreGeneration;
-    final restored = await BookingDraftStorage.restore();
-    if (generation != _draftRestoreGeneration || _currentDraft != null) return;
+    final scopeGeneration = _bookingScopeGeneration;
+    final restored = await BookingDraftStorage.restore(userId: userId);
+    if (generation != _draftRestoreGeneration ||
+        scopeGeneration != _bookingScopeGeneration ||
+        (userId != null && _activeUserId != userId) ||
+        _currentDraft != null) return;
     if (restored != null) {
       _currentDraft = restored;
       notifyListeners();
@@ -250,6 +254,10 @@ class BookingProvider with ChangeNotifier {
       if (clearOldDraft) {
         await _clearDraftOnAccountScopeChange();
         if (requestGeneration != _bookingScopeGeneration) return false;
+      } else if (_currentDraft == null) {
+        // Re-check persisted ownership after login if constructor restoration
+        // ran before authentication was ready.
+        unawaited(_restoreDraft(userId: userId));
       }
     }
     if (requestGeneration != _bookingScopeGeneration) return false;
@@ -313,6 +321,11 @@ class BookingProvider with ChangeNotifier {
       if (clearOldDraft) {
         await _clearDraftOnAccountScopeChange();
         if (requestGeneration != _bookingScopeGeneration) return;
+      } else {
+        // A venue owner must never inherit a player's draft on first login.
+        _draftRestoreGeneration++;
+        _currentDraft = null;
+        unawaited(BookingDraftStorage.clear());
       }
     }
     if (requestGeneration != _bookingScopeGeneration) return;
