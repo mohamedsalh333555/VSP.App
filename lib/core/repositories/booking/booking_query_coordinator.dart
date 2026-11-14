@@ -52,7 +52,7 @@ class BookingQueryCoordinator {
     try {
       return await getUserBookingsDirectlyStrict(userId);
     } catch (e) {
-      VSPLogger.e('Error in getUserBookingsDirectly: $e');
+      VSPLogger.e('Player booking fetch failed (details redacted)');
       return [];
     }
   }
@@ -84,7 +84,7 @@ class BookingQueryCoordinator {
     try {
       return await fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
     } catch (e) {
-      VSPLogger.e('Error fetching owner bookings directly: $e');
+      VSPLogger.e('Owner booking fetch failed (details redacted)');
       return [];
     }
   }
@@ -169,7 +169,7 @@ class BookingQueryCoordinator {
     try {
       return await getBookingByIdStrict(bookingId);
     } catch (e) {
-      debugPrint('Error getting booking: $e');
+      debugPrint('Booking lookup failed (details redacted)');
       return null;
     }
   }
@@ -224,7 +224,7 @@ class BookingQueryCoordinator {
           },
         )
         .handleError((error) {
-          VSPLogger.w('Handled realtime error in getUpcomingBookings: $error');
+          VSPLogger.w('Upcoming booking realtime failed (details redacted)');
         });
   }
 
@@ -275,7 +275,7 @@ class BookingQueryCoordinator {
           },
         )
         .handleError((error) {
-          VSPLogger.w('Handled realtime error in getBookingHistory: $error');
+          VSPLogger.w('Booking history realtime failed (details redacted)');
         });
   }
 
@@ -341,7 +341,7 @@ class BookingQueryCoordinator {
           .map((doc) => Booking.fromFirestore(doc as Map<String, dynamic>, doc['id'].toString()))
           .toList();
     } catch (e) {
-      VSPLogger.e('Error fetching unpaid bookings for user $userId', e);
+      VSPLogger.e('Unpaid booking fetch failed (details redacted)');
       return [];
     }
   }
@@ -365,7 +365,7 @@ class BookingQueryCoordinator {
           onTimeout: (sink) => sink.add([]),
         )
         .handleError((e) {
-          VSPLogger.w('Handled realtime error in match details: $e');
+          VSPLogger.w('Match detail realtime failed (details redacted)');
         });
   }
 }

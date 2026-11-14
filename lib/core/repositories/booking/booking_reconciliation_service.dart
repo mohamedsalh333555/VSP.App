@@ -95,7 +95,7 @@ class BookingReconciliationService {
 
       return true;
     } catch (e) {
-      debugPrint('Error submitting match result: $e');
+      debugPrint('Match result submission failed (details redacted)');
       return false;
     }
   }
@@ -115,7 +115,7 @@ class BookingReconciliationService {
         review: review ?? '',
       );
     } catch (error) {
-      debugPrint('Stadium review failed after result submission: $error');
+      debugPrint('Post-match stadium review failed (details redacted)');
     }
   }
 

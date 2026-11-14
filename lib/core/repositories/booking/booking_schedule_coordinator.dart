@@ -35,7 +35,7 @@ class BookingScheduleCoordinator {
       if (result is Map && result['success'] == false) throw Exception(result['error'] ?? 'فشل تحديث الحجز');
       return true;
     } catch (e) {
-      VSPLogger.e('Error updating manual booking: $e', e);
+      VSPLogger.e('Manual booking update failed (details redacted)');
       rethrow;
     }
   }
@@ -91,8 +91,8 @@ class BookingScheduleCoordinator {
       }
       return {'success': true};
     } catch (e) {
-      VSPLogger.e('Error requesting emergency closure via RPC', e);
-      return {'success': false, 'message': e.toString()};
+      VSPLogger.e('Emergency closure RPC failed (details redacted)');
+      return {'success': false, 'message': 'تعذر إرسال طلب الإغلاق الطارئ. حاول مرة أخرى.'};
     }
   }
 
@@ -109,7 +109,7 @@ class BookingScheduleCoordinator {
       });
       debugPrint('Stale pending bookings transitioned to expired/cancelled safely.');
     } catch (e) {
-      debugPrint('Error cleaning up stale bookings: $e');
+      debugPrint('Stale booking cleanup failed (details redacted)');
     }
   }
 
@@ -126,7 +126,7 @@ class BookingScheduleCoordinator {
         'p_booking_id': bookingId,
       });
     } catch (e) {
-      VSPLogger.e('Failed to release booking lock via RPC', e);
+      VSPLogger.e('Booking lock release failed (details redacted)');
       rethrow;
     }
   }

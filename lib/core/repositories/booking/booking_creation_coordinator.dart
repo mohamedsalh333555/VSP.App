@@ -167,7 +167,7 @@ class BookingCreationCoordinator {
       // Online payment notifications remain owned by the Paymob webhook.
 
       AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
-      VSPLogger.i('Atomic booking created: ${created.id}');
+      VSPLogger.i('Atomic booking created (booking ID redacted)');
       return created;
     } on PostgrestException catch (e) {
       if (e.code == '23P11' ||
@@ -179,7 +179,7 @@ class BookingCreationCoordinator {
       }
       rethrow;
     } catch (e) {
-      VSPLogger.e('Error creating booking', e);
+      VSPLogger.e('Atomic booking creation failed (details redacted)');
       rethrow;
     }
   }
