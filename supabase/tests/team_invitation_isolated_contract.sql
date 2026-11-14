@@ -1,5 +1,6 @@
 -- Disposable PostgreSQL-only fixture. No hosted Supabase connection or real users.
 -- Invitation RPC bodies are injected by the guarded local runner below.
+create extension if not exists pgcrypto;
 create schema auth;
 create function auth.uid()
 returns uuid language sql stable as $uid$
@@ -21,7 +22,7 @@ create table public.team_members(
   primary key(team_id, user_id)
 );
 create table public.team_membership_invitations(
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   team_id uuid not null references public.teams(id) on delete cascade,
   invited_user_id uuid not null references public.users(id) on delete cascade,
   invited_by uuid not null references public.users(id),
