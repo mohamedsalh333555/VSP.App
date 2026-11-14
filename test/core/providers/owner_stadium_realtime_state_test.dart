@@ -79,6 +79,27 @@ void main() {
     expect(provider.stadiums.single.id, 'pitch-2');
   });
 
+  test('entering player discovery clears owner venues and stale events',
+      () async {
+    final fixture = _OwnerStreamFixture();
+    final provider = StadiumProvider(repository: fixture);
+    addTearDown(() async {
+      provider.dispose();
+      await fixture.close();
+    });
+
+    provider.listenToOwnerStadiums('owner-A');
+    fixture.emit('owner-A', [_stadium('owner-private', 'owner-A')]);
+    await Future<void>.delayed(Duration.zero);
+    expect(provider.stadiums.single.id, 'owner-private');
+
+    provider.enterPlayerDiscoveryScope();
+    expect(provider.stadiums, isEmpty);
+    fixture.emit('owner-A', [_stadium('late-owner', 'owner-A')]);
+    await Future<void>.delayed(Duration.zero);
+    expect(provider.stadiums, isEmpty);
+  });
+
   test('player filters cannot erase the current owner stadiums', () async {
     final fixture = _OwnerStreamFixture();
     final provider = StadiumProvider(repository: fixture);

@@ -260,6 +260,30 @@ class StadiumProvider with ChangeNotifier {
  }
  }
 
+  /// Transition from owner-only venue data into public player discovery.
+  /// The caller must have verified that the current account is a player.
+  void enterPlayerDiscoveryScope() {
+    if (_listeningOwnerId == null) return;
+    _scopeGeneration++;
+    _discoveryRequestGeneration++;
+    _listeningOwnerId = null;
+    _stadiumSubscription?.cancel();
+    _stadiumSubscription = null;
+    _stadiums = [];
+    _filteredStadiums = [];
+    _isFilterActive = false;
+    _activeQuickFilter = null;
+    _currentFilters = null;
+    _selectedGovernorate = null;
+    _isGeographicFallback = false;
+    _errorMessage = null;
+    _isLoading = false;
+    _isLoadingMore = false;
+    _lastDocument = null;
+    _hasMore = true;
+    notifyListeners();
+  }
+
   String? _listeningOwnerId;
 
   // Listen specifically to owner's stadiums

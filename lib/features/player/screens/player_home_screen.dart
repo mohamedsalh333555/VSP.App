@@ -104,6 +104,9 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
 
       if (auth.isAuthenticated && !auth.isOwner) {
+        final currentPlayerId = auth.currentUser?.id;
+        if (currentPlayerId == null) return;
+        stadiumProvider.enterPlayerDiscoveryScope();
         String? gov = auth.userModel?.governorate;
 
         // إذا لم يكن لديه محافظة مسجلة، نقوم بمحاولة جلبها فوراً بالـ GPS أولاً في الخلفية
@@ -114,6 +117,9 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
             isAr ? 'جاري تحديد موقعك الجغرافي تلقائياً...' : 'Determining your location automatically...',
           );
           final success = await auth.updateUserLocation();
+          if (!mounted ||
+              context.read<AuthProvider>().currentUser?.id != currentPlayerId ||
+              context.read<AuthProvider>().isOwner) return;
 
           if (success) {
             final resolvedGov = auth.userModel?.governorate;
@@ -122,7 +128,8 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
             }
           } else {
             // إذا فشل الـ GPS أو رفض المستخدم الإذن، نفتح له نافذة الاختيار اليدوي كخيار بديل
-            if (mounted) {
+            if (mounted &&
+                context.read<AuthProvider>().currentUser?.id == currentPlayerId) {
               VSPFeedback.showError(
                 context,
                 isAr
@@ -142,21 +149,26 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
           final bookingsLoaded =
               await Provider.of<BookingProvider>(context, listen: false)
                   .loadUserBookings(userId);
-          if (mounted && bookingsLoaded) {
+          if (mounted && bookingsLoaded &&
+              context.read<AuthProvider>().currentUser?.id == userId &&
+              !context.read<AuthProvider>().isOwner) {
             try {
               // An empty set means the user is not a captain; a query failure
               // must not be silently interpreted as that business state.
               final captainTeamIds =
                   await TeamRepository().getUserCaptainTeamIdsStrict(userId);
-              if (mounted) {
+              if (mounted &&
+                  context.read<AuthProvider>().currentUser?.id == userId &&
+                  !context.read<AuthProvider>().isOwner) {
                 _checkPendingChallengeResultPopup(
                   context,
                   captainTeamIds: captainTeamIds,
                 );
               }
-            } catch (e) {
-              debugPrint('Could not verify captain access for pending match results: $e');
-              if (mounted) {
+            } catch (_) {
+              debugPrint('Captain access verification failed (details redacted)');
+              if (mounted &&
+                  context.read<AuthProvider>().currentUser?.id == userId) {
                 final isArabic =
                     Localizations.localeOf(context).languageCode == 'ar';
                 VSPFeedback.showError(
@@ -169,7 +181,8 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
             }
           }
         }
-      } else {
+      } else if (!auth.isAuthenticated) {
+        // Never reset the owner's private venue stream while the role changes.
         stadiumProvider.fetchStadiums(isRefresh: true);
       }
     });
