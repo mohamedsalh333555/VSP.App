@@ -157,6 +157,13 @@ class StadiumWizardStepsPager extends StatelessWidget {
             uid: uid,
             onStateChanged: onStateChanged,
           ),
+          onSetCover: (img) => StadiumWizardMediaCoordinator.setCoverImage(
+            image: img,
+            images: images,
+            stadiumId: stadiumId,
+            uid: uid,
+            onStateChanged: onStateChanged,
+          ),
           onSubmit: onNextPage,
         ),
       ],

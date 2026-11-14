@@ -8,6 +8,25 @@ import 'stadium_wizard_image_service.dart';
 class StadiumWizardMediaCoordinator {
   const StadiumWizardMediaCoordinator._();
 
+  /// The first saved image becomes `imageUrl` on create and update.
+  static void setCoverImage({
+    required Map<String, dynamic> image,
+    required List<Map<String, dynamic>> images,
+    required String? stadiumId,
+    required String? uid,
+    required VoidCallback onStateChanged,
+  }) {
+    final index = images.indexOf(image);
+    if (index <= 0 || image['isUploading'] == true ||
+        image['url']?.toString().trim().isNotEmpty != true) return;
+    images.removeAt(index);
+    images.insert(0, image);
+    onStateChanged();
+    if (stadiumId == null) {
+      StadiumWizardDraftService.saveImages(uid, images);
+    }
+  }
+
   /// Prompts user for photo source and processes single or multiple image uploads.
   static Future<void> pickAndUpload({
     required BuildContext context,

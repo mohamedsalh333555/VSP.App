@@ -13,6 +13,7 @@ class AddStadiumStep3Images extends StatelessWidget {
   final bool isSaving;
   final VoidCallback onPickImage;
   final ValueChanged<Map<String, dynamic>> onDeleteImage;
+  final ValueChanged<Map<String, dynamic>> onSetCover;
   final VoidCallback onSubmit;
 
   const AddStadiumStep3Images({
@@ -22,6 +23,7 @@ class AddStadiumStep3Images extends StatelessWidget {
     required this.isSaving,
     required this.onPickImage,
     required this.onDeleteImage,
+    required this.onSetCover,
     required this.onSubmit,
   });
 
@@ -62,13 +64,18 @@ class AddStadiumStep3Images extends StatelessWidget {
                 final img = entry.value;
                 return _buildUploadCard(
                   context,
-                  title: isArabic ? 'صورة الملعب ${index + 1}' : 'Stadium Photo ${index + 1}',
+                  title: index == 0 && img['url'] != null
+                      ? (isArabic ? 'صورة الغلاف' : 'Cover Photo')
+                      : (isArabic ? 'صورة الملعب ${index + 1}' : 'Stadium Photo ${index + 1}'),
                   fileUrl: img['url'],
                   isUploading: img['isUploading'] ?? false,
                   progress: img['progress'] ?? 0,
                   statusLabel: img['statusLabel'],
                   onTap: onPickImage,
                   onDelete: () => onDeleteImage(img),
+                  onSetCover: index > 0 && img['url'] != null
+                      ? () => onSetCover(img)
+                      : null,
                   thumbnail: img['url'] != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(VSPRadius.sm),
@@ -117,6 +124,7 @@ class AddStadiumStep3Images extends StatelessWidget {
     String? statusLabel,
     required VoidCallback onTap,
     required VoidCallback onDelete,
+    VoidCallback? onSetCover,
     Widget? thumbnail,
   }) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -214,6 +222,12 @@ class AddStadiumStep3Images extends StatelessWidget {
               const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 22),
               const SizedBox(width: 8),
             ],
+            if (onSetCover != null)
+              IconButton(
+                tooltip: isArabic ? 'تعيين صورة الغلاف' : 'Set as cover',
+                icon: const Icon(Iconsax.star_copy, color: VSPColors.accent),
+                onPressed: onSetCover,
+              ),
             IconButton(
               icon: const Icon(Iconsax.trash_copy, color: VSPColors.error),
               onPressed: onDelete,
