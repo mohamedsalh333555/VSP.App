@@ -14,21 +14,22 @@ class StadiumWizardLocationCoordinator {
     required double? currentLng,
     required String? uid,
     required bool isEditing,
+    Future<LocationResult?> Function()? pickOnMap,
   }) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final result = await AddStadiumLocationPickerSheet.show(
-      context,
-      initialLat: currentLat,
-      initialLng: currentLng,
-    );
+    final result = pickOnMap != null
+        ? await pickOnMap()
+        : await AddStadiumLocationPickerSheet.show(
+            context, initialLat: currentLat, initialLng: currentLng,
+          );
 
-    if (result != null) {
+    if (result != null && _hasValidCoordinates(result)) {
       if (!isEditing) {
-        StadiumWizardDraftService.saveDouble(uid, 'lat', result.latitude);
-        StadiumWizardDraftService.saveDouble(uid, 'lng', result.longitude);
-        StadiumWizardDraftService.saveString(uid, 'location', result.address);
+        await StadiumWizardDraftService.saveDouble(uid, 'lat', result.latitude);
+        await StadiumWizardDraftService.saveDouble(uid, 'lng', result.longitude);
+        await StadiumWizardDraftService.saveString(uid, 'location', result.address);
         if (result.governorate != null) {
-          StadiumWizardDraftService.saveString(uid, 'governorate', result.governorate!);
+          await StadiumWizardDraftService.saveString(uid, 'governorate', result.governorate!);
         }
       }
       if (context.mounted) {
@@ -39,7 +40,7 @@ class StadiumWizardLocationCoordinator {
       }
     }
 
-    return result;
+    return result != null && _hasValidCoordinates(result) ? result : null;
   }
 
   /// Opens the manual address modal without map tiles and persists the coordinates & address.
@@ -49,21 +50,24 @@ class StadiumWizardLocationCoordinator {
     required String? currentAddress,
     required String? uid,
     required bool isEditing,
+    Future<LocationResult?> Function()? pickManually,
   }) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final result = await AddStadiumLocationPickerSheet.showManualAddressDialog(
-      context,
-      initialGovernorate: currentGov,
-      initialAddress: currentAddress,
-    );
+    final result = pickManually != null
+        ? await pickManually()
+        : await AddStadiumLocationPickerSheet.showManualAddressDialog(
+            context,
+            initialGovernorate: currentGov,
+            initialAddress: currentAddress,
+          );
 
-    if (result != null) {
+    if (result != null && _hasValidCoordinates(result)) {
       if (!isEditing) {
-        StadiumWizardDraftService.saveDouble(uid, 'lat', result.latitude);
-        StadiumWizardDraftService.saveDouble(uid, 'lng', result.longitude);
-        StadiumWizardDraftService.saveString(uid, 'location', result.address);
+        await StadiumWizardDraftService.saveDouble(uid, 'lat', result.latitude);
+        await StadiumWizardDraftService.saveDouble(uid, 'lng', result.longitude);
+        await StadiumWizardDraftService.saveString(uid, 'location', result.address);
         if (result.governorate != null) {
-          StadiumWizardDraftService.saveString(uid, 'governorate', result.governorate!);
+          await StadiumWizardDraftService.saveString(uid, 'governorate', result.governorate!);
         }
       }
       if (context.mounted) {
@@ -74,6 +78,11 @@ class StadiumWizardLocationCoordinator {
       }
     }
 
-    return result;
+    return result != null && _hasValidCoordinates(result) ? result : null;
   }
+
+  static bool _hasValidCoordinates(LocationResult location) =>
+      location.latitude.isFinite && location.longitude.isFinite &&
+      location.latitude >= -90 && location.latitude <= 90 &&
+      location.longitude >= -180 && location.longitude <= 180;
 }

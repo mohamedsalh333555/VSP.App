@@ -12,6 +12,41 @@ enum StadiumImagePickType { multiple, single16x9 }
 class StadiumWizardImageService {
   static final StorageService _storageService = StorageService();
 
+  static Future<bool> isSupportedImage(XFile xFile) async {
+    const maxImageBytes = 10 * 1024 * 1024;
+    const mimeByExtension = <String, String>{
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'webp': 'image/webp',
+    };
+    try {
+      final fileName = xFile.name.toLowerCase().trim();
+      final extension = fileName.contains('.') ? fileName.split('.').last : '';
+      final expectedMime = mimeByExtension[extension];
+      if (expectedMime == null) return false;
+      final mime = xFile.mimeType?.toLowerCase().trim();
+      if (mime != null && mime.isNotEmpty && mime != expectedMime) return false;
+      final length = await xFile.length();
+      if (length < 12 || length > maxImageBytes) return false;
+      final header = await xFile.openRead(0, 12).expand((bytes) => bytes).toList();
+      if (header.length < 12) return false;
+      if (expectedMime == 'image/jpeg') {
+        return header[0] == 0xff && header[1] == 0xd8 && header[2] == 0xff;
+      }
+      if (expectedMime == 'image/png') {
+        const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+        return List.generate(png.length, (i) => header[i] == png[i]).every((match) => match);
+      }
+      return header[0] == 0x52 && header[1] == 0x49 &&
+          header[2] == 0x46 && header[3] == 0x46 &&
+          header[8] == 0x57 && header[9] == 0x45 &&
+          header[10] == 0x42 && header[11] == 0x50;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<StadiumImagePickType?> showImageSourceModal(BuildContext context) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
@@ -85,31 +120,14 @@ class StadiumWizardImageService {
     required void Function(int progress) onProgress,
     required String ownerId,
   }) async {
-    const maxImageBytes = 10 * 1024 * 1024;
-    const allowedMimeTypes = <String>{
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-    };
-    const allowedExtensions = <String>{'jpg', 'jpeg', 'png', 'webp'};
     Timer? progressTimer;
 
     try {
       final fileName = xFile.name.toLowerCase().trim();
       final extension =
           fileName.contains('.') ? fileName.split('.').last : '';
-      final mimeType = xFile.mimeType?.toLowerCase().trim();
-      final hasAllowedType = mimeType?.isNotEmpty == true
-          ? allowedMimeTypes.contains(mimeType)
-          : allowedExtensions.contains(extension);
-      final fileLength = await xFile.length();
-      if (!hasAllowedType ||
-          fileLength <= 0 ||
-          fileLength > maxImageBytes) {
-        debugPrint(
-          'Rejected stadium image before upload: '
-          'type=${mimeType ?? extension}, bytes=$fileLength',
-        );
+      if (!await isSupportedImage(xFile)) {
+        debugPrint('Rejected unsupported stadium image before upload');
         return null;
       }
 
