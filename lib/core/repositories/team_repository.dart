@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
@@ -64,7 +65,7 @@ class TeamRepository {
            : 'استجابة غير متوقعة عند تحديث نتيجة المباراة');
      }
    } catch (e) {
-     debugPrint('Error updating match result through atomic RPC: $e');
+     debugPrint('Atomic match result update failed (details redacted)');
      rethrow;
    }
  }
@@ -72,7 +73,7 @@ class TeamRepository {
    try {
      return await getUserCaptainTeamIdsStrict(userId);
    } catch (e) {
-     debugPrint('Error getting user captain teams: $e');
+     debugPrint('Captain team lookup failed (details redacted)');
      return <String>{};
    }
  }
@@ -127,7 +128,7 @@ class TeamRepository {
    try {
      return await getUserTeamStrict(userId);
    } catch (e) {
-     debugPrint('Error getting user team: $e');
+     debugPrint('User team lookup failed (details redacted)');
      return null;
    }
  }
@@ -172,7 +173,7 @@ class TeamRepository {
         await inviteTeamMember(teamId, userId);
       } catch (error) {
         failedInvitationUserIds.add(userId);
-        debugPrint('Team created, but invitation to $userId failed: $error');
+        debugPrint('Team invitation dispatch failed (user details redacted)');
       }
     }
     return teamId;
@@ -183,7 +184,7 @@ class TeamRepository {
     try {
       return await getTeamStrict(id);
     } catch (e) {
-      debugPrint('Error getting team: $e');
+      debugPrint('Team lookup failed (details redacted)');
       return null;
     }
   }
@@ -213,7 +214,7 @@ class TeamRepository {
     try {
       return await fetchTeamsDirectlyStrict(governorate: governorate);
     } catch (e) {
-      debugPrint('Error fetching teams directly: $e');
+      debugPrint('Public team fetch failed (details redacted)');
       return [];
     }
   }
@@ -256,7 +257,7 @@ class TeamRepository {
       }
       return null;
     } catch (e) {
-      debugPrint('Error getting team invite code: $e');
+      debugPrint('Team invitation code lookup failed (details redacted)');
       return null;
     }
   }
@@ -284,7 +285,7 @@ class TeamRepository {
 
  return TeamPayloadBuilder.calculateHeadToHead(response as List, team1Id, team2Id);
  } catch (e) {
- debugPrint('Error getting head to head stats: $e');
+ debugPrint('Team head-to-head lookup failed (details redacted)');
  return null;
  }
  }
@@ -386,9 +387,9 @@ class TeamRepository {
         invite['team_name'] = teamName;
       }
     } catch (error, stackTrace) {
-      debugPrint('Could not resolve invitation team names: $error');
+      debugPrint('Invitation team details unavailable (details redacted)');
       Error.throwWithStackTrace(
-        StateError('Failed to load invitation team details: $error'),
+        StateError('Failed to load invitation team details'),
         stackTrace,
       );
     }
@@ -411,7 +412,7 @@ class TeamRepository {
     if (pgData.isEmpty) return true;
     final response = await _supabase.rpc('update_team_atomic', params: {'p_team_id': teamId, 'p_data': pgData});
     return response is Map && response['success'] == true;
-  } catch (e) { debugPrint('Error updating team: $e'); return false; }
+  } catch (e) { debugPrint('Team update failed (details redacted)'); return false; }
  }
 
  Future<bool> deleteTeam(String teamId) async {
@@ -440,7 +441,7 @@ class TeamRepository {
  );
  return response == true;
  } catch (e) {
- debugPrint('Error checking if team has 1v1 champion: $e');
+ debugPrint('Team 1v1 championship check failed (details redacted)');
  return false;
  }
  }
@@ -461,7 +462,7 @@ class TeamRepository {
         yield [Map<String, dynamic>.from(initialDoc)];
       }
     } catch (e) {
-      VSPLogger.w('Initial public team fetch notice: $e');
+      VSPLogger.w('Initial public team lookup failed (details redacted)');
     }
 
     yield* _supabase
@@ -470,10 +471,13 @@ class TeamRepository {
         .eq('id', teamId)
         .timeout(
           const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
+          onTimeout: (sink) => sink.addError(
+            TimeoutException('Team realtime timeout'),
+          ),
         )
-        .handleError((err) {
-          VSPLogger.w('Team realtime stream notice: $err');
+        .handleError((Object error, StackTrace stack) {
+          VSPLogger.w('Team realtime stream failed (details redacted)');
+          Error.throwWithStackTrace(error, stack);
         });
   }
 
@@ -488,8 +492,8 @@ class TeamRepository {
       }
       return {'success': false, 'error': 'UNEXPECTED_RESPONSE'};
     } catch (e) {
-      VSPLogger.e('Error generating challenge code: $e');
-      return {'success': false, 'error': e.toString()};
+      VSPLogger.e('Team challenge code generation failed (details redacted)');
+      return {'success': false, 'error': 'CHALLENGE_CODE_UNAVAILABLE'};
     }
   }
 
@@ -504,8 +508,8 @@ class TeamRepository {
       }
       return {'success': false, 'error': 'UNEXPECTED_RESPONSE'};
     } catch (e) {
-      VSPLogger.e('Error looking up challenge code: $e');
-      return {'success': false, 'error': e.toString()};
+      VSPLogger.e('Team challenge code lookup failed (details redacted)');
+      return {'success': false, 'error': 'CHALLENGE_LOOKUP_UNAVAILABLE'};
     }
   }
 }
