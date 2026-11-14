@@ -1,5 +1,7 @@
 # VSP — Stadium details and booking screenshot triage
 
+> Update 2026-11-14: the details refresh now retains the last valid parsed venue, isolates cache by venue ID and disables booking until a current valid row arrives. [Flutter CI 43616662427](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43616662427) passed direct resolver tests; Android smoke and iOS compliance passed on the same code head. This is a client-side partial fix for 83.02. The screenshot's actual stream error and device retry have not been reproduced, so **83.02 remains open**. The observations and line references below describe the original 11 November snapshot.
+
 Date: 2026-11-11. Input: two user-provided Android screenshots (stadium details, booking date 11 November 2026). **Static screenshots plus source inspection only.** No reproduction on device, live API payload, network log, authenticated staging run, or production data read. All seven tasks remain OPEN. Do not conflate a displayed symptom with a verified backend root cause.
 
 | ID | Screenshot observation | Source inspection | Classification | Next acceptance evidence |

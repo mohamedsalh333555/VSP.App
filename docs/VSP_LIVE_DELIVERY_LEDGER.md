@@ -1,3 +1,10 @@
+## 2026-11-14 — Stadium detail refresh and booking gate (181/437)
+
+- Commits `e669ac1c` and `cd744482` preserve the last successfully parsed venue details through a malformed row, stream error or retry, while blocking booking until an active, valid row for the same venue is received. Switching venues clears the cached details and keys the stream by venue ID. A refresh has its own progress message rather than claiming a failure while it is still loading.
+- Direct `stadium_snapshot_resolver_test.dart` covers a valid row, error, retry with stale data, malformed row, empty row, another venue ID and switching venues. [Flutter CI 43616662427](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43616662427), [Android smoke 43616662465](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43616662465), iOS compliance, Account SQL and Owner checkout security all succeeded on the same code head.
+- This fixes a source-confirmed stale-data display/booking risk under **83.02** but does not establish why the owner's screenshot showed a refresh warning. Device reproduction, actual venue payload/source diagnosis and retry acceptance remain open. **83.02 is CODE_DONE/IN_PROGRESS, not VERIFIED.** Neither this change nor five green workflows is counted as five completed tasks.
+- **618 total / 181 accepted / 437 open.** No staging/production data or schema mutation, payment/pricing change, `main` merge or APK release.
+
 ## 2026-11-14 — Booking order and history browsing accepted (181/437)
 
 - Accepted **16.06** for deterministic player booking order and browsing the history section. The direct `bookings_screen_test.dart` exercises two future bookings in reversed input order, checks their visible order, scrolls to a completed historical booking and verifies its card. The categorization tests cover stable ties, newest history first and owner order without mutating the source list. [Evidence and boundaries](VSP_BOOKING_ORDER_BROWSING_ACCEPTANCE_16_06_2026-11-14.md).
