@@ -17,8 +17,12 @@ void main() {
     final slots = File(
       'lib/features/player/widgets/booking/booking_slot_stream_section.dart',
     ).readAsStringSync();
+    final resolver = File(
+      'lib/features/player/widgets/stadium_details/stadium_snapshot_resolver.dart',
+    ).readAsStringSync();
     expect(details, contains('if (stadium.isUnderMaintenance)'));
-    expect(details, contains('stadium.isVerified && !stadium.isBlocked && !hasStreamIssue'));
+    expect(details, contains('bookingEnabled: resolved.canBook'));
+    expect(resolver, contains('stadium.isVerified && !stadium.isBlocked'));
     expect(slots, contains('final isClosed = _isSlotClosed(slotItem.key)'));
     expect(slots, contains('isClosed: isClosed'));
   });
