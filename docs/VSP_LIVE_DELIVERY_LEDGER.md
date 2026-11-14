@@ -1,3 +1,9 @@
+## 2026-11-15 — Owner gallery and service choices (200/418)
+
+- Accepted **20.02** for the owner photo upload/delete UI, with a synthetic successful Storage response: completed gallery entry and draft, deletion of that new image and draft cleanup, and deferred deletion of a persisted image during edit. Draft writes in upload/delete are now awaited. [Evidence and boundaries](VSP_STADIUM_MEDIA_AND_SERVICES_ACCEPTANCE_2026-11-15.md).
+- Accepted **21.03** for the owner service selectors: a widget test taps Cafeteria and Garage, then verifies draft restore and the outgoing feature payload. [Flutter CI 43646816118](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43646816118) runs the two tests on the same head.
+- **618 total / 200 accepted / 418 open.** Live Storage permissions, server-side content safety and player-side data reflection still need independent verification.
+
 ## 2026-11-14 — Owner stadium media recovery and cover selection (198/420)
 
 - Accepted **20.05** for the owner wizard's storage failure UI. The coordinator removes the transient uploading row and shows a retryable error on either a null storage response or a thrown upload error. A direct widget test covers both cases and checks the state callback. [Evidence and limits](VSP_STADIUM_IMAGE_UPLOAD_FAILURE_ACCEPTANCE_2026-11-14.md).
