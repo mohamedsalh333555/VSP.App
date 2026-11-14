@@ -76,6 +76,48 @@ void main() {
     expect(provider.selectedGovernorate, 'Cairo');
   });
 
+  test('switching governorates immediately clears old results', () async {
+    final backend = _DelayedStadiumRepository();
+    final provider = StadiumProvider(repository: backend);
+    addTearDown(provider.dispose);
+    var notifications = 0;
+    provider.addListener(() => notifications++);
+
+    provider.applyGovernorateFilter('Aswan');
+    backend.request('Aswan', 0).complete(_page([_stadium('aswan-pitch')]));
+    await Future<void>.delayed(Duration.zero);
+    expect(provider.stadiums.single.id, 'aswan-pitch');
+
+    final beforeSwitch = notifications;
+    provider.applyGovernorateFilter('Cairo');
+    expect(provider.stadiums, isEmpty);
+    expect(provider.isLoading, isTrue);
+    expect(notifications, greaterThan(beforeSwitch));
+
+    backend.request('Cairo', 0).complete(_page([_stadium('cairo-pitch')]));
+    await Future<void>.delayed(Duration.zero);
+    expect(provider.stadiums.single.id, 'cairo-pitch');
+  });
+
+  test('applying a new server filter clears old results before response',
+      () async {
+    final backend = _DelayedStadiumRepository();
+    final provider = StadiumProvider(repository: backend);
+    addTearDown(provider.dispose);
+
+    provider.applyFilters({'location': 'Aswan', 'searchQuery': 'pitch'});
+    backend.request('Aswan', 0).complete(_page([_stadium('old-filter')]));
+    await Future<void>.delayed(Duration.zero);
+    expect(provider.stadiums.single.id, 'old-filter');
+
+    provider.applyFilters({'location': 'Cairo', 'searchQuery': 'arena'});
+    expect(provider.stadiums, isEmpty);
+    expect(provider.isLoading, isTrue);
+    backend.request('Cairo', 0).complete(_page([_stadium('new-filter')]));
+    await Future<void>.delayed(Duration.zero);
+    expect(provider.stadiums.single.id, 'new-filter');
+  });
+
   test('discovery failure is not presented as verified empty results', () async {
     final backend = _DelayedStadiumRepository();
     final provider = StadiumProvider(repository: backend);

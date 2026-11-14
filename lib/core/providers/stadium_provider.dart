@@ -48,6 +48,13 @@ class StadiumProvider with ChangeNotifier {
  if (_isFilterActive && _currentFilters != null) {
    applyFilters(_currentFilters!);
  } else {
+   _stadiums = [];
+   _filteredStadiums = [];
+   _lastDocument = null;
+   _hasMore = true;
+   _isGeographicFallback = false;
+   _errorMessage = null;
+   notifyListeners();
    fetchStadiums(isRefresh: true);
  }
  }
@@ -352,7 +359,8 @@ class StadiumProvider with ChangeNotifier {
  _hasMore = true;
  _isFilterActive = false; 
  _isGeographicFallback = false;
- 
+ _errorMessage = null;
+ notifyListeners(); // Clear the previous governorate before the async query.
  fetchStadiums(isRefresh: true);
  }
 
@@ -378,7 +386,8 @@ class StadiumProvider with ChangeNotifier {
  _filteredStadiums = [];
  _lastDocument = null;
  _hasMore = true;
- 
+ _errorMessage = null;
+ notifyListeners(); // Prevent earlier filter results from lingering.
  final List<String> sports = filters['sports'] is List ? List<String>.from(filters['sports']) : [];
  final String? location = filters['location'] as String?;
  final List<String> sizes = filters['sizes'] is List ? List<String>.from(filters['sizes']) : [];
@@ -475,9 +484,9 @@ class StadiumProvider with ChangeNotifier {
 
  _errorMessage = null;
  notifyListeners();
- } catch (e) {
+ } catch (_) {
  if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
-   VSPLogger.e('Failed to fetch filtered stadiums', e);
+   VSPLogger.e('Filtered stadium fetch failed (details redacted)');
    _setError('stadium_load_failed');
  }
  } finally {
@@ -512,6 +521,9 @@ class StadiumProvider with ChangeNotifier {
  _isGeographicFallback = false;
  _lastDocument = null;
  _hasMore = true;
+ _stadiums = [];
+ _errorMessage = null;
+ notifyListeners();
  await fetchStadiums(isRefresh: true);
  }
 
