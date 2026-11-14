@@ -20,6 +20,8 @@ class BookingSlotStreamSection extends StatefulWidget {
   final String stadiumId;
   final Stadium stadium;
   final DateTime selectedDate;
+  /// The authenticated player viewing this availability snapshot.
+  final String? viewerUserId;
   final List<TimeSlotItem> timeSlots;
   final List<String> selectedTimeSlots;
 
@@ -36,6 +38,7 @@ class BookingSlotStreamSection extends StatefulWidget {
     required this.stadiumId,
     required this.stadium,
     required this.selectedDate,
+    this.viewerUserId,
     required this.timeSlots,
     required this.selectedTimeSlots,
     required this.onSlotTap,
@@ -64,7 +67,8 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
   void didUpdateWidget(covariant BookingSlotStreamSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.stadiumId != widget.stadiumId ||
-        oldWidget.selectedDate != widget.selectedDate) {
+        oldWidget.selectedDate != widget.selectedDate ||
+        oldWidget.viewerUserId != widget.viewerUserId) {
       _subscribe();
     }
   }
@@ -103,6 +107,18 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
       stream: _bookingsStream,
       builder: (context, snapshot) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+        // When the account changes, do not expose the previous session's
+        // booking feed or offer selectable slots until a player signs in.
+        if (widget.viewerUserId == null) {
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'سجّل الدخول لعرض المواعيد' : 'Sign in for availability',
+            message: isArabic
+                ? 'يجب تسجيل الدخول كلاعب للتحقق من الحجوزات الحالية.'
+                : 'Sign in as a player to verify current bookings.',
+          );
+        }
 
         // StreamBuilder retains the *previous date's data* when its stream
         // changes (none -> waiting). Do not offer stale slots while the new

@@ -56,6 +56,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   String? _userTeamName;
   List<TimeSlotItem> _timeSlots = [];
   bool _isSlotsInitialized = false;
+  String? _activeBookingUserId;
+  bool _hasObservedBookingUser = false;
 
   DateTime get _operationalBaseDate =>
       AppDateFormatter.getOperationalDate(DateTime.now());
@@ -90,7 +92,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     _selectedDate = initial.date;
     _selectedTimeSlots.addAll(initial.slots);
     _isPrivate = true;
-    _fetchUserTeam();
+    // Team context is loaded when the authenticated account is known.
   }
 
   @override
@@ -99,6 +101,30 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     if (!_isSlotsInitialized) {
       _isSlotsInitialized = true;
       _generateDynamicTimeSlots();
+    }
+
+    final auth = context.watch<AuthProvider>();
+    final userId = auth.isOwner ? null : auth.currentUser?.id;
+    if (!_hasObservedBookingUser || _activeBookingUserId != userId) {
+      final accountSwitched = _hasObservedBookingUser;
+      _hasObservedBookingUser = true;
+      _activeBookingUserId = userId;
+      // Invalidates old team-read completions synchronously; never show
+      // a previous captain's team or selected slots to the new account.
+      ++_userTeamRequestGeneration;
+      _userTeamId = null;
+      _userTeamName = null;
+      _hasUserTeamLoadError = false;
+      _isLoadingUserTeam = userId != null;
+      if (accountSwitched) {
+        _selectedTimeSlots.clear();
+        _isBallRented = false;
+        _isLoading = false;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _activeBookingUserId != userId) return;
+        _fetchUserTeamFor(userId);
+      });
     }
   }
 
@@ -166,7 +192,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   void _onTimeSlotTap(String slotKey, List<Booking> existingBookings) {
-    if (_isLoading) return;
+    final auth = context.read<AuthProvider>();
+    if (_isLoading || auth.isOwner || auth.currentUser?.id == null ||
+        auth.currentUser?.id != _activeBookingUserId) return;
     setState(() {
       final updated = BookingSlotCalculator.calculateNewSelectedSlots(
         slotKey: slotKey,
@@ -184,6 +212,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   Future<void> _handleBookingConfirmation() async {
+    final auth = context.read<AuthProvider>();
+    final initiatingUserId = auth.currentUser?.id;
+    if (initiatingUserId == null || auth.isOwner ||
+        initiatingUserId != _activeBookingUserId) {
+      VSPFeedback.showError(
+        context,
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? 'سجّل الدخول كلاعب قبل تأكيد الحجز.'
+            : 'Sign in as a player before confirming a booking.',
+      );
+      return;
+    }
     // Reject rapid repeat taps while the first confirmation is running.
     if (_isLoading || _selectedTimeSlots.isEmpty) return;
     if (_requiresTeamContext && _isLoadingUserTeam) {
@@ -225,11 +265,17 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       currentPlayers: _currentPlayers,
       userTeamId: _userTeamId,
       userTeamName: _userTeamName,
-      onLoadingChanged: (loading) => setState(() => _isLoading = loading),
-      onSlotsCleared: () => setState(() {
-        _selectedTimeSlots.clear();
-        _isBallRented = false;
-      }),
+      onLoadingChanged: (loading) {
+        if (!mounted || _activeBookingUserId != initiatingUserId) return;
+        setState(() => _isLoading = loading);
+      },
+      onSlotsCleared: () {
+        if (!mounted || _activeBookingUserId != initiatingUserId) return;
+        setState(() {
+          _selectedTimeSlots.clear();
+          _isBallRented = false;
+        });
+      },
     );
   }
 
@@ -278,6 +324,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     stadiumId: widget.stadium.id,
                     stadium: widget.stadium,
                     selectedDate: _selectedDate,
+                    viewerUserId: _activeBookingUserId,
                     timeSlots: _timeSlots,
                     selectedTimeSlots: List.unmodifiable(_selectedTimeSlots),
                     onSlotTap: _onTimeSlotTap,
