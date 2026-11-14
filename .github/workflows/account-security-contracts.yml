@@ -16,11 +16,13 @@ on:
       - 'scripts/test_booking_window_function_isolated.py'
       - 'scripts/test_accept_join_request_isolated.py'
       - 'scripts/test_accept_join_request_concurrency.py'
+      - 'scripts/test_team_invitation_isolated.py'
       - 'scripts/test_reject_join_request_isolated.py'
       - 'scripts/test_refund_dispatcher_isolated.py'
       - 'test/tooling/test_booking_window_contract_runner.py'
       - 'test/tooling/test_accept_join_request_isolated.py'
       - 'test/tooling/test_accept_join_request_concurrency.py'
+      - 'test/tooling/test_team_invitation_isolated.py'
       - 'test/tooling/test_reject_join_request_isolated.py'
       - 'test/tooling/test_refund_dispatcher_isolated.py'
       - 'scripts/admin_rpc_guard_plan.py'
@@ -47,11 +49,13 @@ on:
       - 'scripts/test_booking_window_function_isolated.py'
       - 'scripts/test_accept_join_request_isolated.py'
       - 'scripts/test_accept_join_request_concurrency.py'
+      - 'scripts/test_team_invitation_isolated.py'
       - 'scripts/test_reject_join_request_isolated.py'
       - 'scripts/test_refund_dispatcher_isolated.py'
       - 'test/tooling/test_booking_window_contract_runner.py'
       - 'test/tooling/test_accept_join_request_isolated.py'
       - 'test/tooling/test_accept_join_request_concurrency.py'
+      - 'test/tooling/test_team_invitation_isolated.py'
       - 'test/tooling/test_reject_join_request_isolated.py'
       - 'test/tooling/test_refund_dispatcher_isolated.py'
       - 'scripts/admin_rpc_guard_plan.py'
@@ -133,6 +137,10 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_accept_join_request_concurrency.py -v
       - name: Verify two independent SQL clients cannot join the same final pickup slot
         run: python3 scripts/test_accept_join_request_concurrency.py
+      - name: Verify team invitation runner cannot target hosted PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_team_invitation_isolated.py -v
+      - name: Verify invitation authorization and expiry on isolated PostgreSQL
+        run: python3 scripts/test_team_invitation_isolated.py
       - name: Verify reject-join runner refuses remote SQL
         run: python3 -m unittest discover -s test/tooling -p test_reject_join_request_isolated.py -v
       - name: Verify reject-join ownership on isolated PostgreSQL
