@@ -88,7 +88,9 @@ void main() {
           expect(accept, isTrue);
           responseCount++;
         },
-        onMembershipChanged: () async => membershipRefreshCount++,
+        onMembershipChanged: () async {
+          membershipRefreshCount++;
+        },
       ),
     );
     await tester.pumpAndSettle();
@@ -120,7 +122,9 @@ void main() {
           expect(accept, isFalse);
           responseCount++;
         },
-        onMembershipChanged: () async => membershipRefreshCount++,
+        onMembershipChanged: () async {
+          membershipRefreshCount++;
+        },
       ),
     );
     await tester.pumpAndSettle();
