@@ -1,3 +1,8 @@
+## 2026-11-14 — Governorate discovery and public visibility (189/429)
+
+- Accepted **14.03 and 14.08** after fixing the repository's unrecognized explicit-governorate fallback. It now returns an empty page without querying the nationwide list. A mocked HTTP request asserts the Aswan governorate and verified/not-blocked/not-deleted predicates are sent to the server. A read-only `anon` staging count found 2 visible Cairo stadiums and 0 unverified, blocked or owner-deleted rows. [Scope and evidence](VSP_STADIUM_GOVERNORATE_VISIBILITY_ACCEPTANCE_2026-11-14.md); code commit `1943b8ae`; [Flutter CI run 43619831953](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43619831953).
+- **618 total / 189 accepted / 429 open.** No real Aswan venue was visible in this staging snapshot; availability, booking eligibility and production publication workflows remain separate tasks. No hosted data/schema mutation.
+
 ## 2026-11-14 — Anonymous privileged RPC checks (187/431)
 
 - Accepted **77.05** for a staging `anon` EXECUTE permission check across all 308 `public` SECURITY DEFINER functions: 0 callable as `anon` (200 callable as `authenticated`). A transaction-scoped `anon` attempt to call `add_team_to_matchup_by_code(uuid,text)` was denied before the function could run. [Evidence and limits](security/VSP_STAGING_ANON_PRIVILEGED_RPC_ACCEPTANCE_2026-11-14.md). No data writes or schema changes.

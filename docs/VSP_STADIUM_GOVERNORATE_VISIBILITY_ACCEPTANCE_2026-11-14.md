@@ -1,0 +1,7 @@
+# Stadium governorate filter and public visibility — 14.03, 14.08
+
+On 14 November 2026, commit `1943b8ae` made `StadiumRepository.getStadiumsPaginated` fail closed for an unrecognized explicit governorate. The earlier behavior silently omitted the governorate condition and queried all of Egypt. The new code returns an empty page without a remote request; `All` still intentionally means nationwide discovery.
+
+The focused HTTP stub test checks that a recognized **Aswan** query sends a governorate expression and `is_verified=true`, `is_blocked=false`, `is_deleted_by_owner=false` filters to the stadiums endpoint, receives one matching synthetic row, and reports correct pagination. A second case checks an unknown explicit governorate returns empty without a request. [Flutter CI 43619831953](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43619831953) runs the test with the existing suite.
+
+Separately, a read-only staging SQL query under `SET LOCAL ROLE anon` found **2** visible stadiums, both in Cairo, and **0** with `is_verified` not true, `is_blocked` not false or `is_deleted_by_owner` not false. This is a snapshot of the current staging RLS and publication state. No Aswan stadium was publicly visible there, so the Aswan test is synthetic. Tasks 14.04 (actual availability), 14.05–14.07 (empty, navigation and incomplete-data UI), other entry points, real booking eligibility, production data and full device journeys remain open. No staging or production row or schema was changed.
