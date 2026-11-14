@@ -17,11 +17,14 @@ class StadiumWizardLocationCoordinator {
     Future<LocationResult?> Function()? pickOnMap,
   }) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final result = pickOnMap != null
-        ? await pickOnMap()
-        : await AddStadiumLocationPickerSheet.show(
-            context, initialLat: currentLat, initialLng: currentLng,
-          );
+    LocationResult? result;
+    if (pickOnMap != null) {
+      result = await pickOnMap();
+    } else {
+      result = await AddStadiumLocationPickerSheet.show(
+        context, initialLat: currentLat, initialLng: currentLng,
+      );
+    }
 
     if (result != null && _hasValidCoordinates(result)) {
       if (!isEditing) {
@@ -53,13 +56,16 @@ class StadiumWizardLocationCoordinator {
     Future<LocationResult?> Function()? pickManually,
   }) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final result = pickManually != null
-        ? await pickManually()
-        : await AddStadiumLocationPickerSheet.showManualAddressDialog(
-            context,
-            initialGovernorate: currentGov,
-            initialAddress: currentAddress,
-          );
+    LocationResult? result;
+    if (pickManually != null) {
+      result = await pickManually();
+    } else {
+      result = await AddStadiumLocationPickerSheet.showManualAddressDialog(
+        context,
+        initialGovernorate: currentGov,
+        initialAddress: currentAddress,
+      );
+    }
 
     if (result != null && _hasValidCoordinates(result)) {
       if (!isEditing) {
