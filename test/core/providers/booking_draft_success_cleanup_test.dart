@@ -20,6 +20,7 @@ class _SuccessRepo extends Fake implements BookingRepository {
       isPrivate: draft.isPrivate,
       rentBall: draft.rentBall,
       totalPrice: draft.totalPrice,
+      paymentMethod: draft.paymentMethod ?? 'cash',
       status: BookingStatus.confirmed,
       createdAt: DateTime.now(),
     );
