@@ -10,10 +10,16 @@ class TeamInvitationsSheet extends StatefulWidget {
     super.key,
     required this.userId,
     this.onMembershipChanged,
+    this.loadInvitations,
+    this.respondToInvitation,
   });
 
   final String userId;
   final Future<void> Function()? onMembershipChanged;
+  final Future<List<Map<String, dynamic>>> Function(String userId)?
+      loadInvitations;
+  final Future<void> Function(String invitationId, bool accept)?
+      respondToInvitation;
 
   @override
   State<TeamInvitationsSheet> createState() => _TeamInvitationsSheetState();
@@ -44,7 +50,8 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
 
   void _refresh() {
     _requestGeneration++;
-    _pending = TeamRepository().getPendingTeamInvitations(widget.userId);
+    _pending = widget.loadInvitations?.call(widget.userId) ??
+        TeamRepository().getPendingTeamInvitations(widget.userId);
   }
 
   Future<void> _respond(String id, bool accept) async {
@@ -67,7 +74,11 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
     final generation = _requestGeneration;
     setState(() => _busyId = id);
     try {
-      await TeamRepository().respondToTeamInvitation(id, accept: accept);
+      if (widget.respondToInvitation != null) {
+        await widget.respondToInvitation!(id, accept);
+      } else {
+        await TeamRepository().respondToTeamInvitation(id, accept: accept);
+      }
       if (!mounted ||
           generation != _requestGeneration ||
           requestUserId != widget.userId ||
