@@ -32,6 +32,9 @@ void main() {
     expect('currentUser?.id != lookupUserId'.allMatches(scope).length,
         greaterThanOrEqualTo(3));
     expect(scope, contains('opponentGeneration == _opponentRequestGeneration'));
+    expect(scope, contains('final lookupTeamId = _userTeam?.id;'));
+    expect(scope, contains('_userTeam?.id == lookupTeamId'));
+    expect(scope, contains('ChallengeTeamService.normalizeChallengeCode(rawCode)'));
     expect(scope, contains('_challengeCodeController.text.trim().toUpperCase()'));
   });
 

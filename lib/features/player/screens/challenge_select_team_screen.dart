@@ -279,8 +279,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   Future<void> _handleLookupCode() async {
     if (_isLookingUpCode) return;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final code = _challengeCodeController.text.trim();
-    if (code.isEmpty) {
+    final rawCode = _challengeCodeController.text.trim();
+    if (rawCode.isEmpty) {
       VSPFeedback.showInfo(
         context,
         Localizations.localeOf(context).languageCode == 'ar'
@@ -290,6 +290,16 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       return;
     }
 
+    final code = ChallengeTeamService.normalizeChallengeCode(rawCode);
+    if (code == null) {
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'كود التحدي لازم يكون حروف أو أرقام أو شرطة فقط، وبحد أقصى 32 خانة.'
+            : 'Challenge codes may contain letters, numbers or dashes (up to 32 characters).',
+      );
+      return;
+    }
     final lookupUserId = context.read<app_auth.AuthProvider>().currentUser?.id;
     if (lookupUserId == null) {
       VSPFeedback.showError(
@@ -298,6 +308,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       );
       return;
     }
+    // Capture the team as well as the account: a late head-to-head response
+    // must not mix two captains' competitive statistics on a shared device.
+    final lookupTeamId = _userTeam?.id;
     FocusScope.of(context).unfocus();
     final opponentGeneration = ++_opponentRequestGeneration;
     setState(() => _isLookingUpCode = true);
@@ -336,9 +349,12 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           });
 
           // Fetch head-to-head stats if user has a team
-          if (_userTeam != null) {
-            final stats = await TeamRepository().getHeadToHeadStats(_userTeam!.id, oppTeam.id);
+          if (lookupTeamId != null && _userTeam?.id == lookupTeamId) {
+            final stats = await TeamRepository().getHeadToHeadStats(lookupTeamId, oppTeam.id);
             if (mounted && opponentGeneration == _opponentRequestGeneration &&
+                context.read<app_auth.AuthProvider>().currentUser?.id == lookupUserId &&
+                _userTeam?.id == lookupTeamId &&
+                _challengeCodeController.text.trim().toUpperCase() == validatedCode &&
                 _selectedTeam?.id == oppTeam.id) {
               setState(() {
                 _h2hStats = stats;
@@ -347,13 +363,21 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
               });
             }
           } else {
-            if (mounted) setState(() {
-              _isLoadingH2H = false;
-              _hasH2HError = false;
-            });
+            if (mounted &&
+                opponentGeneration == _opponentRequestGeneration &&
+                context.read<app_auth.AuthProvider>().currentUser?.id == lookupUserId &&
+                _userTeam?.id == lookupTeamId &&
+                _selectedTeam?.id == oppTeam.id) {
+              setState(() {
+                _isLoadingH2H = false;
+                _hasH2HError = false;
+              });
+            }
           }
 
           if (mounted && opponentGeneration == _opponentRequestGeneration &&
+              context.read<app_auth.AuthProvider>().currentUser?.id == lookupUserId &&
+              _userTeam?.id == lookupTeamId &&
               _selectedTeam?.id == oppTeam.id &&
               _challengeCodeController.text.trim().toUpperCase() == validatedCode) {
             VSPFeedback.showSuccess(
