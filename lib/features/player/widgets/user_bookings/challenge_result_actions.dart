@@ -10,24 +10,37 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_animated_button.dart';
 import '../../screens/player_home_screen.dart';
 import '../match_result_modal.dart';
+import 'challenge_non_played_report_status.dart';
 
 /// Challenge result flow: both captains submit independently.
 /// The match is finalized only when both submissions match.
 class ChallengeResultActions extends StatelessWidget {
   final Booking booking;
   final String? myTeamId;
+  final ChallengeNonPlayedReportStatus? reportStatus;
 
   const ChallengeResultActions({
     super.key,
     required this.booking,
     this.myTeamId,
+    this.reportStatus,
   });
 
   static Widget buildChallengeStatusBadge(
     BuildContext context, {
     required Booking booking,
     required String? myTeamId,
+    ChallengeNonPlayedReportStatus? reportStatus,
   }) {
+    if (reportStatus?.isExcluded == true) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return buildStatusBadge(
+        reportStatus!.underReview
+            ? (isArabic ? 'بلاغ قيد المراجعة' : 'Report under review')
+            : (isArabic ? 'المباراة مستبعدة' : 'Match excluded'),
+        VSPColors.warning,
+      );
+    }
     final l10n = AppLocalizations.of(context)!;
     final currentTeamId = myTeamId;
     if (currentTeamId == null) return const SizedBox.shrink();
@@ -180,6 +193,22 @@ class ChallengeResultActions extends StatelessWidget {
         (currentTeamId != booking.playerTeamId &&
             currentTeamId != booking.opponentTeamId)) {
       return const SizedBox.shrink();
+    }
+
+    // A server-confirmed exclusion overrides an old 'confirmed' result.
+    // A captain must never submit another outcome while the report is open.
+    if (reportStatus?.isExcluded == true) {
+      return ChallengeNonPlayedReportBanner(status: reportStatus!);
+    }
+    if (reportStatus?.isRestored == true) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ChallengeNonPlayedReportBanner(status: reportStatus!),
+          const SizedBox(height: VSPSpacing.sm),
+          ChallengeResultActions(booking: booking, myTeamId: currentTeamId),
+        ],
+      );
     }
 
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
