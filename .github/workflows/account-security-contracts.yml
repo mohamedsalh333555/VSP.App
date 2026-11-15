@@ -10,6 +10,8 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'supabase/tests/**'
+      - 'scripts/test_challenge_timeout_isolated.py'
+      - 'test/tooling/test_challenge_timeout_isolated.py'
       - 'scripts/run_account_security_contracts.py'
       - 'scripts/apply_migration_runner.py'
       - 'test/tooling/test_migration_replay_guard.py'
@@ -124,6 +126,10 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_reject_join_request_isolated.py -v
       - name: Verify reject-join ownership on isolated PostgreSQL
         run: python3 scripts/test_reject_join_request_isolated.py
+      - name: Verify challenge timeout runner rejects hosted databases
+        run: python3 -m unittest discover -s test/tooling -p test_challenge_timeout_isolated.py -v
+      - name: Verify challenge timeout retirement on isolated PostgreSQL
+        run: python3 scripts/test_challenge_timeout_isolated.py
       - name: Verify an existing contract database cannot be reinitialised
         run: |
           python3 - <<'PY'
