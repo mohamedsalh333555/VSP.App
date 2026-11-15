@@ -17,6 +17,7 @@ on:
       - 'docs/security/sql/challenge_non_played_report_candidate.sql'
       - 'docs/security/sql/challenge_non_played_review_candidate.sql'
       - 'docs/security/sql/challenge_public_feed_exclusion_candidate.sql'
+      - 'docs/security/sql/challenge_eligible_head_to_head_candidate.sql'
       - 'test/tooling/test_challenge_timeout_isolated.py'
       - 'scripts/run_account_security_contracts.py'
       - 'scripts/apply_migration_runner.py'

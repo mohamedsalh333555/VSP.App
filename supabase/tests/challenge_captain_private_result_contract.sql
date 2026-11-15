@@ -88,6 +88,7 @@ CREATE POLICY booking_public_feed_select ON public.booking_public_feed
 -- INSTALL_PRIVATE_RESULTS_CANDIDATE
 -- INSTALL_NOT_PLAYED_REVIEW_CANDIDATE
 -- INSTALL_NON_PLAYED_FEED_RLS_CANDIDATE
+-- INSTALL_ELIGIBLE_CHALLENGE_HEAD_TO_HEAD_CANDIDATE
 
 DO $test$
 DECLARE r jsonb; v_id uuid; n int;
@@ -557,4 +558,71 @@ BEGIN
    RAISE EXCEPTION 'Anonymous role can execute internal report filter'; END IF;
 END;
 $public_feed_restriction$;
+RESET ROLE;
+
+-- Head-to-head aggregate must ignore excluded *confirmed* old outcomes,
+-- pending entries, unprocessed results and other booking types.
+INSERT INTO public.bookings
+  (id,booking_type,status,end_time,player_team_id,opponent_team_id,
+   match_result_status,final_outcome,elo_processed)
+VALUES
+ ('00000000-0000-0000-0000-000000000019',
+ 'matchup','completed',now()-interval '2 hours',
+ '00000000-0000-0000-0000-000000000011',
+ '00000000-0000-0000-0000-000000000022',
+ 'confirmed','homeWin',true),
+ ('00000000-0000-0000-0000-000000000020',
+ 'challenge','completed',now()-interval '2 hours',
+ '00000000-0000-0000-0000-000000000011',
+ '00000000-0000-0000-0000-000000000022',
+ 'confirmed','homeWin',false),
+ ('00000000-0000-0000-0000-000000000021',
+ 'challenge','completed',now()-interval '2 hours',
+ '00000000-0000-0000-0000-000000000011',
+ '00000000-0000-0000-0000-000000000022',
+ 'confirmed','homeWin',true);
+INSERT INTO public.challenge_non_played_reports
+(booking_id,reported_by_owner_id,reason,original_outcome,ranking_reversed)
+VALUES
+ ('00000000-0000-0000-0000-000000000021',
+  '00000000-0000-0000-0000-000000000404',
+  'Match was not played','homeWin',true);
+
+-- Synthetic SELECT scope is intentionally broad. In hosted Supabase the
+-- existing bookings_select_private_scope must be used, not this fixture policy.
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON public.bookings TO authenticated;
+CREATE POLICY synthetic_bookings_select ON public.bookings
+ FOR SELECT TO authenticated USING (true);
+SET ROLE authenticated;
+DO $eligible_h2h$
+DECLARE r jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.get_eligible_challenge_head_to_head_stats(
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000022');
+ IF r->>'success'<>'true' OR (r->>'teamAWins')::int<>2
+    OR (r->>'teamBWins')::int<>1 OR (r->>'draws')::int<>1
+    OR (r->>'totalMatches')::int<>4 THEN
+   RAISE EXCEPTION 'Eligible head-to-head counted excluded, unprocessed or matchup rows: %',r;
+ END IF;
+ r:=public.get_eligible_challenge_head_to_head_stats(
+  '00000000-0000-0000-0000-000000000022',
+  '00000000-0000-0000-0000-000000000011');
+ IF (r->>'teamAWins')::int<>1 OR (r->>'teamBWins')::int<>2 THEN
+   RAISE EXCEPTION 'Head-to-head orientation swapped incorrectly'; END IF;
+ r:=public.get_eligible_challenge_head_to_head_stats(
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000011');
+ IF r->>'error'<>'INVALID_TEAM_PAIR' THEN
+   RAISE EXCEPTION 'Same team pair accepted'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','',true);
+ r:=public.get_eligible_challenge_head_to_head_stats(
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000022');
+ IF r->>'error'<>'AUTHENTICATION_REQUIRED' THEN
+   RAISE EXCEPTION 'Anonymous match history accepted'; END IF;
+END;
+$eligible_h2h$;
 RESET ROLE;

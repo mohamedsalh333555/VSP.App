@@ -283,6 +283,39 @@ class TeamRepository {
         teamId: teamId,
       );
 
+ /// Optional stage-gated, challenge-only head-to-head summary. Unlike
+ /// getHeadToHeadStats(), this must exclude owner-reported non-played matches
+ /// inside the database; never fall back to unfiltered bookings on RPC failure.
+ Future<Map<String, int>?> getEligibleChallengeHeadToHeadStats(
+     String team1Id, String team2Id) async {
+   if (team1Id.trim().isEmpty || team2Id.trim().isEmpty ||
+       team1Id == team2Id || _supabase.auth.currentUser == null) {
+     return null;
+   }
+   try {
+     final result = await _supabase.rpc(
+       'get_eligible_challenge_head_to_head_stats',
+       params: {'p_team_a_id': team1Id, 'p_team_b_id': team2Id},
+     );
+     if (result is! Map || result['success'] != true) return null;
+     final teamA = result['teamAWins'];
+     final teamB = result['teamBWins'];
+     final draws = result['draws'];
+     final total = result['totalMatches'];
+     if (teamA is! int || teamB is! int || draws is! int || total is! int ||
+         teamA < 0 || teamB < 0 || draws < 0 || total != teamA + teamB + draws) {
+       return null;
+     }
+     return {
+       'teamAWins': teamA, 'teamBWins': teamB,
+       'draws': draws, 'totalMatches': total,
+     };
+   } catch (_) {
+     debugPrint('Eligible challenge history unavailable (details redacted)');
+     return null;
+   }
+ }
+
  Future<Map<String, int>?> getHeadToHeadStats(String team1Id, String team2Id) async {
  try {
  final response = await _supabase

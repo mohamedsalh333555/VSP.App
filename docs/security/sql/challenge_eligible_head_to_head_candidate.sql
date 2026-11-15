@@ -1,0 +1,53 @@
+-- Candidate: permission-scoped challenge-only head-to-head summary.
+-- Not deployed; old matchup head-to-head and team-league ranks are separate.
+-- SECURITY INVOKER respects the existing bookings RLS for each caller.
+-- The private exclusion helper is non-exposed and reveals only a boolean.
+CREATE OR REPLACE FUNCTION public.get_eligible_challenge_head_to_head_stats(
+  p_team_a_id uuid,p_team_b_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY INVOKER SET search_path=public,pg_temp
+AS $function$
+DECLARE
+  v_team_a_wins integer;
+  v_team_b_wins integer;
+  v_draws integer;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN jsonb_build_object('success',false,'error','AUTHENTICATION_REQUIRED');
+  END IF;
+  IF p_team_a_id IS NULL OR p_team_b_id IS NULL OR
+     p_team_a_id=p_team_b_id THEN
+    RETURN jsonb_build_object('success',false,'error','INVALID_TEAM_PAIR');
+  END IF;
+  SELECT
+    count(*) FILTER (WHERE
+      (b.player_team_id=p_team_a_id AND b.final_outcome='homeWin') OR
+      (b.opponent_team_id=p_team_a_id AND b.final_outcome='awayWin')),
+    count(*) FILTER (WHERE
+      (b.player_team_id=p_team_b_id AND b.final_outcome='homeWin') OR
+      (b.opponent_team_id=p_team_b_id AND b.final_outcome='awayWin')),
+    count(*) FILTER (WHERE b.final_outcome='draw')
+  INTO v_team_a_wins,v_team_b_wins,v_draws
+  FROM public.bookings b
+  WHERE b.booking_type='challenge'
+    AND b.status='completed'
+    AND b.match_result_status='confirmed'
+    AND b.elo_processed IS TRUE
+    AND b.final_outcome IN ('homeWin','awayWin','draw')
+    AND (
+      (b.player_team_id=p_team_a_id AND b.opponent_team_id=p_team_b_id)
+       OR
+      (b.player_team_id=p_team_b_id AND b.opponent_team_id=p_team_a_id)
+    )
+    AND NOT vsp_private.is_challenge_result_excluded(b.id);
+
+  RETURN jsonb_build_object('success',true,
+    'teamAWins',v_team_a_wins,'teamBWins',v_team_b_wins,
+    'draws',v_draws,'totalMatches',
+    v_team_a_wins+v_team_b_wins+v_draws);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.get_eligible_challenge_head_to_head_stats(uuid,uuid)
+  FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.get_eligible_challenge_head_to_head_stats(uuid,uuid)
+  TO authenticated,service_role;
