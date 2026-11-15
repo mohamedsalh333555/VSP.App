@@ -330,7 +330,7 @@ class BookingBottomBar extends StatelessWidget {
                           letterSpacing: -0.5,
                         ).merge(VSPTypography.numericStyle),
                       ),
-                      if (!isOpenJoin && depositAmount > 0 && needsDeposit) ...[
+                      if (isSlotSelected && !isOpenJoin && depositAmount > 0 && needsDeposit) ...[
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
