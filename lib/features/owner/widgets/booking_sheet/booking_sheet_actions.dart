@@ -322,6 +322,7 @@ class BookingSheetBottomActions extends StatelessWidget {
   final VoidCallback onCancelBooking;
   final VoidCallback onConfirmBooking;
   final VoidCallback? onReportNoShow;
+  final VoidCallback? onReportChallengeNotPlayed;
 
   const BookingSheetBottomActions({
     super.key,
@@ -337,6 +338,7 @@ class BookingSheetBottomActions extends StatelessWidget {
     required this.onCancelBooking,
     required this.onConfirmBooking,
     this.onReportNoShow,
+    this.onReportChallengeNotPlayed,
   });
 
   @override
@@ -354,6 +356,7 @@ class BookingSheetBottomActions extends StatelessWidget {
         isArabic: Localizations.localeOf(context).languageCode == 'ar',
         onConfirmCashPayment: onConfirmCashPayment,
         onReportNoShow: onReportNoShow,
+        onReportChallengeNotPlayed: onReportChallengeNotPlayed,
         isSaving: isSaving,
       );
     }

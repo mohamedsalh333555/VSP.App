@@ -48,6 +48,9 @@ class BookingSheetPastPanel extends StatelessWidget {
   final bool isArabic;
   final VoidCallback? onConfirmCashPayment;
   final VoidCallback? onReportNoShow;
+  /// A neutral match-validity report, distinct from financial player no-show.
+  /// This callback is only wired after the server rollout gate passes.
+  final VoidCallback? onReportChallengeNotPlayed;
   final bool isSaving;
 
   const BookingSheetPastPanel({
@@ -56,6 +59,7 @@ class BookingSheetPastPanel extends StatelessWidget {
     required this.isArabic,
     this.onConfirmCashPayment,
     this.onReportNoShow,
+    this.onReportChallengeNotPlayed,
     this.isSaving = false,
   });
 
@@ -105,7 +109,36 @@ class BookingSheetPastPanel extends StatelessWidget {
           ),
           const SizedBox(height: 10),
         ],
-        if (isPendingCash && onReportNoShow != null) ...[
+        if (booking.bookingType == BookingType.challenge &&
+            onReportChallengeNotPlayed != null) ...[
+          SizedBox(
+            width: double.infinity,
+            height: VSPSize.buttonHeight,
+            child: ElevatedButton.icon(
+              onPressed: isSaving ? null : onReportChallengeNotPlayed,
+              icon: const Icon(Icons.flag_outlined, size: 18),
+              label: Text(
+                isArabic ? 'الإبلاغ أن المباراة لم تُلعب'
+                    : 'Report match not played',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.warning.withValues(alpha: 0.15),
+                foregroundColor: VSPColors.warning,
+                side: const BorderSide(color: VSPColors.warning, width: 1),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(VSPRadius.md)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        // If the new server-backed neutral report is enabled, don't also
+        // present the punitive financial no-show as a match-validity action.
+        // With no new callback, preserve the existing no-show flow unchanged.
+        if (isPendingCash && onReportNoShow != null &&
+            !(booking.bookingType == BookingType.challenge &&
+              onReportChallengeNotPlayed != null)) ...[
           SizedBox(
             width: double.infinity,
             height: VSPSize.buttonHeight,
