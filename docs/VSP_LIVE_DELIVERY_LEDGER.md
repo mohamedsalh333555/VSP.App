@@ -1,3 +1,8 @@
+## 2026-11-15 — Stadium stream idle recovery (205/413)
+
+- Accepted **83.02** for the verified code cause and bounded recovery behavior: the 10-second timeout now applies only until the first venue snapshot, so healthy idle Realtime streams no longer emit a false refresh error. Existing resolver tests keep the last valid row visible but disable booking during errors, retry and malformed data. [Evidence and limits](VSP_STADIUM_STREAM_IDLE_RECOVERY_2026-11-15.md); [Flutter CI 43690215018](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43690215018).
+- **618 total / 205 accepted / 413 open.** The original November 11 device incident cannot be attributed without its logs.
+
 ## 2026-11-15 — Server rejects stale booking quote (204/414)
 
 - Accepted **21.07** for the bounded mismatched-price path. The staging `create_booking_atomic` now rejects a synthetic stale quote before insertion and returns its current calculated price. The client explains the retry for cash and online checkout. [Staging evidence and limits](VSP_BOOKING_PRICE_MISMATCH_STAGING_2026-11-15.md); [Flutter CI 43675097299](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43675097299).

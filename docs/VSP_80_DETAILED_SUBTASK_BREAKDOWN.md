@@ -994,7 +994,7 @@
 > Source: two user-provided Android screenshots, 2026-11-11. [Screenshot triage and code references](ux/VSP_STADIUM_BOOKING_SCREENSHOT_TRIAGE_2026-11-11.md), commit `fc64bd0`. The screenshots confirm displayed symptoms, **not** root causes or payment/security defects. All seven tasks are open; overlapping general tasks are not double-counted as accepted.
 
 - [ ] 83.01 — P1: إعادة إنتاج رسالة عدم وجود مواعيد يوم 11 نوفمبر، وفصل إغلاق الملعب عن امتلاء الحجوزات وفشل جلب المواعيد والتوقيت، مع اختبار مصدر ساعات التشغيل
-- [ ] 83.02 — P1: تشخيص سبب تحذير تعذر تحديث بيانات الملعب، والتحقق من آخر بيانات موثوقة وإعادة المحاولة وعدم السماح بحجز اعتمادًا على بيانات غير صالحة
+- [x] 83.02 — P1: تشخيص سبب تحذير تعذر تحديث بيانات الملعب، والتحقق من آخر بيانات موثوقة وإعادة المحاولة وعدم السماح بحجز اعتمادًا على بيانات غير صالحة — [فحص مهلة البث وآخر بيانات موثوقة](VSP_STADIUM_STREAM_IDLE_RECOVERY_2026-11-15.md) (سبب كودي مثبت؛ لا يدّعي سجلات حادث 11 نوفمبر)
 - [ ] 83.03 — P1: ضبط ملخص السعر والعربون والمتبقي قبل وبعد اختيار مدة الحجز، والتحقق من حساب الإضافات وتطابق السعر النهائي مع الخادم
 - [ ] 83.04 — P2: اختبار وضوح التقويم وحالات اليوم المتاح والمغلق والماضي وتحميل المواعيد والتاريخ العربي وRTL
 - [x] 83.05 — P2: التحقق من مصدر النص الإنجليزي داخل وصف الملعب العربي، وضبط الترجمة والنصوص الطويلة والقص من غير تعديل بيانات المستخدم الأصلية — [Owner description localization tests](VSP_LEGACY_NOTIFICATION_AND_DESCRIPTION_PATCH_2026-11-13.md) (stock labels and long texts, no source edits)
