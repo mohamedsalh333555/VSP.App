@@ -1,3 +1,8 @@
+## 2026-11-15 — Booking financial summary (206/412)
+
+- Accepted **83.03** for the bounded financial summary: before slot selection the balance is deferred and the zero-total deposit badge is hidden; selecting an hour, ball rental, and a longer duration updates total and remaining values. The staging RPC price-mismatch rejection is covered separately. [Evidence and limits](VSP_BOOKING_FINANCIAL_SUMMARY_ACCEPTANCE_2026-11-15.md); [Flutter CI 43692957599](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43692957599).
+- **618 total / 206 accepted / 412 open.** No live Paymob settlement or two-account checkout was tested.
+
 ## 2026-11-15 — Stadium stream idle recovery (205/413)
 
 - Accepted **83.02** for the verified code cause and bounded recovery behavior: the 10-second timeout now applies only until the first venue snapshot, so healthy idle Realtime streams no longer emit a false refresh error. Existing resolver tests keep the last valid row visible but disable booking during errors, retry and malformed data. [Evidence and limits](VSP_STADIUM_STREAM_IDLE_RECOVERY_2026-11-15.md); [Flutter CI 43690215018](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43690215018).
