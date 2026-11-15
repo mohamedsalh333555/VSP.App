@@ -1,3 +1,8 @@
+## 2026-11-15 — Server rejects stale booking quote (204/414)
+
+- Accepted **21.07** for the bounded mismatched-price path. The staging `create_booking_atomic` now rejects a synthetic stale quote before insertion and returns its current calculated price. The client explains the retry for cash and online checkout. [Staging evidence and limits](VSP_BOOKING_PRICE_MISMATCH_STAGING_2026-11-15.md); [Flutter CI 43675097299](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43675097299).
+- **618 total / 204 accepted / 414 open.** No production migration, real Paymob charge or two-account end-to-end checkout was claimed.
+
 ## 2026-11-15 — Booking price preflight (203/415 unchanged)
 
 - **CODE_DONE, 21.07 remains open:** confirmation now fetches a fresh bookable stadium and rejects a changed hourly quote, ball fee or deposit before cash/online payment selection. A failed lookup also stops this confirmation path. [Evidence and limits](VSP_BOOKING_PRICE_PREFLIGHT_2026-11-15.md); [Flutter CI 43670740754](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43670740754).
