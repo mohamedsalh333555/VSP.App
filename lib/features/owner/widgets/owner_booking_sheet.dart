@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/owner_repository.dart';
+import '../../../core/repositories/booking/challenge_non_played_report_repository.dart';
+import '../../../core/config/challenge_result_rollout_flags.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/phone_utils.dart';
@@ -13,6 +15,7 @@ import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../data/models.dart';
 import '../../../l10n/app_localizations.dart';
 import 'booking_sheet/booking_sheet_actions.dart';
+import 'booking_sheet/challenge_non_played_report_dialog.dart';
 import 'booking_sheet/booking_sheet_details_form.dart';
 import 'booking_sheet/booking_sheet_duration_selector.dart';
 import 'booking_sheet/booking_sheet_form_fields.dart';
@@ -302,6 +305,91 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         isArabic: isArabic,
         setDeleting: (v) => setState(() => _isDeleting = v),
       );
+
+
+  /// This neutral match-validity report does not change payment/no-show
+  /// state. It is inaccessible unless the staged server rollout is enabled.
+  Future<void> _handleChallengeNotPlayed(
+      Booking booking, bool isArabic) async {
+    if (!ChallengeResultRolloutFlags.nonPlayedReportsEnabled ||
+        !mounted || _isSaving || !widget.parentContext.mounted ||
+        booking.bookingType != BookingType.challenge ||
+        booking.endTime.isAfter(DateTime.now())) {
+      return;
+    }
+    final authProvider =
+        Provider.of<AuthProvider>(widget.parentContext, listen: false);
+    final uid = authProvider.currentUser?.id;
+    if (uid == null || uid != booking.ownerId) {
+      VSPFeedback.showError(context, isArabic
+          ? 'غير مسموح لك بالإبلاغ عن هذه المباراة.'
+          : 'You cannot report this match.');
+      return;
+    }
+    final repository = ChallengeNonPlayedReportRepository();
+    // A failed status lookup is UNKNOWN, never proof no report exists.
+    final state = await repository.fetchMyReportStatus(booking.id);
+    if (!mounted || authProvider.currentUser?.id != uid) return;
+    if (state == null) {
+      VSPFeedback.showError(context, isArabic
+          ? 'حالة البلاغ غير متاحة. حاول مرة أخرى.'
+          : 'Match report status unavailable. Please retry.');
+      return;
+    }
+    if (state['reported'] == true) {
+      VSPFeedback.showInfo(context, isArabic
+          ? 'تم تسجيل بلاغ لهذه المباراة بالفعل.'
+          : 'This match has already been reported.');
+      return;
+    }
+    final reason = await ChallengeNonPlayedReportDialog.show(
+      context, isArabic: isArabic,
+    );
+    if (reason == null || !mounted ||
+        authProvider.currentUser?.id != uid) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final receipt = await repository.ownerReportNotPlayed(
+        bookingId: booking.id, reason: reason,
+      );
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      // A network timeout may have occurred AFTER the server committed:
+      // read back the scoped report status before presenting an error.
+      var confirmed = receipt.accepted && receipt.state == 'excluded';
+      if (!confirmed) {
+        final fresh = await repository.fetchMyReportStatus(booking.id);
+        confirmed = fresh?['state'] == 'excluded';
+      }
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      if (!confirmed) {
+        VSPFeedback.showError(context, isArabic
+            ? 'تعذر تأكيد البلاغ. تحقق من الحالة قبل إعادة المحاولة.'
+            : 'Could not verify the report. Check status before retrying.');
+        return;
+      }
+      final bookingProvider = Provider.of<BookingProvider>(
+        widget.parentContext, listen: false,
+      );
+      await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      Navigator.pop(context);
+      if (widget.parentContext.mounted) {
+        VSPFeedback.showSuccess(widget.parentContext, isArabic
+            ? 'تم تسجيل بلاغ المباراة دون تغيير المدفوعات.'
+            : 'Match report recorded without changing payments.');
+      }
+    } catch (_) {
+      // Do not log a private report reason or identity.
+      if (mounted && authProvider.currentUser?.id == uid) {
+        VSPFeedback.showError(context, isArabic
+            ? 'تعذر التحقق من البلاغ. حاول مرة أخرى بعد مراجعة الحالة.'
+            : 'Could not verify report. Review status before retrying.');
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
 
   Future<void> _handleReportNoShow(Booking booking, bool isArabic) async {
     final parentContext = widget.parentContext;
@@ -669,6 +757,15 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
               if (booking != null) _handleCancelBooking(booking, l10n, isArabic);
             },
             onReportNoShow: booking == null ? null : () => _handleReportNoShow(booking, isArabic),
+            onReportChallengeNotPlayed:
+                ChallengeResultRolloutFlags.nonPlayedReportsEnabled &&
+                        booking != null &&
+                        booking.bookingType == BookingType.challenge &&
+                        !booking.endTime.isAfter(DateTime.now()) &&
+                        booking.status != BookingStatus.cancelled &&
+                        booking.status != BookingStatus.expired
+                    ? () => _handleChallengeNotPlayed(booking, isArabic)
+                    : null,
             onConfirmBooking: () => _handleConfirmBooking(l10n, isArabic),
             isOwnerManual: flags.isOwnerManual,
           ),
