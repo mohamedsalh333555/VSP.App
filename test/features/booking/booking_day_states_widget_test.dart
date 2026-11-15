@@ -64,6 +64,7 @@ Widget _host(
         home: Scaffold(
           body: SingleChildScrollView(
             child: BookingSlotStreamSection(
+              key: ObjectKey(availability),
               stadiumId: stadium.id,
               stadium: stadium,
               selectedDate: date,
@@ -119,6 +120,7 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(find.byType(BookingSlotCard), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
     await pending.close();
   });
 
@@ -135,8 +137,13 @@ void main() {
     expect(find.text('Venue temporarily closed'), findsOneWidget);
 
     final stadium = _venue();
-    availability.stream = Stream.value([_confirmedSlot(stadium, date)]);
-    await tester.pumpWidget(_host(availability, date: date, stadium: stadium));
+    final bookedAvailability = _Availability()
+      ..stream = Stream.value([_confirmedSlot(stadium, date)]);
+    await tester.pumpWidget(_host(
+      bookedAvailability,
+      date: date,
+      stadium: stadium,
+    ));
     await tester.pumpAndSettle();
     expect(find.text('All slots are booked'), findsOneWidget);
 
