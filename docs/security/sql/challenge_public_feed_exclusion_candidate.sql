@@ -25,6 +25,6 @@ GRANT EXECUTE ON FUNCTION vsp_private.is_challenge_result_excluded(uuid)
 -- RESTRICTIVE policies are AND-ed with the existing permissive SELECT
 -- policies. Do NOT add a permissive policy here: OR would leak exclusions.
 CREATE POLICY booking_public_feed_exclude_non_played_challenges
-AS RESTRICTIVE ON public.booking_public_feed
+ON public.booking_public_feed AS RESTRICTIVE
 FOR SELECT TO authenticated
 USING (NOT vsp_private.is_challenge_result_excluded(id));
