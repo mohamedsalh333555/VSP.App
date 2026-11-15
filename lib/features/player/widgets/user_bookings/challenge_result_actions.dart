@@ -218,9 +218,12 @@ class ChallengeResultActions extends StatelessWidget {
           repo.captainAppeal(bookingId: booking.id, reason: reason));
       if (!context.mounted) return;
       var confirmed = receipt.accepted && receipt.state == 'under_review';
-      if (!confirmed && appealSubmitOverride == null) {
-        // A timeout is ambiguous. Confirm a successful appeal through the
-        // caller-scoped read before offering a retry.
+      if (!confirmed &&
+          appealSubmitOverride == null &&
+          reportStatus?.myAppealSubmitted != true) {
+        // A timeout is ambiguous. Readback can confirm the FIRST appeal,
+        // but NOT an edited reason: a previous appeal's presence would be
+        // mistaken for confirmation of a newly submitted edit.
         final fresh = await repo.fetchMyReportStatus(booking.id);
         confirmed = fresh?['state'] == 'excluded' &&
             fresh?['my_appeal_submitted'] == true;
