@@ -76,11 +76,15 @@ class ChallengeNonPlayedReportRepository {
   /// A server-verified reported:false response is returned distinctly.
   /// Explicitly copy known fields to avoid leaking any future RPC additions.
   Future<Map<String, Object?>?> fetchMyReportStatus(String bookingId) async {
-    if (bookingId.trim().isEmpty || !_hasAuthenticatedActor) return null;
+    final actor = _currentUserId;
+    if (bookingId.trim().isEmpty || actor == null || actor.isEmpty) return null;
     try {
       final raw = await _call('get_my_challenge_non_played_status', {
         'p_booking_id': bookingId,
       }).timeout(_timeout);
+      // A completed request belongs to its initiating session only.
+      // Never hand a previous captain's status to a new signed-in actor.
+      if (_currentUserId != actor) return null;
       if (raw is! Map || raw['success'] != true) return null;
       if (raw['reported'] == false && raw['state'] == null) {
         return {'success': true, 'reported': false};
@@ -147,7 +151,8 @@ class ChallengeNonPlayedReportRepository {
     required String reason,
     String? decision,
   }) async {
-    if (!_hasAuthenticatedActor ||
+    final actor = _currentUserId;
+    if (actor == null || actor.isEmpty ||
         bookingId.trim().isEmpty ||
         !_validReason(reason)) {
       return ChallengeReportCommandReceipt.rejected;
@@ -167,9 +172,12 @@ class ChallengeNonPlayedReportRepository {
           decision == 'restore' ? const {'restored'} : const {'excluded'},
         _ => const <String>{},
       };
+      final response = await _call(name, params).timeout(_timeout);
+      if (_currentUserId != actor) {
+        return ChallengeReportCommandReceipt.rejected;
+      }
       return ChallengeReportCommandReceipt.fromRpc(
-        await _call(name, params).timeout(_timeout),
-        allowedStates: allowedStates,
+        response, allowedStates: allowedStates,
       );
     } catch (_) {
       // Unknown network outcome: retry only through server-idempotent RPCs.

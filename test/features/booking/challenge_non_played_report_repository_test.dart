@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/repositories/booking/challenge_non_played_report_repository.dart';
 
@@ -129,6 +130,40 @@ void main() {
       decision: 'restore',
     );
     expect(receipt.accepted, isFalse);
+  });
+
+  test('a completed status lookup cannot cross a sign-out or account switch',
+      () async {
+    final delayed = Completer<Object?>();
+    var activeUser = 'captain-one';
+    final repository = ChallengeNonPlayedReportRepository(
+      currentUserId: () => activeUser,
+      rpc: (name, args) => delayed.future,
+    );
+    final pending = repository.fetchMyReportStatus('booking');
+    activeUser = 'captain-two';
+    delayed.complete({
+      'success': true, 'reported': true, 'state': 'excluded',
+      'under_review': true,
+    });
+    expect(await pending, isNull);
+  });
+
+  test('a completed write acknowledgement cannot cross an account switch',
+      () async {
+    final delayed = Completer<Object?>();
+    var activeUser = 'owner-one';
+    final repository = ChallengeNonPlayedReportRepository(
+      currentUserId: () => activeUser,
+      rpc: (name, args) => delayed.future,
+    );
+    final pending = repository.ownerReportNotPlayed(
+      bookingId: 'booking',
+      reason: 'The booked match did not happen',
+    );
+    activeUser = 'owner-two';
+    delayed.complete({'success': true, 'state': 'excluded'});
+    expect((await pending).accepted, isFalse);
   });
 
   test('invalid reason, empty booking and review decision never reach server', () async {
