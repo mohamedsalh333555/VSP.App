@@ -7,6 +7,7 @@ import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/features/player/screens/stadium_details_screen.dart';
 import 'package:vsp_application/features/player/widgets/stadium_details/stadium_bottom_booking_bar.dart';
+import 'package:vsp_application/features/player/widgets/stadium_details/stadium_image_carousel.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
 class _GuestAuth extends Fake implements AuthProvider {
@@ -47,6 +48,7 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
+            padding: const EdgeInsets.only(top: 24, bottom: 16),
             textScaler: const TextScaler.linear(1.5),
           ),
           child: child!,
@@ -64,14 +66,21 @@ void main() {
     expect(find.textContaining('تعذر تحديث بيانات الملعب'), findsOneWidget);
     expect(find.byType(NestedScrollView), findsOneWidget);
     expect(tester.takeException(), isNull);
+    expect(
+      tester.getRect(find.textContaining('الملعب مغلق للصيانة مؤقتًا')).top,
+      greaterThanOrEqualTo(24),
+    );
 
     final bar = find.byType(StadiumBottomBookingBar);
     final barBefore = tester.getRect(bar);
+    final imageBefore = tester.getRect(find.byType(StadiumImageCarousel));
     expect(barBefore.bottom, lessThanOrEqualTo(568));
     await tester.drag(find.byType(NestedScrollView), const Offset(0, -300));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(tester.getRect(bar), barBefore);
+    expect(tester.getRect(find.byType(StadiumImageCarousel)).top,
+        lessThan(imageBefore.top));
     expect(VSPColors.accent, const Color(0xFFA1A1AA));
   });
 }
