@@ -120,8 +120,6 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(find.byType(BookingSlotCard), findsOneWidget);
-    await tester.pumpWidget(const SizedBox.shrink());
-    await pending.close();
   });
 
   testWidgets('closure, full booking, past day and missing hours have distinct states',
