@@ -48,22 +48,48 @@ class TeamPayloadBuilder {
     int draws = 0;
     int team2Wins = 0;
 
-    for (var row in rows) {
+    for (final row in rows) {
       if (row is! Map) continue;
+      // A reviewed non-played challenge must not count, even when its
+      // historical finalized result remains in the source booking record.
+      // The server-side query still needs to attach this authoritative flag.
+      if (row['is_result_excluded'] == true ||
+          row['non_played_status'] == 'excluded' ||
+          row['match_result_status'] == 'disputed' ||
+          row['match_result_status'] == 'waitingOpponent') {
+        continue;
+      }
+
       final winnerId = row['winner_team_id']?.toString() ?? '';
       final outcome = row['final_outcome']?.toString() ?? '';
-      final pTeam = row['player_team_id']?.toString() ?? '';
+      final homeId = row['player_team_id']?.toString() ?? '';
 
-      if (winnerId == team1Id ||
-          (outcome == 'team_a_win' && pTeam == team1Id) ||
-          (outcome == 'team_b_win' && pTeam == team2Id)) {
-        team1Wins++;
-      } else if (winnerId == team2Id ||
-          (outcome == 'team_b_win' && pTeam == team1Id) ||
-          (outcome == 'team_a_win' && pTeam == team2Id)) {
-        team2Wins++;
-      } else if (outcome == 'draw' || outcome == 'tie') {
+      // The normalized, finalized match outcome takes precedence over
+      // possibly stale denormalized winner_team_id fields. VSP challenges
+      // use homeWin/awayWin, older matchup records use team_a_win/team_b_win.
+      if (outcome == 'draw' || outcome == 'tie') {
         draws++;
+        continue;
+      }
+      final homeWon = outcome == 'homeWin' || outcome == 'team_a_win';
+      final awayWon = outcome == 'awayWin' || outcome == 'team_b_win';
+      if ((homeWon || awayWon) &&
+          (homeId == team1Id || homeId == team2Id)) {
+        if ((homeWon && homeId == team1Id) ||
+            (awayWon && homeId == team2Id)) {
+          team1Wins++;
+        } else {
+          team2Wins++;
+        }
+        continue;
+      }
+
+      // Legacy records may expose the winner ID without a normalized
+      // final outcome. Keep that compatibility, but never count one twice.
+      if (winnerId == team1Id) {
+        team1Wins++;
+      } else if (winnerId == team2Id) {
+        team2Wins++;
       }
     }
 
