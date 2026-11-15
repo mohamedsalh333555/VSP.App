@@ -118,6 +118,8 @@ class _ChallengeReportAwareActionsState
       myTeamId: widget.myTeamId,
       reportStatus: status,
       reportLookupRequired: gated,
+      allowAppeal: gated,
+      onReportChanged: _reload,
     );
   }
 

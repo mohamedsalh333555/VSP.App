@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/repositories/booking/challenge_non_played_report_repository.dart';
 import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -11,6 +12,7 @@ import '../../../../shared/widgets/vsp_animated_button.dart';
 import '../../screens/player_home_screen.dart';
 import '../match_result_modal.dart';
 import 'challenge_non_played_report_status.dart';
+import 'challenge_non_played_appeal_dialog.dart';
 
 /// Challenge result flow: both captains submit independently.
 /// The match is finalized only when both submissions match.
@@ -21,6 +23,11 @@ class ChallengeResultActions extends StatelessWidget {
   /// Opt in ONLY after the scoped report-status RPC has been deployed.
   /// Required but unavailable status blocks stale win badges and actions.
   final bool reportLookupRequired;
+  /// Only enable through the server-gated captain card.
+  final bool allowAppeal;
+  final VoidCallback? onReportChanged;
+  final Future<ChallengeReportCommandReceipt> Function(String reason)?
+      appealSubmitOverride;
 
   const ChallengeResultActions({
     super.key,
@@ -28,6 +35,9 @@ class ChallengeResultActions extends StatelessWidget {
     this.myTeamId,
     this.reportStatus,
     this.reportLookupRequired = false,
+    this.allowAppeal = false,
+    this.onReportChanged,
+    this.appealSubmitOverride,
   });
 
   static Widget buildChallengeStatusBadge(
@@ -197,6 +207,45 @@ class ChallengeResultActions extends StatelessWidget {
     );
   }
 
+  Future<void> _submitAppeal(BuildContext context, bool isArabic) async {
+    final reason = await ChallengeNonPlayedAppealDialog.show(
+      context, isArabic: isArabic,
+    );
+    if (!context.mounted || reason == null) return;
+    final repo = ChallengeNonPlayedReportRepository();
+    try {
+      final receipt = await (appealSubmitOverride?.call(reason) ??
+          repo.captainAppeal(bookingId: booking.id, reason: reason));
+      if (!context.mounted) return;
+      var confirmed = receipt.accepted && receipt.state == 'under_review';
+      if (!confirmed && appealSubmitOverride == null) {
+        // A timeout is ambiguous. Confirm a successful appeal through the
+        // caller-scoped read before offering a retry.
+        final fresh = await repo.fetchMyReportStatus(booking.id);
+        confirmed = fresh?['state'] == 'excluded' &&
+            fresh?['my_appeal_submitted'] == true;
+      }
+      if (!context.mounted) return;
+      if (confirmed) {
+        VSPFeedback.showSuccess(context, isArabic
+            ? 'تم إرسال الاعتراض، والمباراة مستبعدة حتى انتهاء المراجعة.'
+            : 'Appeal submitted. The match stays excluded until review.');
+        onReportChanged?.call();
+      } else {
+        VSPFeedback.showError(context, isArabic
+            ? 'تعذر تأكيد الاعتراض. راجع حالته قبل إعادة المحاولة.'
+            : 'Could not verify appeal. Check its status before retrying.');
+      }
+    } catch (_) {
+      // Never log a private appeal reason or result vote.
+      if (context.mounted) {
+        VSPFeedback.showError(context, isArabic
+            ? 'تعذر الاتصال. تحقق من حالة الاعتراض وأعد المحاولة.'
+            : 'Connection error. Check appeal status before retrying.');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -223,7 +272,31 @@ class ChallengeResultActions extends StatelessWidget {
     // A server-confirmed exclusion overrides an old 'confirmed' result.
     // A captain must never submit another outcome while the report is open.
     if (reportStatus?.isExcluded == true) {
-      return ChallengeNonPlayedReportBanner(status: reportStatus!);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ChallengeNonPlayedReportBanner(status: reportStatus!),
+          if (allowAppeal && !reportStatus!.myAppealSubmitted) ...[
+            const SizedBox(height: VSPSpacing.xs),
+            TextButton.icon(
+              onPressed: () => _submitAppeal(context, isArabic),
+              icon: const Icon(Icons.rate_review_outlined, size: 16),
+              label: Text(isArabic
+                  ? 'اعتراض قائد الفريق'
+                  : 'Captain appeal'),
+            ),
+          ] else if (allowAppeal) ...[
+            const SizedBox(height: VSPSpacing.xs),
+            Text(
+              isArabic ? 'تم تسجيل اعتراض فريقك.'
+                  : 'Your team appeal is recorded.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary, fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      );
     }
     if (reportStatus?.isRestored == true) {
       return Column(
