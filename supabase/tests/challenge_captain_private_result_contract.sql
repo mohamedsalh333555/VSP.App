@@ -145,3 +145,57 @@ BEGIN
    RAISE EXCEPTION 'Private votes exposed to Data API roles'; END IF;
 END;
 $test$;
+
+-- Private read contract: one captain can read their own vote and cannot read
+-- or infer the other vote from this RPC. Audit rows remain hidden to clients.
+DO $private_read$
+DECLARE r jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.get_my_challenge_result_submission(
+    '00000000-0000-0000-0000-000000000002');
+ IF r->>'submitted'<>'false' OR r ? 'my_outcome' THEN
+   RAISE EXCEPTION 'Captain received a vote before making a submission'; END IF;
+ PERFORM public.submit_challenge_result_atomic(
+    '00000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000011','awayWin');
+ r:=public.get_my_challenge_result_submission(
+    '00000000-0000-0000-0000-000000000002');
+ IF r->>'my_outcome'<>'awayWin' OR r->>'my_revision'<>'1' THEN
+   RAISE EXCEPTION 'Own private vote cannot be read correctly'; END IF;
+
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000202',true);
+ r:=public.get_my_challenge_result_submission(
+    '00000000-0000-0000-0000-000000000002');
+ IF r->>'submitted'<>'false' OR r ? 'my_outcome' OR r::text ILIKE '%awayWin%' THEN
+   RAISE EXCEPTION 'Opponent choice leaked via private read'; END IF;
+ PERFORM public.submit_challenge_result_atomic(
+    '00000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000022','homeWin');
+ r:=public.get_my_challenge_result_submission(
+    '00000000-0000-0000-0000-000000000002');
+ IF r->>'my_outcome'<>'homeWin' OR r::text ILIKE '%awayWin%' THEN
+   RAISE EXCEPTION 'Read RPC included other captain outcome on mismatch'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000303',true);
+ r:=public.get_my_challenge_result_submission(
+    '00000000-0000-0000-0000-000000000002');
+ IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'my_outcome' THEN
+   RAISE EXCEPTION 'Unrelated captain read a private submission'; END IF;
+ r:=public.get_my_challenge_result_submission(
+    '00000000-0000-0000-0000-000000000099');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Unknown booking exposes existence or submission'; END IF;
+
+ PERFORM set_config('request.jwt.claim.sub','',true);
+ r:=public.get_my_challenge_result_submission(
+    '00000000-0000-0000-0000-000000000002');
+ IF r->>'error'<>'AUTHENTICATION_REQUIRED' THEN
+   RAISE EXCEPTION 'Anonymous private read was accepted'; END IF;
+ IF has_function_privilege('anon',
+    'public.get_my_challenge_result_submission(uuid)','EXECUTE') THEN
+   RAISE EXCEPTION 'Anonymous role has EXECUTE on private read'; END IF;
+ IF NOT has_function_privilege('authenticated',
+    'public.get_my_challenge_result_submission(uuid)','EXECUTE') THEN
+   RAISE EXCEPTION 'Authenticated captain cannot execute private read'; END IF;
+END;
+$private_read$;

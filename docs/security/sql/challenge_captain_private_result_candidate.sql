@@ -155,3 +155,53 @@ REVOKE ALL ON FUNCTION public.submit_challenge_result_atomic(uuid,uuid,text)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.submit_challenge_result_atomic(uuid,uuid,text)
   TO authenticated, service_role;
+
+-- Private read-back: each authenticated captain can retrieve their own
+-- submission, not the opposing team's outcome or revision history.
+CREATE OR REPLACE FUNCTION public.get_my_challenge_result_submission(
+  p_booking_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_caller_id uuid := auth.uid();
+  v_booking record;
+  v_my_team_id uuid;
+  v_submission record;
+BEGIN
+  IF v_caller_id IS NULL THEN
+    RETURN jsonb_build_object('success',false,'error','AUTHENTICATION_REQUIRED');
+  END IF;
+  SELECT booking_type,player_team_id,opponent_team_id
+    INTO v_booking FROM public.bookings WHERE id=p_booking_id;
+  IF NOT FOUND OR v_booking.booking_type IS DISTINCT FROM 'challenge' THEN
+    RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
+  END IF;
+
+  SELECT t.id INTO v_my_team_id
+  FROM public.teams AS t
+  WHERE t.captain_id=v_caller_id
+    AND t.id IN (v_booking.player_team_id,v_booking.opponent_team_id)
+  ORDER BY CASE WHEN t.id=v_booking.player_team_id THEN 0 ELSE 1 END
+  LIMIT 1;
+  IF v_my_team_id IS NULL THEN
+    RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
+  END IF;
+
+  SELECT outcome,revision,submitted_at INTO v_submission
+    FROM public.challenge_captain_result_entries
+    WHERE booking_id=p_booking_id AND team_id=v_my_team_id;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success',true,'submitted',false);
+  END IF;
+  RETURN jsonb_build_object('success',true,'submitted',true,
+    'my_outcome',v_submission.outcome,
+    'my_revision',v_submission.revision,
+    'submitted_at',v_submission.submitted_at);
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_my_challenge_result_submission(uuid)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_my_challenge_result_submission(uuid)
+  TO authenticated, service_role;
