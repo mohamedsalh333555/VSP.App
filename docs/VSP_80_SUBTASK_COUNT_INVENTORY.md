@@ -1,5 +1,7 @@
 # VSP.App — Inventory of subtask counts for all 80 items
 
+> Current authoritative scope (15 November 2026): **630 tasks / 209 accepted / 421 open**, in [the detailed checklist](VSP_80_DETAILED_SUBTASK_BREAKDOWN.md) and [delivery ledger](VSP_LIVE_DELIVERY_LEDGER.md). The 656-task estimates below are historical planning only; do not add them to the current counter. [RESULT intake and deduplication](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md).
+
 > Planning baseline dated 2026-11-07. These are **estimated/planned subtask allocations**, not an audit of individually enumerated implementation tasks. The source tracker defines only the 80 main items and enumerates the 13 subtasks of item 33. Counts for the other 79 items are proposed scoping estimates, not verified exact totals; they must be revised when detailed acceptance checklists are written. No task is marked complete by this inventory.
 
 ## Summary by workstream
