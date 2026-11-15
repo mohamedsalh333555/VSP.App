@@ -86,6 +86,14 @@ class ChallengeResultActions extends StatelessWidget {
       );
     }
 
+    if (booking.matchResultStatus == MatchResultStatus.disputed) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return buildStatusBadge(
+        isArabic ? 'النتيجتان مختلفتان' : 'Results do not match',
+        VSPColors.warning,
+      );
+    }
+
     // Only bookings without a submitted result can prompt submission.
     // Unknown or disputed statuses must not be presented as "Submit result".
     if (booking.matchResultStatus == MatchResultStatus.noResult &&
@@ -248,6 +256,39 @@ class ChallengeResultActions extends StatelessWidget {
                   fontSize: 11.5,
                 ),
               ),
+              const SizedBox(height: VSPSpacing.sm),
+              _openResultModal(context, currentTeamId),
+            ],
+          ],
+        ),
+      );
+    }
+
+    if (booking.matchResultStatus == MatchResultStatus.disputed) {
+      // A disagreement is not a finalized result and has no standings effect.
+      // Either captain may correct their own submission after the match ends.
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(VSPSpacing.md),
+        decoration: BoxDecoration(
+          color: VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.divider),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isArabic
+                  ? 'النتيجتان مختلفتان. لن تُضاف نقاط حتى يتفق قائدا الفريقين.'
+                  : 'The two results differ. No points are added until both captains agree.',
+              style: const TextStyle(
+                color: VSPColors.textPrimary,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (!booking.endTime.isAfter(VSPTimeService.now)) ...[
               const SizedBox(height: VSPSpacing.sm),
               _openResultModal(context, currentTeamId),
             ],
