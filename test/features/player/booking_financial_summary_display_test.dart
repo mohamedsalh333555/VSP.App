@@ -11,6 +11,12 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 class _AnonymousAuth extends Fake implements AuthProvider {
   @override
   UserModel? get userModel => null;
+
+  @override
+  void addListener(VoidCallback listener) {}
+
+  @override
+  void removeListener(VoidCallback listener) {}
 }
 
 Stadium _stadium() => Stadium(
@@ -34,7 +40,7 @@ Stadium _stadium() => Stadium(
     );
 
 Widget _screen({required bool selected, required double total}) =>
-    Provider<AuthProvider>.value(
+    ChangeNotifierProvider<AuthProvider>.value(
       value: _AnonymousAuth(),
       child: MaterialApp(
         locale: const Locale('en'),
