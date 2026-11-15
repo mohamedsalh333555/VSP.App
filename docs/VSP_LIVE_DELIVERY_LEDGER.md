@@ -1,3 +1,8 @@
+## 2026-11-15 — Cairo skipped booking hour (208/410 unchanged)
+
+- **CODE_DONE; 22.05 remains open.** The client rejects nonexistent local slot clock times instead of normalizing them onto another booking hour; the availability grid filters those slots and explains a date with no valid local times. Cairo DST unit and widget tests run in the dedicated `TZ=Africa/Cairo` CI gate. [Evidence and limits](VSP_CAIRO_DST_SKIPPED_SLOT_GUARD_2026-11-15.md); [Flutter CI 43721346829](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43721346829).
+- **618 total / 208 accepted / 410 open.** Device timezones outside Cairo, repeated autumn hours and real server checkout still need verification.
+
 ## 2026-11-15 — Short stadium detail layout (208/410)
 
 - Accepted **83.06** for the bounded layout: status and maintenance notices plus the gallery scroll above a fixed booking bar, while tabs remain available. A 320×568 Arabic widget fixture with enlarged text checks the safe area, actual header motion, fixed bar bounds and charcoal accent. [Evidence and limits](VSP_STADIUM_SHORT_SCREEN_LAYOUT_ACCEPTANCE_2026-11-15.md); [Flutter CI 43717640626](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43717640626).
