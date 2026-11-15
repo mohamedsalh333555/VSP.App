@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/utils/app_date_formatter.dart';
+import 'package:vsp_application/data/models.dart';
+import 'package:vsp_application/features/player/widgets/booking/booking_slot_calculator.dart';
 
 void main() {
   test('civil days cross month and leap-year boundaries exactly once', () {
@@ -49,6 +53,46 @@ void main() {
       [late.year, late.month, late.day],
       [2026, 10, 30],
     );
+  });
+
+  test('Cairo spring gap never maps skipped midnight slots onto 01:00', () {
+    if (Platform.environment['TZ'] != 'Africa/Cairo') return;
+    expect(DateTime(2026, 4, 24).hour, 1);
+    final stadium = Stadium(
+      id: 'dst-pitch',
+      name: 'DST fixture',
+      location: 'Aswan',
+      imageUrl: '',
+      type: 'Football',
+      size: '5 vs 5',
+      baths: 0,
+      cafeteria: 0,
+      playersPerTeam: 5,
+      totalFieldCapacity: 10,
+      pricePerHour: 200,
+      area: 'Aswan',
+      openingTime: '22:00',
+      closingTime: '02:00',
+    );
+    final businessDate = DateTime(2026, 4, 23);
+    for (final skipped in ['00:00', '00:30']) {
+      expect(
+        () => BookingSlotCalculator.getSlotDateTime(
+          slotKey: skipped,
+          stadium: stadium,
+          selectedDate: businessDate,
+        ),
+        throwsFormatException,
+      );
+    }
+    final before = BookingSlotCalculator.getSlotDateTime(
+      slotKey: '23:30', stadium: stadium, selectedDate: businessDate,
+    );
+    final after = BookingSlotCalculator.getSlotDateTime(
+      slotKey: '01:00', stadium: stadium, selectedDate: businessDate,
+    );
+    expect([after.year, after.month, after.day, after.hour], [2026, 4, 24, 1]);
+    expect(after.toUtc().difference(before.toUtc()), const Duration(minutes: 30));
   });
 
 }

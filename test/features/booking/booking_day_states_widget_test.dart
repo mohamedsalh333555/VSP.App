@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,7 +25,11 @@ class _Availability extends Fake implements BookingProvider {
   void removeListener(VoidCallback listener) {}
 }
 
-Stadium _venue({DateTime? maintenanceUntil}) => Stadium(
+Stadium _venue({
+  DateTime? maintenanceUntil,
+  String openingTime = '08:00 AM',
+  String closingTime = '12:00 AM',
+}) => Stadium(
       id: 'pitch-1',
       name: 'Nile Pitch',
       location: 'Aswan',
@@ -38,8 +43,8 @@ Stadium _venue({DateTime? maintenanceUntil}) => Stadium(
       pricePerHour: 200,
       area: 'Aswan',
       isVerified: true,
-      openingTime: '08:00 AM',
-      closingTime: '12:00 AM',
+      openingTime: openingTime,
+      closingTime: closingTime,
       maintenanceUntil: maintenanceUntil,
     );
 
@@ -162,5 +167,28 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('Venue schedule unavailable'), findsOneWidget);
+  });
+
+  testWidgets('Cairo DST gap does not expose a skipped clock slot',
+      (tester) async {
+    if (Platform.environment['TZ'] != 'Africa/Cairo') return;
+    expect(DateTime(2026, 4, 24).hour, 1);
+    final venue = _venue(openingTime: '10:00 PM', closingTime: '02:00 AM');
+    await tester.pumpWidget(_host(
+      _Availability(),
+      date: DateTime(2026, 4, 23),
+      stadium: venue,
+      slots: [
+        TimeSlotItem(
+          startTime: '12:00 AM',
+          endTime: '12:30 AM',
+          key: '12:00 AM',
+          startMinutes: 1440,
+        ),
+      ],
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('No valid times for this date'), findsOneWidget);
+    expect(find.byType(BookingSlotCard), findsNothing);
   });
 }

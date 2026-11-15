@@ -57,6 +57,7 @@ jobs:
         run: >-
           flutter test --concurrency=1
           test/core/utils/booking_civil_day_time_test.dart
+          test/features/booking/booking_day_states_widget_test.dart
           test/unit/booking_server_operating_hours_precedence_test.dart
       - name: Test
         # Bound worker creation on hosted runners. The suite is large enough

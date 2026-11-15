@@ -275,13 +275,26 @@ class BookingSlotCalculator {
     // Construct the next *calendar* day rather than adding 24 elapsed hours:
     // Egypt daylight-saving transitions can make a local day 23 or 25 hours.
     final nextDay = overnight && startMin < openMin ? 1 : 0;
-    return DateTime(
+    final slotDate = DateTime(
       selectedDate.year,
       selectedDate.month,
       selectedDate.day + nextDay,
       startMin ~/ 60,
       startMin % 60,
     );
+    // A spring-forward gap can normalize 00:00 to 01:00. Never let a slot
+    // labeled with the skipped clock time book the later, different slot.
+    final civilDay = DateTime(
+      selectedDate.year, selectedDate.month, selectedDate.day + nextDay, 12,
+    );
+    if (slotDate.year != civilDay.year ||
+        slotDate.month != civilDay.month ||
+        slotDate.day != civilDay.day ||
+        slotDate.hour != startMin ~/ 60 ||
+        slotDate.minute != startMin % 60) {
+      throw const FormatException('Booking clock time does not exist on this date');
+    }
+    return slotDate;
   }
 
   static bool isSlotBooked({

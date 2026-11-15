@@ -186,6 +186,26 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
                 : 'Venue operating hours are missing or invalid. A booking time cannot be verified; contact the venue.',
           );
         }
+        // The schedule is date-independent, but a civil clock time may not
+        // exist on a daylight-saving transition date. Hide only those slots.
+        final validTimeSlots = widget.timeSlots.where((slot) {
+          try {
+            _getSlotDateTime(slot.key);
+            return true;
+          } on FormatException {
+            return false;
+          }
+        }).toList(growable: false);
+        if (validTimeSlots.isEmpty) {
+          return VSPStateView(
+            state: VSPUiState.empty,
+            icon: Iconsax.clock_copy,
+            title: isArabic ? 'لا توجد أوقات صالحة لهذا اليوم' : 'No valid times for this date',
+            message: isArabic
+                ? 'تغيّر التوقيت المحلي في هذا اليوم. اختر يومًا آخر للحجز.'
+                : 'The local clock changed on this date. Choose another booking day.',
+          );
+        }
         final now = VSPTimeService.now;
         final bool isToday = widget.selectedDate.year == now.year &&
             widget.selectedDate.month == now.month &&
@@ -193,7 +213,7 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
 
         // A day can have a mixture of past and booked slots. Do not show a
         // selectable-looking schedule when none remains available.
-        final allSlotsPassed = widget.timeSlots.every(
+        final allSlotsPassed = validTimeSlots.every(
           (slot) => !_getSlotDateTime(slot.key).isAfter(now),
         );
         if (allSlotsPassed) {
@@ -206,7 +226,7 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
                 : 'All available times for this date have passed. Choose another day.',
           );
         }
-        final allSlotsClosed = widget.timeSlots.every(
+        final allSlotsClosed = validTimeSlots.every(
           (slot) => _isSlotClosed(slot.key),
         );
         if (allSlotsClosed) {
@@ -219,7 +239,7 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
                 : 'These slots fall within a closure. Try another time or date.',
           );
         }
-        final allSlotsBooked = widget.timeSlots.every(
+        final allSlotsBooked = validTimeSlots.every(
           (slot) => _isSlotBooked(slot.key, existingBookings),
         );
         if (allSlotsBooked) {
@@ -232,7 +252,7 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
                 : 'All slots for this date are booked. Try another date.',
           );
         }
-        final hasBookableSlot = widget.timeSlots.any(
+        final hasBookableSlot = validTimeSlots.any(
           (slot) => _getSlotDateTime(slot.key).isAfter(now) &&
               !_isSlotBooked(slot.key, existingBookings) &&
               !_isSlotClosed(slot.key),
@@ -250,7 +270,7 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
 
         String? firstUpcomingSlotKey;
         if (isToday) {
-          for (final item in widget.timeSlots) {
+          for (final item in validTimeSlots) {
             final dt = _getSlotDateTime(item.key);
             final booked = _isSlotBooked(item.key, existingBookings);
             if (dt.isAfter(now) && !booked && !_isSlotClosed(item.key)) {
@@ -261,8 +281,8 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
         }
 
         return Column(
-          children: List.generate(widget.timeSlots.length, (index) {
-            final slotItem = widget.timeSlots[index];
+          children: List.generate(validTimeSlots.length, (index) {
+            final slotItem = validTimeSlots[index];
             final isBooked = _isSlotBooked(slotItem.key, existingBookings);
             final isClosed = _isSlotClosed(slotItem.key);
             final isSelected = widget.selectedTimeSlots.contains(slotItem.key);
@@ -275,7 +295,7 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
 
             final isOvernightSlot = slotItem.startMinutes >= 1440;
             final bool isFirstOvernightSlot =
-                isOvernightSlot && (index == 0 || widget.timeSlots[index - 1].startMinutes < 1440);
+                isOvernightSlot && (index == 0 || validTimeSlots[index - 1].startMinutes < 1440);
             final String nextDayName = isOvernightSlot
                 ? DateFormat('EEEE', Localizations.localeOf(context).toString())
                     .format(slotDateTime)
