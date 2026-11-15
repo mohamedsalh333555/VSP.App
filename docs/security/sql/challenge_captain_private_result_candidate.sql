@@ -58,6 +58,7 @@ DECLARE
   v_final text;
   v_revision integer;
   v_other_submitted boolean;
+  v_previous_override text := current_setting('vsp.system_override', true);
 BEGIN
   IF v_caller_id IS NULL THEN
     RETURN jsonb_build_object('success',false,'error','AUTHENTICATION_REQUIRED');
@@ -120,15 +121,20 @@ BEGIN
 
   -- The private entries retain both captains' independent choices on mismatch.
   IF v_count=2 AND v_distinct=1 THEN
+    -- The existing booking protection trigger requires a scoped internal write.
+    -- Restore the previous setting before returning to the caller.
+    PERFORM set_config('vsp.system_override','true',true);
     UPDATE public.bookings SET match_result_status='confirmed',
       status='completed',final_outcome=v_final,pending_outcome=NULL,
       result_submitted_by_team_id=NULL,requires_admin_intervention=false,
       updated_at=now()
     WHERE id=p_booking_id;
+    PERFORM set_config('vsp.system_override',coalesce(v_previous_override,''),true);
     RETURN jsonb_build_object('success',true,'state','confirmed','finalized',true);
   END IF;
 
   v_other_submitted := v_count=2;
+  PERFORM set_config('vsp.system_override','true',true);
   UPDATE public.bookings SET
     match_result_status=CASE WHEN v_other_submitted THEN 'disputed'
                              ELSE 'waitingOpponent' END,
@@ -136,6 +142,7 @@ BEGIN
     result_submitted_by_team_id=CASE WHEN v_other_submitted THEN NULL ELSE p_team_id END,
     requires_admin_intervention=false,updated_at=now()
   WHERE id=p_booking_id;
+  PERFORM set_config('vsp.system_override',coalesce(v_previous_override,''),true);
   -- Never return another captain's outcome. An independent client may only
   -- learn whether a result was submitted, not which outcome was selected.
   RETURN jsonb_build_object('success',true,

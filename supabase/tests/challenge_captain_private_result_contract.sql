@@ -40,6 +40,24 @@ UPDATE public.bookings SET end_time=now()+interval '2 hours'
 UPDATE public.bookings SET status='pending'
  WHERE id='00000000-0000-0000-0000-000000000005';
 
+-- Synthetic installed booking guard: ordinary result writes are prohibited.
+CREATE FUNCTION public.vsp_test_result_write_guard() RETURNS trigger
+LANGUAGE plpgsql AS $
+BEGIN
+ IF (OLD.status IS DISTINCT FROM NEW.status
+     OR OLD.match_result_status IS DISTINCT FROM NEW.match_result_status
+     OR OLD.final_outcome IS DISTINCT FROM NEW.final_outcome
+     OR OLD.pending_outcome IS DISTINCT FROM NEW.pending_outcome
+     OR OLD.result_submitted_by_team_id IS DISTINCT FROM NEW.result_submitted_by_team_id)
+    AND coalesce(current_setting('vsp.system_override',true),'') <> 'true' THEN
+   RAISE EXCEPTION 'DIRECT_RESULT_WRITE_DENIED';
+ END IF;
+ RETURN NEW;
+END;
+$;
+CREATE TRIGGER vsp_result_write_guard BEFORE UPDATE ON public.bookings
+FOR EACH ROW EXECUTE FUNCTION public.vsp_test_result_write_guard();
+
 -- INSTALL_PRIVATE_RESULTS_CANDIDATE
 
 DO $test$
@@ -55,6 +73,8 @@ BEGIN
    RAISE EXCEPTION 'Missing first independent vote'; END IF;
  IF (SELECT pending_outcome FROM public.bookings WHERE id=v_id) IS NOT NULL THEN
    RAISE EXCEPTION 'Public booking leaks private vote'; END IF;
+ IF coalesce(current_setting('vsp.system_override',true),'') <> '' THEN
+   RAISE EXCEPTION 'Scoped internal booking override leaked to caller'; END IF;
  -- Retries cannot increment revision or add duplicate audit entries.
  r:=public.submit_challenge_result_atomic(v_id,'00000000-0000-0000-0000-000000000011','homeWin');
  IF (SELECT revision FROM public.challenge_captain_result_entries
@@ -76,6 +96,8 @@ BEGIN
  IF (SELECT final_outcome FROM public.bookings WHERE id=v_id)<>'homeWin'
     OR (SELECT status FROM public.bookings WHERE id=v_id)<>'completed' THEN
    RAISE EXCEPTION 'Final outcome not persisted'; END IF;
+ IF coalesce(current_setting('vsp.system_override',true),'') <> '' THEN
+   RAISE EXCEPTION 'Finalization override leaked to caller'; END IF;
  IF (SELECT revision FROM public.challenge_captain_result_entries
        WHERE booking_id=v_id AND team_id='00000000-0000-0000-0000-000000000022')<>2 THEN
    RAISE EXCEPTION 'Edited vote lost revision'; END IF;
