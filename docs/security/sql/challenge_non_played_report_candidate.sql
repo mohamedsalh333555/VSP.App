@@ -56,11 +56,13 @@ BEGIN
   IF v_booking.status NOT IN ('confirmed','completed') THEN
     RETURN jsonb_build_object('success',false,'error','BOOKING_NOT_ELIGIBLE');
   END IF;
-  IF EXISTS(SELECT 1 FROM public.challenge_non_played_reports
-            WHERE booking_id=p_booking_id) THEN
+  SELECT ranking_reversed INTO v_reversed
+    FROM public.challenge_non_played_reports WHERE booking_id=p_booking_id;
+  IF FOUND THEN
     RETURN jsonb_build_object('success',true,'state','excluded',
-      'already_reported',true,'ranking_reversed',false);
+      'already_reported',true,'ranking_reversed',v_reversed);
   END IF;
+  v_reversed:=false;
 
   IF COALESCE(v_booking.elo_processed,false) THEN
     IF v_booking.match_result_status <> 'confirmed'

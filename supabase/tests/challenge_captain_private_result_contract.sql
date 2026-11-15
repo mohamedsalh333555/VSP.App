@@ -30,6 +30,10 @@ CREATE TABLE public.bookings (
  requires_admin_intervention boolean DEFAULT false,
  updated_at timestamptz DEFAULT now(),
  payment_status text DEFAULT 'paid',
+ payment_reconcile_state text DEFAULT 'settled',
+ is_paid boolean DEFAULT true,
+ deposit_amount numeric DEFAULT 100,
+ deposit_paid numeric DEFAULT 50,
  fair_play_score integer DEFAULT 100,
  elo_processed boolean DEFAULT false
 );
@@ -303,7 +307,7 @@ BEGIN
 
  r:=public.owner_report_challenge_not_played_atomic(
    '00000000-0000-0000-0000-000000000001','Repeated report must not alter counters');
- IF r->>'already_reported'<>'true'
+ IF r->>'already_reported'<>'true' OR r->>'ranking_reversed'<>'true'
     OR (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>4 THEN
    RAISE EXCEPTION 'Duplicate report reversed ranking again'; END IF;
 
@@ -317,10 +321,27 @@ BEGIN
    '00000000-0000-0000-0000-000000000011','homeWin');
  IF r->>'error'<>'MATCH_EXCLUDED_NON_PLAYED' THEN
    RAISE EXCEPTION 'Captain finalized already reported non-played match'; END IF;
- IF (SELECT count(*) FROM public.challenge_non_played_reports)<>2 THEN
+ -- A mismatch with two saved, private choices must remain available for
+ -- authorized review, but cannot be accepted while excluded.
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000404',true);
+ r:=public.owner_report_challenge_not_played_atomic(
+   '00000000-0000-0000-0000-000000000002','The scheduled challenge did not happen');
+ IF r->>'ranking_reversed'<>'false'
+    OR (SELECT count(*) FROM public.challenge_captain_result_entries
+        WHERE booking_id='00000000-0000-0000-0000-000000000002')<>2 THEN
+   RAISE EXCEPTION 'Unapproved mismatched selections lost during exclusion'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.submit_challenge_result_atomic(
+   '00000000-0000-0000-0000-000000000002',
+   '00000000-0000-0000-0000-000000000011','homeWin');
+ IF r->>'error'<>'MATCH_EXCLUDED_NON_PLAYED' THEN
+   RAISE EXCEPTION 'Excluded mismatched result could be finalized'; END IF;
+ IF (SELECT count(*) FROM public.challenge_non_played_reports)<>3 THEN
    RAISE EXCEPTION 'Report audit missing or duplicated'; END IF;
  IF EXISTS(SELECT 1 FROM public.bookings WHERE fair_play_score<>100
-    OR payment_status<>'paid') THEN
+    OR payment_status<>'paid' OR payment_reconcile_state<>'settled'
+    OR is_paid IS DISTINCT FROM true
+    OR deposit_amount<>100 OR deposit_paid<>50) THEN
    RAISE EXCEPTION 'Non-played reporting changed payment or fair-play'; END IF;
  IF has_table_privilege('authenticated',
     'public.challenge_non_played_reports','SELECT')
