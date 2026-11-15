@@ -7,7 +7,12 @@ CREATE TABLE public.challenge_non_played_reports (
   booking_id uuid PRIMARY KEY REFERENCES public.bookings(id) ON DELETE RESTRICT,
   reported_by_owner_id uuid NOT NULL,
   reason text NOT NULL CHECK (char_length(btrim(reason)) BETWEEN 8 AND 500),
-  status text NOT NULL DEFAULT 'excluded' CHECK (status = 'excluded'),
+  status text NOT NULL DEFAULT 'excluded' CHECK (status IN ('excluded','restored')),
+  ranking_restored boolean NOT NULL DEFAULT false,
+  reviewed_by_admin_id uuid,
+  reviewed_at timestamptz,
+  review_decision text CHECK (review_decision IN ('uphold','restore')),
+  review_reason text,
   original_outcome text,
   ranking_reversed boolean NOT NULL DEFAULT false,
   reported_at timestamptz NOT NULL DEFAULT now()
@@ -33,6 +38,7 @@ DECLARE
   v_home_losses integer;
   v_away_losses integer;
   v_reversed boolean := false;
+  v_report_status text;
   v_updated integer;
 BEGIN
   IF v_actor IS NULL THEN
@@ -56,10 +62,10 @@ BEGIN
   IF v_booking.status NOT IN ('confirmed','completed') THEN
     RETURN jsonb_build_object('success',false,'error','BOOKING_NOT_ELIGIBLE');
   END IF;
-  SELECT ranking_reversed INTO v_reversed
+  SELECT status,ranking_reversed INTO v_report_status,v_reversed
     FROM public.challenge_non_played_reports WHERE booking_id=p_booking_id;
   IF FOUND THEN
-    RETURN jsonb_build_object('success',true,'state','excluded',
+    RETURN jsonb_build_object('success',true,'state',v_report_status,
       'already_reported',true,'ranking_reversed',v_reversed);
   END IF;
   v_reversed:=false;

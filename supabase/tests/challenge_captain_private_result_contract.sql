@@ -5,6 +5,10 @@ DO $roles$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN; END IF;
 END $roles$;
 CREATE SCHEMA auth;
+CREATE TABLE public.users (id uuid PRIMARY KEY, role text NOT NULL);
+INSERT INTO public.users(id,role) VALUES
+('00000000-0000-0000-0000-000000000505','admin'),
+('00000000-0000-0000-0000-000000000606','player');
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
  SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid;
 $$;
@@ -70,6 +74,7 @@ FOR EACH ROW EXECUTE FUNCTION public.vsp_test_result_write_guard();
 
 -- INSTALL_NOT_PLAYED_REPORT_CANDIDATE
 -- INSTALL_PRIVATE_RESULTS_CANDIDATE
+-- INSTALL_NOT_PLAYED_REVIEW_CANDIDATE
 
 DO $test$
 DECLARE r jsonb; v_id uuid; n int;
@@ -350,3 +355,144 @@ BEGIN
    RAISE EXCEPTION 'Private non-played report exposed'; END IF;
 END;
 $non_played$;
+
+-- Challenge appeal/review/restore, without changing booking finance.
+DO $appeal_restore$
+DECLARE r jsonb; n integer; before_points integer;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.captain_appeal_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','We did play and the result was agreed');
+ IF r->>'state'<>'under_review' OR r->>'revision'<>'1' THEN
+   RAISE EXCEPTION 'First captain appeal failed'; END IF;
+ r:=public.captain_appeal_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','We did play and the result was agreed');
+ IF r->>'already_submitted'<>'true'
+    OR (SELECT count(*) FROM public.challenge_non_played_review_audit
+        WHERE booking_id='00000000-0000-0000-0000-000000000001')<>1 THEN
+   RAISE EXCEPTION 'Appeal replay not idempotent'; END IF;
+ r:=public.get_my_challenge_non_played_status(
+ '00000000-0000-0000-0000-000000000001');
+ IF r->>'state'<>'excluded' OR r->>'under_review'<>'true'
+    OR r->>'my_appeal_submitted'<>'true' THEN
+   RAISE EXCEPTION 'Excluded appeal status not visible to captain'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000202',true);
+ r:=public.get_my_challenge_non_played_status(
+ '00000000-0000-0000-0000-000000000001');
+ IF r->>'my_appeal_submitted'<>'false' OR r ? 'reason' THEN
+   RAISE EXCEPTION 'Opponent appeal reason leaked'; END IF;
+ r:=public.captain_appeal_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','We attended the stadium as scheduled');
+ IF r->>'revision'<>'1' THEN
+   RAISE EXCEPTION 'Second captain appeal was rejected'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000303',true);
+ r:=public.captain_appeal_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','This stranger should not appeal');
+ IF r->>'error'<>'CAPTAIN_ONLY' THEN
+   RAISE EXCEPTION 'Unrelated player appeal accepted'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000404',true);
+ r:=public.review_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','restore','Owner cannot review the claim');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Owner adjudicated own report'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000606',true);
+ r:=public.review_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','restore','Ordinary player is not an admin');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Ordinary player adjudicated a report'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000505',true);
+ r:=public.review_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000002','uphold','Match evidence does not support the objection');
+ IF r->>'state'<>'excluded' THEN
+   RAISE EXCEPTION 'Review upheld report but unexcluded booking'; END IF;
+ r:=public.review_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000002','uphold','Same decision replay should be idempotent');
+ IF r->>'already_reviewed'<>'true' THEN
+   RAISE EXCEPTION 'Repeated uphold inserted new review decision'; END IF;
+
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.captain_appeal_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000002','I dispute the venue owner report');
+ IF r->>'state'<>'under_review' THEN
+   RAISE EXCEPTION 'Appeal after uphold was not accepted'; END IF;
+ r:=public.get_my_challenge_non_played_status(
+ '00000000-0000-0000-0000-000000000002');
+ IF r->>'under_review'<>'true' THEN
+   RAISE EXCEPTION 'New appeal after uphold was not pending review'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000505',true);
+ r:=public.review_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000002','uphold','Re-reviewed the newly submitted appeal');
+ IF r->>'already_reviewed'<>'false' THEN
+   RAISE EXCEPTION 'New appeal did not allow re-review'; END IF;
+
+ r:=public.review_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','restore','Verified actual match evidence and both outcomes');
+ IF r->>'state'<>'restored' OR r->>'ranking_restored'<>'true' THEN
+   RAISE EXCEPTION 'Confirmed challenge ranking not restored'; END IF;
+ IF (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>7
+    OR (SELECT matches_played FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>4
+    OR (SELECT status FROM public.challenge_non_played_reports
+       WHERE booking_id='00000000-0000-0000-0000-000000000001')<>'restored' THEN
+   RAISE EXCEPTION 'Rank totals after authorized restoration invalid'; END IF;
+ r:=public.review_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','restore','Repeat replay must not add extra standings');
+ IF r->>'already_reviewed'<>'true'
+    OR (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>7 THEN
+   RAISE EXCEPTION 'Repeat restoration credited points twice'; END IF;
+ r:=public.review_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','uphold','Do not revert a restored decision');
+ IF r->>'error'<>'REPORT_ALREADY_RESTORED' THEN
+   RAISE EXCEPTION 'Already restored report could be contradicted'; END IF;
+
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000404',true);
+ r:=public.owner_report_challenge_not_played_atomic(
+ '00000000-0000-0000-0000-000000000001','Repeat owner report cannot exclude restored booking');
+ IF r->>'state'<>'restored' OR r->>'already_reported'<>'true' THEN
+   RAISE EXCEPTION 'Repeated owner report re-excluded restored booking'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000202',true);
+ r:=public.captain_appeal_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000001','Appeal after final restoration is no longer open');
+ IF r->>'error'<>'REPORT_NOT_OPEN' THEN
+   RAISE EXCEPTION 'Restored report accepted additional appeal'; END IF;
+ r:=public.get_my_challenge_non_played_status(
+ '00000000-0000-0000-0000-000000000001');
+ IF r->>'state'<>'restored' OR r->>'under_review'<>'false' THEN
+   RAISE EXCEPTION 'Captain does not see safe restored state'; END IF;
+
+ -- The initially unscored and excluded challenge can resume captain agreement
+ -- only after an authorized restore; the ranking trigger must then run once.
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000505',true);
+ r:=public.review_challenge_non_played_atomic(
+ '00000000-0000-0000-0000-000000000003','restore','The scheduled challenge was played after review');
+ IF r->>'ranking_restored'<>'false' THEN
+   RAISE EXCEPTION 'Restored unscored challenge unexpectedly credited points'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.submit_challenge_result_atomic(
+ '00000000-0000-0000-0000-000000000003',
+ '00000000-0000-0000-0000-000000000011','homeWin');
+ IF r->>'state'<>'waitingOpponent' THEN
+   RAISE EXCEPTION 'Captain could not submit after restored exclusion'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000202',true);
+ r:=public.submit_challenge_result_atomic(
+ '00000000-0000-0000-0000-000000000003',
+ '00000000-0000-0000-0000-000000000022','homeWin');
+ IF r->>'state'<>'confirmed' THEN
+   RAISE EXCEPTION 'Both captains could not agree after restoration'; END IF;
+ IF (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>10
+    OR (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000022')<>4
+    OR (SELECT matches_played FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>5 THEN
+   RAISE EXCEPTION 'Corrected challenge points missing or double counted'; END IF;
+
+ IF (SELECT count(*) FROM public.challenge_non_played_review_audit
+    WHERE booking_id='00000000-0000-0000-0000-000000000001')<>3 THEN
+   RAISE EXCEPTION 'Review or appeals audit count differs'; END IF;
+ IF EXISTS (SELECT 1 FROM public.bookings WHERE payment_status<>'paid'
+    OR payment_reconcile_state<>'settled' OR is_paid IS DISTINCT FROM true
+    OR deposit_amount<>100 OR deposit_paid<>50 OR fair_play_score<>100) THEN
+   RAISE EXCEPTION 'Appeal or restoration changed financial or fair-play fields'; END IF;
+ IF has_table_privilege('authenticated','public.challenge_non_played_appeals','SELECT')
+    OR has_table_privilege('anon','public.challenge_non_played_review_audit','SELECT')
+    OR has_table_privilege('authenticated','public.challenge_non_played_review_audit','SELECT') THEN
+   RAISE EXCEPTION 'Confidential appeal/review data exposed to clients'; END IF;
+END;
+$appeal_restore$;
