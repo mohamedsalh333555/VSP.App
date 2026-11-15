@@ -4,7 +4,7 @@
 
 Source: `lib/core/repositories/booking/booking_cancellation_coordinator.dart`, `lib/core/repositories/booking/booking_domain_rules.dart`, and the booking state contract in `VSP_BOOKING_TRANSITIONS_27_02.md`.
 
-The cancellation UI maps backend errors `cannot_cancel_within_6_hours` and historical `cannot_cancel_within_2_hours` to the **currently displayed** policy: cancellation is disallowed when the match begins in fewer than **6 hours**, **except within the first 20 minutes after the booking was created**. The historical two-hour code is a compatibility/error mapping, not proof that two hours is still the server policy.
+The cancellation UI maps backend errors `cannot_cancel_within_6_hours` and historical `cannot_cancel_within_2_hours` to the **currently displayed** policy: cancellation is disallowed when **6 hours or fewer** remain before the match, **except within the first 20 minutes after the booking was created**. The historical two-hour code is a compatibility/error mapping, not proof that two hours is still the server policy.
 
 **Critical limitation:** the actual server-side SQL/Edge Function cutoff implementation was not independently inspected for this document. Therefore 6 hours and 20 minutes are the client-visible policy; they are not certified server behavior. The server must determine the deadline from trusted server time and booking creation/start timestamps. No client clock should authorize cancellation.
 

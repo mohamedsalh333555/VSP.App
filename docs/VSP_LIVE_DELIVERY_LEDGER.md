@@ -1,3 +1,9 @@
+## 2026-11-15 — Cancellation disclosure and takeover regression receipt (209/409)
+
+- Accepted **53.03** for the bounded client disclosure: Arabic/English pre-checkout summary, expandable details, matching signup/player terms, six-hour-inclusive locked/error copy, and no refund timeline for unknown/zero/unpaid amounts. A 320×568, 1.8× text fixture verifies wrapping and RTL/LTR. The old refund FAQ catalog entry no longer promises an in-app wallet credit; that entry is not currently exposed by the help screen. [Evidence and limits](VSP_CANCELLATION_DISCLOSURE_ACCEPTANCE_2026-11-15.md).
+- Resolved the takeover baseline's failing Arabic test by configuring the real locale delegates and supported languages. On code **`2d7debf3`**, [Flutter CI 43725230987](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43725230987) passed analysis, privacy, architecture, Cairo date gates and **1438 tests / 11 skipped**. Android `43725231024`, iOS `43725231107`, Account SQL `43725230990`, Owner checkout `43725230972` all succeeded on that code snapshot.
+- **618 total / 209 accepted / 409 open; this batch accepts one task only.** No cancellation/refund server logic, payment execution, prices, subscriptions or production state changed. Server cutoff, real refund delivery, two-account/device and release tasks remain open. The receipt commit is documentation-only; it is not a new app test run or a main merge.
+
 ## 2026-11-15 — Cairo skipped booking hour (208/410 unchanged)
 
 - **CODE_DONE; 22.05 remains open.** The client rejects nonexistent local slot clock times instead of normalizing them onto another booking hour; the availability grid filters those slots and explains a date with no valid local times. Cairo DST unit and widget tests run in the dedicated `TZ=Africa/Cairo` CI gate. [Evidence and limits](VSP_CAIRO_DST_SKIPPED_SLOT_GUARD_2026-11-15.md); [Flutter CI 43721346829](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43721346829).
