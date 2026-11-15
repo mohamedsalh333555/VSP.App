@@ -34,7 +34,7 @@ SELECT ('00000000-0000-0000-0000-' || lpad(i::text,12,'0'))::uuid,
  'challenge','confirmed',now()-interval '2 hours',
  '00000000-0000-0000-0000-000000000011',
  '00000000-0000-0000-0000-000000000022'
-FROM generate_series(1,12) AS i;
+FROM generate_series(1,14) AS i;
 UPDATE public.bookings SET end_time=now()+interval '2 hours'
  WHERE id='00000000-0000-0000-0000-000000000004';
 UPDATE public.bookings SET status='pending'
