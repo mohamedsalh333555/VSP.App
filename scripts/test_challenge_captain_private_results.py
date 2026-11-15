@@ -13,6 +13,7 @@ CONTRACT = ROOT / "supabase/tests/challenge_captain_private_result_contract.sql"
 RANKING_MIGRATION = ROOT / "supabase/migrations/20261003193000_challenge_mutual_result_agreement_and_points.sql"
 NON_PLAYED_CANDIDATE = ROOT / "docs/security/sql/challenge_non_played_report_candidate.sql"
 REVIEW_CANDIDATE = ROOT / "docs/security/sql/challenge_non_played_review_candidate.sql"
+READ_ONLY_PREFLIGHT = ROOT / "supabase/tests/read_only_challenge_result_rollout_preflight.sql"
 DB = "vsp_captain_result_contracts"
 
 def require_isolated(env: dict[str, str]) -> None:
@@ -62,6 +63,12 @@ def main() -> int:
 CREATE TRIGGER trg_calculate_elo BEFORE UPDATE OF status,final_outcome,match_result_status
 ON public.bookings FOR EACH ROW EXECUTE FUNCTION public.calculate_elo_on_match_completion();
 """)
+    preflight = READ_ONLY_PREFLIGHT.read_text(encoding="utf-8")
+    import re
+    stripped = "\n".join(line.split("--", 1)[0] for line in preflight.splitlines())
+    if re.search(r"\b(?:INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TRUNCATE|COPY|CALL|DO|GRANT|REVOKE|EXECUTE|SET)\b", stripped, re.I):
+        raise RuntimeError("Read-only staging preflight contains a write statement")
+    source += "\n" + preflight
     created = psql("postgres",query=f"CREATE DATABASE {DB}")
     if created.returncode != 0:
         raise RuntimeError("Unable to create separate ephemeral SQL database")
