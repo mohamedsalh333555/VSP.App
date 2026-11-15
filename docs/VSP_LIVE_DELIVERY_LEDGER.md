@@ -1,3 +1,8 @@
+## 2026-11-15 — Owner stadium price update result (203/415)
+
+- Accepted **21.06** at the owner edit boundary: a widget test sends price 320 and checks both repository results. A failed update now keeps the editor open, reports an error and leaves pending photo deletion untouched; success closes the editor. [Evidence and limits](VSP_STADIUM_PRICE_UPDATE_RESULT_ACCEPTANCE_2026-11-15.md); [Flutter CI 43669407411](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43669407411).
+- **618 total / 203 accepted / 415 open.** Live database reflection, player price display after editing and booked-period authoritative price remain unverified.
+
 ## 2026-11-15 — Player venue details from owner values (202/416)
 
 - Accepted **21.05** for the player venue information UI: a widget fixture uses the owner wizard's feature payload and verifies the player tab and price bar show the chosen location, amenities, add-on, hourly price and deposit, while hiding a disabled amenity. [Evidence and limits](VSP_PLAYER_STADIUM_DETAILS_VISIBILITY_2026-11-15.md); [Flutter CI 43668494949](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43668494949).
