@@ -16,7 +16,7 @@ import time
 
 from test_challenge_captain_private_results import (
     ROOT, CONTRACT, CANDIDATE, RANKING_MIGRATION,
-    NON_PLAYED_CANDIDATE, REVIEW_CANDIDATE, require_isolated,
+    NON_PLAYED_CANDIDATE, REVIEW_CANDIDATE, FEED_CANDIDATE, require_isolated,
 )
 
 DB = "vsp_challenge_result_concurrency"
@@ -53,6 +53,7 @@ def build_fixture() -> str:
         "-- INSTALL_NOT_PLAYED_REPORT_CANDIDATE": NON_PLAYED_CANDIDATE,
         "-- INSTALL_PRIVATE_RESULTS_CANDIDATE": CANDIDATE,
         "-- INSTALL_NOT_PLAYED_REVIEW_CANDIDATE": REVIEW_CANDIDATE,
+        "-- INSTALL_NON_PLAYED_FEED_RLS_CANDIDATE": FEED_CANDIDATE,
     }
     for marker, path in markers.items():
         if s.count(marker) != 1:

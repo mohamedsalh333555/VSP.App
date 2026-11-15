@@ -70,11 +70,24 @@ $guard$;
 CREATE TRIGGER vsp_result_write_guard BEFORE UPDATE ON public.bookings
 FOR EACH ROW EXECUTE FUNCTION public.vsp_test_result_write_guard();
 
+-- Synthetic public booking feed with the same default permissive SELECT
+-- shape as staging; only the extra restrictive policy should filter it.
+CREATE TABLE public.booking_public_feed (
+ id uuid PRIMARY KEY REFERENCES public.bookings(id) ON DELETE CASCADE,
+ booking_type text NOT NULL DEFAULT 'challenge',
+ match_result_status text NOT NULL DEFAULT 'confirmed'
+);
+ALTER TABLE public.booking_public_feed ENABLE ROW LEVEL SECURITY;
+GRANT SELECT ON public.booking_public_feed TO authenticated;
+CREATE POLICY booking_public_feed_select ON public.booking_public_feed
+  FOR SELECT TO authenticated USING (true);
+
 -- INSTALL_CHALLENGE_RANKING_TRIGGER
 
 -- INSTALL_NOT_PLAYED_REPORT_CANDIDATE
 -- INSTALL_PRIVATE_RESULTS_CANDIDATE
 -- INSTALL_NOT_PLAYED_REVIEW_CANDIDATE
+-- INSTALL_NON_PLAYED_FEED_RLS_CANDIDATE
 
 DO $test$
 DECLARE r jsonb; v_id uuid; n int;
@@ -516,3 +529,32 @@ BEGIN
    RAISE EXCEPTION 'Booking deletion left orphaned challenge-result private data'; END IF;
 END;
 $deletion_compat$;
+
+-- Exclusion should be enforced at the database query layer, even when
+-- the stored booking_public_feed row still contains a confirmed result.
+INSERT INTO public.booking_public_feed (id,booking_type,match_result_status)
+VALUES
+ ('00000000-0000-0000-0000-000000000002','challenge','disputed'),
+ ('00000000-0000-0000-0000-000000000003','challenge','confirmed'),
+ ('00000000-0000-0000-0000-000000000006','challenge','confirmed');
+SET ROLE authenticated;
+DO $public_feed_restriction$
+DECLARE n integer;
+BEGIN
+ SELECT count(*) INTO n FROM public.booking_public_feed;
+ IF n<>2 THEN
+   RAISE EXCEPTION 'Excluded match exposed to public feed, count %',n; END IF;
+ IF EXISTS(SELECT 1 FROM public.booking_public_feed
+           WHERE id='00000000-0000-0000-0000-000000000002') THEN
+   RAISE EXCEPTION 'Private non-played report not enforced by RLS'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.booking_public_feed
+    WHERE id='00000000-0000-0000-0000-000000000003') THEN
+   RAISE EXCEPTION 'Restored public match did not reappear in feed'; END IF;
+ IF has_schema_privilege('anon','vsp_private','USAGE') THEN
+   RAISE EXCEPTION 'Anonymous role can use internal feed-filter schema'; END IF;
+ IF has_function_privilege('anon',
+     'vsp_private.is_challenge_result_excluded(uuid)','EXECUTE') THEN
+   RAISE EXCEPTION 'Anonymous role can execute internal report filter'; END IF;
+END;
+$public_feed_restriction$;
+RESET ROLE;

@@ -14,6 +14,7 @@ RANKING_MIGRATION = ROOT / "supabase/migrations/20261003193000_challenge_mutual_
 NON_PLAYED_CANDIDATE = ROOT / "docs/security/sql/challenge_non_played_report_candidate.sql"
 REVIEW_CANDIDATE = ROOT / "docs/security/sql/challenge_non_played_review_candidate.sql"
 READ_ONLY_PREFLIGHT = ROOT / "supabase/tests/read_only_challenge_result_rollout_preflight.sql"
+FEED_CANDIDATE = ROOT / "docs/security/sql/challenge_public_feed_exclusion_candidate.sql"
 DB = "vsp_captain_result_contracts"
 
 def require_isolated(env: dict[str, str]) -> None:
@@ -51,6 +52,10 @@ def main() -> int:
     if source.count(review_marker) != 1:
         raise RuntimeError("Non-played review contract marker drift")
     source = source.replace(review_marker,REVIEW_CANDIDATE.read_text(encoding="utf-8"))
+    feed_marker = "-- INSTALL_NON_PLAYED_FEED_RLS_CANDIDATE"
+    if source.count(feed_marker) != 1:
+        raise RuntimeError("Public-feed exclusion policy contract marker drift")
+    source = source.replace(feed_marker,FEED_CANDIDATE.read_text(encoding="utf-8"))
     ranking_marker = "-- INSTALL_CHALLENGE_RANKING_TRIGGER"
     raw_ranking = RANKING_MIGRATION.read_text(encoding="utf-8")
     signature = "CREATE OR REPLACE FUNCTION public.calculate_elo_on_match_completion()"
