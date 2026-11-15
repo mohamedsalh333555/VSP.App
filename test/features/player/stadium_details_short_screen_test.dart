@@ -24,6 +24,14 @@ class _GuestAuth extends Fake implements AuthProvider {
 void main() {
   testWidgets('short Arabic screen scrolls notices and gallery above fixed price bar',
       (tester) async {
+    final originalOnError = FlutterError.onError;
+    FlutterError.onError = (details) {
+      if (details.exceptionAsString().contains('RenderFlex overflowed')) {
+        debugPrint(details.toString());
+      }
+      originalOnError?.call(details);
+    };
+    addTearDown(() => FlutterError.onError = originalOnError);
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
