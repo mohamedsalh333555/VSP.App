@@ -18,6 +18,9 @@ on:
       - 'docs/security/sql/challenge_non_played_review_candidate.sql'
       - 'docs/security/sql/challenge_public_feed_exclusion_candidate.sql'
       - 'docs/security/sql/challenge_eligible_head_to_head_candidate.sql'
+      - 'docs/security/sql/booking_public_feed_logo_sync_fix_candidate.sql'
+      - 'scripts/test_booking_public_feed_logo_sync_isolated.py'
+      - 'test/tooling/test_booking_public_feed_logo_sync_target_guard.py'
       - 'test/tooling/test_challenge_timeout_isolated.py'
       - 'scripts/run_account_security_contracts.py'
       - 'scripts/apply_migration_runner.py'
@@ -137,6 +140,10 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_challenge_timeout_isolated.py -v
       - name: Verify challenge timeout retirement on isolated PostgreSQL
         run: python3 scripts/test_challenge_timeout_isolated.py
+      - name: Verify public feed logo-sync test cannot target hosted PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_booking_public_feed_logo_sync_target_guard.py -v
+      - name: Verify existing public feed trigger and logo sync in disposable PostgreSQL
+        run: python3 scripts/test_booking_public_feed_logo_sync_isolated.py
       - name: Verify isolated captain-result private storage and agreement matrix
         run: python3 scripts/test_challenge_captain_private_results.py
       - name: Verify captain agreement, venue report and restore races in two isolated PostgreSQL sessions

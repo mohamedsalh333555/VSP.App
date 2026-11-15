@@ -27,3 +27,7 @@ Execute `supabase/tests/read_only_challenge_result_rollout_preflight.sql` on sta
 ## Abort/rollback policy
 
 Record a reliable point-in-time database snapshot and old SQL/permissions first. If a gate fails, stop the new feature and restrict its RPC write permissions rather than blindly restoring the single-pending-result implementation over independent votes. Audit and reconcile the original outcomes, rankings and report events in an isolated transaction before reopening. No automatic production rollout or `main` merge.
+
+## Verified public-feed function defect (read-only staging inspection)
+
+The installed `trg_sync_booking_public_feed` runs `public.sync_booking_public_feed()` after **every** booking INSERT/UPDATE/DELETE. Its `ON CONFLICT ... DO UPDATE` contains `opponent_team_logo_url=excluded.opponent_team_logo`, while the table and INSERT target have only `opponent_team_logo_url`. This is a confirmed **source/schema mismatch**, not yet a reproduced hosted mutation failure. It can block public-booking writes when the upsert executes. See [minimal one-reference correction candidate](sql/booking_public_feed_logo_sync_fix_candidate.sql) and [isolated SQL lifecycle contract](../../supabase/tests/booking_public_feed_logo_sync_contract.sql). **Neither was applied to Staging or Production.** Deployment needs explicit schema fingerprint recheck, a real staging dry-run, RLS/privilege review, financial invariance tests and rollback plan.
