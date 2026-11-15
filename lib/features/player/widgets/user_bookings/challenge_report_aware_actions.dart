@@ -5,13 +5,17 @@ import '../../../../core/services/challenge_report_auth_events.dart';
 
 import '../../../../core/config/challenge_result_rollout_flags.dart';
 import '../../../../core/repositories/booking/challenge_non_played_report_repository.dart';
+import '../../../../core/repositories/booking/challenge_captain_private_submission_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import 'challenge_non_played_report_status.dart';
 import 'challenge_result_actions.dart';
+import 'challenge_own_submission_label.dart';
 
 typedef ChallengeReportStatusLoader =
     Future<Map<String, Object?>?> Function(String bookingId);
+typedef ChallengeOwnSubmissionLoader =
+    Future<ChallengeCaptainSubmission?> Function(String bookingId);
 
 /// The only bridge from the existing player card to the new scoped
 /// report-status RPC. By default the original UX remains unchanged.
@@ -22,6 +26,7 @@ class ChallengeReportAwareActions extends StatefulWidget {
   final bool badgeOnly;
   final bool reportFeatureEnabled;
   final ChallengeReportStatusLoader? statusLoader;
+  final ChallengeOwnSubmissionLoader? submissionLoader;
 
   const ChallengeReportAwareActions({
     super.key,
@@ -31,6 +36,7 @@ class ChallengeReportAwareActions extends StatefulWidget {
     this.reportFeatureEnabled =
         ChallengeResultRolloutFlags.nonPlayedReportsEnabled,
     this.statusLoader,
+    this.submissionLoader,
   });
 
   @override
@@ -41,6 +47,7 @@ class ChallengeReportAwareActions extends StatefulWidget {
 class _ChallengeReportAwareActionsState
     extends State<ChallengeReportAwareActions> {
   Future<Map<String, Object?>?>? _pending;
+  Future<ChallengeCaptainSubmission?>? _ownSubmissionPending;
   StreamSubscription<int>? _authSubscription;
 
   @override
@@ -61,6 +68,7 @@ class _ChallengeReportAwareActionsState
   }
 
   void _startLookup() {
+    _ownSubmissionPending = null;
     if (!widget.reportFeatureEnabled || widget.myTeamId == null) {
       _pending = null;
       return;
@@ -68,6 +76,19 @@ class _ChallengeReportAwareActionsState
     final fetcher = widget.statusLoader ??
         ChallengeNonPlayedReportRepository().fetchMyReportStatus;
     _pending = fetcher(widget.booking.id);
+
+    // Only the captain's private choice is fetched, and only for the
+    // unfinished result flow. Existing injected status-only widget tests
+    // never create a real Supabase client.
+    final resultStatus = widget.booking.matchResultStatus;
+    if (!widget.badgeOnly &&
+        (resultStatus == MatchResultStatus.waitingOpponent ||
+            resultStatus == MatchResultStatus.disputed) &&
+        (widget.submissionLoader != null || widget.statusLoader == null)) {
+      final readMine = widget.submissionLoader ??
+          ChallengeCaptainPrivateSubmissionRepository().fetchMySubmission;
+      _ownSubmissionPending = readMine(widget.booking.id);
+    }
   }
 
   void _reload() {
@@ -79,7 +100,9 @@ class _ChallengeReportAwareActionsState
   void didUpdateWidget(covariant ChallengeReportAwareActions oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.reportFeatureEnabled != widget.reportFeatureEnabled ||
-        oldWidget.statusLoader != widget.statusLoader) {
+        oldWidget.statusLoader != widget.statusLoader ||
+        oldWidget.submissionLoader != widget.submissionLoader ||
+        oldWidget.badgeOnly != widget.badgeOnly) {
       _authSubscription?.cancel();
       _authSubscription = null;
       _subscribe();
@@ -167,6 +190,25 @@ class _ChallengeReportAwareActionsState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _render(context, status: status, gated: true),
+            if (status != null && !status.isExcluded &&
+                _ownSubmissionPending != null) ...[
+              const SizedBox(height: VSPSpacing.xs),
+              FutureBuilder<ChallengeCaptainSubmission?>(
+                future: _ownSubmissionPending,
+                builder: (context, voteSnapshot) {
+                  // Never render stale data from an in-flight scoped read.
+                  if (voteSnapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const SizedBox.shrink();
+                  }
+                  return ChallengeOwnSubmissionLabel(
+                    submission: voteSnapshot.data,
+                    isHomeTeam: widget.myTeamId ==
+                        widget.booking.playerTeamId,
+                  );
+                },
+              ),
+            ],
             const SizedBox(height: VSPSpacing.xs),
             TextButton.icon(
               onPressed: _reload,
