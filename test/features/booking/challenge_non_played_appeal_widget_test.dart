@@ -33,6 +33,37 @@ Widget _wrap(Widget content, {required String language}) => MaterialApp(
 );
 
 void main() {
+  testWidgets('a failed appeal edit must never be acknowledged as saved',
+      (tester) async {
+    var submitted = 0;
+    var refreshed = 0;
+    const oldAppeal = ChallengeNonPlayedReportStatus(
+      state: ChallengeNonPlayedReportState.excluded,
+      myAppealSubmitted: true,
+    );
+    await tester.pumpWidget(_wrap(ChallengeResultActions(
+      booking: _fixture(), myTeamId: 'home',
+      reportStatus: oldAppeal,
+      reportLookupRequired: true,
+      allowAppeal: true,
+      appealSubmitOverride: (reason) async {
+        submitted++;
+        return ChallengeReportCommandReceipt.rejected;
+      },
+      onReportChanged: () => refreshed++,
+    ), language: 'en'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Update appeal'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField),
+        'I am supplying a revised, detailed explanation of this fixture.');
+    await tester.tap(find.text('Submit appeal'));
+    await tester.pumpAndSettle();
+    expect(submitted, 1);
+    expect(refreshed, 0);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final language in ['ar','en']) {
     testWidgets('captain can submit an appeal after exclusion: ' + language,
         (tester) async {
