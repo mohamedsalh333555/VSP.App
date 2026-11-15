@@ -6,12 +6,14 @@ import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/repositories/booking_repository.dart';
+import '../../../../core/repositories/stadium_repository.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import 'booking_payment_method_sheet.dart';
 import 'booking_slot_calculator.dart';
 import 'booking_slot_models.dart';
+import 'booking_price_snapshot_guard.dart';
 import 'package:uuid/uuid.dart';
 import '../../screens/payment_gateway_screen.dart';
 
@@ -301,6 +303,50 @@ class BookingConfirmationHandler {
     if (!context.mounted) return;
     if (!isSameUser()) {
       onLoadingChanged(false);
+      return;
+    }
+
+    // The visible quote can become stale while the owner edits the venue.
+    // Re-read the bookable row before offering cash or online checkout.
+    try {
+      final latest = await StadiumRepository()
+          .getStadiumByIdStrict(stadium.id)
+          .timeout(const Duration(seconds: 10));
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
+      if (latest == null || !BookingPriceSnapshotGuard.matches(
+        displayed: stadium,
+        latest: latest,
+        halfHourSlots: selectedTimeSlots.length,
+        rentBall: isBallRented,
+        displayedTotal: totalPrice,
+      )) {
+        onLoadingChanged(false);
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تغيّر سعر الملعب أو شروط الحجز. افتح الملعب من جديد لمراجعة السعر قبل التأكيد.'
+              : 'The venue price or booking terms changed. Reopen the venue to review the price before confirming.',
+        );
+        return;
+      }
+    } catch (_) {
+      VSPLogger.e('Booking price preflight failed (details redacted)');
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
+      onLoadingChanged(false);
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من سعر الملعب الآن. حاول مرة أخرى قبل تأكيد الحجز.'
+            : 'Could not verify the current venue price. Retry before confirming the booking.',
+      );
       return;
     }
 
