@@ -9,7 +9,7 @@ void main() {
     for (final team in ['home', 'away']) {
       testWidgets('opponent choice is hidden for $team in $language', (tester) async {
         List<String>? firstTexts;
-        for (final outcome in MatchOutcome.values) {
+        for (final outcome in <MatchOutcome?>[null, ...MatchOutcome.values]) {
           final now = DateTime.now();
           final booking = Booking(
             id: 'challenge', stadiumId: 'venue', stadiumName: 'Venue',
@@ -29,7 +29,20 @@ void main() {
             locale: Locale(language),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(body: ChallengeResultActions(booking: booking, myTeamId: team)),
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: Column(
+                  children: [
+                    ChallengeResultActions.buildChallengeStatusBadge(
+                      context,
+                      booking: booking,
+                      myTeamId: team,
+                    ),
+                    ChallengeResultActions(booking: booking, myTeamId: team),
+                  ],
+                ),
+              ),
+            ),
           ));
           await tester.pumpAndSettle();
           final texts = tester.widgetList<Text>(find.byType(Text))
@@ -42,6 +55,14 @@ void main() {
               ? 'الفريق المنافس سجّل نتيجته. سجّل نتيجتك بشكل مستقل.'
               : 'Opponent submitted. Record your result independently.'), findsOneWidget);
           expect(find.text(language == 'ar' ? 'تسجيل نتيجتي' : 'Record my result'), findsOneWidget);
+          expect(
+            find.text(
+              language == 'ar'
+                  ? 'الفريق الآخر سجّل نتيجته، سجّل نتيجتك'
+                  : 'Opponent submitted; record your result',
+            ),
+            findsOneWidget,
+          );
           expect(tester.takeException(), isNull);
         }
       });

@@ -61,9 +61,10 @@ class ChallengeResultActions extends StatelessWidget {
 
     if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
       final submittedTeamId = booking.resultSubmittedByTeamId;
-      final hasSubmissionDetails = submittedTeamId != null &&
-          submittedTeamId.isNotEmpty &&
-          booking.pendingOutcome != null;
+      // The opponent's outcome may be withheld until we submit our own.
+      // Submission metadata alone is enough to show the waiting status.
+      final hasSubmissionDetails =
+          submittedTeamId != null && submittedTeamId.isNotEmpty;
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final submittedByMe = submittedTeamId == currentTeamId;
       final canSubmitNow = !booking.endTime.isAfter(VSPTimeService.now);
@@ -185,9 +186,9 @@ class ChallengeResultActions extends StatelessWidget {
     if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
       final submittedByMe =
           booking.resultSubmittedByTeamId == currentTeamId;
-      final pending = booking.pendingOutcome;
+      // A redacted opponent choice must not hide their submitted state.
       final hasSubmissionDetails =
-          booking.resultSubmittedByTeamId?.isNotEmpty == true && pending != null;
+          booking.resultSubmittedByTeamId?.isNotEmpty == true;
 
       // Do not reveal the opponent's choice before independent submission.
       // Server-side field isolation is tracked separately in RESULT-03.
