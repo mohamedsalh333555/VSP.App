@@ -4,7 +4,7 @@
 -- account deletion retention policy and real two-session concurrency tests.
 -- This function must not call owner_record_no_show_atomic or change payments.
 CREATE TABLE public.challenge_non_played_reports (
-  booking_id uuid PRIMARY KEY REFERENCES public.bookings(id) ON DELETE RESTRICT,
+  booking_id uuid PRIMARY KEY REFERENCES public.bookings(id) ON DELETE CASCADE,
   reported_by_owner_id uuid NOT NULL,
   reason text NOT NULL CHECK (char_length(btrim(reason)) BETWEEN 8 AND 500),
   status text NOT NULL DEFAULT 'excluded' CHECK (status IN ('excluded','restored')),

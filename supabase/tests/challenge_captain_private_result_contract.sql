@@ -496,3 +496,23 @@ BEGIN
    RAISE EXCEPTION 'Confidential appeal/review data exposed to clients'; END IF;
 END;
 $appeal_restore$;
+
+-- Account-deletion compatibility: booking/team row deletion must not be
+-- blocked by report/appeal/audit history FKs. Actual retention obligations
+-- still require a separate compliance policy before any staged rollout.
+DO $deletion_compat$
+DECLARE v_booking uuid:='00000000-0000-0000-0000-000000000001';
+BEGIN
+ IF (SELECT count(*) FROM public.challenge_non_played_reports WHERE booking_id=v_booking)<>1
+    OR (SELECT count(*) FROM public.challenge_non_played_appeals WHERE booking_id=v_booking)<>2
+    OR (SELECT count(*) FROM public.challenge_non_played_review_audit WHERE booking_id=v_booking)<>3 THEN
+   RAISE EXCEPTION 'Missing report/appeal/audit fixture before deletion'; END IF;
+ DELETE FROM public.bookings WHERE id=v_booking;
+ IF EXISTS(SELECT 1 FROM public.challenge_non_played_reports WHERE booking_id=v_booking)
+    OR EXISTS(SELECT 1 FROM public.challenge_non_played_appeals WHERE booking_id=v_booking)
+    OR EXISTS(SELECT 1 FROM public.challenge_non_played_review_audit WHERE booking_id=v_booking)
+    OR EXISTS(SELECT 1 FROM public.challenge_captain_result_entries WHERE booking_id=v_booking)
+    OR EXISTS(SELECT 1 FROM public.challenge_captain_result_audit WHERE booking_id=v_booking) THEN
+   RAISE EXCEPTION 'Booking deletion left orphaned challenge-result private data'; END IF;
+END;
+$deletion_compat$;

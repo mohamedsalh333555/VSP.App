@@ -4,8 +4,8 @@
 -- Must be installed AFTER the captain-result and report candidates in one
 -- isolated transaction. No score/booking/payment changes during appeals.
 CREATE TABLE public.challenge_non_played_appeals (
-  booking_id uuid NOT NULL REFERENCES public.challenge_non_played_reports(booking_id) ON DELETE RESTRICT,
-  team_id uuid NOT NULL REFERENCES public.teams(id),
+  booking_id uuid NOT NULL REFERENCES public.challenge_non_played_reports(booking_id) ON DELETE CASCADE,
+  team_id uuid NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
   captain_id uuid NOT NULL,
   reason text NOT NULL CHECK (char_length(btrim(reason)) BETWEEN 8 AND 500),
   revision integer NOT NULL DEFAULT 1 CHECK (revision>=1),
@@ -15,7 +15,7 @@ CREATE TABLE public.challenge_non_played_appeals (
 );
 CREATE TABLE public.challenge_non_played_review_audit (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  booking_id uuid NOT NULL REFERENCES public.challenge_non_played_reports(booking_id) ON DELETE RESTRICT,
+  booking_id uuid NOT NULL REFERENCES public.challenge_non_played_reports(booking_id) ON DELETE CASCADE,
   actor_user_id uuid NOT NULL,
   team_id uuid,
   event text NOT NULL CHECK (event IN ('appeal','appeal_edited','uphold','restore')),
