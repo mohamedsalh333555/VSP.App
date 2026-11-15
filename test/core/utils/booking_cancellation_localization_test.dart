@@ -6,9 +6,9 @@ void main() {
     final source = Exception('cannot_cancel_within_6_hours');
     final ar = AppErrorHandler.formatError(source, isArabic: true);
     final en = AppErrorHandler.formatError(source, isArabic: false);
-    expect(ar, contains('6 ساعات'));
+    expect(ar, contains('6 ساعات أو أقل'));
     expect(ar, contains('20 دقيقة'));
-    expect(en, contains('6 hours'));
+    expect(en, contains('6 hours or less'));
     expect(en, contains('20 minutes'));
     expect(ar, isNot(contains('Exception:')));
     expect(en, isNot(contains('cannot_cancel_within_6_hours')));

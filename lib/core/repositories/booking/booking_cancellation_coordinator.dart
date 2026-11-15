@@ -15,7 +15,7 @@ class BookingCancellationCoordinator {
   static String sanitizeCancellationError(dynamic error, [String? serverMsg]) {
     final raw = serverMsg ?? error?.toString() ?? '';
     if (raw.contains('cannot_cancel_within_6_hours') || raw.contains('6 ساعات') || raw.contains('ساعتين') || raw.contains('cannot_cancel_within_2_hours')) {
-      return 'لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات (إلا خلال أول 20 دقيقة من الحجز).';
+      return 'لا يمكن إلغاء الحجز إذا تبقى 6 ساعات أو أقل على موعد المباراة (إلا خلال أول 20 دقيقة من الحجز).';
     }
     if (raw.contains('cannot_cancel_completed_booking')) {
       return 'عذراً، لا يمكن إلغاء حجز لمباراة مكتملة تم حضورها بالفعل.';

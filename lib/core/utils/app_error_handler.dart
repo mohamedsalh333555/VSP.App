@@ -49,8 +49,8 @@ class AppErrorHandler {
         combined.contains('6 ساعات') ||
         combined.contains('ساعتين')) {
       return isArabic
-          ? 'لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات (إلا خلال أول 20 دقيقة من الحجز).'
-          : 'You cannot cancel less than 6 hours before kickoff (except within the first 20 minutes after booking).';
+          ? 'لا يمكن إلغاء الحجز إذا تبقى 6 ساعات أو أقل على موعد المباراة (إلا خلال أول 20 دقيقة من الحجز).'
+          : 'You cannot cancel when 6 hours or less remain before kickoff (except within the first 20 minutes after booking).';
     }
     if (combined.contains('cannot_cancel_completed_booking')) {
       return isArabic

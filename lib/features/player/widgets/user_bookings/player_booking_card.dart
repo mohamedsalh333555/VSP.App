@@ -515,7 +515,7 @@ class PlayerBookingCard extends StatelessWidget {
                         final bool bookingStarted = now.isAfter(booking.startTime);
                         final String lockedLabel = bookingStarted
                             ? (isArabic ? 'بدأ الحجز' : 'Booking started')
-                            : (isArabic ? 'لا يمكن الإلغاء (أقل من 6 ساعات)' : 'Cannot cancel (< 6 hrs left)');
+                            : (isArabic ? 'لا يمكن الإلغاء (6 ساعات أو أقل)' : 'Cannot cancel (6 hrs or less left)');
                         return Tooltip(
                           message: canCancel ? '' : lockedLabel,
                           child: VSPAnimatedButton(

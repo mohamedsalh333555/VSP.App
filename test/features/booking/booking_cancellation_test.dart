@@ -94,7 +94,7 @@ void main() {
   group('BookingProvider Cancellation Error Handling', () {
     test('sets errorMessage and returns false on failure', () async {
       const expectedError = 'لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات';
-      const safeError = 'لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات (إلا خلال أول 20 دقيقة من الحجز).';
+      const safeError = 'لا يمكن إلغاء الحجز إذا تبقى 6 ساعات أو أقل على موعد المباراة (إلا خلال أول 20 دقيقة من الحجز).';
       final mockRepo = FailingMockBookingRepository(expectedError);
       final provider = BookingProvider(repository: mockRepo);
 
@@ -188,7 +188,7 @@ void main() {
       // A recognized business policy is mapped to safe canonical copy, never
       // echoed verbatim from an arbitrary server exception.
       expect(
-        find.text('لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات (إلا خلال أول 20 دقيقة من الحجز).'),
+        find.text('لا يمكن إلغاء الحجز إذا تبقى 6 ساعات أو أقل على موعد المباراة (إلا خلال أول 20 دقيقة من الحجز).'),
         findsOneWidget,
       );
     });
