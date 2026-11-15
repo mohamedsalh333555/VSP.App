@@ -71,8 +71,14 @@ void main() {
         called.add(name);
         params.add(args);
         return {
-          'success': true, 'state': 'excluded',
-          'already_reported': true, 'ranking_reversed': true,
+          'success': true,
+          'state': switch (name) {
+            'captain_appeal_challenge_non_played_atomic' => 'under_review',
+            'review_challenge_non_played_atomic' => 'restored',
+            _ => 'excluded',
+          },
+          'already_reported': true,
+          'ranking_reversed': true,
         };
       },
     );
@@ -96,6 +102,33 @@ void main() {
     expect(params[0]['p_reason'], 'The match was not played');
     expect(params[2]['p_decision'], 'restore');
     expect(called.where((s) => s.contains('no_show')), isEmpty);
+  });
+
+  test('malformed success acknowledgements are not accepted', () async {
+    expect(
+      ChallengeReportCommandReceipt.fromRpc({'success': true}).accepted,
+      isFalse,
+    );
+    expect(
+      ChallengeReportCommandReceipt.fromRpc({
+        'success': true, 'state': 'pending',
+      }).accepted,
+      isFalse,
+    );
+    final repo = ChallengeNonPlayedReportRepository(
+      currentUserId: () => 'actor',
+      rpc: (name, args) async => {
+        'success': true,
+        // A review must never call itself restored if the server upheld it.
+        'state': 'excluded',
+      },
+    );
+    final receipt = await repo.adminReview(
+      bookingId: 'book-uuid',
+      reason: 'Reviewed all available match evidence',
+      decision: 'restore',
+    );
+    expect(receipt.accepted, isFalse);
   });
 
   test('invalid reason, empty booking and review decision never reach server', () async {

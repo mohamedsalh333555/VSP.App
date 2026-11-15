@@ -24,20 +24,21 @@ class ChallengeReportCommandReceipt {
 
   static const rejected = ChallengeReportCommandReceipt(accepted: false);
 
-  static ChallengeReportCommandReceipt fromRpc(Object? raw) {
+  static ChallengeReportCommandReceipt fromRpc(
+    Object? raw, {
+    Set<String> allowedStates = const {'excluded', 'restored', 'under_review'},
+  }) {
     if (raw is! Map || raw['success'] != true) return rejected;
     final state = raw['state'];
+    // Fail closed on a malformed acknowledgement. A success flag alone
+    // cannot establish that a result/report/review was actually applied.
+    if (state is! String || !allowedStates.contains(state)) return rejected;
     return ChallengeReportCommandReceipt(
       accepted: true,
       alreadyApplied: raw['already_submitted'] == true ||
           raw['already_reported'] == true ||
           raw['already_reviewed'] == true,
-      state: state is String &&
-              (state == 'excluded' ||
-                  state == 'restored' ||
-                  state == 'under_review')
-          ? state
-          : null,
+      state: state,
       rankingReversed:
           raw['ranking_reversed'] == true || raw['ranking_restored'] == true,
     );
@@ -157,8 +158,18 @@ class ChallengeNonPlayedReportRepository {
       if (decision != null) 'p_decision': decision,
     };
     try {
+      final allowedStates = switch (name) {
+        'owner_report_challenge_not_played_atomic' =>
+          const {'excluded', 'restored'},
+        'captain_appeal_challenge_non_played_atomic' =>
+          const {'under_review'},
+        'review_challenge_non_played_atomic' =>
+          decision == 'restore' ? const {'restored'} : const {'excluded'},
+        _ => const <String>{},
+      };
       return ChallengeReportCommandReceipt.fromRpc(
         await _call(name, params).timeout(_timeout),
+        allowedStates: allowedStates,
       );
     } catch (_) {
       // Unknown network outcome: retry only through server-idempotent RPCs.
