@@ -18,6 +18,7 @@ import '../../screens/match_details_screen.dart';
 import '../../screens/player_booking_details_screen.dart';
 import '../../screens/matchup_live_dashboard_screen.dart';
 import 'challenge_result_actions.dart';
+import 'challenge_report_aware_actions.dart';
 import 'player_booking_cancel_dialog.dart';
 import 'refund_badge_widget.dart';
 import 'reschedule_action_banner.dart';
@@ -311,10 +312,10 @@ class PlayerBookingCard extends StatelessWidget {
                     Builder(
                       builder: (ctx) {
                         if (myTeamId == null) return const SizedBox.shrink();
-                        return ChallengeResultActions.buildChallengeStatusBadge(
-                          context,
+                        return ChallengeReportAwareActions(
                           booking: booking,
                           myTeamId: myTeamId,
+                          badgeOnly: true,
                         );
                       },
                     ),
@@ -559,7 +560,10 @@ class PlayerBookingCard extends StatelessWidget {
               myCaptainTeamId != null &&
               booking.endTime.isBefore(DateTime.now())) ...[
             const SizedBox(height: VSPSpacing.md),
-            ChallengeResultActions(booking: booking, myTeamId: myCaptainTeamId),
+            ChallengeReportAwareActions(
+              booking: booking,
+              myTeamId: myCaptainTeamId,
+            ),
           ],
         ],
       ),
