@@ -1,3 +1,8 @@
+## 2026-11-15 — Short stadium detail layout (208/410)
+
+- Accepted **83.06** for the bounded layout: status and maintenance notices plus the gallery scroll above a fixed booking bar, while tabs remain available. A 320×568 Arabic widget fixture with enlarged text checks the safe area, actual header motion, fixed bar bounds and charcoal accent. [Evidence and limits](VSP_STADIUM_SHORT_SCREEN_LAYOUT_ACCEPTANCE_2026-11-15.md); [Flutter CI 43717640626](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43717640626).
+- **618 total / 208 accepted / 410 open.** Actual device screenshots and real venue data were not checked.
+
 ## 2026-11-15 — Booking day states and calendar (207/411)
 
 - Accepted **83.04** for bounded client states: loading, fetch error and retry, bookable, venue closure, all booked, past day and missing schedule, plus Arabic RTL date labels and disabled past dates in calendar tests. [Evidence and limits](VSP_BOOKING_DAY_STATES_ACCEPTANCE_2026-11-15.md); [Flutter CI 43696480753](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43696480753).
