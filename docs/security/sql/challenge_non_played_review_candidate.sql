@@ -226,6 +226,7 @@ DECLARE
  v_booking record;
  v_report record;
  v_team_id uuid;
+ v_member_team_id uuid;
  v_allowed boolean;
  v_total_appeal_revision bigint;
 BEGIN
@@ -240,7 +241,14 @@ BEGIN
  SELECT id INTO v_team_id FROM public.teams
    WHERE captain_id=v_actor
    AND id IN (v_booking.player_team_id,v_booking.opponent_team_id) LIMIT 1;
- v_allowed:= v_actor=v_booking.owner_id OR v_team_id IS NOT NULL;
+ -- A participating team member can view the sanitized exclusion state,
+ -- but only a captain may submit an appeal or read their own appeal flag.
+ SELECT team_id INTO v_member_team_id FROM public.team_members
+   WHERE user_id=v_actor
+     AND team_id IN (v_booking.player_team_id,v_booking.opponent_team_id)
+   LIMIT 1;
+ v_allowed:=v_actor=v_booking.owner_id
+    OR v_team_id IS NOT NULL OR v_member_team_id IS NOT NULL;
  IF NOT v_allowed THEN
    RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
  END IF;

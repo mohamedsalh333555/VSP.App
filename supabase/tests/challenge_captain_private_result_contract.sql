@@ -405,6 +405,23 @@ BEGIN
  '00000000-0000-0000-0000-000000000001');
  IF r->>'my_appeal_submitted'<>'false' OR r ? 'reason' THEN
    RAISE EXCEPTION 'Opponent appeal reason leaked'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000606',true);
+ r:=public.get_my_challenge_non_played_status(
+   '00000000-0000-0000-0000-000000000001');
+ IF r->>'success'<>'true' OR r->>'state'<>'excluded'
+    OR r->>'my_appeal_submitted'<>'false' OR r ? 'reason' THEN
+   RAISE EXCEPTION 'Participant cannot safely view report status'; END IF;
+ r:=public.captain_appeal_challenge_non_played_atomic(
+   '00000000-0000-0000-0000-000000000001',
+   'Member cannot file a captain-only report appeal');
+ IF r->>'error'<>'CAPTAIN_ONLY' THEN
+   RAISE EXCEPTION 'Team member escalated captain-only appeal'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000303',true);
+ r:=public.get_my_challenge_non_played_status(
+   '00000000-0000-0000-0000-000000000001');
+ IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'state' THEN
+   RAISE EXCEPTION 'Unrelated player read excluded-match status'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000202',true);
  r:=public.captain_appeal_challenge_non_played_atomic(
  '00000000-0000-0000-0000-000000000001','We attended the stadium as scheduled');
  IF r->>'revision'<>'1' THEN
