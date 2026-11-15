@@ -65,8 +65,6 @@ class ChallengeNonPlayedReportRepository {
       ? _supabase.auth.currentUser?.id
       : _userIdOverride();
 
-  bool get _hasAuthenticatedActor => _currentUserId?.isNotEmpty == true;
-
   Future<Object?> _call(String name, Map<String, dynamic> params) {
     if (_rpcOverride != null) return _rpcOverride(name, params);
     return _supabase.rpc(name, params: params);
