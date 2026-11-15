@@ -173,7 +173,13 @@ class StadiumWizardSubmitService {
           latitude: latitude,
           longitude: longitude,
         );
-        await databaseService.updateStadium(stadiumId, updatePayload);
+        final updated = await databaseService.updateStadium(stadiumId, updatePayload);
+        if (!updated) {
+          if (context.mounted) {
+            VSPFeedback.showError(context, AppLocalizations.of(context)!.stadiumSaveFailed);
+          }
+          return false;
+        }
         var cleanupFailed = false;
         for (final removedUrl in removedExistingImageUrls) {
           final deleted =
