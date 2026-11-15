@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/data/models.dart';
+import 'package:vsp_application/core/repositories/booking/challenge_captain_private_submission_repository.dart';
 import 'package:vsp_application/features/player/widgets/user_bookings/challenge_report_aware_actions.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
-Booking _challenge() {
+Booking _challenge({MatchResultStatus resultStatus = MatchResultStatus.confirmed}) {
   final now = DateTime.now();
   return Booking(
     id: 'synthetic-challenge',
@@ -24,8 +25,9 @@ Booking _challenge() {
     status: BookingStatus.completed,
     createdByUserId: 'captain',
     createdAt: now,
-    matchResultStatus: MatchResultStatus.confirmed,
-    finalOutcome: MatchOutcome.homeWin,
+    matchResultStatus: resultStatus,
+    finalOutcome: resultStatus == MatchResultStatus.confirmed
+        ? MatchOutcome.homeWin : null,
   );
 }
 
@@ -92,6 +94,87 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  for (final data in [
+    {'lang': 'en', 'team': 'home', 'expected': 'Your submitted result: Win'},
+    {'lang': 'en', 'team': 'away', 'expected': 'Your submitted result: Loss'},
+    {'lang': 'ar', 'team': 'home', 'expected': 'النتيجة التي سجلتها: فوز'},
+    {'lang': 'ar', 'team': 'away', 'expected': 'النتيجة التي سجلتها: خسارة'},
+  ]) {
+    testWidgets('only my vote is shown in pending challenge: ' +
+        data['lang']! + '/' + data['team']!, (tester) async {
+      var privateReads = 0;
+      final ownVote = ChallengeCaptainSubmission.fromScopedRpc({
+        'success': true, 'submitted': true,
+        'my_outcome': 'homeWin', 'my_revision': 1,
+        'opponent_outcome': 'awayWin', 'opponent_captain_id': 'SECRET',
+      });
+      await tester.pumpWidget(_wrap(ChallengeReportAwareActions(
+        booking: _challenge(resultStatus: MatchResultStatus.waitingOpponent),
+        myTeamId: data['team']!,
+        reportFeatureEnabled: true,
+        statusLoader: (_) async => {'success': true, 'reported': false},
+        submissionLoader: (id) async {
+          privateReads++;
+          expect(id, 'synthetic-challenge');
+          return ownVote;
+        },
+      ), language: data['lang']!));
+      await tester.pumpAndSettle();
+      expect(privateReads, 1);
+      expect(find.text(data['expected']!), findsOneWidget);
+      expect(find.textContaining('SECRET'), findsNothing);
+      expect(find.textContaining('opponent_outcome'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('server exclusion suppresses private vote label even if loaded',
+      (tester) async {
+    final ownVote = ChallengeCaptainSubmission.fromScopedRpc({
+      'success': true, 'submitted': true,
+      'my_outcome': 'homeWin', 'my_revision': 1,
+    });
+    await tester.pumpWidget(_wrap(ChallengeReportAwareActions(
+      booking: _challenge(resultStatus: MatchResultStatus.disputed),
+      myTeamId: 'home',
+      reportFeatureEnabled: true,
+      statusLoader: (_) async => {
+        'success': true, 'reported': true, 'state': 'excluded',
+      },
+      submissionLoader: (_) async => ownVote,
+    )));
+    await tester.pumpAndSettle();
+    expect(find.text('Match excluded: reported not played'), findsOneWidget);
+    expect(find.textContaining('Your submitted result'), findsNothing);
+  });
+
+  testWidgets('captain own vote is refreshed after manual status retry',
+      (tester) async {
+    var reads = 0;
+    await tester.pumpWidget(_wrap(ChallengeReportAwareActions(
+      booking: _challenge(resultStatus: MatchResultStatus.disputed),
+      myTeamId: 'home',
+      reportFeatureEnabled: true,
+      statusLoader: (_) async => {'success': true, 'reported': false},
+      submissionLoader: (_) async {
+        reads++;
+        return ChallengeCaptainSubmission.fromScopedRpc(
+          reads == 1
+              ? {'success': true, 'submitted': false}
+              : {'success': true, 'submitted': true,
+                  'my_outcome': 'draw', 'my_revision': 2},
+        );
+      },
+    )));
+    await tester.pumpAndSettle();
+    expect(find.text('You have not submitted your result.'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(reads, 2);
+    expect(find.text('Your submitted result: Draw'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('network failure stays closed and refresh restores a trusted view',
       (tester) async {
