@@ -704,3 +704,64 @@ BEGIN
    RAISE EXCEPTION 'Active reviewer not restored after unblocking'; END IF;
 END;
 $blocked_reviewer$;
+
+
+-- Admin-only case dossier with bounded appeal and adjudication history.
+-- Captains, owners, strangers, anonymous and suspended admins must receive
+-- neither the venue report reason nor another captain's evidence.
+DO $admin_case_dossier$
+DECLARE r jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000505',true);
+ r:=public.admin_get_challenge_non_played_case(
+  '00000000-0000-0000-0000-000000000002');
+ IF r->>'success'<>'true' OR r->>'state'<>'excluded'
+    OR char_length(coalesce(r->>'report_reason',''))<8
+    OR jsonb_typeof(r->'appeals')<>'array'
+    OR jsonb_array_length(r->'appeals')<1
+    OR jsonb_typeof(r->'timeline')<>'array'
+    OR jsonb_array_length(r->'timeline')<1 THEN
+   RAISE EXCEPTION 'Authorized admin missing required review evidence'; END IF;
+ IF r ? 'pending_outcome' OR r ? 'payment_status' THEN
+   RAISE EXCEPTION 'Private review case exposed unrelated finance/vote state'; END IF;
+
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000404',true);
+ r:=public.admin_get_challenge_non_played_case(
+  '00000000-0000-0000-0000-000000000002');
+ IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'report_reason' THEN
+   RAISE EXCEPTION 'Venue owner read private captain appeal evidence'; END IF;
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000101',true);
+ r:=public.admin_get_challenge_non_played_case(
+  '00000000-0000-0000-0000-000000000002');
+ IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'appeals' THEN
+   RAISE EXCEPTION 'Captain read opponent private appeal'; END IF;
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000303',true);
+ r:=public.admin_get_challenge_non_played_case(
+  '00000000-0000-0000-0000-000000000002');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Unrelated user obtained admin case'; END IF;
+
+ UPDATE public.users SET is_blocked=true
+ WHERE id='00000000-0000-0000-0000-000000000505';
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000505',true);
+ r:=public.admin_get_challenge_non_played_case(
+  '00000000-0000-0000-0000-000000000002');
+ IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'report_reason' THEN
+   RAISE EXCEPTION 'Blocked admin read report dossier'; END IF;
+ UPDATE public.users SET is_blocked=false
+ WHERE id='00000000-0000-0000-0000-000000000505';
+ PERFORM set_config('request.jwt.claim.sub','',true);
+ r:=public.admin_get_challenge_non_played_case(
+  '00000000-0000-0000-0000-000000000002');
+ IF r->>'error'<>'AUTHENTICATION_REQUIRED' THEN
+   RAISE EXCEPTION 'Anonymous case dossier access accepted'; END IF;
+ IF has_function_privilege('anon',
+    'public.admin_get_challenge_non_played_case(uuid)','EXECUTE') THEN
+   RAISE EXCEPTION 'Anonymous role has EXECUTE on admin case RPC'; END IF;
+END;
+$admin_case_dossier$;

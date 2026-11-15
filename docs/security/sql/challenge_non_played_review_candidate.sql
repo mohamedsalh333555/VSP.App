@@ -282,3 +282,85 @@ GRANT EXECUTE ON FUNCTION public.review_challenge_non_played_atomic(uuid,text,te
   TO authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.get_my_challenge_non_played_status(uuid)
   TO authenticated,service_role;
+
+
+-- Admin-only review dossier for a single disputed non-played challenge.
+-- This is a private response: NEVER render it in owner/player booking cards.
+-- Uses the same server-authoritative, active-admin guard as adjudication.
+-- Bounded event history prevents unbounded payloads on busy bookings.
+CREATE OR REPLACE FUNCTION public.admin_get_challenge_non_played_case(
+  p_booking_id uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER
+SET search_path=public,pg_temp AS $function$
+DECLARE
+  v_actor uuid:=auth.uid();
+  v_report record;
+  v_appeals jsonb;
+  v_timeline jsonb;
+BEGIN
+  IF v_actor IS NULL THEN
+    RETURN jsonb_build_object('success',false,
+      'error','AUTHENTICATION_REQUIRED');
+  END IF;
+  IF NOT public.is_admin_or_cofounder(v_actor) THEN
+    RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
+  END IF;
+  SELECT r.* INTO v_report FROM public.challenge_non_played_reports r
+    JOIN public.bookings b ON b.id=r.booking_id
+  WHERE r.booking_id=p_booking_id AND b.booking_type='challenge';
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success',false,'error','CASE_NOT_FOUND');
+  END IF;
+
+  SELECT coalesce(jsonb_agg(
+      jsonb_build_object('team_id',a.team_id,
+        'reason',a.reason,'revision',a.revision,
+        'updated_at',a.updated_at)), '[]'::jsonb)
+    INTO v_appeals
+  FROM (
+    SELECT team_id,reason,revision,updated_at
+      FROM public.challenge_non_played_appeals
+    WHERE booking_id=p_booking_id
+    ORDER BY updated_at DESC,team_id
+    LIMIT 2
+  ) a;
+
+  SELECT coalesce(jsonb_agg(
+      jsonb_build_object('event',a.event,
+        'actor_user_id',a.actor_user_id,
+        'team_id',a.team_id,
+        'previous_state',a.previous_state,
+        'new_state',a.new_state,
+        'reason',a.reason,
+        'occurred_at',a.occurred_at)), '[]'::jsonb)
+    INTO v_timeline
+  FROM (
+    SELECT event,actor_user_id,team_id,previous_state,new_state,
+        reason,occurred_at,id
+      FROM public.challenge_non_played_review_audit
+    WHERE booking_id=p_booking_id
+    ORDER BY id DESC
+    LIMIT 25
+  ) a;
+
+  RETURN jsonb_build_object(
+    'success',true,
+    'booking_id',v_report.booking_id,
+    'state',v_report.status,
+    'reported_by_owner_id',v_report.reported_by_owner_id,
+    'report_reason',v_report.reason,
+    'reported_at',v_report.reported_at,
+    'review_decision',v_report.review_decision,
+    'review_reason',v_report.review_reason,
+    'reviewed_at',v_report.reviewed_at,
+    'ranking_reversed',v_report.ranking_reversed,
+    'ranking_restored',v_report.ranking_restored,
+    'appeals',v_appeals,
+    'timeline',v_timeline);
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_get_challenge_non_played_case(uuid)
+  FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_get_challenge_non_played_case(uuid)
+  TO authenticated,service_role;
