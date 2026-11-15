@@ -1,3 +1,8 @@
+## 2026-11-15 — Booking price preflight (203/415 unchanged)
+
+- **CODE_DONE, 21.07 remains open:** confirmation now fetches a fresh bookable stadium and rejects a changed hourly quote, ball fee or deposit before cash/online payment selection. A failed lookup also stops this confirmation path. [Evidence and limits](VSP_BOOKING_PRICE_PREFLIGHT_2026-11-15.md); [Flutter CI 43670740754](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43670740754).
+- **618 total / 203 accepted / 415 open.** A two-account price-edit race and final RPC/payment agreement have not been verified.
+
 ## 2026-11-15 — Owner stadium price update result (203/415)
 
 - Accepted **21.06** at the owner edit boundary: a widget test sends price 320 and checks both repository results. A failed update now keeps the editor open, reports an error and leaves pending photo deletion untouched; success closes the editor. [Evidence and limits](VSP_STADIUM_PRICE_UPDATE_RESULT_ACCEPTANCE_2026-11-15.md); [Flutter CI 43669407411](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43669407411).
