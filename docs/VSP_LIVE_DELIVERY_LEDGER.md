@@ -1,3 +1,14 @@
+## 2026-11-15 — Player venue details from owner values (202/416)
+
+- Accepted **21.05** for the player venue information UI: a widget fixture uses the owner wizard's feature payload and verifies the player tab and price bar show the chosen location, amenities, add-on, hourly price and deposit, while hiding a disabled amenity. [Evidence and limits](VSP_PLAYER_STADIUM_DETAILS_VISIBILITY_2026-11-15.md); [Flutter CI 43668494949](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43668494949).
+- **618 total / 202 accepted / 416 open.** The fixture does not prove a live owner-to-player database journey.
+
+## 2026-11-15 — Stadium location and image input checks (201/417)
+
+- Accepted **21.01** at the owner wizard boundary: a synthetic map selection now awaits latitude, longitude, address and governorate draft writes; a widget test restores those values, checks the stadium payload and rejects a nonfinite manual result without damaging the prior selection. [Evidence and limits](VSP_STADIUM_LOCATION_IMAGE_VALIDATION_2026-11-15.md).
+- Improved **20.07** without closing it: JPEG/PNG/WebP extension, MIME, size and header checks reject obvious spoofing before Storage. Full file decoding, malicious-content handling and live bucket rules remain unverified. [Flutter CI 43668494949](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43668494949) runs the location and image tests.
+- **618 total / 201 accepted / 417 open.** No live map or stadium write was performed.
+
 ## 2026-11-15 — Owner gallery and service choices (200/418)
 
 - Accepted **20.02** for the owner photo upload/delete UI, with a synthetic successful Storage response: completed gallery entry and draft, deletion of that new image and draft cleanup, and deferred deletion of a persisted image during edit. Draft writes in upload/delete are now awaited. [Evidence and boundaries](VSP_STADIUM_MEDIA_AND_SERVICES_ACCEPTANCE_2026-11-15.md).
