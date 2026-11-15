@@ -16,7 +16,7 @@ import time
 
 from test_challenge_captain_private_results import (
     ROOT, CONTRACT, CANDIDATE, RANKING_MIGRATION,
-    NON_PLAYED_CANDIDATE, REVIEW_CANDIDATE, require_isolated, psql,
+    NON_PLAYED_CANDIDATE, REVIEW_CANDIDATE, require_isolated,
 )
 
 DB = "vsp_challenge_result_concurrency"
@@ -32,6 +32,19 @@ def cleaned_env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if k not in (
         "PGHOSTADDR", "PGHOST", "PGPORT", "PGDATABASE", "PGUSER",
         "PGSERVICE", "PGSERVICEFILE", "PGOPTIONS", "PGPASSFILE")}
+
+
+def psql(database: str, *, query: str):
+    """Fixed local target only: no dependency on the other runner's DB allowlist."""
+    if database not in ("postgres", DB):
+        raise RuntimeError("Refusing non-disposable SQL target")
+    return subprocess.run([
+        "psql", "-X", "--no-psqlrc", "--host=127.0.0.1",
+        "--port=5432", "--username=postgres", "--dbname=" + database,
+        "-v", "ON_ERROR_STOP=1", "-q",
+        "-c", query,
+    ], text=True, capture_output=True, env=cleaned_env(),
+       timeout=60, check=False)
 
 
 def build_fixture() -> str:
