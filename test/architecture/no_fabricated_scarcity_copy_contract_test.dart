@@ -42,7 +42,7 @@ void main() {
       'lib/features/player/widgets/booking/booking_slot_stream_section.dart',
     ).readAsStringSync();
     expect(source, contains('final existingBookings = snapshot.data!;'));
-    expect(source, contains('final allSlotsBooked = widget.timeSlots.every('));
+    expect(source, contains('final allSlotsBooked = validTimeSlots.every('));
     expect(source, contains('_isSlotBooked(slot.key, existingBookings)'));
     expect(source.indexOf('if (snapshot.hasError)'),
         lessThan(source.indexOf('final existingBookings = snapshot.data!;')));

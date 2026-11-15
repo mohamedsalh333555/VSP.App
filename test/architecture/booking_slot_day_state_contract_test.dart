@@ -10,11 +10,12 @@ void main() {
 
     expect(source, contains('if (widget.timeSlots.isEmpty) {'));
     expect(source, contains('ساعات العمل غير مكتملة'));
-    expect(source, contains('final allSlotsBooked = widget.timeSlots.every('));
+    expect(source, contains('final validTimeSlots = widget.timeSlots.where('));
+    expect(source, contains('final allSlotsBooked = validTimeSlots.every('));
     expect(source, contains('if (allSlotsBooked) {'));
     expect(source, contains('كل المواعيد محجوزة'));
     expect(source, contains('All slots are booked'));
-    expect(source, contains('final allSlotsPassed = widget.timeSlots.every('));
+    expect(source, contains('final allSlotsPassed = validTimeSlots.every('));
     expect(source, contains('if (allSlotsPassed) {'));
     expect(source, contains('انتهت مواعيد اليوم'));
     expect(source, contains('All slots have passed'));
@@ -24,7 +25,7 @@ void main() {
     final passedIndex = source.indexOf('if (allSlotsPassed) {');
     final cardsIndex = source.indexOf('return Column(\n          children: List.generate');
     final mixedIndex = source.indexOf('if (!hasBookableSlot) {');
-    expect(source, contains('final hasBookableSlot = widget.timeSlots.any('));
+    expect(source, contains('final hasBookableSlot = validTimeSlots.any('));
     expect(source, contains('لا توجد مواعيد متبقية'));
     expect(source, contains('No slots remaining'));
     expect(emptyIndex, lessThan(passedIndex));

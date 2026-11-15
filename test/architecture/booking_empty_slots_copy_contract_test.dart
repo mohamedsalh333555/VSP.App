@@ -8,7 +8,7 @@ void main() {
       'lib/features/player/widgets/booking/booking_slot_stream_section.dart',
     ).readAsStringSync();
     final start = source.indexOf('if (widget.timeSlots.isEmpty) {');
-    final end = source.indexOf('final now = VSPTimeService.now;', start);
+    final end = source.indexOf('final validTimeSlots = widget.timeSlots.where(', start);
     expect(start, greaterThanOrEqualTo(0));
     expect(end, greaterThan(start));
     final emptyState = source.substring(start, end);
@@ -17,6 +17,8 @@ void main() {
     expect(emptyState, contains('state: VSPUiState.error'));
     expect(emptyState, isNot(contains('state: VSPUiState.empty')));
     expect(emptyState, isNot(contains('الملعب لا يفتح مواعيد للحجز')));
+    expect(source, contains('if (validTimeSlots.isEmpty) {'));
+    expect(source, contains('No valid times for this date'));
   });
 
   test('booking availability stream failures have a separate error state', () {
