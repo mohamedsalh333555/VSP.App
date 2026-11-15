@@ -115,6 +115,7 @@ void main() {
     pending.addError(StateError('offline'));
     await tester.pump();
     expect(find.text('Could not load availability'), findsOneWidget);
+    unawaited(pending.close());
 
     availability.stream = Stream.value(<Booking>[]);
     await tester.tap(find.text('Retry'));
