@@ -30,9 +30,10 @@ void main() {
     expect(ChallengeNonPlayedReportStatus.fromScopedRpc({
       'success': true, 'reported': true, 'state': 'unexpected',
     }), isNull);
-    expect(ChallengeNonPlayedReportStatus.fromScopedRpc({
+    final noReport = ChallengeNonPlayedReportStatus.fromScopedRpc({
       'success': true, 'reported': false, 'state': 'excluded',
-    }), isNull);
+    });
+    expect(noReport?.state, ChallengeNonPlayedReportState.notReported);
     final result = ChallengeNonPlayedReportStatus.fromScopedRpc({
       'success': true, 'reported': true, 'state': 'excluded',
       'under_review': true, 'my_appeal_submitted': true,
@@ -46,6 +47,60 @@ void main() {
 
   for (final language in ['ar', 'en']) {
     for (final team in ['home', 'away']) {
+      testWidgets('required but unavailable report status blocks stale result for $team in $language', (tester) async {
+        await tester.pumpWidget(MaterialApp(
+          locale: Locale(language),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: Builder(
+            builder: (context) => Column(children: [
+              ChallengeResultActions.buildChallengeStatusBadge(
+                context, booking: challengeFixture(), myTeamId: team,
+                reportLookupRequired: true,
+              ),
+              ChallengeResultActions(
+                booking: challengeFixture(), myTeamId: team,
+                reportLookupRequired: true,
+              ),
+            ]),
+          )),
+        ));
+        await tester.pumpAndSettle();
+        expect(find.text(language == 'ar'
+            ? 'جارٍ التحقق من بلاغ المباراة'
+            : 'Checking match report status'), findsOneWidget);
+        expect(find.text(language == 'ar'
+            ? 'تعذر التحقق من بلاغ المباراة. أعد المحاولة.'
+            : 'Match report status unavailable. Please retry.'), findsOneWidget);
+        expect(find.text('Standings'), findsNothing);
+        expect(find.text(language == 'ar' ? 'تسجيل نتيجتي' : 'Record my result'),
+            findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('trusted not-reported status can display a confirmed result for $team in $language', (tester) async {
+        final status = ChallengeNonPlayedReportStatus.fromScopedRpc({
+          'success': true, 'reported': false,
+        });
+        await tester.pumpWidget(MaterialApp(
+          locale: Locale(language),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: Builder(
+            builder: (context) => ChallengeResultActions(
+              booking: challengeFixture(), myTeamId: team,
+              reportStatus: status, reportLookupRequired: true,
+            ),
+          )),
+        ));
+        await tester.pumpAndSettle();
+        expect(find.text(language == 'ar'
+            ? 'تم اعتماد النتيجة. يمكنك مراجعة ترتيب الفرق.'
+            : 'Result confirmed. You can check the team standings.'),
+            findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
       testWidgets('excluded challenge takes precedence over old win for $team in $language', (tester) async {
         final status = ChallengeNonPlayedReportStatus.fromScopedRpc({
           'success': true, 'reported': true, 'state': 'excluded',

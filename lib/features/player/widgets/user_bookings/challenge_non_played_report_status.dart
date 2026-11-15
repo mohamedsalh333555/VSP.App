@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
-enum ChallengeNonPlayedReportState { excluded, restored }
+enum ChallengeNonPlayedReportState { notReported, excluded, restored }
 
 /// Sanitized caller-scoped report status only; NEVER holds the opponent's
 /// selected outcome, another captain's appeal reason or admin review notes.
@@ -19,12 +19,18 @@ class ChallengeNonPlayedReportStatus {
   bool get isExcluded => state == ChallengeNonPlayedReportState.excluded;
   bool get isRestored => state == ChallengeNonPlayedReportState.restored;
 
-  /// Fail closed when the server has not deployed the scoped read RPC, when
-  /// the current viewer is not authorized, or when the payload is unexpected.
+  /// An authenticated 'reported: false' is a trusted no-report response.
+  /// An absent, failed, unauthorized or malformed response is NOT proof
+  /// that no report exists. The caller must keep reportLookupRequired true
+  /// and hide outcome actions until a valid response is received.
   static ChallengeNonPlayedReportStatus? fromScopedRpc(Object? raw) {
-    if (raw is! Map || raw['success'] != true || raw['reported'] != true) {
-      return null;
+    if (raw is! Map || raw['success'] != true) return null;
+    if (raw['reported'] == false) {
+      return const ChallengeNonPlayedReportStatus(
+        state: ChallengeNonPlayedReportState.notReported,
+      );
     }
+    if (raw['reported'] != true) return null;
     final state = switch (raw['state']) {
       'excluded' => ChallengeNonPlayedReportState.excluded,
       'restored' => ChallengeNonPlayedReportState.restored,

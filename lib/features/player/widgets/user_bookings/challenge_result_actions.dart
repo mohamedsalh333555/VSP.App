@@ -18,12 +18,16 @@ class ChallengeResultActions extends StatelessWidget {
   final Booking booking;
   final String? myTeamId;
   final ChallengeNonPlayedReportStatus? reportStatus;
+  /// Opt in ONLY after the scoped report-status RPC has been deployed.
+  /// Required but unavailable status blocks stale win badges and actions.
+  final bool reportLookupRequired;
 
   const ChallengeResultActions({
     super.key,
     required this.booking,
     this.myTeamId,
     this.reportStatus,
+    this.reportLookupRequired = false,
   });
 
   static Widget buildChallengeStatusBadge(
@@ -31,9 +35,23 @@ class ChallengeResultActions extends StatelessWidget {
     required Booking booking,
     required String? myTeamId,
     ChallengeNonPlayedReportStatus? reportStatus,
+    bool reportLookupRequired = false,
   }) {
+    final currentTeamId = myTeamId;
+    if (currentTeamId == null ||
+        (currentTeamId != booking.playerTeamId &&
+            currentTeamId != booking.opponentTeamId)) {
+      return const SizedBox.shrink();
+    }
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    // Unknown is not equivalent to no report. Do not display an outdated win.
+    if (reportLookupRequired && reportStatus == null) {
+      return buildStatusBadge(
+        isArabic ? 'جارٍ التحقق من بلاغ المباراة' : 'Checking match report status',
+        VSPColors.warning,
+      );
+    }
     if (reportStatus?.isExcluded == true) {
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       return buildStatusBadge(
         reportStatus!.underReview
             ? (isArabic ? 'بلاغ قيد المراجعة' : 'Report under review')
@@ -42,12 +60,8 @@ class ChallengeResultActions extends StatelessWidget {
       );
     }
     final l10n = AppLocalizations.of(context)!;
-    final currentTeamId = myTeamId;
-    if (currentTeamId == null) return const SizedBox.shrink();
-
     final isHome = currentTeamId == booking.playerTeamId;
     final isAway = currentTeamId == booking.opponentTeamId;
-    if (!isHome && !isAway) return const SizedBox.shrink();
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
       final outcome = booking.finalOutcome;
@@ -193,6 +207,17 @@ class ChallengeResultActions extends StatelessWidget {
         (currentTeamId != booking.playerTeamId &&
             currentTeamId != booking.opponentTeamId)) {
       return const SizedBox.shrink();
+    }
+
+    // Until the scoped report RPC succeeds, an old confirmed booking may
+    // already have been excluded. Never present rankings or a result button.
+    if (reportLookupRequired && reportStatus == null) {
+      return buildStatusBadge(
+        isArabic
+            ? 'تعذر التحقق من بلاغ المباراة. أعد المحاولة.'
+            : 'Match report status unavailable. Please retry.',
+        VSPColors.warning,
+      );
     }
 
     // A server-confirmed exclusion overrides an old 'confirmed' result.
