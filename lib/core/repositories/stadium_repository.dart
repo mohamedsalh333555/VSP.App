@@ -4,6 +4,7 @@ import '../constants/egypt_governorates.dart';
 import 'stadium/owner_stadium_capacity_guard.dart';
 import '../services/logger_service.dart';
 import 'stadium/stadium_payload_builder.dart';
+import 'stadium/stadium_initial_snapshot_guard.dart';
 
 class StadiumRepository {
   // Optional client injection permits real repository request-flow tests with
@@ -447,7 +448,7 @@ class StadiumRepository {
 
   /// Stream single stadium raw records for realtime details
   Stream<List<Map<String, dynamic>>> streamStadiumRaw(String stadiumId) {
-    return _supabase
+    final source = _supabase
         .from('stadiums')
         .stream(primaryKey: ['id'])
         .eq('id', stadiumId)
@@ -456,11 +457,11 @@ class StadiumRepository {
                 data['is_deleted_by_owner'] != true &&
                 data['is_verified'] == true &&
                 data['is_blocked'] != true)
-            .toList(growable: false))
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.addError(StateError('stadium_stream_timeout')),
-        );
+            .toList(growable: false));
+    return StadiumInitialSnapshotGuard.apply(
+      source,
+      timeout: const Duration(seconds: 10),
+    );
   }
 
   /// Stream reviews for a stadium
