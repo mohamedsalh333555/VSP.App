@@ -14,8 +14,8 @@ void main() {
     final panel = source.substring(start, end);
     expect(panel, contains('pending != null'));
     expect(panel, contains('Syncing result status'));
-    expect(panel, contains('Opponent recorded:'));
+    expect(panel, contains('Opponent submitted. Record your result independently.'));
     expect(panel.indexOf('pending != null'),
-        lessThan(panel.indexOf('Opponent recorded:')));
+        lessThan(panel.indexOf('Opponent submitted. Record your result independently.')));
   });
 }

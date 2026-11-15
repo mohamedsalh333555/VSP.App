@@ -189,25 +189,8 @@ class ChallengeResultActions extends StatelessWidget {
       final hasSubmissionDetails =
           booking.resultSubmittedByTeamId?.isNotEmpty == true && pending != null;
 
-      String outcomeText(MatchOutcome? outcome) {
-        if (outcome == MatchOutcome.draw) {
-          return isArabic ? 'تعادل' : 'Draw';
-        }
-        if (outcome == null) {
-          return isArabic ? 'لم تُسجل نتيجة بعد' : 'No result yet';
-        }
-
-        final myWin =
-            (outcome == MatchOutcome.homeWin &&
-                currentTeamId == booking.playerTeamId) ||
-            (outcome == MatchOutcome.awayWin &&
-                currentTeamId == booking.opponentTeamId);
-
-        return isArabic
-            ? (myWin ? 'فوز فريقي' : 'فوز الفريق المنافس')
-            : (myWin ? 'My team won' : 'Opponent won');
-      }
-
+      // Do not reveal the opponent's choice before independent submission.
+      // Server-side field isolation is tracked separately in RESULT-03.
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(VSPSpacing.md),
@@ -240,8 +223,8 @@ class ChallengeResultActions extends StatelessWidget {
                             ? 'تم تسجيل نتيجتك. في انتظار نتيجة الفريق المنافس.'
                             : 'Your result is recorded. Waiting for the opponent.')
                         : (isArabic
-                            ? 'الفريق المنافس سجل: ${outcomeText(pending)}'
-                            : 'Opponent recorded: ${outcomeText(pending)}'),
+                            ? 'الفريق المنافس سجّل نتيجته. سجّل نتيجتك بشكل مستقل.'
+                            : 'Opponent submitted. Record your result independently.'),
                     style: const TextStyle(
                       color: VSPColors.textPrimary,
                       fontSize: 12.5,
