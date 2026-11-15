@@ -311,14 +311,17 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
   /// state. It is inaccessible unless the staged server rollout is enabled.
   Future<void> _handleChallengeNotPlayed(
       Booking booking, bool isArabic) async {
+    final parentContext = widget.parentContext;
     if (!ChallengeResultRolloutFlags.nonPlayedReportsEnabled ||
-        !mounted || _isSaving || !widget.parentContext.mounted ||
+        !mounted || _isSaving || !parentContext.mounted ||
         booking.bookingType != BookingType.challenge ||
         booking.endTime.isAfter(DateTime.now())) {
       return;
     }
     final authProvider =
-        Provider.of<AuthProvider>(widget.parentContext, listen: false);
+        Provider.of<AuthProvider>(parentContext, listen: false);
+    final bookingProvider =
+        Provider.of<BookingProvider>(parentContext, listen: false);
     final uid = authProvider.currentUser?.id;
     if (uid == null || uid != booking.ownerId) {
       VSPFeedback.showError(context, isArabic
@@ -368,14 +371,12 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
             : 'Could not verify the report. Check status before retrying.');
         return;
       }
-      final bookingProvider = Provider.of<BookingProvider>(
-        widget.parentContext, listen: false,
-      );
+      if (!parentContext.mounted) return;
       await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
       if (!mounted || authProvider.currentUser?.id != uid) return;
       Navigator.pop(context);
-      if (widget.parentContext.mounted) {
-        VSPFeedback.showSuccess(widget.parentContext, isArabic
+      if (parentContext.mounted) {
+        VSPFeedback.showSuccess(parentContext, isArabic
             ? 'تم تسجيل بلاغ المباراة دون تغيير المدفوعات.'
             : 'Match report recorded without changing payments.');
       }
