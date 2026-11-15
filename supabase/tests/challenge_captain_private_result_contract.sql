@@ -42,7 +42,7 @@ UPDATE public.bookings SET status='pending'
 
 -- Synthetic installed booking guard: ordinary result writes are prohibited.
 CREATE FUNCTION public.vsp_test_result_write_guard() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $guard$
 BEGIN
  IF (OLD.status IS DISTINCT FROM NEW.status
      OR OLD.match_result_status IS DISTINCT FROM NEW.match_result_status
@@ -54,7 +54,7 @@ BEGIN
  END IF;
  RETURN NEW;
 END;
-$;
+$guard$;
 CREATE TRIGGER vsp_result_write_guard BEFORE UPDATE ON public.bookings
 FOR EACH ROW EXECUTE FUNCTION public.vsp_test_result_write_guard();
 
