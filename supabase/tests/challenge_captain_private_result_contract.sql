@@ -5,6 +5,8 @@ DO $roles$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN; END IF;
 END $roles$;
 CREATE SCHEMA auth;
+-- Real Supabase grants authenticated use of auth.uid(); model that role grant.
+GRANT USAGE ON SCHEMA auth TO authenticated;
 CREATE TABLE public.users (id uuid PRIMARY KEY, role text NOT NULL);
 INSERT INTO public.users(id,role) VALUES
 ('00000000-0000-0000-0000-000000000505','admin'),
