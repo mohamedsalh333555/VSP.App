@@ -99,7 +99,6 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER
 SET search_path=public,pg_temp AS $function$
 DECLARE
   v_actor uuid:=auth.uid();
-  v_role text;
   v_booking record;
   v_report record;
   v_total_appeal_revision bigint;
@@ -122,8 +121,10 @@ BEGIN
   END IF;
   -- Only the server-validated admin/cofounder roles may restore points.
   -- A venue owner and either captain must never call this as adjudicator.
-  SELECT role INTO v_role FROM public.users WHERE id=v_actor;
-  IF coalesce(v_role,'') NOT IN ('admin','co_founder','cofounder','super_admin') THEN
+  -- Server-authoritative helper also rejects blocked administrator accounts.
+  -- Checking role alone would allow a blocked admin with an unexpired JWT
+  -- to uphold reports or restore team ranking points.
+  IF NOT public.is_admin_or_cofounder(v_actor) THEN
     RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
   END IF;
   SELECT * INTO v_booking FROM public.bookings WHERE id=p_booking_id FOR UPDATE;

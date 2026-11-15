@@ -7,7 +7,15 @@ END $roles$;
 CREATE SCHEMA auth;
 -- Real Supabase grants authenticated use of auth.uid(); model that role grant.
 GRANT USAGE ON SCHEMA auth TO authenticated;
-CREATE TABLE public.users (id uuid PRIMARY KEY, role text NOT NULL);
+CREATE TABLE public.users (id uuid PRIMARY KEY, role text NOT NULL,
+  is_blocked boolean NOT NULL DEFAULT false);
+CREATE FUNCTION public.is_admin_or_cofounder(p_user_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path=public,pg_temp AS $helper$
+  SELECT EXISTS (SELECT 1 FROM public.users
+    WHERE id=p_user_id AND coalesce(is_blocked,false)=false
+      AND role IN ('admin','co_founder','cofounder','super_admin'));
+$helper$;
 INSERT INTO public.users(id,role) VALUES
 ('00000000-0000-0000-0000-000000000505','admin'),
 ('00000000-0000-0000-0000-000000000606','player');
@@ -666,3 +674,33 @@ BEGIN
 END;
 $eligible_h2h$;
 RESET ROLE;
+
+-- Authorization must also reject a previously approved admin whose account
+-- was suspended. A valid-looking JWT or role column alone is insufficient.
+DO $blocked_reviewer$
+DECLARE r jsonb;
+BEGIN
+ UPDATE public.users SET is_blocked=true
+ WHERE id='00000000-0000-0000-0000-000000000505';
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000505',true);
+ r:=public.review_challenge_non_played_atomic(
+  '00000000-0000-0000-0000-000000000002','uphold',
+  'A blocked admin must not approve a report');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Blocked admin upheld a nonplayed match report'; END IF;
+ r:=public.review_challenge_non_played_atomic(
+  '00000000-0000-0000-0000-000000000002','restore',
+  'A blocked admin must not reinstate rank points');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Blocked admin restored a reported match'; END IF;
+ IF (SELECT status FROM public.challenge_non_played_reports
+     WHERE booking_id='00000000-0000-0000-0000-000000000002')<>'excluded' THEN
+   RAISE EXCEPTION 'Blocked reviewer mutated report state'; END IF;
+ UPDATE public.users SET is_blocked=false
+ WHERE id='00000000-0000-0000-0000-000000000505';
+ IF NOT public.is_admin_or_cofounder(
+  '00000000-0000-0000-0000-000000000505') THEN
+   RAISE EXCEPTION 'Active reviewer not restored after unblocking'; END IF;
+END;
+$blocked_reviewer$;
