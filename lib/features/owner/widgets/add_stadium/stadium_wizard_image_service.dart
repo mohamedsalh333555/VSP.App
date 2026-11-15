@@ -29,8 +29,11 @@ class StadiumWizardImageService {
       if (mime != null && mime.isNotEmpty && mime != expectedMime) return false;
       final length = await xFile.length();
       if (length < 12 || length > maxImageBytes) return false;
-      final header = await xFile.openRead(0, 12).expand((bytes) => bytes).toList();
-      if (header.length < 12) return false;
+      // XFile.fromData does not guarantee range reads on every platform.
+      // The size cap above bounds this read before inspecting the signature.
+      final bytes = await xFile.readAsBytes();
+      if (bytes.length < 12 || bytes.length > maxImageBytes) return false;
+      final header = bytes.sublist(0, 12);
       if (expectedMime == 'image/jpeg') {
         return header[0] == 0xff && header[1] == 0xd8 && header[2] == 0xff;
       }
