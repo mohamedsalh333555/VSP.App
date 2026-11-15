@@ -52,6 +52,7 @@ DECLARE
   v_caller_id uuid := auth.uid();
   v_booking record;
   v_captain uuid;
+  v_other_captain uuid;
   v_previous record;
   v_count integer;
   v_distinct integer;
@@ -94,6 +95,14 @@ BEGIN
   SELECT captain_id INTO v_captain FROM public.teams WHERE id=p_team_id;
   IF NOT FOUND OR v_captain IS DISTINCT FROM v_caller_id THEN
     RETURN jsonb_build_object('success',false,'error','CAPTAIN_ONLY');
+  END IF;
+  -- Two different team IDs are not sufficient if one account captains both.
+  SELECT captain_id INTO v_other_captain FROM public.teams
+    WHERE id=CASE WHEN p_team_id=v_booking.player_team_id
+                  THEN v_booking.opponent_team_id ELSE v_booking.player_team_id END;
+  IF NOT FOUND OR v_other_captain IS NULL OR v_other_captain=v_caller_id THEN
+    RETURN jsonb_build_object('success',false,
+      'error','INDEPENDENT_CAPTAINS_REQUIRED');
   END IF;
 
   SELECT * INTO v_previous FROM public.challenge_captain_result_entries
@@ -167,6 +176,8 @@ DECLARE
   v_caller_id uuid := auth.uid();
   v_booking record;
   v_my_team_id uuid;
+  v_home_captain uuid;
+  v_away_captain uuid;
   v_submission record;
 BEGIN
   IF v_caller_id IS NULL THEN
@@ -175,6 +186,14 @@ BEGIN
   SELECT booking_type,player_team_id,opponent_team_id
     INTO v_booking FROM public.bookings WHERE id=p_booking_id;
   IF NOT FOUND OR v_booking.booking_type IS DISTINCT FROM 'challenge' THEN
+    RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
+  END IF;
+  SELECT captain_id INTO v_home_captain FROM public.teams
+    WHERE id=v_booking.player_team_id;
+  SELECT captain_id INTO v_away_captain FROM public.teams
+    WHERE id=v_booking.opponent_team_id;
+  IF v_home_captain IS NULL OR v_away_captain IS NULL
+     OR v_home_captain=v_away_captain THEN
     RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
   END IF;
 

@@ -199,3 +199,49 @@ BEGIN
    RAISE EXCEPTION 'Authenticated captain cannot execute private read'; END IF;
 END;
 $private_read$;
+
+-- One account must not impersonate two team captains in the same challenge.
+INSERT INTO public.teams(id,captain_id) VALUES
+ ('00000000-0000-0000-0000-000000000033',
+  '00000000-0000-0000-0000-000000000101');
+INSERT INTO public.bookings(id,booking_type,status,end_time,player_team_id,opponent_team_id)
+VALUES ('00000000-0000-0000-0000-000000000015',
+ 'challenge','confirmed',now()-interval '2 hours',
+ '00000000-0000-0000-0000-000000000011',
+ '00000000-0000-0000-0000-000000000033');
+DO $captain_independence$
+DECLARE r jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.submit_challenge_result_atomic(
+   '00000000-0000-0000-0000-000000000015',
+   '00000000-0000-0000-0000-000000000011','homeWin');
+ IF r->>'error'<>'INDEPENDENT_CAPTAINS_REQUIRED' THEN
+   RAISE EXCEPTION 'Shared captain was allowed to submit a self-confirmed result'; END IF;
+ r:=public.get_my_challenge_result_submission(
+   '00000000-0000-0000-0000-000000000015');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Shared captain private read should not be available'; END IF;
+ IF EXISTS(SELECT 1 FROM public.challenge_captain_result_entries
+   WHERE booking_id='00000000-0000-0000-0000-000000000015') THEN
+   RAISE EXCEPTION 'Invalid challenge changed private result rows'; END IF;
+END;
+$captain_independence$;
+
+-- Check the reader with actual PostgreSQL authenticated privileges as well
+-- as the isolated auth.uid fixture. This does not represent a real GoTrue JWT.
+SET ROLE authenticated;
+DO $actual_role$
+DECLARE r jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.get_my_challenge_result_submission(
+   '00000000-0000-0000-0000-000000000002');
+ IF r->>'my_outcome'<>'awayWin' THEN
+   RAISE EXCEPTION 'Authenticated role cannot read its own result'; END IF;
+ IF has_table_privilege(current_user,
+    'public.challenge_captain_result_entries','SELECT') THEN
+   RAISE EXCEPTION 'Authenticated role can read private raw entries'; END IF;
+END;
+$actual_role$;
+RESET ROLE;
