@@ -289,7 +289,7 @@ class ChallengeResultActions extends StatelessWidget {
             TextButton.icon(
               onPressed: () => _submitAppeal(context, isArabic),
               icon: const Icon(Icons.rate_review_outlined, size: 16),
-              label: Text(reportStatus.myAppealSubmitted
+              label: Text(reportStatus!.myAppealSubmitted
                   ? (isArabic ? 'تحديث الاعتراض' : 'Update appeal')
                   : (isArabic ? 'اعتراض قائد الفريق' : 'Captain appeal')),
             ),
