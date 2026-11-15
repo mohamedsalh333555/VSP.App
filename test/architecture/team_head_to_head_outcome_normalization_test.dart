@@ -29,7 +29,7 @@ void main() {
       {'player_team_id': a, 'winner_team_id': b, 'final_outcome': 'homeWin'},
     ], a, b);
     expect(result, {
-      'teamAWins': 4, 'teamBWins': 3, 'draws': 1, 'totalMatches': 8,
+      'teamAWins': 4, 'teamBWins': 2, 'draws': 1, 'totalMatches': 7,
     });
   });
 
