@@ -65,7 +65,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('Nile Pitch'), findsOneWidget);
-    expect(find.textContaining('Aswan city center'), findsOneWidget);
+    expect(find.text('أسوان المدينة'), findsOneWidget);
     expect(find.text('Cafeteria'), findsOneWidget);
     expect(find.text('Changing Rooms'), findsOneWidget);
     expect(find.text('Seats: 20'), findsOneWidget);
