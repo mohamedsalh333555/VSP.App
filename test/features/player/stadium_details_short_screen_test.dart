@@ -13,6 +13,12 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 class _GuestAuth extends Fake implements AuthProvider {
   @override
   UserModel? get userModel => null;
+
+  @override
+  void addListener(VoidCallback listener) {}
+
+  @override
+  void removeListener(VoidCallback listener) {}
 }
 
 void main() {
@@ -40,7 +46,7 @@ void main() {
       isVerified: true,
       maintenanceUntil: DateTime.now().add(const Duration(days: 2)),
     );
-    await tester.pumpWidget(Provider<AuthProvider>.value(
+    await tester.pumpWidget(ChangeNotifierProvider<AuthProvider>.value(
       value: _GuestAuth(),
       child: MaterialApp(
         locale: const Locale('ar'),
