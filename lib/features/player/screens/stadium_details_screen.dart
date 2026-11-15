@@ -323,6 +323,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
               ],
             ),
           ),
+          ),
           bottomNavigationBar: StadiumBottomBookingBar(
             stadium: stadium,
             bookingEnabled: resolved.canBook,
