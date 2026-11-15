@@ -66,7 +66,10 @@ ON public.bookings FOR EACH ROW EXECUTE FUNCTION public.calculate_elo_on_match_c
     preflight = READ_ONLY_PREFLIGHT.read_text(encoding="utf-8")
     import re
     stripped = "\n".join(line.split("--", 1)[0] for line in preflight.splitlines())
-    if re.search(r"\b(?:INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TRUNCATE|COPY|CALL|DO|GRANT|REVOKE|EXECUTE|SET)\b", stripped, re.I):
+    # Ignore SQL string literals ('EXECUTE' in has_function_privilege,
+    # for example); those literals are data, not top-level statements.
+    syntax_only = re.sub(r"'(?:''|[^'])*'", "''", stripped)
+    if re.search(r"\b(?:INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TRUNCATE|COPY|CALL|DO|GRANT|REVOKE|EXECUTE|SET)\b", syntax_only, re.I):
         raise RuntimeError("Read-only staging preflight contains a write statement")
     source += "\n" + preflight
     created = psql("postgres",query=f"CREATE DATABASE {DB}")
