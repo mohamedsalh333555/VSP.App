@@ -252,30 +252,44 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         color: VSPColors.warning.withValues(alpha: 0.25),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.info_outline,
-                          color: VSPColors.warning,
-                          size: 18,
-                        ),
-                        const SizedBox(width: VSPSpacing.sm),
-                        Expanded(
-                          child: Text(
-                            isArabic
-                                ? 'تعذر تحديث بيانات الملعب. نعرض آخر بيانات متاحة.'
-                                : 'Could not refresh stadium details. Showing the last available information.',
-                            style: const TextStyle(
-                              color: VSPColors.textSecondary,
-                              fontSize: 12,
-                            ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compact = constraints.maxWidth < 340 ||
+                            MediaQuery.textScalerOf(context).scale(14) > 18;
+                        final message = Text(
+                          isArabic
+                              ? 'تعذر تحديث بيانات الملعب. نعرض آخر بيانات متاحة.'
+                              : 'Could not refresh stadium details. Showing the last available information.',
+                          style: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 12,
                           ),
-                        ),
-                        TextButton(
+                        );
+                        final retry = TextButton(
                           onPressed: () => setState(_subscribeToStadium),
                           child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
-                        ),
-                      ],
+                        );
+                        final notice = Row(
+                          children: [
+                            const Icon(Icons.info_outline,
+                                color: VSPColors.warning, size: 18),
+                            const SizedBox(width: VSPSpacing.sm),
+                            Expanded(child: message),
+                            if (!compact) retry,
+                          ],
+                        );
+                        if (!compact) return notice;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            notice,
+                            Align(
+                              alignment: AlignmentDirectional.centerEnd,
+                              child: retry,
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
