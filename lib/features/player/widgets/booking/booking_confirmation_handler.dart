@@ -312,6 +312,7 @@ class BookingConfirmationHandler {
       final latest = await StadiumRepository()
           .getStadiumByIdStrict(stadium.id)
           .timeout(const Duration(seconds: 10));
+      if (!context.mounted) return;
       if (!isSameUser()) {
         onLoadingChanged(false);
         return;
@@ -335,6 +336,7 @@ class BookingConfirmationHandler {
       }
     } catch (_) {
       VSPLogger.e('Booking price preflight failed (details redacted)');
+      if (!context.mounted) return;
       if (!isSameUser()) {
         onLoadingChanged(false);
         return;
