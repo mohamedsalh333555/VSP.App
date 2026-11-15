@@ -276,23 +276,22 @@ class ChallengeResultActions extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ChallengeNonPlayedReportBanner(status: reportStatus!),
-          if (allowAppeal && !reportStatus!.myAppealSubmitted) ...[
+          if (allowAppeal) ...[
             const SizedBox(height: VSPSpacing.xs),
+            if (reportStatus!.myAppealSubmitted)
+              Text(
+                isArabic ? 'تم تسجيل اعتراض فريقك.'
+                    : 'Your team appeal is recorded.',
+                style: const TextStyle(
+                  color: VSPColors.textSecondary, fontSize: 12,
+                ),
+              ),
             TextButton.icon(
               onPressed: () => _submitAppeal(context, isArabic),
               icon: const Icon(Icons.rate_review_outlined, size: 16),
-              label: Text(isArabic
-                  ? 'اعتراض قائد الفريق'
-                  : 'Captain appeal'),
-            ),
-          ] else if (allowAppeal) ...[
-            const SizedBox(height: VSPSpacing.xs),
-            Text(
-              isArabic ? 'تم تسجيل اعتراض فريقك.'
-                  : 'Your team appeal is recorded.',
-              style: const TextStyle(
-                color: VSPColors.textSecondary, fontSize: 12,
-              ),
+              label: Text(reportStatus.myAppealSubmitted
+                  ? (isArabic ? 'تحديث الاعتراض' : 'Update appeal')
+                  : (isArabic ? 'اعتراض قائد الفريق' : 'Captain appeal')),
             ),
           ],
         ],

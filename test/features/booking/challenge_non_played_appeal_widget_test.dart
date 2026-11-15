@@ -82,7 +82,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('noncaptain or already-appealed states offer no new appeal: ' +
+    testWidgets('noncaptain is blocked but captain can update an existing appeal: ' +
         language, (tester) async {
       const pending = ChallengeNonPlayedReportStatus(
         state: ChallengeNonPlayedReportState.excluded,
@@ -106,6 +106,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(language == 'ar'
           ? 'اعتراض قائد الفريق' : 'Captain appeal'), findsNothing);
+      expect(find.text(language == 'ar'
+          ? 'تحديث الاعتراض' : 'Update appeal'), findsOneWidget);
       expect(find.text(language == 'ar'
           ? 'تم تسجيل اعتراض فريقك.' : 'Your team appeal is recorded.'),
           findsOneWidget);
