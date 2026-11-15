@@ -26,6 +26,8 @@ class ChallengeNonPlayedReportStatus {
   static ChallengeNonPlayedReportStatus? fromScopedRpc(Object? raw) {
     if (raw is! Map || raw['success'] != true) return null;
     if (raw['reported'] == false) {
+      // A contradictory response is not proof of no report.
+      if (raw['state'] != null) return null;
       return const ChallengeNonPlayedReportStatus(
         state: ChallengeNonPlayedReportState.notReported,
       );

@@ -30,8 +30,11 @@ void main() {
     expect(ChallengeNonPlayedReportStatus.fromScopedRpc({
       'success': true, 'reported': true, 'state': 'unexpected',
     }), isNull);
-    final noReport = ChallengeNonPlayedReportStatus.fromScopedRpc({
+    expect(ChallengeNonPlayedReportStatus.fromScopedRpc({
       'success': true, 'reported': false, 'state': 'excluded',
+    }), isNull);
+    final noReport = ChallengeNonPlayedReportStatus.fromScopedRpc({
+      'success': true, 'reported': false,
     });
     expect(noReport?.state, ChallengeNonPlayedReportState.notReported);
     final result = ChallengeNonPlayedReportStatus.fromScopedRpc({
