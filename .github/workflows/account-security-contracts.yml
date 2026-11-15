@@ -11,6 +11,8 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/tests/**'
       - 'scripts/test_challenge_timeout_isolated.py'
+      - 'scripts/test_challenge_captain_private_results.py'
+      - 'docs/security/sql/challenge_captain_private_result_candidate.sql'
       - 'test/tooling/test_challenge_timeout_isolated.py'
       - 'scripts/run_account_security_contracts.py'
       - 'scripts/apply_migration_runner.py'
@@ -130,6 +132,8 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_challenge_timeout_isolated.py -v
       - name: Verify challenge timeout retirement on isolated PostgreSQL
         run: python3 scripts/test_challenge_timeout_isolated.py
+      - name: Verify isolated captain-result private storage and agreement matrix
+        run: python3 scripts/test_challenge_captain_private_results.py
       - name: Verify an existing contract database cannot be reinitialised
         run: |
           python3 - <<'PY'
