@@ -11,6 +11,7 @@ CREATE TABLE public.challenge_non_played_reports (
   ranking_restored boolean NOT NULL DEFAULT false,
   reviewed_by_admin_id uuid,
   reviewed_at timestamptz,
+  reviewed_appeal_revision bigint NOT NULL DEFAULT 0,
   review_decision text CHECK (review_decision IN ('uphold','restore')),
   review_reason text,
   original_outcome text,

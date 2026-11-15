@@ -102,7 +102,7 @@ DECLARE
   v_role text;
   v_booking record;
   v_report record;
-  v_latest_appeal timestamptz;
+  v_total_appeal_revision bigint;
   v_home_points integer;
   v_away_points integer;
   v_home_wins integer;
@@ -143,15 +143,18 @@ BEGIN
   END IF;
 
   IF p_decision='uphold' THEN
-    SELECT max(updated_at) INTO v_latest_appeal
+    -- Snapshot revisions, not timestamps: every event in a transaction may
+    -- have exactly the same now() value even when a new appeal arrives.
+    SELECT coalesce(sum(revision),0) INTO v_total_appeal_revision
       FROM public.challenge_non_played_appeals WHERE booking_id=p_booking_id;
-    IF v_report.review_decision='uphold' AND v_report.reviewed_at IS NOT NULL
-       AND (v_latest_appeal IS NULL OR v_latest_appeal<=v_report.reviewed_at) THEN
+    IF v_report.review_decision='uphold'
+       AND v_report.reviewed_appeal_revision=v_total_appeal_revision THEN
       RETURN jsonb_build_object('success',true,'state','excluded','already_reviewed',true);
     END IF;
     UPDATE public.challenge_non_played_reports
     SET reviewed_by_admin_id=v_actor, reviewed_at=now(),
-        review_decision='uphold',review_reason=btrim(p_reason)
+        review_decision='uphold',review_reason=btrim(p_reason),
+        reviewed_appeal_revision=v_total_appeal_revision
     WHERE booking_id=p_booking_id;
     INSERT INTO public.challenge_non_played_review_audit
       (booking_id,actor_user_id,event,previous_state,new_state,reason)
@@ -224,7 +227,7 @@ DECLARE
  v_report record;
  v_team_id uuid;
  v_allowed boolean;
- v_latest_appeal timestamptz;
+ v_total_appeal_revision bigint;
 BEGIN
  IF v_actor IS NULL THEN
    RETURN jsonb_build_object('success',false,'error','AUTHENTICATION_REQUIRED');
@@ -246,13 +249,12 @@ BEGIN
  IF NOT FOUND THEN
    RETURN jsonb_build_object('success',true,'reported',false);
  END IF;
- SELECT max(updated_at) INTO v_latest_appeal
+ SELECT coalesce(sum(revision),0) INTO v_total_appeal_revision
    FROM public.challenge_non_played_appeals WHERE booking_id=p_booking_id;
  RETURN jsonb_build_object('success',true,'reported',true,
     'state',v_report.status,
     'under_review',v_report.status='excluded'
-      AND v_latest_appeal IS NOT NULL
-      AND (v_report.reviewed_at IS NULL OR v_latest_appeal>v_report.reviewed_at),
+      AND v_total_appeal_revision>v_report.reviewed_appeal_revision,
     'my_appeal_submitted',v_team_id IS NOT NULL AND EXISTS(
       SELECT 1 FROM public.challenge_non_played_appeals
        WHERE booking_id=p_booking_id AND team_id=v_team_id));
