@@ -16,7 +16,12 @@ import '../widgets/stadium_details/stadium_snapshot_resolver.dart';
 /// Screen displaying complete details for a stadium including image carousel, facilities, conditions, and reviews.
 class StadiumDetailsScreen extends StatefulWidget {
   final Stadium stadium;
-  const StadiumDetailsScreen({super.key, required this.stadium});
+  final Stream<List<Map<String, dynamic>>>? stadiumSnapshots;
+  const StadiumDetailsScreen({
+    super.key,
+    required this.stadium,
+    this.stadiumSnapshots,
+  });
 
   @override
   State<StadiumDetailsScreen> createState() => _StadiumDetailsScreenState();
@@ -28,14 +33,15 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   final StadiumSnapshotResolver _snapshotResolver = StadiumSnapshotResolver();
 
   void _subscribeToStadium() {
-    _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
+    _stadiumStream = widget.stadiumSnapshots ??
+        StadiumRepository().streamStadiumRaw(widget.stadium.id);
   }
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
+    _subscribeToStadium();
     unawaited(
       AnalyticsService.logVenueViewed(venueId: widget.stadium.id),
     );
@@ -71,9 +77,9 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   @override
   void didUpdateWidget(covariant StadiumDetailsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.stadium.id != widget.stadium.id) {
-      _stadiumStream =
-          StadiumRepository().streamStadiumRaw(widget.stadium.id);
+    if (oldWidget.stadium.id != widget.stadium.id ||
+        oldWidget.stadiumSnapshots != widget.stadiumSnapshots) {
+      _subscribeToStadium();
       // A different stadium starts at the first information tab rather than
       // inheriting the previous stadium's tab selection.
       _tabController.index = 0;
@@ -176,8 +182,11 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           backgroundColor: VSPColors.background,
           body: SafeArea(
             bottom: false,
-            child: Column(
-              children: [
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
                 if (isRefreshing)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -274,6 +283,12 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 stadium: stadium,
                 displayImages: displayImages,
               ),
+                    ],
+                  ),
+                ),
+              ],
+              body: Column(
+                children: [
               Container(
                 color: VSPColors.background,
                 padding: const EdgeInsets.all(VSPSpacing.md),
