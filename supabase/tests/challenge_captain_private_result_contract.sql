@@ -791,7 +791,7 @@ BEGIN
  IF r->>'error'<>'NOT_AUTHORIZED' THEN
    RAISE EXCEPTION 'Blocked captain still submitted a result'; END IF;
  r:=public.get_my_challenge_result_submission(
-  '00000000-0000-0000-0000-000000000001');
+  '00000000-0000-0000-0000-000000000002');
  IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'my_outcome' THEN
    RAISE EXCEPTION 'Blocked captain read a private result'; END IF;
  r:=public.captain_appeal_challenge_non_played_atomic(
@@ -832,7 +832,7 @@ BEGIN
  PERFORM set_config('request.jwt.claim.sub',
   '00000000-0000-0000-0000-000000000101',true);
  r:=public.get_my_challenge_result_submission(
-  '00000000-0000-0000-0000-000000000001');
+  '00000000-0000-0000-0000-000000000002');
  IF r->>'success'<>'true' OR r->>'submitted'<>'true' THEN
    RAISE EXCEPTION 'Active captain blocked after reactivation'; END IF;
 END;
