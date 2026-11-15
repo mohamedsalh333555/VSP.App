@@ -12,6 +12,7 @@ on:
       - 'supabase/tests/**'
       - 'scripts/test_challenge_timeout_isolated.py'
       - 'scripts/test_challenge_captain_private_results.py'
+      - 'scripts/test_challenge_result_two_session_concurrency.py'
       - 'docs/security/sql/challenge_captain_private_result_candidate.sql'
       - 'docs/security/sql/challenge_non_played_report_candidate.sql'
       - 'docs/security/sql/challenge_non_played_review_candidate.sql'
@@ -136,6 +137,8 @@ jobs:
         run: python3 scripts/test_challenge_timeout_isolated.py
       - name: Verify isolated captain-result private storage and agreement matrix
         run: python3 scripts/test_challenge_captain_private_results.py
+      - name: Verify captain agreement, venue report and restore races in two isolated PostgreSQL sessions
+        run: python3 scripts/test_challenge_result_two_session_concurrency.py
       - name: Verify an existing contract database cannot be reinitialised
         run: |
           python3 - <<'PY'
