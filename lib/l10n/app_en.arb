@@ -722,7 +722,7 @@
  "faq8_q": "Why is my match not appearing in the public list?",
  "faq8_a": "Private matches are hidden. Ensure you select 'Public Match' during booking if you want others to find and join you.",
  "faq9_q": "How do I get a refund?",
- "faq9_a": "Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.",
+ "faq9_a": "The server determines refund eligibility and amount from the booking status and recorded payments. Available refund details appear in the booking; an online refund may remain pending until the payment gateway confirms it.",
  "faq10_q": "How do I contact technical support?",
  "faq10_a": "Open In-App Support to create a support ticket and exchange messages with the support team. WhatsApp is available as an escalation channel when needed.",
  "totalCollectedGross": "Total Collected (Gross)",

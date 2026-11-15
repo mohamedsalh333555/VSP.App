@@ -1496,7 +1496,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get faq9_a =>
-      'Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.';
+      'The server determines refund eligibility and amount from the booking status and recorded payments. Available refund details appear in the booking; an online refund may remain pending until the payment gateway confirms it.';
 
   @override
   String get faq10_q => 'How do I contact technical support?';

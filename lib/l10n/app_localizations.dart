@@ -2837,7 +2837,7 @@ abstract class AppLocalizations {
   /// No description provided for @faq9_a.
   ///
   /// In en, this message translates to:
-  /// **'Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.'**
+  /// **'The server determines refund eligibility and amount from the booking status and recorded payments. Available refund details appear in the booking; an online refund may remain pending until the payment gateway confirms it.'**
   String get faq9_a;
 
   /// No description provided for @faq10_q.
