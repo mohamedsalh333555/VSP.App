@@ -10,6 +10,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 CANDIDATE = ROOT / "docs/security/sql/challenge_captain_private_result_candidate.sql"
 CONTRACT = ROOT / "supabase/tests/challenge_captain_private_result_contract.sql"
+RANKING_MIGRATION = ROOT / "supabase/migrations/20261003193000_challenge_mutual_result_agreement_and_points.sql"
 DB = "vsp_captain_result_contracts"
 
 def require_isolated(env: dict[str, str]) -> None:
@@ -39,6 +40,18 @@ def main() -> int:
     if source.count(marker) != 1:
         raise RuntimeError("Contract marker mismatch")
     source = source.replace(marker,CANDIDATE.read_text(encoding="utf-8"))
+    ranking_marker = "-- INSTALL_CHALLENGE_RANKING_TRIGGER"
+    raw_ranking = RANKING_MIGRATION.read_text(encoding="utf-8")
+    signature = "CREATE OR REPLACE FUNCTION public.calculate_elo_on_match_completion()"
+    if source.count(ranking_marker) != 1 or raw_ranking.count(signature) != 1:
+        raise RuntimeError("Ranking source or contract marker drift")
+    ranking_sql = raw_ranking[raw_ranking.index(signature):].strip()
+    if not ranking_sql.endswith("$function$;"):
+        raise RuntimeError("Ranking source definition boundary changed")
+    source = source.replace(ranking_marker, ranking_sql + """
+CREATE TRIGGER trg_calculate_elo BEFORE UPDATE OF status,final_outcome,match_result_status
+ON public.bookings FOR EACH ROW EXECUTE FUNCTION public.calculate_elo_on_match_completion();
+""")
     created = psql("postgres",query=f"CREATE DATABASE {DB}")
     if created.returncode != 0:
         raise RuntimeError("Unable to create separate ephemeral SQL database")

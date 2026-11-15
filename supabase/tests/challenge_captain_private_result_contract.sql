@@ -10,7 +10,9 @@ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
 $$;
 CREATE TABLE public.teams (
  id uuid PRIMARY KEY, captain_id uuid NOT NULL,
- points integer DEFAULT 0, matches_played integer DEFAULT 0
+ points integer DEFAULT 0, matches_played integer DEFAULT 0,
+ wins integer DEFAULT 0, draws integer DEFAULT 0, losses integer DEFAULT 0,
+ updated_at timestamptz DEFAULT now()
 );
 INSERT INTO public.teams(id,captain_id) VALUES
  ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000101'),
@@ -27,7 +29,8 @@ CREATE TABLE public.bookings (
  requires_admin_intervention boolean DEFAULT false,
  updated_at timestamptz DEFAULT now(),
  payment_status text DEFAULT 'paid',
- fair_play_score integer DEFAULT 100
+ fair_play_score integer DEFAULT 100,
+ elo_processed boolean DEFAULT false
 );
 INSERT INTO public.bookings(id,booking_type,status,end_time,player_team_id,opponent_team_id)
 SELECT ('00000000-0000-0000-0000-' || lpad(i::text,12,'0'))::uuid,
@@ -57,6 +60,8 @@ END;
 $guard$;
 CREATE TRIGGER vsp_result_write_guard BEFORE UPDATE ON public.bookings
 FOR EACH ROW EXECUTE FUNCTION public.vsp_test_result_write_guard();
+
+-- INSTALL_CHALLENGE_RANKING_TRIGGER
 
 -- INSTALL_PRIVATE_RESULTS_CANDIDATE
 
@@ -103,6 +108,11 @@ BEGIN
    RAISE EXCEPTION 'Edited vote lost revision'; END IF;
  IF (SELECT count(*) FROM public.challenge_captain_result_audit WHERE booking_id=v_id)<>3 THEN
    RAISE EXCEPTION 'Missing immutable submission audit'; END IF;
+ IF (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>3
+    OR (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000022')<>0
+    OR (SELECT matches_played FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>1
+    OR (SELECT elo_processed FROM public.bookings WHERE id=v_id) IS NOT TRUE THEN
+   RAISE EXCEPTION 'Rank points not processed exactly once on agreement'; END IF;
  r:=public.submit_challenge_result_atomic(v_id,'00000000-0000-0000-0000-000000000022','homeWin');
  IF r->>'error'<>'RESULT_ALREADY_FINALIZED' THEN
    RAISE EXCEPTION 'Finalization not idempotently protected'; END IF;
@@ -135,6 +145,14 @@ BEGIN
  r:=public.submit_challenge_result_atomic('00000000-0000-0000-0000-000000000003',
  '00000000-0000-0000-0000-000000000011','draw');
  IF r->>'error'<>'AUTHENTICATION_REQUIRED' THEN RAISE EXCEPTION 'Anonymous result accepted'; END IF;
+ -- Three finalized fixtures should each award points once: home win 3/0,
+ -- draw 1/1, away win 0/3. Booking 1 already awarded 3/0.
+ IF (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>7
+    OR (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000022')<>4
+    OR (SELECT matches_played FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>4
+    OR (SELECT matches_played FROM public.teams WHERE id='00000000-0000-0000-0000-000000000022')<>4
+    OR (SELECT count(*) FROM public.bookings WHERE elo_processed)<>4 THEN
+   RAISE EXCEPTION 'Mismatch/finalization corrupted standings or double counted'; END IF;
  IF EXISTS(SELECT 1 FROM public.bookings WHERE pending_outcome IS NOT NULL) THEN
    RAISE EXCEPTION 'Public booking outcome leak'; END IF;
  IF EXISTS(SELECT 1 FROM public.bookings WHERE fair_play_score<>100 OR payment_status<>'paid') THEN
