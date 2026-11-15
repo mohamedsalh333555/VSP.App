@@ -64,6 +64,13 @@ BEGIN
   IF v_caller_id IS NULL THEN
     RETURN jsonb_build_object('success',false,'error','AUTHENTICATION_REQUIRED');
   END IF;
+  -- A blocked account can retain a valid token; JWT presence alone must
+  -- never authorize rank-changing or private-result operations.
+  IF NOT EXISTS(SELECT 1 FROM public.users u
+    WHERE u.id=v_caller_id AND coalesce(u.is_blocked,false)=false) THEN
+    RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
+  END IF;
+
   IF p_outcome IS NULL OR p_outcome NOT IN ('homeWin','draw','awayWin') THEN
     RETURN jsonb_build_object('success',false,'error','INVALID_OUTCOME');
   END IF;
@@ -189,6 +196,13 @@ BEGIN
   IF v_caller_id IS NULL THEN
     RETURN jsonb_build_object('success',false,'error','AUTHENTICATION_REQUIRED');
   END IF;
+  -- A blocked account can retain a valid token; JWT presence alone must
+  -- never authorize rank-changing or private-result operations.
+  IF NOT EXISTS(SELECT 1 FROM public.users u
+    WHERE u.id=v_caller_id AND coalesce(u.is_blocked,false)=false) THEN
+    RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
+  END IF;
+
   SELECT booking_type,player_team_id,opponent_team_id
     INTO v_booking FROM public.bookings WHERE id=p_booking_id;
   IF NOT FOUND OR v_booking.booking_type IS DISTINCT FROM 'challenge' THEN

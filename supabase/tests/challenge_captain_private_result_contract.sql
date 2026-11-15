@@ -17,6 +17,9 @@ SET search_path=public,pg_temp AS $helper$
       AND role IN ('admin','co_founder','cofounder','super_admin'));
 $helper$;
 INSERT INTO public.users(id,role) VALUES
+('00000000-0000-0000-0000-000000000101','player'),
+('00000000-0000-0000-0000-000000000202','player'),
+('00000000-0000-0000-0000-000000000404','owner'),
 ('00000000-0000-0000-0000-000000000505','admin'),
 ('00000000-0000-0000-0000-000000000606','player');
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
@@ -765,3 +768,71 @@ BEGIN
    RAISE EXCEPTION 'Anonymous role has EXECUTE on admin case RPC'; END IF;
 END;
 $admin_case_dossier$;
+
+
+-- A blocked captain/owner/member with an unexpired auth token must not
+-- mutate challenge rankings, appeal, or read scoped private results.
+DO $blocked_challenge_actors$
+DECLARE r jsonb; v_points int; v_audits int;
+BEGIN
+ SELECT points INTO v_points FROM public.teams
+  WHERE id='00000000-0000-0000-0000-000000000011';
+ SELECT count(*) INTO v_audits FROM public.challenge_captain_result_audit;
+ UPDATE public.users SET is_blocked=true WHERE id IN (
+  '00000000-0000-0000-0000-000000000101',
+  '00000000-0000-0000-0000-000000000404',
+  '00000000-0000-0000-0000-000000000606');
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000101',true);
+ r:=public.submit_challenge_result_atomic(
+  '00000000-0000-0000-0000-000000000004',
+  '00000000-0000-0000-0000-000000000011','draw');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Blocked captain still submitted a result'; END IF;
+ r:=public.get_my_challenge_result_submission(
+  '00000000-0000-0000-0000-000000000001');
+ IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'my_outcome' THEN
+   RAISE EXCEPTION 'Blocked captain read a private result'; END IF;
+ r:=public.captain_appeal_challenge_non_played_atomic(
+  '00000000-0000-0000-0000-000000000002',
+  'A blocked captain cannot submit an appeal');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Blocked captain appealed a report'; END IF;
+ r:=public.get_my_challenge_non_played_status(
+  '00000000-0000-0000-0000-000000000002');
+ IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'reported' THEN
+   RAISE EXCEPTION 'Blocked captain read a private report'; END IF;
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000404',true);
+ r:=public.owner_report_challenge_not_played_atomic(
+  '00000000-0000-0000-0000-000000000004',
+  'Blocked venue owner cannot exclude a match');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Blocked venue owner still excluded a challenge'; END IF;
+ r:=public.get_my_challenge_non_played_status(
+  '00000000-0000-0000-0000-000000000002');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Blocked owner read report status'; END IF;
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000606',true);
+ r:=public.get_eligible_challenge_head_to_head_stats(
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000022');
+ IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'teamAWins' THEN
+   RAISE EXCEPTION 'Blocked team member retrieved private history'; END IF;
+ IF (SELECT points FROM public.teams
+      WHERE id='00000000-0000-0000-0000-000000000011')<>v_points
+    OR (SELECT count(*) FROM public.challenge_captain_result_audit)<>v_audits THEN
+   RAISE EXCEPTION 'Blocked actor mutated rankings or private vote history'; END IF;
+ UPDATE public.users SET is_blocked=false WHERE id IN (
+  '00000000-0000-0000-0000-000000000101',
+  '00000000-0000-0000-0000-000000000404',
+  '00000000-0000-0000-0000-000000000606');
+ PERFORM set_config('request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000101',true);
+ r:=public.get_my_challenge_result_submission(
+  '00000000-0000-0000-0000-000000000001');
+ IF r->>'success'<>'true' OR r->>'submitted'<>'true' THEN
+   RAISE EXCEPTION 'Active captain blocked after reactivation'; END IF;
+END;
+$blocked_challenge_actors$;

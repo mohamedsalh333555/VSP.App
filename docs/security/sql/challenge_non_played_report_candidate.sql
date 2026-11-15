@@ -45,6 +45,13 @@ BEGIN
   IF v_actor IS NULL THEN
     RETURN jsonb_build_object('success',false,'error','AUTHENTICATION_REQUIRED');
   END IF;
+  -- A blocked account can retain a valid token; JWT presence alone must
+  -- never authorize rank-changing or private-result operations.
+  IF NOT EXISTS(SELECT 1 FROM public.users u
+    WHERE u.id=v_actor AND coalesce(u.is_blocked,false)=false) THEN
+    RETURN jsonb_build_object('success',false,'error','NOT_AUTHORIZED');
+  END IF;
+
   IF p_reason IS NULL OR char_length(btrim(p_reason)) NOT BETWEEN 8 AND 500 THEN
     RETURN jsonb_build_object('success',false,'error','INVALID_REASON');
   END IF;
