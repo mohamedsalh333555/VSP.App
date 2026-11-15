@@ -191,7 +191,7 @@ def restore(i: int) -> str:
 
 def seed_first(i: int) -> None:
     check_sql("BEGIN; SELECT set_config('request.jwt.claim.sub','"
-              + CAPTAIN_HOME + "',true); " + vote(i) + "; COMMIT;",
+              + CAPTAIN_HOME + "',true); " + vote(i, HOME) + "; COMMIT;",
               "Seed first independent captain vote")
 
 
@@ -223,7 +223,7 @@ def main() -> int:
           '""" + HOME + """','""" + AWAY + """'
           FROM generate_series(16,18) AS i;""", "Seed synthetic bookings")
 
-        race("captain_agreement", CAPTAIN_HOME, vote(16), CAPTAIN_AWAY, vote(16))
+        race("captain_agreement", CAPTAIN_HOME, vote(16, HOME), CAPTAIN_AWAY, vote(16, AWAY))
         assert_rank(3, 1)
         check_sql("""DO $test$ BEGIN
           IF (SELECT match_result_status FROM public.bookings WHERE id='""" + booking(16) + """')<>'confirmed'
@@ -232,7 +232,7 @@ def main() -> int:
         END $test$;""", "Captain agreement")
 
         seed_first(17)
-        race("report_first", OWNER, report(17), CAPTAIN_AWAY, vote(17))
+        race("report_first", OWNER, report(17), CAPTAIN_AWAY, vote(17, AWAY))
         assert_rank(3, 1)
         check_sql("""DO $test$ BEGIN
           IF (SELECT count(*) FROM public.challenge_captain_result_entries
@@ -243,7 +243,7 @@ def main() -> int:
         END $test$;""", "Report before second captain")
 
         seed_first(18)
-        race("vote_first", CAPTAIN_AWAY, vote(18), OWNER, report(18))
+        race("vote_first", CAPTAIN_AWAY, vote(18, AWAY), OWNER, report(18))
         assert_rank(3, 1)
         check_sql("""DO $test$ BEGIN
           IF (SELECT match_result_status FROM public.bookings WHERE id='""" + booking(18) + """')<>'confirmed'
