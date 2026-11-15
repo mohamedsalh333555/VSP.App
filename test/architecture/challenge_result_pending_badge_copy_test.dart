@@ -15,7 +15,8 @@ void main() {
     expect(badge, contains('في انتظار نتيجة الفريق الآخر'));
     expect(badge, contains('جارٍ تحديث حالة النتيجة'));
     expect(badge, contains('Syncing result status'));
-    expect(badge, contains('booking.pendingOutcome != null'));
+    // A redacted pending outcome must not hide a valid submission state.
+    expect(badge, isNot(contains('booking.pendingOutcome')));
     expect(badge, contains('submittedTeamId.isNotEmpty'));
     expect(badge, contains('submittedTeamId == currentTeamId'));
     expect(badge, contains('الفريق الآخر سجّل نتيجته، سجّل نتيجتك'));
