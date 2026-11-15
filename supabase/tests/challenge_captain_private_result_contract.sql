@@ -23,6 +23,14 @@ CREATE TABLE public.teams (
 INSERT INTO public.teams(id,captain_id) VALUES
  ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000101'),
  ('00000000-0000-0000-0000-000000000022','00000000-0000-0000-0000-000000000202');
+CREATE TABLE public.team_members (
+ team_id uuid NOT NULL REFERENCES public.teams(id),
+ user_id uuid NOT NULL,
+ PRIMARY KEY (team_id,user_id)
+);
+INSERT INTO public.team_members(team_id,user_id)
+VALUES ('00000000-0000-0000-0000-000000000011',
+        '00000000-0000-0000-0000-000000000606');
 CREATE TABLE public.bookings (
  id uuid PRIMARY KEY,
  booking_type text NOT NULL, status text NOT NULL,
@@ -614,6 +622,19 @@ BEGIN
   '00000000-0000-0000-0000-000000000011');
  IF (r->>'teamAWins')::int<>1 OR (r->>'teamBWins')::int<>2 THEN
    RAISE EXCEPTION 'Head-to-head orientation swapped incorrectly'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000606',true);
+ r:=public.get_eligible_challenge_head_to_head_stats(
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000022');
+ IF r->>'success'<>'true' OR (r->>'totalMatches')::int<>4 THEN
+   RAISE EXCEPTION 'Team member cannot read eligible aggregate'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000303',true);
+ r:=public.get_eligible_challenge_head_to_head_stats(
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000022');
+ IF r->>'error'<>'NOT_AUTHORIZED' OR r ? 'teamAWins' THEN
+   RAISE EXCEPTION 'Unrelated actor received private team aggregate'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
  r:=public.get_eligible_challenge_head_to_head_stats(
   '00000000-0000-0000-0000-000000000011',
   '00000000-0000-0000-0000-000000000011');
