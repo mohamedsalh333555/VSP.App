@@ -19,9 +19,9 @@ void main() {
     expect(note, contains('Booking cancellation policy'));
     expect(note, contains('6 ساعات'));
     expect(note, contains('20 دقيقة'));
-    expect(note, contains('within 6 hours'));
+    expect(note, contains('6 hours or less'));
     expect(note, contains('first 20 minutes'));
-    expect(note, contains('يحدد الخادم أهلية الإلغاء والاسترداد'));
+    expect(note, contains('يحدد الخادم أهلية الإلغاء ومبلغ الاسترداد'));
     expect(note, contains('The server determines cancellation and refund eligibility'));
   });
 }

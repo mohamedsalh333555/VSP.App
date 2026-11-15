@@ -23,19 +23,35 @@ class BookingCancellationPolicyNote extends StatelessWidget {
         childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         iconColor: VSPColors.textSecondary,
         collapsedIconColor: VSPColors.textSecondary,
-        title: Text(
-          isArabic ? 'سياسة إلغاء الحجز' : 'Booking cancellation policy',
-          style: const TextStyle(
-            fontSize: 13,
-            color: VSPColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isArabic ? 'سياسة إلغاء الحجز' : 'Booking cancellation policy',
+              style: const TextStyle(
+                fontSize: 13,
+                color: VSPColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isArabic
+                  ? 'يمكنك الإلغاء قبل موعد المباراة بأكثر من 6 ساعات، أو خلال أول 20 دقيقة من الحجز.'
+                  : 'Cancel more than 6 hours before kickoff, or within the first 20 minutes after booking.',
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                color: VSPColors.textSecondary,
+              ),
+            ),
+          ],
         ),
         children: [
           Text(
             isArabic
-                ? 'حسب السياسة المعروضة في التطبيق، لا يُقبل الإلغاء قبل موعد المباراة بأقل من 6 ساعات، إلا خلال أول 20 دقيقة من إنشاء الحجز. يحدد الخادم أهلية الإلغاء والاسترداد حسب حالة الحجز.'
-                : 'Under the policy displayed in the app, cancellation is unavailable within 6 hours of the match, except during the first 20 minutes after booking. The server determines cancellation and refund eligibility.',
+                ? 'بعد مرور أول 20 دقيقة، لا يُقبل الإلغاء إذا كان متبقيًا 6 ساعات أو أقل على موعد المباراة. يحدد الخادم أهلية الإلغاء ومبلغ الاسترداد حسب حالة الحجز والدفع؛ وقد يظل الاسترداد الإلكتروني قيد المعالجة.'
+                : 'After the first 20 minutes, cancellation is unavailable when 6 hours or less remain before kickoff. The server determines cancellation and refund eligibility based on booking and payment status; an online refund may still be pending.',
             style: const TextStyle(
               fontSize: 12,
               height: 1.5,
