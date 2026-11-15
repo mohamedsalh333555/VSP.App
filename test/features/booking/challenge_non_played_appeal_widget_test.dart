@@ -62,6 +62,10 @@ void main() {
     expect(submitted, 1);
     expect(refreshed, 0);
     expect(tester.takeException(), isNull);
+    // VSPFeedback overlay toasts self-dismiss after three seconds. Drain
+    // that timer in the widget test instead of leaking it at teardown.
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
   });
 
   for (final language in ['ar','en']) {
@@ -111,6 +115,8 @@ void main() {
       expect(submittedReason,
           'Team members played this fixture and have timestamped photos');
       expect(tester.takeException(), isNull);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
     });
 
     testWidgets('noncaptain is blocked but captain can update an existing appeal: ' +

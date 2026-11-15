@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/services/challenge_report_auth_events.dart';
 
 import '../../../../core/config/challenge_result_rollout_flags.dart';
 import '../../../../core/repositories/booking/challenge_non_played_report_repository.dart';
@@ -41,7 +41,7 @@ class ChallengeReportAwareActions extends StatefulWidget {
 class _ChallengeReportAwareActionsState
     extends State<ChallengeReportAwareActions> {
   Future<Map<String, Object?>?>? _pending;
-  StreamSubscription<AuthState>? _authSubscription;
+  StreamSubscription<int>? _authSubscription;
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class _ChallengeReportAwareActionsState
   void _subscribe() {
     if (!widget.reportFeatureEnabled || widget.statusLoader != null) return;
     _authSubscription =
-        Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+        ChallengeReportAuthEvents.changes.listen((_) {
       // Reset a previously loaded private "my_appeal_submitted" flag on
       // account switch. The repository independently guards in-flight RPCs.
       if (mounted) _reload();
