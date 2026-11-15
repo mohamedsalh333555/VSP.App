@@ -212,6 +212,32 @@ void main() {
     });
   });
 
+  testWidgets('opted-in completed owner-created challenge is not hidden by manual mode',
+      (tester) async {
+    var reports = 0;
+    await tester.pumpWidget(_wrap(
+      BookingSheetBottomActions(
+        booking: _fakeBooking(
+          type: BookingType.challenge, isPaid: true,
+        ),
+        isEdit: true, isPastCompleted: true,
+        isUpcomingPendingCash: false,
+        isUpcomingOnlinePaid: false,
+        isOwnerManual: true,
+        isSaving: false, isDeleting: false,
+        onConfirmCashPayment: () {},
+        onCancelBooking: () {},
+        onConfirmBooking: () {},
+        onReportChallengeNotPlayed: () => reports++,
+      ),
+    ));
+    await tester.pump();
+    expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.flag_outlined));
+    await tester.pump();
+    expect(reports, 1);
+  });
+
   group('Challenge non-played owner action — opt-in only', () {
     testWidgets('neutral report replaces punitive no-show for a challenge when enabled', (tester) async {
       var neutralCalls = 0;

@@ -343,7 +343,13 @@ class BookingSheetBottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isOwnerManual && booking != null) {
+    // An owner-created challenge might be classified as a manual cash
+    // booking. Once finished, its neutral match-validity report must still
+    // be available when the staged server-backed action is explicitly wired.
+    if (isOwnerManual && booking != null &&
+        !(isPastCompleted &&
+          booking!.bookingType == BookingType.challenge &&
+          onReportChallengeNotPlayed != null)) {
       return BookingSheetManualPanel(
         booking: booking!,
         isArabic: Localizations.localeOf(context).languageCode == 'ar',
