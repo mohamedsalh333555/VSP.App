@@ -108,7 +108,7 @@
  "hi": "Hi",
  "playerDefaultName": "Player",
  "tournament": "TOURNAMENT",
- "egCurrency": "eg",
+ "egCurrency": "EGP",
  "spotsLeft": "SPOTS LEFT",
  "teamsJoined": "{joinedCount}/{maxCount} TEAMS JOINED",
  "@teamsJoined": {

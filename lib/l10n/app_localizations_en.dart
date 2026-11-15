@@ -319,7 +319,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tournament => 'TOURNAMENT';
 
   @override
-  String get egCurrency => 'eg';
+  String get egCurrency => 'EGP';
 
   @override
   String get spotsLeft => 'SPOTS LEFT';
