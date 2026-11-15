@@ -211,9 +211,15 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         _initBookingRealtimeListener(booking.id);
       } else if (!widget.isTournamentPayment) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        final priceChanged = bookingProvider.errorMessage
+                ?.contains('تغيّر سعر الملعب') == true;
         VSPFeedback.showError(
           context,
-          isArabic
+          priceChanged
+              ? (isArabic
+                  ? 'تغيّر سعر الملعب. افتح الملعب من جديد وراجع السعر قبل الدفع.'
+                  : 'The venue price changed. Reopen the venue and review it before payment.')
+              : isArabic
               ? 'تعذر تأكيد الحجز من الخادم. ارجع وحاول مرة أخرى.'
               : 'The server could not confirm the booking. Go back and retry.',
         );

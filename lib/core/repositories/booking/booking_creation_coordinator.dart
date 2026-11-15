@@ -125,6 +125,8 @@ class BookingCreationCoordinator {
           throw Exception('تعذر العثور على الفريق المنافس.');
         } else if (err == 'SLOT_LOCKED_OR_TAKEN') {
           throw Exception('عذراً، هذا الموعد محجوز لمباراة أخرى.');
+        } else if (err == 'PRICE_MISMATCH') {
+          throw Exception('PRICE_MISMATCH');
         }
 
         String errorMessage = rpcResult['message']?.toString() ??

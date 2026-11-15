@@ -34,6 +34,12 @@ class AppErrorHandler {
 
     final combined = '$code $message $details'.toLowerCase();
 
+    if (combined.contains('price_mismatch')) {
+      return isArabic
+          ? 'تغيّر سعر الملعب قبل تأكيد الحجز. افتح الملعب من جديد وراجع السعر.'
+          : 'The venue price changed before confirmation. Reopen the venue and review the price.';
+    }
+
     // ── Domain Business Rule Codes ──
     // Preserve the known cancellation policy without ever reflecting a raw
     // PostgREST/Exception message. The 20-minute grace period is part of the

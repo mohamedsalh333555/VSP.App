@@ -301,9 +301,15 @@ void showBookingPaymentMethodSheet({
                                 } else if (sheetContext.mounted) {
                                   HapticFeedback.vibrate();
                                   setSheetState(() => isNavigating = false);
+                                  final priceChanged = bookingProvider.errorMessage
+                                          ?.contains('تغيّر سعر الملعب') == true;
                                   VSPFeedback.showError(
                                     sheetContext,
-                                    isArabic
+                                    priceChanged
+                                        ? (isArabic
+                                            ? 'تغيّر سعر الملعب. افتح الملعب من جديد وراجع السعر قبل الحجز.'
+                                            : 'The venue price changed. Reopen the venue and review it before booking.')
+                                        : isArabic
                                         ? 'تعذر تأكيد الحجز النقدي. لم يتم تأكيد الحجز؛ حاول مرة أخرى.'
                                         : 'Could not confirm the cash booking. It has not been confirmed; please retry.',
                                   );
