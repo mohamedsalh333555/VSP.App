@@ -1,3 +1,8 @@
+## 2026-11-15 — Booking day states and calendar (207/411)
+
+- Accepted **83.04** for bounded client states: loading, fetch error and retry, bookable, venue closure, all booked, past day and missing schedule, plus Arabic RTL date labels and disabled past dates in calendar tests. [Evidence and limits](VSP_BOOKING_DAY_STATES_ACCEPTANCE_2026-11-15.md); [Flutter CI 43696480753](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43696480753).
+- **618 total / 207 accepted / 411 open.** Real venue availability, the November 11 device symptom and on-device rendering remain separate.
+
 ## 2026-11-15 — Booking financial summary (206/412)
 
 - Accepted **83.03** for the bounded financial summary: before slot selection the balance is deferred and the zero-total deposit badge is hidden; selecting an hour, ball rental, and a longer duration updates total and remaining values. The staging RPC price-mismatch rejection is covered separately. [Evidence and limits](VSP_BOOKING_FINANCIAL_SUMMARY_ACCEPTANCE_2026-11-15.md); [Flutter CI 43692957599](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43692957599).
