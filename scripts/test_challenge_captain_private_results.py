@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CANDIDATE = ROOT / "docs/security/sql/challenge_captain_private_result_candidate.sql"
 CONTRACT = ROOT / "supabase/tests/challenge_captain_private_result_contract.sql"
 RANKING_MIGRATION = ROOT / "supabase/migrations/20261003193000_challenge_mutual_result_agreement_and_points.sql"
+NON_PLAYED_CANDIDATE = ROOT / "docs/security/sql/challenge_non_played_report_candidate.sql"
 DB = "vsp_captain_result_contracts"
 
 def require_isolated(env: dict[str, str]) -> None:
@@ -40,6 +41,10 @@ def main() -> int:
     if source.count(marker) != 1:
         raise RuntimeError("Contract marker mismatch")
     source = source.replace(marker,CANDIDATE.read_text(encoding="utf-8"))
+    report_marker = "-- INSTALL_NOT_PLAYED_REPORT_CANDIDATE"
+    if source.count(report_marker) != 1:
+        raise RuntimeError("Non-played report contract marker drift")
+    source = source.replace(report_marker,NON_PLAYED_CANDIDATE.read_text(encoding="utf-8"))
     ranking_marker = "-- INSTALL_CHALLENGE_RANKING_TRIGGER"
     raw_ranking = RANKING_MIGRATION.read_text(encoding="utf-8")
     signature = "CREATE OR REPLACE FUNCTION public.calculate_elo_on_match_completion()"

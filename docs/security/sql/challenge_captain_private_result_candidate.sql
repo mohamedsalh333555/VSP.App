@@ -77,6 +77,12 @@ BEGIN
   IF v_booking.booking_type <> 'challenge' THEN
     RETURN jsonb_build_object('success',false,'error','NOT_A_CHALLENGE');
   END IF;
+  -- Owner non-played-match reports are independent of financial no-show.
+  -- A booking row lock serializes reporting against both captain submissions.
+  IF EXISTS(SELECT 1 FROM public.challenge_non_played_reports
+            WHERE booking_id=p_booking_id AND status='excluded') THEN
+    RETURN jsonb_build_object('success',false,'error','MATCH_EXCLUDED_NON_PLAYED');
+  END IF;
   IF v_booking.match_result_status = 'confirmed' THEN
     RETURN jsonb_build_object('success',false,'error','RESULT_ALREADY_FINALIZED');
   END IF;

@@ -21,6 +21,7 @@ CREATE TABLE public.bookings (
  id uuid PRIMARY KEY,
  booking_type text NOT NULL, status text NOT NULL,
  end_time timestamptz NOT NULL,
+ owner_id uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000404',
  player_team_id uuid REFERENCES public.teams(id),
  opponent_team_id uuid REFERENCES public.teams(id),
  match_result_status text NOT NULL DEFAULT 'noResult',
@@ -63,6 +64,7 @@ FOR EACH ROW EXECUTE FUNCTION public.vsp_test_result_write_guard();
 
 -- INSTALL_CHALLENGE_RANKING_TRIGGER
 
+-- INSTALL_NOT_PLAYED_REPORT_CANDIDATE
 -- INSTALL_PRIVATE_RESULTS_CANDIDATE
 
 DO $test$
@@ -263,3 +265,67 @@ BEGIN
 END;
 $actual_role$;
 RESET ROLE;
+
+-- A booking owner can report a match not played without changing its payment
+-- or fair-play state. Reporting a finalized match reverses ranking deltas once.
+DO $non_played$
+DECLARE r jsonb; points_before integer; away_before integer;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.owner_report_challenge_not_played_atomic(
+   '00000000-0000-0000-0000-000000000001','The booked match was not played');
+ IF r->>'error'<>'NOT_AUTHORIZED' THEN
+   RAISE EXCEPTION 'Non-owner was allowed to report'; END IF;
+
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000404',true);
+ r:=public.owner_report_challenge_not_played_atomic(
+   '00000000-0000-0000-0000-000000000004','The booked match was not played');
+ IF r->>'error'<>'MATCH_NOT_FINISHED' THEN
+   RAISE EXCEPTION 'Early non-played report accepted'; END IF;
+ r:=public.owner_report_challenge_not_played_atomic(
+   '00000000-0000-0000-0000-000000000005','The booked match was not played');
+ IF r->>'error'<>'BOOKING_NOT_ELIGIBLE' THEN
+   RAISE EXCEPTION 'Pending booking non-played report accepted'; END IF;
+
+ IF (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>7
+    OR (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000022')<>4 THEN
+   RAISE EXCEPTION 'Unexpected baseline points before report'; END IF;
+ r:=public.owner_report_challenge_not_played_atomic(
+   '00000000-0000-0000-0000-000000000001','The booked match was not played');
+ IF r->>'state'<>'excluded' OR r->>'ranking_reversed'<>'true' THEN
+   RAISE EXCEPTION 'Confirmed match not excluded from rankings'; END IF;
+ IF (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>4
+    OR (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000022')<>4
+    OR (SELECT matches_played FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>3
+    OR (SELECT matches_played FROM public.teams WHERE id='00000000-0000-0000-0000-000000000022')<>3
+    OR (SELECT elo_processed FROM public.bookings WHERE id='00000000-0000-0000-0000-000000000001') IS NOT TRUE THEN
+   RAISE EXCEPTION 'Ranking rollback incorrect or not idempotent'; END IF;
+
+ r:=public.owner_report_challenge_not_played_atomic(
+   '00000000-0000-0000-0000-000000000001','Repeated report must not alter counters');
+ IF r->>'already_reported'<>'true'
+    OR (SELECT points FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011')<>4 THEN
+   RAISE EXCEPTION 'Duplicate report reversed ranking again'; END IF;
+
+ r:=public.owner_report_challenge_not_played_atomic(
+   '00000000-0000-0000-0000-000000000003','Match did not take place at venue');
+ IF r->>'ranking_reversed'<>'false' THEN
+   RAISE EXCEPTION 'Never-scored match unexpectedly changed ranking'; END IF;
+ PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000101',true);
+ r:=public.submit_challenge_result_atomic(
+   '00000000-0000-0000-0000-000000000003',
+   '00000000-0000-0000-0000-000000000011','homeWin');
+ IF r->>'error'<>'MATCH_EXCLUDED_NON_PLAYED' THEN
+   RAISE EXCEPTION 'Captain finalized already reported non-played match'; END IF;
+ IF (SELECT count(*) FROM public.challenge_non_played_reports)<>2 THEN
+   RAISE EXCEPTION 'Report audit missing or duplicated'; END IF;
+ IF EXISTS(SELECT 1 FROM public.bookings WHERE fair_play_score<>100
+    OR payment_status<>'paid') THEN
+   RAISE EXCEPTION 'Non-played reporting changed payment or fair-play'; END IF;
+ IF has_table_privilege('authenticated',
+    'public.challenge_non_played_reports','SELECT')
+    OR has_table_privilege('anon',
+    'public.challenge_non_played_reports','SELECT') THEN
+   RAISE EXCEPTION 'Private non-played report exposed'; END IF;
+END;
+$non_played$;
