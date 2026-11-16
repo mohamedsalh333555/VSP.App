@@ -83,7 +83,8 @@ begin
      blocked_insert:=true;else raise;end if;
  end;
  if not blocked_update or not blocked_delete or not blocked_insert then
-   raise exception 'CHAMPION_TITLE_DID_NOT_FREEZE_SCORES';end if;
+   raise exception 'CHAMPION_TITLE_DID_NOT_FREEZE_SCORES update %, delete %, insert %',
+     blocked_update,blocked_delete,blocked_insert;end if;
 end $frozen$;
 
 -- A fully completed cup with a tied top score is not allowed to crown
