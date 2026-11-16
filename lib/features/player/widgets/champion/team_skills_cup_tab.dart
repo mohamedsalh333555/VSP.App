@@ -498,49 +498,35 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   Future<void> _withdrawRegistration(String registrationId) async {
     if (_submitting || _viewerUserId == null) return;
     final actorId = _viewerUserId;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('سحب طلب مشاركة الفريق'),
-        content: const Text(
-          'سيتم إلغاء طلب الفريق وتحرير مكانه واللاعبين الخمسة. '
-          'لن تستطيع إعادة تقديم نفس الفريق في هذه البطولة بعد السحب.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('العودة'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('تأكيد السحب'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted || actorId != _viewerUserId) return;
+    // Lock before opening the dialog: two quick taps must never open two
+    // confirmation windows or issue duplicate destructive requests.
     setState(() { _submitting = true; _feedback = null; });
     try {
-      await widget.repository.withdrawRegistration(registrationId);
-      if (!mounted || actorId != _viewerUserId) return;
-      // A direct read is independent from overlapping leaderboard polls.
-      final latest = await widget.repository.getRegistrations(cupId);
-      if (!mounted || actorId != _viewerUserId) return;
-      final withdrawn = TeamSkillsCupRepository.isCaptainWithdrawalConfirmed(
-        latest, registrationId: registrationId, captainId: actorId!,
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('سحب طلب مشاركة الفريق'),
+          content: const Text(
+            'سيتم إلغاء طلب الفريق وتحرير مكانه واللاعبين الخمسة. '
+            'لن تستطيع إعادة تقديم نفس الفريق في هذه البطولة بعد السحب.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('العودة'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('تأكيد السحب'),
+            ),
+          ],
+        ),
       );
-      setState(() {
-        _registrations = latest;
-        _feedback = withdrawn
-            ? 'تم سحب طلب الفريق وتحرير مكانه.'
-            : 'تم إرسال طلب السحب لكن تعذر تأكيد حالته. '
-                'راجع طلبك قبل المحاولة مجددًا.';
-      });
-    } catch (_) {
-      if (!mounted || actorId != _viewerUserId) return;
-      // An offline reply is ambiguous: confirm the terminal status rather
-      // than offering another destructive request or claiming failure.
+      if (confirmed != true || !mounted || actorId != _viewerUserId) return;
       try {
+        await widget.repository.withdrawRegistration(registrationId);
+        if (!mounted || actorId != _viewerUserId) return;
+        // A direct read is independent from overlapping leaderboard polls.
         final latest = await widget.repository.getRegistrations(cupId);
         if (!mounted || actorId != _viewerUserId) return;
         final withdrawn = TeamSkillsCupRepository.isCaptainWithdrawalConfirmed(
@@ -549,16 +535,35 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         setState(() {
           _registrations = latest;
           _feedback = withdrawn
-              ? 'طلب الفريق مسحوب بالفعل، وتم تحرير مكانه.'
-              : 'تعذر تأكيد السحب. تحقق من حالة طلبك قبل المحاولة مجددًا.';
+              ? 'تم سحب طلب الفريق وتحرير مكانه.'
+              : 'تم إرسال طلب السحب لكن تعذر تأكيد حالته. '
+                  'راجع طلبك قبل المحاولة مجددًا.';
         });
       } catch (_) {
-        if (mounted && actorId == _viewerUserId) {
-          setState(() => _feedback =
-              'تعذر التحقق من طلب السحب. راجع حالة الفريق قبل المحاولة مجددًا.');
+        if (!mounted || actorId != _viewerUserId) return;
+        // An offline reply is ambiguous: confirm the terminal status rather
+        // than offering another destructive request or claiming failure.
+        try {
+          final latest = await widget.repository.getRegistrations(cupId);
+          if (!mounted || actorId != _viewerUserId) return;
+          final withdrawn = TeamSkillsCupRepository.isCaptainWithdrawalConfirmed(
+            latest, registrationId: registrationId, captainId: actorId!,
+          );
+          setState(() {
+            _registrations = latest;
+            _feedback = withdrawn
+                ? 'طلب الفريق مسحوب بالفعل، وتم تحرير مكانه.'
+                : 'تعذر تأكيد السحب. تحقق من حالة طلبك قبل المحاولة مجددًا.';
+          });
+        } catch (_) {
+          if (mounted && actorId == _viewerUserId) {
+            setState(() => _feedback =
+                'تعذر التحقق من طلب السحب. راجع حالة الفريق قبل المحاولة مجددًا.');
+          }
         }
       }
     } finally {
+      // Also unlock on cancel, system back, dialog errors or account changes.
       if (mounted && actorId == _viewerUserId) {
         setState(() => _submitting = false);
       }
