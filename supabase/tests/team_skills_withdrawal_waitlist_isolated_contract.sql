@@ -83,7 +83,10 @@ end $outsider$;
 
 -- Captain of team 8 withdraws a waitlist application.
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000009308',false);
-select public.team_skills_withdraw_registration(
+select public.team_skills_withdraw_application(
+ '00000000-0000-0000-0000-000000000108');
+-- A dropped network response cannot double-release or double-audit.
+select public.team_skills_withdraw_application(
  '00000000-0000-0000-0000-000000000108');
 do $released$
 begin
