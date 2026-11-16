@@ -133,7 +133,8 @@ void main() {
     expect(tab, contains("value: 'withdraw'"));
     expect(tab, contains("action == 'withdraw'"));
     expect(tab, contains('await widget.repository.withdrawRegistration('));
-    expect(tab, contains("row['status'] == 'withdrawn'"));
+    expect(repo, contains("row['status'] == 'withdrawn'"));
+    expect(tab, contains('isCaptainWithdrawalConfirmed('));
     expect(tab, contains('تحقق من حالة طلبك قبل المحاولة مجددًا'));
   });
 
