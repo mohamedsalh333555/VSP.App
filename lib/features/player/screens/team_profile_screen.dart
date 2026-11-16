@@ -136,7 +136,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       });
     }
     try {
-      final records = await MatchupRepository().getAllHeadToHeadForTeam(teamId);
+      final records = await MatchupRepository().getAllHeadToHeadForTeamStrict(teamId);
       if (mounted &&
           requestVersion == _headToHeadRequestVersion &&
           (widget.team?.id ?? widget.teamId) == teamId) {
@@ -146,8 +146,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
           _hasHeadToHeadLoadError = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading head to head: $e');
+    } catch (_) {
+      debugPrint('Error loading head to head (details redacted)');
       if (mounted &&
           requestVersion == _headToHeadRequestVersion &&
           (widget.team?.id ?? widget.teamId) == teamId) {
@@ -172,8 +172,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
           _isCheckingChampion = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error checking 1v1 champion in team profile: $e');
+    } catch (_) {
+      debugPrint('Error checking 1v1 champion in team profile (details redacted)');
       if (mounted && requestVersion == _championRequestVersion &&
           (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
@@ -206,8 +206,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
           _loadMemberDetails();
         }
       }
-    } catch (e) {
-      debugPrint('Error loading team: $e');
+    } catch (_) {
+      debugPrint('Error loading team (details redacted)');
       if (mounted && requestVersion == _teamRequestVersion &&
           (widget.team?.id ?? widget.teamId) == requestedTeamId) {
         setState(() {
@@ -257,8 +257,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
         final returnedIds = members.map((member) => member.uid).toSet();
         _hasMemberLoadError = !returnedIds.containsAll(memberIds);
       });
-    } catch (e) {
-      debugPrint('Error loading team members: $e');
+    } catch (_) {
+      debugPrint('Error loading team members (details redacted)');
       if (mounted && requestVersion == _rosterRequestVersion &&
           (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
@@ -297,8 +297,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       }
 
       await showTeamMatchupInviteModal(context, code);
-    } catch (e) {
-      debugPrint('Error generating invite code: $e');
+    } catch (_) {
+      debugPrint('Error generating invite code (details redacted)');
       if (mounted) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(

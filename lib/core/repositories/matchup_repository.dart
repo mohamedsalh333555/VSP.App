@@ -16,8 +16,8 @@ class MatchupRepository {
         'p_team_id': teamId,
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error generating team invite code: $e');
+    } catch (_) {
+      debugPrint('Error generating team invite code (details redacted)');
       rethrow;
     }
   }
@@ -33,8 +33,8 @@ class MatchupRepository {
         'p_invite_code': inviteCode.trim().toUpperCase(),
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error adding team to matchup by code: $e');
+    } catch (_) {
+      debugPrint('Error adding team to matchup by code (details redacted)');
       rethrow;
     }
   }
@@ -46,8 +46,8 @@ class MatchupRepository {
         'p_booking_id': bookingId,
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error confirming matchup: $e');
+    } catch (_) {
+      debugPrint('Error confirming matchup (details redacted)');
       rethrow;
     }
   }
@@ -67,8 +67,8 @@ class MatchupRepository {
         'p_outcome': outcome,
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error recording matchup result: $e');
+    } catch (_) {
+      debugPrint('Error recording matchup result (details redacted)');
       rethrow;
     }
   }
@@ -80,8 +80,8 @@ class MatchupRepository {
         'p_booking_id': bookingId,
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error closing matchup: $e');
+    } catch (_) {
+      debugPrint('Error closing matchup (details redacted)');
       rethrow;
     }
   }
@@ -112,8 +112,8 @@ class MatchupRepository {
         if (teamData != null) combined['teams'] = teamData;
         return MatchupTeam.fromMap(combined);
       }).toList();
-    } catch (e) {
-      debugPrint('Error fetching matchup teams: $e');
+    } catch (_) {
+      debugPrint('Error fetching matchup teams (details redacted)');
       return [];
     }
   }
@@ -128,8 +128,8 @@ class MatchupRepository {
           .order('created_at', ascending: true);
 
       return (response as List).map((row) => MatchupResult.fromMap(row)).toList();
-    } catch (e) {
-      debugPrint('Error fetching matchup results: $e');
+    } catch (_) {
+      debugPrint('Error fetching matchup results (details redacted)');
       return [];
     }
   }
@@ -149,25 +149,35 @@ class MatchupRepository {
 
       if (response == null) return null;
       return TeamHeadToHead.fromMap(response);
-    } catch (e) {
-      debugPrint('Error fetching team head to head: $e');
+    } catch (_) {
+      debugPrint('Error fetching team head to head (details redacted)');
       return null;
     }
   }
 
-  /// جلب كل سجلات المواجهات المباشرة لفريق معين
-  Future<List<Map<String, dynamic>>> getAllHeadToHeadForTeam(String teamId) async {
+  /// Compatibility view: old consumers may treat a failure as no rows.
+  /// Critical result/history screens MUST call the strict version instead.
+  Future<List<Map<String, dynamic>>> getAllHeadToHeadForTeam(
+      String teamId) async {
     try {
-      final response = await _supabase
-          .from('team_head_to_head')
-          .select('*, team_a:teams!team_head_to_head_team_a_id_fkey(id, name, logo_url), team_b:teams!team_head_to_head_team_b_id_fkey(id, name, logo_url)')
-          .or('team_a_id.eq.$teamId,team_b_id.eq.$teamId');
-
-      return List<Map<String, dynamic>>.from(response as List);
-    } catch (e) {
-      debugPrint('Error fetching all head to head for team: $e');
+      return await getAllHeadToHeadForTeamStrict(teamId);
+    } catch (_) {
+      debugPrint('Matchup head-to-head lookup failed (details redacted)');
       return [];
     }
+  }
+
+  /// A failed source read is UNKNOWN, not verified empty history. This
+  /// propagates transport/RLS errors so the team-profile screen can display
+  /// its existing retryable failure state instead of a false "no matches".
+  /// Matchup-only history is distinct from captain-agreed challenge results.
+  Future<List<Map<String, dynamic>>> getAllHeadToHeadForTeamStrict(
+      String teamId) async {
+    final response = await _supabase
+        .from('team_head_to_head')
+        .select('*, team_a:teams!team_head_to_head_team_a_id_fkey(id, name, logo_url), team_b:teams!team_head_to_head_team_b_id_fkey(id, name, logo_url)')
+        .or('team_a_id.eq.$teamId,team_b_id.eq.$teamId');
+    return List<Map<String, dynamic>>.from(response as List);
   }
 
   /// حساب جدول الترتيب اللحظي (النقاط = 3 × الفوز + 1 × التعادل)
