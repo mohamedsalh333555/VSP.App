@@ -157,6 +157,37 @@ void main() {
     expect(center, contains('if (cup != null)'));
   });
 
+  test('lost registration reply is reconciled only from same captain and team', () {
+    final rows = <Map<String, dynamic>>[
+      {'team_id':'team-1','captain_id':'other','status':'approved'},
+      {'team_id':'team-2','captain_id':'captain-1','status':'pending'},
+      {'team_id':'team-1','captain_id':'captain-1','status':'waitlist'},
+    ];
+    final result = TeamSkillsCupRepository.findCaptainRegistration(
+      rows, teamId:'team-1', captainId:'captain-1',
+    );
+    expect(result?['status'], 'waitlist');
+    expect(TeamSkillsCupRepository.findCaptainRegistration(
+      rows, teamId:'team-1', captainId:'attacker',
+    ), isNull);
+    expect(TeamSkillsCupRepository.findCaptainRegistration(
+      rows, teamId:'other-team', captainId:'captain-1',
+    ), isNull);
+    expect(TeamSkillsCupRepository.findCaptainRegistration(
+      [{'team_id':'team-1','captain_id':'captain-1','status':'rejected'}],
+      teamId:'team-1', captainId:'captain-1',
+    ), isNull);
+  });
+
+  test('captain registration retries query server before showing a failure', () {
+    final tab = File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
+        .readAsStringSync();
+    expect(tab, contains('await widget.repository.getRegistrations(cupId)'));
+    expect(tab, contains('TeamSkillsCupRepository.findCaptainRegistration('));
+    expect(tab, contains('viewerId != _viewerUserId'));
+    expect(tab, contains('طلب فريقك مسجل بالفعل على قائمة الانتظار'));
+  });
+
   test('team registration and points use a single guarded Supabase backend', () {
     final source=File('lib/core/repositories/team_skills_cup_repository.dart').readAsStringSync();
     expect(source, contains("rpc('team_skills_register'"));
