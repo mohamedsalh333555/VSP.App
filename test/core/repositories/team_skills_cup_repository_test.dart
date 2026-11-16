@@ -125,6 +125,38 @@ void main() {
     expect(tab, contains('await _reload();'));
   });
 
+  test('Team Skills notification deep-link validates source and cup UUID', () {
+    const cupId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+    expect(TeamSkillsCupRepository.cupIdFromNotificationMetadata(
+      {'source':'team_skills_cup','cup_id':cupId}), cupId);
+    for (final metadata in <Map<String,dynamic>?>[
+      null,
+      {},
+      {'source':'booking','cup_id':cupId},
+      {'source':'team_skills_cup','cup_id':'../../../admin'},
+      {'source':'team_skills_cup','cup_id':'not-a-uuid'},
+      {'source':'team_skills_cup','cup_id':''},
+    ]) {
+      expect(TeamSkillsCupRepository.cupIdFromNotificationMetadata(metadata),
+        isNull, reason: '$metadata');
+    }
+  });
+
+  test('cup notifications recheck current account and fetch under published-cup RLS', () {
+    final repository = File('lib/core/repositories/team_skills_cup_repository.dart')
+        .readAsStringSync();
+    final center = File('lib/features/player/screens/notifications_center_screen.dart')
+        .readAsStringSync();
+    expect(repository, contains('getCupById(String cupId)'));
+    expect(repository, contains("['registration', 'live', 'completed']"));
+    expect(repository, contains('.maybeSingle()'));
+    expect(center, contains('cupIdFromNotificationMetadata(metadata)'));
+    expect(center, contains('await repository.getCupById(cupId)'));
+    expect(center, contains("currentUser?.id != userId"));
+    expect(center, contains('TeamSkillsCupDetailsScreen('));
+    expect(center, contains('if (cup != null)'));
+  });
+
   test('team registration and points use a single guarded Supabase backend', () {
     final source=File('lib/core/repositories/team_skills_cup_repository.dart').readAsStringSync();
     expect(source, contains("rpc('team_skills_register'"));
