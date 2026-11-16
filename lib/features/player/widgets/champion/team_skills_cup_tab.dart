@@ -150,7 +150,6 @@ class TeamSkillsCupDetailsScreen extends StatefulWidget {
 
 class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen> {
   late Future<void> _loadFuture;
-  List<Map<String, dynamic>> _leaderboard = [];
   List<RankedTeamSkillsEntry> _rankedLeaderboard = [];
   Timer? _liveRefreshTimer;
   bool _hasLiveRefreshError = false;
@@ -176,7 +175,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     super.initState();
     _loadFuture = _reload();
     _liveRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
-      if (mounted && !_submitting) _refreshLatest();
+      if (mounted && !_submitting) {
+        _refreshLatest();
+      }
     });
   }
 
@@ -202,9 +203,10 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         ...values[1].map((row) => row['team_id'].toString()),
       ]);
       if (!mounted || generation != _readGeneration ||
-          context.read<AuthProvider>().currentUser?.id != currentUserId) return;
+          context.read<AuthProvider>().currentUser?.id != currentUserId) {
+        return;
+      }
       setState(() {
-        _leaderboard = values[0];
         _rankedLeaderboard = ranking;
         _registrations = values[1];
         _awards = values[2];
@@ -241,10 +243,11 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       [...ranks.map((e) => e['team_id'].toString()),
        ...registrations.map((e) => e['team_id'].toString())]);
     if (!mounted || generation != _readGeneration ||
-        context.read<AuthProvider>().currentUser?.id != currentUserId) return;
+        context.read<AuthProvider>().currentUser?.id != currentUserId) {
+      return;
+    }
     setState(() {
       _hasLiveRefreshError = false;
-      _leaderboard = ranks;
       _rankedLeaderboard = rankedLeaderboard;
       _phases = phases;
       _awards = awards;
@@ -279,14 +282,20 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         _rosterOptions = roster;
         final allowedIds = roster.map((r)=>r['uid'].toString()).toSet();
         _selectedPlayers.removeWhere((id)=>!allowedIds.contains(id));
-        if (!_selectedPlayers.contains(_goalkeeperId)) _goalkeeperId=null;
-        if (!_selectedPlayers.contains(_representativeId)) _representativeId=null;
+        if (!_selectedPlayers.contains(_goalkeeperId)) {
+          _goalkeeperId = null;
+        }
+        if (!_selectedPlayers.contains(_representativeId)) {
+          _representativeId = null;
+        }
       });
     } catch (_) {
-      if (mounted && teamId == _selectedTeamId) setState(() {
-        _rosterOptions = [];
-        _feedback = 'تعذر التحقق من أعضاء الفريق. أعد المحاولة.';
-      });
+      if (mounted && teamId == _selectedTeamId) {
+        setState(() {
+          _rosterOptions = [];
+          _feedback = 'تعذر التحقق من أعضاء الفريق. أعد المحاولة.';
+        });
+      }
     }
   }
 
@@ -303,13 +312,19 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         goalkeeperId: _goalkeeperId!, representativeId: _representativeId!,
       );
       await _reload();
-      if (mounted) setState(() => _feedback =
-          'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.');
+      if (mounted) {
+        setState(() => _feedback =
+            'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.');
+      }
     } catch (_) {
-      if (mounted) setState(() => _feedback =
-          'تعذر إكمال التسجيل. راجع حالة الفريق قبل إعادة المحاولة.');
+      if (mounted) {
+        setState(() => _feedback =
+            'تعذر إكمال التسجيل. راجع حالة الفريق قبل إعادة المحاولة.');
+      }
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
   }
 
