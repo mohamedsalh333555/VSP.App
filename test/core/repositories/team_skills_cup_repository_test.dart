@@ -83,7 +83,10 @@ void main() {
         .readAsStringSync();
     expect(repo, contains("rpc('team_skills_withdraw_registration'"));
     expect(tab, contains('showDialog<bool>('));
-    expect(tab, contains('canWithdrawRegistration('));
+    // Edit and withdrawal now share the same captain/unpaid/pending gate.
+    expect(tab, contains('canCorrectRoster('));
+    expect(tab, contains("value: 'withdraw'"));
+    expect(tab, contains("action == 'withdraw'"));
     expect(tab, contains('await widget.repository.withdrawRegistration('));
     expect(tab, contains("row['status'] == 'withdrawn'"));
     expect(tab, contains('تحقق من حالة طلبك قبل المحاولة مجددًا'));
