@@ -151,6 +151,22 @@ class TeamSkillsCupRepository {
     }
     return null;
   }
+  /// UI-only eligibility preview; the server checks canonical captain,
+  /// actual account status, event state, money settlement and current roster.
+  static bool canWithdrawRegistration({
+    required String? cupStatus,
+    required String? status,
+    required String? captainId,
+    required String? viewerId,
+    required String? hospitalityStatus,
+    required bool hasCheckedIn,
+  }) =>
+      cupStatus == 'registration' &&
+      (status == 'pending' || status == 'waitlist') &&
+      viewerId != null && viewerId.isNotEmpty &&
+      captainId == viewerId &&
+      hospitalityStatus == 'unpaid' && !hasCheckedIn;
+
   /// Captain-only withdrawal of a pending/waitlisted application.
   /// The RPC is authoritative and audits the resulting freed roster/seat.
   /// Never treat network success alone as proof of a withdrawn registration.
