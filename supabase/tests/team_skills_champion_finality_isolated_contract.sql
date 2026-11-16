@@ -18,6 +18,12 @@ create table public.team_skills_scores(
  id uuid primary key default gen_random_uuid(),
  cup_id uuid not null,raw_value numeric not null);
 -- CHAMPION_FINALITY_REAL_MIGRATIONS
+-- The production seeding-freeze trigger was created by migration 84000.
+-- In this disposable fixture there is no full cup schema, so recreate
+-- that trigger on the local test table after the updated function loads.
+create trigger team_skills_freeze_score_after_seed
+before insert or update or delete on public.team_skills_scores
+for each row execute function vsp_skills_private.guard_score_after_seeding();
 -- In production the score trigger was installed by the older finals-seeding
 -- migration; this isolated fixture must install the same existing trigger.
 create trigger team_skills_freeze_score_after_seed
