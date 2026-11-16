@@ -9,7 +9,7 @@ from test_team_skills_rls_isolated import psql, reject_nonlocal_targets
 
 ROOT=Path(__file__).resolve().parents[1]
 SQL=ROOT/"supabase/tests/team_skills_blocked_judge_isolated_contract.sql"
-MIGRATION=ROOT/"supabase/migrations/20261116086000_team_skills_blocked_official_guard.sql"
+MIGRATION=ROOT/"supabase/migrations/20261116087000_team_skills_revoke_official.sql"
 DATABASE="vsp_skills_judge_eligibility_isolated"
 
 
