@@ -1,3 +1,9 @@
+## 2026-11-16 — قبول توثيق استثناءات RPC رقم 77.09 (210/420)
+
+- **قبول مهمة واحدة فقط: 77.09** بوصفها جردًا موثقًا لاستثناءات SECURITY DEFINER/التفويض المفوض وليس إصلاح صلاحيات. أُعيد التحقق بالقراءة فقط على Staging من **200** routine بصلاحية authenticated، **0** منها بصلاحية anon، و**12** دون marker لهوية المستدعي في نص تعريفها. [السجل ودليل المصدر والاستثناءات المفتوحة](security/VSP_PRIVILEGED_RPC_EXCEPTIONS_77_09_2026-11-16.md).
+- **630 إجمالي / 210 مقبولة / 420 مفتوحة.** لا تتضمن المهمة اختبارات JWT متعددة الحسابات أو تغيير GRANT/RLS أو تزكية أمنية أو نشرًا على الإنتاج. تستمر 77.04/77.06–77.08/77.10/77.11 و79.* في العداد؛ وليس أي ناتج توثيقي دليلًا على إصلاح الثغرات.
+- آخر CI كودي قبل التعديل التوثيقي [Flutter 43777510189](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43777510189)، [SQL 43777510195](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43777510195)، [Owner Checkout 43777510205](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43777510205)، Android 43777510197 وiOS 43777510199 كلها ناجحة. لا main merge ولا تغييرات على Supabase أو بيانات المال.
+
 ## 2026-11-15 — RESULT task intake only; no implementation (209/421)
 
 - **Before: 618 total / 209 accepted / 409 open. After: 630 total / 209 accepted / 421 open.** Added **12 open tasks 84.01–84.12** to the existing tracker under B09.05; no original IDs or acceptance states changed; no new task accepted. Active parent items: 83 (group 56 remains cancelled).
