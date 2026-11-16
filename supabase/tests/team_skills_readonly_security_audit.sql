@@ -51,6 +51,33 @@ begin
      and position('auth.uid()' in p.prosrc)=0
  ) then raise exception 'Team Skills privileged RPC missing auth.uid identity check';end if;
 
+ -- SQL body scans are defense-in-depth warnings, not a proof of correct
+ -- authorization: real multi-account RPC tests remain mandatory.
+ if exists(
+   select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='public' and p.proname like 'team_skills_%'
+     and p.proname not in ('team_skills_register',
+                           'team_skills_record_score',
+                           'team_skills_record_goalkeeper')
+     and position('vsp_skills_private.is_admin()' in p.prosrc)=0
+ ) then raise exception 'Team Skills administrative RPC missing is_admin guard';end if;
+
+ if exists(
+   select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='public'
+     and p.proname in ('team_skills_record_score','team_skills_record_goalkeeper')
+     and (position('role=' in p.prosrc)=0
+       or position('judge' in p.prosrc)=0
+       or position('vsp_skills_private.is_admin()' in p.prosrc)=0)
+ ) then raise exception 'Assigned judge RPC missing per-cup role checks';end if;
+
+ if exists(
+   select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='public' and p.proname='team_skills_register'
+     and (position('captain_id' in p.prosrc)=0
+       or position('Captain only' in p.prosrc)=0)
+ ) then raise exception 'Captain registration RPC missing canonical team ownership';end if;
+
  if exists(
    select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
    where n.nspname='vsp_skills_private'
