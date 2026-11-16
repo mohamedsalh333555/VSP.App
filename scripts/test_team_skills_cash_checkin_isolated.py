@@ -10,7 +10,7 @@ import sys
 from test_team_skills_rls_isolated import psql, reject_nonlocal_targets
 
 ROOT = Path(__file__).resolve().parents[1]
-ORIGINAL = ROOT / 'supabase/migrations/20261116070000_team_skills_hospitality_checkin.sql'
+APPROVED_ONLY = ROOT / 'supabase/migrations/20261116096000_team_skills_hospitality_approved_only.sql'
 HARDENED = ROOT / 'supabase/migrations/20261116091000_team_skills_checkin_closed_status_first.sql'
 FIXTURE = ROOT / 'supabase/tests/team_skills_cash_checkin_isolated_contract.sql'
 DATABASE = 'vsp_team_skills_cash_checkin_isolated'
@@ -29,14 +29,14 @@ def real_function(source: str, name: str) -> str:
 
 def main() -> int:
     reject_nonlocal_targets(dict(os.environ))
-    base = ORIGINAL.read_text(encoding='utf-8')
+    cash = APPROVED_ONLY.read_text(encoding='utf-8')
     latest = HARDENED.read_text(encoding='utf-8')
     sql = FIXTURE.read_text(encoding='utf-8')
     marker = '-- CHECKIN_AND_RECEIPT_REAL_FUNCTIONS'
     if sql.count(marker) != 1:
         raise RuntimeError('Missing unique check-in RPC injection marker')
     sql = sql.replace(marker, '\n'.join([
-        real_function(base, 'team_skills_confirm_hospitality'),
+        real_function(cash, 'team_skills_confirm_hospitality'),
         real_function(latest, 'team_skills_check_in'),
     ]))
     created = psql('postgres', command='CREATE DATABASE ' + DATABASE)
@@ -47,7 +47,7 @@ def main() -> int:
         if result.returncode:
             print('TEAM_SKILLS_CASH_CHECKIN_FAIL: ' + result.stderr[-2700:], file=sys.stderr)
             return 1
-        print('PASS: no unpaid check-in, audited cash/waiver, zero-fee teams, idempotent entry')
+        print('PASS: only approved teams may record cash/waiver, no unpaid check-in, zero-fee and idempotent entry')
         return 0
     finally:
         deleted = psql('postgres', command='DROP DATABASE IF EXISTS ' + DATABASE + ' WITH (FORCE)')
