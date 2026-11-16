@@ -201,11 +201,11 @@ void main() {
     final editor = source.substring(editStart, withdrawStart);
     final withdraw = source.substring(withdrawStart, buildStart);
     expect(editor.indexOf('setState(() => _submitting = true)'),
-      lessThan(editor.indexOf('Navigator.of(context).push<bool>('));
+      lessThan(editor.indexOf('Navigator.of(context).push<bool>(')));
     expect(editor, contains('} finally {'));
     expect(editor, contains('setState(() => _submitting = false);'));
     expect(withdraw.indexOf('_submitting = true;'),
-      lessThan(withdraw.indexOf('showDialog<bool>('));
+      lessThan(withdraw.indexOf('showDialog<bool>(')));
     expect(withdraw, contains('if (confirmed != true'));
     expect(withdraw, contains('} finally {'));
     expect(withdraw, contains('setState(() => _submitting = false);'));
