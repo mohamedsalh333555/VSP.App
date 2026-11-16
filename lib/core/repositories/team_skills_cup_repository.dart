@@ -178,6 +178,61 @@ class TeamSkillsCupRepository {
       params: {'p_registration_id': registrationId});
   }
 
+  /// Editable only before approval and settlement. Server ownership checks,
+  /// current team membership and audit logging remain authoritative.
+  static bool canCorrectRoster({
+    required String? cupStatus,
+    required String? status,
+    required String? captainId,
+    required String? viewerId,
+    required String? hospitalityStatus,
+    required bool hasCheckedIn,
+  }) => canWithdrawRegistration(
+    cupStatus: cupStatus,
+    status: status,
+    captainId: captainId,
+    viewerId: viewerId,
+    hospitalityStatus: hospitalityStatus,
+    hasCheckedIn: hasCheckedIn,
+  );
+
+  Future<List<Map<String, dynamic>>> getActiveRoster(
+      String registrationId) async {
+    if (registrationId.isEmpty) {
+      throw StateError('TEAM_SKILLS_REGISTRATION_ID_REQUIRED');
+    }
+    final rows = await _client.from('team_skills_roster')
+        .select('player_id,position')
+        .eq('registration_id', registrationId)
+        .eq('active', true)
+        .order('player_id');
+    return (rows as List).cast<Map<String, dynamic>>();
+  }
+
+  /// Captain can atomically replace their five players (including keeper and
+  /// 1v1 representative) while the request is pending or waitlisted.
+  Future<void> correctRoster({
+    required String registrationId,
+    required List<String> playerIds,
+    required String goalkeeperId,
+    required String representativeId,
+  }) async {
+    if (registrationId.isEmpty) {
+      throw StateError('TEAM_SKILLS_REGISTRATION_ID_REQUIRED');
+    }
+    if (playerIds.length != 5 || playerIds.toSet().length != 5 ||
+        !playerIds.contains(goalkeeperId) ||
+        !playerIds.contains(representativeId)) {
+      throw StateError('INVALID_TEAM_SKILLS_ROSTER');
+    }
+    await _client.rpc('team_skills_correct_roster', params: {
+      'p_registration_id': registrationId,
+      'p_player_ids': playerIds,
+      'p_goalkeeper_id': goalkeeperId,
+      'p_representative_id': representativeId,
+    });
+  }
+
   Future<List<Map<String, dynamic>>> getRegistrations(String cupId) async {
     final rows = await _client.from('team_skills_registrations')
         .select('id,cup_id,team_id,captain_id,status,goalkeeper_id,representative_id,'
