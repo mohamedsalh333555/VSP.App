@@ -85,8 +85,20 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
         _standings = standings;
         _hasLoadError = false;
         if (_teams.length >= 2) {
-          _selectedTeamAId ??= _teams[0].teamId;
-          _selectedTeamBId ??= _teams[1].teamId;
+          final eligibleIds = _teams.map((team) => team.teamId).toSet();
+          if (!eligibleIds.contains(_selectedTeamAId)) {
+            _selectedTeamAId = _teams[0].teamId;
+          }
+          if (!eligibleIds.contains(_selectedTeamBId) ||
+              _selectedTeamBId == _selectedTeamAId) {
+            _selectedTeamBId = _teams.firstWhere(
+              (team) => team.teamId != _selectedTeamAId,
+              orElse: () => _teams[1],
+            ).teamId;
+          }
+        } else {
+          _selectedTeamAId = null;
+          _selectedTeamBId = null;
         }
         _isLoading = false;
       });
@@ -105,10 +117,13 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   }
 
   Future<void> _submitMatchResult() async {
+    if (_isSubmitting) return;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final validationError = MatchupDashboardService.validateResultSubmission(
       teamAId: _selectedTeamAId,
       teamBId: _selectedTeamBId,
+      eligibleTeamIds: _teams.map((team) => team.teamId),
+      outcome: _selectedOutcome,
       isArabic: isArabic,
     );
 
@@ -122,14 +137,19 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     }
 
     final requestedBookingId = widget.bookingId;
+    // Capture the complete decision before the first await; never let a
+    // later dropdown change alter a request already being submitted.
+    final submittedTeamAId = _selectedTeamAId!;
+    final submittedTeamBId = _selectedTeamBId!;
+    final submittedOutcome = _selectedOutcome;
     setState(() => _isSubmitting = true);
 
     try {
       final receipt = await _matchupRepo.recordMatchupResult(
         bookingId: requestedBookingId,
-        teamAId: _selectedTeamAId!,
-        teamBId: _selectedTeamBId!,
-        outcome: _selectedOutcome,
+        teamAId: submittedTeamAId,
+        teamBId: submittedTeamBId,
+        outcome: submittedOutcome,
       );
 
       if (!mounted || widget.bookingId != requestedBookingId) return;
@@ -157,6 +177,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   }
 
   Future<void> _closeMatchup() async {
+    if (_isSubmitting) return;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (!MatchupDashboardService.canCloseMatchup(_results.length)) {
       VSPFeedback.showWarning(
@@ -193,7 +214,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
       ),
     );
 
-    if (confirm != true || !mounted) return;
+    if (confirm != true || !mounted || _isSubmitting) return;
 
     final requestedBookingId = widget.bookingId;
     setState(() => _isSubmitting = true);
@@ -308,9 +329,15 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
               selectedTeamBId: _selectedTeamBId,
               selectedOutcome: _selectedOutcome,
               isSubmitting: _isSubmitting,
-              onTeamAChanged: (val) => setState(() => _selectedTeamAId = val),
-              onTeamBChanged: (val) => setState(() => _selectedTeamBId = val),
-              onOutcomeChanged: (val) => setState(() => _selectedOutcome = val),
+              onTeamAChanged: (val) {
+                if (!_isSubmitting) setState(() => _selectedTeamAId = val);
+              },
+              onTeamBChanged: (val) {
+                if (!_isSubmitting) setState(() => _selectedTeamBId = val);
+              },
+              onOutcomeChanged: (val) {
+                if (!_isSubmitting) setState(() => _selectedOutcome = val);
+              },
               onSubmit: _submitMatchResult,
             ),
 
