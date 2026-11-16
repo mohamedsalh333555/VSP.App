@@ -116,6 +116,15 @@ void main() {
     expect(tab, contains("rows.first['computed_points']"));
   });
 
+  test('captain sees the actual bounded waitlist status after registration', () {
+    final tab = File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
+        .readAsStringSync();
+    expect(tab, contains("registration['status'] == 'waitlist'"));
+    expect(tab, contains('تم تسجيل فريقك في قائمة الانتظار'));
+    expect(tab, contains("case 'waitlist':"));
+    expect(tab, contains('await _reload();'));
+  });
+
   test('team registration and points use a single guarded Supabase backend', () {
     final source=File('lib/core/repositories/team_skills_cup_repository.dart').readAsStringSync();
     expect(source, contains("rpc('team_skills_register'"));
