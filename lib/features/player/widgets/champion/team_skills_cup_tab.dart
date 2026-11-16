@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/team_skills_cup_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../services/team_skills_ranking_service.dart';
 
 /// The backend is staged before being enabled in production builds.
 const bool teamSkillsCupEnabled =
@@ -137,6 +138,7 @@ class TeamSkillsCupDetailsScreen extends StatefulWidget {
 class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen> {
   late Future<void> _loadFuture;
   List<Map<String, dynamic>> _leaderboard = [];
+  List<RankedTeamSkillsEntry> _rankedLeaderboard = [];
   List<Map<String, dynamic>> _phases = [];
   List<Map<String, dynamic>> _awards = [];
   List<Map<String, dynamic>> _registrations = [];
@@ -176,12 +178,14 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     final ranks = values[0], phases = values[1], awards = values[2],
         registrations = values[3], teams = values[4];
     final memberTeamIds = await memberTeamsFuture;
+    final rankedLeaderboard = TeamSkillsRankingService.rank(ranks);
     final names = await widget.repository.getTeamNames(
       [...ranks.map((e) => e['team_id'].toString()),
        ...registrations.map((e) => e['team_id'].toString())]);
     if (!mounted) return;
     setState(() {
       _leaderboard = ranks;
+      _rankedLeaderboard = rankedLeaderboard;
       _phases = phases;
       _awards = awards;
       _registrations = registrations;
@@ -313,12 +317,14 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
             const SizedBox(height: 18),
             Text(ar ? 'ترتيب مهارات الفرق' : 'Skills leaderboard',
                 style: const TextStyle(color: VSPColors.white,fontSize:18,fontWeight:FontWeight.bold)),
-            ..._leaderboard.asMap().entries.map((entry)=>ListTile(
-              title:Text('#${entry.key+1} ${_teamNames[entry.value['team_id'].toString()] ?? entry.value['team_id']}',
+            ..._rankedLeaderboard.map((entry)=>ListTile(
+              title:Text('#${entry.rank} ${_teamNames[entry.data['team_id'].toString()] ?? entry.data['team_id']}',
                   style:style),
-              subtitle:Text('${entry.value['completed_stages']}/12',
+              subtitle:Text(
+                  '${entry.data['completed_stages']}/12 • '
+                  '${entry.complete ? (ar ? 'المراحل مكتملة' : 'Stages complete') : (ar ? 'مراحل ناقصة' : 'Stages pending')}',
                   style:const TextStyle(color:VSPColors.textSecondary)),
-              trailing:Text('${entry.value['points']} / 100',
+              trailing:Text('${entry.data['points']} / 100',
                   style:const TextStyle(color:VSPColors.accent,fontWeight:FontWeight.bold)),
             )),
             const SizedBox(height: 14),
