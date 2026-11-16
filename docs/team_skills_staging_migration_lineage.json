@@ -152,6 +152,11 @@
       "staging_migration_name": "team_skills_withdraw_compatibility_20261116"
     },
     {
+      "local_file": "supabase/migrations/20261116104000_team_skills_review_current_roster_guard.sql",
+      "staging_version": "20261116165434",
+      "staging_migration_name": "team_skills_review_current_roster_guard_20261116"
+    },
+    {
       "local_file": "supabase/migrations/20261116163000_team_skills_notifications_realtime_staging.sql",
       "staging_version": "20261116150557",
       "staging_migration_name": "team_skills_notifications_realtime_staging_20261116"
