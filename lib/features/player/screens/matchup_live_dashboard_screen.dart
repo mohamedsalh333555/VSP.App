@@ -33,6 +33,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _hasLoadError = false;
+  int _matchupLoadGeneration = 0;
 
   // Form State for Recording Result
   String? _selectedTeamAId;
@@ -45,37 +46,61 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     _loadMatchupData();
   }
 
+  @override
+  void didUpdateWidget(covariant MatchupLiveDashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.bookingId == widget.bookingId) return;
+    // A reused route must never show an earlier booking's teams or points.
+    _matchupLoadGeneration++;
+    _teams = [];
+    _results = [];
+    _standings = [];
+    _selectedTeamAId = null;
+    _selectedTeamBId = null;
+    _loadMatchupData();
+  }
+
   Future<void> _loadMatchupData() async {
+    if (!mounted) return;
+    final requestedBookingId = widget.bookingId;
+    final generation = ++_matchupLoadGeneration;
     setState(() {
       _isLoading = true;
       _hasLoadError = false;
     });
     try {
-      final teams = await _matchupRepo.getMatchupTeams(widget.bookingId);
-      final results = await _matchupRepo.getMatchupResults(widget.bookingId);
+      // Never reinterpret a failed transport/RLS query as an empty fixture.
+      final teams = await _matchupRepo.getMatchupTeamsStrict(requestedBookingId);
+      if (!mounted || generation != _matchupLoadGeneration ||
+          widget.bookingId != requestedBookingId) return;
+      final results =
+          await _matchupRepo.getMatchupResultsStrict(requestedBookingId);
+      if (!mounted || generation != _matchupLoadGeneration ||
+          widget.bookingId != requestedBookingId) return;
       final standings = _matchupRepo.calculateStandings(teams, results);
 
-      if (mounted) {
-        setState(() {
-          _teams = teams;
-          _results = results;
-          _standings = standings;
-          _hasLoadError = false;
-          if (_teams.length >= 2) {
-            _selectedTeamAId ??= _teams[0].teamId;
-            _selectedTeamBId ??= _teams[1].teamId;
-          }
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading matchup data: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _hasLoadError = true;
-        });
-      }
+      setState(() {
+        _teams = teams;
+        _results = results;
+        _standings = standings;
+        _hasLoadError = false;
+        if (_teams.length >= 2) {
+          _selectedTeamAId ??= _teams[0].teamId;
+          _selectedTeamBId ??= _teams[1].teamId;
+        }
+        _isLoading = false;
+      });
+    } catch (_) {
+      debugPrint('Error loading matchup data (details redacted)');
+      if (!mounted || generation != _matchupLoadGeneration ||
+          widget.bookingId != requestedBookingId) return;
+      setState(() {
+        _teams = [];
+        _results = [];
+        _standings = [];
+        _isLoading = false;
+        _hasLoadError = true;
+      });
     }
   }
 
@@ -96,25 +121,31 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
       return;
     }
 
+    final requestedBookingId = widget.bookingId;
     setState(() => _isSubmitting = true);
 
     try {
-      await _matchupRepo.recordMatchupResult(
-        bookingId: widget.bookingId,
+      final receipt = await _matchupRepo.recordMatchupResult(
+        bookingId: requestedBookingId,
         teamAId: _selectedTeamAId!,
         teamBId: _selectedTeamBId!,
         outcome: _selectedOutcome,
       );
 
-      if (!mounted) return;
+      if (!mounted || widget.bookingId != requestedBookingId) return;
+      if (!MatchupDashboardService.isConfirmedMutationReceipt(
+        receipt, bookingId: requestedBookingId, requireResultId: true,
+      )) {
+        throw StateError('MATCHUP_RESULT_RECEIPT_NOT_CONFIRMED');
+      }
       VSPFeedback.showSuccess(
         context,
         isArabic ? 'تم تسجيل نتيجة المباراة وتحديث الترتيب بنجاح!' : 'Match result recorded and standings updated successfully!',
       );
       await _loadMatchupData();
-    } catch (e) {
-      debugPrint('Error submitting match result: $e');
-      if (mounted) {
+    } catch (_) {
+      debugPrint('Error submitting match result (details redacted)');
+      if (mounted && widget.bookingId == requestedBookingId) {
         VSPFeedback.showError(
           context,
           isArabic ? 'تعذر تسجيل النتيجة. حاول مرة أخرى.' : 'Could not record the result. Please try again.',
@@ -164,18 +195,24 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
 
     if (confirm != true || !mounted) return;
 
+    final requestedBookingId = widget.bookingId;
     setState(() => _isSubmitting = true);
     try {
-      await _matchupRepo.closeMatchup(widget.bookingId);
-      if (!mounted) return;
+      final receipt = await _matchupRepo.closeMatchup(requestedBookingId);
+      if (!mounted || widget.bookingId != requestedBookingId) return;
+      if (!MatchupDashboardService.isConfirmedMutationReceipt(
+        receipt, bookingId: requestedBookingId,
+      )) {
+        throw StateError('MATCHUP_CLOSE_RECEIPT_NOT_CONFIRMED');
+      }
       VSPFeedback.showSuccess(
         context,
         isArabic ? 'تم إغلاق المواجهة واعتماد النتائج النهائية بنجاح!' : 'Matchup closed and final standings confirmed!',
       );
       Navigator.pop(context);
-    } catch (e) {
-      debugPrint('Error closing matchup: $e');
-      if (mounted) {
+    } catch (_) {
+      debugPrint('Error closing matchup (details redacted)');
+      if (mounted && widget.bookingId == requestedBookingId) {
         VSPFeedback.showError(
           context,
           isArabic ? 'تعذر إغلاق المواجهة. حاول مرة أخرى.' : 'Could not close the matchup. Please try again.',

@@ -86,52 +86,64 @@ class MatchupRepository {
     }
   }
 
-  /// جلب قائمة الفرق المشاركة في المواجهة
+  /// Historical callers may still expect [] on failure; the live dashboard
+  /// MUST use the strict methods to distinguish an outage from empty data.
   Future<List<MatchupTeam>> getMatchupTeams(String bookingId) async {
     try {
-      final response = await _supabase
-          .from('matchup_teams')
-          .select('*')
-          .eq('booking_id', bookingId)
-          .order('joined_at', ascending: true);
-
-      final rows = (response as List).cast<Map<String, dynamic>>();
-      if (rows.isEmpty) return [];
-
-      final teamIds = rows.map((r) => r['team_id']?.toString()).whereType<String>().toList();
-      final teamsRes = await _supabase
-          .from('teams_public')
-          .select('id, name, logo_url, captain_id')
-          .inFilter('id', teamIds);
-      final teamsMap = {for (var t in (teamsRes as List)) t['id'].toString(): t};
-
-      return rows.map((row) {
-        final teamId = row['team_id']?.toString();
-        final teamData = teamsMap[teamId];
-        final combined = Map<String, dynamic>.from(row);
-        if (teamData != null) combined['teams'] = teamData;
-        return MatchupTeam.fromMap(combined);
-      }).toList();
+      return await getMatchupTeamsStrict(bookingId);
     } catch (_) {
       debugPrint('Error fetching matchup teams (details redacted)');
       return [];
     }
   }
 
-  /// جلب سجل مباريات المواجهة
+  Future<List<MatchupTeam>> getMatchupTeamsStrict(String bookingId) async {
+    final response = await _supabase
+        .from('matchup_teams')
+        .select('*')
+        .eq('booking_id', bookingId)
+        .order('joined_at', ascending: true);
+
+    final rows = (response as List).cast<Map<String, dynamic>>();
+    if (rows.isEmpty) return [];
+
+    final teamIds = rows.map((r) => r['team_id']?.toString())
+        .whereType<String>().toList();
+    final teamsRes = await _supabase
+        .from('teams_public')
+        .select('id, name, logo_url, captain_id')
+        .inFilter('id', teamIds);
+    final teamsMap = {
+      for (var t in (teamsRes as List)) t['id'].toString(): t
+    };
+
+    return rows.map((row) {
+      final teamId = row['team_id']?.toString();
+      final teamData = teamsMap[teamId];
+      final combined = Map<String, dynamic>.from(row);
+      if (teamData != null) combined['teams'] = teamData;
+      return MatchupTeam.fromMap(combined);
+    }).toList();
+  }
+
   Future<List<MatchupResult>> getMatchupResults(String bookingId) async {
     try {
-      final response = await _supabase
-          .from('matchup_results')
-          .select('*')
-          .eq('booking_id', bookingId)
-          .order('created_at', ascending: true);
-
-      return (response as List).map((row) => MatchupResult.fromMap(row)).toList();
+      return await getMatchupResultsStrict(bookingId);
     } catch (_) {
       debugPrint('Error fetching matchup results (details redacted)');
       return [];
     }
+  }
+
+  Future<List<MatchupResult>> getMatchupResultsStrict(String bookingId) async {
+    final response = await _supabase
+        .from('matchup_results')
+        .select('*')
+        .eq('booking_id', bookingId)
+        .order('created_at', ascending: true);
+    return (response as List).map(
+      (row) => MatchupResult.fromMap(row),
+    ).toList();
   }
 
   /// جلب سجل المواجهات المباشرة بين فريقين (Head to Head)

@@ -38,6 +38,23 @@ class MatchupDashboardService {
     return resultsCount > 0;
   }
 
+  /// Only acknowledge a trusted, booking-scoped server response. A network
+  /// round trip, malformed map or success flag with a different booking ID
+  /// must never create a "match result recorded" or "matchup closed" toast.
+  static bool isConfirmedMutationReceipt(
+    Object? raw, {
+    required String bookingId,
+    bool requireResultId = false,
+  }) {
+    if (raw is! Map || raw['success'] != true ||
+        raw['booking_id']?.toString() != bookingId) return false;
+    if (requireResultId) {
+      final resultId = raw['result_id'];
+      if (resultId is! String || resultId.trim().isEmpty) return false;
+    }
+    return true;
+  }
+
   /// Formats the outcome display text and color for a recorded match result.
   static MatchupOutcomePresentation getOutcomePresentation({
     required String outcome,
@@ -55,11 +72,15 @@ class MatchupDashboardService {
         text: isArabic ? 'فوز $teamBName' : '$teamBName win',
         color: VSPColors.success,
       );
-    } else {
+    } else if (outcome == 'draw') {
       return MatchupOutcomePresentation(
         text: isArabic ? 'تعادل' : 'Draw',
         color: VSPColors.warning,
       );
     }
+    return MatchupOutcomePresentation(
+      text: isArabic ? 'النتيجة غير متاحة' : 'Result unavailable',
+      color: VSPColors.warning,
+    );
   }
 }

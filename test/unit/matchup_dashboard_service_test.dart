@@ -63,6 +63,12 @@ void main() {
       );
       expect(draw.text, 'تعادل');
       expect(draw.color, VSPColors.warning);
+      final unknown = MatchupDashboardService.getOutcomePresentation(
+        outcome: 'pending', teamAName: 'A', teamBName: 'B',
+        isArabic: false,
+      );
+      expect(unknown.text, 'Result unavailable');
+      expect(unknown.color, VSPColors.warning);
     });
   });
 }
