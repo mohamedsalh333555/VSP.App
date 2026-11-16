@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/config/app_env.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/team_skills_cup_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../services/team_skills_ranking_service.dart';
 
-/// The backend is staged before being enabled in production builds.
-const bool teamSkillsCupEnabled =
-    bool.fromEnvironment('VSP_ENABLE_TEAM_SKILLS_CUP', defaultValue: false);
+/// Fail closed unless build explicitly names a matching Supabase project.
+bool get teamSkillsCupEnabled => AppEnv.teamSkillsCupEnabled;
 
 class TeamSkillsCupTab extends StatefulWidget {
   final String selectedLocation;
