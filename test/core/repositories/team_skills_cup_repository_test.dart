@@ -358,7 +358,8 @@ void main() {
     final submitStart = source.indexOf('Future<void> _submit() async');
     final editStart = source.indexOf('Future<void> _editRegistration(');
     final withdrawStart = source.indexOf('Future<void> _withdrawRegistration(');
-    final buildStart = source.indexOf('@override\\n  Widget build(', withdrawStart);
+    final buildStart = source.indexOf('  Widget build(', withdrawStart);
+    expect(buildStart, greaterThan(withdrawStart));
     final submitHandler = source.substring(submitStart, editStart);
     final withdrawHandler = source.substring(withdrawStart, buildStart);
     expect(submitHandler, contains('final receiptId = await widget.repository.registerTeam('));
