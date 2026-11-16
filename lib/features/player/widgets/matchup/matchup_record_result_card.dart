@@ -86,7 +86,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   items: teams.map((t) => DropdownMenuItem(value: t.teamId, child: Text(t.teamName))).toList(),
-                  onChanged: onTeamAChanged,
+                  onChanged: isSubmitting ? null : onTeamAChanged,
                 ),
               ),
               const Padding(
@@ -107,7 +107,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   items: teams.map((t) => DropdownMenuItem(value: t.teamId, child: Text(t.teamName))).toList(),
-                  onChanged: onTeamBChanged,
+                  onChanged: isSubmitting ? null : onTeamBChanged,
                 ),
               ),
             ],
@@ -125,6 +125,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                   label: isArabic ? 'فوز ${teamA.teamName}' : '${teamA.teamName} win',
                   value: 'team_a_win',
                   isSelected: selectedOutcome == 'team_a_win',
+                  isEnabled: !isSubmitting,
                 ),
               ),
               const SizedBox(width: 6),
@@ -133,6 +134,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                   label: isArabic ? 'تعادل' : 'Draw',
                   value: 'draw',
                   isSelected: selectedOutcome == 'draw',
+                  isEnabled: !isSubmitting,
                 ),
               ),
               const SizedBox(width: 6),
@@ -141,6 +143,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                   label: isArabic ? 'فوز ${teamB.teamName}' : '${teamB.teamName} win',
                   value: 'team_b_win',
                   isSelected: selectedOutcome == 'team_b_win',
+                  isEnabled: !isSubmitting,
                 ),
               ),
             ],
@@ -161,9 +164,10 @@ class MatchupRecordResultCard extends StatelessWidget {
     required String label,
     required String value,
     required bool isSelected,
+    required bool isEnabled,
   }) {
     return InkWell(
-      onTap: () => onOutcomeChanged(value),
+      onTap: isEnabled ? () => onOutcomeChanged(value) : null,
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
