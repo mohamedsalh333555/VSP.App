@@ -2,6 +2,7 @@
 create schema auth;
 create function auth.uid() returns uuid language sql stable set search_path=''
 as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+create table public.users(id uuid primary key,is_blocked boolean not null default false);
 create table public.teams(id uuid primary key,captain_id uuid not null);
 create table public.team_members(team_id uuid not null,user_id uuid not null);
 create table public.team_skills_cups(
@@ -28,11 +29,17 @@ values('00000000-0000-0000-0000-000000000001','registration',
 insert into public.teams(id,captain_id)
 select ('00000000-0000-0000-0000-'||lpad((200+i)::text,12,'0'))::uuid,
        ('00000000-0000-0000-0000-'||lpad((900+i)::text,12,'0'))::uuid
-from generate_series(1,9) i;
+from generate_series(1,10) i;
 insert into public.team_members(team_id,user_id)
 select ('00000000-0000-0000-0000-'||lpad((200+i)::text,12,'0'))::uuid,
        ('00000000-0000-0000-0000-'||lpad((5000+i*100+j)::text,12,'0'))::uuid
-from generate_series(1,9) i cross join generate_series(1,5) j;
+from generate_series(1,10) i cross join generate_series(1,5) j;
+insert into public.users(id)
+select distinct id from (
+ select captain_id as id from public.teams
+ union
+ select user_id as id from public.team_members
+) identities;
 
 do $applications$
 declare n integer;t uuid;capt uuid;people uuid[];receipt uuid;
@@ -92,3 +99,38 @@ begin
  or (select count(*) from public.team_skills_audit where action='register_team')<>8
  then raise exception 'WAITLIST_COUNTS_OR_AUDIT_INVALID';end if;
 end $guarantees$;
+
+-- The first eight captains are valid; use a tenth separate team to
+-- prove suspended captain / roster denials occur before full waitlist.
+do $blocked_enrollment$
+declare team10 uuid:='00000000-0000-0000-0000-000000000210';
+cap10 uuid:='00000000-0000-0000-0000-000000000910';
+people uuid[];denied_cap boolean:=false;denied_player boolean:=false;
+begin
+ select array_agg(m.user_id order by m.user_id) into people
+ from public.team_members m where m.team_id=team10;
+ update public.users set is_blocked=true where id=cap10;
+ perform set_config('request.jwt.claim.sub',cap10::text,true);
+ begin
+   perform public.team_skills_register(
+     '00000000-0000-0000-0000-000000000001',team10,people,people[1],people[2]);
+ exception when others then
+   if position('Blocked captain' in sqlerrm)>0 then denied_cap:=true;
+   else raise;end if;
+ end;
+ update public.users set is_blocked=false where id=cap10;
+ update public.users set is_blocked=true where id=people[1];
+ begin
+   perform public.team_skills_register(
+     '00000000-0000-0000-0000-000000000001',team10,people,people[1],people[2]);
+ exception when others then
+   if position('Blocked player' in sqlerrm)>0 then denied_player:=true;
+   else raise;end if;
+ end;
+ if not denied_cap or not denied_player then
+   raise exception 'BLOCKED_CAPTAIN_OR_ROSTER_ACCEPTED';
+ end if;
+ if exists(select 1 from public.team_skills_registrations
+           where team_id=team10)
+ then raise exception 'BLOCKED_TEAM_WROTE_REGISTRATION';end if;
+end $blocked_enrollment$;
