@@ -619,10 +619,15 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                   statusText(registration['status']?.toString()),
                   style: const TextStyle(color: VSPColors.accent),
                 ),
-                trailing: widget.cup['status'] == 'registration' &&
-                        registration['captain_id']?.toString() == _viewerUserId &&
-                        ['pending','waitlist'].contains(registration['status']) &&
-                        registration['hospitality_payment_status'] == 'unpaid'
+                trailing: TeamSkillsCupRepository.canWithdrawRegistration(
+                  cupStatus: widget.cup['status']?.toString(),
+                  status: registration['status']?.toString(),
+                  captainId: registration['captain_id']?.toString(),
+                  viewerId: _viewerUserId,
+                  hospitalityStatus:
+                      registration['hospitality_payment_status']?.toString(),
+                  hasCheckedIn: registration['checked_in_at'] != null,
+                )
                     ? TextButton(
                         onPressed: _submitting
                             ? null
