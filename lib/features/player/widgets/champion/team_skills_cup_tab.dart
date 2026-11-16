@@ -448,49 +448,58 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       hasCheckedIn: registration['checked_in_at'] != null,
     )) return;
 
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(builder: (_) => TeamSkillsRosterCorrectionScreen(
-        cupId: cupId,
-        registrationId: registration['id'].toString(),
-        teamId: registration['team_id'].toString(),
-        captainId: viewerId,
-        initialGoalkeeperId: registration['goalkeeper_id'].toString(),
-        initialRepresentativeId: registration['representative_id'].toString(),
-        repository: widget.repository,
-      )),
-    );
-    if (!mounted || viewerId != _viewerUserId || saved != true) return;
-    setState(() => _feedback = null);
+    // Opening a route is asynchronous. Lock immediately to prevent double
+    // taps opening multiple roster editors for the same application.
+    setState(() => _submitting = true);
     try {
-      // Do not read from _registrations after _reload(): a 20-second
-      // refresh can invalidate that request and leave the cached list old.
-      final latest = await widget.repository.getRegistrations(cupId);
-      if (!mounted || viewerId != _viewerUserId) return;
-      final current = latest.where((row) =>
-          row['id']?.toString() == registration['id']?.toString() &&
-          row['cup_id']?.toString() == cupId &&
-          row['team_id']?.toString() == registration['team_id']?.toString() &&
-          row['captain_id']?.toString() == viewerId).toList();
-      final status = current.length == 1
-          ? current.single['status']?.toString() : null;
-      setState(() {
-        _registrations = latest;
-        _feedback = status == 'approved'
-            ? 'تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك.'
-            : status == 'waitlist'
-                ? 'تم حفظ التشكيلة، والفريق ما زال في قائمة الانتظار.'
-                : status == 'pending'
-                    ? 'تم حفظ التشكيلة، والطلب ما زال ينتظر مراجعة الإدارة.'
-                    : 'تم حفظ التشكيلة، لكن تعذر تأكيد حالة المشاركة الحالية.';
-        _loadFuture = _reload();
-      });
-    } catch (_) {
-      if (mounted && viewerId == _viewerUserId) {
+      final saved = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(builder: (_) => TeamSkillsRosterCorrectionScreen(
+          cupId: cupId,
+          registrationId: registration['id'].toString(),
+          teamId: registration['team_id'].toString(),
+          captainId: viewerId,
+          initialGoalkeeperId: registration['goalkeeper_id'].toString(),
+          initialRepresentativeId: registration['representative_id'].toString(),
+          repository: widget.repository,
+        )),
+      );
+      if (!mounted || viewerId != _viewerUserId || saved != true) return;
+      setState(() => _feedback = null);
+      try {
+        // Read directly: a timed refresh can supersede _reload().
+        final latest = await widget.repository.getRegistrations(cupId);
+        if (!mounted || viewerId != _viewerUserId) return;
+        final current = latest.where((row) =>
+            row['id']?.toString() == registration['id']?.toString() &&
+            row['cup_id']?.toString() == cupId &&
+            row['team_id']?.toString() == registration['team_id']?.toString() &&
+            row['captain_id']?.toString() == viewerId).toList();
+        final status = current.length == 1
+            ? current.single['status']?.toString() : null;
         setState(() {
-          _feedback =
-              'تم حفظ التشكيلة، لكن تعذر تحديث حالة الطلب. أعد التحميل.';
+          _registrations = latest;
+          _feedback = status == 'approved'
+              ? 'تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك.'
+              : status == 'waitlist'
+                  ? 'تم حفظ التشكيلة، والفريق ما زال في قائمة الانتظار.'
+                  : status == 'pending'
+                      ? 'تم حفظ التشكيلة، والطلب ما زال ينتظر مراجعة الإدارة.'
+                      : 'تم حفظ التشكيلة، لكن تعذر تأكيد حالة المشاركة الحالية.';
           _loadFuture = _reload();
         });
+      } catch (_) {
+        if (mounted && viewerId == _viewerUserId) {
+          setState(() {
+            _feedback =
+                'تم حفظ التشكيلة، لكن تعذر تحديث حالة الطلب. أعد التحميل.';
+            _loadFuture = _reload();
+          });
+        }
+      }
+    } finally {
+      // Also release when the editor is cancelled or the route is closed.
+      if (mounted && viewerId == _viewerUserId) {
+        setState(() => _submitting = false);
       }
     }
   }
