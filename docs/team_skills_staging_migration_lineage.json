@@ -147,6 +147,11 @@
       "staging_migration_name": "team_skills_waitlist_review_capacity_20261116"
     },
     {
+      "local_file": "supabase/migrations/20261116103000_team_skills_withdraw_compatibility.sql",
+      "staging_version": "20261116164440",
+      "staging_migration_name": "team_skills_withdraw_compatibility_20261116"
+    },
+    {
       "local_file": "supabase/migrations/20261116163000_team_skills_notifications_realtime_staging.sql",
       "staging_version": "20261116150557",
       "staging_migration_name": "team_skills_notifications_realtime_staging_20261116"
