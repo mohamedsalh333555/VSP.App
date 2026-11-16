@@ -66,22 +66,22 @@ end $applications$;
 
 do $guarantees$
 declare denied_captain boolean:=false;denied_repeat boolean:=false;
-team_id uuid:='00000000-0000-0000-0000-000000000201';
+v_team_id uuid:='00000000-0000-0000-0000-000000000201';
 players uuid[];
 begin
  select array_agg(m.user_id order by m.user_id) into players
- from public.team_members m where m.team_id=team_id;
+ from public.team_members m where m.team_id=v_team_id;
  perform set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000999',true);
  begin
    perform public.team_skills_register(
-     '00000000-0000-0000-0000-000000000001',team_id,players,players[1],players[2]);
+     '00000000-0000-0000-0000-000000000001',v_team_id,players,players[1],players[2]);
  exception when others then
    if position('Captain only' in sqlerrm)>0 then denied_captain:=true;else raise;end if;
  end;
  perform set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000901',true);
  begin
    perform public.team_skills_register(
-     '00000000-0000-0000-0000-000000000001',team_id,players,players[1],players[2]);
+     '00000000-0000-0000-0000-000000000001',v_team_id,players,players[1],players[2]);
  exception when others then
    if position('already registered' in lower(sqlerrm))>0 then denied_repeat:=true;else raise;end if;
  end;
