@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/config/app_env.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/team_skills_cup_repository.dart';
+import 'team_skills_roster_correction_screen.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../services/team_skills_ranking_service.dart';
 
@@ -423,6 +424,37 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     }
   }
 
+  Future<void> _editRegistration(Map<String, dynamic> registration) async {
+    if (_submitting || _viewerUserId == null) return;
+    final viewerId = _viewerUserId!;
+    if (!TeamSkillsCupRepository.canCorrectRoster(
+      cupStatus: widget.cup['status']?.toString(),
+      status: registration['status']?.toString(),
+      captainId: registration['captain_id']?.toString(),
+      viewerId: viewerId,
+      hospitalityStatus:
+          registration['hospitality_payment_status']?.toString(),
+      hasCheckedIn: registration['checked_in_at'] != null,
+    )) return;
+
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => TeamSkillsRosterCorrectionScreen(
+        cupId: cupId,
+        registrationId: registration['id'].toString(),
+        teamId: registration['team_id'].toString(),
+        captainId: viewerId,
+        initialGoalkeeperId: registration['goalkeeper_id'].toString(),
+        initialRepresentativeId: registration['representative_id'].toString(),
+        repository: widget.repository,
+      )),
+    );
+    if (!mounted || viewerId != _viewerUserId || saved != true) return;
+    setState(() {
+      _feedback = 'تم حفظ التشكيلة المحدثة، وما زال الطلب ينتظر مراجعة الإدارة.';
+      _loadFuture = _reload();
+    });
+  }
+
   Future<void> _withdrawRegistration(String registrationId) async {
     if (_submitting || _viewerUserId == null) return;
     final actorId = _viewerUserId;
@@ -619,7 +651,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                   statusText(registration['status']?.toString()),
                   style: const TextStyle(color: VSPColors.accent),
                 ),
-                trailing: TeamSkillsCupRepository.canWithdrawRegistration(
+                trailing: TeamSkillsCupRepository.canCorrectRoster(
                   cupStatus: widget.cup['status']?.toString(),
                   status: registration['status']?.toString(),
                   captainId: registration['captain_id']?.toString(),
@@ -628,13 +660,19 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                       registration['hospitality_payment_status']?.toString(),
                   hasCheckedIn: registration['checked_in_at'] != null,
                 )
-                    ? TextButton(
-                        onPressed: _submitting
-                            ? null
-                            : () => _withdrawRegistration(
-                                registration['id'].toString()),
-                        child: Text(ar ? 'سحب الطلب' : 'Withdraw request'),
-                      )
+                    ? Row(mainAxisSize: MainAxisSize.min, children: [
+                        TextButton(
+                          onPressed: _submitting
+                              ? null : () => _editRegistration(registration),
+                          child: Text(ar ? 'تعديل التشكيلة' : 'Edit roster'),
+                        ),
+                        TextButton(
+                          onPressed: _submitting
+                              ? null : () => _withdrawRegistration(
+                                  registration['id'].toString()),
+                          child: Text(ar ? 'سحب الطلب' : 'Withdraw request'),
+                        ),
+                      ])
                     : Icon(
                         registration['checked_in_at'] != null
                             ? Icons.how_to_reg_outlined
