@@ -18,6 +18,17 @@ class TeamSkillsCupRepository {
     return (rows as List).cast<Map<String, dynamic>>();
   }
 
+  /// The existing team_members table is the source of player membership.
+  /// The caller can show their team's registration state without captain rights.
+  Future<Set<String>> getMemberTeamIds(String userId) async {
+    final rows = await _client.from('team_members')
+        .select('team_id').eq('user_id', userId);
+    return (rows as List)
+        .map((row) => row['team_id']?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
   Future<List<Map<String, dynamic>>> getCaptainTeams(String userId) async {
     final rows = await _client.from('teams_public')
         .select('id,name,captain_id').eq('captain_id', userId);
@@ -54,7 +65,8 @@ class TeamSkillsCupRepository {
 
   Future<List<Map<String, dynamic>>> getRegistrations(String cupId) async {
     final rows = await _client.from('team_skills_registrations')
-        .select('id,cup_id,team_id,captain_id,status,goalkeeper_id,representative_id,created_at')
+        .select('id,cup_id,team_id,captain_id,status,goalkeeper_id,representative_id,'
+            'hospitality_payment_status,checked_in_at,created_at')
         .eq('cup_id', cupId);
     return (rows as List).cast<Map<String, dynamic>>();
   }
