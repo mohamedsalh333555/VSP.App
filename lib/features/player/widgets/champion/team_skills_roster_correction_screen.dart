@@ -36,6 +36,7 @@ class _TeamSkillsRosterCorrectionScreenState
     extends State<TeamSkillsRosterCorrectionScreen> {
   bool _loading = true;
   bool _saving = false;
+  bool _rosterVerified = false;
   String? _error;
   List<Map<String, dynamic>> _members = [];
   final Set<String> _selectedPlayers = {};
@@ -50,7 +51,7 @@ class _TeamSkillsRosterCorrectionScreenState
       _representative != widget.initialRepresentativeId;
 
   bool get _valid =>
-      _selectedPlayers.length == 5 &&
+      _rosterVerified && _selectedPlayers.length == 5 &&
       _selectedPlayers.contains(_goalkeeper) &&
       _selectedPlayers.contains(_representative) && _hasChanges;
 
@@ -64,6 +65,7 @@ class _TeamSkillsRosterCorrectionScreenState
   }
 
   Future<void> _load() async {
+    if (_saving) return;
     if (!_isSameCaptain()) {
       if (mounted) {
         setState(() {
@@ -73,6 +75,11 @@ class _TeamSkillsRosterCorrectionScreenState
       }
       return;
     }
+    setState(() {
+      _loading = true;
+      _rosterVerified = false;
+      _error = null;
+    });
     try {
       final members = await widget.repository.getRosterOptions(widget.teamId);
       final roster = await widget.repository
@@ -86,6 +93,7 @@ class _TeamSkillsRosterCorrectionScreenState
           .where((id) => id.isNotEmpty).toSet();
       setState(() {
         _members = members;
+        _rosterVerified = true;
         _originalPlayers = original;
         _selectedPlayers
           ..clear()
@@ -95,11 +103,11 @@ class _TeamSkillsRosterCorrectionScreenState
         _representative = _selectedPlayers.contains(widget.initialRepresentativeId)
             ? widget.initialRepresentativeId : null;
         _loading = false;
-        if (original.length != 5 ||
-            _selectedPlayers.length != original.length) {
-          _error = 'بعض لاعبي التشكيلة لم يعودوا ضمن الفريق. '
-              'اختر خمسة أعضاء حاليين لإصلاح الطلب.';
-        }
+        _error = original.length != 5 ||
+                _selectedPlayers.length != original.length
+            ? 'بعض لاعبي التشكيلة لم يعودوا ضمن الفريق. '
+                'اختر خمسة أعضاء حاليين لإصلاح الطلب.'
+            : null;
       });
     } catch (_) {
       if (mounted && _isSameCaptain()) {
@@ -174,7 +182,8 @@ class _TeamSkillsRosterCorrectionScreenState
             'أو تغيّرت عضوية الفريق؛ تحقق من الحالة قبل إعادة المحاولة.';
       });
     } finally {
-      if (mounted && _isSameCaptain()) setState(() => _saving = false);
+      // Always release the in-flight lock, even if the account changed.
+      if (mounted) setState(() => _saving = false);
     }
   }
 
