@@ -10,8 +10,8 @@ create schema vsp_skills_private;
 create function auth.uid() returns uuid language sql stable set search_path=''
 as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 create function vsp_skills_private.is_admin() returns boolean
-language sql stable set search_path='' as $
- select auth.uid()='00000000-0000-0000-0000-000000009099'::uuid $;
+language sql stable set search_path='' as $admin$
+ select auth.uid()='00000000-0000-0000-0000-000000009099'::uuid $admin$;
 create function vsp_skills_private.score(
  p_metric text,p_raw numeric,p_weight numeric,p_target numeric,p_best integer,p_worst integer)
 returns numeric language sql immutable set search_path=''
