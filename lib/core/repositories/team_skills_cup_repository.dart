@@ -151,10 +151,21 @@ class TeamSkillsCupRepository {
     }
     return null;
   }
+  /// Captain-only withdrawal of a pending/waitlisted application.
+  /// The RPC is authoritative and audits the resulting freed roster/seat.
+  /// Never treat network success alone as proof of a withdrawn registration.
+  Future<void> withdrawRegistration(String registrationId) async {
+    if (registrationId.isEmpty) {
+      throw StateError('TEAM_SKILLS_REGISTRATION_ID_REQUIRED');
+    }
+    await _client.rpc('team_skills_withdraw_registration',
+      params: {'p_registration_id': registrationId});
+  }
+
   Future<List<Map<String, dynamic>>> getRegistrations(String cupId) async {
     final rows = await _client.from('team_skills_registrations')
         .select('id,cup_id,team_id,captain_id,status,goalkeeper_id,representative_id,'
-            'hospitality_payment_status,checked_in_at,created_at')
+            'hospitality_payment_status,checked_in_at,created_at,withdrawal_reason,withdrawn_at')
         .eq('cup_id', cupId);
     return (rows as List).cast<Map<String, dynamic>>();
   }
