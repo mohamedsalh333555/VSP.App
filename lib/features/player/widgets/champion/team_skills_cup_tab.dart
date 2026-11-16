@@ -660,19 +660,28 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                       registration['hospitality_payment_status']?.toString(),
                   hasCheckedIn: registration['checked_in_at'] != null,
                 )
-                    ? Row(mainAxisSize: MainAxisSize.min, children: [
-                        TextButton(
-                          onPressed: _submitting
-                              ? null : () => _editRegistration(registration),
-                          child: Text(ar ? 'تعديل التشكيلة' : 'Edit roster'),
-                        ),
-                        TextButton(
-                          onPressed: _submitting
-                              ? null : () => _withdrawRegistration(
-                                  registration['id'].toString()),
-                          child: Text(ar ? 'سحب الطلب' : 'Withdraw request'),
-                        ),
-                      ])
+                    ? PopupMenuButton<String>(
+                        tooltip: ar ? 'إدارة طلب الفريق' : 'Manage team request',
+                        enabled: !_submitting,
+                        icon: const Icon(Icons.more_horiz, color: VSPColors.accent),
+                        onSelected: (action) {
+                          if (action == 'edit') {
+                            _editRegistration(registration);
+                          } else if (action == 'withdraw') {
+                            _withdrawRegistration(registration['id'].toString());
+                          }
+                        },
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(ar ? 'تعديل التشكيلة' : 'Edit roster'),
+                          ),
+                          PopupMenuItem(
+                            value: 'withdraw',
+                            child: Text(ar ? 'سحب الطلب' : 'Withdraw request'),
+                          ),
+                        ],
+                      )
                     : Icon(
                         registration['checked_in_at'] != null
                             ? Icons.how_to_reg_outlined
