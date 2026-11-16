@@ -37,6 +37,10 @@ class _TeamSkillsRosterCorrectionScreenState
   bool _loading = true;
   bool _saving = false;
   bool _rosterVerified = false;
+  bool _identityBound = false;
+  String? _viewerUserId;
+  int _sessionGeneration = 0;
+  int _loadGeneration = 0;
   String? _error;
   List<Map<String, dynamic>> _members = [];
   final Set<String> _selectedPlayers = {};
@@ -58,14 +62,45 @@ class _TeamSkillsRosterCorrectionScreenState
   bool _isSameCaptain() =>
       context.read<AuthProvider>().currentUser?.id == widget.captainId;
 
+  /// The edit route can survive an account switch. Invalidate all private
+  /// roster state and pending responses before the new account can interact.
   @override
-  void initState() {
-    super.initState();
-    _load();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final actorId = context.watch<AuthProvider>().currentUser?.id;
+    if (_identityBound && actorId == _viewerUserId) return;
+    _identityBound = true;
+    _viewerUserId = actorId;
+    ++_sessionGeneration;
+    ++_loadGeneration;
+    _members = [];
+    _originalPlayers = {};
+    _selectedPlayers.clear();
+    _goalkeeper = null;
+    _representative = null;
+    _saving = false;
+    _rosterVerified = false;
+    _loading = actorId == widget.captainId;
+    _error = _loading ? null : 'الحساب الحالي ليس قائد الفريق.';
+    if (_loading) {
+      final generation = _sessionGeneration;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && generation == _sessionGeneration) _load();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    ++_sessionGeneration;
+    ++_loadGeneration;
+    super.dispose();
   }
 
   Future<void> _load() async {
     if (_saving) return;
+    final session = _sessionGeneration;
+    final request = ++_loadGeneration;
     if (!_isSameCaptain()) {
       if (mounted) {
         setState(() {
@@ -84,7 +119,8 @@ class _TeamSkillsRosterCorrectionScreenState
       final members = await widget.repository.getRosterOptions(widget.teamId);
       final roster = await widget.repository
           .getActiveRoster(widget.registrationId);
-      if (!mounted || !_isSameCaptain()) return;
+      if (!mounted || session != _sessionGeneration ||
+          request != _loadGeneration || !_isSameCaptain()) return;
 
       final availableIds = members
           .map((row) => row['uid']?.toString() ?? '').toSet();
@@ -110,7 +146,8 @@ class _TeamSkillsRosterCorrectionScreenState
             : null;
       });
     } catch (_) {
-      if (mounted && _isSameCaptain()) {
+      if (mounted && session == _sessionGeneration &&
+          request == _loadGeneration && _isSameCaptain()) {
         setState(() {
           _loading = false;
           _error = 'تعذر التحقق من التشكيلة الحالية. أعد تحميلها.';
@@ -141,6 +178,7 @@ class _TeamSkillsRosterCorrectionScreenState
 
   Future<void> _save() async {
     if (_loading || _saving || !_valid || !_isSameCaptain()) return;
+    final session = _sessionGeneration;
     setState(() {
       _saving = true;
       _error = null;
@@ -153,9 +191,11 @@ class _TeamSkillsRosterCorrectionScreenState
         goalkeeperId: _goalkeeper!,
         representativeId: _representative!,
       );
-      if (!mounted || !_isSameCaptain()) return;
+      if (!mounted || session != _sessionGeneration ||
+          !_isSameCaptain()) return;
       final verified = await _confirmedOnServer();
-      if (!mounted || !_isSameCaptain()) return;
+      if (!mounted || session != _sessionGeneration ||
+          !_isSameCaptain()) return;
       if (verified) {
         Navigator.of(context).pop(true);
         return;
@@ -165,14 +205,16 @@ class _TeamSkillsRosterCorrectionScreenState
             'راجع الطلب قبل المحاولة مجددًا.';
       });
     } catch (_) {
-      if (!mounted || !_isSameCaptain()) return;
+      if (!mounted || session != _sessionGeneration ||
+          !_isSameCaptain()) return;
       bool verified = false;
       try {
         verified = await _confirmedOnServer();
       } catch (_) {
         // No server reply is not proof of a failed transaction.
       }
-      if (!mounted || !_isSameCaptain()) return;
+      if (!mounted || session != _sessionGeneration ||
+          !_isSameCaptain()) return;
       if (verified) {
         Navigator.of(context).pop(true);
         return;
@@ -183,7 +225,9 @@ class _TeamSkillsRosterCorrectionScreenState
       });
     } finally {
       // Always release the in-flight lock, even if the account changed.
-      if (mounted) setState(() => _saving = false);
+      if (mounted && session == _sessionGeneration) {
+        setState(() => _saving = false);
+      }
     }
   }
 
@@ -228,7 +272,7 @@ class _TeamSkillsRosterCorrectionScreenState
                             style: textStyle),
                         value: checked,
                         activeColor: VSPColors.accent,
-                        onChanged: _saving || id.isEmpty
+                        onChanged: !_rosterVerified || _saving || id.isEmpty
                             ? null
                             : (value) {
                                 if (value == true && _selectedPlayers.length >= 5) {
@@ -258,7 +302,7 @@ class _TeamSkillsRosterCorrectionScreenState
                         value: p['uid']?.toString(),
                         child: Text(p['name']?.toString() ?? 'لاعب'),
                       )).toList(),
-                      onChanged: _saving ? null :
+                      onChanged: !_rosterVerified || _saving ? null :
                           (value) => setState(() => _goalkeeper = value),
                     ),
                     DropdownButton<String>(
@@ -273,7 +317,7 @@ class _TeamSkillsRosterCorrectionScreenState
                         value: p['uid']?.toString(),
                         child: Text(p['name']?.toString() ?? 'لاعب'),
                       )).toList(),
-                      onChanged: _saving ? null :
+                      onChanged: !_rosterVerified || _saving ? null :
                           (value) => setState(() => _representative = value),
                     ),
                     const SizedBox(height: 20),
