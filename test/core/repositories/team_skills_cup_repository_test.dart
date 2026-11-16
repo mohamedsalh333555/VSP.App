@@ -104,6 +104,75 @@ void main() {
     expect(source, contains('if (!mounted || viewerId != _viewerUserId) return;'));
   });
 
+  test('roster edit preview is limited to current unpaid pending/waitlisted captain', () {
+    bool allowed({
+      String cup = 'registration', String status = 'pending',
+      String viewer = 'captain', String captain = 'captain',
+      String hospitality = 'unpaid', bool checkedIn = false,
+    }) => TeamSkillsCupRepository.canCorrectRoster(
+      cupStatus: cup, status: status,
+      captainId: captain, viewerId: viewer,
+      hospitalityStatus: hospitality, hasCheckedIn: checkedIn,
+    );
+    expect(allowed(), isTrue);
+    expect(allowed(status: 'waitlist'), isTrue);
+    expect(allowed(status: 'approved'), isFalse);
+    expect(allowed(status: 'withdrawn'), isFalse);
+    expect(allowed(status: 'rejected'), isFalse);
+    expect(allowed(viewer: 'other-user'), isFalse);
+    expect(allowed(cup: 'live'), isFalse);
+    expect(allowed(hospitality: 'verified'), isFalse);
+    expect(allowed(hospitality: 'waived'), isFalse);
+    expect(allowed(checkedIn: true), isFalse);
+  });
+
+  test('roster correction refuses invalid player sets before any network request', () async {
+    Future<void> invalid(List<String> players, String keeper, String representative) async {
+      await expectLater(
+        repository.correctRoster(
+          registrationId: 'pending-registration',
+          playerIds: players,
+          goalkeeperId: keeper,
+          representativeId: representative,
+        ),
+        throwsA(isA<StateError>()),
+      );
+    }
+    await invalid(['1','2','3','4'], '1', '2');
+    await invalid(['1','2','3','4','4'], '1', '2');
+    await invalid(['1','2','3','4','5'], '6', '2');
+    await invalid(['1','2','3','4','5'], '1', '6');
+    await expectLater(
+      repository.correctRoster(registrationId: '', playerIds: [
+        '1','2','3','4','5',
+      ], goalkeeperId: '1', representativeId: '2'),
+      throwsA(isA<StateError>()),
+    );
+  });
+
+  test('captain can edit five players before approval with verified server receipt', () {
+    final tab=File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
+        .readAsStringSync();
+    final screen=File(
+      'lib/features/player/widgets/champion/team_skills_roster_correction_screen.dart',
+    ).readAsStringSync();
+    final repo=File('lib/core/repositories/team_skills_cup_repository.dart')
+        .readAsStringSync();
+    expect(tab, contains('TeamSkillsRosterCorrectionScreen('));
+    expect(tab, contains('canCorrectRoster('));
+    expect(tab, contains("value: 'edit'"));
+    expect(tab, contains("value: 'withdraw'"));
+    expect(screen, contains('getActiveRoster(widget.registrationId)'));
+    expect(screen, contains('getRosterOptions(widget.teamId)'));
+    expect(screen, contains('correctRoster('));
+    expect(screen, contains('_confirmedOnServer()'));
+    expect(screen, contains('Navigator.of(context).pop(true)'));
+    expect(screen, contains('context.watch<AuthProvider>().currentUser?.id'));
+    expect(repo, contains("rpc('team_skills_correct_roster'"));
+    expect(repo, contains(".eq('active', true)"));
+    expect(screen, isNot(contains('service_role')));
+  });
+
   test('captain is selectable even if absent from team_members roster', () {
     final selected = TeamSkillsCupRepository.normalizeRosterWithCaptain(
       members: [
