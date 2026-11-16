@@ -368,9 +368,10 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       return;
     }
     final viewerId = _viewerUserId;
+    if (viewerId == null || viewerId.isEmpty) return;
+    final submittedTeamId = _selectedTeamId!;
     setState(() { _submitting = true; _feedback = null; });
     try {
-      final submittedTeamId = _selectedTeamId!;
       await widget.repository.registerTeam(
         cupId: cupId, teamId: submittedTeamId,
         playerIds: _selectedPlayers.toList()..sort(),
@@ -387,9 +388,33 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
             : 'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.');
       }
     } catch (_) {
+      // The server may have committed a registration even when the network
+      // response was lost. Read the existing row under the current user's
+      // RLS privileges instead of submitting another registration.
+      if (!mounted || viewerId != _viewerUserId) return;
+      try {
+        final latest = await widget.repository.getRegistrations(cupId);
+        if (!mounted || viewerId != _viewerUserId) return;
+        final registered = TeamSkillsCupRepository.findCaptainRegistration(
+          latest, teamId: submittedTeamId, captainId: viewerId,
+        );
+        if (registered != null) {
+          setState(() {
+            _registrations = latest;
+            _feedback = registered['status'] == 'waitlist'
+                ? 'طلب فريقك مسجل بالفعل على قائمة الانتظار.'
+                : registered['status'] == 'approved'
+                    ? 'تم اعتماد مشاركة فريقك بالفعل.'
+                    : 'طلب فريقك مسجل بالفعل وينتظر مراجعة الإدارة.';
+          });
+          return;
+        }
+      } catch (_) {
+        // No network confirmation is not evidence that the server rolled back.
+      }
       if (mounted && viewerId == _viewerUserId) {
         setState(() => _feedback =
-            'تعذر إكمال التسجيل. راجع حالة الفريق قبل إعادة المحاولة.');
+            'تعذر التحقق من حالة التسجيل. راجع حالة الفريق قبل إعادة المحاولة.');
       }
     } finally {
       if (mounted && viewerId == _viewerUserId) {
