@@ -15,6 +15,8 @@ import '../../../core/services/notification/notification_display_text_resolver.d
 import '../../../data/models.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/notification_repository.dart';
+import '../../../core/repositories/team_skills_cup_repository.dart';
+import '../widgets/champion/team_skills_cup_tab.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import 'package:provider/provider.dart';
 
@@ -460,6 +462,34 @@ class _NotificationCard extends StatelessWidget {
         MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
       );
       return;
+    }
+
+    // In-app Team Skills notifications include a cup_id, not a legacy
+    // championship_id or booking_id. Never navigate by metadata alone:
+    // verify the same signed-in account after loading an RLS-visible cup.
+    final cupId = teamSkillsCupEnabled
+        ? TeamSkillsCupRepository.cupIdFromNotificationMetadata(metadata)
+        : null;
+    if (cupId != null) {
+      try {
+        final repository = TeamSkillsCupRepository();
+        final cup = await repository.getCupById(cupId);
+        if (!context.mounted ||
+            context.read<AuthProvider>().currentUser?.id != userId) {
+          return;
+        }
+        if (cup != null) {
+          Navigator.push(context, MaterialPageRoute(
+            builder: (_) => TeamSkillsCupDetailsScreen(
+              cup: cup, repository: repository,
+            ),
+          ));
+          return;
+        }
+      } catch (_) {
+        // A hidden, cancelled, deleted or unavailable cup cannot be opened
+        // from a stale notification. The original message remains readable.
+      }
     }
 
     final tournamentId = (metadata['tournament_id'] ?? metadata['championship_id'])?.toString();
