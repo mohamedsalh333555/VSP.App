@@ -157,6 +157,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   bool _hasBoundViewer = false;
   String? _viewerUserId;
   List<Map<String, dynamic>> _phases = [];
+  List<Map<String, dynamic>> _approvedScores = [];
   List<Map<String, dynamic>> _awards = [];
   List<Map<String, dynamic>> _registrations = [];
   List<Map<String, dynamic>> _captainTeams = [];
@@ -195,6 +196,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       ++_readGeneration;
       _registrations = [];
       _rankedLeaderboard = [];
+      _approvedScores = [];
       _awards = [];
       _teamNames = {};
       _memberTeamIds = <String>{};
@@ -228,6 +230,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         widget.repository.getLeaderboard(cupId),
         widget.repository.getRegistrations(cupId),
         widget.repository.getAwards(cupId),
+        widget.repository.getApprovedScores(cupId),
         currentUserId == null
             ? Future.value(<Map<String, dynamic>>[])
             : widget.repository.getCaptainTeams(currentUserId),
@@ -246,7 +249,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         _rankedLeaderboard = ranking;
         _registrations = values[1];
         _awards = values[2];
-        _captainTeams = values[3];
+        _approvedScores = values[3];
+        _captainTeams = values[4];
         _memberTeamIds = memberIds;
         _teamNames = names;
         if (!_captainTeams.any(
@@ -279,12 +283,14 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       widget.repository.getPhases(cupId),
       widget.repository.getAwards(cupId),
       widget.repository.getRegistrations(cupId),
+      widget.repository.getApprovedScores(cupId),
       currentUserId == null
           ? Future.value(<Map<String, dynamic>>[])
           : widget.repository.getCaptainTeams(currentUserId),
     ]);
     final ranks = values[0], phases = values[1], awards = values[2],
-        registrations = values[3], teams = values[4];
+        registrations = values[3], approvedScores = values[4],
+        teams = values[5];
     final memberTeamIds = await memberTeamsFuture;
     final rankedLeaderboard = TeamSkillsRankingService.rank(ranks);
     final names = await widget.repository.getTeamNames(
@@ -297,6 +303,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     setState(() {
       _hasLiveRefreshError = false;
       _rankedLeaderboard = rankedLeaderboard;
+      _approvedScores = approvedScores;
       _phases = phases;
       _awards = awards;
       _registrations = registrations;
@@ -460,16 +467,40 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
             const SizedBox(height: 18),
             Text(ar ? 'ترتيب مهارات الفرق' : 'Skills leaderboard',
                 style: const TextStyle(color: VSPColors.white,fontSize:18,fontWeight:FontWeight.bold)),
-            ..._rankedLeaderboard.map((entry)=>ListTile(
-              title:Text('#${entry.rank} ${_teamNames[entry.data['team_id'].toString()] ?? entry.data['team_id']}',
-                  style:style),
-              subtitle:Text(
-                  '${entry.data['completed_stages']}/12 • '
-                  '${entry.complete ? (ar ? 'المراحل مكتملة' : 'Stages complete') : (ar ? 'مراحل ناقصة' : 'Stages pending')}',
-                  style:const TextStyle(color:VSPColors.textSecondary)),
-              trailing:Text('${entry.data['points']} / 100',
-                  style:const TextStyle(color:VSPColors.accent,fontWeight:FontWeight.bold)),
-            )),
+            ..._rankedLeaderboard.map((entry) {
+              final registrationId = entry.data['registration_id']?.toString();
+              final approvedForTeam = _approvedScores
+                  .where((score) => score['registration_id']?.toString() == registrationId)
+                  .toList();
+              return ExpansionTile(
+                iconColor: VSPColors.accent,
+                collapsedIconColor: VSPColors.textSecondary,
+                title: Text('#${entry.rank} ${_teamNames[entry.data['team_id'].toString()] ?? entry.data['team_id']}',
+                    style: style),
+                subtitle: Text(
+                    '${entry.data['points']} / 100 • ${entry.data['completed_stages']}/12 • '
+                    '${entry.complete ? (ar ? 'مكتمل' : 'Complete') : (ar ? 'قيد الاعتماد' : 'Pending stages')}',
+                    style: const TextStyle(color: VSPColors.accent)),
+                children: [
+                  ..._phases.map((phase) {
+                    final stageNo = phase['stage_no']?.toString();
+                    final rows = approvedForTeam.where(
+                      (score) => score['stage_no']?.toString() == stageNo,
+                    ).toList();
+                    final verified = rows.isNotEmpty
+                        ? rows.first['computed_points']?.toString() ?? '0'
+                        : '—';
+                    return ListTile(
+                      dense: true,
+                      title: Text(phase['name_ar']?.toString() ?? '',
+                          style: const TextStyle(color: VSPColors.textPrimary)),
+                      trailing: Text('$verified / ${phase['weight']}',
+                          style: const TextStyle(color: VSPColors.textSecondary)),
+                    );
+                  }),
+                ],
+              );
+            }),
             const SizedBox(height: 14),
             if (_awards.isNotEmpty) ...[
               Text(ar ? 'الأبطال المعتمدون' : 'Official winners',style:style),
