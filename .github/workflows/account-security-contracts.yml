@@ -134,6 +134,8 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_team_skills_rls_target_guard.py -v
       - name: Verify Team Skills private results, roster, and goalkeeper scopes
         run: python3 scripts/test_team_skills_rls_isolated.py
+      - name: Verify Team Skills waitlist approval cap and admin role authorization
+        run: python3 scripts/test_team_skills_capacity_isolated.py
       - name: Verify matchup fee migration rebuild target guard
         run: python3 -m unittest discover -s test/tooling -p test_matchup_fee_migration_rebuild.py -v
       - name: Rebuild and replay matchup fee migration on isolated PostgreSQL
