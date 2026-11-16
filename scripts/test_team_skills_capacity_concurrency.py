@@ -103,7 +103,10 @@ select count(*) as accepted
 from public.team_skills_registrations
 where cup_id='{CUP}' and status='approved';
 """)
-        if inspect.returncode or not inspect.stdout.strip().endswith("4"):
+        # psql's default aligned table output ends with "(1 row)", not "4".
+        counts = [line.strip() for line in inspect.stdout.splitlines()
+                  if line.strip().isdigit()]
+        if inspect.returncode or counts != ["4"]:
             raise RuntimeError("Approved team count diverged after concurrent review")
         print("PASS: 2 independent SQL sessions, one waitlist approval and one capacity denial")
         return 0
