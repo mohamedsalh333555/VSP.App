@@ -55,3 +55,48 @@ Head: `2e119d3a6a8f6f682128d511775a699846320c3c`.
    rapid cup switching, account switching, weak network and double clicks.
 4. Compare actual staging migration history with checked-in lineage before
    any SQL deployment; keep explicit safety gates for sensitive operations.
+
+## Follow-up implementation checkpoint — 16 November 2026
+
+### Flutter — branch `uxlp-44-implementation`
+Changes from `39a73f4926404106ed1b31f4cf9595c10afcc1c1` through
+`2ec126ce67616e69ffdfd639a6c5d0b2e22243da` (six commits):
+- Repaired the old withdrawal source assertion so it follows the canonical
+  captain withdrawal readback rather than an obsolete widget expression.
+- Roster correction now invalidates and clears private form data whenever
+  the signed-in identity changes. Asynchronous loading and saving results
+  from the old session cannot repopulate the new session's editor.
+- Edit preflight rechecks the current cup/registration/captain/team,
+  payment/check-in state, and server-stored keeper and representative.
+  Stale navigation arguments never authorize a captain edit.
+- The edit screen verifies the exact cup/team/status on readback.
+- After a successful edit, the parent requests the captain's current
+  registration directly rather than trusting a potentially superseded
+  periodic refresh. Focused source and repository tests updated.
+- 54 focused literal source expectations (tab/screen/repository) inspected
+  against the latest checked-in sources: no missing expected snippets.
+  **This is not proof of Dart compilation or widget runtime success.**
+
+### Admin — branch `feat/team-skills-cup`
+Changes from `26f012ac620441194f4313601482cb0ccd2a675f` through
+`d8736fd9d3cf57de721278d5fbd4ca0207c31e31` (three commits):
+- A goalkeeper session requires two distinct teams and increasing valid times.
+- The admin explicitly selects one scheduled goalkeeper trial before entering
+  its measurement, preventing accidental writes to a different trial.
+- Saves, shots and conceded values must be nonnegative whole numbers; saves
+  cannot exceed shots. Final 1v1 score must be distinct nonnegative whole goals.
+- Pure guards include case coverage for invalid inputs. The backend remains
+  authoritative for all match and tournament rules.
+
+### Verification and release boundaries
+- Admin **project-native GitHub Actions test and build run succeeded** at
+  `d8736fd9d3cf57de721278d5fbd4ca0207c31e31`:
+  https://github.com/mohamedsalh333555/vsp-admin-panel/actions/runs/43961875672
+- Nine direct focused cases exercised against the checked-in admin pure
+  guard implementation also passed; do not substitute these for full E2E.
+- Flutter CI, Android smoke and security contract workflows were still
+  in progress at this checkpoint and must be assessed at the exact tested
+  SHA. Do not label pending checks as passing.
+- No production migration, payment, release APK, deploy or merge to `main`.
+- The accepted core counter remains **211/630 accepted, 419 open**:
+  technical commits are not automatically accepted core tasks.
