@@ -48,3 +48,9 @@ calls it twice on a synthetic unprocessed confirmed challenge and asserts the fu
 and booking snapshots (including paid/deposit/fair-play fields) remain unchanged.
 It has **not** been deployed on staging or production; historical reconciliation
 and a migration/rollback approval remain separate gates.
+
+## RESULT-10: exclusion-aware 3/1/0 booking trigger (unapplied SQL candidate)
+
+Read-only Staging confirmed the installed `calculate_elo_on_match_completion()` checks confirmed outcomes and `elo_processed=false` but not the private owner report. If an older confirmed booking had not yet earned points, a future result-column UPDATE could **award 3/1/0 points after the owner excluded it**. There were **0** such unprocessed confirmed bookings in the staging snapshot; the risk is a real code-path inconsistency but no customer incident was reproduced on staging.
+
+[New exclusion-aware trigger candidate](sql/challenge_excluded_result_scoring_guard_candidate.sql) checks the private exclusion helper before incrementing team standings, validates both teams/outcomes, and preserves idempotent `elo_processed`. The [isolated SQL fixture](../../supabase/tests/challenge_captain_private_result_contract.sql) checks repeated booking UPDATEs leave an excluded historical result unscored, and checks a restored result can then be scored once and only once. This does not make historical score backfills an automatic job. **Candidate not deployed; roll out atomically with report/feed/private result schemas, never independently.**

@@ -19,6 +19,7 @@ on:
       - 'docs/security/sql/challenge_public_feed_exclusion_candidate.sql'
       - 'docs/security/sql/challenge_eligible_head_to_head_candidate.sql'
       - 'docs/security/sql/challenge_legacy_elo_reconciliation_guard_candidate.sql'
+      - 'docs/security/sql/challenge_excluded_result_scoring_guard_candidate.sql'
       - 'docs/security/sql/booking_public_feed_logo_sync_fix_candidate.sql'
       - 'scripts/test_booking_public_feed_logo_sync_isolated.py'
       - 'test/tooling/test_booking_public_feed_logo_sync_target_guard.py'

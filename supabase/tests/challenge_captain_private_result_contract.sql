@@ -111,6 +111,7 @@ CREATE POLICY booking_public_feed_select ON public.booking_public_feed
 -- INSTALL_NOT_PLAYED_REVIEW_CANDIDATE
 -- INSTALL_NON_PLAYED_FEED_RLS_CANDIDATE
 -- INSTALL_ELIGIBLE_CHALLENGE_HEAD_TO_HEAD_CANDIDATE
+-- INSTALL_EXCLUDED_SCORING_GUARD_CANDIDATE
 -- INSTALL_LEGACY_ELO_RECONCILE_GUARD_CANDIDATE
 
 DO $test$
@@ -879,3 +880,64 @@ BEGIN
    RAISE EXCEPTION 'Legacy Elo guard leaked execution permission'; END IF;
 END;
 $legacy_elo_guard$;
+
+
+-- Owner reports a previously confirmed but unprocessed challenge. A later
+-- booking result-column UPDATE must NEVER credit it while report is excluded.
+DO $excluded_scoring_guard$
+DECLARE r jsonb; before_teams jsonb; after_teams jsonb;
+        initial_home int; initial_away int;
+        initial_home_played int; initial_away_played int;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub',
+   '00000000-0000-0000-0000-000000000404',true);
+ r:=public.owner_report_challenge_not_played_atomic(
+   '00000000-0000-0000-0000-000000000099',
+   'Match did not take place at the stadium');
+ IF r->>'success'<>'true' OR r->>'state'<>'excluded'
+    OR r->>'ranking_reversed'<>'false' THEN
+   RAISE EXCEPTION 'Could not report confirmed unprocessed challenge'; END IF;
+ SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.id),'[]'::jsonb)
+   INTO before_teams FROM public.teams t;
+ UPDATE public.bookings SET final_outcome=final_outcome
+  WHERE id='00000000-0000-0000-0000-000000000099';
+ UPDATE public.bookings SET status=status
+  WHERE id='00000000-0000-0000-0000-000000000099';
+ SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.id),'[]'::jsonb)
+   INTO after_teams FROM public.teams t;
+ IF before_teams IS DISTINCT FROM after_teams OR
+    (SELECT elo_processed FROM public.bookings
+      WHERE id='00000000-0000-0000-0000-000000000099') IS TRUE THEN
+   RAISE EXCEPTION 'Excluded unprocessed challenge received scoring points'; END IF;
+
+ -- Restoring a never-processed result must not claim points were restored.
+ PERFORM set_config('request.jwt.claim.sub',
+   '00000000-0000-0000-0000-000000000505',true);
+ r:=public.review_challenge_non_played_atomic(
+   '00000000-0000-0000-0000-000000000099',
+   'restore','Verified match was actually played');
+ IF r->>'state'<>'restored' OR r->>'ranking_restored'<>'false' THEN
+   RAISE EXCEPTION 'Unprocessed historical result falsely restored points'; END IF;
+ SELECT points,matches_played INTO initial_home,initial_home_played
+   FROM public.teams WHERE id='00000000-0000-0000-0000-000000000011';
+ SELECT points,matches_played INTO initial_away,initial_away_played
+   FROM public.teams WHERE id='00000000-0000-0000-0000-000000000022';
+ -- Once no longer excluded, the original authoritative result may be
+ -- credited ONCE by the normal eligible 3/1/0 trigger.
+ UPDATE public.bookings SET final_outcome=final_outcome
+  WHERE id='00000000-0000-0000-0000-000000000099';
+ UPDATE public.bookings SET final_outcome=final_outcome
+  WHERE id='00000000-0000-0000-0000-000000000099';
+ IF (SELECT points FROM public.teams
+     WHERE id='00000000-0000-0000-0000-000000000011')<>initial_home+3
+    OR (SELECT points FROM public.teams
+     WHERE id='00000000-0000-0000-0000-000000000022')<>initial_away
+    OR (SELECT matches_played FROM public.teams
+     WHERE id='00000000-0000-0000-0000-000000000011')<>initial_home_played+1
+    OR (SELECT matches_played FROM public.teams
+     WHERE id='00000000-0000-0000-0000-000000000022')<>initial_away_played+1
+    OR (SELECT elo_processed FROM public.bookings
+     WHERE id='00000000-0000-0000-0000-000000000099') IS DISTINCT FROM true
+ THEN RAISE EXCEPTION 'Restored eligible challenge was not scored exactly once'; END IF;
+END;
+$excluded_scoring_guard$;
