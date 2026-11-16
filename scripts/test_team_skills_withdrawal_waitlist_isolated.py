@@ -13,6 +13,7 @@ FIXTURE=ROOT/'supabase/tests/team_skills_withdrawal_waitlist_isolated_contract.s
 WITHDRAWAL=ROOT/'supabase/migrations/20261116100000_team_skills_registration_withdrawal.sql'
 REVIEW=ROOT/'supabase/migrations/20261116102000_team_skills_waitlist_review_capacity.sql'
 COMPAT=ROOT/'supabase/migrations/20261116103000_team_skills_withdraw_compatibility.sql'
+RECEIPT=ROOT/'supabase/migrations/20261116105000_team_skills_withdrawal_receipt_notification.sql'
 DATABASE='vsp_team_skills_withdrawal_review_isolated'
 
 
@@ -24,6 +25,7 @@ def main() -> int:
         raise RuntimeError('Missing unique Team Skills withdrawal injection marker')
     sql=fixture.replace(marker,WITHDRAWAL.read_text(encoding='utf-8')+
                               '\n'+REVIEW.read_text(encoding='utf-8')+
+                              '\n'+RECEIPT.read_text(encoding='utf-8')+
                               '\n'+COMPAT.read_text(encoding='utf-8'))
     result=psql('postgres',command='CREATE DATABASE '+DATABASE)
     if result.returncode:
