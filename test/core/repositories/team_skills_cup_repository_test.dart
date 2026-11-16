@@ -101,6 +101,21 @@ void main() {
     expect(captainIsMember.single['name'], 'قائد مسجل');
   });
 
+  test('players can view approved per-stage points, never pending judge measurements', () {
+    final repo = File('lib/core/repositories/team_skills_cup_repository.dart')
+        .readAsStringSync();
+    final tab = File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
+        .readAsStringSync();
+    expect(repo, contains('getApprovedScores('));
+    expect(repo, contains("from('team_skills_scores')"));
+    expect(repo, contains(".eq('status', 'approved')"));
+    expect(repo, contains("'registration_id,stage_no,computed_points'"));
+    expect(repo, contains("'cup_id,team_id,registration_id,points,completed_stages,all_stages_approved'"));
+    expect(tab, contains('ExpansionTile('));
+    expect(tab, contains('_approvedScores'));
+    expect(tab, contains("rows.first['computed_points']"));
+  });
+
   test('team registration and points use a single guarded Supabase backend', () {
     final source=File('lib/core/repositories/team_skills_cup_repository.dart').readAsStringSync();
     expect(source, contains("rpc('team_skills_register'"));
