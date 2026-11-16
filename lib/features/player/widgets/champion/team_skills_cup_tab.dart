@@ -373,26 +373,32 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     final submittedTeamId = _selectedTeamId!;
     setState(() { _submitting = true; _feedback = null; });
     try {
-      await widget.repository.registerTeam(
+      final receiptId = await widget.repository.registerTeam(
         cupId: cupId, teamId: submittedTeamId,
         playerIds: _selectedPlayers.toList()..sort(),
         goalkeeperId: _goalkeeperId!, representativeId: _representativeId!,
       );
       if (!mounted || viewerId != _viewerUserId) return;
-      await _reload();
-      if (mounted && viewerId == _viewerUserId) {
-        final confirmed = TeamSkillsCupRepository.findCaptainRegistration(
-          _registrations, teamId: submittedTeamId, captainId: viewerId,
-        );
-        setState(() => _feedback = confirmed == null
+      // A periodic refresh may supersede _reload(). Confirm the exact RPC
+      // receipt against a direct, current captain read instead.
+      final latest = await widget.repository.getRegistrations(cupId);
+      if (!mounted || viewerId != _viewerUserId) return;
+      final candidate = TeamSkillsCupRepository.findCaptainRegistration(
+        latest, teamId: submittedTeamId, captainId: viewerId,
+      );
+      final confirmed = candidate?['id']?.toString() == receiptId
+          ? candidate : null;
+      setState(() {
+        _registrations = latest;
+        _feedback = confirmed == null
             ? 'تم إرسال الطلب لكن تعذر تأكيد تسجيل الفريق. '
                 'راجع حالة طلبك قبل المحاولة مجددًا.'
             : confirmed['status'] == 'waitlist'
                 ? 'تم تسجيل فريقك في قائمة الانتظار. ستراجع الإدارة طلبك عند توفر مكان.'
                 : confirmed['status'] == 'approved'
                     ? 'تم اعتماد مشاركة فريقك بالفعل.'
-                    : 'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.');
-      }
+                    : 'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.';
+      });
     } catch (_) {
       // The server may have committed a registration even when the network
       // response was lost. Read the existing row under the current user's
@@ -517,17 +523,19 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     try {
       await widget.repository.withdrawRegistration(registrationId);
       if (!mounted || actorId != _viewerUserId) return;
-      await _reload();
-      if (mounted && actorId == _viewerUserId) {
-        final withdrawn = TeamSkillsCupRepository.isCaptainWithdrawalConfirmed(
-          _registrations, registrationId: registrationId,
-          captainId: actorId!,
-        );
-        setState(() => _feedback = withdrawn
+      // A direct read is independent from overlapping leaderboard polls.
+      final latest = await widget.repository.getRegistrations(cupId);
+      if (!mounted || actorId != _viewerUserId) return;
+      final withdrawn = TeamSkillsCupRepository.isCaptainWithdrawalConfirmed(
+        latest, registrationId: registrationId, captainId: actorId!,
+      );
+      setState(() {
+        _registrations = latest;
+        _feedback = withdrawn
             ? 'تم سحب طلب الفريق وتحرير مكانه.'
             : 'تم إرسال طلب السحب لكن تعذر تأكيد حالته. '
-                'راجع طلبك قبل المحاولة مجددًا.');
-      }
+                'راجع طلبك قبل المحاولة مجددًا.';
+      });
     } catch (_) {
       if (!mounted || actorId != _viewerUserId) return;
       // An offline reply is ambiguous: confirm the terminal status rather
