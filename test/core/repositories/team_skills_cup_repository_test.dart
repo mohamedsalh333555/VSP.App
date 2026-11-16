@@ -41,13 +41,52 @@ void main() {
         .readAsStringSync();
     expect(repo, contains('getMemberTeamIds('));
     expect(repo, contains("from('team_members')"));
-    expect(repo, contains("'hospitality_payment_status,checked_in_at,created_at'"));
+    expect(repo, contains('hospitality_payment_status,checked_in_at,created_at,withdrawal_reason,withdrawn_at'));
     expect(tab, contains('_memberTeamIds'));
     expect(tab, contains('myRegistrations'));
     expect(tab, contains('statusText('));
     expect(tab, contains('if (myRegistrations.isNotEmpty)'));
     // Only the captain's branch can open the registration action form.
     expect(tab, contains("widget.cup['status'] == 'registration' && _captainTeams.isNotEmpty"));
+  });
+
+  test('only the active captain may withdraw unpaid pending or waiting requests', () {
+    bool may({
+      String? cup = 'registration',
+      String? status = 'pending',
+      String? captain = 'captain',
+      String? viewer = 'captain',
+      String? hospitality = 'unpaid',
+      bool checkedIn = false,
+    }) => TeamSkillsCupRepository.canWithdrawRegistration(
+      cupStatus: cup, status: status, captainId: captain,
+      viewerId: viewer, hospitalityStatus: hospitality,
+      hasCheckedIn: checkedIn,
+    );
+    expect(may(), isTrue);
+    expect(may(status: 'waitlist'), isTrue);
+    expect(may(status: 'approved'), isFalse);
+    expect(may(status: 'withdrawn'), isFalse);
+    expect(may(cup: 'live'), isFalse);
+    expect(may(cup: 'cancelled'), isFalse);
+    expect(may(viewer: 'other-user'), isFalse);
+    expect(may(viewer: null), isFalse);
+    expect(may(hospitality: 'verified'), isFalse);
+    expect(may(hospitality: 'waived'), isFalse);
+    expect(may(checkedIn: true), isFalse);
+  });
+
+  test('withdrawal requires an explicit confirmation and network recovery check', () {
+    final tab = File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
+        .readAsStringSync();
+    final repo = File('lib/core/repositories/team_skills_cup_repository.dart')
+        .readAsStringSync();
+    expect(repo, contains("rpc('team_skills_withdraw_registration'"));
+    expect(tab, contains('showDialog<bool>('));
+    expect(tab, contains('canWithdrawRegistration('));
+    expect(tab, contains('await widget.repository.withdrawRegistration('));
+    expect(tab, contains("row['status'] == 'withdrawn'"));
+    expect(tab, contains('تحقق من حالة طلبك قبل المحاولة مجددًا'));
   });
 
   test('session switch clears private cup membership and ignores stale responses', () {
