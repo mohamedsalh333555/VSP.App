@@ -455,9 +455,30 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     );
     if (!mounted || viewerId != _viewerUserId || saved != true) return;
     setState(() {
-      _feedback = 'تم حفظ التشكيلة المحدثة، وما زال الطلب ينتظر مراجعة الإدارة.';
+      _feedback = null;
       _loadFuture = _reload();
     });
+    try {
+      await _loadFuture;
+      if (!mounted || viewerId != _viewerUserId) return;
+      final current = _registrations.where((row) =>
+          row['id']?.toString() == registration['id']?.toString() &&
+          row['captain_id']?.toString() == viewerId).toList();
+      final status = current.length == 1
+          ? current.single['status']?.toString() : null;
+      setState(() => _feedback = status == 'approved'
+          ? 'تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك.'
+          : status == 'waitlist'
+              ? 'تم حفظ التشكيلة، والفريق ما زال في قائمة الانتظار.'
+              : status == 'pending'
+                  ? 'تم حفظ التشكيلة، والطلب ما زال ينتظر مراجعة الإدارة.'
+                  : 'تم حفظ التشكيلة، لكن تعذر تأكيد حالة المشاركة الحالية.');
+    } catch (_) {
+      if (mounted && viewerId == _viewerUserId) {
+        setState(() => _feedback =
+            'تم حفظ التشكيلة، لكن تعذر تحديث حالة الطلب. أعد التحميل.');
+      }
+    }
   }
 
   Future<void> _withdrawRegistration(String registrationId) async {
