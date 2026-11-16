@@ -67,7 +67,44 @@ void main() {
     expect(source, contains('_rosterVerified = false;'));
     expect(source, contains('_rosterVerified = true;'));
     expect(source, contains('_error = null;'));
-    expect(source, contains('if (mounted) setState(() => _saving = false);'));
+    expect(source, contains('if (mounted && session == _sessionGeneration)'));
+    expect(source, contains('setState(() => _saving = false);'));
+  });
+
+  test('captain roster edit clears private selection on account switch', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_roster_correction_screen.dart',
+    ).readAsStringSync();
+    expect(source, contains('void didChangeDependencies()'));
+    expect(source, contains('context.watch<AuthProvider>().currentUser?.id'));
+    expect(source, contains('actorId == _viewerUserId'));
+    expect(source, contains('++_sessionGeneration;'));
+    expect(source, contains('++_loadGeneration;'));
+    expect(source, contains('_members = [];'));
+    expect(source, contains('_selectedPlayers.clear();'));
+    expect(source, contains('_rosterVerified = false;'));
+    expect(source, contains('request != _loadGeneration'));
+    expect(source, contains('session != _sessionGeneration'));
+    expect(source, contains('WidgetsBinding.instance.addPostFrameCallback'));
+  });
+
+  test('captain roster edit validates live application and stored roles', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_roster_correction_screen.dart',
+    ).readAsStringSync();
+    expect(source, contains('getRegistrations(widget.cupId)'));
+    expect(source, contains('getCupById(widget.cupId)'));
+    expect(source, contains('TeamSkillsCupRepository.canCorrectRoster('));
+    expect(source, contains("row['team_id']?.toString() == widget.teamId"));
+    expect(source, contains("row['captain_id']?.toString() == widget.captainId"));
+    expect(source, contains('_serverGoalkeeperId = serverKeeper;'));
+    expect(source, contains('_serverRepresentativeId = serverRepresentative;'));
+    expect(source, contains('_goalkeeper != _serverGoalkeeperId'));
+    expect(source, contains('_representative != _serverRepresentativeId'));
+    expect(source, contains('!_rosterVerified || _saving'));
+    expect(source, contains('لم يعد تعديل التشكيلة متاحًا لهذا الطلب'));
+    expect(source, contains("row['cup_id']?.toString() != widget.cupId"));
+    expect(source, contains("row['team_id']?.toString() != widget.teamId"));
   });
 
   test('champion home has three tabs and replaces the old public 1v1 entry', () {
