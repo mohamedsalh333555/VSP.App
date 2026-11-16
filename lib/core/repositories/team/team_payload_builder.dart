@@ -50,6 +50,24 @@ class TeamPayloadBuilder {
 
     for (final row in rows) {
       if (row is! Map) continue;
+      // When authoritative result metadata is present, reject every
+      // unconfirmed/unprocessed/non-challenge row instead of trusting a
+      // stale denormalized winner or displaying a synthetic draw.
+      if ((row.containsKey('booking_type') &&
+              row['booking_type'] != 'challenge') ||
+          (row.containsKey('match_result_status') &&
+              row['match_result_status'] != 'confirmed') ||
+          (row.containsKey('elo_processed') &&
+              row['elo_processed'] != true)) {
+        continue;
+      }
+      final pairedHome = row['player_team_id']?.toString() ?? '';
+      final pairedAway = row['opponent_team_id']?.toString() ?? '';
+      if (pairedAway.isNotEmpty &&
+          !((pairedHome == team1Id && pairedAway == team2Id) ||
+              (pairedHome == team2Id && pairedAway == team1Id))) {
+        continue;
+      }
       // A reviewed non-played challenge must not count, even when its
       // historical finalized result remains in the source booking record.
       // The server-side query still needs to attach this authoritative flag.

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../config/challenge_result_rollout_flags.dart';
 import '../../data/models.dart';
 import '../constants/egypt_governorates.dart';
 import '../services/logger_service.dart';
@@ -316,19 +317,45 @@ class TeamRepository {
    }
  }
 
- Future<Map<String, int>?> getHeadToHeadStats(String team1Id, String team2Id) async {
- try {
- final response = await _supabase
- .from('bookings')
- .select('player_team_id, opponent_team_id, final_outcome, winner_team_id')
- .eq('status', 'completed')
- .or('and(player_team_id.eq.$team1Id,opponent_team_id.eq.$team2Id),and(player_team_id.eq.$team2Id,opponent_team_id.eq.$team1Id)');
+ /// Legacy challenge summary remains available only while the non-played
+ /// result feature is OFF. Once owner exclusions are enabled, all challenge
+ /// head-to-head counts MUST come from the permission-scoped server aggregate
+ /// and NEVER fall back to broad booking reads after an RPC failure.
+ Future<Map<String, int>?> getHeadToHeadStats(
+     String team1Id, String team2Id) async {
+   if (ChallengeResultRolloutFlags.nonPlayedReportsEnabled) {
+     return getEligibleChallengeHeadToHeadStats(team1Id, team2Id);
+   }
 
- return TeamPayloadBuilder.calculateHeadToHead(response as List, team1Id, team2Id);
- } catch (e) {
- debugPrint('Team head-to-head lookup failed (details redacted)');
- return null;
- }
+   // The OR filter below is PostgREST syntax. Never interpolate arbitrary
+   // user-controlled strings into that expression.
+   final uuid = RegExp(
+     r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+   );
+   if (!uuid.hasMatch(team1Id) || !uuid.hasMatch(team2Id) ||
+       team1Id == team2Id || _supabase.auth.currentUser == null) {
+     return null;
+   }
+
+   try {
+     final response = await _supabase
+         .from('bookings')
+         .select('booking_type, player_team_id, opponent_team_id, '
+             'match_result_status, elo_processed, final_outcome, '
+             'winner_team_id')
+         .eq('booking_type', 'challenge')
+         .eq('status', 'completed')
+         .eq('match_result_status', 'confirmed')
+         .eq('elo_processed', true)
+         .inFilter('final_outcome', ['homeWin', 'awayWin', 'draw'])
+         .or('and(player_team_id.eq.$team1Id,opponent_team_id.eq.$team2Id),'
+             'and(player_team_id.eq.$team2Id,opponent_team_id.eq.$team1Id)');
+     return TeamPayloadBuilder.calculateHeadToHead(
+         response as List, team1Id, team2Id);
+   } catch (_) {
+     debugPrint('Team head-to-head lookup failed (details redacted)');
+     return null;
+   }
  }
 
   @Deprecated('Use lookupChallengeCode or team ID instead of captain phone')
