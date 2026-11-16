@@ -40,6 +40,7 @@ migration as applied.
 | `supabase/migrations/20261116100000_team_skills_registration_withdrawal.sql` | `20261116162452` |
 | `supabase/migrations/20261116101000_team_skills_captain_pending_withdrawal.sql` | `20261116151313` |
 | `supabase/migrations/20261116102000_team_skills_waitlist_review_capacity.sql` | `20261116162920` |
+| `supabase/migrations/20261116103000_team_skills_withdraw_compatibility.sql` | `20261116164440` |
 | `supabase/migrations/20261116163000_team_skills_notifications_realtime_staging.sql` | `20261116150557` |
 | `supabase/migrations/20261116164000_team_skills_blocked_captain_roster_guard.sql` | `20261116151450` |
 
@@ -66,5 +67,5 @@ migration as applied.
    hospitality is not a commission on stadium bookings; no live charges
    have been authorized or tested as part of this record.
 
-**Observed count:** 30 named Team Skills Cup migrations applied on
+**Observed count:** 31 named Team Skills Cup migrations applied on
 Staging at time of audit; `main` and Production are unchanged by this file.
