@@ -30,7 +30,9 @@ class _TeamSkillsHistorySectionState extends State<TeamSkillsHistorySection> {
   void didUpdateWidget(covariant TeamSkillsHistorySection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.participantId != widget.participantId ||
-        oldWidget.isTeam != widget.isTeam) _refresh();
+        oldWidget.isTeam != widget.isTeam) {
+      _refresh();
+    }
   }
 
   void _refresh() {
