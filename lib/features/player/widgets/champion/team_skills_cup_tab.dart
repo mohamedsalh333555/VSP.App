@@ -423,6 +423,68 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     }
   }
 
+  Future<void> _withdrawRegistration(String registrationId) async {
+    if (_submitting || _viewerUserId == null) return;
+    final actorId = _viewerUserId;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('سحب طلب مشاركة الفريق'),
+        content: const Text(
+          'سيتم إلغاء طلب الفريق وتحرير مكانه واللاعبين الخمسة. '
+          'لن تستطيع إعادة تقديم نفس الفريق في هذه البطولة بعد السحب.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('العودة'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('تأكيد السحب'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || actorId != _viewerUserId) return;
+    setState(() { _submitting = true; _feedback = null; });
+    try {
+      await widget.repository.withdrawRegistration(registrationId);
+      if (!mounted || actorId != _viewerUserId) return;
+      await _reload();
+      if (mounted && actorId == _viewerUserId) {
+        setState(() => _feedback = 'تم سحب طلب الفريق وتحرير مكانه.');
+      }
+    } catch (_) {
+      if (!mounted || actorId != _viewerUserId) return;
+      // An offline reply is ambiguous: confirm the terminal status rather
+      // than offering another destructive request or claiming failure.
+      try {
+        final latest = await widget.repository.getRegistrations(cupId);
+        if (!mounted || actorId != _viewerUserId) return;
+        final withdrawn = latest.any((row) =>
+            row['id']?.toString() == registrationId &&
+            row['captain_id']?.toString() == actorId &&
+            row['status'] == 'withdrawn');
+        setState(() {
+          _registrations = latest;
+          _feedback = withdrawn
+              ? 'طلب الفريق مسحوب بالفعل، وتم تحرير مكانه.'
+              : 'تعذر تأكيد السحب. تحقق من حالة طلبك قبل المحاولة مجددًا.';
+        });
+      } catch (_) {
+        if (mounted && actorId == _viewerUserId) {
+          setState(() => _feedback =
+              'تعذر التحقق من طلب السحب. راجع حالة الفريق قبل المحاولة مجددًا.');
+        }
+      }
+    } finally {
+      if (mounted && actorId == _viewerUserId) {
+        setState(() => _submitting = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
@@ -557,12 +619,23 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                   statusText(registration['status']?.toString()),
                   style: const TextStyle(color: VSPColors.accent),
                 ),
-                trailing: Icon(
-                  registration['checked_in_at'] != null
-                      ? Icons.how_to_reg_outlined
-                      : Icons.schedule_outlined,
-                  color: VSPColors.textSecondary,
-                ),
+                trailing: widget.cup['status'] == 'registration' &&
+                        registration['captain_id']?.toString() == _viewerUserId &&
+                        ['pending','waitlist'].contains(registration['status']) &&
+                        registration['hospitality_payment_status'] == 'unpaid'
+                    ? TextButton(
+                        onPressed: _submitting
+                            ? null
+                            : () => _withdrawRegistration(
+                                registration['id'].toString()),
+                        child: Text(ar ? 'سحب الطلب' : 'Withdraw request'),
+                      )
+                    : Icon(
+                        registration['checked_in_at'] != null
+                            ? Icons.how_to_reg_outlined
+                            : Icons.schedule_outlined,
+                        color: VSPColors.textSecondary,
+                      ),
               )),
             ],
             if (widget.cup['status'] == 'registration' && _captainTeams.isNotEmpty) ...[
