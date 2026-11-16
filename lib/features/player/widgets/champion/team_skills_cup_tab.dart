@@ -154,6 +154,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   Timer? _liveRefreshTimer;
   bool _hasLiveRefreshError = false;
   int _readGeneration = 0;
+  bool _hasBoundViewer = false;
+  String? _viewerUserId;
   List<Map<String, dynamic>> _phases = [];
   List<Map<String, dynamic>> _awards = [];
   List<Map<String, dynamic>> _registrations = [];
@@ -173,12 +175,35 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   @override
   void initState() {
     super.initState();
-    _loadFuture = _reload();
+    _loadFuture = Future<void>.value();
     _liveRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       if (mounted && !_submitting) {
         _refreshLatest();
       }
     });
+  }
+
+  /// AuthProvider is the owner of the current identity. A route may survive
+  /// logout/login, so never keep showing the previous viewer's team state.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final actorId = context.watch<AuthProvider>().currentUser?.id;
+    if (!_hasBoundViewer || _viewerUserId != actorId) {
+      _hasBoundViewer = true;
+      _viewerUserId = actorId;
+      ++_readGeneration;
+      _registrations = [];
+      _memberTeamIds = <String>{};
+      _captainTeams = [];
+      _rosterOptions = [];
+      _selectedTeamId = null;
+      _selectedPlayers.clear();
+      _goalkeeperId = null;
+      _representativeId = null;
+      _feedback = null;
+      _loadFuture = _reload();
+    }
   }
 
   @override
@@ -192,11 +217,18 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     final generation = ++_readGeneration;
     final currentUserId = context.read<AuthProvider>().currentUser?.id;
     try {
+      final memberFuture = currentUserId == null
+          ? Future.value(<String>{})
+          : widget.repository.getMemberTeamIds(currentUserId);
       final values = await Future.wait([
         widget.repository.getLeaderboard(cupId),
         widget.repository.getRegistrations(cupId),
         widget.repository.getAwards(cupId),
+        currentUserId == null
+            ? Future.value(<Map<String, dynamic>>[])
+            : widget.repository.getCaptainTeams(currentUserId),
       ]);
+      final memberIds = await memberFuture;
       final ranking = TeamSkillsRankingService.rank(values[0]);
       final names = await widget.repository.getTeamNames([
         ...values[0].map((row) => row['team_id'].toString()),
@@ -210,7 +242,19 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         _rankedLeaderboard = ranking;
         _registrations = values[1];
         _awards = values[2];
+        _captainTeams = values[3];
+        _memberTeamIds = memberIds;
         _teamNames = names;
+        if (!_captainTeams.any(
+            (team) => team['id'].toString() == _selectedTeamId)) {
+          _selectedTeamId = _captainTeams.isEmpty
+              ? null
+              : _captainTeams.first['id'].toString();
+          _rosterOptions = [];
+          _selectedPlayers.clear();
+          _goalkeeperId = null;
+          _representativeId = null;
+        }
         _hasLiveRefreshError = false;
       });
     } catch (_) {
@@ -275,9 +319,14 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   }
 
   Future<void> _loadRoster(String teamId) async {
+    final viewerId = _viewerUserId;
+    final generation = _readGeneration;
     try {
       final roster = await widget.repository.getRosterOptions(teamId);
-      if (!mounted || teamId != _selectedTeamId) return;
+      if (!mounted || teamId != _selectedTeamId ||
+          generation != _readGeneration || viewerId != _viewerUserId) {
+        return;
+      }
       setState(() {
         _rosterOptions = roster;
         final allowedIds = roster.map((r)=>r['uid'].toString()).toSet();
@@ -290,7 +339,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         }
       });
     } catch (_) {
-      if (mounted && teamId == _selectedTeamId) {
+      if (mounted && teamId == _selectedTeamId &&
+          generation == _readGeneration && viewerId == _viewerUserId) {
         setState(() {
           _rosterOptions = [];
           _feedback = 'تعذر التحقق من أعضاء الفريق. أعد المحاولة.';
