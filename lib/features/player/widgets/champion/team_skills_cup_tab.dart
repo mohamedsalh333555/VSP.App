@@ -194,6 +194,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       _viewerUserId = actorId;
       ++_readGeneration;
       _registrations = [];
+      _rankedLeaderboard = [];
+      _awards = [];
+      _teamNames = {};
       _memberTeamIds = <String>{};
       _captainTeams = [];
       _rosterOptions = [];
@@ -202,6 +205,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       _goalkeeperId = null;
       _representativeId = null;
       _feedback = null;
+      _submitting = false;
       _loadFuture = _reload();
     }
   }
@@ -354,6 +358,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         _selectedPlayers.length != 5 ||
         !_selectedPlayers.contains(_goalkeeperId) ||
         !_selectedPlayers.contains(_representativeId)) return;
+    final viewerId = _viewerUserId;
     setState(() { _submitting = true; _feedback = null; });
     try {
       await widget.repository.registerTeam(
@@ -361,18 +366,19 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         playerIds: _selectedPlayers.toList()..sort(),
         goalkeeperId: _goalkeeperId!, representativeId: _representativeId!,
       );
+      if (!mounted || viewerId != _viewerUserId) return;
       await _reload();
-      if (mounted) {
+      if (mounted && viewerId == _viewerUserId) {
         setState(() => _feedback =
             'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.');
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && viewerId == _viewerUserId) {
         setState(() => _feedback =
             'تعذر إكمال التسجيل. راجع حالة الفريق قبل إعادة المحاولة.');
       }
     } finally {
-      if (mounted) {
+      if (mounted && viewerId == _viewerUserId) {
         setState(() => _submitting = false);
       }
     }
