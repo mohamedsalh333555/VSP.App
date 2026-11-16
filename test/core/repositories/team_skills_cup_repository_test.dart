@@ -272,6 +272,18 @@ void main() {
     expect(tab, contains("rows.first['computed_points']"));
   });
 
+  test('roster edit feedback reflects the latest admin review, not an assumed pending state', () {
+    final tab = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    expect(tab, contains('await _loadFuture;'));
+    expect(tab, contains("status == 'approved'"));
+    expect(tab, contains("status == 'waitlist'"));
+    expect(tab, contains("status == 'pending'"));
+    expect(tab, contains('تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك'));
+    expect(tab, isNot(contains('تم حفظ التشكيلة المحدثة، وما زال الطلب ينتظر مراجعة الإدارة')));
+  });
+
   test('captain sees the actual bounded waitlist status after registration', () {
     final tab = File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
         .readAsStringSync();
