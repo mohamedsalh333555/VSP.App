@@ -364,7 +364,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     if (_submitting || _selectedTeamId == null ||
         _selectedPlayers.length != 5 ||
         !_selectedPlayers.contains(_goalkeeperId) ||
-        !_selectedPlayers.contains(_representativeId)) return;
+        !_selectedPlayers.contains(_representativeId)) {
+      return;
+    }
     final viewerId = _viewerUserId;
     setState(() { _submitting = true; _feedback = null; });
     try {
