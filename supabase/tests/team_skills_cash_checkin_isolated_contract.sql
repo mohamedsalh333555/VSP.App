@@ -22,8 +22,36 @@ insert into public.team_skills_registrations(id,cup_id,status) values
  ('00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000001','approved'),
  ('00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000001','approved'),
  ('00000000-0000-0000-0000-000000000103','00000000-0000-0000-0000-000000000002','approved'),
- ('00000000-0000-0000-0000-000000000104','00000000-0000-0000-0000-000000000003','approved');
+ ('00000000-0000-0000-0000-000000000104','00000000-0000-0000-0000-000000000003','approved'),
+ ('00000000-0000-0000-0000-000000000105','00000000-0000-0000-0000-000000000001','pending'),
+ ('00000000-0000-0000-0000-000000000106','00000000-0000-0000-0000-000000000001','waitlist');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000009001',false);
+do $not_approved$
+declare pending_denied boolean:=false;waiting_denied boolean:=false;
+begin
+ begin
+  perform public.team_skills_confirm_hospitality(
+    '00000000-0000-0000-0000-000000000105',false,null);
+ exception when others then
+  if position('approved teams' in lower(sqlerrm))>0 then
+    pending_denied:=true; else raise; end if;
+ end;
+ begin
+  perform public.team_skills_confirm_hospitality(
+    '00000000-0000-0000-0000-000000000106',
+    true,'Unapproved team must not receive a waiver');
+ exception when others then
+  if position('approved teams' in lower(sqlerrm))>0 then
+    waiting_denied:=true; else raise; end if;
+ end;
+ if not pending_denied or not waiting_denied then
+  raise exception 'UNAPPROVED_HOSPITALITY_RECEIPT_OR_WAIVER_ACCEPTED';
+ end if;
+ if exists(select 1 from public.team_skills_audit
+   where action='hospitality_recorded') then
+  raise exception 'UNAPPROVED_TEAM_WAS_AUDITED_AS_PAID';
+ end if;
+end $not_approved$;
 do $unpaid$
 declare blocked boolean:=false;
 begin
