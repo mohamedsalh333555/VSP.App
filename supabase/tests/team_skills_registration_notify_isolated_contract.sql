@@ -8,6 +8,7 @@ create table public.notifications(
  title text not null,body text not null,message text,
  type text not null,metadata jsonb,created_at timestamptz default now());
 -- TEAM_SKILLS_NOTIFY_MIGRATION
+-- TEAM_SKILLS_INITIAL_RECEIPT_MIGRATION
 
 insert into public.team_skills_registrations(id,cup_id,team_id,captain_id,status)
 values
@@ -16,7 +17,32 @@ values
 ('00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000001',
  '00000000-0000-0000-0000-000000000202','00000000-0000-0000-0000-000000000302','pending'),
 ('00000000-0000-0000-0000-000000000103','00000000-0000-0000-0000-000000000001',
- '00000000-0000-0000-0000-000000000203','00000000-0000-0000-0000-000000000303','pending');
+ '00000000-0000-0000-0000-000000000203','00000000-0000-0000-0000-000000000303','pending'),
+('00000000-0000-0000-0000-000000000104','00000000-0000-0000-0000-000000000001',
+ '00000000-0000-0000-0000-000000000204','00000000-0000-0000-0000-000000000304','waitlist'),
+('00000000-0000-0000-0000-000000000105','00000000-0000-0000-0000-000000000001',
+ '00000000-0000-0000-0000-000000000205','00000000-0000-0000-0000-000000000305','approved');
+
+do $receipt$
+declare n integer;pending_n integer;wait_n integer;approved_n integer;valid_n integer;
+begin
+ select count(*),
+   count(*) filter(where n.metadata->>'status'='pending'),
+   count(*) filter(where n.metadata->>'status'='waitlist'),
+   count(*) filter(where n.metadata->>'status'='approved'),
+   count(*) filter(where n.user_id=r.captain_id
+     and n.metadata->>'registration_id'=r.id::text
+     and n.metadata->>'cup_id'=r.cup_id::text)
+ into n,pending_n,wait_n,approved_n,valid_n
+ from public.notifications n
+ join public.team_skills_registrations r
+   on r.id::text=n.metadata->>'registration_id'
+ where n.metadata->>'event'='registration_submitted';
+ if n<>4 or pending_n<>3 or wait_n<>1 or approved_n<>0 or valid_n<>4 then
+   raise exception 'INITIAL_CAPTAIN_RECEIPTS_INVALID: total %, pending %, waitlisted %, approved %, verified %',
+     n,pending_n,wait_n,approved_n,valid_n;
+ end if;
+end $receipt$;
 
 update public.team_skills_registrations set status='approved'
  where id='00000000-0000-0000-0000-000000000101';
