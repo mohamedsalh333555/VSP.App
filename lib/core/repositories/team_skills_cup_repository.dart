@@ -153,6 +153,18 @@ class TeamSkillsCupRepository {
     }
     return null;
   }
+  /// A successful HTTP response is not enough to confirm withdrawal.
+  /// Read a terminal status for this exact captain and registration.
+  static bool isCaptainWithdrawalConfirmed(
+    List<Map<String, dynamic>> registrations, {
+    required String registrationId,
+    required String captainId,
+  }) => registrationId.isNotEmpty && captainId.isNotEmpty &&
+      registrations.any((row) =>
+        row['id']?.toString() == registrationId &&
+        row['captain_id']?.toString() == captainId &&
+        row['status'] == 'withdrawn');
+
   /// UI-only eligibility preview; the server checks canonical captain,
   /// actual account status, event state, money settlement and current roster.
   static bool canWithdrawRegistration({
