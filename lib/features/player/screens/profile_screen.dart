@@ -28,6 +28,7 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../widgets/vsp_1v1_trophy_badge.dart';
+import '../widgets/champion/team_skills_history_section.dart';
 import '../widgets/create_team_sheet.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -494,6 +495,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
 
  const SizedBox(height: VSPSpacing.xl),
+
+ if (auth.currentUser?.id != null) ...[
+   TeamSkillsHistorySection(
+     participantId: auth.currentUser!.id,
+     isTeam: false,
+   ),
+   const SizedBox(height: VSPSpacing.lg),
+ ],
 
  // 2. Account Section
  VSPSectionTitle(l10n.account),
