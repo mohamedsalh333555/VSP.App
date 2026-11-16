@@ -125,8 +125,19 @@ class TeamSkillsCupRepository {
 
   Future<List<Map<String, dynamic>>> getLeaderboard(String cupId) async {
     final rows = await _client.from('team_skills_leaderboard')
-        .select('cup_id,team_id,points,completed_stages,all_stages_approved')
+        .select('cup_id,team_id,registration_id,points,completed_stages,all_stages_approved')
         .eq('cup_id', cupId).order('points', ascending: false);
+    return (rows as List).cast<Map<String, dynamic>>();
+  }
+
+  /// Only approved measurements are visible to players. Pending, corrected
+  /// and unverified score inputs stay within the judges/admin workstream.
+  Future<List<Map<String, dynamic>>> getApprovedScores(String cupId) async {
+    final rows = await _client.from('team_skills_scores')
+        .select('registration_id,stage_no,computed_points')
+        .eq('cup_id', cupId)
+        .eq('status', 'approved')
+        .order('stage_no');
     return (rows as List).cast<Map<String, dynamic>>();
   }
 
