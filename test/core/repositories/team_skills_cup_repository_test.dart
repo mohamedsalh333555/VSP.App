@@ -275,10 +275,40 @@ void main() {
   test('captain sees the actual bounded waitlist status after registration', () {
     final tab = File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
         .readAsStringSync();
-    expect(tab, contains("registration['status'] == 'waitlist'"));
+    expect(tab, contains("confirmed['status'] == 'waitlist'"));
+    expect(tab, contains('confirmed == null'));
+    expect(tab, contains('TeamSkillsCupRepository.findCaptainRegistration('));
     expect(tab, contains('تم تسجيل فريقك في قائمة الانتظار'));
     expect(tab, contains("case 'waitlist':"));
     expect(tab, contains('await _reload();'));
+  });
+
+
+  test('captain withdrawal is only confirmed by own terminal registration', () {
+    final rows = <Map<String,dynamic>>[
+      {'id':'request-1','captain_id':'captain','status':'pending'},
+      {'id':'request-2','captain_id':'other','status':'withdrawn'},
+      {'id':'request-3','captain_id':'captain','status':'withdrawn'},
+    ];
+    bool confirmed(String id,String actor) =>
+        TeamSkillsCupRepository.isCaptainWithdrawalConfirmed(
+          rows,registrationId:id,captainId:actor);
+    expect(confirmed('request-3','captain'),isTrue);
+    expect(confirmed('request-1','captain'),isFalse);
+    expect(confirmed('request-2','captain'),isFalse);
+    expect(confirmed('request-3','other'),isFalse);
+    expect(confirmed('','captain'),isFalse);
+  });
+
+  test('captain success toasts require a persisted registration or withdrawal', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    expect(source,contains('confirmed == null'));
+    expect(source,contains('isCaptainWithdrawalConfirmed('));
+    expect(source,contains('تم إرسال طلب السحب لكن تعذر تأكيد حالته'));
+    expect(source,contains('تم إرسال الطلب لكن تعذر تأكيد تسجيل الفريق'));
+    expect(source,contains('تم سحب طلب الفريق وتحرير مكانه'));
   });
 
   test('Team Skills notification deep-link validates source and cup UUID', () {
