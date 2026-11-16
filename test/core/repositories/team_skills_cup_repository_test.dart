@@ -65,6 +65,42 @@ void main() {
     expect(source, contains('if (!mounted || viewerId != _viewerUserId) return;'));
   });
 
+  test('captain is selectable even if absent from team_members roster', () {
+    final selected = TeamSkillsCupRepository.normalizeRosterWithCaptain(
+      members: [
+        {'uid':'member-1','name':'لاعب 1','phone':'01000000000'},
+        {'uid':'member-2','name':'لاعب 2','phone':'01100000000'},
+      ],
+      currentUserId: 'captain-id',
+      captainUserId: 'captain-id',
+      captainName: 'الكابتن',
+    );
+    expect(selected.map((p) => p['uid']).toList(),
+      ['member-1','member-2','captain-id']);
+    expect(selected.last['name'], 'الكابتن');
+    expect(selected.every((p) => !p.containsKey('phone')), isTrue,
+      reason: 'Team Skills roster must not retain private phone numbers');
+  });
+
+  test('does not add a different user as team captain or duplicate actual captain', () {
+    final options = TeamSkillsCupRepository.normalizeRosterWithCaptain(
+      members: [{'uid':'member-1','name':'لاعب'}],
+      currentUserId: 'not-captain',
+      captainUserId: 'captain-id',
+    );
+    expect(options.length, 1);
+    final captainIsMember = TeamSkillsCupRepository.normalizeRosterWithCaptain(
+      members: [
+        {'uid':'captain-id','name':'قائد مسجل'},
+        {'uid':'captain-id','name':'عضو مكرر'},
+      ],
+      currentUserId: 'captain-id',
+      captainUserId: 'captain-id',
+    );
+    expect(captainIsMember.length, 1);
+    expect(captainIsMember.single['name'], 'قائد مسجل');
+  });
+
   test('team registration and points use a single guarded Supabase backend', () {
     final source=File('lib/core/repositories/team_skills_cup_repository.dart').readAsStringSync();
     expect(source, contains("rpc('team_skills_register'"));
