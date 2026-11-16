@@ -141,6 +141,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   List<Map<String, dynamic>> _awards = [];
   List<Map<String, dynamic>> _registrations = [];
   List<Map<String, dynamic>> _captainTeams = [];
+  Set<String> _memberTeamIds = <String>{};
   List<Map<String, dynamic>> _rosterOptions = [];
   Map<String, String> _teamNames = {};
   String? _selectedTeamId;
@@ -160,6 +161,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
 
   Future<void> _reload() async {
     final currentUserId = context.read<AuthProvider>().currentUser?.id;
+    final memberTeamsFuture = currentUserId == null
+        ? Future.value(<String>{})
+        : widget.repository.getMemberTeamIds(currentUserId);
     final values = await Future.wait([
       widget.repository.getLeaderboard(cupId),
       widget.repository.getPhases(cupId),
@@ -171,6 +175,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     ]);
     final ranks = values[0], phases = values[1], awards = values[2],
         registrations = values[3], teams = values[4];
+    final memberTeamIds = await memberTeamsFuture;
     final names = await widget.repository.getTeamNames(
       [...ranks.map((e) => e['team_id'].toString()),
        ...registrations.map((e) => e['team_id'].toString())]);
@@ -181,9 +186,20 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       _awards = awards;
       _registrations = registrations;
       _captainTeams = teams;
+      _memberTeamIds = memberTeamIds;
       _teamNames = names;
-      if (_selectedTeamId == null && teams.isNotEmpty) {
+      if (teams.isEmpty) {
+        _selectedTeamId = null;
+        _rosterOptions = [];
+        _selectedPlayers.clear();
+        _goalkeeperId = null;
+        _representativeId = null;
+      } else if (!teams.any((t) => t['id'].toString() == _selectedTeamId)) {
         _selectedTeamId = teams.first['id'].toString();
+        _rosterOptions = [];
+        _selectedPlayers.clear();
+        _goalkeeperId = null;
+        _representativeId = null;
       }
     });
     if (_selectedTeamId != null && teams.any((t)=>t['id'].toString()==_selectedTeamId)) {
@@ -237,9 +253,27 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   Widget build(BuildContext context) {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     const style = TextStyle(color: VSPColors.white);
-    final activeTeamRegistration = _registrations.where(
+    final viewerTeamIds = <String>{
+      ..._memberTeamIds,
+      ..._captainTeams.map((team) => team['id'].toString()),
+    };
+    final myRegistrations = _registrations
+        .where((registration) =>
+            viewerTeamIds.contains(registration['team_id'].toString()))
+        .toList();
+    final activeTeamRegistration = myRegistrations.where(
       (r) => r['team_id'].toString() == _selectedTeamId,
     ).toList();
+    String statusText(String? status) {
+      switch (status) {
+        case 'pending': return ar ? 'بانتظار مراجعة الإدارة' : 'Pending approval';
+        case 'approved': return ar ? 'تم قبول الفريق' : 'Approved';
+        case 'waitlist': return ar ? 'قائمة الانتظار' : 'Waitlisted';
+        case 'rejected': return ar ? 'غير مقبول' : 'Rejected';
+        case 'withdrawn': return ar ? 'منسحب' : 'Withdrawn';
+        default: return ar ? 'حالة غير معروفة' : 'Unknown status';
+      }
+    }
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(backgroundColor: VSPColors.background,
@@ -296,6 +330,29 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                     style:const TextStyle(color:VSPColors.textSecondary)),
               )),
             ],
+            if (myRegistrations.isNotEmpty) ...[
+              const Divider(color: VSPColors.divider),
+              Text(ar ? 'حالة مشاركة فرقك' : 'Your teams in this cup',
+                  style: const TextStyle(color: VSPColors.white,
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+              ...myRegistrations.map((registration) => ListTile(
+                title: Text(
+                  _teamNames[registration['team_id'].toString()] ??
+                      (ar ? 'فريقك' : 'Your team'),
+                  style: const TextStyle(color: VSPColors.textPrimary),
+                ),
+                subtitle: Text(
+                  statusText(registration['status']?.toString()),
+                  style: const TextStyle(color: VSPColors.accent),
+                ),
+                trailing: Icon(
+                  registration['checked_in_at'] != null
+                      ? Icons.how_to_reg_outlined
+                      : Icons.schedule_outlined,
+                  color: VSPColors.textSecondary,
+                ),
+              )),
+            ],
             if (widget.cup['status'] == 'registration' && _captainTeams.isNotEmpty) ...[
               const Divider(color: VSPColors.divider),
               Text(ar ? 'تسجيل فريقك (للكابتن فقط)' : 'Register your team (captains only)',
@@ -318,9 +375,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                 },
               ),
               if (activeTeamRegistration.isNotEmpty)
-                Text(ar ? 'حالة طلب فريقك: ${activeTeamRegistration.first['status']}'
-                    : 'Your registration: ${activeTeamRegistration.first['status']}',
-                    style:const TextStyle(color:VSPColors.accent)),
+                Text(statusText(activeTeamRegistration.first['status']?.toString()),
+                    style: const TextStyle(color: VSPColors.accent)),
               if (activeTeamRegistration.isEmpty) ...[
                 Text(ar ? 'اختر 5 لاعبين من أعضاء فريقك' : 'Choose 5 current team members',
                     style: const TextStyle(color:VSPColors.textSecondary)),
