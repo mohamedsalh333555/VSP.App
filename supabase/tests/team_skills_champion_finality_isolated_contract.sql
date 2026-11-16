@@ -24,11 +24,6 @@ create table public.team_skills_scores(
 create trigger team_skills_freeze_score_after_seed
 before insert or update or delete on public.team_skills_scores
 for each row execute function vsp_skills_private.guard_score_after_seeding();
--- In production the score trigger was installed by the older finals-seeding
--- migration; this isolated fixture must install the same existing trigger.
-create trigger team_skills_freeze_score_after_seed
-before insert or update or delete on public.team_skills_scores
-for each row execute function vsp_skills_private.guard_score_after_seeding();
 
 
 insert into public.team_skills_registrations(id,cup_id,status)
