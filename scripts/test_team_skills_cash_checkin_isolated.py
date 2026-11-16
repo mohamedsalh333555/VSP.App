@@ -11,7 +11,7 @@ from test_team_skills_rls_isolated import psql, reject_nonlocal_targets
 
 ROOT = Path(__file__).resolve().parents[1]
 ORIGINAL = ROOT / 'supabase/migrations/20261116070000_team_skills_hospitality_checkin.sql'
-HARDENED = ROOT / 'supabase/migrations/20261116090000_team_skills_checkin_hospitality_guard.sql'
+HARDENED = ROOT / 'supabase/migrations/20261116091000_team_skills_checkin_closed_status_first.sql'
 FIXTURE = ROOT / 'supabase/tests/team_skills_cash_checkin_isolated_contract.sql'
 DATABASE = 'vsp_team_skills_cash_checkin_isolated'
 
