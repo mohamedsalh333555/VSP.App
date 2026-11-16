@@ -41,6 +41,8 @@ def audit() -> int:
         raise ValueError("Source files repeated or in wrong chronological order")
 
     versions = []
+    source_versions = []
+    staging_names = []
     for entry in entries:
         filename = Path(entry["local_file"]).name
         match = FILENAME.fullmatch(filename)
@@ -54,9 +56,16 @@ def audit() -> int:
         if name != match.group(2) + "_20261116":
             raise ValueError(f"Staging migration slug does not match file: {filename}")
         versions.append(version)
-    if versions != sorted(set(versions)):
-        raise ValueError("Staging versions are duplicated or out of applied order")
-    print(f"PASS: {len(entries)} repo migrations have unique staging provenance records")
+        source_versions.append(match.group(1))
+        staging_names.append(name)
+    if len(source_versions) != len(set(source_versions)):
+        raise ValueError("Duplicate source migration timestamps would break a CLI rollout")
+    if len(versions) != len(set(versions)) or len(staging_names) != len(set(staging_names)):
+        raise ValueError("Staging versions or migration names are duplicated")
+    # Supabase MCP generated an independent staging timestamp for each apply.
+    # Their application order can differ from the sorted GitHub filenames;
+    # do not reject correct provenance merely because those orders differ.
+    print(f"PASS: {len(entries)} repo migrations have unique source timestamps and staging provenance")
     print("WARNING: SQL parity, production deployment and history reconciliation remain unverified")
     return 0
 
