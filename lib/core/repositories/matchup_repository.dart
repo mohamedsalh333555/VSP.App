@@ -198,7 +198,17 @@ class MatchupRepository {
     }
 
     for (final r in results) {
-      if (!stats.containsKey(r.teamAId) || !stats.containsKey(r.teamBId)) continue;
+      // Only authoritative completed matchup outcomes count. A partial or
+      // malformed record must not magically award a draw and one point.
+      // Team challenge results use a separate two-captain agreement flow.
+      if (!stats.containsKey(r.teamAId) ||
+          !stats.containsKey(r.teamBId) ||
+          r.teamAId == r.teamBId ||
+          (r.outcome != 'team_a_win' &&
+              r.outcome != 'team_b_win' &&
+              r.outcome != 'draw')) {
+        continue;
+      }
 
       stats[r.teamAId]!['played'] = stats[r.teamAId]!['played']! + 1;
       stats[r.teamBId]!['played'] = stats[r.teamBId]!['played']! + 1;
@@ -211,8 +221,7 @@ class MatchupRepository {
         stats[r.teamBId]!['wins'] = stats[r.teamBId]!['wins']! + 1;
         stats[r.teamBId]!['points'] = stats[r.teamBId]!['points']! + 3;
         stats[r.teamAId]!['losses'] = stats[r.teamAId]!['losses']! + 1;
-      } else {
-        // Draw
+      } else if (r.outcome == 'draw') {
         stats[r.teamAId]!['draws'] = stats[r.teamAId]!['draws']! + 1;
         stats[r.teamAId]!['points'] = stats[r.teamAId]!['points']! + 1;
         stats[r.teamBId]!['draws'] = stats[r.teamBId]!['draws']! + 1;
