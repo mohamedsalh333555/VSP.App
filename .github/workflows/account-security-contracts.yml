@@ -148,6 +148,8 @@ jobs:
         run: python3 scripts/test_team_skills_registration_notify_isolated.py
       - name: Verify blocked judges and organizers cannot submit protected scores
         run: python3 scripts/test_team_skills_blocked_judge_isolated.py
+      - name: Verify cash hospitality and waived-fee attendance on isolated PostgreSQL
+        run: python3 scripts/test_team_skills_cash_checkin_isolated.py
       - name: Verify matchup fee migration rebuild target guard
         run: python3 -m unittest discover -s test/tooling -p test_matchup_fee_migration_rebuild.py -v
       - name: Rebuild and replay matchup fee migration on isolated PostgreSQL
