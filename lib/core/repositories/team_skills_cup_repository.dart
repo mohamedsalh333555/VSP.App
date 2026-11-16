@@ -118,7 +118,9 @@ class TeamSkillsCupRepository {
     required List<String> playerIds, required String goalkeeperId,
     required String representativeId,
   }) async {
-    if (playerIds.length != 5 || playerIds.toSet().length != 5 ||
+    if (cupId.trim().isEmpty || teamId.trim().isEmpty ||
+        playerIds.any((id) => id.trim().isEmpty || id != id.trim()) ||
+        playerIds.length != 5 || playerIds.toSet().length != 5 ||
         !playerIds.contains(goalkeeperId) ||
         !playerIds.contains(representativeId)) {
       throw StateError('INVALID_TEAM_SKILLS_ROSTER');
@@ -171,7 +173,7 @@ class TeamSkillsCupRepository {
   /// The RPC is authoritative and audits the resulting freed roster/seat.
   /// Never treat network success alone as proof of a withdrawn registration.
   Future<void> withdrawRegistration(String registrationId) async {
-    if (registrationId.isEmpty) {
+    if (registrationId.trim().isEmpty) {
       throw StateError('TEAM_SKILLS_REGISTRATION_ID_REQUIRED');
     }
     await _client.rpc('team_skills_withdraw_registration',
@@ -198,7 +200,7 @@ class TeamSkillsCupRepository {
 
   Future<List<Map<String, dynamic>>> getActiveRoster(
       String registrationId) async {
-    if (registrationId.isEmpty) {
+    if (registrationId.trim().isEmpty) {
       throw StateError('TEAM_SKILLS_REGISTRATION_ID_REQUIRED');
     }
     final rows = await _client.from('team_skills_roster')
@@ -217,10 +219,11 @@ class TeamSkillsCupRepository {
     required String goalkeeperId,
     required String representativeId,
   }) async {
-    if (registrationId.isEmpty) {
+    if (registrationId.trim().isEmpty) {
       throw StateError('TEAM_SKILLS_REGISTRATION_ID_REQUIRED');
     }
-    if (playerIds.length != 5 || playerIds.toSet().length != 5 ||
+    if (playerIds.any((id) => id.trim().isEmpty || id != id.trim()) ||
+        playerIds.length != 5 || playerIds.toSet().length != 5 ||
         !playerIds.contains(goalkeeperId) ||
         !playerIds.contains(representativeId)) {
       throw StateError('INVALID_TEAM_SKILLS_ROSTER');
