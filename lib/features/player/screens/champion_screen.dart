@@ -5,13 +5,12 @@ import 'package:provider/provider.dart';
 import '../../../core/ui/vsp_ui.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/repositories/league_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../widgets/champion/champion_podium_components.dart';
 import '../widgets/champion/championships_list_tab.dart';
 import '../widgets/champion/teams_ranking_tab.dart';
-import '../widgets/champion/vsp_1v1_league_tab.dart';
+import '../widgets/champion/team_skills_cup_tab.dart';
 
 final GlobalKey<ChampionScreenState> championScreenKey = GlobalKey<ChampionScreenState>();
 
@@ -90,8 +89,8 @@ class ChampionScreenState extends State<ChampionScreen>
               child: VSPSegmentedControl(
                 labels: [
                   Localizations.localeOf(context).languageCode == 'ar' ? 'البطولات' : 'Tournaments',
-                  AppLocalizations.of(context)!.teams,
-                  Localizations.localeOf(context).languageCode == 'ar' ? '1 ضد 1' : '1vs1',
+                  Localizations.localeOf(context).languageCode == 'ar' ? 'ترتيب الفرق' : 'Team rankings',
+                  Localizations.localeOf(context).languageCode == 'ar' ? 'مهارات الفرق' : 'Team skills',
                 ],
                 selectedIndex: _selectedTabIndex,
                 onSelected: (index) => _tabController.animateTo(index),
@@ -147,14 +146,7 @@ class ChampionScreenState extends State<ChampionScreen>
                     selectedSport: _selectedSport,
                     onRetry: () => setState(() {}),
                   ),
-                  Vsp1v1LeagueTab(
-                    selectedLocation: _selectedLocation,
-                    onLocationChanged: (loc) => setState(() => _selectedLocation = loc),
-                    getActive1v1Stream: (loc) => LeagueRepository().getActive1v1TournamentStream(governorate: loc),
-                    getTournamentPlayersStream: (id) => LeagueRepository().getTournamentPlayersStream(id, isCompleted: false),
-                    getStandingsStream: (id) => LeagueRepository().get1v1Standings(tournamentId: id),
-                    onRetry: () => setState(() {}),
-                  ),
+                  TeamSkillsCupTab(selectedLocation: _selectedLocation),
                 ],
               ),
             ),
