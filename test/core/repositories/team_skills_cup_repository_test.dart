@@ -314,12 +314,28 @@ void main() {
     final tab = File(
       'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
     ).readAsStringSync();
-    expect(tab, contains('await _loadFuture;'));
+    expect(tab, contains('final latest = await widget.repository.getRegistrations(cupId);'));
+    expect(tab, contains('_registrations = latest;'));
+    expect(tab, contains('_loadFuture = _reload();'));
     expect(tab, contains("status == 'approved'"));
     expect(tab, contains("status == 'waitlist'"));
     expect(tab, contains("status == 'pending'"));
     expect(tab, contains('تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك'));
     expect(tab, isNot(contains('تم حفظ التشكيلة المحدثة، وما زال الطلب ينتظر مراجعة الإدارة')));
+  });
+
+  test('edit confirmation is scoped to the same cup, team and captain', () {
+    final tab = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    final handlerStart = tab.indexOf('Future<void> _editRegistration(');
+    final withdrawStart = tab.indexOf('Future<void> _withdrawRegistration(');
+    final editHandler = tab.substring(handlerStart, withdrawStart);
+    expect(editHandler, contains('final latest = await widget.repository.getRegistrations(cupId);'));
+    expect(editHandler, contains("row['cup_id']?.toString() == cupId"));
+    expect(editHandler, contains("row['team_id']?.toString() == registration['team_id']?.toString()"));
+    expect(editHandler, contains("row['captain_id']?.toString() == viewerId"));
+    expect(editHandler, isNot(contains('await _loadFuture;')));
   });
 
   test('captain sees the actual bounded waitlist status after registration', () {
