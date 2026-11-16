@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
@@ -20,12 +21,24 @@ class TeamSkillsCupTab extends StatefulWidget {
 
 class _TeamSkillsCupTabState extends State<TeamSkillsCupTab> {
   late Future<List<Map<String, dynamic>>> _cups;
+  Timer? _cupsRefreshTimer;
   TeamSkillsCupRepository get _repo => widget.repository ?? TeamSkillsCupRepository();
 
   @override
   void initState() {
     super.initState();
     _reload();
+    if (teamSkillsCupEnabled) {
+      _cupsRefreshTimer = Timer.periodic(const Duration(seconds: 45), (_) {
+        if (mounted) setState(_reload);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _cupsRefreshTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -139,6 +152,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   late Future<void> _loadFuture;
   List<Map<String, dynamic>> _leaderboard = [];
   List<RankedTeamSkillsEntry> _rankedLeaderboard = [];
+  Timer? _liveRefreshTimer;
+  bool _hasLiveRefreshError = false;
+  int _readGeneration = 0;
   List<Map<String, dynamic>> _phases = [];
   List<Map<String, dynamic>> _awards = [];
   List<Map<String, dynamic>> _registrations = [];
@@ -159,9 +175,51 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   void initState() {
     super.initState();
     _loadFuture = _reload();
+    _liveRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted && !_submitting) _refreshLatest();
+    });
+  }
+
+  @override
+  void dispose() {
+    _liveRefreshTimer?.cancel();
+    ++_readGeneration;
+    super.dispose();
+  }
+
+  Future<void> _refreshLatest() async {
+    final generation = ++_readGeneration;
+    final currentUserId = context.read<AuthProvider>().currentUser?.id;
+    try {
+      final values = await Future.wait([
+        widget.repository.getLeaderboard(cupId),
+        widget.repository.getRegistrations(cupId),
+        widget.repository.getAwards(cupId),
+      ]);
+      final ranking = TeamSkillsRankingService.rank(values[0]);
+      final names = await widget.repository.getTeamNames([
+        ...values[0].map((row) => row['team_id'].toString()),
+        ...values[1].map((row) => row['team_id'].toString()),
+      ]);
+      if (!mounted || generation != _readGeneration ||
+          context.read<AuthProvider>().currentUser?.id != currentUserId) return;
+      setState(() {
+        _leaderboard = values[0];
+        _rankedLeaderboard = ranking;
+        _registrations = values[1];
+        _awards = values[2];
+        _teamNames = names;
+        _hasLiveRefreshError = false;
+      });
+    } catch (_) {
+      if (mounted && generation == _readGeneration) {
+        setState(() => _hasLiveRefreshError = true);
+      }
+    }
   }
 
   Future<void> _reload() async {
+    final generation = ++_readGeneration;
     final currentUserId = context.read<AuthProvider>().currentUser?.id;
     final memberTeamsFuture = currentUserId == null
         ? Future.value(<String>{})
@@ -182,8 +240,10 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     final names = await widget.repository.getTeamNames(
       [...ranks.map((e) => e['team_id'].toString()),
        ...registrations.map((e) => e['team_id'].toString())]);
-    if (!mounted) return;
+    if (!mounted || generation != _readGeneration ||
+        context.read<AuthProvider>().currentUser?.id != currentUserId) return;
     setState(() {
+      _hasLiveRefreshError = false;
       _leaderboard = ranks;
       _rankedLeaderboard = rankedLeaderboard;
       _phases = phases;
@@ -295,6 +355,18 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
             ));
           }
           return ListView(padding: const EdgeInsets.all(16), children: [
+            if (_hasLiveRefreshError) ...[
+              Row(children: [
+                Expanded(child: Text(
+                    ar ? 'تعذر تحديث النتائج، المعروض آخر بيانات تم التحقق منها.'
+                        : 'Live refresh unavailable. Showing last verified data.',
+                    style: const TextStyle(color: VSPColors.warning))),
+                TextButton(
+                  onPressed: _refreshLatest,
+                  child: Text(ar ? 'تحديث' : 'Refresh')),
+              ]),
+              const SizedBox(height: 12),
+            ],
             Text(ar ? '6 اختبارات • 12 مرحلة • 100 نقطة'
                 : '6 disciplines • 12 stages • 100 points',
                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
