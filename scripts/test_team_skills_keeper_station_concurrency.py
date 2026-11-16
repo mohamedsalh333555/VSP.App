@@ -55,9 +55,9 @@ begin
      outcome:='conflict';
    else raise;end if;
  end;
- perform set_config('vsp_keeper_race_outcome',outcome,true);
+ perform set_config('vsp.keeper_race_outcome',outcome,true);
 end $attempt$;
-select current_setting('vsp_keeper_race_outcome');
+select current_setting('vsp.keeper_race_outcome');
 commit;
 """
             result = psql(DATABASE, sql=statement)
