@@ -50,6 +50,21 @@ void main() {
     expect(tab, contains("widget.cup['status'] == 'registration' && _captainTeams.isNotEmpty"));
   });
 
+  test('session switch clears private cup membership and ignores stale responses', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    expect(source, contains('void didChangeDependencies()'));
+    expect(source, contains('context.watch<AuthProvider>().currentUser?.id'));
+    expect(source, contains('_viewerUserId != actorId'));
+    expect(source, contains('_memberTeamIds = <String>{};'));
+    expect(source, contains('_captainTeams = [];'));
+    expect(source, contains('_registrations = [];'));
+    expect(source, contains('_selectedPlayers.clear();'));
+    expect(source, contains('generation != _readGeneration || viewerId != _viewerUserId'));
+    expect(source, contains('if (!mounted || viewerId != _viewerUserId) return;'));
+  });
+
   test('team registration and points use a single guarded Supabase backend', () {
     final source=File('lib/core/repositories/team_skills_cup_repository.dart').readAsStringSync();
     expect(source, contains("rpc('team_skills_register'"));
