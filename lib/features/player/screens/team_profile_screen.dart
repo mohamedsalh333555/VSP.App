@@ -16,6 +16,7 @@ import '../widgets/team_profile/team_profile_stats_grid.dart';
 import '../widgets/team_profile/team_profile_captain_card.dart';
 import '../widgets/team_profile/team_profile_roster_section.dart';
 import '../widgets/team_profile/team_profile_achievements_section.dart';
+import '../widgets/champion/team_skills_history_section.dart';
 import '../widgets/team_profile/team_profile_head_to_head_section.dart';
 import '../widgets/team_profile/team_profile_action_bar.dart';
 import '../widgets/team_profile/team_matchup_invite_modal.dart';
@@ -483,6 +484,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
 
             // 5. Achievements
             TeamProfileAchievementsSection(team: team),
+            const SizedBox(height: VSPSpacing.md),
+            TeamSkillsHistorySection(participantId: team.id, isTeam: true),
             if (_championVerificationFailed) ...[
               const SizedBox(height: VSPSpacing.sm),
               Container(
