@@ -25,6 +25,51 @@ void main() {
     await expectInvalid(['1','2','3','4','5'], '1', '6');
   });
 
+  test('malformed registration, roster and identifiers fail before any RPC', () async {
+    const players = ['1', '2', '3', '4', '5'];
+    Future<void> invalidRegistration({
+      String cupId = 'cup',
+      String teamId = 'team',
+      List<String> ids = players,
+    }) async {
+      await expectLater(repository.registerTeam(
+        cupId: cupId, teamId: teamId, playerIds: ids,
+        goalkeeperId: '1', representativeId: '2',
+      ), throwsA(isA<StateError>()));
+    }
+
+    await invalidRegistration(cupId: '  ');
+    await invalidRegistration(teamId: '');
+    await invalidRegistration(ids: ['1', '2', '3', '4', ' ']);
+    await invalidRegistration(ids: ['1', '2', '3', '4', ' 5']);
+
+    await expectLater(repository.correctRoster(
+      registrationId: 'pending', playerIds: const ['1', '2', '3', '4', ' '],
+      goalkeeperId: '1', representativeId: '2',
+    ), throwsA(isA<StateError>()));
+    await expectLater(repository.correctRoster(
+      registrationId: ' ', playerIds: players,
+      goalkeeperId: '1', representativeId: '2',
+    ), throwsA(isA<StateError>()));
+    await expectLater(repository.getActiveRoster(' '),
+        throwsA(isA<StateError>()));
+    await expectLater(repository.withdrawRegistration(' '),
+        throwsA(isA<StateError>()));
+  });
+
+  test('roster correction blocks stale saves and clears previous load errors', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_roster_correction_screen.dart',
+    ).readAsStringSync();
+    expect(source, contains('bool _rosterVerified = false;'));
+    expect(source, contains('_rosterVerified && _selectedPlayers.length == 5'));
+    expect(source, contains('_loading = true;'));
+    expect(source, contains('_rosterVerified = false;'));
+    expect(source, contains('_rosterVerified = true;'));
+    expect(source, contains('_error = null;'));
+    expect(source, contains('if (mounted) setState(() => _saving = false);'));
+  });
+
   test('champion home has three tabs and replaces the old public 1v1 entry', () {
     final source=File('lib/features/player/screens/champion_screen.dart').readAsStringSync();
     expect(source, contains('TabController(length: 3'));
