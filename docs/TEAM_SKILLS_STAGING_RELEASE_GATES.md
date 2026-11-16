@@ -87,3 +87,44 @@ separately reviewed deployment configuration.
 - [ ] Weak-network, double-submit, account-switch and permission revocation tested
 - [ ] Database migration lineage reconciled and staging rollback tested
 - [ ] Production security review and store approval blockers resolved
+
+## 2026-11-16 — Registration withdrawal / bounded waitlist hardening
+
+Implemented in STAGING and feature branches, not in production:
+- `20261116100000_team_skills_registration_withdrawal.sql`: authenticated
+  current captain may withdraw pending or waitlisted applications only.
+  Admin can withdraw an approved or pending/queued team before kickoff with
+  a documented reason **only before hospitality has been settled or check-in**.
+  All withdrawals are terminal, deactivate five reserved roster rows, release
+  the seat, create an audit record and notify the captain when admin-initiated.
+  **Never infer refund or issue online charges from withdrawal.**
+- `20261116102000_team_skills_waitlist_review_capacity.sql`: both captain
+  enrollments and admin waitlist moves respect the 4–8 team cap and the
+  separately bounded waiting queue. No-op review decisions are refused.
+  All three routines serialize on the parent cup row.
+- `20261116103000_team_skills_withdraw_compatibility.sql`: older
+  captain-only withdraw_application calls delegate to the same canonical
+  withdrawal RPC; repeated captain retries remain idempotent and create
+  only one canonical audit entry.
+- Explicit migration filename collision was removed. The canonical read-only
+  provenance manifest now enumerates **31** source migrations, each with its
+  own local timestamp and Staging-applied name/version. This is NOT SQL-body
+  parity proof; production deployment remains blocked pending reconciliation.
+- Flutter now exposes a confirmed withdrawal button **only** to the current
+  captain on unpaid pending/waitlisted applications. Uncertain network
+  responses are reconciled by reading the status, never by asserting a
+  mutation succeeded from a disconnected response alone.
+- Admin UI displays active/waiting capacity, and allows a documented,
+  confirmed pre-event withdrawal with explicit unpaid/unchecked guards.
+  Registration, withdrawn reason/date and account-switch behavior are
+  tested by Flutter and Admin CI.
+- Staging PostgreSQL transactions confirmed: outsider denied; captain
+  releases roster; waitlisted team promoted only after a free slot; paid
+  team withdrawal denied; admin full-waitlist moves refused; legacy
+  compatibility retry produces no duplicate audit. All fixtures rolled back.
+- Isolated PostgreSQL regression now exercises the actual withdrawal,
+  capacity-review and legacy-delegate SQL functions with eight registrations.
+
+Before release: run role-separated real-device/browser E2E, confirm refund and
+cancellation terms for paid team hospitality, reconcile migration history
+without blind db push, and complete push notification / Store readiness reviews.
