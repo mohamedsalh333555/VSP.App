@@ -381,12 +381,17 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       if (!mounted || viewerId != _viewerUserId) return;
       await _reload();
       if (mounted && viewerId == _viewerUserId) {
-        final queued = _registrations.any((registration) =>
-            registration['team_id']?.toString() == submittedTeamId &&
-            registration['status'] == 'waitlist');
-        setState(() => _feedback = queued
-            ? 'تم تسجيل فريقك في قائمة الانتظار. ستراجع الإدارة طلبك عند توفر مكان.'
-            : 'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.');
+        final confirmed = TeamSkillsCupRepository.findCaptainRegistration(
+          _registrations, teamId: submittedTeamId, captainId: viewerId,
+        );
+        setState(() => _feedback = confirmed == null
+            ? 'تم إرسال الطلب لكن تعذر تأكيد تسجيل الفريق. '
+                'راجع حالة طلبك قبل المحاولة مجددًا.'
+            : confirmed['status'] == 'waitlist'
+                ? 'تم تسجيل فريقك في قائمة الانتظار. ستراجع الإدارة طلبك عند توفر مكان.'
+                : confirmed['status'] == 'approved'
+                    ? 'تم اعتماد مشاركة فريقك بالفعل.'
+                    : 'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.');
       }
     } catch (_) {
       // The server may have committed a registration even when the network
@@ -485,7 +490,14 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       if (!mounted || actorId != _viewerUserId) return;
       await _reload();
       if (mounted && actorId == _viewerUserId) {
-        setState(() => _feedback = 'تم سحب طلب الفريق وتحرير مكانه.');
+        final withdrawn = TeamSkillsCupRepository.isCaptainWithdrawalConfirmed(
+          _registrations, registrationId: registrationId,
+          captainId: actorId!,
+        );
+        setState(() => _feedback = withdrawn
+            ? 'تم سحب طلب الفريق وتحرير مكانه.'
+            : 'تم إرسال طلب السحب لكن تعذر تأكيد حالته. '
+                'راجع طلبك قبل المحاولة مجددًا.');
       }
     } catch (_) {
       if (!mounted || actorId != _viewerUserId) return;
@@ -494,10 +506,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       try {
         final latest = await widget.repository.getRegistrations(cupId);
         if (!mounted || actorId != _viewerUserId) return;
-        final withdrawn = latest.any((row) =>
-            row['id']?.toString() == registrationId &&
-            row['captain_id']?.toString() == actorId &&
-            row['status'] == 'withdrawn');
+        final withdrawn = TeamSkillsCupRepository.isCaptainWithdrawalConfirmed(
+          latest, registrationId: registrationId, captainId: actorId!,
+        );
         setState(() {
           _registrations = latest;
           _feedback = withdrawn
