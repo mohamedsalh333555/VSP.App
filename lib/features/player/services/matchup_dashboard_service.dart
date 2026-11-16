@@ -21,13 +21,30 @@ class MatchupDashboardService {
   static String? validateResultSubmission({
     required String? teamAId,
     required String? teamBId,
+    Iterable<String>? eligibleTeamIds,
+    String? outcome,
     bool isArabic = true,
   }) {
-    if (teamAId == null || teamBId == null) {
+    if (teamAId == null || teamBId == null ||
+        teamAId.trim().isEmpty || teamBId.trim().isEmpty) {
       return isArabic ? 'يرجى اختيار الفريقين المتنافسين' : 'Select both competing teams.';
     }
     if (teamAId == teamBId) {
       return isArabic ? 'لا يمكن تسجيل مباراة بين نفس الفريق' : 'A team cannot play against itself.';
+    }
+    // A dropdown selection may be stale after the session's team list
+    // refreshes. Never send a result for teams outside this booking.
+    if (eligibleTeamIds != null) {
+      final eligible = eligibleTeamIds.toSet();
+      if (!eligible.contains(teamAId) || !eligible.contains(teamBId)) {
+        return isArabic
+            ? 'الفريق المحدد غير موجود في هذه المواجهة'
+            : 'Selected team is not part of this matchup.';
+      }
+    }
+    if (outcome != null &&
+        !const {'team_a_win', 'team_b_win', 'draw'}.contains(outcome)) {
+      return isArabic ? 'نتيجة المباراة غير صالحة' : 'Invalid match result.';
     }
     return null;
   }
