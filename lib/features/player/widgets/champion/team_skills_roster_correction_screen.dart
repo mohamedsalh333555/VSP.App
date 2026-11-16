@@ -47,12 +47,14 @@ class _TeamSkillsRosterCorrectionScreenState
   Set<String> _originalPlayers = {};
   String? _goalkeeper;
   String? _representative;
+  String? _serverGoalkeeperId;
+  String? _serverRepresentativeId;
 
   bool get _hasChanges =>
       !_selectedPlayers.containsAll(_originalPlayers) ||
       !_originalPlayers.containsAll(_selectedPlayers) ||
-      _goalkeeper != widget.initialGoalkeeperId ||
-      _representative != widget.initialRepresentativeId;
+      _goalkeeper != _serverGoalkeeperId ||
+      _representative != _serverRepresentativeId;
 
   bool get _valid =>
       _rosterVerified && _selectedPlayers.length == 5 &&
@@ -78,6 +80,8 @@ class _TeamSkillsRosterCorrectionScreenState
     _selectedPlayers.clear();
     _goalkeeper = null;
     _representative = null;
+    _serverGoalkeeperId = null;
+    _serverRepresentativeId = null;
     _saving = false;
     _rosterVerified = false;
     _loading = actorId == widget.captainId;
@@ -119,9 +123,39 @@ class _TeamSkillsRosterCorrectionScreenState
       final members = await widget.repository.getRosterOptions(widget.teamId);
       final roster = await widget.repository
           .getActiveRoster(widget.registrationId);
+      final registrations = await widget.repository
+          .getRegistrations(widget.cupId);
+      final currentCup = await widget.repository.getCupById(widget.cupId);
       if (!mounted || session != _sessionGeneration ||
           request != _loadGeneration || !_isSameCaptain()) return;
 
+      // The navigation snapshot may be old after admin approval or a captain
+      // change. Only the current server record can unlock an edit.
+      final current = registrations.where((row) =>
+          row['id']?.toString() == widget.registrationId &&
+          row['cup_id']?.toString() == widget.cupId &&
+          row['team_id']?.toString() == widget.teamId &&
+          row['captain_id']?.toString() == widget.captainId).toList();
+      if (current.length != 1 || !TeamSkillsCupRepository.canCorrectRoster(
+        cupStatus: currentCup?['status']?.toString(),
+        status: current.single['status']?.toString(),
+        captainId: current.single['captain_id']?.toString(),
+        viewerId: _viewerUserId,
+        hospitalityStatus:
+            current.single['hospitality_payment_status']?.toString(),
+        hasCheckedIn: current.single['checked_in_at'] != null,
+      )) {
+        setState(() {
+          _loading = false;
+          _rosterVerified = false;
+          _error = 'لم يعد تعديل التشكيلة متاحًا لهذا الطلب. '
+              'راجع حالته بعد تحديث البطولة.';
+        });
+        return;
+      }
+      final serverKeeper = current.single['goalkeeper_id']?.toString();
+      final serverRepresentative =
+          current.single['representative_id']?.toString();
       final availableIds = members
           .map((row) => row['uid']?.toString() ?? '').toSet();
       final original = roster
@@ -131,13 +165,15 @@ class _TeamSkillsRosterCorrectionScreenState
         _members = members;
         _rosterVerified = true;
         _originalPlayers = original;
+        _serverGoalkeeperId = serverKeeper;
+        _serverRepresentativeId = serverRepresentative;
         _selectedPlayers
           ..clear()
           ..addAll(original.intersection(availableIds));
-        _goalkeeper = _selectedPlayers.contains(widget.initialGoalkeeperId)
-            ? widget.initialGoalkeeperId : null;
-        _representative = _selectedPlayers.contains(widget.initialRepresentativeId)
-            ? widget.initialRepresentativeId : null;
+        _goalkeeper = _selectedPlayers.contains(serverKeeper)
+            ? serverKeeper : null;
+        _representative = _selectedPlayers.contains(serverRepresentative)
+            ? serverRepresentative : null;
         _loading = false;
         _error = original.length != 5 ||
                 _selectedPlayers.length != original.length
@@ -168,6 +204,10 @@ class _TeamSkillsRosterCorrectionScreenState
           row['captain_id']?.toString() == widget.captainId).toList();
     if (latestRegistration.length != 1) return false;
     final row = latestRegistration.single;
+    if (row['cup_id']?.toString() != widget.cupId ||
+        row['team_id']?.toString() != widget.teamId ||
+        !const {'pending', 'waitlist', 'approved'}
+            .contains(row['status']?.toString())) return false;
     final ids = latestRoster
         .map((r) => r['player_id']?.toString()).whereType<String>().toSet();
     return ids.length == 5 &&
