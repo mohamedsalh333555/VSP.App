@@ -1,3 +1,8 @@
+-- Disposable SQL regression: blocked, organizer, and revoked judge permissions.
+do $roles$ begin
+ if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated; end if;
+ if not exists(select 1 from pg_roles where rolname='anon') then create role anon; end if;
+end $roles$;
 -- Disposable SQL regression: assigned but BLOCKED judges cannot submit either
 -- regular skills scores or goalkeeper measurements. Organizer is read-only.
 create schema auth;
