@@ -156,6 +156,17 @@ begin
 end $paid$;
 update public.team_skills_registrations set hospitality_payment_status='unpaid'
 where id='00000000-0000-0000-0000-000000000105';
+do $bounded_reason$
+declare denied boolean:=false;
+begin
+ begin
+   perform public.team_skills_withdraw_registration(
+     '00000000-0000-0000-0000-000000000105',repeat('x',301));
+ exception when others then
+   if position('exceeds 300 characters' in sqlerrm)>0 then denied:=true;else raise;end if;
+ end;
+ if not denied then raise exception 'UNBOUNDED_AUDIT_REASON_ACCEPTED';end if;
+end $bounded_reason$;
 select public.team_skills_withdraw_registration(
  '00000000-0000-0000-0000-000000000105',
  'Admin documented before-event cancellation');
@@ -166,9 +177,18 @@ begin
     where action='withdraw_registration')<>3 then
   raise exception 'MISSING_THREE_WITHDRAWAL_AUDITS';end if;
  if (select count(*) from public.notifications
+   where metadata->>'event'='registration_withdrawn')<>3 then
+  raise exception 'WITHDRAWAL_INBOX_EVENT_DUPLICATED_OR_MISSING';end if;
+ if (select count(*) from public.notifications
    where metadata->>'event'='registration_withdrawn'
      and user_id='00000000-0000-0000-0000-000000009305')<>1 then
   raise exception 'ADMIN_WITHDRAWAL_NOTIFICATION_NOT_TO_CAPTAIN';end if;
+ if (select count(*) from public.notifications
+   where metadata->>'event'='registration_withdrawn'
+     and user_id in (
+       '00000000-0000-0000-0000-000000009301',
+       '00000000-0000-0000-0000-000000009308'))<>2 then
+  raise exception 'CAPTAIN_WITHDRAWAL_RECEIPTS_MISSING_OR_DUPLICATED';end if;
  if (select count(*) from public.team_skills_registrations
     where status='withdrawn')<>3 then
   raise exception 'WRONG_NUMBER_OF_WITHDRAWN_REGISTRATIONS';end if;
