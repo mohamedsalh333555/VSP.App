@@ -16,6 +16,7 @@ REVIEW_CANDIDATE = ROOT / "docs/security/sql/challenge_non_played_review_candida
 READ_ONLY_PREFLIGHT = ROOT / "supabase/tests/read_only_challenge_result_rollout_preflight.sql"
 FEED_CANDIDATE = ROOT / "docs/security/sql/challenge_public_feed_exclusion_candidate.sql"
 HEAD_TO_HEAD_CANDIDATE = ROOT / "docs/security/sql/challenge_eligible_head_to_head_candidate.sql"
+LEGACY_ELO_CANDIDATE = ROOT / "docs/security/sql/challenge_legacy_elo_reconciliation_guard_candidate.sql"
 DB = "vsp_captain_result_contracts"
 
 def require_isolated(env: dict[str, str]) -> None:
@@ -61,6 +62,11 @@ def main() -> int:
     if source.count(h2h_marker) != 1:
         raise RuntimeError("Head-to-head summary marker drift")
     source = source.replace(h2h_marker,HEAD_TO_HEAD_CANDIDATE.read_text(encoding="utf-8"))
+    legacy_marker = "-- INSTALL_LEGACY_ELO_RECONCILE_GUARD_CANDIDATE"
+    if source.count(legacy_marker) != 1:
+        raise RuntimeError("Legacy Elo guard contract marker mismatch")
+    source = source.replace(legacy_marker,
+        LEGACY_ELO_CANDIDATE.read_text(encoding="utf-8"))
     ranking_marker = "-- INSTALL_CHALLENGE_RANKING_TRIGGER"
     raw_ranking = RANKING_MIGRATION.read_text(encoding="utf-8")
     signature = "CREATE OR REPLACE FUNCTION public.calculate_elo_on_match_completion()"

@@ -31,3 +31,20 @@ Record a reliable point-in-time database snapshot and old SQL/permissions first.
 ## Verified public-feed function defect (read-only staging inspection)
 
 The installed `trg_sync_booking_public_feed` runs `public.sync_booking_public_feed()` after **every** booking INSERT/UPDATE/DELETE. Its `ON CONFLICT ... DO UPDATE` contains `opponent_team_logo_url=excluded.opponent_team_logo`, while the table and INSERT target have only `opponent_team_logo_url`. This is a confirmed **source/schema mismatch**, not yet a reproduced hosted mutation failure. It can block public-booking writes when the upsert executes. See [minimal one-reference correction candidate](sql/booking_public_feed_logo_sync_fix_candidate.sql) and [isolated SQL lifecycle contract](../../supabase/tests/booking_public_feed_logo_sync_contract.sql). **Neither was applied to Staging or Production.** Deployment needs explicit schema fingerprint recheck, a real staging dry-run, RLS/privilege review, financial invariance tests and rollback plan.
+
+## Dormant incompatible Elo function (read-only staging; 2026-11-16)
+
+Staging retains the old `public.reconcile_daily_elo_ratings()` SECURITY DEFINER routine,
+which awards an Elo-like score to confirmed challenges with `elo_processed=false`.
+The deployed trigger uses **3/1/0 competition points**, so invoking the old
+function on such rows could corrupt ranking totals. Read-only counts showed **zero**
+confirmed unprocessed challenges and **zero** cron jobs referencing the old function
+at inspection: this is dormant risk, not a verified customer incident.
+
+The optional [no-op compatibility SQL](sql/challenge_legacy_elo_reconciliation_guard_candidate.sql)
+preserves the callable signature and trusted service role without reprocessing any row.
+The [disposable PostgreSQL fixture](../../supabase/tests/challenge_captain_private_result_contract.sql)
+calls it twice on a synthetic unprocessed confirmed challenge and asserts the full team
+and booking snapshots (including paid/deposit/fair-play fields) remain unchanged.
+It has **not** been deployed on staging or production; historical reconciliation
+and a migration/rollback approval remain separate gates.

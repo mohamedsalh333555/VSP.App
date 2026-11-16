@@ -111,6 +111,7 @@ CREATE POLICY booking_public_feed_select ON public.booking_public_feed
 -- INSTALL_NOT_PLAYED_REVIEW_CANDIDATE
 -- INSTALL_NON_PLAYED_FEED_RLS_CANDIDATE
 -- INSTALL_ELIGIBLE_CHALLENGE_HEAD_TO_HEAD_CANDIDATE
+-- INSTALL_LEGACY_ELO_RECONCILE_GUARD_CANDIDATE
 
 DO $test$
 DECLARE r jsonb; v_id uuid; n int;
@@ -837,3 +838,44 @@ BEGIN
    RAISE EXCEPTION 'Active captain blocked after reactivation'; END IF;
 END;
 $blocked_challenge_actors$;
+
+
+-- Dormant legacy Elo processing must not grant a second scoring formula.
+DO $legacy_elo_guard$
+DECLARE before_teams jsonb; after_teams jsonb;
+        before_booking jsonb; after_booking jsonb;
+BEGIN
+ INSERT INTO public.bookings(
+  id,booking_type,status,end_time,player_team_id,opponent_team_id,
+  match_result_status,final_outcome,elo_processed,payment_status,
+  payment_reconcile_state,is_paid,deposit_amount,deposit_paid,fair_play_score)
+ VALUES (
+  '00000000-0000-0000-0000-000000000099',
+  'challenge','completed',now()-interval '5 hours',
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000022',
+  'confirmed','homeWin',false,'paid','settled',true,100,50,100
+ );
+ SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.id),'[]'::jsonb)
+  INTO before_teams FROM public.teams t;
+ SELECT to_jsonb(b) INTO before_booking
+  FROM public.bookings b WHERE id='00000000-0000-0000-0000-000000000099';
+ PERFORM public.reconcile_daily_elo_ratings();
+ PERFORM public.reconcile_daily_elo_ratings();
+ SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.id),'[]'::jsonb)
+  INTO after_teams FROM public.teams t;
+ SELECT to_jsonb(b) INTO after_booking
+  FROM public.bookings b WHERE id='00000000-0000-0000-0000-000000000099';
+ IF before_teams IS DISTINCT FROM after_teams THEN
+   RAISE EXCEPTION 'Old Elo function re-awarded standings'; END IF;
+ IF before_booking IS DISTINCT FROM after_booking THEN
+   RAISE EXCEPTION 'Old Elo function altered booking, payments or attendance'; END IF;
+ IF has_function_privilege('anon',
+  'public.reconcile_daily_elo_ratings()','EXECUTE')
+ OR has_function_privilege('authenticated',
+  'public.reconcile_daily_elo_ratings()','EXECUTE')
+ OR NOT has_function_privilege('service_role',
+  'public.reconcile_daily_elo_ratings()','EXECUTE') THEN
+   RAISE EXCEPTION 'Legacy Elo guard leaked execution permission'; END IF;
+END;
+$legacy_elo_guard$;
