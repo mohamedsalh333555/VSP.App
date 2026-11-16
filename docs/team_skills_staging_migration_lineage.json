@@ -142,7 +142,7 @@
       "staging_migration_name": "team_skills_captain_pending_withdrawal_20261116"
     },
     {
-      "local_file": "supabase/migrations/20261116101000_team_skills_waitlist_review_capacity.sql",
+      "local_file": "supabase/migrations/20261116102000_team_skills_waitlist_review_capacity.sql",
       "staging_version": "20261116162920",
       "staging_migration_name": "team_skills_waitlist_review_capacity_20261116"
     },
