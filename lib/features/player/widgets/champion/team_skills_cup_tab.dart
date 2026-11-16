@@ -454,29 +454,37 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       )),
     );
     if (!mounted || viewerId != _viewerUserId || saved != true) return;
-    setState(() {
-      _feedback = null;
-      _loadFuture = _reload();
-    });
+    setState(() => _feedback = null);
     try {
-      await _loadFuture;
+      // Do not read from _registrations after _reload(): a 20-second
+      // refresh can invalidate that request and leave the cached list old.
+      final latest = await widget.repository.getRegistrations(cupId);
       if (!mounted || viewerId != _viewerUserId) return;
-      final current = _registrations.where((row) =>
+      final current = latest.where((row) =>
           row['id']?.toString() == registration['id']?.toString() &&
+          row['cup_id']?.toString() == cupId &&
+          row['team_id']?.toString() == registration['team_id']?.toString() &&
           row['captain_id']?.toString() == viewerId).toList();
       final status = current.length == 1
           ? current.single['status']?.toString() : null;
-      setState(() => _feedback = status == 'approved'
-          ? 'تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك.'
-          : status == 'waitlist'
-              ? 'تم حفظ التشكيلة، والفريق ما زال في قائمة الانتظار.'
-              : status == 'pending'
-                  ? 'تم حفظ التشكيلة، والطلب ما زال ينتظر مراجعة الإدارة.'
-                  : 'تم حفظ التشكيلة، لكن تعذر تأكيد حالة المشاركة الحالية.');
+      setState(() {
+        _registrations = latest;
+        _feedback = status == 'approved'
+            ? 'تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك.'
+            : status == 'waitlist'
+                ? 'تم حفظ التشكيلة، والفريق ما زال في قائمة الانتظار.'
+                : status == 'pending'
+                    ? 'تم حفظ التشكيلة، والطلب ما زال ينتظر مراجعة الإدارة.'
+                    : 'تم حفظ التشكيلة، لكن تعذر تأكيد حالة المشاركة الحالية.';
+        _loadFuture = _reload();
+      });
     } catch (_) {
       if (mounted && viewerId == _viewerUserId) {
-        setState(() => _feedback =
-            'تم حفظ التشكيلة، لكن تعذر تحديث حالة الطلب. أعد التحميل.');
+        setState(() {
+          _feedback =
+              'تم حفظ التشكيلة، لكن تعذر تحديث حالة الطلب. أعد التحميل.';
+          _loadFuture = _reload();
+        });
       }
     }
   }
