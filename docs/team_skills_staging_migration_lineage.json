@@ -130,6 +130,11 @@
       "local_file": "supabase/migrations/20261116099000_team_skills_champion_finality_uuid_fix.sql",
       "staging_version": "20261116145900",
       "staging_migration_name": "team_skills_champion_finality_uuid_fix_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116163000_team_skills_notifications_realtime_staging.sql",
+      "staging_version": "20261116150557",
+      "staging_migration_name": "team_skills_notifications_realtime_staging_20261116"
     }
   ]
 }
