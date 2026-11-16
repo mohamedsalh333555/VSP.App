@@ -370,16 +370,21 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     final viewerId = _viewerUserId;
     setState(() { _submitting = true; _feedback = null; });
     try {
+      final submittedTeamId = _selectedTeamId!;
       await widget.repository.registerTeam(
-        cupId: cupId, teamId: _selectedTeamId!,
+        cupId: cupId, teamId: submittedTeamId,
         playerIds: _selectedPlayers.toList()..sort(),
         goalkeeperId: _goalkeeperId!, representativeId: _representativeId!,
       );
       if (!mounted || viewerId != _viewerUserId) return;
       await _reload();
       if (mounted && viewerId == _viewerUserId) {
-        setState(() => _feedback =
-            'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.');
+        final queued = _registrations.any((registration) =>
+            registration['team_id']?.toString() == submittedTeamId &&
+            registration['status'] == 'waitlist');
+        setState(() => _feedback = queued
+            ? 'تم تسجيل فريقك في قائمة الانتظار. ستراجع الإدارة طلبك عند توفر مكان.'
+            : 'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.');
       }
     } catch (_) {
       if (mounted && viewerId == _viewerUserId) {
