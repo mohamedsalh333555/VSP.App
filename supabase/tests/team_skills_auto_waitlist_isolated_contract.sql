@@ -36,7 +36,7 @@ from generate_series(1,9) i cross join generate_series(1,5) j;
 
 do $applications$
 declare n integer;t uuid;capt uuid;people uuid[];receipt uuid;
-v_status text; full boolean:=false;
+v_status text; waitlist_full boolean:=false;
 begin
  for n in 1..9 loop
    t:=('00000000-0000-0000-0000-'||lpad((200+n)::text,12,'0'))::uuid;
@@ -49,7 +49,7 @@ begin
        perform public.team_skills_register(
          '00000000-0000-0000-0000-000000000001',t,people,people[1],people[2]);
      exception when others then
-       if position('waitlist are full' in lower(sqlerrm))>0 then full:=true;
+       if position('waitlist are full' in lower(sqlerrm))>0 then waitlist_full:=true;
        else raise;end if;
      end;
    else
@@ -61,7 +61,7 @@ begin
      end if;
    end if;
  end loop;
- if not full then raise exception 'UNBOUNDED_WAITLIST';end if;
+ if not waitlist_full then raise exception 'UNBOUNDED_WAITLIST';end if;
 end $applications$;
 
 do $guarantees$
