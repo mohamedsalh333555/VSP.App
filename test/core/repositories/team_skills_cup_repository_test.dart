@@ -346,9 +346,31 @@ void main() {
     expect(tab, contains('TeamSkillsCupRepository.findCaptainRegistration('));
     expect(tab, contains('تم تسجيل فريقك في قائمة الانتظار'));
     expect(tab, contains("case 'waitlist':"));
-    expect(tab, contains('await _reload();'));
+    expect(tab, contains('final receiptId = await widget.repository.registerTeam('));
+    expect(tab, contains("candidate?['id']?.toString() == receiptId"));
   });
 
+
+  test('captain registration and withdrawal receipt reads bypass leaderboard polling', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    final submitStart = source.indexOf('Future<void> _submit() async');
+    final editStart = source.indexOf('Future<void> _editRegistration(');
+    final withdrawStart = source.indexOf('Future<void> _withdrawRegistration(');
+    final buildStart = source.indexOf('@override\\n  Widget build(', withdrawStart);
+    final submitHandler = source.substring(submitStart, editStart);
+    final withdrawHandler = source.substring(withdrawStart, buildStart);
+    expect(submitHandler, contains('final receiptId = await widget.repository.registerTeam('));
+    expect(submitHandler, contains('final latest = await widget.repository.getRegistrations(cupId);'));
+    expect(submitHandler, contains("candidate?['id']?.toString() == receiptId"));
+    expect(submitHandler, contains('_registrations = latest;'));
+    expect(submitHandler, isNot(contains('await _reload();')));
+    expect(withdrawHandler, contains('final latest = await widget.repository.getRegistrations(cupId);'));
+    expect(withdrawHandler, contains('isCaptainWithdrawalConfirmed('));
+    expect(withdrawHandler, contains('_registrations = latest;'));
+    expect(withdrawHandler, isNot(contains('await _reload();')));
+  });
 
   test('captain withdrawal is only confirmed by own terminal registration', () {
     final rows = <Map<String,dynamic>>[
