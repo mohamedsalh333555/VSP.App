@@ -134,6 +134,8 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_team_skills_rls_target_guard.py -v
       - name: Verify Team Skills private results, roster, and goalkeeper scopes
         run: python3 scripts/test_team_skills_rls_isolated.py
+      - name: Verify blocked event officials cannot read pending scores or goalkeeper data
+        run: python3 scripts/test_team_skills_blocked_official_reads_isolated.py
       - name: Verify Team Skills waitlist approval cap and admin role authorization
         run: python3 scripts/test_team_skills_capacity_isolated.py
       - name: Verify two independent SQL clients cannot approve the same final cup slot
