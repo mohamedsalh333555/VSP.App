@@ -9,7 +9,7 @@ import sys
 from test_team_skills_rls_isolated import psql, reject_nonlocal_targets
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT/'supabase/migrations/20261116093000_team_skills_automatic_waitlist_registration.sql'
+MIGRATION = ROOT/'supabase/migrations/20261116164000_team_skills_blocked_captain_roster_guard.sql'
 FIXTURE = ROOT/'supabase/tests/team_skills_auto_waitlist_isolated_contract.sql'
 DATABASE = 'vsp_team_skills_auto_waitlist_isolated'
 
