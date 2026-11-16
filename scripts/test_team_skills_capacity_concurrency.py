@@ -16,7 +16,7 @@ from test_team_skills_rls_isolated import psql, reject_nonlocal_targets
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "supabase/tests/team_skills_capacity_isolated_contract.sql"
-MIGRATION = ROOT / "supabase/migrations/20261116081000_team_skills_review_capacity_guard.sql"
+MIGRATION = ROOT / "supabase/migrations/20261116094000_team_skills_waitlist_promotion_capacity.sql"
 DATABASE = "vsp_team_skills_capacity_race"
 CUP = "00000000-0000-0000-0000-000000000001"
 ADMIN = "00000000-0000-0000-0000-000000009001"
