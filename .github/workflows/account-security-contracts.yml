@@ -140,6 +140,8 @@ jobs:
         run: python3 scripts/test_team_skills_capacity_isolated.py
       - name: Verify two independent SQL clients cannot approve the same final cup slot
         run: python3 scripts/test_team_skills_capacity_concurrency.py
+      - name: Verify captain-authenticated bounded auto-waitlist enrollment
+        run: python3 scripts/test_team_skills_auto_waitlist_isolated.py
       - name: Verify future-round knockout slots and tied goalkeeper prizes on isolated SQL
         run: python3 scripts/test_team_skills_bracket_keeper_isolated.py
       - name: Verify Team Skills finals cannot seed from incomplete scores or mutate seeded rankings
