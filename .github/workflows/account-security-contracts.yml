@@ -136,6 +136,8 @@ jobs:
         run: python3 scripts/test_team_skills_rls_isolated.py
       - name: Verify Team Skills waitlist approval cap and admin role authorization
         run: python3 scripts/test_team_skills_capacity_isolated.py
+      - name: Verify two independent SQL clients cannot approve the same final cup slot
+        run: python3 scripts/test_team_skills_capacity_concurrency.py
       - name: Verify future-round knockout slots and tied goalkeeper prizes on isolated SQL
         run: python3 scripts/test_team_skills_bracket_keeper_isolated.py
       - name: Verify matchup fee migration rebuild target guard
