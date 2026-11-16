@@ -34,6 +34,22 @@ void main() {
     expect(source, isNot(contains('getActive1v1TournamentStream(')));
   });
 
+  test('registration status is visible to members, without captain mutation access', () {
+    final tab = File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
+        .readAsStringSync();
+    final repo = File('lib/core/repositories/team_skills_cup_repository.dart')
+        .readAsStringSync();
+    expect(repo, contains('getMemberTeamIds('));
+    expect(repo, contains("from('team_members')"));
+    expect(repo, contains("'hospitality_payment_status,checked_in_at,created_at'"));
+    expect(tab, contains('_memberTeamIds'));
+    expect(tab, contains('myRegistrations'));
+    expect(tab, contains('statusText('));
+    expect(tab, contains('if (myRegistrations.isNotEmpty)'));
+    // Only the captain's branch can open the registration action form.
+    expect(tab, contains("widget.cup['status'] == 'registration' && _captainTeams.isNotEmpty"));
+  });
+
   test('team registration and points use a single guarded Supabase backend', () {
     final source=File('lib/core/repositories/team_skills_cup_repository.dart').readAsStringSync();
     expect(source, contains("rpc('team_skills_register'"));
