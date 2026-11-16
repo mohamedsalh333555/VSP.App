@@ -190,6 +190,27 @@ void main() {
     expect(source, contains('if (!mounted || viewerId != _viewerUserId) return;'));
   });
 
+  test('captain edit and withdrawal lock before opening routes or dialogs', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    final editStart = source.indexOf('Future<void> _editRegistration(');
+    final withdrawStart = source.indexOf('Future<void> _withdrawRegistration(');
+    final buildStart = source.indexOf('  Widget build(', withdrawStart);
+    expect(buildStart, greaterThan(withdrawStart));
+    final editor = source.substring(editStart, withdrawStart);
+    final withdraw = source.substring(withdrawStart, buildStart);
+    expect(editor.indexOf('setState(() => _submitting = true)'),
+      lessThan(editor.indexOf('Navigator.of(context).push<bool>('));
+    expect(editor, contains('} finally {'));
+    expect(editor, contains('setState(() => _submitting = false);'));
+    expect(withdraw.indexOf('_submitting = true;'),
+      lessThan(withdraw.indexOf('showDialog<bool>('));
+    expect(withdraw, contains('if (confirmed != true'));
+    expect(withdraw, contains('} finally {'));
+    expect(withdraw, contains('setState(() => _submitting = false);'));
+  });
+
   test('roster edit preview is limited to current unpaid pending/waitlisted captain', () {
     bool allowed({
       String cup = 'registration', String status = 'pending',
