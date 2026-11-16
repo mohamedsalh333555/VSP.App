@@ -35,11 +35,63 @@ class TeamSkillsCupRepository {
     return (rows as List).cast<Map<String, dynamic>>();
   }
 
+  /// The captain may be the canonical teams.captain_id without a duplicate
+  /// team_members row. Show them in the 5-person selector only after checking
+  /// both current Auth identity and canonical team ownership.
+  ///
+  /// Drop phone/contact fields returned by the shared legacy roster RPC: the
+  /// Team Skills selector only needs stable IDs and display names.
+  static List<Map<String, dynamic>> normalizeRosterWithCaptain({
+    required List<Map<String, dynamic>> members,
+    required String? currentUserId,
+    required String? captainUserId,
+    String? captainName,
+  }) {
+    final seen = <String>{};
+    final options = <Map<String, dynamic>>[];
+    for (final member in members) {
+      final uid = member['uid']?.toString();
+      if (uid == null || uid.isEmpty || !seen.add(uid)) continue;
+      options.add({
+        'uid': uid,
+        'name': member['name']?.toString() ?? '',
+        'p_position': member['p_position']?.toString() ?? '',
+      });
+    }
+    if (currentUserId != null && currentUserId.isNotEmpty &&
+        captainUserId == currentUserId && seen.add(currentUserId)) {
+      options.add({
+        'uid': currentUserId,
+        'name': captainName?.trim().isNotEmpty == true
+            ? captainName!.trim() : 'قائد الفريق',
+        'p_position': 'captain',
+      });
+    }
+    return options;
+  }
+
   Future<List<Map<String, dynamic>>> getRosterOptions(String teamId) async {
+    final currentUserId = _client.auth.currentUser?.id;
     final rows = await _client.rpc('get_team_member_profiles',
         params: {'p_team_id': teamId});
-    return (rows as List).map((row) =>
-      Map<String, dynamic>.from(row as Map)).toList();
+    final rawMembers = (rows as List)
+        .map((row) => Map<String, dynamic>.from(row as Map)).toList();
+    final canonicalTeam = await _client.from('teams_public')
+        .select('captain_id').eq('id', teamId).maybeSingle();
+    final captainUserId = canonicalTeam?['captain_id']?.toString();
+    String? captainName;
+    if (currentUserId != null && currentUserId == captainUserId &&
+        !rawMembers.any((row) => row['uid']?.toString() == currentUserId)) {
+      final profile = await _client.from('users')
+          .select('name').eq('id', currentUserId).maybeSingle();
+      captainName = profile?['name']?.toString();
+    }
+    return normalizeRosterWithCaptain(
+      members: rawMembers,
+      currentUserId: currentUserId,
+      captainUserId: captainUserId,
+      captainName: captainName,
+    );
   }
 
   Future<String> registerTeam({
