@@ -1,5 +1,10 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## 2026-11-17 — signed direct-refund replay claims and release HOLD dependencies
+
+[Scoped remediation, CI evidence and remaining Paymob Sandbox/hosted migration blockers](security/VSP_PAYMOB_DIRECT_REFUND_DISPATCH_CLAIMS_2026-11-17.md). Added a unique, service-role-only, RLS-enabled dispatch record for the **legacy 1v1** and **already-cancelled booking** direct refund paths; a duplicate signed callback or unavailable claim table can no longer issue a second refund request from those paths. Deno/Flutter financial and disposable PostgreSQL contracts passed; production/Staging migration + genuine user access tests still open. The release security declaration explicitly blocks enabling the modified Edge Functions before `20261117173000` and `20261117174500` migration verification. Existing SEC-06/SEC-10 / 30.* / 31.* tasks stay OPEN; **633 unique / 267 accepted / 366 open**, no new task IDs or accepted completions.
+
+
 ## 2026-11-17 — eliminate duplicate team refund owner and align League CHECK statuses
 
 [Evidence, commits, isolated PostgreSQL CAS and Deno/Flutter CI](security/VSP_PAYMOB_SINGLE_REFUND_OWNER_LEAGUE_STATUS_CONTRACT_2026-11-17.md). Team tournament over-capacity RPC **already queues refunds**; Webhook no longer makes a competing refund call. Current production/Staging Team League status constraint blocks existing refund/cancellation statuses; migration committed and validated only in disposable PostgreSQL, **not deployed**. Direct paid withdrawal now CAS-claims its payment before gateway POST and rejects unverified financial completion. These **source-only** changes do not close the broader SEC-06/SEC-10/31.* tasks. **633 unique / 267 accepted / 366 open**, 0 new accepted for this batch; continue to hold releases until hosted schema and Paymob Sandbox checks.
