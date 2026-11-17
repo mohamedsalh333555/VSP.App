@@ -7,3 +7,19 @@ export function isPersistedPaymobOrder(result: unknown, expectedOrderId: string)
   return row.id != null && row.paymob_order_id != null &&
     String(row.paymob_order_id) === expectedOrderId;
 }
+
+/**
+ * A signed callback still needs exact server-side order correlation. An
+ * absent stored ID is never a match: the checkout handler must bind it first.
+ */
+export function matchesBoundPaymobOrder(stored: unknown, signed: unknown): boolean {
+  const normalized = (value: unknown): string | null => {
+    if (typeof value === "number") {
+      return Number.isSafeInteger(value) && value > 0 ? String(value) : null;
+    }
+    return typeof value === "string" && /^[1-9][0-9]*$/.test(value)
+      ? value : null;
+  };
+  const expected = normalized(stored);
+  return expected !== null && expected === normalized(signed);
+}

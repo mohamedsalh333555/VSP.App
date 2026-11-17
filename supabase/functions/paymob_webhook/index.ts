@@ -5,6 +5,7 @@ import { verifyOwnerSubscriptionPayment } from "../_shared/owner_subscription_pa
 import { computePaymobHMAC, verifyPaymobHmacSignature } from "../_shared/paymob_hmac.ts";
 import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
 import { isAuthorizedPaymobIntegration } from "../_shared/paymob_integration_guard.ts";
+import { matchesBoundPaymobOrder } from "../_shared/paymob_order_binding.ts";
 
 declare const Deno: any;
 
@@ -239,7 +240,7 @@ serve(async (req: Request) => {
       if (orderError || !order) {
         return { ok: false, reason: "payment_order_not_found" };
       }
-      if (order.paymob_order_id && String(order.paymob_order_id) !== String(orderId)) {
+      if (!matchesBoundPaymobOrder(order.paymob_order_id, orderId)) {
         return { ok: false, reason: "paymob_order_correlation_mismatch" };
       }
       if (order.payment_status === "paid") {
@@ -331,7 +332,7 @@ serve(async (req: Request) => {
         if (leaguePaymentError || !leaguePayment) {
           return new Response(JSON.stringify({ error: "Team league payment order not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
         }
-        if (leaguePayment.paymob_order_id && String(leaguePayment.paymob_order_id) !== String(orderId)) {
+        if (!matchesBoundPaymobOrder(leaguePayment.paymob_order_id, orderId)) {
           console.error("Rejected league webhook Paymob order correlation mismatch:", specialReference);
           return new Response(JSON.stringify({ error: "Invalid payment order correlation" }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
@@ -600,7 +601,7 @@ serve(async (req: Request) => {
       });
     }
 
-    if (existingBooking.paymob_order_id && String(existingBooking.paymob_order_id) !== String(orderId)) {
+    if (!matchesBoundPaymobOrder(existingBooking.paymob_order_id, orderId)) {
       console.error("Rejected booking webhook Paymob order correlation mismatch:", bookingId);
       return new Response(JSON.stringify({ error: "Invalid payment order correlation" }), {
         status: 400,

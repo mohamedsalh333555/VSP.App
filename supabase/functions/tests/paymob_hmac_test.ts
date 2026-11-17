@@ -3,7 +3,7 @@ import {
   verifyPaymobHmacSignature,
 } from "../_shared/paymob_hmac.ts";
 import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
-import { isPersistedPaymobOrder } from "../_shared/paymob_order_binding.ts";
+import { isPersistedPaymobOrder, matchesBoundPaymobOrder } from "../_shared/paymob_order_binding.ts";
 import { isAuthorizedPaymobIntegration } from "../_shared/paymob_integration_guard.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -232,4 +232,26 @@ Deno.test("Verified Paymob integration gate precedes all financial processing", 
   assert(verifiedLog > integration && payment > verifiedLog, "unauthorized integration can reach verified payment processing");
   assert(src.includes('Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")'), "server-side card configuration missing");
   assert(src.includes('Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")'), "server-side wallet configuration missing");
+});
+
+Deno.test("Signed Paymob callbacks require an existing exact order ID bound by the server", () => {
+  assert(matchesBoundPaymobOrder("123", "123"), "matching stored and signed IDs rejected");
+  assert(matchesBoundPaymobOrder("123", 123), "normal numeric callback order rejected");
+  for (const existing of [null, undefined, "", 0, "0", "00123", "123foo", "124"]) {
+    assert(!matchesBoundPaymobOrder(existing, "123"), "missing/mismatched stored ID was accepted");
+  }
+  for (const signed of [null, undefined, "", 0, "0", "0123", 124, "123.0", "123foo"]) {
+    assert(!matchesBoundPaymobOrder("123", signed), "invalid callback order was accepted");
+  }
+});
+
+Deno.test("Every signed booking, league and tournament callback refuses unbound orders", async () => {
+  const s = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  for (const expression of [
+    "if (!matchesBoundPaymobOrder(order.paymob_order_id, orderId))",
+    "if (!matchesBoundPaymobOrder(leaguePayment.paymob_order_id, orderId))",
+    "if (!matchesBoundPaymobOrder(existingBooking.paymob_order_id, orderId))",
+  ]) assert(s.includes(expression), "Paymob order missing strict correlation: " + expression);
+  assert(!/if \((?:order|leaguePayment|existingBooking)\.paymob_order_id &&/.test(s),
+    "legacy nullable-order bypass reintroduced");
 });
