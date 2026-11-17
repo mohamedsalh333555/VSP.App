@@ -34,6 +34,7 @@ create table public.team_skills_audit(
 grant select on public.team_skills_knockout to authenticated;
 -- INJECT_REAL_BRACKET_GENERATOR
 -- INJECT_REAL_MATCH_APPROVAL
+-- INJECT_KNOCKOUT_PENALTIES_MIGRATION
 
 select set_config('request.jwt.claim.sub',
  '00000000-0000-0000-0000-000000009001',false);
@@ -198,4 +199,107 @@ begin
  if (select status from public.team_skills_knockout where id=match_id)<>'scheduled'
  then raise exception 'CANCELLED_CUP_MATCH_MUTATED';end if;
 end $cancelled$;
+
+-- Separate completed, 4-team cup so the legacy non-draw approval tests above
+-- remain unchanged. The server must decide the tied match by penalties.
+insert into public.team_skills_cups(id,status) values
+('00000000-0000-0000-0000-000000000003','live');
+insert into public.team_skills_registrations(id,cup_id,status,created_at)
+select ('00000000-0000-0000-0000-'||lpad((300+i)::text,12,'0'))::uuid,
+ '00000000-0000-0000-0000-000000000003','approved',
+ now()+(i||' seconds')::interval from generate_series(1,4) i;
+insert into public.team_skills_leaderboard(
+ registration_id,points,completed_stages,all_stages_approved)
+select id,50-(row_number() over (order by id)),12,true
+from public.team_skills_registrations
+where cup_id='00000000-0000-0000-0000-000000000003';
+select public.team_skills_generate_knockout(
+ '00000000-0000-0000-0000-000000000003');
+
+do $penalty_tie$
+declare m1 uuid;m2 uuid;final_id uuid;first_id uuid;
+ second_id uuid; winner uuid;denied boolean;
+begin
+ select id, first_registration_id,second_registration_id
+ into m1,first_id,second_id from public.team_skills_knockout
+ where cup_id='00000000-0000-0000-0000-000000000003'
+ and round_no=1 and match_no=1;
+ -- Ties must NOT silently be decided by the legacy three-argument endpoint.
+ denied:=false;
+ begin perform public.team_skills_approve_knockout_match(m1,1,1);
+ exception when others then
+  if position('decisive score required' in lower(sqlerrm))>0
+  then denied:=true;else raise;end if;
+ end;
+ if not denied then raise exception 'LEGACY_DRAW_AUTO_ADVANCED';end if;
+ denied:=false;
+ begin perform public.team_skills_approve_knockout_penalties(m1,1,1,4,4);
+ exception when others then
+  if position('decisive penalty score required' in lower(sqlerrm))>0
+  then denied:=true;else raise;end if;
+ end;
+ if not denied then raise exception 'TIED_PENALTIES_ADVANCED';end if;
+ denied:=false;
+ begin perform public.team_skills_approve_knockout_penalties(m1,1,0,4,3);
+ exception when others then
+  if position('require a tied' in lower(sqlerrm))>0
+  then denied:=true;else raise;end if;
+ end;
+ if not denied then raise exception 'PENALTIES_ALLOWED_ON_CLEAR_REGULATION_WIN';end if;
+ denied:=false;
+ begin perform public.team_skills_approve_knockout_penalties(m1,2,2,-1,3);
+ exception when others then
+  if position('decisive penalty score required' in lower(sqlerrm))>0
+  then denied:=true;else raise;end if;
+ end;
+ if not denied then raise exception 'NEGATIVE_PENALTIES_ADVANCED';end if;
+ winner:=public.team_skills_approve_knockout_penalties(m1,1,1,4,5);
+ if winner<>second_id or
+  (select winner_registration_id from public.team_skills_knockout
+   where id=m1)<>second_id
+ then raise exception 'WRONG_TIED_SEMIFINAL_WINNER';end if;
+ if not exists(select 1 from public.team_skills_knockout where id=m1
+    and first_penalties=4 and second_penalties=5 and first_goals=1
+    and second_goals=1 and status='approved') then
+   raise exception 'PENALTY_EVIDENCE_NOT_PERSISTED';end if;
+ if not exists(select 1 from public.team_skills_knockout
+  where cup_id='00000000-0000-0000-0000-000000000003'
+    and round_no=2 and match_no=1
+    and first_registration_id=second_id)
+ then raise exception 'PENALTY_WINNER_NOT_PROMOTED';end if;
+ denied:=false;
+ begin perform public.team_skills_approve_knockout_penalties(m1,1,1,5,4);
+ exception when others then
+  if position('match not ready' in lower(sqlerrm))>0
+  then denied:=true;else raise;end if;
+ end;
+ if not denied then raise exception 'DUPLICATE_PENALTY_APPROVAL';end if;
+ if (select count(*) from public.team_skills_audit
+  where cup_id='00000000-0000-0000-0000-000000000003'
+   and action='approve_knockout' and subject_id=m1
+   and details->>'method'='penalties' and details->>'first_penalties'='4'
+   and details->>'second_penalties'='5')<>1 then
+   raise exception 'PENALTY_AUDIT_NOT_EXACTLY_ONCE';end if;
+ select id into m2 from public.team_skills_knockout
+  where cup_id='00000000-0000-0000-0000-000000000003'
+    and round_no=1 and match_no=2;
+ perform public.team_skills_approve_knockout_match(m2,2,1);
+ select id into final_id from public.team_skills_knockout
+  where cup_id='00000000-0000-0000-0000-000000000003'
+    and round_no=2 and match_no=1;
+ if not exists(select 1 from public.team_skills_knockout
+  where id=final_id and first_registration_id is not null
+   and second_registration_id is not null) then
+   raise exception 'PENALTY_FINAL_NOT_READY';end if;
+ perform public.team_skills_approve_knockout_penalties(final_id,0,0,3,2);
+ if (select count(*) from public.team_skills_knockout
+  where cup_id='00000000-0000-0000-0000-000000000003'
+  and status='approved')<>3 then
+   raise exception 'FINAL_PENALTY_DRAW_NOT_APPROVED';end if;
+ if (select count(*) from public.team_skills_audit
+  where cup_id='00000000-0000-0000-0000-000000000003'
+  and action='approve_knockout')<>3 then
+   raise exception 'PENALTY_FINAL_DUPLICATE_AUDITS';end if;
+end $penalty_tie$;
+
 rollback;
