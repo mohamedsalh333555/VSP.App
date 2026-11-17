@@ -92,7 +92,7 @@ Deno.test("Paymob intention provider errors log status only, never response body
   const source = await Deno.readTextFile(
     new URL("../create_paymob_intention/index.ts", import.meta.url),
   );
-  assert(!/console\\.(?:error|warn|log)\\([\\s\\S]{0,180}\\bintentionData\\b/.test(source),
+  assert(!/console\.(?:error|warn|log)\([\s\S]{0,180}\bintentionData\b/.test(source),
     "provider error response body might expose billing data or API tokens");
   assert(source.includes("httpStatus: intentionRes.status"),
     "provider error log must retain a non-sensitive HTTP status");
