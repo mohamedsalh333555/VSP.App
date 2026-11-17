@@ -231,9 +231,14 @@ class NotificationService {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null || userId.isEmpty || bookingId.trim().isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
-    if (Supabase.instance.client.auth.currentUser?.id != userId ||
-        !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_general')) ?? true) ||
-        !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_match_reminders')) ?? true)) return;
+    // Check again after every native/persistence await: a user can opt out
+    // while the OS is scheduling, after the settings screen cancelled the
+    // previously recorded reminders.
+    bool reminderConsentValid() =>
+        Supabase.instance.client.auth.currentUser?.id == userId &&
+        (prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_general')) ?? true) &&
+        (prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_match_reminders')) ?? true);
+    if (!reminderConsentValid()) return;
     final when = VSPMatchReminderSchedule.reminderUtc(
       matchTime: matchTime, now: DateTime.now(),
     );
@@ -281,8 +286,8 @@ class NotificationService {
       payload: jsonEncode({'type': 'booking_confirmed', 'bookingId': bookingId,
           'recipientUserId': userId}),
     );
-    if (Supabase.instance.client.auth.currentUser?.id != userId) {
-      await _localNotifications.cancel(id);
+    if (!reminderConsentValid()) {
+      await cancelObsoleteReminder();
       return;
     }
     final existing = prefs.getStringList(key) ?? const <String>[];
@@ -292,11 +297,16 @@ class NotificationService {
       await _localNotifications.cancel(id);
       return;
     }
-    await prefs.setStringList(
+    final saved = await prefs.setStringList(
       key, VSPMatchReminderSchedule.withScheduled(
         records: existing, notificationId: id, reminderUtc: when,
       ),
     );
+    // An opt-out or logout may finish while the async registry write runs.
+    // Never leave a scheduled alert when we cannot safely retain its record.
+    if (!saved || !reminderConsentValid()) {
+      await cancelObsoleteReminder();
+    }
   }
 
   Future<void> cancelScheduledMatchRemindersForUser(String userId) async {
@@ -393,10 +403,11 @@ class NotificationService {
    const title = 'Booking Confirmed!';
    final bodyStr = 'You booked $stadiumName on ${bookingDate.month}/${bookingDate.day} at $timeSlot.';
    await NotificationService()._localNotifications.show(stadiumName.hashCode, title, bodyStr, details);
-   final uid = Supabase.instance.client.auth.currentUser?.id;
-   if (uid != null) {
+   // Do not write this booking confirmation into a different account's
+   // inbox if the user signs out or switches accounts during the native show.
+   if (Supabase.instance.client.auth.currentUser?.id == userId) {
      final appNotif = AppNotification(id: '', title: title, body: bodyStr, type: 'info', createdAt: DateTime.now(), isRead: false);
-     try { await NotificationRepository().sendNotification(uid, appNotif); }
+     try { await NotificationRepository().sendNotification(userId, appNotif); }
      catch (e) { VSPLogger.e('Error saving booking confirmation to Supabase', e); }
    }
  }
