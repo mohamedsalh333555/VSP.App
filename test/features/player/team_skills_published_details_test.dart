@@ -28,7 +28,7 @@ void main() {
     expect(find.textContaining('البداية:'), findsOneWidget);
     expect(find.textContaining('النهاية:'), findsOneWidget);
     expect(find.textContaining('75 جنيه'), findsOneWidget);
-    expect(find.textContaining('8'), findsOneWidget);
+    expect(find.text('عدد الفرق الأقصى: 8'), findsOneWidget);
     expect(find.textContaining('كأس الفريق البطل'), findsOneWidget);
     expect(find.textContaining('ميداليات'), findsOneWidget);
     expect(find.textContaining('توقيت جهازك'), findsOneWidget);
