@@ -612,6 +612,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final monthlyPrice = _planAmount(plan, 'monthly_price');
     final annualPrice = _planAmount(plan, 'yearly_price');
     final annualSavings = monthlyPrice * 12 - annualPrice;
+    final copilotIncluded = (plan['features'] as Map)['ai_insights'] == true;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.xl),
@@ -646,8 +647,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 ),
                 child: Text(
                   isArabic
-                      ? '${_planNumber(plan, 'max_stadiums')} ملاعب + Copilot'
-                      : '${_planNumber(plan, 'max_stadiums')} Stadiums + Copilot',
+                      ? '${_planNumber(plan, 'max_stadiums')} ملاعب${copilotIncluded ? ' + Copilot' : ''}'
+                      : '${_planNumber(plan, 'max_stadiums')} Stadiums${copilotIncluded ? ' + Copilot' : ''}',
                   style: const TextStyle(
                     color: VSPColors.proAccent,
                     fontWeight: FontWeight.w800,
