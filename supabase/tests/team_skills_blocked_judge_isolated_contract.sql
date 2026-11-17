@@ -72,6 +72,44 @@ begin
 end $deny_blocked$;
 update public.users set is_blocked=false
 where id='00000000-0000-0000-0000-000000009001';
+-- A judge may record only their assigned cup, even when an unrelated
+-- published cup has a valid registered team and scheduled keeper trial.
+insert into public.team_skills_cups(id,status)
+values('00000000-0000-0000-0000-000000000002','live');
+insert into public.team_skills_registrations(id,cup_id,status)
+values('00000000-0000-0000-0000-000000000102',
+       '00000000-0000-0000-0000-000000000002','approved');
+insert into public.team_skills_phases(cup_id,stage_no,metric,weight,target) values
+ ('00000000-0000-0000-0000-000000000002',1,'count',10,10);
+insert into public.team_skills_goalkeeper_trials(id,cup_id,status) values
+ ('00000000-0000-0000-0000-000000000203',
+  '00000000-0000-0000-0000-000000000002','scheduled');
+do $cross_cup_judge_denied$
+declare denied_score boolean:=false;denied_keeper boolean:=false;
+begin
+ begin
+  perform public.team_skills_record_score(
+   '00000000-0000-0000-0000-000000000102',1,5);
+ exception when others then
+  if position('Judge or admin only' in sqlerrm)>0 then denied_score:=true;
+  else raise;end if;
+ end;
+ begin
+  perform public.team_skills_record_goalkeeper(
+   '00000000-0000-0000-0000-000000000203',10,8,2);
+ exception when others then
+  if position('Judge only' in sqlerrm)>0 then denied_keeper:=true;
+  else raise;end if;
+ end;
+ if not denied_score or not denied_keeper then
+  raise exception 'JUDGE_WROTE_UNASSIGNED_CUP_MEASUREMENTS';end if;
+ if exists(select 1 from public.team_skills_scores
+  where cup_id='00000000-0000-0000-0000-000000000002')
+ or exists(select 1 from public.team_skills_goalkeeper_trials
+  where id='00000000-0000-0000-0000-000000000203'
+  and status<>'scheduled') then
+  raise exception 'CROSS_CUP_WRITE_CREATED_SIDE_EFFECTS';end if;
+end $cross_cup_judge_denied$;
 select public.team_skills_record_score(
  '00000000-0000-0000-0000-000000000101',1,5);
 select public.team_skills_record_goalkeeper(

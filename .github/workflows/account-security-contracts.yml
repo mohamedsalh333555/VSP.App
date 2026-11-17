@@ -50,6 +50,7 @@ on:
       - 'test/tooling/test_account_security_runner.py'
       - 'scripts/test_team_skills_registration_concurrency.py'
       - 'scripts/test_team_skills_registration_lifecycle_isolated.py'
+      - 'scripts/test_team_skills_published_details_isolated.py'
       - 'scripts/test_team_skills_score_approval_isolated.py'
       - 'scripts/test_team_skills_score_rejection_isolated.py'
       - 'scripts/test_team_skills_knockout_advancement_isolated.py'
@@ -151,6 +152,8 @@ jobs:
         run: python3 scripts/test_team_skills_registration_concurrency.py
       - name: Verify actual Team Skills publish and close enrollment with retained five-player registration
         run: python3 scripts/test_team_skills_registration_lifecycle_isolated.py
+      - name: Verify published Team Skills details visibility and admin-only publication against real RPC/RLS
+        run: python3 scripts/test_team_skills_published_details_isolated.py
       - name: Verify captain-authenticated bounded auto-waitlist enrollment
         run: python3 scripts/test_team_skills_auto_waitlist_isolated.py
       - name: Verify captain withdrawal and audited admin cancellations preserve team capacity
