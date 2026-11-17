@@ -1,5 +1,15 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+
+## 2026-11-17 — SEC-NEW-01..05 intake and verified Paymob code follow-up
+
+- Official [Supabase Storage advisories and applicability register](security/VSP_SUPABASE_STORAGE_PAYMOB_SECURITY_INTAKE_2026-11-17.md): three **new, distinct** applicability audits `85.01–85.03` (JWT role `none`, S3 SigV4 presigned PUT, signed resumable upload). All are P0 **Needs Verification**, not evidence that VSP is exploitable. Supabase Cloud is used; confirmed hosted Storage component version and Auth hook issuance remain unverified.
+- SEC-NEW-04 Paymob HMAC / webhook replay and SEC-NEW-05 privileged SQL, secrets and RLS map to **existing** SEC-02/06/09/10 and task IDs 30.*, 63.*, 76–80; **do not create duplicates**. Existing signed webhook/ledger checks and isolated DB payment tests remain relevant, but live Sandbox, provider settlement and independent JWT access checks are not complete.
+- Additional Paymob refund diagnostic and checkout-exception redaction source fixes: commits [a161137a](https://github.com/mohamedsalh333555/VSP.App/commit/a161137a059b3320d033e7db609ddabec73247c1), [5bc61a8b](https://github.com/mohamedsalh333555/VSP.App/commit/5bc61a8b1600bcbbb4f08382de5d551d22636398), [23fe3066](https://github.com/mohamedsalh333555/VSP.App/commit/23fe3066a10063eb1b55ee4428a14ca9378fce35). [Financial CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100276777) **SUCCESS** on the source SHA, without live deployments.
+- Supabase read-only security advisors still flag callable `SECURITY DEFINER` functions. Four payment/admin-sensitive functions in each environment have apparent caller checks but not completed negative account tests. Do not bulk revoke or weaken RLS.
+- **Counter unchanged after this additional code-only batch:** 633 unique / 266 accepted / 367 open; 0 extra accepted, 0 additional new IDs. The earlier +3 audit additions remain open. Production webhook deployment, Storage provider version proof, key rotation and production DB changes require separate authorization. No real payments or `main` merge.
+
+
 ## Batch10 verified security rollout and release-policy documentation — 2026-11-11
 
 [37-policy/self-unblock deployment and evidence](security/STORE_COMPLIANCE_BATCH_10_2026-11-11.md), [website delivery](security/STORE_COMPLIANCE_BATCH_08_2026-11-11.md), [actual iOS build](security/STORE_COMPLIANCE_BATCH_09_2026-11-11.md) and [release policy80.07](security/RELEASE_ACCEPTANCE_POLICY.md). Core82 accepted/538 pending. SEC-02/09 scoped corrections verified in native CI and staging then production; not completion of all Phase8/9 or store readiness.
