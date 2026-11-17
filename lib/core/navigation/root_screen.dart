@@ -113,7 +113,7 @@ class _RootScreenState extends State<RootScreen> {
      await prefs.remove('pending_deep_link');
      // Account may change while reading/removing the preference. Do not send
      // the previous account's navigation intent into the new account's UI.
-     if (parsed == null || !sameVerifiedAccount()) return;
+     if (parsed == null || !sameVerifiedAccount() || !mounted) return;
      VSPLogger.i('Recovering validated deep link for current account');
      GoRouter.of(context).push(parsed.routePath);
    } catch (e, stackTrace) {
