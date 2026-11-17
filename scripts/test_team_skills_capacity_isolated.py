@@ -30,7 +30,7 @@ def main() -> int:
         if result.returncode:
             print("TEAM_SKILLS_CAPACITY_FAILED: " + result.stderr[-2200:], file=sys.stderr)
             return 1
-        print("PASS: full cup rejects waitlist promotion, nonadmin rejected, freed slot succeeds")
+        print("PASS: full cup denies promotion; nonadmin denied; freed slot approved; admin reject reason recorded once with inactive roster")
         return 0
     finally:
         drop = psql("postgres", command="DROP DATABASE IF EXISTS " + DATABASE + " WITH (FORCE)")
