@@ -48,11 +48,37 @@ void main() {
     final report = VSPActivationFunnels.build(
       journey: 'player_booking', events: events.reversed, observedThrough: cutoff)!;
     expect(report.role, 'player');
-    expect(report.stages.map((e) => e.accounts).toList(), [10, 10, 10, 10, 6]);
+    expect(report.stages.map((e) => e.accounts).toList(), [10, 10, 10, 10, null]);
     expect(report.stages.last.conversionFromPrevious, isNull,
         reason: 'Four dropped accounts are suppressed, not shown as a percent');
     expect(report.stages.last.dropOffFromPrevious, isNull);
     expect(report.stages[3].conversionFromPrevious, 1);
+  });
+
+  test('small adjacent drop-offs cannot be inferred by subtraction', () {
+    final events = <VSPRetentionCohortEvent>[];
+    for (var i = 0; i < 10; i++) {
+      for (var s = 0; s < booking.length; s++) {
+        if (s == 2 && i >= 6) break;
+        events.add(signal('p-$i', 'player', booking[s],
+            '2026-11-01T0$s:00:00Z'));
+      }
+    }
+    final report = VSPActivationFunnels.build(
+      journey: 'player_booking', events: events, observedThrough: cutoff,
+    )!;
+    // 10 -> 6 would reveal four people leaving if both were published.
+    expect(report.stages[0].accounts, 10);
+    expect(report.stages[1].accounts, 10);
+    expect(report.stages[2].accounts, isNull);
+    expect(report.stages[2].dropOffFromPrevious, isNull);
+    // Subsequent raw stages also contain six; avoid revealing the gap
+    // by publishing a later stage when an intermediate count is hidden.
+    expect(report.stages[3].accounts, isNull);
+    expect(report.stages[4].accounts, isNull);
+    final exported = report.toJson().toString();
+    expect(exported, isNot(contains('accounts: 6')));
+    expect(exported, isNot(contains('dropOffFromPrevious: 4')));
   });
 
   test('mature transitions are visible if drop-off is at least five', () {
