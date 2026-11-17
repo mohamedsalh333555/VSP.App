@@ -23,8 +23,16 @@ abstract final class PendingDeepLinkAccountGuard {
     required String? profileUserId,
     required bool isAuthenticated,
     required bool isRegistrationComplete,
+    String? storedForUserId,
   }) {
     if (!isAuthenticated || !isRegistrationComplete) return false;
+    // A link cached while account A was signed in must not be replayed
+    // into B, even if it survived a fast platform-level account change.
+    if (storedForUserId != null &&
+        storedForUserId.isNotEmpty &&
+        storedForUserId != requestedForUserId) {
+      return false;
+    }
     if (requestedForUserId == null || requestedForUserId.trim().isEmpty) {
       return false;
     }
