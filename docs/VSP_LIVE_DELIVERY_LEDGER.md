@@ -1,3 +1,10 @@
+## 2026-11-18 — Booking availability and trustworthy owner-finance states (+2; 294/339)
+
+- **53.01:** tested synthetic client availability under overlapping/pending/expired/cancelled bookings, venue mismatch and old selection invalidation; normalized booking/stadium IDs before conflict checks, and verified separate loading/error, full, closed and DST cases. No hosted booking concurrency or RLS claims.
+- **03.05:** prevented owner finance card from showing fake zero or stale cash/online revenue while Supabase analytics for current venue/period is loading or failing; Pro Insights also blocks the previous query while it is unverified. Independent withdrawal balance verification preserved. Other booking status, false scarcity and plan-price protections remain tested.
+- [Booking Availability Accuracy CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44195557335) and [Owner Reporting and Booking Filters CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44195557149) at [SHA 2a8811b](https://github.com/mohamedsalh333555/VSP.App/commit/2a8811b5112e1da03d1d72d593b4efc8b8a0f1b6). [Evidence / limits](VSP_BOOKING_AVAILABILITY_OWNER_FINANCE_TRUST_03_05_53_01_2026-11-18.md).
+- **633 unique / 294 accepted / 339 open (46.45%)**; +2 prior IDs, 0 new. Real server availability, Supabase figures, Paymob Sandbox and RLS cross-user checks remain open. No production writes, deploy or main merge.
+
 ## 2026-11-18 — Owner booking filters, subscription display and date reports (+3; 292/341)
 
 - **23.05:** owner schedule now uses a pure, testable filter by stadium and operational shift day, excludes cancelled rows, and fails closed for empty venue/invalid opening hours. Synthetic day/overnight/cross-venue/cancelled tests pass; cross-owner RLS/staging are not proven.
