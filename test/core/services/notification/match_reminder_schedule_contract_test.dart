@@ -42,6 +42,54 @@ void main() {
         lessThan(out.indexOf('await authService.signOut()')));
   });
 
+
+  test('opt-out racing async native scheduling cancels and clears the reminder', () {
+    final service = File('lib/core/services/notification_service.dart')
+        .readAsStringSync();
+    final start = service.indexOf('Future<void> scheduleMatchReminder(');
+    final end = service.indexOf(
+      'Future<void> cancelScheduledMatchRemindersForUser(', start,
+    );
+    final schedule = service.substring(start, end);
+    final native = schedule.indexOf('await _localNotifications.zonedSchedule(');
+    final preflight = schedule.indexOf('if (!reminderConsentValid()) return;');
+    final afterNative = schedule.indexOf('if (!reminderConsentValid()) {', native);
+    final cancelAfterNative =
+        schedule.indexOf('await cancelObsoleteReminder();', afterNative);
+    final registryWrite = schedule.indexOf('final saved = await prefs.setStringList(');
+    final afterWrite =
+        schedule.indexOf('if (!saved || !reminderConsentValid())', registryWrite);
+    final cancelAfterWrite =
+        schedule.indexOf('await cancelObsoleteReminder();', afterWrite);
+    expect(preflight, greaterThanOrEqualTo(0));
+    expect(native, greaterThan(preflight));
+    expect(afterNative, greaterThan(native));
+    expect(cancelAfterNative, greaterThan(afterNative));
+    expect(registryWrite, greaterThan(cancelAfterNative));
+    expect(afterWrite, greaterThan(registryWrite));
+    expect(cancelAfterWrite, greaterThan(afterWrite));
+    expect(schedule, contains("scopedPrefKey(userId, 'notif_general')"));
+    expect(schedule, contains("scopedPrefKey(userId, 'notif_match_reminders')"));
+  });
+
+  test('native booking confirmation never writes to a switched account inbox', () {
+    final source = File('lib/core/services/notification_service.dart')
+        .readAsStringSync();
+    final start = source.indexOf('static Future<void> showBookingConfirmation(');
+    final end = source.indexOf('Future<bool> _shouldShowNotification(', start);
+    final confirmation = source.substring(start, end);
+    final native = confirmation.indexOf('await NotificationService()._localNotifications.show(');
+    final recheck = confirmation.indexOf(
+      'if (Supabase.instance.client.auth.currentUser?.id == userId)', native,
+    );
+    final insert = confirmation.indexOf('sendNotification(userId, appNotif)');
+    expect(start, greaterThanOrEqualTo(0));
+    expect(native, greaterThanOrEqualTo(0));
+    expect(recheck, greaterThan(native));
+    expect(insert, greaterThan(recheck));
+    expect(confirmation, isNot(contains('sendNotification(uid, appNotif)')));
+  });
+
   test('daily quota caps at 3, while same booking reschedules without extra slots', () {
     final day = DateTime.utc(2026, 11, 17, 18);
     final records = [
