@@ -1,3 +1,10 @@
+## 2026-11-17 — Paymob source-only integration/order/refund hardening (0 accepted) (266/367)
+
+- **Five source issues corrected:** refund from signed historical gross, integration allow-list, mandatory existing order correlation, late-failure update guarded by `paymob_order_id`, and checked/reflected over-capacity refund ledger RPC outcomes. [Commits and exact safeguards](security/VSP_PAYMOB_INTEGRATION_ORDER_REFUND_RECONCILIATION_2026-11-17.md).
+- **Financial CI:** [signed-gross](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44105832697), [integration](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44106409594), [order](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44106689595), [stale-failure](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107059958) **all SUCCESS**. [Latest refund-ledger test](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107568234) Deno success; full workflow must be checked separately.
+- Storage policy **count divergence** prod 20/staging 6 (read-only metadata), not proof of leak or identical staging QA. Legacy Paymob signed callbacks without persisted order IDs now fail closed, pending orders require operational plan.
+- **Account:** 633 unique / 266 accepted / 367 open; 0 newly accepted, 0 added. Existing 30.* / 31.* / 63.* / SEC-06/10 and 85.* audits stay open. No live transaction, staging/prod update, secrets, or main merge.
+
 ## 2026-11-17 — Paymob pending/reversal/replay + five checkout order-binding guards (0 accepted; 266/367)
 
 - **Real source code corrections:** verified signed `pending` events no longer cancel pending bookings; void/refund/ambiguous successes never credit paid; non-EGP callbacks rejected; repeated booking refund events stop before duplicate notices; all five Paymob Intention order types refuse checkout on zero-row/mismatched correlation.

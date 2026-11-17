@@ -1,5 +1,10 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## 2026-11-17 — Paymob follow-up: server integration/order identity and refund accounting
+
+[Evidence, commits, passing Deno and prior full financial CI](security/VSP_PAYMOB_INTEGRATION_ORDER_REFUND_RECONCILIATION_2026-11-17.md). Five confirmed source-level risk patterns fixed in `uxlp-44-implementation`: refund signed amount instead of current fee config; server integration allow-list; absent Paymob order ID rejection; stale failed-event update bound to intended order; over-capacity refund ledger acknowledgement and manual reconciliation response. Staging RLS does not yet match production policy count (6 vs 20 storage object policies). No actual user access test, provider refund or hosted deployment. These are **source fixes, not P0 release acceptance**. 633/266/367; 0 new unique IDs or accepted IDs.
+
+
 ## 2026-11-17 — Paymob signed pending/void/refund safeguards and order binding
 
 - [Latest bounded source security batch, CI and deployment blockers](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md): confirmed locally from source, signed-but-pending webhook previously could cancel a still-pending booking; flags for reversed/authorization-only transactions were not excluded from generic success; duplicate refunded callbacks could repeat direct notices; checkout order binding would not detect a successful zero-row UPDATE. Source-fixed and Deno/Flutter financial CI verified for these paths, **not production tested**.
