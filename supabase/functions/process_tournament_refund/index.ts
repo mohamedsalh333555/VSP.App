@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { isConfirmedPaymobRefund, isAlreadyRefundedProviderMessage } from "../_shared/paymob_refund_safety.ts";
 import { markTournamentRefundDispatched } from "../_shared/paymob_tournament_dispatch.ts";
+import { validatedPaymobRefundRequest } from "../_shared/paymob_refund_request.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 declare const Deno: any;
 
@@ -256,8 +257,9 @@ serve(async (req: Request) => {
         }
 
         // 3. Call Paymob Refund API
-        const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
-        const refundAmtCents = Math.round(queueAmount * 100);
+        const refundRequest = validatedPaymobRefundRequest(item.paymob_transaction_id, queueAmount);
+        const txnId = refundRequest?.transactionId ?? "";
+        const refundAmtCents = refundRequest?.amountCents ?? 0;
 
         let refundSuccess = false;
         let refundError: string | null = null;
@@ -282,7 +284,7 @@ serve(async (req: Request) => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 auth_token: paymobToken,
-                transaction_id: Number(txnId),
+                transaction_id: refundRequest!.transactionIdNumber,
                 amount_cents: refundAmtCents,
               }),
             });
@@ -467,8 +469,9 @@ serve(async (req: Request) => {
         }
 
         // 3. Call Paymob Refund API
-        const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
-        const refundAmtCents = Math.round(queueAmount * 100);
+        const refundRequest = validatedPaymobRefundRequest(item.paymob_transaction_id, queueAmount);
+        const txnId = refundRequest?.transactionId ?? "";
+        const refundAmtCents = refundRequest?.amountCents ?? 0;
 
         let refundSuccess = false;
         let refundError: string | null = null;
@@ -493,7 +496,7 @@ serve(async (req: Request) => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 auth_token: paymobToken,
-                transaction_id: Number(txnId),
+                transaction_id: refundRequest!.transactionIdNumber,
                 amount_cents: refundAmtCents,
               }),
             });
@@ -670,8 +673,9 @@ serve(async (req: Request) => {
         }
 
         // 3. Call Paymob Refund API
-        const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
-        const refundAmtCents = Math.round(queueAmount * 100);
+        const refundRequest = validatedPaymobRefundRequest(item.paymob_transaction_id, queueAmount);
+        const txnId = refundRequest?.transactionId ?? "";
+        const refundAmtCents = refundRequest?.amountCents ?? 0;
 
         let refundSuccess = false;
         let refundError: string | null = null;
@@ -696,7 +700,7 @@ serve(async (req: Request) => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 auth_token: paymobToken,
-                transaction_id: Number(txnId),
+                transaction_id: refundRequest!.transactionIdNumber,
                 amount_cents: refundAmtCents,
               }),
             });

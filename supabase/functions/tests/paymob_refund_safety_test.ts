@@ -1,5 +1,6 @@
 import { isConfirmedPaymobRefund, isAlreadyRefundedProviderMessage } from "../_shared/paymob_refund_safety.ts";
 import { markTournamentRefundDispatched, REFUND_DISPATCH_HOLD_UNTIL } from "../_shared/paymob_tournament_dispatch.ts";
+import { validatedPaymobRefundRequest } from "../_shared/paymob_refund_request.ts";
 function assert(condition: unknown, message: string): asserts condition { if (!condition) throw new Error(message); }
 Deno.test("Explicit Paymob refund result required, not ID or text", () => {
   assert(isConfirmedPaymobRefund(true, { success: true }), "positive response rejected");
@@ -83,4 +84,32 @@ Deno.test("Direct team withdrawal refund reserves the paid order once before Pay
     "unverified refund ledger must not be returned as successful");
   assert(!direct.includes('error: String(err?.message || err)'),
     "unsafe internal diagnostics leaked to client");
+});
+
+Deno.test("Reject malformed refund transaction ID and non-piaster amounts", () => {
+  const valid = validatedPaymobRefundRequest("123456", "10.50");
+  assert(valid?.transactionIdNumber === 123456 && valid?.amountCents === 1050,
+    "valid provider transaction and amount rejected");
+  assert(validatedPaymobRefundRequest(1234, 20.25)?.amountCents === 2025,
+    "valid numeric amount rejected");
+  for (const id of [null, "", "0", "-1", "12test34", "1.2", "00123", "123x",
+    "1e4", 0, Infinity, 1e20, "9007199254740992"]) {
+    assert(validatedPaymobRefundRequest(id, 50) === null,
+      "unsafe provider id was silently rewritten: " + String(id));
+  }
+  for (const amount of [null, undefined, 0, -1, "0", "0.001", "1.234",
+    "1e4", 1e20, NaN, Infinity, "100,00", "100 EGP"]) {
+    assert(validatedPaymobRefundRequest("123", amount) === null,
+      "nonmoney or nonfinite amount accepted: " + String(amount));
+  }
+});
+
+Deno.test("All refund worker queues strictly validate the gateway id and cents", async () => {
+  const src = await Deno.readTextFile(new URL("../process_tournament_refund/index.ts",import.meta.url));
+  assert((src.match(/validatedPaymobRefundRequest\(item\.paymob_transaction_id, queueAmount\)/g)||[]).length === 3,
+    "a refund queue is not protected by the strict numeric guard");
+  assert(!src.includes('String(item.paymob_transaction_id || "").replace(/\\D/g, "")'),
+    "unsafe provider transaction digit stripping reintroduced");
+  assert((src.match(/transaction_id: refundRequest!\.transactionIdNumber/g)||[]).length === 3,
+    "outbound refund is not using validated transaction ID");
 });

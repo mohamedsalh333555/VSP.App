@@ -25,6 +25,7 @@ on:
       - 'supabase/functions/process_tournament_refund/index.ts'
       - 'supabase/functions/_shared/paymob_refund_safety.ts'
       - 'supabase/functions/_shared/paymob_tournament_dispatch.ts'
+      - 'supabase/functions/_shared/paymob_refund_request.ts'
       - 'supabase/functions/_shared/paymob_direct_refund_claim.ts'
       - 'supabase/functions/tests/paymob_direct_refund_claim_test.ts'
       - 'supabase/functions/_shared/paymob_audit_payload.ts'
