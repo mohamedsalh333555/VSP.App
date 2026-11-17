@@ -32,7 +32,10 @@ serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { data: messages, error: readError } = await supabase.rpc("pgmq_read", {
       queue_name: "notifications_queue",
-      vt: 30, // visibility timeout, seconds: failed sends become visible again
+      // Five sequential calls with a 25s per-call deadline require a
+      // visibility lease larger than the dispatch window to reduce duplicate
+      // in-flight deliveries. This is still at-least-once, not exactly-once.
+      vt: 180,
       qty: 10,
     });
     if (readError) {
@@ -58,6 +61,7 @@ serve(async (req: Request) => {
           Authorization: `Bearer ${supabaseKey}`,
         },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(25_000),
       }),
       archive: (msgId) => supabase.rpc("pgmq_archive", {
         queue_name: "notifications_queue",

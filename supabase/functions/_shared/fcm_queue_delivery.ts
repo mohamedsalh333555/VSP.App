@@ -26,6 +26,7 @@ export type QueueStats = {
   retry_pending: number;
   archive_failed: number;
   partial_device_failures: number;
+  rate_limited: number;
 };
 
 export type QueueDeps = {
@@ -54,6 +55,23 @@ export async function classifyFcmReply(response: Response): Promise<"delivered" 
   return failed > 0 ? "partial" : "delivered";
 }
 
+/** Extract an owner only to apply in-memory fairness, never for logs. */
+function recipientOf(message: unknown): string | null {
+  if (!message || typeof message !== "object" || Array.isArray(message)) return null;
+  const root = message as Record<string, unknown>;
+  const record = root.record && typeof root.record === "object" && !Array.isArray(root.record)
+    ? root.record as Record<string, unknown>
+    : root;
+  const id = record.user_id ?? record.userId;
+  return typeof id === "string" && id.length > 0 ? id : null;
+}
+
+/** A conservative per-invocation bound. Cross-invocation limits require a
+ * persistent, atomic recipient delivery ledger and stay out of this scope.
+ */
+export const FCM_QUEUE_MAX_PER_INVOCATION = 5;
+export const FCM_QUEUE_MAX_PER_RECIPIENT = 2;
+
 /** Never log notification payload, error response body, device token or user ID. */
 export async function processFcmQueueMessages(
   messages: QueueMessage[], deps: QueueDeps
@@ -61,9 +79,24 @@ export async function processFcmQueueMessages(
   const stats: QueueStats = {
     attempted: 0, delivered: 0, skipped_no_token: 0,
     retry_pending: 0, archive_failed: 0, partial_device_failures: 0,
+    rate_limited: 0,
   };
+  const attemptedByRecipient = new Map<string, number>();
   for (const msg of messages) {
+    const recipient = recipientOf(msg.message);
+    // Keep the message unarchived. PGMQ visibility timeout permits fair
+    // replay on the next invocation; never silently discard overflow.
+    if (stats.attempted >= FCM_QUEUE_MAX_PER_INVOCATION ||
+        (recipient !== null &&
+         (attemptedByRecipient.get(recipient) ?? 0) >= FCM_QUEUE_MAX_PER_RECIPIENT)) {
+      stats.rate_limited++;
+      deps.log("rate_limited", msg.msg_id);
+      continue;
+    }
     stats.attempted++;
+    if (recipient !== null) {
+      attemptedByRecipient.set(recipient, (attemptedByRecipient.get(recipient) ?? 0) + 1);
+    }
     try {
       deps.log("attempt", msg.msg_id);
       const response = await deps.dispatch(msg.message);

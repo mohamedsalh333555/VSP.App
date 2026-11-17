@@ -1,5 +1,6 @@
 import {
   classifyFcmReply, isValidPgmqReadBatch, processFcmQueueMessages,
+  FCM_QUEUE_MAX_PER_INVOCATION, FCM_QUEUE_MAX_PER_RECIPIENT,
 } from "../_shared/fcm_queue_delivery.ts";
 import { checkFcmWorkerAccess } from "../_shared/fcm_queue_auth.ts";
 
@@ -160,4 +161,71 @@ Deno.test("pgmq_archive must return literal true before message counts as archiv
   });
   eq(stat.archive_failed, 0);
   eq(stat.delivered, 1);
+});
+
+
+Deno.test("batch dispatch cap and per-recipient quota defer rather than discard overflow", async () => {
+  const names: string[] = [];
+  const archived: number[] = [];
+  const events: string[] = [];
+  const input = [
+    ...[1, 2, 3, 4, 5].map(msg_id => ({ msg_id, message: { user_id: "player-a" } })),
+    ...[6, 7].map(msg_id => ({ msg_id, message: { record: { user_id: "player-b" } } })),
+    { msg_id: 8, message: { userId: "player-c" } },
+    { msg_id: 9, message: { userId: "player-d" } },
+  ];
+  const stats = await processFcmQueueMessages(input, {
+    dispatch: async (msg) => {
+      names.push(JSON.stringify(msg));
+      return reply({ success: true, sent_count: 1, failed_count: 0 });
+    },
+    archive: async (id) => { archived.push(Number(id)); return { data: true }; },
+    log: (event, id) => events.push(event + ":" + id),
+  });
+  eq(FCM_QUEUE_MAX_PER_INVOCATION, 5);
+  eq(FCM_QUEUE_MAX_PER_RECIPIENT, 2);
+  eq(stats.attempted, 5);
+  eq(stats.delivered, 5);
+  eq(stats.rate_limited, 4);
+  eq(archived, [1, 2, 6, 7, 8]);
+  eq(events.filter(s => s.startsWith("rate_limited")).length, 4);
+  if (JSON.stringify(events).includes("player-")) throw new Error("User identity leaked to queue logs");
+});
+
+Deno.test("failed sends count toward per-invocation quota and remain retriable", async () => {
+  let dispatched = 0;
+  const messages = Array.from({ length: 7 }, (_, i) => ({
+    msg_id: i + 1, message: { user_id: "recipient-" + i },
+  }));
+  const stats = await processFcmQueueMessages(messages, {
+    dispatch: async () => { dispatched++; return reply({ error: "offline" }, 503); },
+    archive: async () => { throw new Error("must not archive failures"); },
+    log: () => {},
+  });
+  eq(dispatched, FCM_QUEUE_MAX_PER_INVOCATION);
+  eq(stats.attempted, 5);
+  eq(stats.retry_pending, 5);
+  eq(stats.rate_limited, 2);
+  eq(stats.delivered, 0);
+});
+
+Deno.test("rate limitation is scoped to a single worker invocation, not claimed as durable", async () => {
+  const msg = [
+    { msg_id: 1, message: { user_id: "same" } },
+    { msg_id: 2, message: { user_id: "same" } },
+    { msg_id: 3, message: { user_id: "same" } },
+  ];
+  const sent: number[] = [];
+  const deps = {
+    dispatch: async () => reply({ success: true, sent_count: 1, failed_count: 0 }),
+    archive: async (id: string | number) => { sent.push(Number(id)); return { data: true }; },
+    log: () => {},
+  };
+  const first = await processFcmQueueMessages(msg, deps);
+  eq([first.delivered, first.rate_limited], [2, 1]);
+  // Re-processing a later visibility window uses a new in-memory quota,
+  // showing why this does not prove a daily or global send cap.
+  const second = await processFcmQueueMessages(msg.slice(2), deps);
+  eq([second.delivered, second.rate_limited], [1, 0]);
+  eq(sent, [1, 2, 3]);
 });
