@@ -1,6 +1,7 @@
 import {
   classifyFcmReply, processFcmQueueMessages,
 } from "../_shared/fcm_queue_delivery.ts";
+import { checkFcmWorkerAccess } from "../_shared/fcm_queue_auth.ts";
 
 const eq = (a: unknown, b: unknown) => {
   if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`Expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);
@@ -115,4 +116,15 @@ Deno.test("exceptions keep message for retry; logs contain only event and id", a
   });
   eq(s.retry_pending, 1);
   if (JSON.stringify(logs).includes("secret-payload")) throw new Error("Sensitive error leaked");
+});
+
+Deno.test("FCM worker requires service-to-service bearer before queue access", () => {
+  eq(checkFcmWorkerAccess("POST", "Bearer secret-for-test", "secret-for-test"), "allowed");
+  eq(checkFcmWorkerAccess("POST", "bearer secret-for-test", "secret-for-test"), "allowed");
+  for (const header of [
+    null, "", "Bearer", "Bearer anon-key", "Basic secret-for-test",
+    "Bearer secret-for-test extra", "Bearer secret-for-tes", "Bearer secret-for-testX",
+  ]) eq(checkFcmWorkerAccess("POST", header, "secret-for-test"), "unauthorized");
+  eq(checkFcmWorkerAccess("GET", "Bearer secret-for-test", "secret-for-test"), "method_not_allowed");
+  eq(checkFcmWorkerAccess("POST", "Bearer secret-for-test", ""), "unconfigured");
 });

@@ -2,14 +2,31 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { processFcmQueueMessages } from "../_shared/fcm_queue_delivery.ts";
+import { checkFcmWorkerAccess } from "../_shared/fcm_queue_auth.ts";
 
 declare const Deno: any;
 
-serve(async (_req: Request) => {
+serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    if (!supabaseUrl || !supabaseKey) {
+    // Validate before creating a database client or reading the queue.
+    // This function is internal-only. No deployed pg_cron caller was found
+    // in staging or production as of 2026-11-17; review any external
+    // scheduler's bearer auth before first deploying this worker.
+    const access = checkFcmWorkerAccess(
+      req.method, req.headers.get("authorization"), supabaseKey,
+    );
+    if (access !== "allowed") {
+      const status = access === "method_not_allowed" ? 405
+        : access === "unconfigured" ? 503 : 401;
+      return new Response(JSON.stringify({ error: status === 405
+        ? "Method not allowed" : status === 503
+        ? "FCM service is not configured" : "Unauthorized" }), {
+        status, headers: { "Cache-Control": "no-store" },
+      });
+    }
+    if (!supabaseUrl) {
       return new Response(JSON.stringify({ error: "FCM service is not configured" }), { status: 503 });
     }
     const supabase = createClient(supabaseUrl, supabaseKey);
