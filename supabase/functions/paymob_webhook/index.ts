@@ -532,100 +532,31 @@ serve(async (req: Request) => {
             status: 500,
             headers: { "Content-Type": "application/json" },
           });
-        } else if (tournResult?.needs_refund === true || tournResult?.requires_refund === true) {
-          // OVER-CAPACITY DETECTED: refund the exact gross amount charged to the payer.
-          console.warn(`Capacity exceeded for tournament order ${specialReference}. Initiating REAL Paymob Refund API call...`);
-          
-          let refundSuccess = false;
-          let refundId = null;
-          let refundErrorMsg = null;
-
-          try {
-            const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
-            if (!paymobApiKey) {
-              throw new Error("Missing PAYMOB_API_KEY / PAYMOB_SECRET_KEY on server environment");
-            }
-
-            // Step A: Authenticate with Paymob to obtain auth token
-            const authRes = await fetch("https://accept.paymob.com/api/auth/tokens", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ api_key: paymobApiKey }),
-            });
-
-            if (!authRes.ok) {
-              // Do not include Paymob's response body: it may contain sensitive data.
-              throw new Error("Paymob refund authentication request failed");
-            }
-
-            const authData = await authRes.json();
-            const authToken = authData.token;
-
-            // Step B: Use the exact HMAC-verified Paymob transaction amount.
-            // Recomputing from current fee settings can over/under-refund if
-            // pricing has changed since this payment was actually captured.
-            const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                auth_token: authToken,
-                transaction_id: Number(transactionId),
-                amount_cents: amountCents,
-              }),
-            });
-
-            const refundData = await refundRes.json();
-            // Never log raw gateway responses, even when a refund is rejected.
-            console.log("Paymob refund API response", { httpStatus: refundRes.status, accepted: refundRes.ok });
-
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true)) {
-              refundSuccess = true;
-              refundId = String(refundData.id || refundData.transaction_id || "REFUND_SUCCESS");
-            } else {
-              refundErrorMsg = `Paymob refund rejected (HTTP ${refundRes.status})`;
-            }
-          } catch (refundEx: any) {
-            console.error("Paymob refund request failed (tournament)");
-            refundErrorMsg = "Paymob refund request failed";
-          }
-
-          // Step C: Atomically record real refund status or flag for manual review
-          const { data: refundRecorded, error: refundRecordingError } = await supabase.rpc("record_tournament_refund_status_atomic", {
-            p_order_reference: specialReference,
-            p_refund_success: refundSuccess,
-            p_paymob_refund_id: refundId,
-            p_error_message: refundErrorMsg,
-            p_refund_amount: amountCents / 100,
-          });
-          if (refundRecordingError || refundRecorded?.success !== true) {
-            // Gateway action may already have happened. Do not return a
-            // retry-triggering 5xx that could cause another external refund.
-            // Preserve an operator-visible audit and require reconciliation.
-            console.error("Paymob tournament refund ledger requires manual reconciliation (tournament)");
-            await supabase.from("webhook_logs").insert({
-              provider: "paymob",
-              event_type: "refund_ledger_reconciliation_required",
-              txn_id: transactionId,
-              order_id: orderId,
-              payload: {
-                order_reference: specialReference,
-                refund_request_accepted: refundSuccess,
-                refund_id: refundId,
-              },
-              signature_verified: true,
-              status: "requires_reconciliation",
-              error_message: "Paymob refund ledger write not confirmed",
-            });
-            return new Response(JSON.stringify({
-              status: "requires_reconciliation", type: "tournament", success: false,
-            }), { status: 200, headers: { "Content-Type": "application/json" } });
-          }
+        } else if (tournResult?.needs_refund === true) {
+          // confirm_tournament_order_atomic already created an idempotent
+          // cancellation_refund_queue item, keyed by order_id, in the SAME
+          // transaction that rejected the over-capacity/cancelled registration.
+          //
+          // NEVER call Paymob's external refund endpoint here. Doing so would
+          // race the queue worker and could refund the same payment twice.
+          // Its worker owns the durable claim, dispatch marker and ledger.
           return new Response(JSON.stringify({
-            status: refundSuccess ? "refund_recorded" : "refund_manual_review",
+            status: "refund_queued",
+            type: "tournament",
+            success: false,
+            refund_pending: true,
+          }), { status: 200, headers: { "Content-Type": "application/json" } });
+        } else if (tournResult?.success !== true) {
+          // An RPC-rejected confirmation (including a replay of an already
+          // failed order) must NOT be presented as a successful payment.
+          console.error("Tournament confirmation rejected; manual reconciliation required", {
+            reason: String(tournResult?.error || "confirmation_unverified"),
+          });
+          return new Response(JSON.stringify({
+            status: "requires_reconciliation",
             type: "tournament",
             success: false,
           }), { status: 200, headers: { "Content-Type": "application/json" } });
-
         } else {
           console.log("Tournament order confirmed successfully:", tournResult);
         }

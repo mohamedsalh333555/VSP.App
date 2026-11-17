@@ -199,14 +199,18 @@ Deno.test("Over-capacity tournament refunds always use the signed gross amount",
     "cannot isolate the actual over-capacity refund routes");
   const oneVsOne = src.slice(oneVsOneStart, teamStart);
   const team = src.slice(teamStart, bookingsStart);
-  for (const [name, section] of [["1v1", oneVsOne], ["team", team]] as const) {
-    assert(section.includes("amount_cents: amountCents"), name + " refund must use verified cents");
-    assert(section.includes("p_refund_amount: amountCents / 100"), name + " accounting must use verified cents");
-    assert(!section.includes("const amountCents = Math.round(grossAmount * 100)"),
-      name + " refund recomputes stale gross amount");
-    assert(!section.includes("let amountCents ="),
-      name + " refund shadows HMAC-verified amount with a fee fallback");
-  }
+  // Historical 1v1 still uses a direct refund path; the team tournament
+  // confirmation RPC itself creates a refund queue item. A second direct
+  // refund from the webhook would race that worker.
+  assert(oneVsOne.includes("amount_cents: amountCents"), "1v1 refund must use verified cents");
+  assert(oneVsOne.includes("p_refund_amount: amountCents / 100"), "1v1 accounting must use verified cents");
+  assert(!oneVsOne.includes("let amountCents ="), "1v1 refund shadows signed amount");
+  assert(!team.includes("https://accept.paymob.com/api/acceptance/void_refund/refund"),
+    "team tournament webhook must NOT call Paymob refund outside its SQL refund queue");
+  assert(team.includes('status: "refund_queued"') && team.includes('refund_pending: true'),
+    "over-capacity team tournament must acknowledge queued refund, not settled refund");
+  assert(team.includes('tournResult?.success !== true'),
+    "replayed or rejected team confirmation must not appear successful");
 });
 
 Deno.test("Paymob transaction callback integration must be server-authorized", () => {
@@ -305,4 +309,21 @@ Deno.test("Webhook redacts all signed callback logs", async () => {
   assert((s.match(/payload: sanitizePaymobAuditPayload\(obj\)/g) || []).length === 2, "unfiltered verified payload remains");
   assert(s.includes("originalTxn: sanitizePaymobAuditPayload(obj)"), "unfiltered original transaction remains");
   assert(!s.includes("error_message: JSON.stringify(paymentError || paymentResult)"), "raw RPC error persisted");
+});
+
+Deno.test("Team tournament overcapacity refunds have exactly one external owner: queue worker", async () => {
+  const webhook = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const worker = await Deno.readTextFile(new URL("../process_tournament_refund/index.ts", import.meta.url));
+  const branch = webhook.slice(
+    webhook.indexOf('if (specialReference.startsWith("TOURN_"))'),
+    webhook.indexOf("if (!bookingId)", webhook.indexOf('if (specialReference.startsWith("TOURN_"))')),
+  );
+  assert(branch.includes('"confirm_tournament_order_atomic"'), "team payment must first execute queue-owning RPC");
+  assert(branch.includes("tournResult?.needs_refund === true"), "queued status must be gated by database result");
+  assert(!branch.includes("record_tournament_refund_status_atomic"),
+    "direct webhook cannot settle a refund also owned by worker");
+  assert(!branch.includes("void_refund/refund"),
+    "direct webhook would risk duplicate refund");
+  assert(worker.includes('markTournamentRefundDispatched(adminClient, "cancellation_refund_queue", item)'),
+    "the refund worker must own the durable queue claim");
 });
