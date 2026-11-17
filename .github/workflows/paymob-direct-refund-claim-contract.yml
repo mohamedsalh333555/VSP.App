@@ -1,0 +1,47 @@
+name: Paymob Direct Refund Claim Contract
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'supabase/migrations/20261117174500_paymob_webhook_direct_refund_dispatch_claims.sql'
+      - 'supabase/tests/paymob_webhook_direct_refund_claims_isolated_contract.sql'
+      - '.github/workflows/paymob-direct-refund-claim-contract.yml'
+  workflow_dispatch:
+
+jobs:
+  isolated-postgres-refund-claims:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_DB: vsp_direct_refund_contract
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: vsp_ephemeral_ci_only
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: vsp_direct_refund_contract
+      PGUSER: postgres
+      PGPASSWORD: vsp_ephemeral_ci_only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm database is a disposable CI service
+        run: |
+          test "$PGHOST" = "127.0.0.1"
+          test "$PGDATABASE" = "vsp_direct_refund_contract"
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT current_database()" | grep -Fx 'vsp_direct_refund_contract'
+      - name: Verify unique claims, RLS deny-by-default, server role and SQL constraints
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/paymob_webhook_direct_refund_claims_isolated_contract.sql

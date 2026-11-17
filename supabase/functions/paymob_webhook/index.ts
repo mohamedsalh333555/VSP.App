@@ -7,6 +7,7 @@ import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.
 import { isAuthorizedPaymobIntegration } from "../_shared/paymob_integration_guard.ts";
 import { matchesBoundPaymobOrder } from "../_shared/paymob_order_binding.ts";
 import { sanitizePaymobAuditPayload } from "../_shared/paymob_audit_payload.ts";
+import { claimDirectPaymobRefund, recordDirectPaymobRefundOutcome } from "../_shared/paymob_direct_refund_claim.ts";
 
 declare const Deno: any;
 
@@ -400,6 +401,7 @@ serve(async (req: Request) => {
           let refundSuccess = false;
           let refundId = null;
           let refundErrorMsg = null;
+          let directRefundClaimed = false;
           // The signed callback's amountCents was HMAC-verified and validated
           // before this branch. Never reconstruct historical charges from a
           // mutable, current fee policy when refunding an over-capacity order.
@@ -424,6 +426,26 @@ serve(async (req: Request) => {
 
             const authData = await authRes.json();
             const authToken = authData.token;
+            if (!authToken) throw new Error("Paymob refund authentication token missing");
+
+            // HMAC authentication alone is NOT refund dispatch idempotency.
+            // The service-role-only unique claim persists across webhook replay
+            // and worker crashes; never call Paymob unless INSERT won.
+            const directClaim = await claimDirectPaymobRefund(supabase, {
+              transactionId,
+              orderReference: specialReference,
+              context: "legacy_1v1",
+              amountCents,
+            });
+            if (!directClaim) {
+              return new Response(JSON.stringify({
+                status: "requires_reconciliation",
+                type: "1v1_tournament",
+                success: false,
+                refund_pending: true,
+              }), { status: 200, headers: { "Content-Type": "application/json" } });
+            }
+            directRefundClaimed = true;
 
             // Step B: Call Paymob Void/Refund API with exact transaction and amount in cents
             // Refund the exact gross amount Paymob actually charged, including VSP/gateway fees.
@@ -451,6 +473,10 @@ serve(async (req: Request) => {
           } catch (refundEx: any) {
             console.error("Paymob refund request failed (1v1)");
             refundErrorMsg = "Paymob refund request failed";
+          }
+
+          if (directRefundClaimed) {
+            await recordDirectPaymobRefundOutcome(supabase, transactionId, refundSuccess);
           }
 
           // Step C: Atomically record real refund status or flag for manual review
@@ -670,6 +696,7 @@ serve(async (req: Request) => {
         let refundSuccess = false;
         let refundId = null;
         let refundErrorMsg = null;
+        let directRefundClaimed = false;
 
         try {
           const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
@@ -683,6 +710,25 @@ serve(async (req: Request) => {
           if (!authRes.ok) throw new Error("Paymob auth token request failed");
 
           const authData = await authRes.json();
+          if (!authData?.token) throw new Error("Paymob refund authentication token missing");
+
+          // Prevent the same signed transaction from triggering a second
+          // outbound refund for an already cancelled booking.
+          const directClaim = await claimDirectPaymobRefund(supabase, {
+            transactionId,
+            orderReference: bookingId,
+            context: "cancelled_booking",
+            amountCents,
+          });
+          if (!directClaim) {
+            return new Response(JSON.stringify({
+              status: "requires_reconciliation",
+              type: "cancelled_booking",
+              success: false,
+              refund_pending: true,
+            }), { status: 200, headers: { "Content-Type": "application/json" } });
+          }
+          directRefundClaimed = true;
           const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -702,6 +748,10 @@ serve(async (req: Request) => {
           }
         } catch (refundEx: any) {
           refundErrorMsg = "Paymob refund request failed";
+        }
+
+        if (directRefundClaimed) {
+          await recordDirectPaymobRefundOutcome(supabase, transactionId, refundSuccess);
         }
 
         if (refundSuccess) {
