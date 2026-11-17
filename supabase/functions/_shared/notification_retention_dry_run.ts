@@ -59,17 +59,30 @@ export function prepareInboxRetentionDryRun(input: RetentionDryRunInput): Retent
   if (!Array.isArray(input.rows) || !Number.isFinite(input.now?.getTime())) {
     missingGates.push("valid_snapshot");
   }
-  // Without a complete, unique list of stable notification IDs, a purported
-  // cleanup plan could accidentally omit protected notifications.
+  // Normalize UUID casing before comparing records and reference sets:
+  // Postgres UUIDs are case-insensitive. A mixed-case ID must never evade a
+  // legal/audit/delivery hold or be treated as a distinct notification.
   const seen = new Set<string>();
   if (Array.isArray(input.rows)) {
     for (const entry of input.rows) {
       const id = entry?.id;
-      if (typeof id !== "string" || !validId.test(id) || seen.has(id)) {
+      if (typeof id !== "string" || !validId.test(id) ||
+          seen.has(id.toLowerCase())) {
         missingGates.push("valid_unique_ids");
         break;
       }
-      seen.add(id);
+      seen.add(id.toLowerCase());
+    }
+  }
+  for (const refs of [
+    input.pendingDeliveryIds, input.legalHoldIds,
+    input.auditReferenceIds, input.foreignKeyReferenceIds,
+  ]) {
+    if (refs instanceof Set && [...refs].some(
+      (id) => typeof id !== "string" || !validId.test(id),
+    )) {
+      missingGates.push("valid_dependency_references");
+      break;
     }
   }
   if (missingGates.length) {
@@ -80,15 +93,17 @@ export function prepareInboxRetentionDryRun(input: RetentionDryRunInput): Retent
     };
   }
 
+  const held = new Set<string>([
+    ...input.pendingDeliveryIds!, ...input.legalHoldIds!,
+    ...input.auditReferenceIds!, ...input.foreignKeyReferenceIds!,
+  ].map((id) => id.toLowerCase()));
+
   let candidateForHumanReview = 0;
   let retainedByPolicy = 0;
   let protectedByDependencies = 0;
   for (const entry of input.rows) {
-    const id = entry.id as string;
-    if (input.pendingDeliveryIds!.has(id) ||
-        input.legalHoldIds!.has(id) ||
-        input.auditReferenceIds!.has(id) ||
-        input.foreignKeyReferenceIds!.has(id)) {
+    const id = (entry.id as string).toLowerCase();
+    if (held.has(id)) {
       protectedByDependencies++;
       continue;
     }
