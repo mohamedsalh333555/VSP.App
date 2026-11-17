@@ -103,6 +103,29 @@ void main() {
       ), isFalse);
     });
 
+    test('saved general opt-out blocks re-engagement and transactional foreground alerts', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final aKey = NotificationFilterService.scopedPrefKey('player-a', 'notif_general');
+      final bKey = NotificationFilterService.scopedPrefKey('player-b', 'notif_general');
+      expect(await prefs.setBool(aKey, false), isTrue);
+      expect(await prefs.setBool(bKey, true), isTrue);
+      // A new settings read after the save must not restore the default.
+      final reopened = await SharedPreferences.getInstance();
+      for (final type in <String>['reengagement', 'marketing', 'match_reminder', 'booking_confirmed']) {
+        expect(await NotificationFilterService.shouldShowNotificationForUser(
+          type, userId: 'player-a', prefs: reopened,
+        ), isFalse, reason: type);
+      }
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'match_reminder', userId: 'player-b', prefs: reopened,
+      ), isTrue);
+      // Opting back in must be explicit for the same account.
+      expect(await reopened.setBool(aKey, true), isTrue);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'match_reminder', userId: 'player-a', prefs: reopened,
+      ), isTrue);
+    });
+
     test('foreground push requires recipient of the active authenticated account', () {
       expect(NotificationFilterService.isRecipientCurrentUser(
         {'recipientUserId': 'owner-a'}, 'owner-a',
