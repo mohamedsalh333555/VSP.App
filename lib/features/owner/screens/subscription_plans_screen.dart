@@ -12,6 +12,7 @@ import '../../../core/repositories/owner_subscription_repository.dart';
 import '../../../core/services/analytics_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/subscription/owner_plan_expiry_presentation.dart';
+import '../widgets/subscription/owner_plan_comparison_contract.dart';
 
 
 /// شاشة اشتراك المالكين: استخدام مجاني + Pro المدفوع + تجربة Pro
@@ -119,6 +120,100 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       labels.add(isArabic ? 'دعم فني قياسي' : 'Standard support');
     }
     return labels;
+  }
+
+  /// Explicit, server-sourced comparison: only differences between the
+  /// already fetched public plan rows are shown. Never hardcode Pro promises.
+  Widget _buildPlanComparison(
+    bool isArabic,
+    Map<String, dynamic> freePlan,
+    Map<String, dynamic> proPlan,
+  ) {
+    final freeFeatures = Map<String, dynamic>.from(freePlan['features'] as Map);
+    final proFeatures = Map<String, dynamic>.from(proPlan['features'] as Map);
+    final extras = OwnerPlanComparisonContract.additionalProFeatures(
+      basicFeatures: freeFeatures,
+      proFeatures: proFeatures,
+    );
+    final addedLabels = _featureLabels(extras, isArabic);
+    final freeMax = _planNumber(freePlan, 'max_stadiums');
+    final proMax = _planNumber(proPlan, 'max_stadiums');
+    final moreStadiums = OwnerPlanComparisonContract.hasHigherStadiumCapacity(
+      freeMaxStadiums: freeMax,
+      proMaxStadiums: proMax,
+    );
+    if (addedLabels.isEmpty && !moreStadiums) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(VSPSpacing.md),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isArabic ? 'ماذا تضيف باقة Pro؟' : 'What does Pro add?',
+            style: const TextStyle(
+              color: VSPColors.textPrimary,
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (moreStadiums)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                isArabic
+                    ? 'عدد الملاعب: $proMax في Pro مقابل $freeMax في المجانية'
+                    : 'Venue allowance: $proMax on Pro versus $freeMax on Free',
+                style: const TextStyle(
+                  color: VSPColors.textPrimary,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          for (final label in addedLabels)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Iconsax.tick_circle_copy,
+                    size: 16,
+                    color: VSPColors.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: VSPColors.textPrimary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Text(
+            isArabic
+                ? 'المزايا المعروضة مأخوذة من تفاصيل الباقات الحالية.'
+                : 'Benefits are based on the currently loaded plan details.',
+            style: const TextStyle(
+              color: VSPColors.textSecondary,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   bool _isValidPlan(Map<String, dynamic> plan) {
@@ -342,6 +437,10 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               ],
 
               const SizedBox(height: 18),
+
+              // Only show a benefit when Pro actually adds it to Free.
+              _buildPlanComparison(isArabic, _freePlan!, _proPlan!),
+              const SizedBox(height: VSPSpacing.md),
 
               // Free and Pro plan content is sourced from public_subscription_plans.
               _buildFreePlanCard(context, isArabic, hasProAccess, isTrialActive, _freePlan!),
