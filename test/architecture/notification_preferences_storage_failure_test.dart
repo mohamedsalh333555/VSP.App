@@ -18,7 +18,7 @@ void main() {
     final source = File(
       'lib/features/player/screens/profile_subscreens/notifications_screen.dart',
     ).readAsStringSync();
-    final save = source.indexOf('Future<void> _saveSetting(');
+    final save = source.indexOf('Future<bool> _saveSetting(');
     final persisted = source.indexOf('final saved = await prefs.setBool(', save);
     final failure = source.indexOf('if (!saved && mounted', persisted);
     final catchBlock = source.indexOf('} catch (_) {', persisted);
@@ -26,5 +26,7 @@ void main() {
     expect(persisted, greaterThan(save));
     expect(failure, greaterThan(persisted));
     expect(catchBlock, greaterThan(failure));
+    expect(source.indexOf('return saved;', failure), greaterThan(failure));
+    expect(source.indexOf('return false;', catchBlock), greaterThan(catchBlock));
   });
 }

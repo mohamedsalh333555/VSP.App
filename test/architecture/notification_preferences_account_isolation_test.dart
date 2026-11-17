@@ -24,7 +24,11 @@ void main() {
 
   test('signed-out preferences reset to defaults and cannot be saved', () {
     expect(source, contains('if (userId.isEmpty) {'));
-    expect(source, contains('if (userId == null || userId.isEmpty) return;'));
-    expect(source, contains('_generalNotifications = true;'));
+    expect(source, contains('if (userId == null || userId.isEmpty) return false;'));
+    final reset = source.indexOf('void _resetNotificationSettings() {');
+    expect(reset, greaterThan(0));
+    expect(source.substring(reset), contains('_generalNotifications = true;'));
+    final signOut = source.indexOf('if (userId.isEmpty) {');
+    expect(source.indexOf('_resetNotificationSettings();', signOut), greaterThan(signOut));
   });
 }
