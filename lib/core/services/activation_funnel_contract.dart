@@ -31,6 +31,22 @@ class VSPFunnelReport {
     required this.observedThroughUtc,
     required this.stages,
   });
+
+  /// Export aggregates ONLY. Never include account keys or event timelines.
+  Map<String, Object?> toJson() => {
+        'journey': journey,
+        'role': role,
+        'observedThroughUtc': observedThroughUtc.toIso8601String(),
+        'stages': [
+          for (final stage in stages)
+            {
+              'event': stage.event,
+              'accounts': stage.accounts,
+              'conversionFromPrevious': stage.conversionFromPrevious,
+              'dropOffFromPrevious': stage.dropOffFromPrevious,
+            },
+        ],
+      };
 }
 
 /// Offline analytical contract for 50.04/50.05.
