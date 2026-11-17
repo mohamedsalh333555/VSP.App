@@ -1,3 +1,9 @@
+## 2026-11-18 — Retention small-group complementary privacy hardening (+0 accepted)
+
+- **Fixed source disclosure:** a published cohort of 10 with 6 eligible users leaked four through subtraction. Eligibility day counts now use complementary suppression against total and preceding visible D1/D7 counts; all later stages remain masked after suppression.
+- Directly constructed undersized, invalid or unrecognized cohort segments fail safe on export. The offline HTML importer independently rejects unsafe combinations. [Flutter + Node focused analytics CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44188773549) on source SHA [cc2e4f0](https://github.com/mohamedsalh333555/VSP.App/commit/cc2e4f0b00ecef590f9e60c743e2fab9ec440231). [Privacy fix report](VSP_RETENTION_COMPLEMENTARY_PRIVACY_HARDENING_2026-11-18.md).
+- **No task count movement:** 633 unique / 289 accepted / 344 open (45.66%). This is follow-up protection on existing 54.02/55.04 and does not prove live Firebase reporting, privacy counsel signoff, or previously open dashboard/retention milestones. No database, payments, production, APK or main merge.
+
 ## 2026-11-18 — Four scoped owner subscription/funnel contracts accepted (+4; 289/344)
 
 - **52.01:** dashboard `owner_dashboard_viewed` event only for the signed-in owner on visible home; same-account session deduplication, switch-account isolation and failed-send retry verified in Dart. Firebase live totals not verified.
