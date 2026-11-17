@@ -12,12 +12,12 @@ const PATTERNS = {
   goRoute: /\bGoRoute\s*\(/g,
   pushNavigation: /\b(?:Navigator\.(?:push|pushNamed|pushReplacement|pushReplacementNamed)|context\.(?:push|pushNamed|go|goNamed|replace))\s*\(/g,
   popNavigation: /\b(?:Navigator\.(?:pop|maybePop)|context\.pop|VSPBackButton)\b/g,
-  navigationGuard: /\b(?:redirectLogic|redirect\s*:|isAuthenticated|isOwner|isAdmin|isPlayer)\b/g,
+  navigationGuard: /\b(?:redirectLogic|isAuthenticated|isOwner|isAdmin|isPlayer)\b|\bredirect\s*:/g,
   loadingState: /\b(?:VSPUiState\.loading|CircularProgressIndicator|LinearProgressIndicator|CupertinoActivityIndicator)\b/g,
   dataBuilder: /\b(?:FutureBuilder|StreamBuilder)\s*(?:<[^>]+>)?\s*\(/g,
   errorState: /\b(?:VSPUiState\.error|VSPErrorState)\b/g,
   emptyState: /\b(?:VSPUiState\.empty|VSPEmptyState)\b/g,
-  retryAction: /\b(?:onRetry\s*:|forceRefresh\s*:)\b/g,
+  retryAction: /\bonRetry\s*:|\bforceRefresh\s*:/g,
 };
 const NAMES = Object.freeze(Object.keys(PATTERNS));
 
