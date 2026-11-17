@@ -14,6 +14,7 @@ ROOT=Path(__file__).resolve().parents[1]
 FIXTURE=ROOT/"supabase/tests/team_skills_knockout_advancement_isolated_contract.sql"
 GENERATOR=ROOT/"supabase/migrations/20261116084000_team_skills_final_seeding_freeze.sql"
 APPROVAL=ROOT/"supabase/migrations/20261116088000_team_skills_closed_event_write_guards.sql"
+PENALTIES=ROOT/"supabase/migrations/20261117021000_team_skills_knockout_penalty_tie_break.sql"
 DATABASE="vsp_team_skills_knockout_advancement_isolated"
 
 
@@ -34,7 +35,8 @@ def main() -> int:
         "-- INJECT_REAL_BRACKET_GENERATOR":extract_function(
             GENERATOR,"public.team_skills_generate_knockout"),
         "-- INJECT_REAL_MATCH_APPROVAL":extract_function(
-            APPROVAL,"public.team_skills_approve_knockout_match")
+            APPROVAL,"public.team_skills_approve_knockout_match"),
+        "-- INJECT_KNOCKOUT_PENALTIES_MIGRATION":PENALTIES.read_text(encoding="utf-8")
     }
     for marker,actual in replacements.items():
         if sql.count(marker)!=1:
@@ -48,7 +50,7 @@ def main() -> int:
         if result.returncode:
             print("TEAM_SKILLS_ADVANCEMENT_FAIL: "+result.stderr[-2700:],file=sys.stderr)
             return 1
-        print("PASS: actual knockout RPC promotes both semifinals, selects final champion, denies ties, repeat, outsider and cancelled cup")
+        print("PASS: knockout progression and decisive penalties for tied semifinals/final, saved goals, correct winner, single audit; ambiguous/negative/repeat denied")
         return 0
     finally:
         cleaned=psql("postgres",command="DROP DATABASE IF EXISTS "+DATABASE+" WITH (FORCE)")
