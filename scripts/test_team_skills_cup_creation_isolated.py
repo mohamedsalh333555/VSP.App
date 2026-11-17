@@ -13,12 +13,12 @@ MIGRATION=ROOT/"supabase/migrations/20261117024000_team_skills_create_cup_stadiu
 FIXTURE=ROOT/"supabase/tests/team_skills_cup_creation_isolated_contract.sql"
 DB="vsp_team_skills_cup_creation_isolated"
 
-def source_function(source: str, signature: str) -> str:
+def source_function(source: str, signature: str, terminator: str='end $$;') -> str:
     marker="create or replace function "+signature+"("
     if source.count(marker)!=1:
         raise RuntimeError("Canonical function source missing or ambiguous: "+signature)
     start=source.index(marker)
-    return source[start:source.index("end $$;",start)+len("end $$;")]
+    return source[start:source.index(terminator,start)+len(terminator)]
 
 def main() -> int:
     reject_nonlocal_targets(dict(os.environ))
@@ -27,7 +27,7 @@ def main() -> int:
     source=MIGRATION.read_text(encoding="utf-8")
     pieces={
       "-- ACTUAL_TEAM_SKILLS_ADMIN_CHECK":source_function(
-        foundation,"vsp_skills_private.is_admin"),
+        foundation,"vsp_skills_private.is_admin",terminator="$$;"),
       "-- ACTUAL_TEAM_SKILLS_CREATE_CUP":source_function(
         source,"public.team_skills_create_cup")+
         "\nrevoke all on function public.team_skills_create_cup(text,text,uuid,timestamptz,timestamptz,int,numeric,jsonb,text) from public,anon;\ngrant execute on function public.team_skills_create_cup(text,text,uuid,timestamptz,timestamptz,int,numeric,jsonb,text) to authenticated;",
