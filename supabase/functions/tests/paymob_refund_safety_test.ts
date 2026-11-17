@@ -1,6 +1,7 @@
 import { isConfirmedPaymobRefund, isAlreadyRefundedProviderMessage } from "../_shared/paymob_refund_safety.ts";
 import { markTournamentRefundDispatched, REFUND_DISPATCH_HOLD_UNTIL } from "../_shared/paymob_tournament_dispatch.ts";
 import { validatedPaymobRefundRequest } from "../_shared/paymob_refund_request.ts";
+import { confirmedRefundLedgerWrite } from "../_shared/paymob_refund_ledger.ts";
 function assert(condition: unknown, message: string): asserts condition { if (!condition) throw new Error(message); }
 Deno.test("Explicit Paymob refund result required, not ID or text", () => {
   assert(isConfirmedPaymobRefund(true, { success: true }), "positive response rejected");
@@ -112,4 +113,43 @@ Deno.test("All refund worker queues strictly validate the gateway id and cents",
     "unsafe provider transaction digit stripping reintroduced");
   assert((src.match(/transaction_id: refundRequest!\.transactionIdNumber/g)||[]).length === 3,
     "outbound refund is not using validated transaction ID");
+});
+
+Deno.test("PostgREST refund accounting rejects errors, zero rows and duplicate rows", async () => {
+  const mock = (data: unknown, error: unknown = null) => ({
+    select: async (column: string) => {
+      assert(column === "id", "must request updated DB IDs");
+      return { data, error };
+    },
+  });
+  assert(await confirmedRefundLedgerWrite(mock([{ id: "good" }])),
+    "one confirmed ledger row rejected");
+  for (const result of [[], null, [{ id: "a" }, { id: "b" }],
+    [{ id: null }], [{ not_id: "x" }]]) {
+    assert(!await confirmedRefundLedgerWrite(mock(result)),
+      "unconfirmed ledger row set accepted");
+  }
+  assert(!await confirmedRefundLedgerWrite(mock([{ id: "good" }], { message: "RLS denied" })),
+    "database error ignored");
+  assert(!await confirmedRefundLedgerWrite({ select: async () => { throw new Error("offline"); } }),
+    "database exception ignored");
+});
+
+Deno.test("Queue completes only after all confirmed financial ledger writes", async () => {
+  const s = await Deno.readTextFile(new URL("../process_tournament_refund/index.ts", import.meta.url));
+  for (const table of ["cancellation_refund_queue", "vsp_1v1_cancellation_refund_queue",
+    "team_league_cancellation_refund_queue"]) {
+    const start = s.indexOf('if (refundSuccess) {\n          // An accepted Paymob response',s.indexOf('markTournamentRefundDispatched(adminClient, "'+table+'"'));
+    const end = s.indexOf('\n        } else {',start);
+    assert(start > 0 && end > start, "confirmed refund ledger branch missing: "+table);
+    const block = s.slice(start,end);
+    const ledger = block.indexOf("for (const write of accountingSteps)");
+    const final = block.indexOf('status: "completed"',ledger);
+    const guard = block.indexOf("if (!accountingOk)",final);
+    const notify = block.indexOf("await ensureRefundNotification",guard);
+    assert(ledger > 0 && final > ledger && guard > final && notify > guard,
+      "premature completed queue / player success in "+table);
+    assert(block.includes('error: "GATEWAY_REFUNDED_LEDGER_RECONCILIATION_REQUIRED"'),
+      "failed ledger not escalated to manual reconciliation: "+table);
+  }
 });
