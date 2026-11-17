@@ -207,5 +207,7 @@
       "staging_migration_name": "team_skills_award_notification_active_roster_guard_20261117"
     }
   ],
-  "unapplied_source_files": []
+  "unapplied_source_files": [
+    "supabase/migrations/20261117061000_team_skills_approved_phase_score_notification.sql"
+  ]
 }

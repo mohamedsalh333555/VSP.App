@@ -54,6 +54,7 @@ on:
       - 'scripts/test_team_skills_published_details_isolated.py'
       - 'scripts/test_team_skills_cup_creation_isolated.py'
       - 'scripts/test_team_skills_award_notification_recipients_isolated.py'
+      - 'scripts/test_team_skills_approved_score_notice_isolated.py'
       - 'scripts/test_team_skills_score_approval_isolated.py'
       - 'scripts/test_team_skills_score_rejection_isolated.py'
       - 'scripts/test_team_skills_knockout_advancement_isolated.py'
@@ -185,6 +186,8 @@ jobs:
         run: python3 scripts/test_team_skills_registration_notify_isolated.py
       - name: Verify award notifications exclude inactive and unrelated team members
         run: python3 scripts/test_team_skills_award_notification_recipients_isolated.py
+      - name: Verify only fully approved live Team Skills stage results notify the correct captain
+        run: python3 scripts/test_team_skills_approved_score_notice_isolated.py
       - name: Verify blocked judges and organizers cannot submit protected scores
         run: python3 scripts/test_team_skills_blocked_judge_isolated.py
       - name: Verify cash hospitality and waived-fee attendance on isolated PostgreSQL
