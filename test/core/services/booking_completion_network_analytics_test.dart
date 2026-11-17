@@ -111,7 +111,7 @@ void main() {
         'AnalyticsService.logBookingCompleted(',
       ));
       expect(analytics, contains('if (await send()) return true;'));
-      expect(analytics, contains('if (safeParameters.isEmpty)'));
+      expect(analytics, contains('parameters: safeParameters.isEmpty ? null : safeParameters,'));
       expect(analytics, contains('catch (e)'));
       expect(analytics, contains('return false;'));
       // A failed analytics upload is auxiliary, never a booking failure gate.
