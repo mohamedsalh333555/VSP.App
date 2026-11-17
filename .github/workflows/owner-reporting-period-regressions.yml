@@ -1,4 +1,4 @@
-name: VSP Owner Reporting Period Regression
+name: VSP Owner Reporting and Booking Filters
 
 on:
   workflow_dispatch:
@@ -10,6 +10,9 @@ on:
       - "lib/core/utils/owner_financial_calculator.dart"
       - "lib/features/owner/screens/owner_dashboard_screen.dart"
       - "test/features/owner/owner_reporting_period_boundaries_test.dart"
+      - "lib/features/owner/widgets/bookings/owner_booking_schedule_filter.dart"
+      - "lib/features/owner/screens/owner_bookings_screen.dart"
+      - "test/features/owner/owner_booking_schedule_filter_test.dart"
       - "test/core/utils/owner_financial_calculator_test.dart"
   pull_request:
     branches: [main]
@@ -19,6 +22,9 @@ on:
       - "lib/core/utils/owner_financial_calculator.dart"
       - "lib/features/owner/screens/owner_dashboard_screen.dart"
       - "test/features/owner/owner_reporting_period_boundaries_test.dart"
+      - "lib/features/owner/widgets/bookings/owner_booking_schedule_filter.dart"
+      - "lib/features/owner/screens/owner_bookings_screen.dart"
+      - "test/features/owner/owner_booking_schedule_filter_test.dart"
 permissions:
   contents: read
 concurrency:
@@ -43,8 +49,12 @@ jobs:
           lib/core/utils/owner_financial_calculator.dart
           lib/features/owner/screens/owner_dashboard_screen.dart
           test/features/owner/owner_reporting_period_boundaries_test.dart
+          lib/features/owner/widgets/bookings/owner_booking_schedule_filter.dart
+          lib/features/owner/screens/owner_bookings_screen.dart
+          test/features/owner/owner_booking_schedule_filter_test.dart
       - name: Test reporting period and revenue source contracts
         run: >-
           flutter test --concurrency=1
           test/features/owner/owner_reporting_period_boundaries_test.dart
           test/core/utils/owner_financial_calculator_test.dart
+          test/features/owner/owner_booking_schedule_filter_test.dart
