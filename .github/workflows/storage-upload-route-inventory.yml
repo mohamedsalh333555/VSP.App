@@ -1,0 +1,35 @@
+name: VSP Storage upload route inventory
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'scripts/audit_storage_upload_routes.py'
+      - 'test/tooling/test_storage_upload_route_audit.py'
+      - 'lib/**'
+      - 'supabase/functions/**'
+      - 'functions/**'
+      - 'web/**'
+      - '.github/workflows/storage-upload-route-inventory.yml'
+  workflow_dispatch:
+
+jobs:
+  read-only-source-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify scanner redaction and routing classification
+        run: python3 -m unittest discover -s test/tooling -p test_storage_upload_route_audit.py -v
+      - name: Scan checked-out application source (report is not an applicability verdict)
+        run: python3 scripts/audit_storage_upload_routes.py --root . --output storage-upload-inventory.json
+      - name: Preserve bounded source-level evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsp-storage-upload-inventory
+          path: storage-upload-inventory.json
+          if-no-files-found: error
+          retention-days: 14
