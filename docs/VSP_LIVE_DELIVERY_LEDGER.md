@@ -1,3 +1,11 @@
+## 2026-11-17 — Booking trust and offline analytics interruptions accepted narrowly (+3; 283/350)
+
+- **51.07** — simulated loss/recovery of analytics transport; a confirmed booking's `booking_completed` is eligible only after authoritative confirmation, with retry after offline failure and one accepted event per in-process session. No actual Firebase, Android airplane mode or cross-device test.
+- **53.04** — Arabic/English state headings distinguish confirmed, pending, cancelled and expired booking. Pending/cancelled receipt labels now use warning color instead of the confirmation accent. No provider-paid webhook or device screenshot claim.
+- **53.05** — a Dart/ARB/web-source regression test prohibits hard-coded numbered scarcity/last-chance claims while server-based slot checks control real availability. Does not inspect external marketing or runtime-provided copy.
+- [Exact-code focused Flutter analyze + Dart and offline dashboard tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44183845285) on [295b109](https://github.com/mohamedsalh333555/VSP.App/commit/295b1095626e11fc5cbaa49e5be29c214c8e58b8). [Precise acceptance limits](VSP_BOOKING_TRUST_ANALYTICS_ACCEPTANCE_51_07_53_04_53_05_2026-11-17.md).
+- **633 unique / 283 accepted / 350 open (44.71%)**. +3 previously open IDs, no unique scope change. 50.04/50.05, 54.06, 55.06 and retention cleanup 49.02–49.07 still await their own live-data/rollout criteria. No production writes, Paymob actions, APK or main merge.
+
 ## 2026-11-17 — 54.07 local opt-out tests narrowly accepted (+1; 280/353)
 
 - Existing **54.07** accepted only for local/foreground opt-out: reminder scheduling rechecks saved account consent after native scheduling and async quota persistence and cancels upon revocation; booking-confirmation inbox writes do not follow a switched current account.
