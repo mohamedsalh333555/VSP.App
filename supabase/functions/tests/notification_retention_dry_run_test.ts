@@ -85,6 +85,36 @@ Deno.test("duplicate and malformed identifiers cannot bypass reference holds", (
   }
 });
 
+Deno.test("mixed-case UUID cannot bypass audit holds or duplicate a row", () => {
+  const snapshot = input();
+  const upper = {
+    ...snapshot,
+    rows: [{ id: id(4).toUpperCase(), notification: old }],
+  };
+  const result = prepareInboxRetentionDryRun(upper);
+  assert(result.status === "review_only");
+  assert(result.protectedByDependencies === 1);
+  assert(result.candidateForHumanReview === 0);
+  const duplicates = prepareInboxRetentionDryRun({
+    ...snapshot, rows: [
+      { id: id(4).toUpperCase(), notification: old },
+      { id: id(4), notification: old },
+    ],
+  });
+  assert(duplicates.status === "blocked");
+});
+
+Deno.test("invalid hold set identifiers block the entire rehearsal", () => {
+  const snapshot = input();
+  const result = prepareInboxRetentionDryRun({
+    ...snapshot,
+    auditReferenceIds: new Set([id(6), "malformed-reference"]),
+  });
+  assert(result.status === "blocked");
+  assert(result.missingGates.includes("valid_dependency_references"));
+  assert(result.candidateForHumanReview === 0);
+});
+
 Deno.test("failed date or missing approval blocks even empty candidate snapshots", () => {
   const snapshot = input();
   const invalidClock = prepareInboxRetentionDryRun({
