@@ -20,5 +20,5 @@
 ## Acceptance policy and open work
 
 - Do **not** mark 80.05 accepted until the GitHub Actions live workflow successfully authenticates and validates actual hosted report(s) with approved warning disposition. A passing mocked test cannot prove that.
-- Narrow 80.04 audit-check support may be accepted after the source unit test CI passes, combined with the explicit read-only live MCP finding snapshots above; that does not accept 80.05 or 80.06.
-- Current baseline **633 unique / 268 accepted / 365 open** pending CI; any later ledger promotion requires exact CI run evidence. No duplicate task IDs were added.
+- **80.04 ACCEPTED narrowly** after the source-unit CI [SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44126115477) on commit `5c6aabc` and the direct hosted MCP read-only snapshots above. Release-gate CI [SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44126114428). The GitHub **live-advisor job is SKIPPED**, so 80.05 and 80.06 stay open.
+- Current baseline **633 unique / 269 accepted / 364 open** after exact source CI; +1 existing ID, +0 new task IDs. Not a signed release or live CI Advisor check.

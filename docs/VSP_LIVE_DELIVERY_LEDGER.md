@@ -1,3 +1,9 @@
+## 2026-11-17 — Live Supabase Security Advisor read-only checker ACCEPTED 80.04 (+1; 269/364)
+
+- **80.04 accepted narrowly:** actual read-only Supabase Security Advisor snapshots obtained for hosted staging (229 WARN, 0 ERROR) and production (198 WARN, 0 ERROR); a fail-closed, read-only Management API checker and manual-on-demand GitHub workflow were implemented in [5c6aabc](https://github.com/mohamedsalh333555/VSP.App/commit/5c6aabc30ee24de7bab13418a7bb17f95ad01388). [Offline workflow SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44126115477) and [release gate SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44126114428) on exact commit.
+- **No overclaim:** the manual **live GitHub Advisor job was SKIPPED** (no token-backed run); 80.05 CI authenticated enforcement, 80.06 remediation, 77.04/06/07 and 85.01–03 remain OPEN. A management API GET check and its mocked CI tests do not prove 197/224 high-privilege RPCs are exploitable. [Source, observed counts and explicit limits](security/VSP_SUPABASE_ADVISOR_LIVE_GATE_2026-11-17.md).
+- **Current inventory:** **633 unique / 269 accepted / 364 open (42.50%)**. +1 accepted existing ID / +0 new unique IDs. No DB write, Staging/production migration, Paymob action, APK or main merge.
+
 ## 2026-11-17 — Captain transfer two-session invariant ACCEPTED 32.09 (+1; 268/365)
 
 - **Task 32.09 accepted narrowly:** [same-source staging+production captain transfer snapshot](security/VSP_TEAM_CAPTAIN_TRANSFER_32_09_ACCEPTANCE_2026-11-17.md) with matching SHA and [disposable PostgreSQL 17 CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44122001956). Tests noncaptain, blocked/nonmember/different region, active game/league, successful handoff and two competing old-captain transfers with **one successful successor**. No hosted JWT or production write, no `main` merge.
