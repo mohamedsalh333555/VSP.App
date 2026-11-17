@@ -57,7 +57,7 @@ void main() {
       'created_at': '2026-01-01T00:00:00.000Z',
       'app_metadata': <String, dynamic>{},
       'user_metadata': <String, dynamic>{},
-    });
+    })!;
     await AuthSignOutHandler.performSignOut(
       user: user,
       userModelUid: user.id,
