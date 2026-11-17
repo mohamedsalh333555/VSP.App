@@ -137,23 +137,27 @@ void main() {
       final arabicWallet = booking('wallet', 'فودافون كاش', 150);
       final venueCash = booking('cash', 'كاش', 200);
       final card = booking('card', 'Visa', 100);
+      final meeza = booking('meeza', 'Meeza', 50);
+      final arabicCard = booking('arabic_card', 'بطاقة', 75);
       expect(arabicWallet.effectivePaymentSource, 'vodafone_cash');
       expect(arabicWallet.isDigital, isTrue);
       expect(arabicWallet.pitchCashCollected, 0);
       expect(arabicWallet.digitalAmountPaid, 150);
       expect(venueCash.pitchCashCollected, 200);
       expect(card.digitalAmountPaid, 100);
+      expect(meeza.effectivePaymentSource, 'paymob');
+      expect(arabicCard.effectivePaymentSource, 'paymob');
 
       final metrics = OwnerFinancialCalculator.calculate(
-        allBookings: [arabicWallet, venueCash, card],
+        allBookings: [arabicWallet, venueCash, card, meeza, arabicCard],
         ownerChampionships: [],
         timePeriod: 'today',
         stadiumFilter: 'all',
       );
       expect(metrics.cashCollected, 200);
-      expect(metrics.digitalBalance, 250);
-      expect(metrics.totalPipeline, 450);
-      expect(metrics.activeBookingsCount, 3);
+      expect(metrics.digitalBalance, 375);
+      expect(metrics.totalPipeline, 575);
+      expect(metrics.activeBookingsCount, 5);
     });
 
     test('unpaid Arabic mobile wallet is not approved as cash on arrival', () {

@@ -439,7 +439,9 @@ class Booking {
         m.contains('card') ||
         m.contains('visa') ||
         m.contains('mastercard') ||
-        m.contains('wallet') ||
+        m.contains('meeza') || m.contains('ميزا') ||
+        m.contains('فيزا') || m.contains('بطاقة') ||
+        m.contains('wallet') || m.contains('محفظة') ||
         m.contains('online') ||
         tx.startsWith('PAYMOB')) {
       return 'paymob';
