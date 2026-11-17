@@ -1,3 +1,11 @@
+## 2026-11-18 — Restricted direct/notification routes and verified deep-link origins (+3; 303/330)
+
+- **07.04:** global GoRouter now denies owner-only screens to verified players and player-only deep links to owners, without allowing query strings or menu bypasses to skip role checks. Auth/hydrated/suspended checks occur first; Supabase RLS remains authoritative.
+- **07.07:** registered previously missing owner billing and subscription URLs referenced by FCM; guarded in-app notification `Navigator.push` by active account and owner role. Real delivered FCM and multi-account server checks are not accepted.
+- **07.03:** hardened trusted OAuth callback origins and deep-link web/custom schemes; bounded route IDs, rejected duplicate IDs, URL userinfo, insecure websites, additional segments and fragments. The app no longer derives registration role from untrusted callback query or stores unknown pending URLs. OAuth initiator already stored local role prior to SDK redirect.
+- [Navigation, notification and deep-link Flutter CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44202088013) on SHA [1a935a1](https://github.com/mohamedsalh333555/VSP.App/commit/1a935a1c03e5a62f2bc9a099e4c4c6a12e8a215a). [Evidence and exclusions](VSP_ROLE_DEEPLINK_NOTIFICATION_SECURITY_ACCEPTANCE_07_03_07_04_07_07_2026-11-18.md).
+- **633 unique / 303 accepted / 330 open (47.87%)**; +3 previously open IDs, zero new. No live OAuth redirect/FCM proof, cross-owner RLS claim, production changes, payment or main merge.
+
 ## 2026-11-18 — Verified semantic contrast correction and Arabic/English audit (+2; 300/333)
 
 - **05.01:** measured 12 WCAG-style VSP semantic color pairs and corrected `VSPDSSemanticColors.textMuted` on charcoal surfaces. Previous color was 3.66:1 on `surface`; the source change to existing neutral `zinc400` yields **6.91:1 on `surface` and 5.81:1 on `surfaceRaised`**, with 12/12 sampled pairs passing chosen thresholds. Full real-widget/device audit remains open.
