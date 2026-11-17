@@ -17,7 +17,7 @@ void main() {
       expect(OwnerFinancialCalculator.inferSourceFromMethod('unrecognized'), 'pending');
     });
     test('supported cash vs digital settlement method strings remain distinct', () {
-      for (final value in ['Cash', 'كاش', 'نقدي', 'cash_on_arrival']) {
+      for (final value in ['Cash', 'كاش', 'نقدي', 'cash_on_arrival', 'كاش عند الملعب', 'دفع نقدي']) {
         expect(OwnerFinancialCalculator.inferSourceFromMethod(value), 'cash',
             reason: 'Venue-collected cash: $value');
       }

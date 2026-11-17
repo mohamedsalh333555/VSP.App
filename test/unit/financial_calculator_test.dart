@@ -135,7 +135,7 @@ void main() {
       );
 
       final arabicWallet = booking('wallet', 'فودافون كاش', 150);
-      final venueCash = booking('cash', 'كاش', 200);
+      final venueCash = booking('cash', 'كاش عند الملعب', 200);
       final card = booking('card', 'Visa', 100);
       final meeza = booking('meeza', 'Meeza', 50);
       final arabicCard = booking('arabic_card', 'بطاقة', 75);

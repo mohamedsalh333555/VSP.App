@@ -433,6 +433,7 @@ class Booking {
         instapay != null) return 'instapay';
     if (m == 'cash' || m == 'كاش' || m == 'نقدي' ||
         m == 'cash_on_arrival' || m == 'cash on arrival' ||
+        m == 'كاش عند الملعب' || m == 'دفع نقدي' ||
         tx.startsWith('MANUAL')) return 'cash';
     if (m.contains('bank_transfer') || m.contains('bank') || m.contains('تحويل')) return 'bank_transfer';
     if (m.contains('paymob') ||
@@ -559,7 +560,8 @@ class BookingPaymentMatrix {
     final isCash = source == 'cash' ||
         (!isMobileWallet &&
          (method == 'cash' || method == 'كاش' || method == 'نقدي' ||
-          method == 'cash_on_arrival' || method == 'cash on arrival'));
+          method == 'cash_on_arrival' || method == 'cash on arrival' ||
+          method == 'كاش عند الملعب' || method == 'دفع نقدي'));
     final isOnline = method == 'paymob' ||
         method == 'card' ||
         method == 'wallet' ||

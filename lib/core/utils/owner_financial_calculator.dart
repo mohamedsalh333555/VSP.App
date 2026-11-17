@@ -113,6 +113,7 @@ class OwnerFinancialCalculator {
         m.contains('meeza') || m.contains('بطاقة')) return 'paymob';
     if (m == 'cash' || m == 'كاش' || m == 'نقدي' ||
         m == 'cash on arrival' || m == 'cash_on_arrival' ||
+        m == 'كاش عند الملعب' || m == 'دفع نقدي' ||
         m == 'cash at stadium') return 'cash';
     return 'pending';
   }
