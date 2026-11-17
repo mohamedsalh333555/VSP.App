@@ -3,6 +3,7 @@ import {
   verifyPaymobHmacSignature,
 } from "../_shared/paymob_hmac.ts";
 import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
+import { isPersistedPaymobOrder } from "../_shared/paymob_order_binding.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -150,4 +151,35 @@ Deno.test("HMAC boundary, currency gate, pending cancellation and refund replay 
   assert(src.includes('if (obj.is_refunded === true && paymentOutcome === "reversed") {'), "refund recording must be an explicit reversed outcome");
   assert(src.includes('if (refundResult?.already_recorded === true) {'), "duplicate refund would send repeated notifications");
   assert(src.includes('paymentOutcome === "pending" ? "pending"'), "pending callback needs nonfinal response status");
+});
+
+Deno.test("Checkout must not return a Paymob client secret for zero-row or mismatched order binding", () => {
+  assert(isPersistedPaymobOrder({ data: { id: "uuid", paymob_order_id: "12345" }, error: null }, "12345"),
+    "matching persisted order should be accepted");
+  for (const failed of [
+    null,
+    { data: null, error: null },
+    { data: { id: null, paymob_order_id: "12345" }, error: null },
+    { data: { id: "uuid", paymob_order_id: "12346" }, error: null },
+    { data: { id: "uuid", paymob_order_id: "12345" }, error: { code: "DB_FAILURE" } },
+    { data: [{ id: "uuid", paymob_order_id: "12345" }], error: null },
+  ]) {
+    assert(!isPersistedPaymobOrder(failed, "12345"), "failed or unmatched write claimed binding success");
+  }
+  assert(!isPersistedPaymobOrder({ data: { id: "uuid", paymob_order_id: "12345" }, error: null }, ""),
+    "empty Paymob order ID must be denied");
+});
+
+Deno.test("Every payment intention type requires a matching persisted row before checkout URL", async () => {
+  const src = await Deno.readTextFile(new URL("../create_paymob_intention/index.ts", import.meta.url));
+  const start = src.indexOf("const persistPaymobOrder = async () =>");
+  const end = src.indexOf("await persistPaymobOrder();", start);
+  assert(start >= 0 && end > start, "payment intention binding gate missing");
+  const block = src.slice(start, end);
+  assert((block.match(/\.select\("id, paymob_order_id"\)\.maybeSingle\(\)/g) || []).length === 5,
+    "one of five payment order types fails to verify its updated database row");
+  assert((block.match(/requireBinding\(binding\);/g) || []).length === 5,
+    "one of five payment order types can bypass confirmed binding");
+  assert(block.includes('if (!bindingCompleted) throw new Error("Unsupported payment order correlation")'),
+    "unrecognized payment order type can return an unbound checkout URL");
 });
