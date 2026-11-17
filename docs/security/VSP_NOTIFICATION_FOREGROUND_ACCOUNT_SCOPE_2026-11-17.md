@@ -24,3 +24,10 @@ Candidate scope: `49.04` user preferences and `79.08` cross-account notification
 - Local match reminders and booking confirmation now consult their account-scoped notification toggles. Existing schedule timing behavior is **not** changed in this batch.
 - Notification click handling now refuses missing/wrong recipient ID, validates route ID segments and suppresses raw booking/team identifiers from diagnostic logs; Realtime-generated local payloads carry the recipient ID.
 - Source assertions cover all four entry points, plus user-scoped Flutter unit/widget tests. No hosted JWT or cross-account real-device proof; 79.08 remains open.
+
+## Token-owner reconciliation (read-only hosted evidence)
+
+- Aggregated read-only database query of both production and Staging: **0 users** currently have a nonempty `users.fcm_token`; no owner mismatch or unmatched legacy values were found. No individual token, user row or PII was read or exported.
+- Removed fallback push delivery from `users.fcm_token`: that column can remain stale after a shared-device account switch. FCM now selects only `user_device_tokens` entries for `user_id` and checks the owner a second time before sending. Token cleanup was already constrained to the same `user_id`.
+- Defensive failure: device-token lookup errors return 503 rather than incorrectly classifying the user as having no devices. No database columns, policies or schema were changed.
+- Added isolated Deno tests for two accounts with a shared device, invalid rows, deduplication, and missing recipient. Source-only; production FCM sender deployment is separate and remains on HOLD until Staging real-account tests.

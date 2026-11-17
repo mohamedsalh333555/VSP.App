@@ -10,6 +10,9 @@ on:
       - 'supabase/functions/fcm_queue_worker/index.ts'
       - 'supabase/functions/_shared/fcm_queue_delivery.ts'
       - 'supabase/functions/_shared/fcm_queue_auth.ts'
+      - 'supabase/functions/_shared/fcm_recipient_tokens.ts'
+      - 'supabase/functions/fcm_push/index.ts'
+      - 'supabase/functions/tests/fcm_recipient_tokens_test.ts'
       - 'supabase/functions/tests/fcm_queue_delivery_test.ts'
       - '.github/workflows/fcm-delivery-contracts.yml'
   pull_request:
@@ -18,6 +21,9 @@ on:
       - 'supabase/functions/fcm_queue_worker/index.ts'
       - 'supabase/functions/_shared/fcm_queue_delivery.ts'
       - 'supabase/functions/_shared/fcm_queue_auth.ts'
+      - 'supabase/functions/_shared/fcm_recipient_tokens.ts'
+      - 'supabase/functions/fcm_push/index.ts'
+      - 'supabase/functions/tests/fcm_recipient_tokens_test.ts'
       - 'supabase/functions/tests/fcm_queue_delivery_test.ts'
       - '.github/workflows/fcm-delivery-contracts.yml'
   workflow_dispatch:
@@ -32,4 +38,4 @@ jobs:
         with:
           deno-version: "2.2.12"
       - name: Test retry, outage recovery, no-token and archive semantics (no network)
-        run: deno test --no-config supabase/functions/tests/fcm_queue_delivery_test.ts
+        run: deno test --no-config supabase/functions/tests/fcm_queue_delivery_test.ts supabase/functions/tests/fcm_recipient_tokens_test.ts

@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { SignJWT, importPKCS8 } from "https://deno.land/x/jose@v4.14.4/index.ts";
+import { selectOwnedFcmTokens } from "../_shared/fcm_recipient_tokens.ts";
 declare const Deno: any;
 
 serve(async (req: Request) => {
@@ -43,15 +44,19 @@ serve(async (req: Request) => {
     const body = record.body || record.message || "";
     const type = record.type || "info";
 
-    const [{ data: deviceRows }, { data: userData }] = await Promise.all([
-      supabase.from("user_device_tokens").select("token").eq("user_id", userId),
-      supabase.from("users").select("fcm_token").eq("id", userId).maybeSingle(),
-    ]);
-
-    const fcmTokens = Array.from(new Set([
-      ...(deviceRows || []).map((row: any) => String(row.token || "").trim()),
-      String(userData?.fcm_token || "").trim(),
-    ].filter(Boolean)));
+    // Only a token explicitly owned by the intended recipient can be used.
+    // Legacy users.fcm_token may be stale after a shared device changes
+    // accounts; never combine it with the owner-scoped device-token table.
+    const { data: deviceRows, error: tokenReadError } = await supabase
+      .from("user_device_tokens")
+      .select("token,user_id")
+      .eq("user_id", userId);
+    if (tokenReadError) {
+      return new Response(JSON.stringify({ error: "Device token lookup unavailable" }), {
+        status: 503,
+      });
+    }
+    const fcmTokens = selectOwnedFcmTokens(deviceRows, String(userId));
 
     if (fcmTokens.length === 0) {
       return new Response(JSON.stringify({ status: "skipped", reason: "no_fcm_token" }), { status: 200 });
