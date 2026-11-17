@@ -1,3 +1,10 @@
+## 2026-11-18 — Loading and navigation source inventories (+2; 298/335)
+
+- **03.01:** read-only scan of all 556 non-generated Flutter files: 132 progress/loading signatures (95 files), 12 builder entry points, 43 error states, 31 empty states and 66 retry/forced-refresh references. Inventory-only, not offline success or every screen's correctness.
+- **07.01:** enumerated 27 declared GoRouter literal paths, grouped by auth/owner/player/system, plus 108 push/navigation call sites, 292 return/back references and 192 redirect/auth guard references. Counts are syntactic occurrences, not verified authorization or completed journeys.
+- [Navigation and Loading Source Inventory CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44197447172) at [SHA a1f024df](https://github.com/mohamedsalh333555/VSP.App/commit/a1f024df504b13f0c7e55ed14d73f8df9cc4cc3b); the GitHub Actions run has Markdown and JSON report artifacts. [Evidence and exclusions](VSP_NAVIGATION_LOADING_SOURCE_INVENTORY_03_01_07_01_2026-11-18.md).
+- **633 total / 298 accepted / 335 open (47.08%)**, +2 existing IDs, 0 new. Role-based routing, live loading, back/deep-link device tests and RLS stay open. No production writes or main merge.
+
 ## 2026-11-18 — Source inventories of design tokens and motion (+2; 296/337)
 
 - **02.01:** generated a read-only, reproducible inventory over **556 non-generated Dart files**: 5,557 color-token uses, 60 `Colors.*` references, 60 literal colors, 957 spacing-token uses, 890 radius-token uses, 1,283 numeric font sizes, 7 explicit font-family literals, 1,177 EdgeInsets calls and 2,046 SizedBox calls. Counts are candidates for follow-up, not styling defects.
