@@ -30,7 +30,17 @@ def actual_sql() -> str:
     marker="-- ACTUAL_TEAM_SKILLS_APPROVE_SCORE_FUNCTION_HERE"
     if fixture.count(marker)!=1:
         raise RuntimeError("Unique score approval fixture marker missing")
-    return fixture.replace(marker,migration[start:stop])
+    view="create or replace view public.team_skills_leaderboard "
+    view_grant="grant select on public.team_skills_leaderboard to authenticated;"
+    if migration.count(view)!=1 or migration.count(view_grant)!=1:
+        raise RuntimeError("Canonical leaderboard view signature drift")
+    view_start=migration.index(view)
+    view_stop=migration.index(view_grant,view_start)+len(view_grant)
+    view_marker="-- ACTUAL_TEAM_SKILLS_LEADERBOARD_VIEW_HERE"
+    if fixture.count(view_marker)!=1:
+        raise RuntimeError("Unique leaderboard view fixture marker missing")
+    return fixture.replace(view_marker,migration[view_start:view_stop]).replace(
+        marker,migration[start:stop])
 
 
 def main() -> int:
@@ -44,7 +54,7 @@ def main() -> int:
             print("TEAM_SKILLS_SCORE_APPROVAL_FAIL: "+result.stderr[-3000:],
                   file=sys.stderr)
             return 1
-        print("PASS: signed-in role simulation denies outsider, approves exact pending score, audits once, denies duplicate/unknown")
+        print("PASS: pending result excluded from leaderboard; admin approves exact score; standings update once; outsider and duplicate denied; audit once")
         return 0
     finally:
         removed=psql("postgres",command="DROP DATABASE IF EXISTS "+DATABASE+" WITH (FORCE)")
