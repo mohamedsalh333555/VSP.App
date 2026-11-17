@@ -77,16 +77,72 @@ void main() {
       role: 'owner', firstValueEvent: VSPAnalyticsEvents.ownerDashboardViewed,
       cohortDayUtc: DateTime.utc(2026, 11, 1), accounts: 8,
       eligibleD1: 3, activeD1: 1,
-      eligibleD7: 5, activeD7: 5,
+      eligibleD7: 0, activeD7: 0,
       eligibleD30: 0, activeD30: 0,
     );
     final result = segment.toPrivacySafeJson();
     expect(result['eligibleD1'], isNull);
     expect(result['activeD1'], isNull);
-    expect(result['eligibleD7'], 5);
-    expect(result['activeD7'], 5);
-    expect(result['eligibleD30'], 0);
-    expect(result['activeD30'], 0);
+    expect(result['eligibleD7'], isNull);
+    expect(result['activeD7'], isNull);
+    expect(result['eligibleD30'], isNull);
+    expect(result['activeD30'], isNull);
+  });
+
+  test('eligible cohort sizes cannot reveal a four-person unmatured group', () {
+    const firstValue = VSPAnalyticsEvents.bookingCompleted;
+    final report = VSPRetentionCohortSegment(
+      role: 'player',
+      firstValueEvent: firstValue,
+      cohortDayUtc: DateTime.utc(2026, 11, 1),
+      accounts: 10,
+      eligibleD1: 6, activeD1: 6,
+      eligibleD7: 6, activeD7: 0,
+      eligibleD30: 0, activeD30: 0,
+    ).toPrivacySafeJson();
+    expect(report['accounts'], 10);
+    expect(report['eligibleD1'], isNull);
+    expect(report['activeD1'], isNull);
+    expect(report['eligibleD7'], isNull);
+    expect(report['eligibleD30'], isNull);
+  });
+
+  test('intermediate eligible-day gap suppresses later day counts', () {
+    final report = VSPRetentionCohortSegment(
+      role: 'owner',
+      firstValueEvent: VSPAnalyticsEvents.ownerDashboardViewed,
+      cohortDayUtc: DateTime.utc(2026, 11, 1),
+      accounts: 20,
+      eligibleD1: 20, activeD1: 15,
+      eligibleD7: 16, activeD7: 10,
+      eligibleD30: 0, activeD30: 0,
+    ).toPrivacySafeJson();
+    expect(report['eligibleD1'], 20);
+    expect(report['activeD1'], 15);
+    expect(report['eligibleD7'], isNull);
+    expect(report['activeD7'], isNull);
+    expect(report['eligibleD30'], isNull);
+  });
+
+  test('untrusted small or inconsistent segments cannot be serialized', () {
+    VSPRetentionCohortSegment segment({
+      int accounts = 10, int eligibleD1 = 10, int eligibleD7 = 10,
+      String role = 'player',
+      String event = VSPAnalyticsEvents.bookingCompleted,
+    }) => VSPRetentionCohortSegment(
+      role: role, firstValueEvent: event,
+      cohortDayUtc: DateTime.utc(2026, 11, 1),
+      accounts: accounts, eligibleD1: eligibleD1, activeD1: 0,
+      eligibleD7: eligibleD7, activeD7: 0,
+      eligibleD30: 0, activeD30: 0,
+    );
+    expect(() => segment(accounts: 4, eligibleD1: 4, eligibleD7: 4)
+        .toPrivacySafeJson(), throwsStateError);
+    expect(() => segment(eligibleD1: 11).toPrivacySafeJson(), throwsStateError);
+    expect(() => segment(eligibleD7: 11).toPrivacySafeJson(), throwsStateError);
+    expect(() => segment(role: 'invalid').toPrivacySafeJson(), throwsStateError);
+    expect(() => segment(event: 'personal_identifier')
+        .toPrivacySafeJson(), throwsStateError);
   });
 
   test('roles, first value, unconsented and anonymous records never mix', () {
