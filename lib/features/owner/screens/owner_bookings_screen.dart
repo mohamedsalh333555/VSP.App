@@ -14,6 +14,7 @@ import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_error_state.dart';
 import '../widgets/bookings/owner_bookings_filter_bar.dart';
+import '../widgets/bookings/owner_booking_schedule_filter.dart';
 import '../widgets/bookings/owner_schedule_slots_builder.dart';
 import '../widgets/bookings/owner_time_slot_row.dart';
 import '../widgets/owner_booking_sheet.dart';
@@ -214,16 +215,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           final selectedDateOnly = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
           final int startH = AppDateFormatter.parseTimeToHour(selectedStadium.openingTime);
 
-          final dayBookings = bookingProvider.userBookings.where((b) {
-            if (b.stadiumId.toLowerCase().trim() != selectedStadium.id.toLowerCase().trim() ||
-                b.status == BookingStatus.cancelled) {
-              return false;
-            }
-            final bShiftDate = b.operationalDate ?? OwnerScheduleSlotsBuilder.getShiftDate(b.startTime, startH);
-            return bShiftDate.year == selectedDateOnly.year &&
-                bShiftDate.month == selectedDateOnly.month &&
-                bShiftDate.day == selectedDateOnly.day;
-          }).toList();
+          final dayBookings = OwnerBookingScheduleFilter.select(
+            bookings: bookingProvider.userBookings,
+            stadiumId: selectedStadium.id,
+            operationalDay: selectedDateOnly,
+            openingHour: startH,
+          );
 
           final rawSlots = OwnerScheduleSlotsBuilder.generateRawSlots(
             selectedStadium: selectedStadium,
