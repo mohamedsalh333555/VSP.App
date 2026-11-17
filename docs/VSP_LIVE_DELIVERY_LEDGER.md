@@ -1,3 +1,11 @@
+## 2026-11-18 — Owner booking filters, subscription display and date reports (+3; 292/341)
+
+- **23.05:** owner schedule now uses a pure, testable filter by stadium and operational shift day, excludes cancelled rows, and fails closed for empty venue/invalid opening hours. Synthetic day/overnight/cross-venue/cancelled tests pass; cross-owner RLS/staging are not proven.
+- **24.04:** owner dashboard badge distinguishes paid Pro, active Pro trial, Free, expired trial and paid term, and unknown/non-owner state in Arabic/English. Removed misleading fixed 1000 EGP upsell; the existing pricing screen retrieves live public plan rows. Does not grant privileges.
+- **24.06:** owner financial local summaries use the exact selected `DashboardFilter` boundaries (including custom), year/week/month aliases; all-venues selection explicitly clears old court ID; civil calendar dates avoid DST drift; metric cache keys cover booking time/venue/payment changes. Server analytics source parity remains unproven.
+- [Owner Reporting and Booking Filters CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44194293882) and [Owner Plans and Funnel Contracts CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44194294060) on [4f4a271](https://github.com/mohamedsalh333555/VSP.App/commit/4f4a271591c81f1dea7eff33dd1a22c2b70b222a). [Full evidence and acceptance limits](VSP_OWNER_SCHEDULE_REPORTS_SUBSCRIPTION_ACCEPTANCE_23_05_24_04_24_06_2026-11-18.md).
+- **633 unique / 292 accepted / 341 open (46.13%)**, +3 pre-existing task IDs, 0 new. No database, payments, production, APK publication or main merge.
+
 ## 2026-11-18 — Retention small-group complementary privacy hardening (+0 accepted)
 
 - **Fixed source disclosure:** a published cohort of 10 with 6 eligible users leaked four through subtraction. Eligibility day counts now use complementary suppression against total and preceding visible D1/D7 counts; all later stages remain masked after suppression.
