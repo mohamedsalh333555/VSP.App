@@ -56,6 +56,14 @@ Adding a stadium still needs a separate event at the server-confirmed wizard suc
 
 Retention requires consented longitudinal data and stable identity semantics. No D7/D30 result or conversion uplift is claimed.
 
+## Offline activation funnel and dashboard (2026-11-17 source batch)
+
+- `VSPActivationFunnels` computes distinct-account **chronological** player booking, player match, owner activation and owner subscription funnels using previously defined event names. It requires authenticated, consented, stable identities and a supplied UTC observation cutoff. Conversion and drop-off are suppressed for small groups; no raw identifiers appear in JSON export.
+- Local visualization: `scripts/vsp_activation_dashboard.html` accepts aggregate JSON exported by `VSPFunnelReport.toJson()` without remote network calls. It is not publicly served and contains no fabricated sample metrics.
+- Legacy `stadium_booked` and `challenge_sent` wrappers preserve the event names but now omit stadium, team and price dimensions. `privacySafeParameters` explicitly allowlists categorical or bounded-rank fields, rejecting unknown identifiers and free text.
+- No live Firebase export, cohort identification, analytics console validation, D1/D7/D30 observation or before/after measurement was performed. Tasks 50.04/50.05 remain pending verification and authorization for a real source; 54.06/55.06 remain open.
+- See [implementation evidence and acceptance limitations](VSP_ANALYTICS_FUNNEL_LOCAL_DASHBOARD_2026-11-17.md).
+
 ## Automated validation
 
 - `test/core/services/analytics_service_test.dart`: privacy filtering, exact event dictionary, uniqueness and name format.
