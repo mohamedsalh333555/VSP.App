@@ -35,6 +35,7 @@ void main() {
     expect(schedule, contains('await _localNotifications.cancel(id)'));
     expect(schedule, contains('VSPMatchReminderSchedule.allowsScheduling('));
     expect(schedule, contains('VSPMatchReminderSchedule.withScheduled('));
+    expect(schedule, contains('await cancelObsoleteReminder();'));
     expect(service, contains('VSPMatchReminderSchedule.notificationIdFromRecord(raw)'));
     final out = File('lib/core/providers/auth/auth_sign_out_handler.dart').readAsStringSync();
     expect(out.indexOf('cancelScheduledMatchRemindersForUser(user.id)'),
@@ -75,5 +76,20 @@ void main() {
     expect(VSPMatchReminderSchedule.notificationIdFromRecord('190'), 190);
     expect(VSPMatchReminderSchedule.notificationIdFromRecord('2026-11-18|200'), 200);
     expect(VSPMatchReminderSchedule.notificationIdFromRecord('invalid'), isNull);
+  });
+
+  test('an invalid or moved booking may invalidate an older native reminder', () {
+    final before = <String>[
+      VSPMatchReminderSchedule.quotaRecord(99, DateTime.utc(2026, 11, 17)),
+      VSPMatchReminderSchedule.quotaRecord(100, DateTime.utc(2026, 11, 17)),
+      '101',
+    ];
+    final after = VSPMatchReminderSchedule.withoutScheduled(
+      records: before, notificationId: 99,
+    );
+    expect(after.length, 2);
+    expect(after.any((record) => record.endsWith('|99')), isFalse);
+    expect(after.any((record) => record.endsWith('|100')), isTrue);
+    expect(after.contains('101'), isTrue);
   });
 }

@@ -44,6 +44,14 @@ abstract final class VSPMatchReminderSchedule {
     return todays.length < maxRemindersPerUtcDay;
   }
 
+  /// Remove an obsolete booking reminder from the account's local registry.
+  static List<String> withoutScheduled({
+    required Iterable<String> records,
+    required int notificationId,
+  }) => List<String>.unmodifiable(
+    records.where((record) => notificationIdFromRecord(record) != notificationId),
+  );
+
   static List<String> withScheduled({
     required Iterable<String> records,
     required int notificationId,

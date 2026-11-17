@@ -237,13 +237,32 @@ class NotificationService {
     final when = VSPMatchReminderSchedule.reminderUtc(
       matchTime: matchTime, now: DateTime.now(),
     );
-    if (when == null) return;
     final id = VSPMatchReminderSchedule.reminderId(userId, bookingId);
     final key = VSPMatchReminderSchedule.preferenceKey(userId);
+
+    Future<void> cancelObsoleteReminder() async {
+      await _localNotifications.cancel(id);
+      final existing = prefs.getStringList(key) ?? const <String>[];
+      await prefs.setStringList(
+        key, VSPMatchReminderSchedule.withoutScheduled(
+          records: existing, notificationId: id,
+        ),
+      );
+    }
+
+    // A moved/expired match must invalidate the previously scheduled alert,
+    // otherwise the user could receive an obsolete booking reminder.
+    if (when == null) {
+      await cancelObsoleteReminder();
+      return;
+    }
     if (!VSPMatchReminderSchedule.allowsScheduling(
       records: prefs.getStringList(key) ?? const <String>[],
       notificationId: id, reminderUtc: when,
-    )) return;
+    )) {
+      await cancelObsoleteReminder();
+      return;
+    }
     // UTC absolute instant avoids Cairo DST wall-clock ambiguity.
     final scheduledAt = tz.TZDateTime.utc(when.year, when.month, when.day,
         when.hour, when.minute, when.second, when.millisecond, when.microsecond);
