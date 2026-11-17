@@ -48,6 +48,47 @@ void main() {
     expect([matured.eligibleD30, matured.activeD30], [6, 1]);
   });
 
+  test('dashboard cohort export hides small active and inactive counts', () {
+    final events = <VSPRetentionCohortEvent>[];
+    for (var i = 0; i < 10; i++) {
+      events.add(e('private-$i', 'player',
+          VSPAnalyticsEvents.bookingCompleted, '2026-11-01T08:00:00Z'));
+      if (i < 6) {
+        events.add(e('private-$i', 'player',
+            VSPAnalyticsEvents.matchViewed, '2026-11-02T08:00:00Z'));
+      }
+    }
+    final segment = VSPRetentionCohorts.segment(
+      events: events, observedThrough: DateTime.utc(2026, 12, 10),
+    ).single;
+    expect(segment.activeD1, 6);
+    final payload = segment.toPrivacySafeJson();
+    expect(payload['accounts'], 10);
+    expect(payload['eligibleD1'], 10);
+    // 10 - 6 reveals a group of four; do not publish active=6.
+    expect(payload['activeD1'], isNull);
+    expect(payload['activeD7'], 0);
+    expect(payload['eligibleD7'], 10);
+    expect(payload.toString(), isNot(contains('private-')));
+  });
+
+  test('cohort export masks small eligible day counts', () {
+    final segment = VSPRetentionCohortSegment(
+      role: 'owner', firstValueEvent: VSPAnalyticsEvents.ownerDashboardViewed,
+      cohortDayUtc: DateTime.utc(2026, 11, 1), accounts: 8,
+      eligibleD1: 3, activeD1: 1,
+      eligibleD7: 5, activeD7: 5,
+      eligibleD30: 0, activeD30: 0,
+    );
+    final result = segment.toPrivacySafeJson();
+    expect(result['eligibleD1'], isNull);
+    expect(result['activeD1'], isNull);
+    expect(result['eligibleD7'], 5);
+    expect(result['activeD7'], 5);
+    expect(result['eligibleD30'], 0);
+    expect(result['activeD30'], 0);
+  });
+
   test('roles, first value, unconsented and anonymous records never mix', () {
     final signals = <VSPRetentionCohortEvent>[];
     for (var i = 0; i < 5; i++) {
