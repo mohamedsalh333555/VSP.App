@@ -5,6 +5,7 @@ import {
 import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
 import { isPersistedPaymobOrder, matchesBoundPaymobOrder } from "../_shared/paymob_order_binding.ts";
 import { isAuthorizedPaymobIntegration } from "../_shared/paymob_integration_guard.ts";
+import { sanitizePaymobAuditPayload } from "../_shared/paymob_audit_payload.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -278,4 +279,30 @@ Deno.test("Over-capacity refund requires ledger confirmation before reporting su
     const slice = src.slice(call, result);
     assert(slice.includes('status: 200'), "unsafe retry of an already attempted external refund");
   }
+});
+
+Deno.test("Signed Paymob audit stores reconciliation fields without card or billing PII", () => {
+  const callback = {
+    id: 91, amount_cents: 2250, currency: "EGP", integration_id: 12, success: true,
+    order: { id: 77, merchant_order_id: "test-reference", email: "secret@example.com" },
+    source_data: { type: "card", sub_type: "Visa", pan: "4111111111111111", token: "s3cr3t" },
+    billing_data: { email: "secret@example.com", phone_number: "01010101010" },
+    client_secret: "do-not-log", api_key: "do-not-log",
+  };
+  const safe = sanitizePaymobAuditPayload(callback);
+  assert(safe.id === 91 && safe.amount_cents === 2250, "reconciliation fields removed");
+  assert((safe.order as {id:number}).id === 77, "order reference removed");
+  assert((safe.source_data as {type:string}).type === "card", "payment method removed");
+  const serialized = JSON.stringify(safe);
+  for (const secret of ["4111111111111111", "secret@example.com", "01010101010", "client_secret", "api_key", "merchant_order_id", "s3cr3t"]) {
+    assert(!serialized.includes(secret), "sensitive provider field leaked");
+  }
+  assert(callback.source_data.pan === "4111111111111111", "mutated signed callback");
+});
+
+Deno.test("Webhook redacts all signed callback logs", async () => {
+  const s = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  assert((s.match(/payload: sanitizePaymobAuditPayload\(obj\)/g) || []).length === 2, "unfiltered verified payload remains");
+  assert(s.includes("originalTxn: sanitizePaymobAuditPayload(obj)"), "unfiltered original transaction remains");
+  assert(!s.includes("error_message: JSON.stringify(paymentError || paymentResult)"), "raw RPC error persisted");
 });

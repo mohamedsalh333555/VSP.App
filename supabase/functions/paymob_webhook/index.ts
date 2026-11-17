@@ -6,6 +6,7 @@ import { computePaymobHMAC, verifyPaymobHmacSignature } from "../_shared/paymob_
 import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
 import { isAuthorizedPaymobIntegration } from "../_shared/paymob_integration_guard.ts";
 import { matchesBoundPaymobOrder } from "../_shared/paymob_order_binding.ts";
+import { sanitizePaymobAuditPayload } from "../_shared/paymob_audit_payload.ts";
 
 declare const Deno: any;
 
@@ -217,7 +218,7 @@ serve(async (req: Request) => {
         txn_id: transactionId,
         order_id: String(obj.order?.id ?? obj.order ?? ""),
         booking_id: bookingId,
-        payload: obj,
+        payload: sanitizePaymobAuditPayload(obj),
         signature_verified: true,
         status: isSuccess ? "success" : paymentOutcome,
       });
@@ -807,7 +808,7 @@ serve(async (req: Request) => {
           event_type: "auto_refund_expired_booking",
           txn_id: transactionId,
           booking_id: bookingId,
-          payload: { refundSuccess, refundId, refundErrorMsg, originalTxn: obj },
+          payload: { refundSuccess, refundId, refundErrorMsg, originalTxn: sanitizePaymobAuditPayload(obj) },
           signature_verified: true,
           status: refundSuccess ? "refunded" : "refund_pending",
           error_message: refundErrorMsg,
@@ -929,17 +930,17 @@ serve(async (req: Request) => {
       );
 
       if (paymentError || paymentResult?.success !== true) {
-        console.error("Payment ledger RPC rejected verified webhook:", paymentError || paymentResult);
+        console.error("Payment ledger RPC rejected verified webhook");
         await supabase.from("webhook_logs").insert({
           provider: "paymob",
           event_type: "payment_accounting_rejected",
           txn_id: transactionId,
           order_id: orderId,
           booking_id: bookingId,
-          payload: obj,
+          payload: sanitizePaymobAuditPayload(obj),
           signature_verified: true,
           status: "rejected",
-          error_message: JSON.stringify(paymentError || paymentResult),
+          error_message: "Verified payment accounting rejected",
         });
         return new Response(JSON.stringify({ error: "Payment accounting rejected" }), {
           status: 400,
