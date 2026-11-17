@@ -1,3 +1,9 @@
+## 2026-11-18 — Deferred links bound to active account and cleared on logout (+1; 304/329)
+
+- **07.05:** prevented pending deep links opened during auth recovery from crossing a logout/account switch: account ID and hydrated profile recheck before/after asynchronous SharedPreferences reads, persisted original-account binding, logout cleanup, and exclusive lease against duplicate pushes from `main.dart` and `RootScreen`. Logout routes still redirect private URLs to `/welcome`.
+- [Flutter Analyze and navigation/account-switch tests — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44203770410) at SHA [a9d1bdc](https://github.com/mohamedsalh333555/VSP.App/commit/a9d1bdc88cceb45d383b9aefe9745684253590d2). [Evidence and limitations](VSP_DEFERRED_DEEP_LINK_ACCOUNT_SWITCH_ACCEPTANCE_07_05_2026-11-18.md).
+- **633 total / 304 accepted / 329 open (48.03%)**, one existing task ID accepted, no new IDs. **11.05 JWT real session-expiry tests remain open**; no production changes or main merge.
+
 ## 2026-11-18 — Restricted direct/notification routes and verified deep-link origins (+3; 303/330)
 
 - **07.04:** global GoRouter now denies owner-only screens to verified players and player-only deep links to owners, without allowing query strings or menu bypasses to skip role checks. Auth/hydrated/suspended checks occur first; Supabase RLS remains authoritative.
