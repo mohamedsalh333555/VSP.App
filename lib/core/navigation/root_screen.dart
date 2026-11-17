@@ -104,13 +104,22 @@ class _RootScreenState extends State<RootScreen> {
      final prefs = await SharedPreferences.getInstance();
      if (!sameVerifiedAccount()) return;
      final pendingLink = prefs.getString('pending_deep_link');
+     final storedForUserId = prefs.getString('pending_deep_link_user_id');
      if (pendingLink == null || pendingLink.isEmpty) return;
+     if (storedForUserId != null &&
+         storedForUserId.isNotEmpty &&
+         storedForUserId != expectedUserId) {
+       await prefs.remove('pending_deep_link');
+       await prefs.remove('pending_deep_link_user_id');
+       return;
+     }
 
      // Parse first and clear the original pending intent before opening.
      // A stale or forged URL must not be replayed on every startup.
      final uri = Uri.tryParse(pendingLink);
      final parsed = uri == null ? null : DeepLinkHelper.parse(uri);
      await prefs.remove('pending_deep_link');
+     await prefs.remove('pending_deep_link_user_id');
      // Account may change while reading/removing the preference. Do not send
      // the previous account's navigation intent into the new account's UI.
      if (parsed == null || !sameVerifiedAccount() || !mounted) return;
