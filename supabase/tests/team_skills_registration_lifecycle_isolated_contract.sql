@@ -10,10 +10,10 @@ as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 create function vsp_skills_private.is_admin() returns boolean language sql stable set search_path=''
 as $$ select auth.uid()='00000000-0000-0000-0000-000000009001'::uuid $$;
 create table public.users (id uuid primary key,is_blocked boolean default false);
-create table public.teams (id uuid primary key,captain_id uuid not null);
+create table public.teams (id uuid primary key,captain_id uuid not null,governorate text);
 create table public.team_members(team_id uuid not null,user_id uuid not null);
 create table public.team_skills_cups (
- id uuid primary key, status text not null, starts_at timestamptz not null,
+ id uuid primary key, status text not null, governorate text not null, starts_at timestamptz not null,
  max_teams integer not null, published_at timestamptz);
 create table public.team_skills_registrations(
  id uuid primary key default gen_random_uuid(),
@@ -34,13 +34,13 @@ grant execute on function public.team_skills_register(uuid,uuid,uuid[],uuid,uuid
 to authenticated;
 grant select on public.team_skills_cups,public.team_skills_registrations,
  public.team_skills_roster,public.team_skills_audit,public.team_members to authenticated;
-insert into public.team_skills_cups(id,status,starts_at,max_teams) values
-('00000000-0000-0000-0000-000000000001','draft',now()+interval '2 days',4),
-('00000000-0000-0000-0000-000000000002','draft',now()+interval '2 days',4),
-('00000000-0000-0000-0000-000000000003','registration',now()-interval '1 day',4);
-insert into public.teams(id,captain_id) values
-('00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000009101'),
-('00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000009102');
+insert into public.team_skills_cups(id,status,governorate,starts_at,max_teams) values
+('00000000-0000-0000-0000-000000000001','draft','Aswan',now()+interval '2 days',4),
+('00000000-0000-0000-0000-000000000002','draft','Cairo',now()+interval '2 days',4),
+('00000000-0000-0000-0000-000000000003','registration','Aswan',now()-interval '1 day',4);
+insert into public.teams(id,captain_id,governorate) values
+('00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000009101','  aswan '),
+('00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000009102','Giza');
 insert into public.team_members(team_id,user_id)
 select '00000000-0000-0000-0000-000000000101'::uuid,
 ('00000000-0000-0000-0000-'||lpad((1001+n)::text,12,'0'))::uuid
@@ -116,6 +116,37 @@ begin
  where action='register_team')<>1 then
  raise exception 'CAPTAIN_REAL_REGISTRATION_MISSING';end if;
 end $registered$;
+
+
+-- A real captain and valid five-person roster from Giza cannot take
+-- an Aswan cup seat. Neither registration nor audit may change on failure.
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000009102',true);
+do $wrong_governorate$
+declare people uuid[]; denied boolean:=false;
+begin
+ select array_agg(user_id order by user_id) into people
+ from public.team_members
+ where team_id='00000000-0000-0000-0000-000000000102';
+ begin
+  perform public.team_skills_register(
+   '00000000-0000-0000-0000-000000000001',
+   '00000000-0000-0000-0000-000000000102',
+   people,people[1],people[2]);
+ exception when others then
+  if position('governorate' in lower(sqlerrm))>0 then denied:=true;
+  else raise;end if;
+ end;
+ if not denied then raise exception 'CROSS_GOVERNORATE_REGISTRATION_ALLOWED';end if;
+end $wrong_governorate$;
+reset role;
+do $no_foreign_registration$
+begin
+ if (select count(*) from public.team_skills_registrations)<>1
+ or (select count(*) from public.team_skills_roster)<>5
+ or (select count(*) from public.team_skills_audit where action='register_team')<>1
+ then raise exception 'CROSS_GOVERNORATE_MUTATED_ROWS';end if;
+end $no_foreign_registration$;
 
 -- Admin closes enrollment by starting competition. All historical
 -- registrations, roster and previous publication timestamp remain.

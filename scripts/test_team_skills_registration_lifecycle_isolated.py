@@ -15,7 +15,7 @@ from test_team_skills_rls_isolated import psql, reject_nonlocal_targets
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "supabase/tests/team_skills_registration_lifecycle_isolated_contract.sql"
 FOUNDATION = ROOT / "supabase/migrations/20261116030000_team_skills_cup_foundation.sql"
-REGISTRATION = ROOT / "supabase/migrations/20261116164000_team_skills_blocked_captain_roster_guard.sql"
+REGISTRATION = ROOT / "supabase/migrations/20261117023000_team_skills_registration_governorate_guard.sql"
 DB = "vsp_team_skills_registration_lifecycle_isolated"
 
 
