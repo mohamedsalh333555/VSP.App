@@ -1,0 +1,66 @@
+name: VSP Owner Plans and Funnel Contracts
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/owner-plan-and-funnel-contracts.yml"
+      - "lib/features/owner/screens/subscription_plans_screen.dart"
+      - "lib/features/owner/screens/owner_dashboard_screen.dart"
+      - "lib/features/owner/widgets/subscription/owner_plan_comparison_contract.dart"
+      - "lib/features/owner/widgets/subscription/owner_plan_expiry_presentation.dart"
+      - "lib/core/services/analytics_service.dart"
+      - "test/features/owner/owner_plan_comparison_contract_test.dart"
+      - "test/features/owner/owner_expiry_notice_contract_test.dart"
+      - "test/features/owner/owner_dashboard_entry_analytics_test.dart"
+      - "test/unit/owner_plan_expiry_presentation_test.dart"
+      - "test/architecture/phase10_analytics_contract_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/owner-plan-and-funnel-contracts.yml"
+      - "lib/features/owner/screens/subscription_plans_screen.dart"
+      - "lib/features/owner/widgets/subscription/owner_plan_comparison_contract.dart"
+      - "lib/features/owner/widgets/subscription/owner_plan_expiry_presentation.dart"
+      - "test/features/owner/owner_plan_comparison_contract_test.dart"
+      - "test/features/owner/owner_expiry_notice_contract_test.dart"
+      - "test/features/owner/owner_dashboard_entry_analytics_test.dart"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: owner-plans-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  owner-plans:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - name: Install Flutter packages
+        run: flutter pub get
+      - name: Analyze source and owner contracts
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/owner/screens/subscription_plans_screen.dart
+          lib/features/owner/widgets/subscription/owner_plan_comparison_contract.dart
+          lib/features/owner/widgets/subscription/owner_plan_expiry_presentation.dart
+          test/features/owner/owner_plan_comparison_contract_test.dart
+          test/features/owner/owner_expiry_notice_contract_test.dart
+          test/features/owner/owner_dashboard_entry_analytics_test.dart
+      - name: Run owner plan difference, expiry and dashboard analytics contracts
+        run: >-
+          flutter test --concurrency=1
+          test/features/owner/owner_plan_comparison_contract_test.dart
+          test/features/owner/owner_expiry_notice_contract_test.dart
+          test/features/owner/owner_dashboard_entry_analytics_test.dart
+          test/unit/owner_plan_expiry_presentation_test.dart
+          test/architecture/phase10_analytics_contract_test.dart
