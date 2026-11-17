@@ -13,9 +13,22 @@ function visibleKeys(arb) {
 }
 function placeholders(value) {
   if (typeof value !== 'string') return [];
-  return [...new Set(
-    [...value.matchAll(/\{\s*([A-Za-z][A-Za-z0-9_]*)\s*(?:,|\})/g)].map(m => m[1]),
-  )].sort();
+  const usesIcuChoice = /,\s*(?:plural|select|selectordinal)\s*,/.test(value);
+  const names = [];
+  for (const match of value.matchAll(
+    /\{\s*([A-Za-z][A-Za-z0-9_]*)\s*(?:,|\})/g,
+  )) {
+    // ICU choice syntax uses labels like "one{...}" and "other{...}".
+    // Those braces delimit a choice body, not an interpolation variable.
+    if (usesIcuChoice &&
+        /(?:^|[,{}])\s*(?:zero|one|two|few|many|other|=\d+)\s*$/.test(
+          value.slice(0, match.index),
+        )) {
+      continue;
+    }
+    names.push(match[1]);
+  }
+  return [...new Set(names)].sort();
 }
 
 function review({
