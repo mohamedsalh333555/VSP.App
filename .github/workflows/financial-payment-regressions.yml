@@ -18,6 +18,7 @@ on:
       - 'supabase/functions/paymob_webhook/index.ts'
       - 'supabase/functions/create_paymob_intention/index.ts'
       - 'supabase/functions/_shared/paymob_hmac.ts'
+      - 'supabase/functions/_shared/paymob_webhook_outcome.ts'
       - 'supabase/functions/tests/paymob_hmac_test.ts'
   workflow_dispatch:
 

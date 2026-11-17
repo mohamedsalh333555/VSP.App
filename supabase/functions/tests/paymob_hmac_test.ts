@@ -2,6 +2,7 @@ import {
   computePaymobHMAC,
   verifyPaymobHmacSignature,
 } from "../_shared/paymob_hmac.ts";
+import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -84,8 +85,8 @@ Deno.test("No unauthenticated raw URL, HMAC proof or payload persisted by webhoo
     "the rejection audit persists the untrusted HMAC string");
   assert((unauthenticated.match(/rejected_before_authentication: true/g) || []).length >= 5,
     "one or more rejection paths lacks minimal audit metadata");
-  assert(source.includes("obj.success === true && obj.pending === false"),
-    "server must require explicit boolean payment-success indicators");
+  assert(source.includes('const isSuccess = paymentOutcome === "paid"'),
+    "server must derive charge success from signed transaction outcome");
 });
 
 Deno.test("Paymob intention provider errors log status only, never response body", async () => {
@@ -120,8 +121,6 @@ Deno.test("Refund and checkout error paths never echo provider or internal diagn
     "checkout failure must return a stable, sanitized message");
 });
 
-
-import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
 
 Deno.test("Pending, voided, refunded or authorization-only Paymob events cannot finalize a charge", () => {
   const base = { success: true, pending: false, currency: "EGP", is_refunded: false, is_voided: false };
