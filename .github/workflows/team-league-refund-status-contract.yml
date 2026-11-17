@@ -10,6 +10,7 @@ on:
       - '.github/workflows/team-league-refund-status-contract.yml'
       - 'supabase/migrations/20261117173000_align_team_league_payment_refund_states.sql'
       - 'supabase/tests/team_league_payment_refund_status_isolated_contract.sql'
+      - 'scripts/test_team_league_refund_claim_concurrency.py'
   workflow_dispatch:
 
 concurrency:
@@ -49,3 +50,5 @@ jobs:
           psql -v ON_ERROR_STOP=1 -Atc "SELECT current_database()" | grep -Fx 'vsp_team_league_refund_isolated'
       - name: Test migration and reject unknown payment states
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/team_league_payment_refund_status_isolated_contract.sql
+      - name: Verify two separate SQL refund attempts cannot both claim an order
+        run: python3 scripts/test_team_league_refund_claim_concurrency.py
