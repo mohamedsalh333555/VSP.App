@@ -845,7 +845,11 @@ serve(async (req: Request) => {
     const orderReference = String(prep.order_reference || "");
     const transactionId = String(prep.paymob_transaction_id || "");
     const refundAmount = Math.round(Number(prep.refund_amount || 0) * 100) / 100;
-    if (!orderReference || !transactionId || refundAmount <= 0) {
+    // A malformed provider ID must NEVER be silently normalized by stripping
+    // non-digits; this can target a different Paymob transaction.
+    if (!orderReference || !/^[1-9][0-9]*$/.test(transactionId) ||
+      !Number.isSafeInteger(Number(transactionId)) ||
+      !Number.isFinite(refundAmount) || refundAmount <= 0) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -854,6 +858,45 @@ serve(async (req: Request) => {
         }),
         { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // The withdrawal RPC above checks the player's actual team/captain
+    // authority, but it only READS the paid order. Claim that order here
+    // before dispatching Paymob's irreversible refund endpoint.
+    //
+    // This CAS also blocks duplicate user/API retries and process crashes.
+    // Team-league states require the accompanying schema CHECK migration
+    // before Staging/Production can deploy this Edge Function safely.
+    const { data: withdrawalChampionship, error: withdrawalChampionshipError } =
+      await adminClient.from("championships")
+        .select("template_type")
+        .eq("id", championshipId)
+        .maybeSingle();
+    if (withdrawalChampionshipError || !withdrawalChampionship) {
+      return new Response(JSON.stringify({
+        success: false, refund_pending: true, manual_review: true,
+        message: "تعذر تأكيد نوع البطولة قبل الاسترداد. يلزم المراجعة.",
+      }), { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+    const withdrawalOrderTable = withdrawalChampionship.template_type === "team_league"
+      ? "team_league_payments" : "tournament_orders";
+    const { data: withdrawalClaim, error: withdrawalClaimError } = await adminClient
+      .from(withdrawalOrderTable)
+      .update({ payment_status: "refund_pending", updated_at: new Date().toISOString() })
+      .eq("order_reference", orderReference)
+      .eq("championship_id", championshipId)
+      .eq("team_id", teamId)
+      .eq("paymob_transaction_id", transactionId)
+      .eq("payment_status", "paid")
+      .select("id")
+      .maybeSingle();
+    if (withdrawalClaimError || !withdrawalClaim) {
+      // A prior request may have already reserved/refunded the same payment.
+      // Never retry the gateway call when the atomic claim is absent.
+      return new Response(JSON.stringify({
+        success: false, refund_pending: true, manual_review: true,
+        message: "تم حجز الاسترداد أو تعذر تثبيت الطلب. لن يتم إرسال طلب مكرر.",
+      }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
     let refundSuccess = false;
@@ -874,7 +917,7 @@ serve(async (req: Request) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           auth_token: authData.token,
-          transaction_id: Number(transactionId.replace(/\D/g, "")),
+          transaction_id: Number(transactionId),
           amount_cents: Math.round(refundAmount * 100),
         }),
       });
@@ -903,7 +946,15 @@ serve(async (req: Request) => {
         p_error_message: refundError,
       }
     );
-    if (finalizeError) throw finalizeError;
+    if (finalizeError || finalized?.success !== true) {
+      // The provider may already have moved money. Do not throw a 5xx which
+      // encourages a new client refund attempt; reconcile manually instead.
+      console.error("Team withdrawal refund ledger not confirmed");
+      return new Response(JSON.stringify({
+        success: false, refund_pending: true, manual_review: true,
+        message: "حالة الاسترداد تحتاج مراجعة محاسبية قبل أي إعادة محاولة.",
+      }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
 
     return new Response(
       JSON.stringify({
@@ -914,15 +965,16 @@ serve(async (req: Request) => {
         refund_amount: refundAmount,
         refund_success: refundSuccess,
       }),
-      { status: refundSuccess ? 200 : 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (err: any) {
-    console.error("process_tournament_refund error", err);
+    // Errors can contain provider tokens or DB diagnostics; keep them out of
+    // public responses and logs. Operator reconciliation is required.
+    console.error("process_tournament_refund failed; investigate safe server traces");
     return new Response(
       JSON.stringify({
         success: false,
-        message: "تعذر إتمام استرداد اشتراك البطولة حالياً.",
-        error: String(err?.message || err),
+        message: "تعذر إتمام استرداد اشتراك البطولة حالياً؛ يرجى مراجعة الإدارة.",
       }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

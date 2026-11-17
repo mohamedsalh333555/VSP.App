@@ -63,3 +63,24 @@ Deno.test("All three tournament queue refund POSTs require durable dispatch clai
   assert((src.match(/if \(!dispatchAllowed\) \{/g)||[]).length===3,
     "failed dispatch guard could still call Paymob");
 });
+
+Deno.test("Direct team withdrawal refund reserves the paid order once before Paymob POST", async () => {
+  const source = await Deno.readTextFile(new URL("../process_tournament_refund/index.ts", import.meta.url));
+  const direct = source.slice(source.indexOf("// MODE 2: Single Team Withdrawal Refund"));
+  const prepared = direct.indexOf('"withdraw_team_from_championship_atomic"');
+  const fetched = direct.indexOf('.select("template_type")', prepared);
+  const update = direct.indexOf('.update({ payment_status: "refund_pending"', fetched);
+  const paid = direct.indexOf('.eq("payment_status", "paid")', update);
+  const checked = direct.indexOf('if (withdrawalClaimError || !withdrawalClaim)', paid);
+  const dispatched = direct.indexOf('const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund"', checked);
+  assert(prepared >= 0 && fetched > prepared && update > fetched && paid > update &&
+    checked > paid && dispatched > checked, "team withdrawal can dispatch without a unique order claim");
+  assert(direct.includes('.eq("paymob_transaction_id", transactionId)'),
+    "provider transaction ID must be bound to the claimed order");
+  assert(!direct.includes('transactionId.replace(/\\D/g, "")'),
+    "transaction ID sanitization can transform the target of a refund");
+  assert(direct.includes("if (finalizeError || finalized?.success !== true)"),
+    "unverified refund ledger must not be returned as successful");
+  assert(!direct.includes('error: String(err?.message || err)'),
+    "unsafe internal diagnostics leaked to client");
+});
