@@ -221,12 +221,17 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final yearly = _planAmount(plan, 'yearly_price');
     final trialDays = _planNumber(plan, 'trial_days', fallback: -1);
     final maxStadiums = _planNumber(plan, 'max_stadiums', fallback: -1);
+    // The "Free forever" badge is unconditional. A broken server plan
+    // must not silently show a paid Basic row as free.
+    final basicIsActuallyFree = plan['code'] != 'basic' ||
+        (monthly == 0 && yearly == 0);
     return monthly.isFinite &&
         yearly.isFinite &&
         monthly >= 0 &&
         yearly >= 0 &&
         trialDays >= 0 &&
         maxStadiums > 0 &&
+        basicIsActuallyFree &&
         plan['features'] is Map;
   }
 
