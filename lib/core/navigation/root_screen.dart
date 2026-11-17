@@ -98,7 +98,8 @@ class _RootScreenState extends State<RootScreen> {
      );
    }
 
-   if (!sameVerifiedAccount()) return;
+   if (!sameVerifiedAccount() ||
+       !PendingDeepLinkAccountGuard.tryAcquire()) return;
    try {
      final prefs = await SharedPreferences.getInstance();
      if (!sameVerifiedAccount()) return;
@@ -117,6 +118,8 @@ class _RootScreenState extends State<RootScreen> {
      GoRouter.of(context).push(parsed.routePath);
    } catch (e, stackTrace) {
      VSPLogger.e('Failed to process pending deep link', e, stackTrace);
+   } finally {
+     PendingDeepLinkAccountGuard.release();
    }
  }
 
