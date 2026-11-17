@@ -1,5 +1,10 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## 2026-11-17 — durable pre-dispatch Paymob refund guards
+
+[Source fixes, test runs and remaining release gates](security/VSP_PAYMOB_REFUND_DISPATCH_CRASH_SAFETY_2026-11-17.md): the 5-minute booking refund claim and 15-minute tournament queue leases are insufficient alone after a gateway POST if the process crashes. CAS-saved dispatch marks now block automatic replay in the booking handler and all 3 cancellation queue worker paths. Deno/Flutter financial CI passed for source paths. Live two-session Staging and Paymob Sandbox remain open. No accepted task-ID promotion; **633 total / 266 accepted / 367 open**.
+
+
 ## 2026-11-17 — Paymob booking refund proof and verified audit payload minimization
 
 [Source changes and CI evidence](security/VSP_PAYMOB_REFUND_PROOF_AUDIT_MINIMIZATION_2026-11-17.md): explicit refund outcome instead of ID-only; no raw provider refund/auth bodies in booking refund diagnostic records; redact PAN, billing and novel provider fields from future signed Webhook logs while keeping all Staging receipt-check fields. Focused Deno/Flutter finance CI PASS, actual hosted integration/cleanup/deployment OPEN. Existing tasks SEC-03/06/10, 30.* and 31.* remain open. No new IDs or accepted completions. Counter 633/266/367.

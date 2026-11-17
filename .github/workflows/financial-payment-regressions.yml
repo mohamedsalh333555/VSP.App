@@ -24,6 +24,7 @@ on:
       - 'supabase/functions/tests/paymob_hmac_test.ts'
       - 'supabase/functions/process_tournament_refund/index.ts'
       - 'supabase/functions/_shared/paymob_refund_safety.ts'
+      - 'supabase/functions/_shared/paymob_tournament_dispatch.ts'
       - 'supabase/functions/_shared/paymob_audit_payload.ts'
       - 'supabase/functions/tests/paymob_refund_safety_test.ts'
       - 'supabase/functions/tests/paymob_booking_refund_safety_test.ts'

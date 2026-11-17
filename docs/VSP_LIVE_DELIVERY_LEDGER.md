@@ -1,3 +1,9 @@
+## 2026-11-17 — Refund dispatch crash/replay protection (0 newly accepted; 266/367)
+
+- **Confirmed source risk:** 5-minute booking and 15-minute tournament queue leases can expire after refund dispatch and permit re-dispatch on worker crash. [Booking CAS marker a9ea11cd](https://github.com/mohamedsalh333555/VSP.App/commit/a9ea11cd2e34ea482765f83f6a50bce4c7900746) and [three queue CAS guards 68e76686](https://github.com/mohamedsalh333555/VSP.App/commit/68e76686a5eea1a10f62edc2e35380389b7f8bf0) persist pre-dispatch holds. [Refund response hardening 44b07d18](https://github.com/mohamedsalh333555/VSP.App/commit/44b07d186b977534b54d2d2f2ffcec5fe87354fe) preserves manual reconciliation on ambiguity.
+- **CI:** [queue guards, Deno and focused Flutter SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110931520); [booking guard financial test](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110166202). **No actual provider refund or two-session Staging crash test.** [Evidence and open gates](security/VSP_PAYMOB_REFUND_DISPATCH_CRASH_SAFETY_2026-11-17.md).
+- **No duplicate accounting:** 633 unique / 266 accepted / 367 open, 0 added, 0 newly accepted. Source fixes are not production approval. No `main` merge or production change.
+
 ## 2026-11-17 — Paymob booking refund proof and signed audit minimization (0 new accepted)
 
 - **Code fixes:** [e25c26ed](https://github.com/mohamedsalh333555/VSP.App/commit/e25c26ede601aa3600bbcf66fc286ad4e2429794) requires explicit refund acceptance and omits provider error bodies in booking refund diagnostics; [9129d652](https://github.com/mohamedsalh333555/VSP.App/commit/9129d652d30a868c82c1519a2f5d5db349b6086a) redacts signed webhook payload records and accounting error text.
