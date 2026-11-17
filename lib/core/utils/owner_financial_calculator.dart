@@ -103,8 +103,17 @@ class OwnerFinancialCalculator {
     final m = method.toLowerCase().trim();
     if (m.contains('vodafone') || m.contains('فودافون')) return 'vodafone_cash';
     if (m.contains('instapay') || m.contains('انستاباي')) return 'instapay';
-    if (m.contains('paymob') || m.contains('card') || m.contains('online')) return 'paymob';
-    if (m.contains('cash') || m.contains('كاش')) return 'cash';
+    // Electronic wallets and bank transfers are never cash collected at
+    // the venue. This is display-only fallback for legacy method strings;
+    // financial accounting still comes from server reconciliation.
+    if (m.contains('bank_transfer') || m.contains('bank transfer') ||
+        m.contains('تحويل بنكي')) return 'bank_transfer';
+    if (m.contains('paymob') || m.contains('card') || m.contains('online') ||
+        m.contains('wallet') || m.contains('visa') || m.contains('mastercard') ||
+        m.contains('meeza') || m.contains('بطاقة')) return 'paymob';
+    if (m == 'cash' || m == 'كاش' || m == 'نقدي' ||
+        m == 'cash on arrival' || m == 'cash_on_arrival' ||
+        m == 'cash at stadium') return 'cash';
     return 'pending';
   }
 }

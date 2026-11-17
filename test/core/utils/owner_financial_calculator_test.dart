@@ -16,5 +16,29 @@ void main() {
       expect(OwnerFinancialCalculator.inferSourceFromMethod('Paymob Card'), 'paymob');
       expect(OwnerFinancialCalculator.inferSourceFromMethod('unrecognized'), 'pending');
     });
+    test('supported cash vs digital settlement method strings remain distinct', () {
+      for (final value in ['Cash', 'كاش', 'نقدي', 'cash_on_arrival']) {
+        expect(OwnerFinancialCalculator.inferSourceFromMethod(value), 'cash',
+            reason: 'Venue-collected cash: $value');
+      }
+      for (final value in ['wallet', 'visa', 'MasterCard', 'Meeza',
+        'بطاقة ائتمان', 'Paymob wallet']) {
+        expect(OwnerFinancialCalculator.inferSourceFromMethod(value), 'paymob',
+            reason: 'Paymob electronic channel: $value');
+      }
+      for (final value in ['bank_transfer', 'Bank Transfer', 'تحويل بنكي']) {
+        expect(OwnerFinancialCalculator.inferSourceFromMethod(value), 'bank_transfer',
+            reason: 'Bank transfer is not pitch cash: $value');
+      }
+      for (final value in ['Vodafone Cash', 'فودافون كاش']) {
+        expect(OwnerFinancialCalculator.inferSourceFromMethod(value), 'vodafone_cash',
+            reason: 'Mobile wallet is not cash collected at stadium: $value');
+      }
+      expect(OwnerFinancialCalculator.inferSourceFromMethod('InstaPay'), 'instapay');
+      for (final value in ['', 'cash app unknown', 'unknown']) {
+        expect(OwnerFinancialCalculator.inferSourceFromMethod(value), 'pending',
+            reason: 'Unverified payment method must not be assumed cash: $value');
+      }
+    });
   });
 }
