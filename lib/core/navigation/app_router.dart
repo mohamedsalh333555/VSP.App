@@ -25,6 +25,7 @@ import '../../features/player/screens/profile_subscreens/edit_profile_screen.dar
 import 'offline_error_screen.dart';
 import 'suspended_account_screen.dart';
 import 'root_screen.dart';
+import 'app_route_role_guard.dart';
 import '../../features/player/screens/championship_details_screen.dart';
 import '../../core/repositories/tournament_repository.dart';
 import '../../data/models.dart';
@@ -311,6 +312,16 @@ class AppRouter {
     }
     return null;
   }
+
+  // Restrict direct links after the authenticated profile is hydrated.
+  // Keep this separate from menu gating: notifications, stored links and
+  // Android intents can navigate without visiting a tab.
+  final roleRedirect = AppRouteRoleGuard.redirectForRole(
+    path: path,
+    isOwner: isOwner,
+    isAdmin: authProvider.isAdmin,
+  );
+  if (roleRedirect != null) return roleRedirect;
 
   // 7. Registration detail check (missing phone)
   final rawPhone = userModel.phone?.trim() ?? '';
