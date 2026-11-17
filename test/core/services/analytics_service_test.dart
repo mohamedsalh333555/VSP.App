@@ -121,6 +121,34 @@ void main() {
       );
     });
 
+    test('drops direct identifiers and arbitrary metric properties', () {
+      final safe = AnalyticsService.privacySafeParameters({
+        'role': 'player',
+        'payment_method': 'card',
+        'stadium_id': 'venue-private-id',
+        'team_id': 'team-private-id',
+        'from_team': 'captain-team',
+        'to_team': 'opponent-team',
+        'booking_id': 'booking-private-id',
+        'price': 420,
+        'custom_property': 'unreviewed-value',
+      });
+      expect(safe, {'role': 'player', 'payment_method': 'card'});
+    });
+
+    test('does not allow personal text disguised as categorical values', () {
+      final safe = AnalyticsService.privacySafeParameters({
+        'role': 'someone@example.com',
+        'plan_code': 'A very long free text value containing private data',
+        'payment_method': '+201012345678',
+        'type': 'pickup',
+        'message_type': 'group',
+        'old_rank': 4,
+        'new_rank': -1,
+      });
+      expect(safe, {'type': 'pickup', 'message_type': 'group', 'old_rank': 4});
+    });
+
     test('returns an immutable empty map for absent parameters', () {
       final safe = AnalyticsService.privacySafeParameters(null);
       expect(safe, isEmpty);
