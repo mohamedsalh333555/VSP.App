@@ -8,6 +8,7 @@ import '../../../../core/services/image_pick_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../owner_notification_button.dart';
+import '../subscription/owner_subscription_status_presentation.dart';
 import '../../../../shared/widgets/vsp_ai_spark_icon.dart';
 
 /// Sleek header for Owner Dashboard with glow avatar, profile edit badge,
@@ -33,7 +34,18 @@ class OwnerDashboardHeader extends StatelessWidget {
     final String name = (rawName != null && rawName.isNotEmpty)
         ? rawName
         : (isArabic ? 'كابتن الملعب' : 'Pitch Owner');
-    final isTrial = user?.isInActiveTrial == true;
+    final subscriptionState = OwnerSubscriptionStatusPresentation.stateFor(
+      user, DateTime.now(),
+    );
+    final subscriptionLabel = OwnerSubscriptionStatusPresentation.label(
+      subscriptionState, isArabic: isArabic,
+    );
+    final subscriptionBadgeColor =
+        OwnerSubscriptionStatusPresentation.getIsWarning(subscriptionState)
+            ? VSPColors.warning
+            : OwnerSubscriptionStatusPresentation.getIsActivePro(subscriptionState)
+                ? VSPColors.accent
+                : VSPColors.textSecondary;
     final photoUrl = user?.profileImageUrl;
 
     return Row(
@@ -225,11 +237,9 @@ class OwnerDashboardHeader extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              isProOwner
-                                  ? 'PRO'
-                                  : (isTrial ? (isArabic ? 'تجربة Pro' : 'Pro Trial') : (isArabic ? 'مجاني' : 'Free')),
+                              subscriptionLabel,
                               style: TextStyle(
-                                color: isProOwner ? VSPColors.accent : VSPColors.textSecondary,
+                                color: subscriptionBadgeColor,
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.3,
@@ -343,7 +353,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                   border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35), width: 0.8),
                 ),
                 child: Text(
-                  isArabic ? 'باقة 1000 ج.م الاحترافية (PRO)' : 'PRO Plan Exclusive (1000 EGP)',
+                  isArabic ? 'عرض مزايا باقة Pro' : 'Explore Pro plan features',
                   style: const TextStyle(
                     color: VSPColors.accent,
                     fontSize: 11,
@@ -370,8 +380,8 @@ class OwnerDashboardHeader extends StatelessWidget {
               // Description
               Text(
                 isArabic
-                    ? 'الذكاء الاصطناعي ميزة حصرية لمشتركي باقة 1000 ج.م الاحترافية.\nاحصل على تحليلات ذكية لحجوزات ملعبك، اقتراحات تسعير فترات الذروة، ودعم إداري فوري على مدار الساعة.'
-                    : 'AI Copilot is an exclusive feature for 1000 EGP Pro Plan subscribers.\nUnlock intelligent booking forecasts, peak-hour pricing suggestions, and 24/7 automated pitch management.',
+                    ? 'راجع تفاصيل باقة Pro وأسعارها الحالية ومزايا Copilot من صفحة الاشتراكات، قبل طلب الترقية.'
+                    : 'Review current Pro plan pricing and Copilot benefits on the subscription screen before upgrading.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: VSPColors.textSecondary,
@@ -404,7 +414,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                       const Icon(Iconsax.crown_1_copy, color: VSPColors.black, size: 18),
                       const SizedBox(width: 8),
                       Text(
-                        isArabic ? 'ترقية لباقة 1000 ج.م الآن' : 'Upgrade to Pro Plan (1000 EGP)',
+                        isArabic ? 'عرض باقات الاشتراك' : 'View subscription plans',
                         style: const TextStyle(
                           color: VSPColors.black,
                           fontWeight: FontWeight.w900,
