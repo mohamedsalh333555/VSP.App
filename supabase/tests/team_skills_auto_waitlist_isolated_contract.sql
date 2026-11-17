@@ -134,3 +134,61 @@ begin
            where team_id=team10)
  then raise exception 'BLOCKED_TEAM_WROTE_REGISTRATION';end if;
 end $blocked_enrollment$;
+
+
+-- Enrollment closes at kickoff and while the cup is not in registration.
+-- Even a fully booked waiting list must not mask the definitive close guard.
+-- All attempts are rejected before any registration, roster or audit write.
+update public.users set is_blocked=false
+where id='00000000-0000-0000-0000-000000000910'
+   or id in (select user_id from public.team_members
+      where team_id='00000000-0000-0000-0000-000000000210');
+update public.team_skills_cups set starts_at=now()-interval '1 minute'
+where id='00000000-0000-0000-0000-000000000001';
+
+do $registration_closure$
+declare team10 uuid:='00000000-0000-0000-0000-000000000210';
+ capt10 uuid:='00000000-0000-0000-0000-000000000910';
+ people uuid[]; denied boolean:=false;
+begin
+ select array_agg(user_id order by user_id) into people
+ from public.team_members where team_id=team10;
+ perform set_config('request.jwt.claim.sub',capt10::text,true);
+ begin
+   perform public.team_skills_register(
+     '00000000-0000-0000-0000-000000000001',
+     team10,people,people[1],people[2]);
+ exception when others then
+   if position('registration closed' in lower(sqlerrm))>0 then
+     denied:=true;
+   else raise;end if;
+ end;
+ if not denied then raise exception 'PAST_KICKOFF_ENROLLMENT_ACCEPTED';end if;
+end $registration_closure$;
+
+update public.team_skills_cups set status='draft',starts_at=now()+interval '3 days'
+where id='00000000-0000-0000-0000-000000000001';
+do $draft_closure$
+declare team10 uuid:='00000000-0000-0000-0000-000000000210';
+ capt10 uuid:='00000000-0000-0000-0000-000000000910';
+ people uuid[]; denied boolean:=false;
+begin
+ select array_agg(user_id order by user_id) into people
+ from public.team_members where team_id=team10;
+ perform set_config('request.jwt.claim.sub',capt10::text,true);
+ begin
+   perform public.team_skills_register(
+     '00000000-0000-0000-0000-000000000001',
+     team10,people,people[1],people[2]);
+ exception when others then
+   if position('registration closed' in lower(sqlerrm))>0 then
+     denied:=true;
+   else raise;end if;
+ end;
+ if not denied then raise exception 'DRAFT_ENROLLMENT_ACCEPTED';end if;
+ if (select count(*) from public.team_skills_registrations)<>8
+ or (select count(*) from public.team_skills_roster where active)<>40
+ or (select count(*) from public.team_skills_audit
+     where action='register_team')<>8
+ then raise exception 'CLOSED_REGISTRATION_MUTATED_AUDITED_DATA';end if;
+end $draft_closure$;
