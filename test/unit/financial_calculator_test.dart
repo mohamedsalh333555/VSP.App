@@ -114,6 +114,73 @@ void main() {
       expect(normalizedBooking.pendingReceivable, equals(200.0)); // 300 total - 100 paid online = 200 pending at pitch
     });
 
+    test('Arabic Vodafone Cash is electronic in real owner revenue totals, not venue cash', () {
+      Booking booking(String id, String method, double amount) => Booking(
+        id: id,
+        stadiumId: 's1',
+        stadiumName: 'Stadium 1',
+        ownerId: 'owner1',
+        createdByUserId: 'user_$id',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        isPrivate: true,
+        rentBall: false,
+        totalPrice: amount,
+        paymentMethod: method,
+        paymentStatus: 'paid',
+        isPaid: true,
+        status: BookingStatus.confirmed,
+        bookingType: BookingType.personal,
+        createdAt: now,
+      );
+
+      final arabicWallet = booking('wallet', 'فودافون كاش', 150);
+      final venueCash = booking('cash', 'كاش', 200);
+      final card = booking('card', 'Visa', 100);
+      expect(arabicWallet.effectivePaymentSource, 'vodafone_cash');
+      expect(arabicWallet.isDigital, isTrue);
+      expect(arabicWallet.pitchCashCollected, 0);
+      expect(arabicWallet.digitalAmountPaid, 150);
+      expect(venueCash.pitchCashCollected, 200);
+      expect(card.digitalAmountPaid, 100);
+
+      final metrics = OwnerFinancialCalculator.calculate(
+        allBookings: [arabicWallet, venueCash, card],
+        ownerChampionships: [],
+        timePeriod: 'today',
+        stadiumFilter: 'all',
+      );
+      expect(metrics.cashCollected, 200);
+      expect(metrics.digitalBalance, 250);
+      expect(metrics.totalPipeline, 450);
+      expect(metrics.activeBookingsCount, 3);
+    });
+
+    test('unpaid Arabic mobile wallet is not approved as cash on arrival', () {
+      final pendingWallet = Booking(
+        id: 'wallet_pending',
+        stadiumId: 's1',
+        stadiumName: 'Stadium 1',
+        ownerId: 'owner1',
+        createdByUserId: 'wallet_user',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        isPrivate: true,
+        rentBall: false,
+        totalPrice: 180,
+        paymentMethod: 'فودافون كاش',
+        paymentStatus: 'unpaid',
+        status: BookingStatus.confirmed,
+        bookingType: BookingType.personal,
+        createdAt: now,
+      );
+      expect(pendingWallet.effectivePaymentSource, 'vodafone_cash');
+      expect(pendingWallet.isMatrixValid, isFalse);
+      expect(pendingWallet.pitchCashCollected, 0);
+      expect(pendingWallet.digitalAmountPaid, 0);
+      expect(pendingWallet.pendingReceivable, 180);
+    });
+
     test('Online deposit (100 EGP) with cash collected at pitch (200 EGP) yields exact split', () {
       final hybridBooking = Booking(
         id: 'b_hybrid',

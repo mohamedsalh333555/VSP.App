@@ -424,9 +424,16 @@ class Booking {
     }
     final m = paymentMethod.toLowerCase().trim();
     final tx = (paymentTransactionId ?? '').toUpperCase();
-    if (m == 'cash' || tx.startsWith('MANUAL') || m.contains('كاش')) return 'cash';
-    if (m.contains('instapay') || instapay != null) return 'instapay';
-    if (m.contains('vodafone') || vodafoneCash != null) return 'vodafone_cash';
+    // Vodafone Cash is an electronic wallet, not cash handed to the pitch.
+    // Check it before the legacy Arabic word 'كاش'; only an exact venue-cash
+    // method or a documented MANUAL transaction is classified as pitch cash.
+    if (m.contains('vodafone') || m.contains('فودافون') ||
+        vodafoneCash != null) return 'vodafone_cash';
+    if (m.contains('instapay') || m.contains('انستاباي') ||
+        instapay != null) return 'instapay';
+    if (m == 'cash' || m == 'كاش' || m == 'نقدي' ||
+        m == 'cash_on_arrival' || m == 'cash on arrival' ||
+        tx.startsWith('MANUAL')) return 'cash';
     if (m.contains('bank_transfer') || m.contains('bank') || m.contains('تحويل')) return 'bank_transfer';
     if (m.contains('paymob') ||
         m.contains('card') ||
@@ -544,7 +551,13 @@ class BookingPaymentMatrix {
   }) {
     final method = paymentMethod.toLowerCase().trim();
     final source = (paymentSource ?? '').toLowerCase().trim();
-    final isCash = method == 'cash' || source == 'cash' || method.contains('كاش');
+    // Arabic mobile wallets include the word "كاش" but are NOT venue cash.
+    final isMobileWallet = source == 'vodafone_cash' ||
+        method.contains('vodafone') || method.contains('فودافون');
+    final isCash = source == 'cash' ||
+        (!isMobileWallet &&
+         (method == 'cash' || method == 'كاش' || method == 'نقدي' ||
+          method == 'cash_on_arrival' || method == 'cash on arrival'));
     final isOnline = method == 'paymob' ||
         method == 'card' ||
         method == 'wallet' ||
