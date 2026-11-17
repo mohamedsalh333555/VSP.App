@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { isConfirmedPaymobRefund, isAlreadyRefundedProviderMessage } from "../_shared/paymob_refund_safety.ts";
+import { markTournamentRefundDispatched } from "../_shared/paymob_tournament_dispatch.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 declare const Deno: any;
 
@@ -268,6 +269,13 @@ serve(async (req: Request) => {
         } else {
           try {
             // A dispatched call may have succeeded even when its response is lost.
+            // Durably reserve this exact claim before any external refund.
+            // Crashes after dispatch must not cause a second refund after 15m.
+            const dispatchAllowed = await markTournamentRefundDispatched(adminClient, "cancellation_refund_queue", item);
+            if (!dispatchAllowed) {
+              results.push({ id: item.id, success: false, error: "REFUND_DISPATCH_GUARD_UNAVAILABLE" });
+              continue;
+            }
             refundRequestSent = true;
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
@@ -472,6 +480,13 @@ serve(async (req: Request) => {
         } else {
           try {
             // A dispatched call may have succeeded even when its response is lost.
+            // Durably reserve this exact claim before any external refund.
+            // Crashes after dispatch must not cause a second refund after 15m.
+            const dispatchAllowed = await markTournamentRefundDispatched(adminClient, "vsp_1v1_cancellation_refund_queue", item);
+            if (!dispatchAllowed) {
+              results.push({ id: item.id, success: false, error: "REFUND_DISPATCH_GUARD_UNAVAILABLE" });
+              continue;
+            }
             refundRequestSent = true;
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
@@ -668,6 +683,13 @@ serve(async (req: Request) => {
         } else {
           try {
             // A dispatched call may have succeeded even when its response is lost.
+            // Durably reserve this exact claim before any external refund.
+            // Crashes after dispatch must not cause a second refund after 15m.
+            const dispatchAllowed = await markTournamentRefundDispatched(adminClient, "team_league_cancellation_refund_queue", item);
+            if (!dispatchAllowed) {
+              results.push({ id: item.id, success: false, error: "REFUND_DISPATCH_GUARD_UNAVAILABLE" });
+              continue;
+            }
             refundRequestSent = true;
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
