@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../shared/widgets/primary_button.dart';
 
 /// Footer section displaying the encryption security guarantee, progress indicator, and payment CTA button.
@@ -68,10 +69,10 @@ class PaymentSecurityFooter extends StatelessWidget {
           child: PrimaryButton(
             text: isArabic
                 ? (totalAmount != null
-                    ? 'الانتقال للدفع الآمن • ${totalAmount!.toStringAsFixed(1)} ج.م'
+                    ? 'الانتقال للدفع الآمن • ${VSPMoneyFormatter.amount(totalAmount!)} ج.م'
                     : 'الانتقال للدفع الآمن')
                 : (totalAmount != null
-                    ? 'Proceed to Checkout • ${totalAmount!.toStringAsFixed(1)} EGP'
+                    ? 'Proceed to Checkout • ${VSPMoneyFormatter.amount(totalAmount!)} EGP'
                     : 'Proceed to Secure Checkout'),
             isLoading: isLoading || isAwaitingWebhook,
             onPressed: canProceed ? onProceed : null,
