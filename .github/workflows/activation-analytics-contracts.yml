@@ -14,6 +14,7 @@ on:
       - "lib/core/services/retention_cohort_contract.dart"
       - "test/core/services/activation_funnel_contract_test.dart"
       - "test/core/services/retention_cohort_contract_test.dart"
+      - "test/architecture/no_fabricated_scarcity_copy_contract_test.dart"
 
 permissions:
   contents: read
@@ -51,9 +52,11 @@ jobs:
           test/core/services/analytics_service_test.dart
           test/core/services/activation_funnel_contract_test.dart
           test/core/services/retention_cohort_contract_test.dart
+          test/architecture/no_fabricated_scarcity_copy_contract_test.dart
       - name: Run isolated analytics and cohort tests
         run: >-
           flutter test --concurrency=1
           test/core/services/analytics_service_test.dart
           test/core/services/activation_funnel_contract_test.dart
           test/core/services/retention_cohort_contract_test.dart
+          test/architecture/no_fabricated_scarcity_copy_contract_test.dart
