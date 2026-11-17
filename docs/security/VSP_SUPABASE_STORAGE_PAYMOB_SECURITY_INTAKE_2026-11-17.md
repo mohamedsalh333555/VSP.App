@@ -39,3 +39,21 @@ Read-only production policies show private owner-documents, receipt and verifica
 - **After intake**: **633 total; 266 accepted; 367 open; 84 active parent groups** (group 56 stays excluded).
 - **Accepted during this intake: 0** until CI and runtime scope match acceptance; **1 observed Paymob logging defect patched in source**, not deployed or certified fixed. New advisory-audit P0 candidates: 3 open; total project-wide P0 count cannot be computed reliably from priorities alone.
 - **Required approval later**: production webhook deployment, any Storage/issuer provider configuration change, database migration, live-account tests, real payment/refund, or secret rotation. No main merge.
+
+
+## Follow-up: Paymob diagnostic redaction + CI verification (2026-11-17)
+
+**New source review, no hosted deployment.** Two further unsafe code patterns were verified in the branch source; neither is proof that credentials or customer records were actually leaked:
+1. The 1v1 and team-tournament refund paths previously printed the full Paymob refund HTTP response and included provider authentication error bodies and refund exception messages in persistent refund diagnostics. The cancelled-booking refund path also persisted raw provider error messages. All three paths now use generic, bounded error summaries and HTTP status only; actual refund decision/accounting conditions are unchanged.
+2. The payment-intention handler previously returned raw internal exception text to Flutter on its top-level 500 response and logged raw database persistence exceptions. These now return a fixed client error and minimally categorized server reason.
+
+**Development commits:**
+- [a161137a](https://github.com/mohamedsalh333555/VSP.App/commit/a161137a059b3320d033e7db609ddabec73247c1) — Paymob refund-response/error redaction.
+- [5bc61a8b](https://github.com/mohamedsalh333555/VSP.App/commit/5bc61a8b1600bcbbb4f08382de5d551d22636398) — Payment-intention exception redaction.
+- [23fe3066](https://github.com/mohamedsalh333555/VSP.App/commit/23fe3066a10063eb1b55ee4428a14ca9378fce35) — Additional offline redaction regression contract.
+
+**Current-SHA CI:** [Financial payment regressions run 44100276777](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100276777) **SUCCESS** at `23fe3066`: both `paymob-hmac-rejection-contracts` (Deno synthetic HMAC vector, malformed signature, failure-path source guards) and `financial-methods-and-receipts` (focused Flutter payment tests) passed. [Owner checkout security run 44100288877](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100288877), [isolated SQL security run 44100288875](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100288875), and [task accounting run 44100324732](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100324732) also succeeded on the same source SHA. No live webhook, sandbox charge, actual refund, independent account access, or deployment was verified.
+
+**Read-only infrastructure check:** Supabase Cloud project health ACTIVE_HEALTHY for production and staging. Production `paymob_webhook` remains ACTIVE v45 with `verify_jwt=false`, appropriate only when validated by a correct HMAC gate; staging has no deployed `paymob_webhook` and therefore no staging webhook acceptance can be claimed. The branch patch is **not live** in either project. Supabase Security Advisor currently reports 197 production and 224 staging callable `SECURITY DEFINER` warnings; these are review findings, **not 421 confirmed exploits**. Four targeted routines (`activate_vsp_pro`, `admin_approve_owner_atomic`, `admin_cancel_booking_atomic`, and `admin_record_payout_settlement_atomic`) were inspected read-only in both environments and have apparent internal role checks; this is not sufficient to mark their cross-role tests done.
+
+**Accounting:** The previously added `85.01–85.03` audits remain open. These two extra logging hardenings fall under existing SEC-06 / SEC-10 Paymob/secrets work and add **zero** unique task IDs. The accepted task ledger remains **633 total / 266 accepted / 367 open**. Code-level redaction plus regression passed for these two paths, but deployment security acceptance remains OPEN. There was no production key rotation, database mutation, business-model change, or merge to `main`.
