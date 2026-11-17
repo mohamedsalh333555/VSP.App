@@ -63,6 +63,12 @@ th,td{padding:10px;border-bottom:1px solid #414348}th{font-weight:700}
     owner_dashboard_viewed:"فتح لوحة المالك",
     subscription_viewed:"مشاهدة الباقات",subscription_activated:"اشتراك مؤكد"
   };
+  const definitions = {
+    player_booking: ["app_opened","signup_completed","venue_viewed","booking_started","booking_completed"],
+    player_match: ["app_opened","signup_completed","match_viewed","match_joined"],
+    owner_activation: ["app_opened","owner_registration_started","owner_registration_completed","owner_dashboard_viewed"],
+    owner_subscription: ["owner_dashboard_viewed","subscription_viewed","subscription_activated"]
+  };
   const clean = () => {
     funnelRoot.replaceChildren();cohortRoot.replaceChildren();
     results.hidden = true;
@@ -85,6 +91,37 @@ th,td{padding:10px;border-bottom:1px solid #414348}th{font-weight:700}
           safeCount(s.accounts) && safeCount(s.dropOffFromPrevious) &&
           safeRate(s.conversionFromPrevious))) {
       throw Error("صيغة مسار التحويل أو حدود الخصوصية غير صحيحة.");
+    }
+    const expected = definitions[report.journey];
+    if (report.role !== (report.journey.startsWith("owner_") ? "owner" : "player") ||
+        report.stages.length !== expected.length ||
+        report.stages.some((s,i) => s.event !== expected[i]) ||
+        report.stages[0].accounts === null ||
+        report.stages[0].accounts < 5 ||
+        report.stages[0].dropOffFromPrevious !== null ||
+        report.stages[0].conversionFromPrevious !== null) {
+      throw Error("مراحل التقرير أو دور المستخدم غير متطابقين.");
+    }
+    for (let i = 1; i < report.stages.length; i++) {
+      const previous = report.stages[i - 1], current = report.stages[i];
+      if (previous.accounts === null || current.accounts === null) {
+        if (current.dropOffFromPrevious !== null ||
+            current.conversionFromPrevious !== null) {
+          throw Error("معلومات صغيرة الحجم غير محجوبة.");
+        }
+        continue;
+      }
+      if (current.accounts > previous.accounts) throw Error("العدد يزداد بين خطوات التحويل.");
+      const lost = previous.accounts - current.accounts;
+      const expectedDrop = lost === 0 || lost >= 5 ? lost : null;
+      const expectedRate = expectedDrop === null || previous.accounts === 0
+        ? null : current.accounts / previous.accounts;
+      if (current.dropOffFromPrevious !== expectedDrop ||
+          (expectedRate === null ? current.conversionFromPrevious !== null :
+           current.conversionFromPrevious === null ||
+           Math.abs(current.conversionFromPrevious - expectedRate) > 0.000001)) {
+        throw Error("معدل التحويل لا يطابق عدد الحسابات.");
+      }
     }
     const h = document.createElement("h3");
     h.textContent = report.journey + " — " + (report.role === "owner" ? "مالك" : "لاعب");
