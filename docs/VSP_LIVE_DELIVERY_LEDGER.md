@@ -1,3 +1,9 @@
+## 2026-11-17 — ACCEPTED 49.04 scoped notification settings and 54.01 active-return metric definition (+2)
+
+[Exact-commit Flutter CI SUCCESS, 30 tests plus Analyze](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44144855159) at `bc293e3`. Local preferences saving and per-account UI recovery now verified at source/unit level (**49.04 narrowly accepted**, not real FCM unsubscribe). Meaningful D1/D7/D30 role, consent, identity and UTC event rules verified (**54.01 narrowly accepted**, not live cohort analytics). [Storage audit 742 files SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44143356917), no hosted version or independent-account security proof; 85.01–85.03 remain open. [Issue 38 evidence](https://github.com/mohamedsalh333555/VSP.App/issues/38).
+
+**633 unique / 274 accepted / 359 open (43.29%).** +2 existing IDs, no new task IDs, no main merge, hosted database/payment write or APK.
+
 ## 2026-11-17 — FCM retry and provider-outage contracts accepted 48.03/48.05/48.07 (+3; 272/361)
 
 - Source [27814f](https://github.com/mohamedsalh333555/VSP.App/commit/27814f65bd097259ecb5ebaacea1f8e81543518a) refactors FCM queue dispatch classification, preserving pgmq retry for non-2xx and ambiguous 2xx; removes raw provider/error logging from worker. [Isolated Deno CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44133120292).
