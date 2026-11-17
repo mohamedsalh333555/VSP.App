@@ -1,3 +1,11 @@
+## 2026-11-17 — Paymob single team refund ownership, League CHECK migration, direct withdrawal CAS (267/366)
+
+- **Confirmed double-refund source route removed:** `confirm_tournament_order_atomic` already inserts `cancellation_refund_queue` for failed-capacity team orders; Webhook formerly called Paymob refund **again**. Now queue-only. [Source commit](https://github.com/mohamedsalh333555/VSP.App/commit/2a32fdf67ec3f0cd170127bc98a392096bf2e7a0); [Deno/Flutter CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44113325380).
+- **Schema drift:** `team_league_payments_status_ck` rejects deployed RPC status outputs. Transactional candidate migration source-committed; [isolated PostgreSQL contract SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44114070373). **Not applied to hosted databases**.
+- **Direct withdrawal refund:** pre-Paymob CAS `paid`→`refund_pending`; no malformed transaction normalization; no raw provider errors. [Deno/Flutter CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44114439885); [two simultaneous PostgreSQL sessions: one CAS winner SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44114766244).
+- **Release gate:** migrated statuses must be deployed to Staging before enabling new withdrawal handler; real Paymob Sandbox/RLS and legacy 1v1/cancelled booking audit still open. [Full bounded evidence](security/VSP_PAYMOB_SINGLE_REFUND_OWNER_LEAGUE_STATUS_CONTRACT_2026-11-17.md).
+- **No false count:** 633 unique / **267 accepted** / **366 open**, 0 newly accepted / 0 new IDs in this batch; no prod writes/real refunds/`main` merge.
+
 ## 2026-11-17 — Release critical-risk fail-closed acceptance: 80.08 (+1; 267/366)
 
 - **Accepted 80.08 narrowly:** [signed APK release security gate](security/VSP_RELEASE_SECURITY_GATE_80_08_ACCEPTANCE_2026-11-17.md) is checked before signing/build; current status HOLD, and synthetic critical finding/unknown reviewer/evidence/SHA mismatches are denied. [CI 9/9 SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44111816114). First CI run failed for Python module import and was corrected; no issue hidden.

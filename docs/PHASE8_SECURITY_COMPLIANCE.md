@@ -1,5 +1,10 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## 2026-11-17 — eliminate duplicate team refund owner and align League CHECK statuses
+
+[Evidence, commits, isolated PostgreSQL CAS and Deno/Flutter CI](security/VSP_PAYMOB_SINGLE_REFUND_OWNER_LEAGUE_STATUS_CONTRACT_2026-11-17.md). Team tournament over-capacity RPC **already queues refunds**; Webhook no longer makes a competing refund call. Current production/Staging Team League status constraint blocks existing refund/cancellation statuses; migration committed and validated only in disposable PostgreSQL, **not deployed**. Direct paid withdrawal now CAS-claims its payment before gateway POST and rejects unverified financial completion. These **source-only** changes do not close the broader SEC-06/SEC-10/31.* tasks. **633 unique / 267 accepted / 366 open**, 0 new accepted for this batch; continue to hold releases until hosted schema and Paymob Sandbox checks.
+
+
 ## 2026-11-17 — Release critical-finding negative gate accepted (80.08)
 
 [Proof: 9/9 GitHub CI tests, source SHA and blocked release workflow](security/VSP_RELEASE_SECURITY_GATE_80_08_ACCEPTANCE_2026-11-17.md). Manual Android release now fails closed when critical findings are listed or when sign-off/evidence/code SHA are missing. The committed release gate remains HOLD. This accepts **80.08 scoped synthetic fail-closed test only**; live Supabase Advisor collection/CI mapping (80.04/80.05), actual remediation (80.06), Sandbox and production release stay open. Current core counter **633 / 267 accepted / 366 open**.
