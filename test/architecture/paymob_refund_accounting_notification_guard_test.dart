@@ -19,13 +19,16 @@ void main() {
   test('successful refund message follows server ledger acceptance', () {
     final source = File('supabase/functions/paymob_webhook/index.ts')
         .readAsStringSync();
-    final refunded = source.indexOf('if (obj.is_refunded === true)');
+    final refunded = source.indexOf('if (obj.is_refunded === true && paymentOutcome === "reversed")');
     final accounting = source.indexOf('"record_booking_gateway_refund_atomic"', refunded);
     final guard = source.indexOf('refundResult?.success !== true', accounting);
+    final duplicateReplay = source.indexOf('if (refundResult?.already_recorded === true)', guard);
     final message = source.indexOf('title: "تم اعتماد الاسترداد المالي!', guard);
+    expect(duplicateReplay, greaterThan(guard));
+    expect(message, greaterThan(duplicateReplay));
     expect(refunded, greaterThan(0));
     expect(accounting, greaterThan(refunded));
     expect(guard, greaterThan(accounting));
-    expect(message, greaterThan(guard));
+    // A duplicate gateway refund must return before any success notice.
   });
 }
