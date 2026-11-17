@@ -1,0 +1,33 @@
+name: VSP FCM queue delivery contracts
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'supabase/functions/fcm_queue_worker/index.ts'
+      - 'supabase/functions/_shared/fcm_queue_delivery.ts'
+      - 'supabase/functions/tests/fcm_queue_delivery_test.ts'
+      - '.github/workflows/fcm-delivery-contracts.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/fcm_queue_worker/index.ts'
+      - 'supabase/functions/_shared/fcm_queue_delivery.ts'
+      - 'supabase/functions/tests/fcm_queue_delivery_test.ts'
+      - '.github/workflows/fcm-delivery-contracts.yml'
+  workflow_dispatch:
+
+jobs:
+  fcm-queue-isolated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.2.12"
+      - name: Test retry, outage recovery, no-token and archive semantics (no network)
+        run: deno test --no-config supabase/functions/tests/fcm_queue_delivery_test.ts
