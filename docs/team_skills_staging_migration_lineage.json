@@ -4,7 +4,7 @@
   "project_ref": "vtwgqyxglevcsxwdmhop",
   "recorded_date": "2026-11-17",
   "branch": "uxlp-44-implementation",
-  "note": "Read-only staging lineage snapshot. Staging versions reflect verified supabase_migrations.schema_migrations entries for Team Skills penalty tie-break and safe in-place regeneration. Local SQL contract CI passed; signed-in multi-account browser/mobile E2E and production SQL body parity remain unverified. Never blindly db push to production. New source 20261117023000 is deliberately UNAPPLIED to staging and production; separate review and verified deployment required. Read-only catalog check verified staging migration 20261117023518 for Team Skills governorate eligibility guard; no production deployment.",
+  "note": "Read-only staging lineage snapshot. Staging versions reflect verified supabase_migrations.schema_migrations entries for Team Skills penalty tie-break and safe in-place regeneration. Local SQL contract CI passed; signed-in multi-account browser/mobile E2E and production SQL body parity remain unverified. Never blindly db push to production. New source 20261117023000 is deliberately UNAPPLIED to staging and production; separate review and verified deployment required. Read-only catalog check verified staging migration 20261117023518 for Team Skills governorate eligibility guard; no production deployment. Stadium governorate creation guard source is unapplied pending successful isolated CI and staging-only review.",
   "migrations": [
     {
       "local_file": "supabase/migrations/20261116030000_team_skills_cup_foundation.sql",
@@ -197,5 +197,7 @@
       "staging_migration_name": "team_skills_registration_governorate_guard_20261117"
     }
   ],
-  "unapplied_source_files": []
+  "unapplied_source_files": [
+    "supabase/migrations/20261117024000_team_skills_create_cup_stadium_governorate_guard.sql"
+  ]
 }
