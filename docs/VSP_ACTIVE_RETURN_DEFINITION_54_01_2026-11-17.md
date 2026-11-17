@@ -21,3 +21,7 @@
 `VSPActiveReturnContract` is a **pure Dart definition and validator**, not a Firebase uploader, retention dashboard or identity joiner. Unit tests cover D1/D7/D30 boundaries, cross-role activity, missing consent/identity, app opens and timezone offsets.
 
 **Acceptance limit for 54.01:** source-only metric definition can be accepted after exact commit Flutter CI. **54.02–54.08 stay open:** actual segmentation, consent implementation, delivery frequency and D7/D30 cohort measurement require real privacy-approved data governance and tooling. No claim of current VSP retention rate or uplift.
+
+## Verified acceptance (2026-11-17)
+
+**54.01 ACCEPTED as an executable metric definition only:** [Flutter Analyze plus 30 focused tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44144855159) on source SHA `bc293e3`. No live Firebase retention report, consented identities or active cohorts were measured. **54.02–54.08 remain open**. Current project count 633 / 274 accepted / 359 open.

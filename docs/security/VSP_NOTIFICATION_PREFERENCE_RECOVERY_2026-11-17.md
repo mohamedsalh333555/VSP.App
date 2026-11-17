@@ -14,4 +14,4 @@ Switches were already stored per-account, but after changing accounts the old to
 ## Tests and limits
 Isolated architecture tests assert account-scope reset, storage failure, reload and save-before-UI contracts; Flutter CI must verify them on the current commit. These source fixes are local to notification settings and do not prove server-side FCM suppression or hosted two-user RLS access.
 
-Task 49.04 remains pending until Flutter CI is green on exact source commit. Other broad notification/consent and cross-account tasks remain open, no schema or production writes. 633 total / 272 accepted / 361 open until evidence.
+49.04 ACCEPTED narrowly after [focused Flutter CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44144855159) on `bc293e3`. Other broad notification/consent and cross-account tasks remain open, no schema or production writes. 633 total / 274 accepted / 359 open after CI proof.

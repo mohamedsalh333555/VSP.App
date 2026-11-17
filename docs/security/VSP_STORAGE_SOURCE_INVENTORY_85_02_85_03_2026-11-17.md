@@ -14,3 +14,7 @@ Relevant advisories (official):
 No hosted runtime version was measured. `supabase/.temp/storage-version` is a local CLI cache, not proof of cloud Storage. **85.01, 85.02 and 85.03 remain OPEN** pending provider-verified hosted patch and real two-account tests, as documented in `VSP_SUPABASE_STORAGE_PAYMOB_SECURITY_INTAKE_2026-11-17.md`.
 
 Branch `uxlp-44-implementation`. No production mutation, new roles, schema changes, keys or deployment. Task inventory still 633 unique / 272 accepted / 361 open until evidence-led promotion.
+
+## Automated source audit results (2026-11-17)
+
+[GitHub CI run 44143356917 SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44143356917): 7 scanner unit tests passed; 742 application source files inspected; 0 S3 presigned PUT source indicators and 0 signed resumable/TUS source indicators. Full JSON artifact is linked in the CI run. This is **not proof** of current hosted Supabase Storage runtime patch version, external apps, dynamic routes or two-account authorization. 85.01–85.03 remain OPEN. Findings documented on [Issue #38](https://github.com/mohamedsalh333555/VSP.App/issues/38).
