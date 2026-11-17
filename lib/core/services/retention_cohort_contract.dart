@@ -45,6 +45,43 @@ class VSPRetentionCohortSegment {
     required this.activeD30,
   });
 
+  /// Privacy-safe local dashboard export. Raw small cohort activity is not
+  /// serialized. Also avoid inferring a small *inactive* group by subtracting
+  /// a published active count from an eligible denominator.
+  Map<String, Object?> toPrivacySafeJson() {
+    int? safeCount(int count) => count == 0 ||
+            count >= VSPRetentionCohorts.minimumReportableCohort
+        ? count
+        : null;
+
+    (int?, int?) day(int eligible, int active) {
+      final visibleEligible = safeCount(eligible);
+      if (visibleEligible == null) return (null, null);
+      final inactive = eligible - active;
+      final safeActive = inactive == 0 ||
+              inactive >= VSPRetentionCohorts.minimumReportableCohort
+          ? safeCount(active)
+          : null;
+      return (visibleEligible, safeActive);
+    }
+
+    final d1 = day(eligibleD1, activeD1);
+    final d7 = day(eligibleD7, activeD7);
+    final d30 = day(eligibleD30, activeD30);
+    return {
+      'role': role,
+      'firstValueEvent': firstValueEvent,
+      'cohortDayUtc': cohortDayUtc.toIso8601String(),
+      'accounts': accounts,
+      'eligibleD1': d1.$1,
+      'activeD1': d1.$2,
+      'eligibleD7': d7.$1,
+      'activeD7': d7.$2,
+      'eligibleD30': d30.$1,
+      'activeD30': d30.$2,
+    };
+  }
+
   double? get d1Rate => eligibleD1 == 0 ? null : activeD1 / eligibleD1;
   double? get d7Rate => eligibleD7 == 0 ? null : activeD7 / eligibleD7;
   double? get d30Rate => eligibleD30 == 0 ? null : activeD30 / eligibleD30;
