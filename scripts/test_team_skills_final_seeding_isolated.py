@@ -43,8 +43,9 @@ def actual_sql() -> str:
     regen_marker = "create or replace function public.team_skills_regenerate_knockout("
     if regen_source.count(regen_marker) != 1:
         raise RuntimeError("Expected one safe-regeneration SQL function")
+    terminator = "end " + chr(36) * 2 + ";"
     regen_function = regen_source[regen_source.index(regen_marker):
-        regen_source.index("end $;",regen_source.index(regen_marker))+len("end $;")]
+        regen_source.index(terminator,regen_source.index(regen_marker))+len(terminator)]
     insert = "-- SAFE_REGENERATION_FUNCTION_HERE"
     if fixture.count(insert) != 1:
         raise RuntimeError("Expected one safe-regeneration fixture insertion marker")
