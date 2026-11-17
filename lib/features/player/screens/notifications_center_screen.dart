@@ -15,6 +15,8 @@ import '../../../core/services/notification/notification_display_text_resolver.d
 import '../../../data/models.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/notification_repository.dart';
+import '../../../core/services/notification/team_invitation_notification_route.dart';
+import '../widgets/team_invitations_sheet.dart';
 import '../../../core/repositories/team_skills_cup_repository.dart';
 import '../widgets/champion/team_skills_cup_tab.dart';
 import '../../../core/utils/app_date_formatter.dart';
@@ -460,6 +462,24 @@ class _NotificationCard extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
+      );
+      return;
+    }
+
+    // Server-generated team membership invitations route to this account's
+    // existing RLS-filtered invitation inbox. No team join is implied just
+    // because the notification was received or tapped.
+    if (TeamInvitationNotificationRoute.opensCurrentPlayerInbox(
+      metadata, userId,
+    )) {
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (_) => FractionallySizedBox(
+          heightFactor: 0.7,
+          child: TeamInvitationsSheet(userId: userId),
+        ),
       );
       return;
     }
