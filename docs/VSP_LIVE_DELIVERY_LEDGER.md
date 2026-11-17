@@ -1,3 +1,10 @@
+## 2026-11-18 — Verified semantic contrast correction and Arabic/English audit (+2; 300/333)
+
+- **05.01:** measured 12 WCAG-style VSP semantic color pairs and corrected `VSPDSSemanticColors.textMuted` on charcoal surfaces. Previous color was 3.66:1 on `surface`; the source change to existing neutral `zinc400` yields **6.91:1 on `surface` and 5.81:1 on `surfaceRaised`**, with 12/12 sampled pairs passing chosen thresholds. Full real-widget/device audit remains open.
+- **04.01:** audited 756 Arabic and 756 English ARB keys: zero missing keys, zero blanks, zero heuristic placeholder mismatches. Whole-lib scan found **33 same-line raw Text candidates**, including 9 containing Latin characters and 24 containing Arabic characters; manual language verification remains open.
+- [Semantic Color Contrast CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44198636272) and [Arabic English Copy Audit CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44198628560) at SHA [6efcd632](https://github.com/mohamedsalh333555/VSP.App/commit/6efcd6322ea0e3dbe6d3162751959ab17f0795f0). [Evidence and limits](VSP_CONTRAST_LOCALIZATION_ACCEPTANCE_04_01_05_01_2026-11-18.md).
+- **633 total / 300 accepted / 333 open (47.39%)**, +2 pre-existing audit IDs, zero new. No global WCAG/i18n production completion or changes to finance, staging, production or main merge.
+
 ## 2026-11-18 — Loading and navigation source inventories (+2; 298/335)
 
 - **03.01:** read-only scan of all 556 non-generated Flutter files: 132 progress/loading signatures (95 files), 12 builder entry points, 43 error states, 31 empty states and 66 retry/forced-refresh references. Inventory-only, not offline success or every screen's correctness.
