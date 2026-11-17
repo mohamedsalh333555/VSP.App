@@ -13,6 +13,6 @@ The existing worker treated any HTTP 2xx from the `fcm_push` function as a succe
 - Add isolated Deno tests for FCM 502 outage, contradictory 200, recovery on third attempt, duplicate-archive avoidance in clean run, no-token skip, archive error, batch continuation, and safe log abstraction; GitHub CI path trigger.
 
 ## Acceptance
-**Before CI:** 48.03 / 48.05 / 48.07 remain unchecked. Accept narrowly for worker-level modeled outage/retry after successful CI on exact commit. Does not prove actual FCM, cron invocation identity, production delivery, real PGMQ visibility, or external network recovery.
+**After CI:** 48.03 / 48.05 / 48.07 ACCEPTED NARROWLY for worker-level modeled outage/retry: [FCM Deno CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44133120292) on [27814f](https://github.com/mohamedsalh333555/VSP.App/commit/27814f65bd097259ecb5ebaacea1f8e81543518a). Does not prove actual FCM, cron invocation identity, production delivery, real PGMQ visibility, or external network recovery.
 
-**Unchanged:** 48.02 durable attempt log and 48.04 send-rate limits remain open. No additional unique task IDs.
+**Unchanged:** 48.02 durable attempt log and 48.04 send-rate limits remain open. Count now 633 total / 272 accepted / 361 remaining; +3 accepted IDs, no additional unique task IDs.

@@ -57,15 +57,18 @@ Deno.test("FCM successful dispatch archives exactly once after delivery", async 
 
 Deno.test("no token is archived intentionally; unknown skipped state is retried", async () => {
   const calls: number[] = [];
-  const result = await processFcmQueueMessages([{ msg_id: 1, message: {} }, { msg_id: 2, message: {} }], {
-    dispatch: async (payload) => Object.keys(payload as object).length === 0
+  const result = await processFcmQueueMessages(
+    [{ msg_id: 1, message: { kind: "no_token" } }, { msg_id: 2, message: { kind: "unexpected_skip" } }],
+    {
+    dispatch: async (payload) => (payload as { kind: string }).kind === "no_token"
       ? reply({ status: "skipped", reason: "no_fcm_token" })
       : reply({ status: "skipped", reason: "provider_unknown" }),
     archive: async (id) => { calls.push(Number(id)); return { data: true }; },
     log: () => {},
   });
-  eq(result.skipped_no_token, 2);
-  eq(calls, [1, 2]);
+  eq(result.skipped_no_token, 1);
+  eq(result.retry_pending, 1);
+  eq(calls, [1]);
 });
 
 Deno.test("archive errors leave message eligible for reprocessing", async () => {

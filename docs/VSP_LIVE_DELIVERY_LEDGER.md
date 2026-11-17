@@ -1,3 +1,10 @@
+## 2026-11-17 — FCM retry and provider-outage contracts accepted 48.03/48.05/48.07 (+3; 272/361)
+
+- Source [27814f](https://github.com/mohamedsalh333555/VSP.App/commit/27814f65bd097259ecb5ebaacea1f8e81543518a) refactors FCM queue dispatch classification, preserving pgmq retry for non-2xx and ambiguous 2xx; removes raw provider/error logging from worker. [Isolated Deno CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44133120292).
+- **Three narrow acceptances:** **48.03** failed full-message send stays unarchived for a next visibility-timeout attempt; **48.05** simulated provider 502/false-200 negative test; **48.07** same queued message succeeds on recovery and archives exactly once in the mocked run. No real Firebase credentials, hosted DB, external token, or production deployment.
+- Mixed per-device partial failures are **not** re-delivered, to avoid duplicating success on other tokens; those require per-device durable tracking. Archive failures may still result in at-least-once duplicates. 48.02 durable attempt history and 48.04 rate limiting remain OPEN. [Boundary report](security/VSP_FCM_QUEUE_DELIVERY_CONTRACT_2026-11-17.md).
+- **633 unique / 272 accepted / 361 open (42.97%)**. +3 accepted existing IDs, +0 new IDs. No main merge, APK or hosted production write.
+
 ## 2026-11-17 — Live Supabase Security Advisor read-only checker ACCEPTED 80.04 (+1; 269/364)
 
 - **80.04 accepted narrowly:** actual read-only Supabase Security Advisor snapshots obtained for hosted staging (229 WARN, 0 ERROR) and production (198 WARN, 0 ERROR); a fail-closed, read-only Management API checker and manual-on-demand GitHub workflow were implemented in [5c6aabc](https://github.com/mohamedsalh333555/VSP.App/commit/5c6aabc30ee24de7bab13418a7bb17f95ad01388). [Offline workflow SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44126115477) and [release gate SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44126114428) on exact commit.
