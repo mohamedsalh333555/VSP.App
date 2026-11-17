@@ -1,0 +1,44 @@
+name: Financial payment regressions
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - uxlp-44-implementation
+    paths:
+      - '.github/workflows/financial-payment-regressions.yml'
+      - 'lib/data/models/booking_models.dart'
+      - 'lib/core/utils/owner_financial_calculator.dart'
+      - 'test/unit/financial_calculator_test.dart'
+      - 'test/core/utils/owner_financial_calculator_test.dart'
+      - 'test/architecture/paymob_verified_notification_contract_test.dart'
+      - 'test/architecture/paymob_refund_accounting_notification_guard_test.dart'
+      - 'supabase/functions/paymob_webhook/index.ts'
+  workflow_dispatch:
+
+concurrency:
+  group: payment-regressions-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  financial-methods-and-receipts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+          channel: stable
+          cache: true
+      - name: Install Flutter dependencies
+        run: flutter pub get
+      - name: Verify normalized venue cash vs wallets and financial receipts
+        run: >-
+          flutter test --concurrency=2
+          test/core/utils/owner_financial_calculator_test.dart
+          test/unit/financial_calculator_test.dart
+          test/architecture/paymob_verified_notification_contract_test.dart
+          test/architecture/paymob_refund_accounting_notification_guard_test.dart
