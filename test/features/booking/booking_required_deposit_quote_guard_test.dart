@@ -4,17 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/booking/booking_price_snapshot_guard.dart';
 
 void main() {
-  bool valid(double total, double deposit, {bool required = true}) =>
+  bool valid(double total, double deposit, {bool needsDeposit = true}) =>
       BookingPriceSnapshotGuard.isValidDepositQuote(
-        bookingTotal: total, deposit: deposit, needsDeposit: required,
+        bookingTotal: total, deposit: deposit, needsDeposit: needsDeposit,
       );
 
   test('valid partial and full required deposits do not exceed booking total', () {
     expect(valid(100, 25), isTrue);
     expect(valid(100, 100), isTrue);
     expect(valid(50.25, 20.10), isTrue);
-    expect(valid(100, 0, required: false), isTrue);
-    expect(valid(100, 50, required: false), isTrue);
+    expect(valid(100, 0, needsDeposit: false), isTrue);
+    expect(valid(100, 50, needsDeposit: false), isTrue);
   });
 
   test('rejects over-collection, required zero and negative deposit', () {
@@ -22,7 +22,7 @@ void main() {
     expect(valid(50, 100), isFalse);
     expect(valid(100, 0), isFalse);
     expect(valid(100, -1), isFalse);
-    expect(valid(100, -1, required: false), isFalse);
+    expect(valid(100, -1, needsDeposit: false), isFalse);
   });
 
   test('rejects non-finite, zero and negative booking totals', () {
