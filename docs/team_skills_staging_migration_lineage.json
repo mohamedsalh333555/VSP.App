@@ -4,7 +4,7 @@
   "project_ref": "vtwgqyxglevcsxwdmhop",
   "recorded_date": "2026-11-17",
   "branch": "uxlp-44-implementation",
-  "note": "Read-only staging lineage snapshot. Staging versions reflect verified supabase_migrations.schema_migrations entries for Team Skills penalty tie-break and safe in-place regeneration. Local SQL contract CI passed; signed-in multi-account browser/mobile E2E and production SQL body parity remain unverified. Never blindly db push to production. New source 20261117023000 is deliberately UNAPPLIED to staging and production; separate review and verified deployment required. Read-only catalog check verified staging migration 20261117023518 for Team Skills governorate eligibility guard; no production deployment. Stadium governorate creation guard source is unapplied pending successful isolated CI and staging-only review. Read-only staging catalog verified create-cup region guard applied at version 20261117025416; no production release.",
+  "note": "Read-only staging lineage snapshot. Staging versions reflect verified supabase_migrations.schema_migrations entries for Team Skills penalty tie-break and safe in-place regeneration. Local SQL contract CI passed; signed-in multi-account browser/mobile E2E and production SQL body parity remain unverified. Never blindly db push to production. Source 20261117023000 is applied on staging only as version 20261117023518; production remains unchanged. Read-only catalog check verified staging migration 20261117023518 for Team Skills governorate eligibility guard; no production deployment. Stadium governorate creation guard source was applied and verified on staging only. Read-only staging catalog verified create-cup region guard applied at version 20261117025416; no production release. Staging version 20261117032927 applied and verified active-roster champion-notification recipient exclusion; no production rollout or customer rows modified.",
   "migrations": [
     {
       "local_file": "supabase/migrations/20261116030000_team_skills_cup_foundation.sql",
@@ -200,9 +200,12 @@
       "local_file": "supabase/migrations/20261117024000_team_skills_create_cup_stadium_governorate_guard.sql",
       "staging_version": "20261117025416",
       "staging_migration_name": "team_skills_create_cup_stadium_governorate_guard_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117033000_team_skills_award_notification_active_roster_guard.sql",
+      "staging_version": "20261117032927",
+      "staging_migration_name": "team_skills_award_notification_active_roster_guard_20261117"
     }
   ],
-  "unapplied_source_files": [
-    "supabase/migrations/20261117033000_team_skills_award_notification_active_roster_guard.sql"
-  ]
+  "unapplied_source_files": []
 }
