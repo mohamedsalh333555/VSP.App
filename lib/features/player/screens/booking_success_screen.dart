@@ -190,8 +190,9 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
        const SizedBox(width: 6),
        Text(
          bookingStatusHeading,
-         style: const TextStyle(
-           color: VSPColors.accent,
+         // Pending/cancelled status must not inherit the positive accent.
+         style: TextStyle(
+           color: confirmationColor,
            fontWeight: FontWeight.w800,
            fontSize: 12,
          ),
