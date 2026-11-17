@@ -443,7 +443,8 @@ serve(async (req: Request) => {
     try {
       await persistPaymobOrder();
     } catch (persistError) {
-      console.error("Failed to persist Paymob order correlation:", persistError);
+      // Database errors may contain identifiers, SQL or sensitive metadata.
+      console.error("Failed to persist Paymob order correlation");
       return new Response(
         JSON.stringify({ error: "Failed to persist secure payment correlation" }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -474,9 +475,12 @@ serve(async (req: Request) => {
       }
     );
   } catch (err: any) {
-    console.error("Unhandled error in create_paymob_intention:", err);
+    // Do not forward internal/third-party exception messages to Flutter.
+    console.error("Unhandled error in create_paymob_intention", {
+      reason: err instanceof Error ? err.name : "unknown",
+    });
     return new Response(
-      JSON.stringify({ error: err?.message || String(err) }),
+      JSON.stringify({ error: "Unable to create a payment session" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
