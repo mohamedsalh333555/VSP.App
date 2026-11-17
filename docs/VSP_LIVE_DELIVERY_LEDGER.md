@@ -1,3 +1,10 @@
+## 2026-11-17 — 54.07 local opt-out tests narrowly accepted (+1; 280/353)
+
+- Existing **54.07** accepted only for local/foreground opt-out: reminder scheduling rechecks saved account consent after native scheduling and async quota persistence and cancels upon revocation; booking-confirmation inbox writes do not follow a switched current account.
+- Focused [Flutter analyze/tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44178671321) at [80fefcc](https://github.com/mohamedsalh333555/VSP.App/commit/80fefccbea1a79770eb12872e76519b00b3d18ea); includes opt-out persistence with isolated accounts and source-order regression checks. [Exact evidence and exclusions](VSP_NOTIFICATION_OPTOUT_54_07_ACCEPTANCE_2026-11-17.md).
+- Read-only [Supabase advisor revisit](security/VSP_SUPABASE_ADVISOR_READONLY_2026-11-17_LATE.md): staging 229 WARN, production 198 WARN, zero ERROR; privileged RPCs are advisory findings, not confirmed exploits.
+- **633 unique / 280 accepted / 353 open (44.23%).** Tasks **54.04/54.08** remain open for server FCM consent and true cross-device re-engagement exclusion. No production change, no main merge, no live push or user-data mutation.
+
 ## 2026-11-17 — 54.05 local match reminder cap accepted narrowly (+1; 279/354)
 
 - **54.05** implements a best-effort per-account cap of 3 native match reminders per UTC day, with booking ID reuse, moved-booking day replacement, old reminder invalidation and legacy ID cancellation.
