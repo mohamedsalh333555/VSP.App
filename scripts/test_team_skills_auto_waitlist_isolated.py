@@ -29,7 +29,7 @@ def main() -> int:
         if result.returncode:
             print('TEAM_SKILLS_AUTO_WAITLIST_FAILED: '+result.stderr[-2600:],file=sys.stderr)
             return 1
-        print('PASS: 4 pending + 4 waitlisted; 9th denied; captains isolated; audit correct')
+        print('PASS: 4 pending + 4 waitlisted; 9th denied; duplicate rejected; closed/draft enrollment refused; roster and audit unchanged')
         return 0
     finally:
         dropped = psql('postgres',command='DROP DATABASE IF EXISTS '+DATABASE+' WITH (FORCE)')
