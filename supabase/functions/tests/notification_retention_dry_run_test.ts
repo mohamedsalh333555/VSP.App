@@ -103,5 +103,5 @@ Deno.test("every result is inspection-only, never a deletion command", () => {
   const prepared = prepareInboxRetentionDryRun(input());
   const encoded = JSON.stringify(prepared);
   assert(prepared.autoDeleteAllowed === false);
-  assert(!/\\b(?:delete\\s+from|truncate\\s+table|drop\\s+table)\\b/i.test(encoded));
+  assert(!/\b(?:delete\s+from|truncate\s+table|drop\s+table)\b/i.test(encoded));
 });
