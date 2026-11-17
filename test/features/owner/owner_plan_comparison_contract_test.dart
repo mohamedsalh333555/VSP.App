@@ -94,6 +94,12 @@ void main() {
     expect(src, contains('المزايا المعروضة مأخوذة من تفاصيل الباقات الحالية.'));
     expect(src, contains('Could not load current plan prices and features.'));
     expect(src, contains('fetchPublicPlans()'));
+    expect(src, contains("plan['code'] != 'basic'"));
+    expect(src, contains('(monthly == 0 && yearly == 0)'));
+    expect(src, contains('basicIsActuallyFree &&'));
+    expect(src, contains("final copilotIncluded = (plan['features'] as Map)['ai_insights'] == true;"));
+    expect(src, contains("copilotIncluded ? ' + Copilot' : ''"));
+
     // Nothing about a pricing-screen view should fire a paid activation event.
     expect(src, isNot(contains('AnalyticsService.logSubscriptionActivated(')));
   });
