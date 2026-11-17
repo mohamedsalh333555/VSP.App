@@ -19,6 +19,10 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   final double onlineHeld;
   final double availableBalance;
   final bool balanceVerified;
+  /// Revenue totals must only be displayed when the server analytics request
+  /// for the current owner, venue and date range has completed successfully.
+  final bool revenueVerified;
+  final bool revenueLoading;
   final double upcomingValue;
   final bool isProOwner;
   final VoidCallback onOpenLedger;
@@ -36,6 +40,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     this.onlineHeld = 0.0,
     required this.availableBalance,
     this.balanceVerified = true,
+    this.revenueVerified = true,
+    this.revenueLoading = false,
     this.upcomingValue = 0.0,
     required this.isProOwner,
     required this.onOpenLedger,
@@ -110,7 +116,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                VSPMoneyFormatter.amount(collectedTotal),
+                revenueVerified ? VSPMoneyFormatter.amount(collectedTotal) : '—',
                 style: const TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -120,7 +126,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Text(
+              if (revenueVerified)
+                Text(
                 currency,
                 style: const TextStyle(
                   fontSize: 13,
@@ -139,6 +146,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                   label: isArabic ? 'كاش متحصل' : 'Cash collected',
                   value: collectedCash,
                   currency: currency,
+                  verified: revenueVerified,
                 ),
               ),
               const SizedBox(width: 10),
@@ -148,12 +156,29 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                   label: isArabic ? 'أونلاين متحصل' : 'Online collected',
                   value: collectedOnline,
                   currency: currency,
+                  verified: revenueVerified,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          if (isProOwner)
+          if (!revenueVerified)
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                revenueLoading
+                    ? (isArabic
+                        ? 'جارٍ التحقق من مبالغ التحصيل الحالية.'
+                        : 'Verifying current collection amounts.')
+                    : (isArabic
+                        ? 'تعذر التحقق من التحصيل الحالي. لا نعرض مبالغ قديمة أو صفراً افتراضياً.'
+                        : 'Collection totals could not be verified. Old amounts and assumed zeros are hidden.'),
+                style: const TextStyle(
+                  color: VSPColors.textSecondary, fontSize: 12,
+                ),
+              ),
+            )
+          else if (isProOwner)
             _buildProCollectionIntelligence(
               currency: currency,
               cashDue: cashDue,
@@ -264,7 +289,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
               ),
             ),
           ],
-          if (upcomingValue > 0.009) ...[
+          if (revenueVerified && upcomingValue > 0.009) ...[
             const SizedBox(height: 10),
             Text(
               isArabic
@@ -530,6 +555,7 @@ class _MoneySplit extends StatelessWidget {
   final double value;
   final String currency;
   final bool highlight;
+  final bool verified;
 
   const _MoneySplit({
     required this.icon,
@@ -537,6 +563,7 @@ class _MoneySplit extends StatelessWidget {
     required this.value,
     required this.currency,
     this.highlight = false,
+    this.verified = true,
   });
 
   @override
@@ -581,7 +608,7 @@ class _MoneySplit extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${VSPMoneyFormatter.amount(value)} $currency',
+            verified ? '${VSPMoneyFormatter.amount(value)} $currency' : '—',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
