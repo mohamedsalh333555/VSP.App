@@ -153,3 +153,24 @@ Deno.test("Queue completes only after all confirmed financial ledger writes", as
       "failed ledger not escalated to manual reconciliation: "+table);
   }
 });
+
+Deno.test("Refund success rejects contradictory and nonboolean provider flags", () => {
+  assert(isConfirmedPaymobRefund(true, { success: true, is_refund: true }),
+    "confirmed provider refund rejected");
+  for (const extra of [
+    { is_refund: false }, { is_refund: "false" }, { pending: "false" },
+    { success: "true" }, { error_occured: "false" }, { is_voided: "false" },
+    { is_void: "false" }, { pending: true, is_refund: true },
+  ]) {
+    assert(!isConfirmedPaymobRefund(true, { success: true, ...extra }),
+      "contradictory refund flags accepted: " + JSON.stringify(extra));
+  }
+});
+
+Deno.test("Completed refund queue clears its old dispatch warning only after confirmed ledger", async () => {
+  const src = await Deno.readTextFile(new URL("../process_tournament_refund/index.ts", import.meta.url));
+  assert((src.match(/status: "completed", processed_at: nowIso,\n\s*locked_until: null, failure_reason: null, updated_at: nowIso/g) || []).length === 3,
+    "completed queue still carries a stale gateway dispatch/manual warning");
+  assert((src.match(/failure_reason: "GATEWAY_REFUNDED_LEDGER_RECONCILIATION_REQUIRED"/g) || []).length === 3,
+    "failed refund ledger no longer escalates to explicit manual-review status");
+});

@@ -347,7 +347,7 @@ serve(async (req: Request) => {
             accountingOk = await confirmedRefundLedgerWrite(
               adminClient.from("cancellation_refund_queue")
                 .update({ status: "completed", processed_at: nowIso,
-                  locked_until: null, updated_at: nowIso })
+                  locked_until: null, failure_reason: null, updated_at: nowIso })
                 .eq("id", item.id)
                 .eq("status", "processing"),
             );
@@ -581,7 +581,7 @@ serve(async (req: Request) => {
             accountingOk = await confirmedRefundLedgerWrite(
               adminClient.from("vsp_1v1_cancellation_refund_queue")
                 .update({ status: "completed", processed_at: nowIso,
-                  locked_until: null, updated_at: nowIso })
+                  locked_until: null, failure_reason: null, updated_at: nowIso })
                 .eq("id", item.id)
                 .eq("status", "processing"),
             );
@@ -804,7 +804,7 @@ serve(async (req: Request) => {
             accountingOk = await confirmedRefundLedgerWrite(
               adminClient.from("team_league_cancellation_refund_queue")
                 .update({ status: "completed", processed_at: nowIso,
-                  locked_until: null, updated_at: nowIso })
+                  locked_until: null, failure_reason: null, updated_at: nowIso })
                 .eq("id", item.id)
                 .eq("status", "processing"),
             );
