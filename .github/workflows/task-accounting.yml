@@ -43,8 +43,8 @@ jobs:
           remaining = result["not_accepted"]
           total = result["total"]
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
-              f.write(f"## VSP core task counter\\n\\n")
-              f.write(f"**{completed} accepted / {remaining} open / {total} total**\\n\\n")
-              f.write(f"**{completed / total * 100:.2f}% complete**\\n\\n")
-              f.write("Only accepted checklist entries count; commits and passing tests are not task IDs.\\n")
+              f.write(f"## VSP core task counter\n\n")
+              f.write(f"**{completed} accepted / {remaining} open / {total} total**\n\n")
+              f.write(f"**{completed / total * 100:.2f}% complete**\n\n")
+              f.write("Only accepted checklist entries count; commits and passing tests are not task IDs.\n")
           PY
