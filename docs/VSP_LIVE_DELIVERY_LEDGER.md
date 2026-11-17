@@ -1,3 +1,9 @@
+## 2026-11-17 — 54.03 match-reminder timing accepted, narrow local scope (+1; 278/355)
+
+- Replaced incorrect immediate `show` with kickoff-minus-2-hour `zonedSchedule` at UTC instant; per-account/booking stable IDs and account-scoped preferences; cancel on normal sign-out and saved general/reminder opt-out. [Sources and limits](VSP_MATCH_REMINDER_SCHEDULE_54_03_2026-11-17.md).
+- [Specialized Flutter Analyze and tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44161802294) on [8e431bf](https://github.com/mohamedsalh333555/VSP.App/commit/8e431bfe5cbe6c9ad6e14e5a6edbae15b9fbe2f0). Not a real-device delivery/Android idle timing test or global FCM consent compliance.
+- **633 unique / 278 accepted / 355 open (43.92%)**. One pre-existing ID, no new tasks, database writes, production notifications, APK or main merge.
+
 ## 2026-11-17 — 48.04 / 49.01 / 54.02 narrowly accepted (+3; 277/356)
 
 - **48.04:** [FCM queue pacing CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44160181074) for 5 worker calls per invocation, 2 per recipient per batch, overflow remains queued. This is NOT a durable cross-instance provider quota. [Implementation](security/VSP_FCM_WORKER_PACING_48_04_2026-11-17.md).

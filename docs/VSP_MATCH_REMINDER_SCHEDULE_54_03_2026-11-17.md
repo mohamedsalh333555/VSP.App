@@ -18,3 +18,7 @@ Unit/source contract tests cover DST absolute times, future-only trigger, stable
 
 ## Follow-on opt-out hardening
 Both `notif_general` and `notif_match_reminders` switch handlers now cancel the account's scheduled native reminders **only after local opt-out persistence succeeded**. A failed save does not report a successful switch; a cancellation failure is caught to avoid reversing an already saved opt-out. The active-account scope is retained. The specialized Flutter CI now includes both new focused tests and their source dependency paths.
+
+## Focused acceptance evidence, 17 November 2026
+
+**54.03 ACCEPTED, narrowly scoped** to fixing the existing local match reminder timing and lifecycle, not broad engagement messaging. [Specialized Flutter Analyze and focused tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44161802294) on [8e431bf](https://github.com/mohamedsalh333555/VSP.App/commit/8e431bfe5cbe6c9ad6e14e5a6edbae15b9fbe2f0). No physical Android/iOS delivery or exact idle timing claimed. Current project accounting: 633 total, 278 accepted, 355 open.
