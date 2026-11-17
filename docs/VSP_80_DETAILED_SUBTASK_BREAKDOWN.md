@@ -407,12 +407,12 @@
 
 - [x] 30.01 — تحديد مصدر حقيقة الدفع — [مصدر الحقيقة والتسوية](VSP_PAYMENT_SERVER_SOURCE_OF_TRUTH_30_01.md)، commit `41a4552`
 - [ ] 30.02 — التحقق من توقيع webhook
-- [ ] 30.03 — ربط المعاملة بالحجز
-- [ ] 30.04 — معالجة webhook المكرر
-- [ ] 30.05 — تسوية الحالات غير المتطابقة
+- [ ] 30.03 — ربط المعاملة بالحجز — [كود Partial/CI، بدون قبول Staging](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md)
+- [ ] 30.04 — معالجة webhook المكرر — [كود Partial/CI، بدون قبول Staging](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md)
+- [ ] 30.05 — تسوية الحالات غير المتطابقة — [كود Partial/CI، بدون قبول Staging](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md)
 - [ ] 30.06 — إضافة سجل تدقيق
 - [ ] 30.07 — اختبار sandbox
-- [ ] 30.08 — اختبار webhook بتوقيع غير صالح وترتيب أحداث معكوس
+- [ ] 30.08 — اختبار webhook بتوقيع غير صالح وترتيب أحداث معكوس — [كود Partial/CI، بدون قبول Staging](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md)
 
 ### 31 — Refund queues and notifications (8)
 

@@ -1,5 +1,12 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## 2026-11-17 — Paymob signed pending/void/refund safeguards and order binding
+
+- [Latest bounded source security batch, CI and deployment blockers](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md): confirmed locally from source, signed-but-pending webhook previously could cancel a still-pending booking; flags for reversed/authorization-only transactions were not excluded from generic success; duplicate refunded callbacks could repeat direct notices; checkout order binding would not detect a successful zero-row UPDATE. Source-fixed and Deno/Flutter financial CI verified for these paths, **not production tested**.
+- Five checkout types now require verified persisted `paymob_order_id`; unmatched state or identity fails closed before exposing client secret. [CI payment SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103800758), [isolated SQL SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103816555), [owner checkout SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103816707) at `b2c42d4e`.
+- Existing `30.*` / `63.*` / `SEC-06` / `SEC-10` remain OPEN until end-to-end provider and cross-account checks. The three `85.*` Storage advisory applicability checks remain OPEN; no fresh task duplication. **633 total / 266 accepted / 367 open**. No real payment, hosted deployment, secret access or `main` merge.
+
+
 
 ## 2026-11-17 — SEC-NEW-01..05 intake and verified Paymob code follow-up
 
