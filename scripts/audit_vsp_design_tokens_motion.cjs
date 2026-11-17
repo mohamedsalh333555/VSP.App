@@ -21,7 +21,8 @@ const SOURCE_PATTERNS = {
   edgeInsets: /\bEdgeInsets(?:Directional)?\.(?:all|only|symmetric|fromLTRB|fromSTEB)/g,
   sizeGap: /\bSizedBox\s*\(/g,
   motionToken: /\bVSPDSMotion\.\w+/g,
-  animatedWidget: /\b(?:AnimatedContainer|AnimatedOpacity|AnimatedSwitcher|AnimatedSize|AnimatedScale|AnimatedPositioned|AnimatedAlign|AnimatedRotation|AnimatedSlide|TweenAnimationBuilder|AnimationController|Hero|PageRouteBuilder)\b/g,
+  animatedWidget: /\b(?:AnimatedContainer|AnimatedOpacity|AnimatedSwitcher|AnimatedSize|AnimatedScale|AnimatedPositioned|AnimatedAlign|AnimatedRotation|AnimatedSlide|AnimatedCrossFade|AnimatedPadding|AnimatedTheme|AnimatedDefaultTextStyle|AnimatedPhysicalModel|AnimatedList|TweenAnimationBuilder|AnimationController|CurvedAnimation|FadeTransition|SlideTransition|ScaleTransition|SizeTransition|RotationTransition|PositionedTransition|AlignTransition|Hero)\b/g,
+  routeTransition: /\b(?:PageRouteBuilder|MaterialPageRoute|CupertinoPageRoute|CustomTransitionPage|NoTransitionPage)\b/g,
   explicitMotionDuration: /\bDuration\s*\(\s*(?:milliseconds|microseconds|seconds)\s*:/g,
   reduceMotionGate: /\b(?:disableAnimationsOf|accessibleNavigationOf|MediaQueryData\s*\.\s*disableAnimations)\b/g,
 };
@@ -91,6 +92,7 @@ function auditSource(root) {
       'Automated source-only inventory: counts are approximate and are not defect findings.',
       'Generated .g.dart/.freezed.dart/.gr.dart files and the generated/ directory are excluded.',
       'Inline expressions in code strings or multi-line comments may be counted; verify before remediation.',
+      'Navigation routes are counted as transition review points; default routes are not necessarily custom animations.',
       'Animation inventory does not prove runtime reduced-motion support; Android device testing remains open.',
     ],
   };
