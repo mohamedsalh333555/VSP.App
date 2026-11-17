@@ -26,6 +26,7 @@ import 'package:app_links/app_links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/vsp_time_service.dart';
 import 'core/navigation/app_router.dart';
+import 'core/navigation/pending_deep_link_account_guard.dart';
 import 'dart:async';
 
 import 'package:flutter_web_plugins/url_strategy.dart';
@@ -296,19 +297,40 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
  }
 
   Future<void> _replayPendingDeepLink() async {
-   // Links opened from WhatsApp can arrive before authentication/profile loading
-   // finishes. Replay exactly once after the authenticated player is ready.
+   // If the app resumes after OAuth, wait for a fully hydrated account.
    for (var attempt = 0; attempt < 20; attempt++) {
      if (!mounted) return;
      final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-     if (auth.isAuthenticated && auth.userModel?.isRegistrationComplete == true) {
-       final prefs = await SharedPreferences.getInstance();
-       final raw = prefs.getString('pending_deep_link');
-       if (raw == null || raw.isEmpty) return;
-       await prefs.remove('pending_deep_link');
-       final uri = Uri.tryParse(raw);
-       if (uri == null) return;
-       _handleDeepLink(uri);
+     final expectedUserId = auth.currentUser?.id;
+
+     bool sameVerifiedAccount() {
+       if (!mounted) return false;
+       final current = Provider.of<app_auth.AuthProvider>(context, listen: false);
+       return PendingDeepLinkAccountGuard.canReplay(
+         requestedForUserId: expectedUserId,
+         currentUserId: current.currentUser?.id,
+         profileUserId: current.userModel?.uid,
+         isAuthenticated: current.isAuthenticated,
+         isRegistrationComplete: current.userModel?.isRegistrationComplete == true,
+       );
+     }
+
+     if (sameVerifiedAccount()) {
+       // Only one of RootScreen or startup may consume a stored intent.
+       if (!PendingDeepLinkAccountGuard.tryAcquire()) return;
+       try {
+         final prefs = await SharedPreferences.getInstance();
+         if (!sameVerifiedAccount()) return;
+         final raw = prefs.getString('pending_deep_link');
+         if (raw == null || raw.isEmpty) return;
+         final uri = Uri.tryParse(raw);
+         final parsed = uri == null ? null : DeepLinkHelper.parse(uri);
+         await prefs.remove('pending_deep_link');
+         if (parsed == null || !sameVerifiedAccount()) return;
+         _router.push(parsed.routePath);
+       } finally {
+         PendingDeepLinkAccountGuard.release();
+       }
        return;
      }
      await Future<void>.delayed(const Duration(milliseconds: 250));
