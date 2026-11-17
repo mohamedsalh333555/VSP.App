@@ -9,12 +9,16 @@ on:
     paths:
       - 'supabase/functions/_shared/notification_retention_policy.ts'
       - 'supabase/functions/tests/notification_retention_policy_test.ts'
+      - 'supabase/functions/_shared/notification_retention_dry_run.ts'
+      - 'supabase/functions/tests/notification_retention_dry_run_test.ts'
       - '.github/workflows/notification-inbox-retention-contract.yml'
   pull_request:
     branches: [main]
     paths:
       - 'supabase/functions/_shared/notification_retention_policy.ts'
       - 'supabase/functions/tests/notification_retention_policy_test.ts'
+      - 'supabase/functions/_shared/notification_retention_dry_run.ts'
+      - 'supabase/functions/tests/notification_retention_dry_run_test.ts'
       - '.github/workflows/notification-inbox-retention-contract.yml'
   workflow_dispatch:
 
@@ -28,4 +32,7 @@ jobs:
         with:
           deno-version: "2.2.12"
       - name: Verify reminder retention cutoffs and financial/audit safety (offline)
-        run: deno test --no-config supabase/functions/tests/notification_retention_policy_test.ts
+        run: >-
+          deno test --no-config
+          supabase/functions/tests/notification_retention_policy_test.ts
+          supabase/functions/tests/notification_retention_dry_run_test.ts
