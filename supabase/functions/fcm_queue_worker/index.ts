@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { processFcmQueueMessages } from "../_shared/fcm_queue_delivery.ts";
+import { isValidPgmqReadBatch, processFcmQueueMessages } from "../_shared/fcm_queue_delivery.ts";
 import { checkFcmWorkerAccess } from "../_shared/fcm_queue_auth.ts";
 
 declare const Deno: any;
@@ -40,7 +40,14 @@ serve(async (req: Request) => {
       console.error("FCM queue read failed");
       return new Response(JSON.stringify({ error: "Queue temporarily unavailable" }), { status: 503 });
     }
-    if (!Array.isArray(messages) || messages.length === 0) {
+    if (!isValidPgmqReadBatch(messages)) {
+      // A broken or version-drifted RPC response is not an empty queue.
+      console.error("FCM queue read returned invalid batch");
+      return new Response(JSON.stringify({ error: "Queue temporarily unavailable" }), {
+        status: 503,
+      });
+    }
+    if (messages.length === 0) {
       return new Response(JSON.stringify({ processed: 0 }), { status: 200 });
     }
     const stats = await processFcmQueueMessages(messages, {

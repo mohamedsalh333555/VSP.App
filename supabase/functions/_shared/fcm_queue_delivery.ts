@@ -4,6 +4,21 @@
  * has been archived. This intentionally preserves at-least-once semantics.
  */
 export type QueueMessage = { msg_id: number | string; message: unknown };
+
+/** An invalid RPC response must never be treated as an empty queue.
+ * pgmq_read returns a JSON array of messages (including [] when empty).
+ */
+export function isValidPgmqReadBatch(value: unknown): value is QueueMessage[] {
+  if (!Array.isArray(value)) return false;
+  return value.every((row) => {
+    if (!row || typeof row !== "object" || Array.isArray(row) || !("message" in row)) {
+      return false;
+    }
+    const id = (row as { msg_id?: unknown }).msg_id;
+    return (typeof id === "number" && Number.isSafeInteger(id) && id > 0) ||
+      (typeof id === "string" && /^[1-9][0-9]*$/.test(id));
+  });
+}
 export type QueueStats = {
   attempted: number;
   delivered: number;
@@ -66,7 +81,10 @@ export async function processFcmQueueMessages(
         deps.log("partial_device_failure", msg.msg_id);
       }
       const archived = await deps.archive(msg.msg_id);
-      if (archived?.error || archived?.data === false) {
+      // The actual hosted public.pgmq_archive RPC returns boolean.
+      // Only an explicit true confirms the message was archived.
+      // null/undefined/0/"true" must not count as delivery.
+      if (archived?.error || archived?.data !== true) {
         stats.archive_failed++;
         deps.log("archive_failed", msg.msg_id);
         continue;

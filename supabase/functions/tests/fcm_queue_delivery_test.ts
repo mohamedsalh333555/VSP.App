@@ -1,5 +1,5 @@
 import {
-  classifyFcmReply, processFcmQueueMessages,
+  classifyFcmReply, isValidPgmqReadBatch, processFcmQueueMessages,
 } from "../_shared/fcm_queue_delivery.ts";
 import { checkFcmWorkerAccess } from "../_shared/fcm_queue_auth.ts";
 
@@ -127,4 +127,37 @@ Deno.test("FCM worker requires service-to-service bearer before queue access", (
   ]) eq(checkFcmWorkerAccess("POST", header, "secret-for-test"), "unauthorized");
   eq(checkFcmWorkerAccess("GET", "Bearer secret-for-test", "secret-for-test"), "method_not_allowed");
   eq(checkFcmWorkerAccess("POST", "Bearer secret-for-test", ""), "unconfigured");
+});
+
+
+Deno.test("pgmq_read may return empty [] but must not silently accept invalid RPC payload", () => {
+  eq(isValidPgmqReadBatch([]), true);
+  eq(isValidPgmqReadBatch([{ msg_id: 1, message: {} }]), true);
+  eq(isValidPgmqReadBatch([{ msg_id: "9223372036854775807", message: {} }]), true);
+  for (const input of [null, {}, "[]", { error: "database unavailable" },
+    [{ msg_id: 0, message: {} }], [{ msg_id: 1 }],
+    [{ msg_id: "1.5", message: {} }], [{ msg_id: Number.MAX_SAFE_INTEGER + 1, message: {} }]]) {
+    eq(isValidPgmqReadBatch(input), false);
+  }
+});
+
+Deno.test("pgmq_archive must return literal true before message counts as archived", async () => {
+  for (const invalidResult of [
+    { data: null }, {}, { data: false }, { data: 0 }, { data: "true" }, { error: "db down" },
+  ]) {
+    const stat = await processFcmQueueMessages([{ msg_id: 81, message: { kind: "test" } }], {
+      dispatch: async () => reply({ success: true, sent_count: 1, failed_count: 0 }),
+      archive: async () => invalidResult,
+      log: () => {},
+    });
+    eq(stat.archive_failed, 1);
+    eq(stat.delivered, 0);
+  }
+  const stat = await processFcmQueueMessages([{ msg_id: 82, message: {} }], {
+    dispatch: async () => reply({ success: true, sent_count: 1, failed_count: 0 }),
+    archive: async () => ({ data: true }),
+    log: () => {},
+  });
+  eq(stat.archive_failed, 0);
+  eq(stat.delivered, 1);
 });
