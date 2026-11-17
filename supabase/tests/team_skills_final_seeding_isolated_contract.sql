@@ -101,3 +101,63 @@ begin
      where id='00000000-0000-0000-0000-000000000901')<>10 then
   raise exception 'BLOCKED_MUTATION_TOUCHED_ROW';end if;
 end $frozen$;
+
+
+-- Actual server RPC must seed every permitted roster size (5,6,7,8)
+-- without missing or duplicated first-round teams, and never regenerate.
+-- Four-team behavior and the twelve-stage/freeze gates are asserted above.
+do $every_size$
+declare n integer; idx integer; cup uuid; team uuid;
+ first_round_count integer; byes integer; participants integer;
+ denied boolean;
+begin
+ for n in 5..8 loop
+   cup:=('00000000-0000-0000-0000-'||lpad((200+n)::text,12,'0'))::uuid;
+   insert into public.team_skills_cups(id,status) values(cup,'live');
+   for idx in 1..n loop
+     team:=('00000000-0000-0000-0000-'||
+       lpad((n*100+idx)::text,12,'0'))::uuid;
+     insert into public.team_skills_registrations(id,cup_id,status,created_at)
+     values(team,cup,'approved',now()+(idx||' seconds')::interval);
+     insert into public.team_skills_leaderboard(
+       registration_id,points,completed_stages,all_stages_approved)
+     values(team,100-idx,12,true);
+   end loop;
+   if public.team_skills_generate_knockout(cup)<>8 then
+     raise exception 'WRONG_BRACKET_SIZE_FOR_%',n;end if;
+   select count(*),count(*) filter(where status='approved'
+       and winner_registration_id is not null)
+     into first_round_count,byes
+     from public.team_skills_knockout
+     where cup_id=cup and round_no=1;
+   if first_round_count<>4 or byes<>8-n then
+     raise exception 'INVALID_BYE_COUNT_FOR_%: %',n,byes;end if;
+   select count(*) into participants
+   from public.team_skills_knockout k
+   cross join lateral unnest(array[k.first_registration_id,
+                                   k.second_registration_id]) member
+   where k.cup_id=cup and k.round_no=1 and member is not null;
+   if participants<>n or
+      (select count(distinct member)
+       from public.team_skills_knockout k
+       cross join lateral unnest(array[k.first_registration_id,
+                                       k.second_registration_id]) member
+       where k.cup_id=cup and k.round_no=1 and member is not null)<>n
+   then raise exception 'DUPLICATE_OR_MISSING_SEEDED_TEAM_FOR_%',n;end if;
+   if (select count(*) from public.team_skills_knockout
+       where cup_id=cup)<>7 then
+     raise exception 'MISSING_FUTURE_ROUND_FOR_%',n;end if;
+   denied:=false;
+   begin
+     perform public.team_skills_generate_knockout(cup);
+   exception when others then
+     if position('already exists' in lower(sqlerrm))>0 then
+       denied:=true;
+     else raise;end if;
+   end;
+   if not denied or
+      (select count(*) from public.team_skills_knockout
+       where cup_id=cup)<>7 then
+     raise exception 'BRACKET_REGEN_DUPLICATED_MATCHES_FOR_%',n;end if;
+ end loop;
+end $every_size$;
