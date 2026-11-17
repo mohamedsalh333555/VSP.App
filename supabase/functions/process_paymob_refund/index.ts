@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { isConfirmedPaymobRefund } from "../_shared/paymob_refund_safety.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -201,14 +202,12 @@ serve(async (req: Request) => {
     });
 
     if (!authRes.ok) {
-      const errorText = await authRes.text();
       await admin
         .from("transactions")
         .update({
           metadata: {
             ...(claim || {}),
             gateway_error: "Paymob authentication failed",
-            gateway_error_detail: errorText,
             refund_lease_expires_at: new Date().toISOString(),
           },
           updated_at: new Date().toISOString(),
@@ -249,7 +248,7 @@ serve(async (req: Request) => {
         .update({
           metadata: {
             ...(claim || {}),
-            gateway_error: gatewayError?.message || String(gatewayError),
+            gateway_error: "PAYMOB_REFUND_RESULT_UNKNOWN_RECONCILE_BEFORE_RETRY",
             refund_lease_expires_at: new Date().toISOString(),
           },
           updated_at: new Date().toISOString(),
@@ -265,9 +264,8 @@ serve(async (req: Request) => {
       );
     }
 
-    const refundSuccess =
-      refundHttpOk &&
-      (refundResponse.success === true || refundResponse.is_refund === true || Boolean(refundResponse.id));
+    // HTTP 2xx or a provider response ID alone does not prove settlement.
+    const refundSuccess = isConfirmedPaymobRefund(refundHttpOk, refundResponse);
 
     if (!refundSuccess) {
       await admin
@@ -275,8 +273,7 @@ serve(async (req: Request) => {
         .update({
           metadata: {
             ...(claim || {}),
-            gateway_error: refundResponse?.message || refundResponse?.detail || "refund_failed",
-            refund_response: refundResponse,
+            gateway_error: "PAYMOB_REFUND_NOT_CONFIRMED_RECONCILIATION_REQUIRED",
             refund_lease_expires_at: new Date().toISOString(),
           },
           updated_at: new Date().toISOString(),
@@ -359,7 +356,8 @@ serve(async (req: Request) => {
       message: "تم استرداد المبلغ بنجاح عبر Paymob.",
     });
   } catch (e) {
-    console.error("process_paymob_refund:", e);
+    // Do not echo exception objects that may embed provider credentials.
+    console.error("process_paymob_refund failed", { reason: e instanceof Error ? e.name : "unknown" });
     return out(
       {
         success: false,

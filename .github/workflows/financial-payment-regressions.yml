@@ -25,6 +25,8 @@ on:
       - 'supabase/functions/process_tournament_refund/index.ts'
       - 'supabase/functions/_shared/paymob_refund_safety.ts'
       - 'supabase/functions/tests/paymob_refund_safety_test.ts'
+      - 'supabase/functions/tests/paymob_booking_refund_safety_test.ts'
+      - 'supabase/functions/process_paymob_refund/index.ts'
   workflow_dispatch:
 
 concurrency:
@@ -41,7 +43,7 @@ jobs:
         with:
           deno-version: "2.2.12"
       - name: Verify offline SHA-512 vectors and reject unsigned/untrusted logs
-        run: deno test --no-config --allow-read supabase/functions/tests/paymob_hmac_test.ts supabase/functions/tests/paymob_refund_safety_test.ts
+        run: deno test --no-config --allow-read supabase/functions/tests/paymob_hmac_test.ts supabase/functions/tests/paymob_refund_safety_test.ts supabase/functions/tests/paymob_booking_refund_safety_test.ts
 
   financial-methods-and-receipts:
     runs-on: ubuntu-latest
