@@ -485,7 +485,7 @@ serve(async (req: Request) => {
             const refundData = await refundRes.json();
             console.log("Paymob Refund API Response:", JSON.stringify(refundData));
 
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "REFUND_SUCCESS");
             } else {
@@ -604,7 +604,7 @@ serve(async (req: Request) => {
             const refundData = await refundRes.json();
             console.log("Paymob Refund API Response:", JSON.stringify(refundData));
 
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "REFUND_SUCCESS");
             } else {
@@ -752,7 +752,7 @@ serve(async (req: Request) => {
           });
           const refundData = await refundRes.json();
 
-          if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+          if (refundRes.ok && (refundData.success === true || refundData.is_refund === true)) {
             refundSuccess = true;
             refundId = String(refundData.id || refundData.transaction_id || transactionId);
           } else {
@@ -763,24 +763,33 @@ serve(async (req: Request) => {
         }
 
         if (refundSuccess) {
-          await supabase.rpc("record_booking_gateway_refund_atomic", {
-            p_booking_id: bookingId,
-            p_refund_amount: chargedAmountEgp,
-            p_refund_txn_id: refundId,
-            p_refund_payment_method: "card",
-            p_refund_gross_amount: chargedAmountEgp,
-          });
-        } else {
+          const { data: refundAccounting, error: refundAccountingError } =
+            await supabase.rpc("record_booking_gateway_refund_atomic", {
+              p_booking_id: bookingId,
+              p_refund_amount: chargedAmountEgp,
+              p_refund_txn_id: refundId,
+              p_refund_payment_method: "card",
+              p_refund_gross_amount: chargedAmountEgp,
+            });
+          // The gateway response alone does not prove that this refund was
+          // recorded in the server's financial ledger. Never tell the user
+          // the money was refunded if authoritative accounting rejects it.
+          if (refundAccountingError || refundAccounting?.success !== true) {
+            refundSuccess = false;
+            refundErrorMsg = "Gateway refund acknowledged; server refund accounting remains unverified";
+          }
+        }
+        if (!refundSuccess) {
           await supabase
             .from("bookings")
             .update({
               payment_status: "refund_pending",
               refund_amount: chargedAmountEgp,
-              cancellation_reason: "انتهت مهلة الدفع ولم يكتمل الحجز، والاسترداد يحتاج معالجة.",
+              cancellation_reason: "الاسترداد يحتاج مراجعة التسوية مع مزود الدفع.",
               updated_at: new Date().toISOString(),
             })
             .eq("id", bookingId)
-        .eq("status", "pending");
+            .eq("status", "cancelled");
         }
 
         await supabase.from("webhook_logs").insert({
