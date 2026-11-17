@@ -17,6 +17,7 @@ on:
       - 'lib/features/player/widgets/payment/payment_security_footer.dart'
       - 'lib/features/player/screens/payment_gateway_screen.dart'
       - 'test/features/booking/payment_fee_cent_precision_test.dart'
+      - 'test/features/booking/booking_price_clarity_widget_test.dart'
       - 'test/unit/financial_calculator_test.dart'
       - 'test/core/utils/owner_financial_calculator_test.dart'
       - 'test/architecture/paymob_verified_notification_contract_test.dart'
@@ -75,6 +76,7 @@ jobs:
           lib/features/player/widgets/payment/payment_breakdown_card.dart
           lib/features/player/widgets/payment/payment_security_footer.dart
           test/features/booking/payment_fee_cent_precision_test.dart
+          test/features/booking/booking_price_clarity_widget_test.dart
       - name: Verify normalized venue cash vs wallets and financial receipts
         run: >-
           flutter test --concurrency=2
@@ -83,3 +85,4 @@ jobs:
           test/architecture/paymob_verified_notification_contract_test.dart
           test/architecture/paymob_refund_accounting_notification_guard_test.dart
           test/features/booking/payment_fee_cent_precision_test.dart
+          test/features/booking/booking_price_clarity_widget_test.dart
