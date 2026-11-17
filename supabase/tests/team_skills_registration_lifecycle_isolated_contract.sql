@@ -42,11 +42,11 @@ insert into public.teams(id,captain_id) values
 ('00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000009101'),
 ('00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000009102');
 insert into public.team_members(team_id,user_id)
-select '00000000-0000-0000-0000-000000000101',
+select '00000000-0000-0000-0000-000000000101'::uuid,
 ('00000000-0000-0000-0000-'||lpad((1001+n)::text,12,'0'))::uuid
 from generate_series(1,5) n
 union all
-select '00000000-0000-0000-0000-000000000102',
+select '00000000-0000-0000-0000-000000000102'::uuid,
 ('00000000-0000-0000-0000-'||lpad((1101+n)::text,12,'0'))::uuid
 from generate_series(1,5) n;
 insert into public.users(id)
