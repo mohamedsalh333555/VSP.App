@@ -33,6 +33,20 @@ class TeamSkillsCupRepository {
   static bool registrationOpen(Map<String, dynamic>? latestCup) =>
       latestCup?['status'] == 'registration';
 
+  /// The stadium's display name is read separately from the published cup.
+  /// Missing venue access never changes the authoritative cup status.
+  Future<String?> getVenueName(String stadiumId) async {
+    if (stadiumId.isEmpty) return null;
+    try {
+      final row = await _client.from('stadiums')
+          .select('name').eq('id', stadiumId).maybeSingle();
+      final name = row?['name']?.toString().trim();
+      return name == null || name.isEmpty ? null : name;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> getCupById(String cupId) async {
     final row = await _client.from('team_skills_cups')
         .select('id,name,governorate,stadium_id,starts_at,ends_at,max_teams,'

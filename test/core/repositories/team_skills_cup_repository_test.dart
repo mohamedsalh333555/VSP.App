@@ -129,7 +129,10 @@ void main() {
     expect(tab, contains('statusText('));
     expect(tab, contains('if (myRegistrations.isNotEmpty)'));
     // Only the captain's branch can open the registration action form.
-    expect(tab, contains("widget.cup['status'] == 'registration' && _captainTeams.isNotEmpty"));
+    expect(tab, contains('TeamSkillsCupRepository.registrationOpen(visibleCup) && _captainTeams.isNotEmpty'));
+    expect(tab, contains('final freshCup = await widget.repository.getCupById(cupId);'));
+    expect(tab, contains('TeamSkillsCupRepository.registrationOpen(freshCup)'));
+    expect(tab, contains('_cupStateCurrent = false;'));
   });
 
   test('only the active captain may withdraw unpaid pending or waiting requests', () {

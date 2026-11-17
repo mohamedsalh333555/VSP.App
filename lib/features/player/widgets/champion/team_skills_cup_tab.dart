@@ -5,6 +5,7 @@ import '../../../../core/config/app_env.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/team_skills_cup_repository.dart';
 import 'team_skills_roster_correction_screen.dart';
+import 'team_skills_published_details.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../services/team_skills_ranking_service.dart';
 
@@ -155,6 +156,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   Timer? _liveRefreshTimer;
   bool _hasLiveRefreshError = false;
   Map<String, dynamic>? _currentCup;
+  String? _venueName;
   bool _cupStateCurrent = false;
   int _readGeneration = 0;
   bool _hasBoundViewer = false;
@@ -199,6 +201,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       ++_readGeneration;
       _registrations = [];
       _currentCup = null;
+      _venueName = null;
       _cupStateCurrent = false;
       _rankedLeaderboard = [];
       _approvedScores = [];
@@ -243,6 +246,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       ]);
       final memberIds = await memberFuture;
       final currentCup = await cupFuture;
+      final venueName = currentCup == null ? null
+          : await widget.repository.getVenueName(
+              currentCup['stadium_id']?.toString() ?? '');
       final ranking = TeamSkillsRankingService.rank(values[0]);
       final names = await widget.repository.getTeamNames([
         ...values[0].map((row) => row['team_id'].toString()),
@@ -254,6 +260,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       }
       setState(() {
         _currentCup = currentCup;
+        _venueName = venueName;
         _cupStateCurrent = currentCup != null;
         _rankedLeaderboard = ranking;
         _registrations = values[1];
@@ -308,6 +315,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         teams = values[5];
     final memberTeamIds = await memberTeamsFuture;
     final latestCup = await cupFuture;
+    final venueName = latestCup == null ? null
+        : await widget.repository.getVenueName(
+            latestCup['stadium_id']?.toString() ?? '');
     final rankedLeaderboard = TeamSkillsRankingService.rank(ranks);
     final names = await widget.repository.getTeamNames(
       [...ranks.map((e) => e['team_id'].toString()),
@@ -319,10 +329,12 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     if (latestCup == null) {
       _cupStateCurrent = false;
       _currentCup = null;
+      _venueName = null;
       throw StateError('TEAM_SKILLS_CUP_NOT_PUBLISHED');
     }
     setState(() {
       _currentCup = latestCup;
+      _venueName = venueName;
       _cupStateCurrent = true;
       _hasLiveRefreshError = false;
       _rankedLeaderboard = rankedLeaderboard;
@@ -685,8 +697,11 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                 : '2–3 hours. Highest skills score wins; 1v1 and best goalkeeper awards are independent.',
                 style: const TextStyle(color: VSPColors.textSecondary)),
             const SizedBox(height: 8),
-            Text('${displayCup['hospitality_fee']} ${ar ? 'جنيه ضيافة للفريق' : 'EGP hospitality per team'}',
-                style: style),
+            TeamSkillsPublishedDetails(
+              cup: displayCup,
+              stadiumName: _venueName,
+              isArabic: ar,
+            ),
             const SizedBox(height: 20),
             Text(ar ? 'مراحل البطولة' : 'Skills stages',
                 style: const TextStyle(color: VSPColors.white,fontSize:18,fontWeight:FontWeight.bold)),
