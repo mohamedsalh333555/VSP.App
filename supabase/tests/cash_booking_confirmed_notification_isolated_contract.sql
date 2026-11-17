@@ -51,6 +51,54 @@ begin
  then raise exception 'CASH_OWNER_OR_CHALLENGE_RECIPIENT_MISROUTED';end if;
 end $created_confirmed$;
 
+-- Repeated confirmed-state updates must not re-send a challenge invite
+-- or a venue booking notice. The notification already belongs to this booking.
+update public.bookings set status='confirmed'
+ where id='00000000-0000-0000-0000-000000001001';
+update public.bookings set status='confirmed'
+ where id='00000000-0000-0000-0000-000000001001';
+do $challenge_replay$
+begin
+ if (select count(*) from public.notifications
+     where booking_id='00000000-0000-0000-0000-000000001001')<>2
+ or (select count(*) from public.notifications
+     where booking_id='00000000-0000-0000-0000-000000001001'
+       and user_id='00000000-0000-0000-0000-000000000102'
+       and type='challenge_confirmed')<>1
+ then raise exception 'CASH_CHALLENGE_NOTIFICATION_DUPLICATED';end if;
+end $challenge_replay$;
+
+-- A pre-existing notification from the former client does not get sent
+-- again when the server later confirms the same challenge.
+insert into public.bookings(
+ id,stadium_id,created_by_user_id,payment_method,status,booking_type,
+ opponent_team_id,player_team_name,opponent_team_name)
+values('00000000-0000-0000-0000-000000001008',
+ '00000000-0000-0000-0000-000000000001',
+ '00000000-0000-0000-0000-000000000103',
+ 'cash','pending','challenge',
+ '00000000-0000-0000-0000-000000000201','النيل','الجزيرة');
+insert into public.notifications(user_id,title,booking_id,type)
+values('00000000-0000-0000-0000-000000000102',
+ 'تم تأكيد مباراة تحدي!','00000000-0000-0000-0000-000000001008',
+ 'challenge_confirmed');
+update public.bookings set status='confirmed'
+ where id='00000000-0000-0000-0000-000000001008';
+do $legacy_challenge_replay$
+begin
+ if (select count(*) from public.notifications
+      where booking_id='00000000-0000-0000-0000-000000001008')<>2
+ or (select count(*) from public.notifications
+      where booking_id='00000000-0000-0000-0000-000000001008'
+        and user_id='00000000-0000-0000-0000-000000000102'
+        and type='challenge_confirmed')<>1
+ or (select count(*) from public.notifications
+      where booking_id='00000000-0000-0000-0000-000000001008'
+        and user_id='00000000-0000-0000-0000-000000000101'
+        and metadata->>'event'='cash_booking_confirmed')<>1
+ then raise exception 'LEGACY_CHALLENGE_RECEIPT_RESENT';end if;
+end $legacy_challenge_replay$;
+
 -- Cash booking starts pending. Notification only when the authoritative
 -- booking status is changed to confirmed, never on a repeated same status.
 insert into public.bookings(id,stadium_id,owner_id,created_by_user_id,
