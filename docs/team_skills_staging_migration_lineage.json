@@ -208,6 +208,7 @@
     }
   ],
   "unapplied_source_files": [
-    "supabase/migrations/20261117061000_team_skills_approved_phase_score_notification.sql"
+    "supabase/migrations/20261117061000_team_skills_approved_phase_score_notification.sql",
+    "supabase/migrations/20261117062000_team_skills_knockout_approved_advancement_notification.sql"
   ]
 }
