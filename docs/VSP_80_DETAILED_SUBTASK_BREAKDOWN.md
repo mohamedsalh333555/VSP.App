@@ -559,10 +559,10 @@
 
 ### 42 — Admin result approval (8)
 
-- [ ] 42.01 — عرض النتائج المعلقة للمشرف
+- [x] 42.01 — عرض النتائج المعلقة للمشرف — [قبول محدود لبطولة المهارات — مراجعة ورفض النتائج](VSP_TEAM_SKILLS_PENDING_REJECTION_ACCEPTANCE_2026-11-17.md) (Team Skills فقط؛ JWT E2E غير معتمد)
 - [x] 42.02 — التحقق من صلاحيات المشرف — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
 - [x] 42.03 — اعتماد النتيجة — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
-- [ ] 42.04 — رفض النتيجة وإعادتها
+- [x] 42.04 — رفض النتيجة وإعادتها — [قبول محدود لبطولة المهارات — مراجعة ورفض النتائج](VSP_TEAM_SKILLS_PENDING_REJECTION_ACCEPTANCE_2026-11-17.md) (Team Skills فقط؛ JWT E2E غير معتمد)
 - [x] 42.05 — تحديث الجداول بعد الاعتماد — [SQL قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_ADVANCEMENT_RANKING_ACCEPTANCE_2026-11-17.md) (التأهل/الترتيب المعتمد في SQL فقط؛ JWT والأجهزة مفتوحة)
 - [x] 42.06 — تسجيل أثر التدقيق — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
 - [x] 42.07 — اختبار منع الاعتماد المكرر — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
