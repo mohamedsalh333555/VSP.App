@@ -100,7 +100,7 @@ class PaymentBreakdownCard extends StatelessWidget {
           const SizedBox(height: 6),
           _buildFeeRow(
             label: isArabic ? 'مصاريف إدارية' : 'Administrative Fee',
-            value: '${serviceFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
+            value: '${VSPMoneyFormatter.amount(serviceFee)} ${isArabic ? 'ج.م' : 'EGP'}',
             isBold: false,
             onInfoTap: () => showFeeTransparencyModal(context, isArabic),
             infoTooltip: isArabic ? 'تفاصيل المصاريف الإدارية' : 'Fee details',
@@ -108,7 +108,7 @@ class PaymentBreakdownCard extends StatelessWidget {
           const SizedBox(height: 6),
           _buildFeeRow(
             label: isArabic ? 'إجمالي المطلوب دفعه الآن' : 'Total Amount Due Now',
-            value: '${totalWithFees.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
+            value: '${VSPMoneyFormatter.amount(totalWithFees)} ${isArabic ? 'ج.م' : 'EGP'}',
             isBold: true,
           ),
           if (hasDeposit && (bookingDraft.totalPrice - amountToPay) > 0) ...[
