@@ -529,7 +529,7 @@
 ### 39 — Registration/eligibility (7)
 
 - [x] 39.01 — تسجيل فريق أو لاعب — [SQL قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_REGISTRATION_LIFECYCLE_ACCEPTANCE_2026-11-17.md) (حساب الكابتن والصلاحيات محاكاة محلية؛ JWT والأجهزة مفتوحة)
-- [ ] 39.02 — التحقق من المحافظة والأهلية
+- [x] 39.02 — التحقق من المحافظة والأهلية — [قبول SQL وتجربة Staging لبطولة مهارات الفرق فقط](VSP_TEAM_SKILLS_GOVERNORATE_ELIGIBILITY_ACCEPTANCE_39_02_2026-11-17.md) (اختبارات JWT والأجهزة لا تزال ضمن 59 و79)
 - [x] 39.03 — التحقق من السعة — [دليل قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_CAPACITY_ACCEPTANCE_38_03_39_03_2026-11-17.md) (Team Skills Cup فقط، اختبارات SQL معزولة وCI؛ الرحلات الحقيقية ما زالت مفتوحة)
 - [x] 39.04 — منع التسجيل المكرر — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
 - [x] 39.05 — تطبيق موعد الإغلاق — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
