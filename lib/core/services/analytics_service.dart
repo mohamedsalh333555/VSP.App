@@ -79,8 +79,8 @@ class AnalyticsService {
 
   static final AnalyticsSessionDedupe _sessionDedupe = AnalyticsSessionDedupe();
 
-  // Deliberate allowlist: callers must never send per-user, per-team,
-  // per-venue or per-booking identifiers, even under an innocuous key.
+  // Only reviewed aggregate dimensions are allowed; no user, venue,
+  // booking or team IDs are transmitted as event parameters.
   static const Set<String> _categoricalParameterKeys = <String>{
     'role',
     'plan_code',
@@ -93,194 +93,21 @@ class AnalyticsService {
     'old_rank',
     'new_rank',
   };
-  static final RegExp _safeCategory = RegExp(r'^[a-zA-Z0-9_.-]{1,40}
-
-  static Future<bool> _sendEvent({
-    required String name,
-    Map<String, Object>? parameters,
-  }) async {
-    try {
-      final safeParameters = privacySafeParameters(parameters);
-      await _analytics.logEvent(
-        name: name,
-        parameters: safeParameters.isEmpty ? null : safeParameters,
-      );
-      VSPLogger.i('Analytics Event: $name | $safeParameters');
-      return true;
-    } catch (e) {
-      // Analytics is auxiliary and must never block a user journey.
-      VSPLogger.e('Analytics Error: $e');
-      return false;
-    }
-  }
-
-  static Future<void> logEvent({
-    required String name,
-    Map<String, Object>? parameters,
-  }) async {
-    await _sendEvent(name: name, parameters: parameters);
-  }
-
-  /// Duplicate calls in one session are suppressed only after delivery.
-  /// If Firebase reports an offline/transport failure, another trigger can retry.
-  static Future<void> logOncePerSession({
-    required String name,
-    required String dedupeKey,
-    Map<String, Object>? parameters,
-  }) async {
-    await _sessionDedupe.sendOnce(
-      name: name,
-      dedupeKey: dedupeKey,
-      send: () => _sendEvent(name: name, parameters: parameters),
-    );
-  }
-
-  static Future<void> setUserProperties({
-    required String userId,
-    String? role,
-    String? governorate,
-  }) async {
-    await _analytics.setUserId(id: userId);
-    if (role != null) {
-      await _analytics.setUserProperty(name: 'user_role', value: role);
-    }
-    if (governorate != null) {
-      await _analytics.setUserProperty(
-        name: 'governorate',
-        value: governorate,
-      );
-    }
-  }
-
-  // Phase 10 conversion funnel events. Parameters are deliberately categorical.
-  static Future<void> logAppOpened() => logOncePerSession(
-        name: VSPAnalyticsEvents.appOpened,
-        dedupeKey: 'app_opened',
-      );
-
-  static Future<void> logOnboardingStarted() => logOncePerSession(
-        name: VSPAnalyticsEvents.onboardingStarted,
-        dedupeKey: 'onboarding_started',
-      );
-
-  static Future<void> logSignupCompleted({required String role}) => logEvent(
-        name: VSPAnalyticsEvents.signupCompleted,
-        parameters: {'role': role},
-      );
-
-  static Future<void> logVenueViewed({required String venueId}) =>
-      logOncePerSession(
-        name: VSPAnalyticsEvents.venueViewed,
-        dedupeKey: 'venue_viewed:$venueId',
-      );
-
-  static Future<void> logBookingStarted({required String venueId}) =>
-      logOncePerSession(
-        name: VSPAnalyticsEvents.bookingStarted,
-        dedupeKey: 'booking_started:$venueId',
-      );
-
-  static Future<void> logBookingCompleted({
-    required String bookingId,
-    required String paymentMethod,
-  }) =>
-      logOncePerSession(
-        name: VSPAnalyticsEvents.bookingCompleted,
-        dedupeKey: 'booking_completed:$bookingId',
-        parameters: {'payment_method': paymentMethod},
-      );
-
-  static Future<void> logMatchViewed({required String matchId}) =>
-      logOncePerSession(
-        name: VSPAnalyticsEvents.matchViewed,
-        dedupeKey: 'match_viewed:$matchId',
-      );
-
-  static Future<void> logTeamCreated({required String sportType}) => logEvent(
-        name: VSPAnalyticsEvents.teamCreated,
-        parameters: {'sport_type': sportType},
-      );
-
-  static Future<void> logOwnerRegistrationStarted() => logOncePerSession(
-        name: VSPAnalyticsEvents.ownerRegistrationStarted,
-        dedupeKey: 'owner_registration_started',
-      );
-
-  static Future<void> logOwnerRegistrationCompleted() => logEvent(
-        name: VSPAnalyticsEvents.ownerRegistrationCompleted,
-      );
-
-  /// First dashboard entry per owner account in the current app session.
-  static Future<void> logOwnerDashboardViewed({required String ownerId}) =>
-      logOncePerSession(
-        name: VSPAnalyticsEvents.ownerDashboardViewed,
-        dedupeKey: 'owner_dashboard_viewed:$ownerId',
-      );
-
-  static Future<void> logSubscriptionViewed() => logOncePerSession(
-        name: VSPAnalyticsEvents.subscriptionViewed,
-        dedupeKey: 'subscription_viewed',
-      );
-
-  static Future<void> logSubscriptionActivated({
-    required String planCode,
-  }) =>
-      logEvent(
-        name: VSPAnalyticsEvents.subscriptionActivated,
-        parameters: {'plan_code': planCode},
-      );
-
-  // Existing product events retained for compatibility.
-  static Future<void> logMatchJoined(String bookingId, String type) =>
-      logOncePerSession(
-        name: VSPAnalyticsEvents.matchJoined,
-        dedupeKey: 'match_joined:$bookingId',
-        parameters: {'type': type},
-      );
-
-  static Future<void> logStadiumBooked(String stadiumId, double price) async {
-    // Legacy event name retained; venue identity and financial amount are
-    // deliberately NOT passed to analytics. Both parameters remain in this
-    // method signature for existing callers.
-    await logEvent(name: 'stadium_booked');
-  }
-
-  static Future<void> logChallengeSent(
-    String fromTeam,
-    String toTeam,
-  ) async {
-    // Team identifiers are never analytics dimensions.
-    await logEvent(name: 'challenge_sent');
-  }
-
-  static Future<void> logRankUp(int oldRank, int newRank) async {
-    await logEvent(
-      name: 'rank_up',
-      parameters: {'old_rank': oldRank, 'new_rank': newRank},
-    );
-  }
-
-  static Future<void> logChatMessageSent(String type) async {
-    await logEvent(
-      name: 'chat_message_sent',
-      parameters: {'message_type': type},
-    );
-  }
-}
-);
+  static final RegExp _safeCategory = RegExp(r'^[a-zA-Z0-9_.-]+$');
 
   static Map<String, Object> privacySafeParameters(
     Map<String, Object>? parameters,
   ) {
     if (parameters == null || parameters.isEmpty) return const {};
-
     return Map<String, Object>.unmodifiable(
       Map<String, Object>.fromEntries(
         parameters.entries.where((entry) {
           final key = entry.key;
           final value = entry.value;
           if (_categoricalParameterKeys.contains(key)) {
-            return value is String && _safeCategory.hasMatch(value);
+            return value is String &&
+                value.length <= 40 &&
+                _safeCategory.hasMatch(value);
           }
           if (_numericParameterKeys.contains(key)) {
             return value is int && value >= 0 && value <= 100000;
@@ -290,7 +117,6 @@ class AnalyticsService {
       ),
     );
   }
-
   static Future<bool> _sendEvent({
     required String name,
     Map<String, Object>? parameters,
@@ -435,22 +261,17 @@ class AnalyticsService {
       );
 
   static Future<void> logStadiumBooked(String stadiumId, double price) async {
-    await logEvent(
-      name: 'stadium_booked',
-      parameters: {'stadium_id': stadiumId, 'price': price},
-    );
+    // Preserve legacy event name; never transmit venue ID or amounts.
+    await logEvent(name: 'stadium_booked');
   }
 
   static Future<void> logChallengeSent(
     String fromTeam,
     String toTeam,
   ) async {
-    await logEvent(
-      name: 'challenge_sent',
-      parameters: {'from_team': fromTeam, 'to_team': toTeam},
-    );
+    // Preserve event name; never transmit team identifiers.
+    await logEvent(name: 'challenge_sent');
   }
-
   static Future<void> logRankUp(int oldRank, int newRank) async {
     await logEvent(
       name: 'rank_up',
