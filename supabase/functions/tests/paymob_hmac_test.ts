@@ -119,3 +119,36 @@ Deno.test("Refund and checkout error paths never echo provider or internal diagn
   assert(checkout.includes('error: "Unable to create a payment session"'),
     "checkout failure must return a stable, sanitized message");
 });
+
+
+import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
+
+Deno.test("Pending, voided, refunded or authorization-only Paymob events cannot finalize a charge", () => {
+  const base = { success: true, pending: false, currency: "EGP", is_refunded: false, is_voided: false };
+  assert(classifyPaymobWebhookOutcome(base) === "paid", "valid settled charge not classified as paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, pending: true }) === "pending", "signed pending payment marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, success: false, pending: true }) === "pending", "pending failure cancelled too soon");
+  assert(classifyPaymobWebhookOutcome({ ...base, is_refunded: true }) === "reversed", "refunded charge marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, is_voided: true }) === "reversed", "voided charge marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, is_refund: true }) === "reversed", "refund operation marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, refunded_amount_cents: 100 }) === "reversed", "partially refunded transaction marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, is_auth: true }) === "unresolved", "authorization only marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, error_occured: true }) === "unresolved", "conflicting gateway flags marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, pending: "false" }) === "unresolved", "string status marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, success: false }) === "failed", "terminal failure not classified");
+  assert(classifyPaymobWebhookOutcome({ ...base, success: false, pending: undefined }) === "unresolved", "unknown pending status cancelled");
+  assert(classifyPaymobWebhookOutcome({ ...base, success: false, is_refunded: true }) === "reversed", "refund callback treated as failure");
+});
+
+Deno.test("HMAC boundary, currency gate, pending cancellation and refund replay stay wired to handler", async () => {
+  const src = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const signature = src.indexOf("verifyPaymobHmacSignature(receivedHmac, calculatedHmac)");
+  const currency = src.indexOf('if (obj?.currency !== "EGP")');
+  const classify = src.indexOf("classifyPaymobWebhookOutcome(obj)");
+  assert(signature >= 0 && currency > signature && classify > currency, "signed outcome must be classified after HMAC and currency validation");
+  assert(src.includes('const isSuccess = paymentOutcome === "paid"'), "refund or void flags must not confirm charges");
+  assert(src.includes('} else if (paymentOutcome === "failed") {'), "pending webhook can still cancel booking");
+  assert(src.includes('if (obj.is_refunded === true && paymentOutcome === "reversed") {'), "refund recording must be an explicit reversed outcome");
+  assert(src.includes('if (refundResult?.already_recorded === true) {'), "duplicate refund would send repeated notifications");
+  assert(src.includes('paymentOutcome === "pending" ? "pending"'), "pending callback needs nonfinal response status");
+});

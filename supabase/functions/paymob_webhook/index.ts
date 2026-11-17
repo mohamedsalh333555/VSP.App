@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { verifyOwnerSubscriptionPayment } from "../_shared/owner_subscription_payment.ts";
 import { computePaymobHMAC, verifyPaymobHmacSignature } from "../_shared/paymob_hmac.ts";
+import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
 
 declare const Deno: any;
 
@@ -161,6 +162,14 @@ serve(async (req: Request) => {
     }
 
     const amountCents = Number(obj?.amount_cents);
+    // All VSP checkout intentions are EGP. A signed callback in another
+    // currency cannot be reconciled against the EGP booking/plan ledger.
+    if (obj?.currency !== "EGP") {
+      return new Response(JSON.stringify({ error: "Unexpected payment currency" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", "X-Content-Type-Options": "nosniff" },
+      });
+    }
     if (
       !/^[0-9]+$/.test(transactionId) ||
       !/^[0-9]+$/.test(orderId) ||
@@ -176,7 +185,10 @@ serve(async (req: Request) => {
 
     console.log("✅ HMAC Signature Verified Successfully!");
 
-    const isSuccess = obj.success === true && obj.pending === false;
+    // A signed pending/void/refund/authorization-only callback is not a
+    // settled charge. Never turn those events into paid bookings or prizes.
+    const paymentOutcome = classifyPaymobWebhookOutcome(obj);
+    const isSuccess = paymentOutcome === "paid";
 
     console.log(`🔔 Webhook received for Booking: ${bookingId} | Success: ${isSuccess} | Tx: ${transactionId}`);
 
@@ -190,7 +202,7 @@ serve(async (req: Request) => {
         booking_id: bookingId,
         payload: obj,
         signature_verified: true,
-        status: isSuccess ? "success" : "failed",
+        status: isSuccess ? "success" : paymentOutcome,
       });
     } catch (logErr) {
       console.warn("⚠️ Non-blocking warning: failed to write to webhook_logs", logErr);
@@ -607,7 +619,7 @@ serve(async (req: Request) => {
     }
 
     // 3.5 Handle Paymob Refund Callback if is_refunded is true
-    if (obj.is_refunded === true) {
+    if (obj.is_refunded === true && paymentOutcome === "reversed") {
       const refundAmount = (obj.amount_cents || 0) / 100;
       const refundTxnId = String(obj.id || transactionId);
       const refundMethod = (() => {
@@ -637,6 +649,15 @@ serve(async (req: Request) => {
         console.error("❌ Failed to atomically record booking refund:", refundRecordError || refundResult);
         return new Response(JSON.stringify({ error: "Refund recording failed" }), {
           status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // The ledger RPC returns already_recorded for a repeated, signed
+      // refund transaction. Replaying a webhook must not notify twice.
+      if (refundResult?.already_recorded === true) {
+        return new Response(JSON.stringify({ status: "already_processed", type: "booking_refund" }), {
+          status: 200,
           headers: { "Content-Type": "application/json" },
         });
       }
@@ -905,7 +926,9 @@ serve(async (req: Request) => {
         principal_amount: principalPaid,
         remaining_amount: remainingAmount,
       }), { status: 200, headers: { "Content-Type": "application/json" } });
-    } else {
+    } else if (paymentOutcome === "failed") {
+      // Only a terminal failure may cancel a pending booking; a pending
+      // Paymob event must not destroy a still-valid payment attempt.
       await supabase
         .from("bookings")
         .update({
@@ -917,7 +940,10 @@ serve(async (req: Request) => {
         .eq("status", "pending");
     }
 
-    return new Response(JSON.stringify({ status: "processed", success: isSuccess }), {
+    const responseStatus = paymentOutcome === "pending" ? "pending" :
+      paymentOutcome === "reversed" || paymentOutcome === "unresolved"
+      ? "requires_reconciliation" : "processed";
+    return new Response(JSON.stringify({ status: responseStatus, success: isSuccess }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
