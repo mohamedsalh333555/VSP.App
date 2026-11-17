@@ -4,7 +4,7 @@
   "project_ref": "vtwgqyxglevcsxwdmhop",
   "recorded_date": "2026-11-16",
   "branch": "uxlp-44-implementation",
-  "note": "Do not repair migration history automatically or run a blind supabase db push. Staging tool-assigned versions differ from local filenames; this manifest is a read-only review aid.",
+  "note": "Do not repair migration history automatically or run a blind supabase db push. Staging tool-assigned versions differ from local filenames; this manifest is a read-only review aid. Unapplied source files are explicitly listed and have NO staging migration identity or rollout acceptance.",
   "migrations": [
     {
       "local_file": "supabase/migrations/20261116030000_team_skills_cup_foundation.sql",
@@ -176,5 +176,8 @@
       "staging_version": "20261116151450",
       "staging_migration_name": "team_skills_blocked_captain_roster_guard_20261116"
     }
+  ],
+  "unapplied_source_files": [
+    "supabase/migrations/20261117020000_team_skills_reject_score_audited.sql"
   ]
 }
