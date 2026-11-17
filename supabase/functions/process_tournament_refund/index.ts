@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { isConfirmedPaymobRefund, isAlreadyRefundedProviderMessage } from "../_shared/paymob_refund_safety.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 declare const Deno: any;
 
@@ -168,7 +169,7 @@ serve(async (req: Request) => {
         });
         const authData = await authRes.json();
         if (!authRes.ok || !authData.token) {
-          throw new Error("Paymob authentication failed: " + JSON.stringify(authData));
+          throw new Error("Paymob authentication failed");
         }
         return authData.token;
       };
@@ -177,9 +178,9 @@ serve(async (req: Request) => {
       try {
         paymobToken = await getPaymobToken();
       } catch (authErr: any) {
-        console.error("Paymob token generation failed:", authErr);
+        console.error("Paymob token generation failed");
         return new Response(
-          JSON.stringify({ success: false, message: "Paymob authentication failed", error: String(authErr?.message || authErr) }),
+          JSON.stringify({ success: false, message: "Paymob authentication failed" }),
           { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
@@ -260,11 +261,14 @@ serve(async (req: Request) => {
         let refundSuccess = false;
         let refundError: string | null = null;
         let refundId: string | null = null;
+        let refundRequestSent = false;
 
         if (!txnId || refundAmtCents <= 0) {
           refundError = "Invalid transaction ID or zero amount";
         } else {
           try {
+            // A dispatched call may have succeeded even when its response is lost.
+            refundRequestSent = true;
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -275,22 +279,19 @@ serve(async (req: Request) => {
               }),
             });
             const refundData = await refundRes.json();
-            const msgLower = JSON.stringify(refundData).toLowerCase();
-
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+            if (isConfirmedPaymobRefund(refundRes.ok, refundData)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "");
-            } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
-              // Double refund prevention: Paymob indicates already refunded
-              refundSuccess = true;
-              refundId = "ALREADY_REFUNDED_AT_GATEWAY";
+            } else if (isAlreadyRefundedProviderMessage(refundData)) {
+              // Text alone is not verified refund proof: manual reconciliation.
+              refundError = "GATEWAY_ALREADY_REFUNDED_NEEDS_VERIFICATION";
             } else {
-              refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
+              refundError = "GATEWAY_REFUND_RESPONSE_UNCONFIRMED";
             }
           } catch (e: any) {
-            const errStr = e?.message || String(e);
-            const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
-            refundError = isTimeout ? `NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS: ${errStr}` : errStr;
+            // Never retain raw provider/network exception diagnostics.
+            refundError = refundRequestSent
+              ? "GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH" : "GATEWAY_REQUEST_NOT_SENT";
           }
         }
 
@@ -333,16 +334,15 @@ serve(async (req: Request) => {
           results.push({ id: item.id, order_id: item.order_id, success: true, refund_id: refundId });
         } else {
           console.error(`Refund failed for queue item ${item.id}:`, refundError);
-          const isAmbiguousTimeout = refundError?.includes("NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS");
+          const isAmbiguousTimeout = refundError?.includes("GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH");
 
-          if (item.retry_count >= 3 || isAmbiguousTimeout) {
+          if (item.retry_count >= 3 || isAmbiguousTimeout || refundRequestSent) {
             // Escalate to manual review immediately on ambiguous timeout or max retries
             // to strictly protect against double refund!
             await adminClient.from("cancellation_refund_queue").update({
               status: "failed_manual_review",
-              failure_reason: isAmbiguousTimeout 
-                ? `GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY: ${refundError}` 
-                : refundError,
+              failure_reason: refundRequestSent
+                ? "GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY" : refundError,
               locked_until: null,
               updated_at: nowIso,
             }).eq("id", item.id);
@@ -465,11 +465,14 @@ serve(async (req: Request) => {
         let refundSuccess = false;
         let refundError: string | null = null;
         let refundId: string | null = null;
+        let refundRequestSent = false;
 
         if (!txnId || refundAmtCents <= 0) {
           refundError = "Invalid transaction ID or zero amount";
         } else {
           try {
+            // A dispatched call may have succeeded even when its response is lost.
+            refundRequestSent = true;
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -480,21 +483,19 @@ serve(async (req: Request) => {
               }),
             });
             const refundData = await refundRes.json();
-            const msgLower = JSON.stringify(refundData).toLowerCase();
-
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+            if (isConfirmedPaymobRefund(refundRes.ok, refundData)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "");
-            } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
-              refundSuccess = true;
-              refundId = "ALREADY_REFUNDED_AT_GATEWAY";
+            } else if (isAlreadyRefundedProviderMessage(refundData)) {
+              // Text alone is not verified refund proof: manual reconciliation.
+              refundError = "GATEWAY_ALREADY_REFUNDED_NEEDS_VERIFICATION";
             } else {
-              refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
+              refundError = "GATEWAY_REFUND_RESPONSE_UNCONFIRMED";
             }
           } catch (e: any) {
-            const errStr = e?.message || String(e);
-            const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
-            refundError = isTimeout ? `NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS: ${errStr}` : errStr;
+            // Never retain raw provider/network exception diagnostics.
+            refundError = refundRequestSent
+              ? "GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH" : "GATEWAY_REQUEST_NOT_SENT";
           }
         }
 
@@ -537,14 +538,13 @@ serve(async (req: Request) => {
           results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: true, refund_id: refundId });
         } else {
           console.error(`1v1 Refund failed for queue item ${item.id}:`, refundError);
-          const isAmbiguousTimeout = refundError?.includes("NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS");
+          const isAmbiguousTimeout = refundError?.includes("GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH");
 
-          if (item.retry_count >= 3 || isAmbiguousTimeout) {
+          if (item.retry_count >= 3 || isAmbiguousTimeout || refundRequestSent) {
             await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
               status: "failed_manual_review",
-              failure_reason: isAmbiguousTimeout 
-                ? `GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY: ${refundError}` 
-                : refundError,
+              failure_reason: refundRequestSent
+                ? "GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY" : refundError,
               locked_until: null,
               updated_at: nowIso,
             }).eq("id", item.id);
@@ -661,11 +661,14 @@ serve(async (req: Request) => {
         let refundSuccess = false;
         let refundError: string | null = null;
         let refundId: string | null = null;
+        let refundRequestSent = false;
 
         if (!txnId || refundAmtCents <= 0) {
           refundError = "Invalid transaction ID or zero amount";
         } else {
           try {
+            // A dispatched call may have succeeded even when its response is lost.
+            refundRequestSent = true;
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -676,21 +679,19 @@ serve(async (req: Request) => {
               }),
             });
             const refundData = await refundRes.json();
-            const msgLower = JSON.stringify(refundData).toLowerCase();
-
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+            if (isConfirmedPaymobRefund(refundRes.ok, refundData)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "");
-            } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
-              refundSuccess = true;
-              refundId = "ALREADY_REFUNDED_AT_GATEWAY";
+            } else if (isAlreadyRefundedProviderMessage(refundData)) {
+              // Text alone is not verified refund proof: manual reconciliation.
+              refundError = "GATEWAY_ALREADY_REFUNDED_NEEDS_VERIFICATION";
             } else {
-              refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
+              refundError = "GATEWAY_REFUND_RESPONSE_UNCONFIRMED";
             }
           } catch (e: any) {
-            const errStr = e?.message || String(e);
-            const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
-            refundError = isTimeout ? `NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS: ${errStr}` : errStr;
+            // Never retain raw provider/network exception diagnostics.
+            refundError = refundRequestSent
+              ? "GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH" : "GATEWAY_REQUEST_NOT_SENT";
           }
         }
 
@@ -728,14 +729,13 @@ serve(async (req: Request) => {
           results.push({ id: item.id, payment_id: item.payment_id, type: "team_league", success: true, refund_id: refundId });
         } else {
           console.error(`Team League Refund failed for queue item ${item.id}:`, refundError);
-          const isAmbiguousTimeout = refundError?.includes("NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS");
+          const isAmbiguousTimeout = refundError?.includes("GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH");
 
-          if (item.retry_count >= 3 || isAmbiguousTimeout) {
+          if (item.retry_count >= 3 || isAmbiguousTimeout || refundRequestSent) {
             await adminClient.from("team_league_cancellation_refund_queue").update({
               status: "failed_manual_review",
-              failure_reason: isAmbiguousTimeout 
-                ? `GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY: ${refundError}` 
-                : refundError,
+              failure_reason: refundRequestSent
+                ? "GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY" : refundError,
               locked_until: null,
               updated_at: nowIso,
             }).eq("id", item.id);
@@ -857,19 +857,16 @@ serve(async (req: Request) => {
         }),
       });
       const refundData = await refundRes.json();
-      const msgLower = JSON.stringify(refundData).toLowerCase();
-
-      if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+      if (isConfirmedPaymobRefund(refundRes.ok, refundData)) {
         refundSuccess = true;
         refundId = String(refundData.id || refundData.transaction_id || "");
-      } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
-        refundSuccess = true;
-        refundId = "ALREADY_REFUNDED_AT_GATEWAY";
       } else {
-        refundError = refundData.message || refundData.detail || JSON.stringify(refundData);
+        refundError = isAlreadyRefundedProviderMessage(refundData)
+          ? "GATEWAY_ALREADY_REFUNDED_NEEDS_VERIFICATION"
+          : "GATEWAY_REFUND_RESPONSE_UNCONFIRMED";
       }
     } catch (e: any) {
-      refundError = e?.message || String(e);
+      refundError = "GATEWAY_OUTCOME_AMBIGUOUS_NEEDS_RECONCILIATION";
     }
 
     const { data: finalized, error: finalizeError } = await adminClient.rpc(
