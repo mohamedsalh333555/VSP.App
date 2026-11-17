@@ -12,6 +12,7 @@ import 'dart:async';
 import '../services/remote_config_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/deep_link_helper.dart';
+import 'pending_deep_link_account_guard.dart';
 import '../services/logger_service.dart';
 import '../../l10n/app_localizations.dart';
 import 'offline_error_screen.dart';
@@ -82,22 +83,41 @@ class _RootScreenState extends State<RootScreen> {
 
  // دالة استرجاع وتوجيه المستخدم للرابط العميق المعلق بشكل آمن ومتوافق مع جميع الهياكل
  Future<void> _handlePendingDeepLink() async {
- try {
- final prefs = await SharedPreferences.getInstance();
- final String? pendingLink = prefs.getString('pending_deep_link');
- if (pendingLink != null && mounted) {
- VSPLogger.i('Recovering pending deep link');
- await prefs.remove('pending_deep_link'); // حذف الرابط فوراً لمنع التكرار
+   final initialAuth = Provider.of<AuthProvider>(context, listen: false);
+   final expectedUserId = initialAuth.currentUser?.id;
 
- final uri = Uri.parse(pendingLink);
- final parsed = DeepLinkHelper.parse(uri);
- if (parsed != null && mounted) {
- GoRouter.of(context).push(parsed.routePath);
- }
- }
- } catch (e, stackTrace) {
- VSPLogger.e('Failed to process pending deep link', e, stackTrace);
- }
+   bool sameVerifiedAccount() {
+     if (!mounted) return false;
+     final current = Provider.of<AuthProvider>(context, listen: false);
+     return PendingDeepLinkAccountGuard.canReplay(
+       requestedForUserId: expectedUserId,
+       currentUserId: current.currentUser?.id,
+       profileUserId: current.userModel?.uid,
+       isAuthenticated: current.isAuthenticated,
+       isRegistrationComplete: current.userModel?.isRegistrationComplete == true,
+     );
+   }
+
+   if (!sameVerifiedAccount()) return;
+   try {
+     final prefs = await SharedPreferences.getInstance();
+     if (!sameVerifiedAccount()) return;
+     final pendingLink = prefs.getString('pending_deep_link');
+     if (pendingLink == null || pendingLink.isEmpty) return;
+
+     // Parse first and clear the original pending intent before opening.
+     // A stale or forged URL must not be replayed on every startup.
+     final uri = Uri.tryParse(pendingLink);
+     final parsed = uri == null ? null : DeepLinkHelper.parse(uri);
+     await prefs.remove('pending_deep_link');
+     // Account may change while reading/removing the preference. Do not send
+     // the previous account's navigation intent into the new account's UI.
+     if (parsed == null || !sameVerifiedAccount()) return;
+     VSPLogger.i('Recovering validated deep link for current account');
+     GoRouter.of(context).push(parsed.routePath);
+   } catch (e, stackTrace) {
+     VSPLogger.e('Failed to process pending deep link', e, stackTrace);
+   }
  }
 
  Future<void> _initRemoteConfig() async {
