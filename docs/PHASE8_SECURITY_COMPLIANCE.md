@@ -1,5 +1,10 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## 2026-11-17 — Release critical-finding negative gate accepted (80.08)
+
+[Proof: 9/9 GitHub CI tests, source SHA and blocked release workflow](security/VSP_RELEASE_SECURITY_GATE_80_08_ACCEPTANCE_2026-11-17.md). Manual Android release now fails closed when critical findings are listed or when sign-off/evidence/code SHA are missing. The committed release gate remains HOLD. This accepts **80.08 scoped synthetic fail-closed test only**; live Supabase Advisor collection/CI mapping (80.04/80.05), actual remediation (80.06), Sandbox and production release stay open. Current core counter **633 / 267 accepted / 366 open**.
+
+
 ## 2026-11-17 — durable pre-dispatch Paymob refund guards
 
 [Source fixes, test runs and remaining release gates](security/VSP_PAYMOB_REFUND_DISPATCH_CRASH_SAFETY_2026-11-17.md): the 5-minute booking refund claim and 15-minute tournament queue leases are insufficient alone after a gateway POST if the process crashes. CAS-saved dispatch marks now block automatic replay in the booking handler and all 3 cancellation queue worker paths. Deno/Flutter financial CI passed for source paths. Live two-session Staging and Paymob Sandbox remain open. No accepted task-ID promotion; **633 total / 266 accepted / 367 open**.

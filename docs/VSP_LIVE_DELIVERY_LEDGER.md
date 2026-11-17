@@ -1,3 +1,9 @@
+## 2026-11-17 — Release critical-risk fail-closed acceptance: 80.08 (+1; 267/366)
+
+- **Accepted 80.08 narrowly:** [signed APK release security gate](security/VSP_RELEASE_SECURITY_GATE_80_08_ACCEPTANCE_2026-11-17.md) is checked before signing/build; current status HOLD, and synthetic critical finding/unknown reviewer/evidence/SHA mismatches are denied. [CI 9/9 SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44111816114). First CI run failed for Python module import and was corrected; no issue hidden.
+- **Open:** 80.04 actual Supabase Advisor check, 80.05 real CI advisor integration, 80.06 critical remediation, independent cross-role checks, Paymob Sandbox and release authorization. No live deploy, no APK signing, no main merge.
+- **Count:** 633 unique tasks, 267 accepted, 366 remaining. 1 newly accepted in this batch, 0 new unique tasks. Earlier 266/367 ledger sections are historical.
+
 ## 2026-11-17 — Refund dispatch crash/replay protection (0 newly accepted; 266/367)
 
 - **Confirmed source risk:** 5-minute booking and 15-minute tournament queue leases can expire after refund dispatch and permit re-dispatch on worker crash. [Booking CAS marker a9ea11cd](https://github.com/mohamedsalh333555/VSP.App/commit/a9ea11cd2e34ea482765f83f6a50bce4c7900746) and [three queue CAS guards 68e76686](https://github.com/mohamedsalh333555/VSP.App/commit/68e76686a5eea1a10f62edc2e35380389b7f8bf0) persist pre-dispatch holds. [Refund response hardening 44b07d18](https://github.com/mohamedsalh333555/VSP.App/commit/44b07d186b977534b54d2d2f2ffcec5fe87354fe) preserves manual reconciliation on ambiguity.
