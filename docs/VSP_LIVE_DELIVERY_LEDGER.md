@@ -1,3 +1,11 @@
+## 2026-11-17 — Paymob error redaction + current-SHA CI (source-only; 0 new accepted) (266/367)
+
+- **Confirmed unsafe source patterns:** two refund paths logged full provider responses, some refund flows persisted raw provider/exception error strings, and intention creation returned raw internal error descriptions to the Flutter client. These were remediated as sanitized diagnostics without changing refund/payment state calculations. No actual breach or specific customer data exposure was demonstrated.
+- **3 new commits, no new task IDs:** [a161137a](https://github.com/mohamedsalh333555/VSP.App/commit/a161137a059b3320d033e7db609ddabec73247c1), [5bc61a8b](https://github.com/mohamedsalh333555/VSP.App/commit/5bc61a8b1600bcbbb4f08382de5d551d22636398), [23fe3066](https://github.com/mohamedsalh333555/VSP.App/commit/23fe3066a10063eb1b55ee4428a14ca9378fce35).
+- **CI at 23fe3066:** [Paymob HMAC/source redaction Deno + Flutter payment](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100276777) SUCCESS; [isolated PostgreSQL security](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100288875) SUCCESS; [owner checkout security](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100288877) SUCCESS; [task accounting](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100324732) SUCCESS.
+- **Not accepted/deployed:** production `paymob_webhook` still v45, staging has no deployed webhook, no live Paymob sandbox or external account negative tests, Storage runtime/issuer hook proof still open. Existing Phase 8 SEC-06/10; 85.01–85.03 remain OPEN. [Full updated security evidence](security/VSP_SUPABASE_STORAGE_PAYMOB_SECURITY_INTAKE_2026-11-17.md).
+- **Numbers:** 633 unique, 266 accepted, 367 remaining. This source verification does not promote any pre-existing task to accepted. No production SQL or secrets change, no main merge.
+
 ## 2026-11-17 — Phase 8 published Storage advisories + Paymob security intake (0 new accepted) (266/367)
 
 - **العداد:** 630 أصلية / 266 مقبولة / 364 مفتوحة ← **633 فريدة / 266 مقبولة / 367 مفتوحة**. أضيفت 85.01–85.03 كمهام فحص انطباق ثغرات Storage فقط. SEC-NEW-04 وSEC-NEW-05 محمولتان بالفعل على مهام 30/63/76–80 وPhase 8، دون ازدواج.
