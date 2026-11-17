@@ -143,6 +143,50 @@ test("cohort refuses complementary disclosure of fewer than five exits", async (
   assert.equal(result.hidden, true);
 });
 
+test("viewer refuses a four-person difference between cohort and eligible day", async () => {
+  const report = {
+    cohorts: [{
+      role: "player", firstValueEvent: "booking_completed",
+      cohortDayUtc: "2026-11-01T00:00:00.000Z",
+      accounts: 10,
+      eligibleD1: 6, activeD1: null,
+      eligibleD7: null, activeD7: null,
+      eligibleD30: null, activeD30: null,
+    }],
+  };
+  const result = await harness().load(report);
+  assert.equal(result.hidden, true);
+  assert.match(result.message, /تعذر فتح التقرير/);
+});
+
+test("viewer rejects exposed later eligibility after an earlier suppressed day", async () => {
+  const report = {
+    cohorts: [{
+      role: "owner", firstValueEvent: "owner_dashboard_viewed",
+      cohortDayUtc: "2026-11-01T00:00:00.000Z",
+      accounts: 10,
+      eligibleD1: null, activeD1: null,
+      eligibleD7: 5, activeD7: 0,
+      eligibleD30: 0, activeD30: 0,
+    }],
+  };
+  assert.equal((await harness().load(report)).hidden, true);
+});
+
+test("viewer rejects a four-person gap between eligible D1 and D7", async () => {
+  const report = {
+    cohorts: [{
+      role: "owner", firstValueEvent: "owner_dashboard_viewed",
+      cohortDayUtc: "2026-11-01T00:00:00.000Z",
+      accounts: 20,
+      eligibleD1: 20, activeD1: 15,
+      eligibleD7: 16, activeD7: null,
+      eligibleD30: null, activeD30: null,
+    }],
+  };
+  assert.equal((await harness().load(report)).hidden, true);
+});
+
 test("invalid JSON and oversized files fail closed", async () => {
   const page = harness();
   page.elements.report.files = [{
