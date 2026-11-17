@@ -232,7 +232,7 @@ void main() {
        isRegistrationComplete: true,
        isEmailVerified: true,
        hasStadium: true,
-       additionalData: {'isOnboardingConfirmed': true},
+       isOnboardingConfirmed: true,
      ),
    );
    for (final path in [
