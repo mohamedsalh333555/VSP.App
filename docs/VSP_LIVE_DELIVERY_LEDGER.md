@@ -1,3 +1,10 @@
+## 2026-11-18 — Source inventories of design tokens and motion (+2; 296/337)
+
+- **02.01:** generated a read-only, reproducible inventory over **556 non-generated Dart files**: 5,557 color-token uses, 60 `Colors.*` references, 60 literal colors, 957 spacing-token uses, 890 radius-token uses, 1,283 numeric font sizes, 7 explicit font-family literals, 1,177 EdgeInsets calls and 2,046 SizedBox calls. Counts are candidates for follow-up, not styling defects.
+- **06.01:** the same whole-lib scan inventories 61 `VSPDSMotion` tokens, 84 animation widgets/controllers, 108 navigation transition constructors, 140 explicit durations and 11 reduced-motion/navigation checks. Not a device setting test or proof of accessibility.
+- [Node inventory/test CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44196802382) on SHA [834641bc](https://github.com/mohamedsalh333555/VSP.App/commit/834641bc2ff3ba817960c9576eca6571cd8682cb); two generated Markdown/JSON inventories attached as GitHub Actions artifact. [Measured inventory and exclusions](VSP_DESIGN_MOTION_SOURCE_INVENTORY_02_01_06_01_2026-11-18.md).
+- **633 unique / 296 accepted / 337 open (46.76%)**. +2 inventory-only IDs and zero new IDs. No source design changes, financial transactions, production deployments or main merge.
+
 ## 2026-11-18 — Booking availability and trustworthy owner-finance states (+2; 294/339)
 
 - **53.01:** tested synthetic client availability under overlapping/pending/expired/cancelled bookings, venue mismatch and old selection invalidation; normalized booking/stadium IDs before conflict checks, and verified separate loading/error, full, closed and DST cases. No hosted booking concurrency or RLS claims.
