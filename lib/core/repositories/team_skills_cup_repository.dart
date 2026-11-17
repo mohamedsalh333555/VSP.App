@@ -28,6 +28,11 @@ class TeamSkillsCupRepository {
     return valid ? id.toLowerCase() : null;
   }
 
+  /// Only a fresh published cup in the registration state may expose write
+  /// actions. A cached notification/card or a failed refresh never suffices.
+  static bool registrationOpen(Map<String, dynamic>? latestCup) =>
+      latestCup?['status'] == 'registration';
+
   Future<Map<String, dynamic>?> getCupById(String cupId) async {
     final row = await _client.from('team_skills_cups')
         .select('id,name,governorate,stadium_id,starts_at,ends_at,max_teams,'

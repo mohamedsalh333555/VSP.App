@@ -154,6 +154,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   List<RankedTeamSkillsEntry> _rankedLeaderboard = [];
   Timer? _liveRefreshTimer;
   bool _hasLiveRefreshError = false;
+  Map<String, dynamic>? _currentCup;
+  bool _cupStateCurrent = false;
   int _readGeneration = 0;
   bool _hasBoundViewer = false;
   String? _viewerUserId;
@@ -196,6 +198,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       _viewerUserId = actorId;
       ++_readGeneration;
       _registrations = [];
+      _currentCup = null;
+      _cupStateCurrent = false;
       _rankedLeaderboard = [];
       _approvedScores = [];
       _awards = [];
@@ -224,6 +228,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     final generation = ++_readGeneration;
     final currentUserId = context.read<AuthProvider>().currentUser?.id;
     try {
+      final cupFuture = widget.repository.getCupById(cupId);
       final memberFuture = currentUserId == null
           ? Future.value(<String>{})
           : widget.repository.getMemberTeamIds(currentUserId);
@@ -237,6 +242,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
             : widget.repository.getCaptainTeams(currentUserId),
       ]);
       final memberIds = await memberFuture;
+      final currentCup = await cupFuture;
       final ranking = TeamSkillsRankingService.rank(values[0]);
       final names = await widget.repository.getTeamNames([
         ...values[0].map((row) => row['team_id'].toString()),
@@ -247,6 +253,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         return;
       }
       setState(() {
+        _currentCup = currentCup;
+        _cupStateCurrent = currentCup != null;
         _rankedLeaderboard = ranking;
         _registrations = values[1];
         _awards = values[2];
@@ -264,18 +272,24 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
           _goalkeeperId = null;
           _representativeId = null;
         }
-        _hasLiveRefreshError = false;
+        _hasLiveRefreshError = currentCup == null;
       });
     } catch (_) {
-      if (mounted && generation == _readGeneration) {
-        setState(() => _hasLiveRefreshError = true);
+      if (mounted && generation == _readGeneration &&
+          context.read<AuthProvider>().currentUser?.id == currentUserId) {
+        setState(() {
+          _hasLiveRefreshError = true;
+          _cupStateCurrent = false;
+        });
       }
     }
   }
 
   Future<void> _reload() async {
     final generation = ++_readGeneration;
+    _cupStateCurrent = false;
     final currentUserId = context.read<AuthProvider>().currentUser?.id;
+    final cupFuture = widget.repository.getCupById(cupId);
     final memberTeamsFuture = currentUserId == null
         ? Future.value(<String>{})
         : widget.repository.getMemberTeamIds(currentUserId);
@@ -293,6 +307,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         registrations = values[3], approvedScores = values[4],
         teams = values[5];
     final memberTeamIds = await memberTeamsFuture;
+    final latestCup = await cupFuture;
     final rankedLeaderboard = TeamSkillsRankingService.rank(ranks);
     final names = await widget.repository.getTeamNames(
       [...ranks.map((e) => e['team_id'].toString()),
@@ -301,7 +316,14 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         context.read<AuthProvider>().currentUser?.id != currentUserId) {
       return;
     }
+    if (latestCup == null) {
+      _cupStateCurrent = false;
+      _currentCup = null;
+      throw StateError('TEAM_SKILLS_CUP_NOT_PUBLISHED');
+    }
     setState(() {
+      _currentCup = latestCup;
+      _cupStateCurrent = true;
       _hasLiveRefreshError = false;
       _rankedLeaderboard = rankedLeaderboard;
       _approvedScores = approvedScores;
@@ -362,6 +384,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   }
 
   Future<void> _submit() async {
+    if (!TeamSkillsCupRepository.registrationOpen(
+        _cupStateCurrent ? _currentCup : null)) return;
     if (_submitting || _selectedTeamId == null ||
         _selectedPlayers.length != 5 ||
         !_selectedPlayers.contains(_goalkeeperId) ||
@@ -373,6 +397,22 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     final submittedTeamId = _selectedTeamId!;
     setState(() { _submitting = true; _feedback = null; });
     try {
+      // Read the live published status immediately before submission: a card
+      // can remain open when an admin starts or cancels the competition.
+      final freshCup = await widget.repository.getCupById(cupId);
+      if (!mounted || viewerId != _viewerUserId) return;
+      if (!TeamSkillsCupRepository.registrationOpen(freshCup)) {
+        setState(() {
+          _currentCup = freshCup;
+          _cupStateCurrent = freshCup != null;
+          _feedback = 'التسجيل لم يعد مفتوحًا لهذه البطولة.';
+        });
+        return;
+      }
+      setState(() {
+        _currentCup = freshCup;
+        _cupStateCurrent = true;
+      });
       final receiptId = await widget.repository.registerTeam(
         cupId: cupId, teamId: submittedTeamId,
         playerIds: _selectedPlayers.toList()..sort(),
@@ -436,10 +476,10 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   }
 
   Future<void> _editRegistration(Map<String, dynamic> registration) async {
-    if (_submitting || _viewerUserId == null) return;
+    if (_submitting || _viewerUserId == null || !_cupStateCurrent) return;
     final viewerId = _viewerUserId!;
     if (!TeamSkillsCupRepository.canCorrectRoster(
-      cupStatus: widget.cup['status']?.toString(),
+      cupStatus: _currentCup?['status']?.toString(),
       status: registration['status']?.toString(),
       captainId: registration['captain_id']?.toString(),
       viewerId: viewerId,
@@ -505,7 +545,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   }
 
   Future<void> _withdrawRegistration(String registrationId) async {
-    if (_submitting || _viewerUserId == null) return;
+    if (_submitting || _viewerUserId == null ||
+        !TeamSkillsCupRepository.registrationOpen(
+            _cupStateCurrent ? _currentCup : null)) return;
     final actorId = _viewerUserId;
     // Lock before opening the dialog: two quick taps must never open two
     // confirmation windows or issue duplicate destructive requests.
@@ -583,6 +625,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   Widget build(BuildContext context) {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     const style = TextStyle(color: VSPColors.white);
+    final visibleCup = _cupStateCurrent ? _currentCup : null;
+    final displayCup = _currentCup ?? widget.cup;
     final viewerTeamIds = <String>{
       ..._memberTeamIds,
       ..._captainTeams.map((team) => team['id'].toString()),
@@ -607,7 +651,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(backgroundColor: VSPColors.background,
-        title: Text(widget.cup['name']?.toString() ?? 'Team Skills Cup')),
+        title: Text(displayCup['name']?.toString() ?? 'Team Skills Cup')),
       body: FutureBuilder<void>(
         future: _loadFuture,
         builder: (context,snapshot) {
@@ -641,7 +685,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                 : '2–3 hours. Highest skills score wins; 1v1 and best goalkeeper awards are independent.',
                 style: const TextStyle(color: VSPColors.textSecondary)),
             const SizedBox(height: 8),
-            Text('${widget.cup['hospitality_fee']} ${ar ? 'جنيه ضيافة للفريق' : 'EGP hospitality per team'}',
+            Text('${displayCup['hospitality_fee']} ${ar ? 'جنيه ضيافة للفريق' : 'EGP hospitality per team'}',
                 style: style),
             const SizedBox(height: 20),
             Text(ar ? 'مراحل البطولة' : 'Skills stages',
@@ -714,7 +758,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                   style: const TextStyle(color: VSPColors.accent),
                 ),
                 trailing: TeamSkillsCupRepository.canCorrectRoster(
-                  cupStatus: widget.cup['status']?.toString(),
+                  cupStatus: visibleCup?['status']?.toString(),
                   status: registration['status']?.toString(),
                   captainId: registration['captain_id']?.toString(),
                   viewerId: _viewerUserId,
@@ -752,7 +796,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                       ),
               )),
             ],
-            if (widget.cup['status'] == 'registration' && _captainTeams.isNotEmpty) ...[
+            if (TeamSkillsCupRepository.registrationOpen(visibleCup) && _captainTeams.isNotEmpty) ...[
               const Divider(color: VSPColors.divider),
               Text(ar ? 'تسجيل فريقك (للكابتن فقط)' : 'Register your team (captains only)',
                   style:const TextStyle(color:VSPColors.white,fontSize:18,fontWeight:FontWeight.bold)),
