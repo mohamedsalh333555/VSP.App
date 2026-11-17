@@ -145,19 +145,26 @@ abstract final class VSPActivationFunnels {
         value == 0 || value >= minimumReportable ? value : null;
 
     final stages = <VSPFunnelStage>[];
+    // Complementary disclosure: showing 10 at the previous stage and 6 at
+    // the next would reveal a forbidden drop-off of four accounts even if
+    // the separate drop-off column were hidden. After any suppressed stage,
+    // keep all later stages suppressed in this report to prevent subtraction.
+    var previousPublished = true;
     for (var index = 0; index < steps.length; index++) {
       final prior = index == 0 ? null : counts[index - 1];
       final current = counts[index];
-      final visiblePrior = prior == null ? null : publish(prior);
-      final visibleCurrent = publish(current);
       final delta = prior == null ? null : prior - current;
-      // Hide small drop-offs even when both headline counts are visible.
-      final visibleDelta = delta == null ? null : publish(delta);
-      final rate = visiblePrior != null &&
-              visiblePrior > 0 &&
-              visibleCurrent != null &&
-              visibleDelta != null
-          ? current / prior!
+      final safeDelta = delta == null || delta == 0 ||
+          delta >= minimumReportable;
+      final visibleCurrent = previousPublished && safeDelta
+          ? publish(current)
+          : null;
+      final visibleDelta = prior != null && visibleCurrent != null
+          ? publish(delta!)
+          : null;
+      final rate = prior != null && prior > 0 &&
+              visibleCurrent != null && visibleDelta != null
+          ? current / prior
           : null;
       stages.add(VSPFunnelStage(
         event: steps[index],
@@ -165,6 +172,7 @@ abstract final class VSPActivationFunnels {
         conversionFromPrevious: rate,
         dropOffFromPrevious: visibleDelta,
       ));
+      previousPublished = visibleCurrent != null;
     }
     return VSPFunnelReport(
       journey: journey,
