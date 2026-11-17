@@ -16,3 +16,11 @@
 
 ## Task accounting and acceptance
 Candidate scope: `49.04` user preferences and `79.08` cross-account notification isolation. **Do not mark either accepted solely from source changes.** Flutter CI must pass, and `79.08` requires a production-equivalent two-account RLS/push test beyond widget simulation. No task counted as completed from code alone. Existing 633/272/361 baseline stays unchanged until verified.
+
+## Second batch: cover the actual foreground notification service and Realtime callbacks
+
+- Audited `lib/core/services/notification_service.dart`: previously it could call `_showLocalNotification` **before** the helper's protected snackbar check, so only guarding `NotificationUiHelper` left a foreground local-notification exposure. Realtime callbacks were also using legacy global settings and could continue when a different user signed in.
+- Added checks against the active user and target `recipientUserId` **before** local FCM display, then recheck after asynchronous preferences reads. Realtime callbacks check the subscribed user ID, row owner ID and current signed-in account before any notification display.
+- Local match reminders and booking confirmation now consult their account-scoped notification toggles. Existing schedule timing behavior is **not** changed in this batch.
+- Notification click handling now refuses missing/wrong recipient ID, validates route ID segments and suppresses raw booking/team identifiers from diagnostic logs; Realtime-generated local payloads carry the recipient ID.
+- Source assertions cover all four entry points, plus user-scoped Flutter unit/widget tests. No hosted JWT or cross-account real-device proof; 79.08 remains open.
