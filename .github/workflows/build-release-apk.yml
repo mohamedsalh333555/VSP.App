@@ -18,6 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Manual test-release builds are blocked until all known critical
+      # security findings have a current, evidence-backed owner sign-off.
+      - name: Enforce signed release security acceptance
+        run: python3 scripts/check_release_security_gate.py --state docs/security/VSP_RELEASE_GATE_STATE.json --sha "${{ github.sha }}"
+
       - name: Free runner disk space
         shell: bash
         run: |

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "status": "hold",
+  "reviewed_code_sha": null,
+  "reviewer": null,
+  "open_critical_findings": [
+    "85.01-85.03 Supabase Storage advisory applicability audits still open",
+    "Paymob Sandbox signed webhook/refund and parallel refund verification not completed",
+    "Cross-account production-equivalent JWT, RLS and Storage negative tests not completed"
+  ],
+  "evidence_urls": [],
+  "notes": "Manually reviewed release declaration, not a Supabase Advisor API snapshot. Remain blocked until current security evidence and separate owner release approval exist."
+}

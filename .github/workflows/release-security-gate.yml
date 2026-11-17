@@ -1,0 +1,32 @@
+name: VSP Release Security Gate
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'scripts/check_release_security_gate.py'
+      - 'docs/security/VSP_RELEASE_GATE_STATE.json'
+      - 'test/tooling/test_release_security_gate.py'
+      - '.github/workflows/build-release-apk.yml'
+      - '.github/workflows/release-security-gate.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/check_release_security_gate.py'
+      - 'docs/security/VSP_RELEASE_GATE_STATE.json'
+      - 'test/tooling/test_release_security_gate.py'
+      - '.github/workflows/build-release-apk.yml'
+      - '.github/workflows/release-security-gate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-release-security-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify release gate rejects P0, unapproved and mismatched SHA
+        run: python3 -m unittest -v test/tooling/test_release_security_gate.py
