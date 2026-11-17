@@ -10,12 +10,14 @@ void main() {
     String? profile = 'player-A',
     bool authenticated = true,
     bool complete = true,
+    String? storedFor,
   }) => PendingDeepLinkAccountGuard.canReplay(
     requestedForUserId: expected,
     currentUserId: current,
     profileUserId: profile,
     isAuthenticated: authenticated,
     isRegistrationComplete: complete,
+    storedForUserId: storedFor,
   );
 
   test('same signed-in account with completed profile may replay', () {
@@ -34,6 +36,16 @@ void main() {
     expect(canReplay(current: 'player-B', profile: 'player-B'), isFalse);
     expect(canReplay(expected: ''), isFalse);
     expect(canReplay(expected: null), isFalse);
+  });
+
+  test('links originally bound to another account are not reused', () {
+    expect(canReplay(storedFor: 'player-A'), isTrue);
+    expect(canReplay(storedFor: 'player-B'), isFalse);
+    expect(canReplay(current: 'player-B', profile: 'player-B',
+        storedFor: 'player-A'), isFalse);
+    // Links arriving before login have no original account binding.
+    expect(canReplay(storedFor: ''), isTrue);
+    expect(canReplay(storedFor: null), isTrue);
   });
 
   test('incomplete and unhydrated onboarding profiles cannot replay', () {
@@ -63,11 +75,19 @@ void main() {
       expect(source, contains('PendingDeepLinkAccountGuard.release()'));
       expect(source, contains("prefs.getString('pending_deep_link')"));
       expect(source, contains("prefs.remove('pending_deep_link')"));
+      expect(source, contains("prefs.getString('pending_deep_link_user_id')"));
+      expect(source, contains("prefs.remove('pending_deep_link_user_id')"));
       expect(source, contains('if (parsed == null || !sameVerifiedAccount()'));
 
       expect(source, contains('profileUserId: current.userModel?.uid,'));
     }
     expect(root, contains('final expectedUserId = initialAuth.currentUser?.id;'));
     expect(main, contains('final expectedUserId = auth.currentUser?.id;'));
+    expect(main, contains("prefs.setString('pending_deep_link_user_id'"));
+    final draftCleaner = File(
+      'lib/core/providers/auth/auth_draft_cleaner.dart',
+    ).readAsStringSync();
+    expect(draftCleaner, contains("k == 'pending_deep_link'"));
+    expect(draftCleaner, contains("k == 'pending_deep_link_user_id'"));
   });
 }
