@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vsp_application/core/navigation/app_router.dart';
+import 'package:vsp_application/core/navigation/app_route_role_guard.dart';
 import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/core/models/user_model.dart';
 
@@ -174,6 +175,125 @@ void main() {
  // Verify they are strictly prevented from viewing player-specific screen and sent back to /owner
  expect(redirectResult, '/owner');
  });
+
+ test('4. Player direct links cannot open owner-only surfaces', () {
+   final player = FakeAuthProvider(
+     isAuthenticated: true,
+     isOwner: false,
+     userModel: UserModel(
+       uid: 'verified-player',
+       email: 'player@example.invalid',
+       role: 'player',
+       phone: '01012345678',
+       isBlocked: false,
+       isRegistrationComplete: true,
+       isEmailVerified: true,
+     ),
+   );
+   for (final path in [
+     '/owner',
+     '/facility-onboarding',
+     '/documentation',
+     '/copilot',
+     '/owner?tab=financial',
+     '/documentation?step=files',
+   ]) {
+     final actual = AppRouter.redirectLogic(
+       DummyBuildContext(), FakeGoRouterState(path), player,
+     );
+     expect(actual, '/', reason: 'Player direct URL: $path');
+   }
+   // Public player deep links remain available to a verified player.
+   for (final path in [
+     '/match/verified-booking',
+     '/team/visible-team',
+     '/collective/fixture-invite',
+     '/notifications',
+     '/edit-profile',
+   ]) {
+     expect(AppRouter.redirectLogic(
+       DummyBuildContext(), FakeGoRouterState(path), player,
+     ), isNull, reason: 'Player must be allowed to use $path');
+   }
+ });
+
+ test('5. Owner direct links cannot open player-only screens', () {
+   final owner = FakeAuthProvider(
+     isAuthenticated: true,
+     isOwner: true,
+     userModel: UserModel(
+       uid: 'verified-owner',
+       email: 'owner@example.invalid',
+       role: 'owner',
+       phone: '01012345678',
+       isBlocked: false,
+       isRegistrationComplete: true,
+       isEmailVerified: true,
+       hasStadium: true,
+       additionalData: {'isOnboardingConfirmed': true},
+     ),
+   );
+   for (final path in [
+     '/player',
+     '/match/another-booking',
+     '/team/another-team',
+     '/collective/private-invite',
+     '/edit-profile',
+     '/notifications',
+   ]) {
+     expect(AppRouter.redirectLogic(
+       DummyBuildContext(), FakeGoRouterState(path), owner,
+     ), '/owner', reason: 'Owner direct URL: $path');
+   }
+   expect(AppRouter.redirectLogic(
+     DummyBuildContext(), FakeGoRouterState('/documentation'), owner,
+   ), isNull);
+   expect(AppRouter.redirectLogic(
+     DummyBuildContext(), FakeGoRouterState('/copilot'), owner,
+   ), isNull);
+ });
+
+ test('6. Unknown roles fail closed and exact path matches prevent false positives', () {
+   for (final path in [
+     '/owner', '/documentation', '/facility-onboarding', '/copilot',
+   ]) {
+     expect(AppRouteRoleGuard.redirectForRole(
+       path: path, isOwner: false, isAdmin: false,
+     ), '/');
+   }
+   expect(AppRouteRoleGuard.redirectForRole(
+     path: '/ownerish', isOwner: false, isAdmin: false,
+   ), isNull);
+   expect(AppRouteRoleGuard.redirectForRole(
+     path: '/teamwork', isOwner: true, isAdmin: false,
+   ), isNull);
+   expect(AppRouteRoleGuard.redirectForRole(
+     path: '/owner', isOwner: false, isAdmin: true,
+   ), isNull);
+   expect(AppRouteRoleGuard.redirectForRole(
+     path: '/match/booking', isOwner: true, isAdmin: true,
+   ), isNull);
+ });
+
+ test('7. Suspended user denial takes precedence over role-based routing', () {
+   final blocked = FakeAuthProvider(
+     isAuthenticated: true,
+     isOwner: false,
+     userModel: UserModel(
+       uid: 'suspended-player',
+       email: 'blocked@example.invalid',
+       role: 'player',
+       phone: '01012345678',
+       isBlocked: true,
+       isRegistrationComplete: true,
+       isEmailVerified: true,
+     ),
+   );
+   expect(AppRouter.redirectLogic(
+     DummyBuildContext(), FakeGoRouterState('/owner'), blocked,
+   ), '/suspended');
+ });
+
 
  });
 }
