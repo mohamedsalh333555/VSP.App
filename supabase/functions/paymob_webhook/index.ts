@@ -928,7 +928,10 @@ serve(async (req: Request) => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", bookingId)
-        .eq("status", "pending");
+        .eq("status", "pending")
+        // A newer checkout may have replaced this order ID since our read.
+        // A late failure for the old order must not cancel the new attempt.
+        .eq("paymob_order_id", orderId);
     }
 
     const responseStatus = paymentOutcome === "pending" ? "pending" :

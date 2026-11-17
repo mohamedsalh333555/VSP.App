@@ -255,3 +255,13 @@ Deno.test("Every signed booking, league and tournament callback refuses unbound 
   assert(!/if \((?:order|leaguePayment|existingBooking)\.paymob_order_id &&/.test(s),
     "legacy nullable-order bypass reintroduced");
 });
+
+Deno.test("A late failed callback cannot cancel a newer pending checkout order", async () => {
+  const source = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const failureStart = source.indexOf('} else if (paymentOutcome === "failed") {');
+  const failureEnd = source.indexOf("const responseStatus = paymentOutcome", failureStart);
+  assert(failureStart > 0 && failureEnd > failureStart, "unable to locate terminal-failure state update");
+  const failurePath = source.slice(failureStart, failureEnd);
+  assert(failurePath.includes('.eq("status", "pending")') && failurePath.includes('.eq("paymob_order_id", orderId)'),
+    "late callback can cancel pending booking with a newer Paymob order");
+});
