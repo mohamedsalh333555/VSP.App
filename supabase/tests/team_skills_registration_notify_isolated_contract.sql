@@ -68,3 +68,70 @@ begin
   raise exception 'BAD_TEAM_STATUS_NOTIFICATIONS: total %, unique %, scoped %',total,uniq,correct;
  end if;
 end $assert$;
+
+-- One more cup and captain. A receipt is written only on INSERT, and
+-- a review notice only on a genuine state transition for that registration.
+insert into public.team_skills_registrations(id,cup_id,team_id,captain_id,status)
+values(
+ '00000000-0000-0000-0000-000000000106',
+ '00000000-0000-0000-0000-000000000002',
+ '00000000-0000-0000-0000-000000000206',
+ '00000000-0000-0000-0000-000000000306','waitlist');
+do $second_cup_receipt$
+declare found_receipt integer;
+begin
+ select count(*) into found_receipt from public.notifications n
+ where n.user_id='00000000-0000-0000-0000-000000000306'
+   and n.metadata->>'source'='team_skills_cup'
+   and n.metadata->>'event'='registration_submitted'
+   and n.metadata->>'status'='waitlist'
+   and n.metadata->>'cup_id'='00000000-0000-0000-0000-000000000002'
+   and n.metadata->>'team_id'='00000000-0000-0000-0000-000000000206'
+   and n.metadata->>'registration_id'='00000000-0000-0000-0000-000000000106';
+ if found_receipt<>1 or (select count(*) from public.notifications
+   where user_id='00000000-0000-0000-0000-000000000306')<>1
+ then raise exception 'CROSS_CUP_RECEIPT_MISROUTED';end if;
+end $second_cup_receipt$;
+
+update public.team_skills_registrations set status='approved'
+where id='00000000-0000-0000-0000-000000000106';
+update public.team_skills_registrations set status='approved'
+where id='00000000-0000-0000-0000-000000000106';
+do $review_after_real_status_change$
+begin
+ if (select count(*) from public.notifications n
+   where n.user_id='00000000-0000-0000-0000-000000000306'
+     and n.metadata->>'event'='registration_review'
+     and n.metadata->>'status'='approved'
+     and n.metadata->>'registration_id'='00000000-0000-0000-0000-000000000106'
+     and n.metadata->>'cup_id'='00000000-0000-0000-0000-000000000002')<>1
+ then raise exception 'REVIEW_NOT_TRIGGERED_ONCE';end if;
+ if (select count(*) from public.notifications n
+     where n.user_id='00000000-0000-0000-0000-000000000306')<>2
+ or exists(select 1 from public.notifications n
+     where n.metadata->>'registration_id'='00000000-0000-0000-0000-000000000106'
+       and n.user_id<>'00000000-0000-0000-0000-000000000306')
+ then raise exception 'REVIEW_DUPLICATED_OR_LEAKED_TO_WRONG_CAPTAIN';end if;
+ if (select count(*) from public.notifications n
+     where n.metadata->>'registration_id'='00000000-0000-0000-0000-000000000101'
+       and n.user_id<>'00000000-0000-0000-0000-000000000301')<>0
+ then raise exception 'PREVIOUS_CUP_REVIEW_LEAKED';end if;
+ if exists(select 1 from public.notifications n
+     where n.metadata->>'event'='registration_submitted'
+       and n.metadata->>'status'='approved')
+ then raise exception 'APPROVED_ROW_RECEIVED_FALSE_INITIAL_NOTICE';end if;
+end $review_after_real_status_change$;
+
+-- These triggers are internal, not callable public RPCs.
+do $triggers_not_public$
+begin
+ if has_function_privilege('anon',
+    'vsp_skills_private.notify_team_skills_registration_status()','EXECUTE')
+ or has_function_privilege('authenticated',
+    'vsp_skills_private.notify_team_skills_registration_status()','EXECUTE')
+ or has_function_privilege('anon',
+    'vsp_skills_private.notify_team_skills_registration_receipt()','EXECUTE')
+ or has_function_privilege('authenticated',
+    'vsp_skills_private.notify_team_skills_registration_receipt()','EXECUTE')
+ then raise exception 'NOTIFICATION_TRIGGER_EXPOSED_AS_RPC';end if;
+end $triggers_not_public$;
