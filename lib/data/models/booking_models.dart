@@ -419,10 +419,25 @@ class Booking {
 
   /// مصدر الدفع الموحد للحجز
   String get effectivePaymentSource {
-    if (paymentSource != null && paymentSource!.isNotEmpty) {
-      return paymentSource!;
-    }
     final m = paymentMethod.toLowerCase().trim();
+    final stored = paymentSource?.toLowerCase().trim() ?? '';
+    if (stored.isNotEmpty) {
+      // Explicit conflict: a legacy 'cash' source accompanied by an
+      // electronic method is not evidence of pitch cash collection.
+      // Fail closed for owner reports until server reconciliation settles it.
+      if (stored == 'cash' &&
+          (m.contains('vodafone') || m.contains('فودافون') ||
+           m.contains('instapay') || m.contains('انستاباي') ||
+           m.contains('wallet') || m.contains('محفظة') ||
+           m.contains('card') || m.contains('visa') ||
+           m.contains('mastercard') || m.contains('meeza') ||
+           m.contains('ميزا') || m.contains('بطاقة') ||
+           m.contains('paymob') || m.contains('bank_transfer') ||
+           m.contains('bank transfer') || m.contains('تحويل بنكي'))) {
+        return 'unknown';
+      }
+      return stored;
+    }
     final tx = (paymentTransactionId ?? '').toUpperCase();
     // Vodafone Cash is an electronic wallet, not cash handed to the pitch.
     // Check it before the legacy Arabic word 'كاش'; only an exact venue-cash
@@ -557,8 +572,9 @@ class BookingPaymentMatrix {
     // Arabic mobile wallets include the word "كاش" but are NOT venue cash.
     final isMobileWallet = source == 'vodafone_cash' ||
         method.contains('vodafone') || method.contains('فودافون');
-    final isCash = source == 'cash' ||
-        (!isMobileWallet &&
+    final isCash = !isMobileWallet &&
+        !{'paymob','vodafone_cash','instapay','bank_transfer'}.contains(source) &&
+        (source == 'cash' ||
          (method == 'cash' || method == 'كاش' || method == 'نقدي' ||
           method == 'cash_on_arrival' || method == 'cash on arrival' ||
           method == 'كاش عند الملعب' || method == 'دفع نقدي'));

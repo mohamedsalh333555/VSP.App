@@ -160,6 +160,40 @@ void main() {
       expect(metrics.activeBookingsCount, 5);
     });
 
+    test('contradictory legacy cash source + wallet method cannot inflate cash totals', () {
+      final inconsistent = Booking(
+        id: 'legacy_conflict',
+        stadiumId: 's1',
+        stadiumName: 'Stadium 1',
+        ownerId: 'owner1',
+        createdByUserId: 'legacy_player',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        isPrivate: true,
+        rentBall: false,
+        totalPrice: 190,
+        paymentMethod: 'فودافون كاش',
+        paymentSource: 'cash',
+        paymentStatus: 'unpaid',
+        status: BookingStatus.confirmed,
+        bookingType: BookingType.personal,
+        createdAt: now,
+      );
+      expect(inconsistent.effectivePaymentSource, 'unknown');
+      expect(inconsistent.isCash, isFalse);
+      expect(inconsistent.isDigital, isFalse);
+      expect(inconsistent.isMatrixValid, isFalse);
+      final summary = OwnerFinancialCalculator.calculate(
+        allBookings: [inconsistent],
+        ownerChampionships: [],
+        timePeriod: 'today',
+        stadiumFilter: 'all',
+      );
+      expect(summary.cashCollected, 0);
+      expect(summary.digitalBalance, 0);
+      expect(summary.pendingAmount, 190);
+    });
+
     test('unpaid Arabic mobile wallet is not approved as cash on arrival', () {
       final pendingWallet = Booking(
         id: 'wallet_pending',
