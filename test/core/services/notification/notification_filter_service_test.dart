@@ -78,6 +78,66 @@ void main() {
       ), isTrue);
     });
 
+    test('foreground preferences are scoped per account, not legacy device keys', () async {
+      SharedPreferences.setMockInitialValues({
+        'notif_general': false,
+        'notif_chat': false,
+        'vsp_user_player-a_notif_general': false,
+        'vsp_user_player-b_notif_general': true,
+        'vsp_user_player-b_notif_chat': false,
+        'vsp_user_player-c_notif_general': true,
+        'vsp_user_player-c_notif_chat': true,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'player-a', prefs: prefs,
+      ), isFalse);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'player-b', prefs: prefs,
+      ), isFalse);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'player-c', prefs: prefs,
+      ), isTrue);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: '', prefs: prefs,
+      ), isFalse);
+    });
+
+    test('foreground push requires recipient of the active authenticated account', () {
+      expect(NotificationFilterService.isRecipientCurrentUser(
+        {'recipientUserId': 'owner-a'}, 'owner-a',
+      ), isTrue);
+      expect(NotificationFilterService.isRecipientCurrentUser(
+        {'recipient_user_id': 'owner-a'}, 'owner-a',
+      ), isTrue);
+      for (final data in <Map<String, dynamic>>[
+        {}, {'recipientUserId': 'owner-b'},
+        {'recipientUserId': ''}, {'recipientUserId': 123},
+      ]) {
+        expect(NotificationFilterService.isRecipientCurrentUser(data, 'owner-a'), isFalse);
+      }
+      expect(NotificationFilterService.isRecipientCurrentUser(
+        {'recipientUserId': 'owner-a'}, null,
+      ), isFalse);
+    });
+
+    test('legacy global opt-out never determines a different account preference', () async {
+      SharedPreferences.setMockInitialValues({
+        'notif_general': false, 'notif_chat': false,
+        'vsp_user_owner-a_notif_general': true,
+        'vsp_user_owner-a_notif_chat': false,
+        'vsp_user_owner-b_notif_general': true,
+        'vsp_user_owner-b_notif_chat': true,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'owner-a', prefs: prefs, isOwner: true,
+      ), isFalse);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'owner-b', prefs: prefs, isOwner: true,
+      ), isTrue);
+    });
+
     test('deep links accept legacy snake-case IDs and trim whitespace', () {
       expect(
         NotificationFilterService.resolveDeepLinkRoute({'booking_id': '  b-123  '}),

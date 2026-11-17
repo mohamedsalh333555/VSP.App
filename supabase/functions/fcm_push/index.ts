@@ -104,6 +104,9 @@ serve(async (req: Request) => {
             click_action: "FLUTTER_NOTIFICATION_CLICK",
             type: String(type),
             notification_id: String(record.id || record.notification_id || ""),
+            // Foreground UI refuses payloads for another signed-in account.
+            // FCM token ownership must still be enforced server-side.
+            recipientUserId: String(userId),
             bookingId,
             tournamentId,
             championship_id: tournamentId,
@@ -145,7 +148,8 @@ serve(async (req: Request) => {
     }
 
     if (invalidTokens.length) {
-      await supabase.from("user_device_tokens").delete().in("token", invalidTokens);
+      await supabase.from("user_device_tokens")
+        .delete().eq("user_id", userId).in("token", invalidTokens);
     }
 
     const dispatchResult = {

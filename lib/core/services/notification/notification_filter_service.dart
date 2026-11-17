@@ -60,6 +60,44 @@ class NotificationFilterService {
     }
   }
 
+  /// Keys match the notification settings screen and are always scoped to the
+  /// active account. Unscoped legacy device keys are never used for alerts.
+  static String scopedPrefKey(String userId, String key) =>
+      'vsp_user_${userId}_$key';
+
+  /// Push metadata is an untrusted routing hint. Require a recipient that
+  /// matches the active account before showing any foreground alert.
+  /// This is a privacy guard, not a replacement for server token ownership.
+  static bool isRecipientCurrentUser(
+    Map<String, dynamic> payload, String? activeUserId,
+  ) {
+    if (activeUserId == null || activeUserId.trim().isEmpty) return false;
+    final recipient = payload['recipientUserId'] ?? payload['recipient_user_id'];
+    return recipient is String && recipient == activeUserId;
+  }
+
+  /// Foreground-only preference check. Never import settings from another
+  /// account (including unscoped keys left by older app versions).
+  static Future<bool> shouldShowNotificationForUser(
+    String? type, {
+    required String userId,
+    SharedPreferences? prefs,
+    bool isOwner = false,
+  }) async {
+    if (userId.trim().isEmpty) return false;
+    try {
+      final preferences = prefs ?? await SharedPreferences.getInstance();
+      if (preferences.getBool(scopedPrefKey(userId, 'notif_general')) == false) {
+        return false;
+      }
+      final category = getPrefKeyForType(type, isOwner: isOwner);
+      if (category == null) return true;
+      return preferences.getBool(scopedPrefKey(userId, category)) ?? true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Evaluates whether a notification of [type] should be displayed.
   static Future<bool> shouldShowNotification(
     String? type, {

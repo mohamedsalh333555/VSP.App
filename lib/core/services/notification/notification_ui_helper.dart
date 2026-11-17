@@ -25,7 +25,13 @@ class NotificationUiHelper {
     required BuildContext? context,
     required RemoteMessage message,
   }) async {
-    if (context == null) return;
+    if (context == null || !context.mounted) return;
+    // Pushes can arrive after logout or while switching accounts on a shared
+    // device. Do not display content unless it names the current recipient.
+    final requestUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    if (!NotificationFilterService.isRecipientCurrentUser(
+      message.data, requestUserId,
+    )) return;
 
     final String? notifBookingId = message.data['bookingId'] ?? message.data['booking_id'];
     // Only suppress an alert for the conversation currently visible.
@@ -38,16 +44,25 @@ class NotificationUiHelper {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      if (!context.mounted) return;
+      if (!context.mounted ||
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id != requestUserId) {
+        return;
+      }
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final shouldShow = await NotificationFilterService.shouldShowNotification(
+      final shouldShow = await NotificationFilterService.shouldShowNotificationForUser(
         message.data['type']?.toString(),
+        userId: requestUserId!,
         prefs: prefs,
         isOwner: auth.isOwner,
       );
-      if (!context.mounted || !shouldShow) return;
+      if (!context.mounted || !shouldShow ||
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id != requestUserId) {
+        return;
+      }
 
-      final soundEnabled = prefs.getBool('notif_sound') ?? true;
+      final soundEnabled = prefs.getBool(
+        NotificationFilterService.scopedPrefKey(requestUserId, 'notif_sound'),
+      ) ?? true;
       if (soundEnabled) {
         HapticFeedback.heavyImpact();
       }

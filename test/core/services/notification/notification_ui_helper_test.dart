@@ -25,7 +25,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    SharedPreferences.setMockInitialValues({'notif_sound': false});
+    SharedPreferences.setMockInitialValues({
+      'vsp_user_test-owner-user_notif_sound': false,
+    });
   });
 
   group('NotificationUiHelper Tests', () {
@@ -47,7 +49,7 @@ void main() {
                             title: 'Test Notification Title',
                             body: 'Test Notification Body Content',
                           ),
-                          data: {'type': 'system'},
+                          data: {'type': 'system', 'recipientUserId': 'test-owner-user'},
                         ),
                       );
                     },
@@ -67,6 +69,80 @@ void main() {
         expect(find.text('Test Notification Body Content'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'foreground alert ignores push for another account or missing recipient',
+      (tester) async {
+        await tester.pumpWidget(
+          ChangeNotifierProvider<AuthProvider>.value(
+            value: TestOwnerAuthProvider(),
+            child: MaterialApp(
+              home: Scaffold(
+                body: Builder(
+                  builder: (context) => ElevatedButton(
+                    onPressed: () {
+                      for (final recipient in ['other-account', '']) {
+                        NotificationUiHelper.showInAppAlert(
+                          context: context,
+                          message: RemoteMessage(
+                            notification: const RemoteNotification(
+                              title: 'Private Alert',
+                              body: 'This must not leak to the owner',
+                            ),
+                            data: {'type': 'system', 'recipientUserId': recipient},
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text('Trigger unsafe alerts'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('Trigger unsafe alerts'));
+        await tester.pumpAndSettle();
+        expect(find.text('Private Alert'), findsNothing);
+      },
+    );
+
+    testWidgets('owner scoped opt-out suppresses foreground alert', (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'vsp_user_test-owner-user_notif_general': false,
+        'vsp_user_test-owner-user_notif_sound': false,
+      });
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AuthProvider>.value(
+          value: TestOwnerAuthProvider(),
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () => NotificationUiHelper.showInAppAlert(
+                    context: context,
+                    message: const RemoteMessage(
+                      notification: RemoteNotification(
+                        title: 'Disabled alert',
+                        body: 'Should remain hidden',
+                      ),
+                      data: {
+                        'type': 'system',
+                        'recipientUserId': 'test-owner-user',
+                      },
+                    ),
+                  ),
+                  child: const Text('Trigger disabled alert'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Trigger disabled alert'));
+      await tester.pumpAndSettle();
+      expect(find.text('Disabled alert'), findsNothing);
+    });
 
     test('notification booking access requires an actual participant', () {
       final booking = Booking(
