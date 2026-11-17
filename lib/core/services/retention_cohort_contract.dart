@@ -49,12 +49,39 @@ class VSPRetentionCohortSegment {
   /// serialized. Also avoid inferring a small *inactive* group by subtracting
   /// a published active count from an eligible denominator.
   Map<String, Object?> toPrivacySafeJson() {
+    // Only cohort segments created from a known first-value event may be
+    // exported. A manually constructed four-person group must not bypass
+    // the minimum cell-size threshold through direct serialization.
+    final firstValueSet = role == 'owner'
+        ? VSPActiveReturnContract.ownerFirstValueEvents
+        : role == 'player'
+            ? VSPActiveReturnContract.playerFirstValueEvents
+            : const <String>{};
+    if (accounts < VSPRetentionCohorts.minimumReportableCohort ||
+        !firstValueSet.contains(firstValueEvent) ||
+        eligibleD1 < 0 || eligibleD1 > accounts ||
+        eligibleD7 < 0 || eligibleD7 > eligibleD1 ||
+        eligibleD30 < 0 || eligibleD30 > eligibleD7 ||
+        activeD1 < 0 || activeD1 > eligibleD1 ||
+        activeD7 < 0 || activeD7 > eligibleD7 ||
+        activeD30 < 0 || activeD30 > eligibleD30) {
+      throw StateError('Unsafe or invalid retention cohort export');
+    }
     int? safeCount(int count) => count == 0 ||
             count >= VSPRetentionCohorts.minimumReportableCohort
         ? count
         : null;
 
-    (int?, int?) day(int eligible, int active) {
+    // A cohort of ten with six eligible accounts exposes the other four by
+    // subtraction even when activity is hidden. Mask such eligibility cells,
+    // and continue masking all later eligible-day cells once any is hidden.
+    (int?, int?) day(int eligible, int active, int? priorPublishedEligible) {
+      if (priorPublishedEligible == null) return (null, null);
+      final notYetEligible = priorPublishedEligible - eligible;
+      if (notYetEligible > 0 &&
+          notYetEligible < VSPRetentionCohorts.minimumReportableCohort) {
+        return (null, null);
+      }
       final visibleEligible = safeCount(eligible);
       if (visibleEligible == null) return (null, null);
       final inactive = eligible - active;
@@ -65,9 +92,9 @@ class VSPRetentionCohortSegment {
       return (visibleEligible, safeActive);
     }
 
-    final d1 = day(eligibleD1, activeD1);
-    final d7 = day(eligibleD7, activeD7);
-    final d30 = day(eligibleD30, activeD30);
+    final d1 = day(eligibleD1, activeD1, accounts);
+    final d7 = day(eligibleD7, activeD7, d1.$1);
+    final d30 = day(eligibleD30, activeD30, d7.$1);
     return {
       'role': role,
       'firstValueEvent': firstValueEvent,
