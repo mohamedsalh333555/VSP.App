@@ -21,13 +21,16 @@ create table public.team_skills_knockout(
  id uuid primary key default gen_random_uuid(), cup_id uuid not null,
  round_no integer not null,match_no integer not null,
  first_registration_id uuid,second_registration_id uuid,
- winner_registration_id uuid,status text not null);
+ winner_registration_id uuid,status text not null,
+ first_goals int,second_goals int,first_penalties int,second_penalties int);
 create table public.team_skills_audit(
  cup_id uuid,actor_id uuid,action text,details jsonb);
+create table public.team_skills_awards(cup_id uuid not null);
 create table public.team_skills_scores(
  id uuid primary key default gen_random_uuid(),
  cup_id uuid not null,status text not null,raw_value numeric not null);
 -- FINAL_SEEDING_FUNCTIONS_HERE
+-- SAFE_REGENERATION_FUNCTION_HERE
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000009001',false);
 insert into public.team_skills_cups(id,status)
@@ -161,3 +164,98 @@ begin
      raise exception 'BRACKET_REGEN_DUPLICATED_MATCHES_FOR_%',n;end if;
  end loop;
 end $every_size$;
+
+
+-- A supported re-generation repairs the unplayed bracket IN PLACE.
+-- It retains every match UUID (unlike DELETE/reseed), restores byes,
+-- never touches skills scores, and refuses any played game or awarded title.
+do $safe_regenerate$
+declare n integer; cup uuid; before_ids uuid[]; after_ids uuid[];
+ initial_seeds text[]; final_seeds text[]; original_score numeric;
+ denied boolean:=false;
+begin
+ cup:='00000000-0000-0000-0000-000000000001';
+ select array_agg(id order by round_no,match_no)
+ into before_ids from public.team_skills_knockout where cup_id=cup;
+ if public.team_skills_regenerate_knockout(cup)<>4 then
+   raise exception 'FOUR_TEAM_REGENERATION_WRONG_SIZE';end if;
+ select array_agg(id order by round_no,match_no)
+ into after_ids from public.team_skills_knockout where cup_id=cup;
+ if before_ids is distinct from after_ids then
+   raise exception 'FOUR_TEAM_REGENERATION_REPLACED_MATCH_IDS';end if;
+ if (select raw_value from public.team_skills_scores
+   where id='00000000-0000-0000-0000-000000000901')<>10 then
+   raise exception 'REGENERATION_CHANGED_SKILLS_SCORE';end if;
+
+ for n in 5..8 loop
+   cup:=('00000000-0000-0000-0000-'||lpad((200+n)::text,12,'0'))::uuid;
+   select array_agg(id order by round_no,match_no),
+          array_agg(first_registration_id::text||':'||
+            coalesce(second_registration_id::text,'BYE')
+            order by round_no,match_no)
+    into before_ids, initial_seeds from public.team_skills_knockout
+    where cup_id=cup;
+   if public.team_skills_regenerate_knockout(cup)<>8 or
+      public.team_skills_regenerate_knockout(cup)<>8 then
+     raise exception 'REGENERATION_WRONG_SIZE_%',n;end if;
+   select array_agg(id order by round_no,match_no),
+          array_agg(first_registration_id::text||':'||
+            coalesce(second_registration_id::text,'BYE')
+            order by round_no,match_no)
+    into after_ids, final_seeds from public.team_skills_knockout
+    where cup_id=cup;
+   if before_ids is distinct from after_ids then
+     raise exception 'REGENERATION_CHANGED_MATCH_IDS_FOR_%',n;end if;
+   if (select count(*) from public.team_skills_knockout
+       where cup_id=cup)<>7 or
+      (select count(*) from public.team_skills_knockout
+       where cup_id=cup and round_no=1 and status='approved'
+         and second_registration_id is null)<>8-n then
+      raise exception 'REGENERATION_WRONG_BYE_OR_MATCH_COUNT_FOR_%',n;
+   end if;
+   if (select count(*) from public.team_skills_audit
+      where cup_id=cup and action='regenerate_knockout')<>2 then
+     raise exception 'REGENERATION_NOT_AUDITED_TWICE_FOR_%',n;end if;
+ end loop;
+
+ -- An administered result makes the bracket irrevocably non-resettable.
+ cup:='00000000-0000-0000-0000-000000000205';
+ update public.team_skills_knockout set first_goals=2,second_goals=1,
+ status='approved' where id=(select id from public.team_skills_knockout
+ where cup_id=cup and status='scheduled' and round_no=1
+ order by match_no limit 1);
+ denied:=false;
+ begin
+   perform public.team_skills_regenerate_knockout(cup);
+ exception when others then
+   if position('played match' in lower(sqlerrm))>0 then denied:=true;
+   else raise;end if;
+ end;
+ if not denied then raise exception 'PLAYED_MATCH_WIPED_BY_REGENERATION';end if;
+ if (select count(*) from public.team_skills_knockout
+   where cup_id=cup and first_goals=2 and second_goals=1)<>1 then
+   raise exception 'FAILED_REGENERATION_CHANGED_REAL_RESULT';end if;
+
+ -- Even an unplayed cup with an announced award must not be reseeded.
+ cup:='00000000-0000-0000-0000-000000000206';
+ insert into public.team_skills_awards(cup_id) values(cup);
+ denied:=false;
+ begin
+  perform public.team_skills_regenerate_knockout(cup);
+ exception when others then
+  if position('award announcement' in lower(sqlerrm))>0 then
+    denied:=true;else raise;end if;
+ end;
+ if not denied then raise exception 'AWARDED_CUP_REGENERATED';end if;
+
+ -- A completed/closed cup cannot reopen its results via regenerate.
+ cup:='00000000-0000-0000-0000-000000000207';
+ update public.team_skills_cups set status='completed' where id=cup;
+ denied:=false;
+ begin perform public.team_skills_regenerate_knockout(cup);
+ exception when others then
+  if position('only a live cup' in lower(sqlerrm))>0 then
+    denied:=true;else raise;end if;
+ end;
+ if not denied then raise exception 'COMPLETED_CUP_REGENERATED';end if;
+end $safe_regenerate$;
