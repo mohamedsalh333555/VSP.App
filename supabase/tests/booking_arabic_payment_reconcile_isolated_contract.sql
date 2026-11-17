@@ -86,7 +86,7 @@ end $paid$;
 -- A payment/refund status cannot become paid merely by retaining an
 -- irrelevant legacy payment source.
 insert into public.bookings(id,status,payment_method,payment_status)
-values (14,'pending','cash','refund_pending');
+values (14,'cancelled','cash','refund_pending');
 do $refund$ begin
  if (select payment_reconcile_state from public.bookings where id=14)<>'refund_pending'
  then raise exception 'REFUND_PRECEDENCE_REGRESSED';end if;
