@@ -311,7 +311,8 @@ class BookingSlotCalculator {
     final slotEndTime = slotStartTime.add(const Duration(minutes: 30));
 
     for (var booking in existingBookings) {
-      if (booking.stadiumId != stadium.id ||
+      if (booking.stadiumId.trim().toLowerCase() !=
+              stadium.id.trim().toLowerCase() ||
           booking.status == BookingStatus.cancelled ||
           booking.status == BookingStatus.expired) {
         continue;
