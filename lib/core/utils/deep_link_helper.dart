@@ -20,7 +20,7 @@ class ParsedDeepLink {
 
 /// معالج ومحلل الروابط العميقة الموحد لتطبيق VSP
 class DeepLinkHelper {
-  static final RegExp _validIdRegex = RegExp(r'^[a-zA-Z0-9_-]{1,128}
+  static final RegExp _validIdRegex = RegExp(r'^[a-zA-Z0-9_-]{1,128}$');
   static const Set<String> _validTypes = {
     'match',
     'collective',
