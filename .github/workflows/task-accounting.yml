@@ -1,0 +1,50 @@
+name: VSP Core Task Accounting
+
+on:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'docs/VSP_80_DETAILED_SUBTASK_BREAKDOWN.md'
+      - 'docs/VSP_UNIFIED_EXECUTION_PLAN_V2.md'
+      - 'docs/VSP_LIVE_DELIVERY_LEDGER.md'
+      - 'docs/VSP_CURRENT_TASK_COUNTER.md'
+      - 'scripts/verify_task_accounting.py'
+      - '.github/workflows/task-accounting.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/VSP_80_DETAILED_SUBTASK_BREAKDOWN.md'
+      - 'docs/VSP_UNIFIED_EXECUTION_PLAN_V2.md'
+      - 'docs/VSP_LIVE_DELIVERY_LEDGER.md'
+      - 'docs/VSP_CURRENT_TASK_COUNTER.md'
+      - 'scripts/verify_task_accounting.py'
+      - '.github/workflows/task-accounting.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-core-task-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify 630 unique core IDs and checklist / ledger reconciliation
+        run: python3 scripts/verify_task_accounting.py | tee task-accounting.json
+      - name: Display accepted vs open progress
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          result = json.loads(Path("task-accounting.json").read_text())
+          completed = result["accepted_checklist_entries"]
+          remaining = result["not_accepted"]
+          total = result["total"]
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write(f"## VSP core task counter\\n\\n")
+              f.write(f"**{completed} accepted / {remaining} open / {total} total**\\n\\n")
+              f.write(f"**{completed / total * 100:.2f}% complete**\\n\\n")
+              f.write("Only accepted checklist entries count; commits and passing tests are not task IDs.\\n")
+          PY
