@@ -402,8 +402,8 @@ serve(async (req: Request) => {
             });
 
             if (!authRes.ok) {
-              const authErrText = await authRes.text();
-              throw new Error(`Paymob auth token request failed: ${authErrText}`);
+              // Do not include Paymob's response body: it may contain sensitive data.
+              throw new Error("Paymob refund authentication request failed");
             }
 
             const authData = await authRes.json();
@@ -423,17 +423,18 @@ serve(async (req: Request) => {
             });
 
             const refundData = await refundRes.json();
-            console.log("Paymob Refund API Response:", JSON.stringify(refundData));
+            // Never log raw gateway responses, even when a refund is rejected.
+            console.log("Paymob refund API response", { httpStatus: refundRes.status, accepted: refundRes.ok });
 
             if (refundRes.ok && (refundData.success === true || refundData.is_refund === true)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "REFUND_SUCCESS");
             } else {
-              refundErrorMsg = refundData.message || refundData.detail || JSON.stringify(refundData);
+              refundErrorMsg = `Paymob refund rejected (HTTP ${refundRes.status})`;
             }
           } catch (refundEx: any) {
-            console.error("❌ Exception during Paymob Refund API call:", refundEx);
-            refundErrorMsg = refundEx.message || String(refundEx);
+            console.error("Paymob refund request failed (1v1)");
+            refundErrorMsg = "Paymob refund request failed";
           }
 
           // Step C: Atomically record real refund status or flag for manual review
@@ -509,8 +510,8 @@ serve(async (req: Request) => {
             });
 
             if (!authRes.ok) {
-              const authErrText = await authRes.text();
-              throw new Error(`Paymob auth token request failed: ${authErrText}`);
+              // Do not include Paymob's response body: it may contain sensitive data.
+              throw new Error("Paymob refund authentication request failed");
             }
 
             const authData = await authRes.json();
@@ -542,17 +543,18 @@ serve(async (req: Request) => {
             });
 
             const refundData = await refundRes.json();
-            console.log("Paymob Refund API Response:", JSON.stringify(refundData));
+            // Never log raw gateway responses, even when a refund is rejected.
+            console.log("Paymob refund API response", { httpStatus: refundRes.status, accepted: refundRes.ok });
 
             if (refundRes.ok && (refundData.success === true || refundData.is_refund === true)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "REFUND_SUCCESS");
             } else {
-              refundErrorMsg = refundData.message || refundData.detail || JSON.stringify(refundData);
+              refundErrorMsg = `Paymob refund rejected (HTTP ${refundRes.status})`;
             }
           } catch (refundEx: any) {
-            console.error("Exception during Paymob Refund API call:", refundEx);
-            refundErrorMsg = refundEx.message || String(refundEx);
+            console.error("Paymob refund request failed (tournament)");
+            refundErrorMsg = "Paymob refund request failed";
           }
 
           // Step C: Atomically record real refund status or flag for manual review
@@ -696,10 +698,10 @@ serve(async (req: Request) => {
             refundSuccess = true;
             refundId = String(refundData.id || refundData.transaction_id || transactionId);
           } else {
-            refundErrorMsg = refundData.message || refundData.detail || JSON.stringify(refundData);
+            refundErrorMsg = `Paymob refund rejected (HTTP ${refundRes.status})`;
           }
         } catch (refundEx: any) {
-          refundErrorMsg = refundEx?.message || String(refundEx);
+          refundErrorMsg = "Paymob refund request failed";
         }
 
         if (refundSuccess) {
