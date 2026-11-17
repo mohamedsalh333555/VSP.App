@@ -1,0 +1,48 @@
+name: VSP Semantic Color Contrast Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-semantic-contrast-audit.yml"
+      - "scripts/audit_vsp_semantic_contrast.cjs"
+      - "scripts/test_vsp_semantic_contrast.cjs"
+      - "lib/core/ui/tokens/vsp_design_tokens.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-semantic-contrast-audit.yml"
+      - "scripts/audit_vsp_semantic_contrast.cjs"
+      - "scripts/test_vsp_semantic_contrast.cjs"
+      - "lib/core/ui/tokens/vsp_design_tokens.dart"
+
+permissions:
+  contents: read
+concurrency:
+  group: vsp-contrast-audit-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contrast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test WCAG contrast calculations and current semantic tokens
+        run: node --test scripts/test_vsp_semantic_contrast.cjs
+      - name: Generate source semantic contrast audit
+        run: |
+          node scripts/audit_vsp_semantic_contrast.cjs --markdown > /tmp/vsp-semantic-contrast.md
+          node scripts/audit_vsp_semantic_contrast.cjs --json > /tmp/vsp-semantic-contrast.json
+          cat /tmp/vsp-semantic-contrast.md
+          cat /tmp/vsp-semantic-contrast.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsp-semantic-contrast-inventory
+          path: |
+            /tmp/vsp-semantic-contrast.md
+            /tmp/vsp-semantic-contrast.json
+          retention-days: 14
