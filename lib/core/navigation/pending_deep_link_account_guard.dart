@@ -2,6 +2,21 @@
 /// account after an asynchronous preferences read, sign-out or account switch.
 /// Never replaces server-side RLS for the target resource.
 abstract final class PendingDeepLinkAccountGuard {
+  // RootScreen and app startup both restore pending links. They run on the
+  // same Flutter UI isolate; a synchronous lease prevents duplicate pushes
+  // while SharedPreferences' asynchronous remove is in flight.
+  static bool _isConsuming = false;
+
+  static bool tryAcquire() {
+    if (_isConsuming) return false;
+    _isConsuming = true;
+    return true;
+  }
+
+  static void release() {
+    _isConsuming = false;
+  }
+
   static bool canReplay({
     required String? requestedForUserId,
     required String? currentUserId,
