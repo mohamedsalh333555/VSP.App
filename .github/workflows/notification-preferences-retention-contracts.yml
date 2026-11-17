@@ -9,10 +9,15 @@ on:
     paths:
       - 'lib/features/player/screens/profile_subscreens/notifications_screen.dart'
       - 'lib/core/services/notification/notification_filter_service.dart'
+      - 'lib/core/services/notification_service.dart'
+      - 'lib/core/services/notification/match_reminder_schedule_contract.dart'
+      - 'lib/core/providers/auth/auth_sign_out_handler.dart'
       - 'lib/core/services/retention_event_contract.dart'
       - 'lib/core/services/retention_cohort_contract.dart'
       - 'lib/core/services/analytics_service.dart'
       - 'test/core/services/notification/notification_filter_service_test.dart'
+      - 'test/core/services/notification/match_reminder_schedule_contract_test.dart'
+      - 'test/core/providers/auth/auth_sign_out_handler_test.dart'
       - 'test/core/services/retention_event_contract_test.dart'
       - 'test/core/services/retention_cohort_contract_test.dart'
       - 'test/architecture/notification_preferences_*'
@@ -22,10 +27,15 @@ on:
     paths:
       - 'lib/features/player/screens/profile_subscreens/notifications_screen.dart'
       - 'lib/core/services/notification/notification_filter_service.dart'
+      - 'lib/core/services/notification_service.dart'
+      - 'lib/core/services/notification/match_reminder_schedule_contract.dart'
+      - 'lib/core/providers/auth/auth_sign_out_handler.dart'
       - 'lib/core/services/retention_event_contract.dart'
       - 'lib/core/services/retention_cohort_contract.dart'
       - 'lib/core/services/analytics_service.dart'
       - 'test/core/services/notification/notification_filter_service_test.dart'
+      - 'test/core/services/notification/match_reminder_schedule_contract_test.dart'
+      - 'test/core/providers/auth/auth_sign_out_handler_test.dart'
       - 'test/core/services/retention_event_contract_test.dart'
       - 'test/core/services/retention_cohort_contract_test.dart'
       - 'test/architecture/notification_preferences_*'
@@ -53,8 +63,11 @@ jobs:
             test/core/services/notification/notification_filter_service_test.dart \
             test/core/services/retention_event_contract_test.dart \
             test/core/services/retention_cohort_contract_test.dart \
+            test/core/services/notification/match_reminder_schedule_contract_test.dart \
+            test/core/providers/auth/auth_sign_out_handler_test.dart \
             test/architecture/notification_preferences_account_isolation_test.dart \
             test/architecture/notification_preferences_commit_guard_test.dart \
+            test/architecture/notification_preferences_cancel_on_optout_test.dart \
             test/architecture/notification_preferences_lifecycle_guard_test.dart \
             test/architecture/notification_preferences_load_recovery_test.dart \
             test/architecture/notification_preferences_storage_failure_test.dart

@@ -15,3 +15,6 @@ Date: 2026-11-17. Working branch: `uxlp-44-implementation`.
 Unit/source contract tests cover DST absolute times, future-only trigger, stable IDs, zoned scheduling, identity check and logout cleanup. Flutter CI must pass before a task is accepted.
 
 **Limits:** Android inexact scheduling can fire late under idle modes; no physical-device reliability proof, no forced-kill cleanup, no backward cleanup of old-version notifications; concurrent local settings writes and rare 31-bit hash collisions remain possible. Existing scheduled reminders may still fire after user disables a preference until cancellation is additionally wired into the settings UI. This does not implement global notification frequency rules. No production notification was sent or new device permission requested.
+
+## Follow-on opt-out hardening
+Both `notif_general` and `notif_match_reminders` switch handlers now cancel the account's scheduled native reminders **only after local opt-out persistence succeeded**. A failed save does not report a successful switch; a cancellation failure is caught to avoid reversing an already saved opt-out. The active-account scope is retained. The specialized Flutter CI now includes both new focused tests and their source dependency paths.

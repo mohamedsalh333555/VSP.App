@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/providers/language_provider.dart';
 import '../../../../core/providers/auth_provider.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../shared/widgets/vsp_back_button.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -207,6 +208,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       if (await _saveSetting('notif_general', v) &&
                           mounted && _settingsUserId == requestUserId) {
                         setState(() => _generalNotifications = v);
+                        // Stop previously scheduled local reminders as soon as
+                        // the signed-in user's opt-out is durably saved.
+                        if (!v && requestUserId != null && requestUserId.isNotEmpty) {
+                          try {
+                            await NotificationService()
+                                .cancelScheduledMatchRemindersForUser(requestUserId);
+                          } catch (_) {
+                            // Failed OS cleanup must not misreport preference persistence.
+                            // Server/client consent gates remain independently enforced.
+                          }
+                        }
                       }
                     },
                   ),
@@ -343,6 +355,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       if (await _saveSetting('notif_match_reminders', v) &&
                           mounted && _settingsUserId == requestUserId) {
                         setState(() => _playerMatchReminders = v);
+                        // Stop previously scheduled local reminders as soon as
+                        // the signed-in user's opt-out is durably saved.
+                        if (!v && requestUserId != null && requestUserId.isNotEmpty) {
+                          try {
+                            await NotificationService()
+                                .cancelScheduledMatchRemindersForUser(requestUserId);
+                          } catch (_) {
+                            // Failed OS cleanup must not misreport preference persistence.
+                            // Server/client consent gates remain independently enforced.
+                          }
+                        }
                       }
                     }
                           : null,
