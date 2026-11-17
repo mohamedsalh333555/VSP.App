@@ -85,6 +85,7 @@ const CHECKS = [
   ['textSecondary', 'background', 4.5, 'normal text'],
   ['textSecondary', 'surface', 4.5, 'normal text'],
   ['textMuted', 'surface', 4.5, 'potential normal text'],
+  ['textMuted', 'surfaceRaised', 4.5, 'muted small text on raised cards'],
   ['accent', 'background', 3.0, 'non-text highlight'],
   ['warning', 'surface', 4.5, 'normal warning text'],
   ['error', 'surface', 4.5, 'normal error text'],
