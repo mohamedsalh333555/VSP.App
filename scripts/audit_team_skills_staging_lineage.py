@@ -63,8 +63,9 @@ def audit() -> int:
         name = entry["staging_migration_name"]
         if not isinstance(version, str) or VERSION.fullmatch(version) is None:
             raise ValueError(f"Unexpected staging migration version: {version}")
-        # Original tools used a _YYYYMMDD suffix on the server migration name.
-        if name != match.group(2) + "_20261116":
+        # Server migration names end in the source's own YYYYMMDD date;
+        # older sources are 20261116 and this batch adds a 20261117 entry.
+        if name != match.group(2) + "_" + match.group(1)[:8]:
             raise ValueError(f"Staging migration slug does not match file: {filename}")
         versions.append(version)
         source_versions.append(match.group(1))
