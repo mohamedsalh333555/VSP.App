@@ -67,20 +67,30 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       ownerChampionships: _ownerChampionships,
       timePeriod: _selectedTimePeriod,
       stadiumFilter: _selectedStadiumFilter,
+      periodFilter: _currentFilter,
     );
     return _cachedMetrics!;
   }
 
   String _generateMetricsCacheKey(List<Booking> bookings) {
-    final buffer = StringBuffer('$_selectedTimePeriod:$_selectedStadiumFilter:${bookings.length}:');
+    final buffer = StringBuffer('$_selectedTimePeriod:$_selectedStadiumFilter:${_currentFilter.startIsoUtc}:${_currentFilter.endIsoUtc}:${_currentFilter.courtId}:${bookings.length}:');
     // Every loaded booking contributes to the cache key; truncating at 50 can
     // leave owner totals stale when records outside the first page change.
     for (final b in bookings) {
       buffer.write(
         '${b.id}:'
+        '${b.stadiumId}:'
+        '${b.status.name}:'
+        '${b.startTime.toUtc().toIso8601String()}:'
+        '${b.endTime.toUtc().toIso8601String()}:'
+        '${b.operationalDate?.toIso8601String()}:'
         '${b.effectivePaymentState}:'
         '${b.totalPrice}:'
-        '${b.depositPaid}|',
+        '${b.depositPaid}:'
+        '${b.depositAmount}:'
+        '${b.paymentMethod}:'
+        '${b.paymentSource}:'
+        '${b.paymentReconcileState}|',
       );
     }
     return buffer.toString().hashCode.toString();
@@ -815,7 +825,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                         setState(() {
                           _selectedStadiumFilter = id;
                           _cachedMetrics = null;
-                          _currentFilter = _currentFilter.copyWith(courtId: id != 'all' ? id : null);
+                          _currentFilter = _currentFilter.copyWith(
+                              courtId: id != 'all' ? id : null,
+                              clearCourtId: id == 'all',
+                            );
                         });
                         _loadDashboardAnalytics(filter: _currentFilter);
                       },
