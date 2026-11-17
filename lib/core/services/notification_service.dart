@@ -292,8 +292,12 @@ class NotificationService {
 
  static Future<void> showBookingConfirmation({required String stadiumName, required DateTime bookingDate, required String timeSlot}) async {
    if (kIsWeb) return;
+   final userId = Supabase.instance.client.auth.currentUser?.id;
+   if (userId == null || userId.isEmpty) return;
    final prefs = await SharedPreferences.getInstance();
-   if (!(prefs.getBool('notif_general') ?? true) || !(prefs.getBool('notif_cash_bookings') ?? true)) return;
+   if (Supabase.instance.client.auth.currentUser?.id != userId ||
+       !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_general')) ?? true) ||
+       !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_cash_bookings')) ?? true)) return;
    const androidDetails = AndroidNotificationDetails(
      'booking_channel', 'Booking Notifications',
      importance: Importance.max, priority: Priority.high, icon: 'ic_notification',
@@ -311,10 +315,14 @@ class NotificationService {
    }
  }
 
- Future<bool> _shouldShowNotification(String? type) async {
-   final prefs = await SharedPreferences.getInstance();
-   final hasOwnerToggles = prefs.containsKey('notif_owner_new_bookings') || prefs.containsKey('notif_owner_payouts');
-   return NotificationFilterService.shouldShowNotification(type, isOwner: hasOwnerToggles, prefs: prefs);
+ Future<bool> _shouldShowNotification(
+   String? type, {required String userId, required bool isOwner}
+ ) async {
+   if (userId.isEmpty ||
+       Supabase.instance.client.auth.currentUser?.id != userId) return false;
+   return NotificationFilterService.shouldShowNotificationForUser(
+     type, userId: userId, isOwner: isOwner,
+   );
  }
 
  RealtimeChannel? _realtimeNotifChannel;
@@ -331,7 +339,20 @@ class NotificationService {
          filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'user_id', value: userId),
          callback: (payload) async {
            final record = payload.newRecord;
-           if (record.isEmpty || !await _shouldShowNotification(record['type']?.toString())) return;
+           if (record.isEmpty || record['user_id']?.toString() != userId ||
+               Supabase.instance.client.auth.currentUser?.id != userId) return;
+           final context = _navigatorKey?.currentContext;
+           if (context == null || !context.mounted) return;
+           final auth = Provider.of<AuthProvider>(context, listen: false);
+           if (auth.currentUser?.id != userId ||
+               !await _shouldShowNotification(
+                 record['type']?.toString(), userId: userId, isOwner: auth.isOwner,
+               )) return;
+           if (!context.mounted ||
+               Supabase.instance.client.auth.currentUser?.id != userId ||
+               Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) {
+             return;
+           }
            const androidDetails = AndroidNotificationDetails(
              'vsp_default_channel', 'VSP General Notifications',
              importance: Importance.max, priority: Priority.high, icon: 'ic_notification',
@@ -348,6 +369,7 @@ class NotificationService {
              details,
              payload: jsonEncode({
                'type': record['type']?.toString() ?? 'info',
+               'recipientUserId': userId,
                if (record['booking_id'] != null) 'bookingId': record['booking_id'].toString(),
                if (record['team_id'] != null) 'teamId': record['team_id'].toString(),
                if (record['tournament_id'] != null) 'tournamentId': record['tournament_id'].toString(),
