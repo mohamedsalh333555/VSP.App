@@ -453,13 +453,41 @@ serve(async (req: Request) => {
           }
 
           // Step C: Atomically record real refund status or flag for manual review
-          await supabase.rpc("record_1v1_refund_status_atomic", {
+          const { data: refundRecorded, error: refundRecordingError } = await supabase.rpc("record_1v1_refund_status_atomic", {
             p_order_reference: specialReference,
             p_refund_success: refundSuccess,
             p_paymob_refund_id: refundId,
             p_error_message: refundErrorMsg,
             p_refund_amount: amountCents / 100,
           });
+          if (refundRecordingError || refundRecorded?.success !== true) {
+            // Gateway action may already have happened. Do not return a
+            // retry-triggering 5xx that could cause another external refund.
+            // Preserve an operator-visible audit and require reconciliation.
+            console.error("Paymob tournament refund ledger requires manual reconciliation (1v1_tournament)");
+            await supabase.from("webhook_logs").insert({
+              provider: "paymob",
+              event_type: "refund_ledger_reconciliation_required",
+              txn_id: transactionId,
+              order_id: orderId,
+              payload: {
+                order_reference: specialReference,
+                refund_request_accepted: refundSuccess,
+                refund_id: refundId,
+              },
+              signature_verified: true,
+              status: "requires_reconciliation",
+              error_message: "Paymob refund ledger write not confirmed",
+            });
+            return new Response(JSON.stringify({
+              status: "requires_reconciliation", type: "1v1_tournament", success: false,
+            }), { status: 200, headers: { "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({
+            status: refundSuccess ? "refund_recorded" : "refund_manual_review",
+            type: "1v1_tournament",
+            success: false,
+          }), { status: 200, headers: { "Content-Type": "application/json" } });
 
         } else {
           console.log("🎉 1v1 Tournament order confirmed successfully:", tournResult);
@@ -561,13 +589,41 @@ serve(async (req: Request) => {
           }
 
           // Step C: Atomically record real refund status or flag for manual review
-          await supabase.rpc("record_tournament_refund_status_atomic", {
+          const { data: refundRecorded, error: refundRecordingError } = await supabase.rpc("record_tournament_refund_status_atomic", {
             p_order_reference: specialReference,
             p_refund_success: refundSuccess,
             p_paymob_refund_id: refundId,
             p_error_message: refundErrorMsg,
             p_refund_amount: amountCents / 100,
           });
+          if (refundRecordingError || refundRecorded?.success !== true) {
+            // Gateway action may already have happened. Do not return a
+            // retry-triggering 5xx that could cause another external refund.
+            // Preserve an operator-visible audit and require reconciliation.
+            console.error("Paymob tournament refund ledger requires manual reconciliation (tournament)");
+            await supabase.from("webhook_logs").insert({
+              provider: "paymob",
+              event_type: "refund_ledger_reconciliation_required",
+              txn_id: transactionId,
+              order_id: orderId,
+              payload: {
+                order_reference: specialReference,
+                refund_request_accepted: refundSuccess,
+                refund_id: refundId,
+              },
+              signature_verified: true,
+              status: "requires_reconciliation",
+              error_message: "Paymob refund ledger write not confirmed",
+            });
+            return new Response(JSON.stringify({
+              status: "requires_reconciliation", type: "tournament", success: false,
+            }), { status: 200, headers: { "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({
+            status: refundSuccess ? "refund_recorded" : "refund_manual_review",
+            type: "tournament",
+            success: false,
+          }), { status: 200, headers: { "Content-Type": "application/json" } });
 
         } else {
           console.log("Tournament order confirmed successfully:", tournResult);

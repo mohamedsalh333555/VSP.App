@@ -265,3 +265,17 @@ Deno.test("A late failed callback cannot cancel a newer pending checkout order",
   assert(failurePath.includes('.eq("status", "pending")') && failurePath.includes('.eq("paymob_order_id", orderId)'),
     "late callback can cancel pending booking with a newer Paymob order");
 });
+
+Deno.test("Over-capacity refund requires ledger confirmation before reporting success", async () => {
+  const src = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  for (const fn of ["record_1v1_refund_status_atomic", "record_tournament_refund_status_atomic"]) {
+    const call = src.indexOf('await supabase.rpc("' + fn + '"');
+    const guard = src.indexOf("refundRecordingError || refundRecorded?.success !== true", call);
+    const manual = src.indexOf('status: "requires_reconciliation"', guard);
+    const result = src.indexOf('status: refundSuccess ? "refund_recorded" : "refund_manual_review"', manual);
+    assert(call > 0 && guard > call && manual > guard && result > manual,
+      "missing checked refund ledger and manual reconciliation response: " + fn);
+    const slice = src.slice(call, result);
+    assert(slice.includes('status: 200'), "unsafe retry of an already attempted external refund");
+  }
+});
