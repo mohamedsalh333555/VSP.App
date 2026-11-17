@@ -108,14 +108,14 @@ class DeepLinkHelper {
         return null;
       }
       if (!_validTypes.contains(type)) return null;
-      if (id == null || id.isEmpty) {
+      if (id.isEmpty) {
         if (!_idOptionalTypes.contains(type)) return null;
         id = '';
       } else if (!_validIdRegex.hasMatch(id)) {
         return null;
       }
       return ParsedDeepLink(
-        type: type!,
+        type: type,
         id: id,
         queryParams: uri.queryParameters,
       );
