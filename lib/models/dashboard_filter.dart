@@ -126,10 +126,14 @@ class DashboardFilter {
     );
   }
 
-  DashboardFilter copyWith({String? courtId}) => DashboardFilter(
+  /// [courtId] changes the selected court; [clearCourtId] explicitly
+  /// resets to all courts. A null courtId alone means "unchanged" to avoid
+  /// silently resetting unrelated filter fields when copying a period.
+  DashboardFilter copyWith({String? courtId, bool clearCourtId = false}) =>
+      DashboardFilter(
         type: type,
         startDate: startDate,
         endDate: endDate,
-        courtId: courtId ?? this.courtId,
+        courtId: clearCourtId ? null : (courtId ?? this.courtId),
       );
 }
