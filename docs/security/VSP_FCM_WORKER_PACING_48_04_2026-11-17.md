@@ -13,3 +13,7 @@
 This is **not** a durable rolling hourly/daily quota across parallel Edge instances or a marketing notification cap. On the next invocation, the in-memory cap resets. To add a true cross-instance per-user cap, implement an atomic persisted recipient quota with a transaction and idempotent message state. Multiple-device FCM pushes inside one `fcm_push` call are not capped by this per-notification gate. Live deployment and staging stress tests remain open.
 
 **48.04 candidate acceptance is limited to worker-level dispatch pacing after exact-commit Deno CI.** Do not claim global provider limit compliance, a real FCM delivery test, production protection, or any change to `main`.
+
+## Acceptance evidence (17 November 2026)
+
+**48.04 ACCEPTED, narrowly scoped to in-worker dispatch pacing (5 attempts/run; 2 per recipient/batch).** [Isolated Deno CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44160181074) on commit [151b0d9](https://github.com/mohamedsalh333555/VSP.App/commit/151b0d925a6159f5201fe7ddc5fb8b32a84986ac). Persisted and cross-instance rate limits, hosted staging and production checks remain open.

@@ -1,3 +1,10 @@
+## 2026-11-17 — 48.04 / 49.01 / 54.02 narrowly accepted (+3; 277/356)
+
+- **48.04:** [FCM queue pacing CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44160181074) for 5 worker calls per invocation, 2 per recipient per batch, overflow remains queued. This is NOT a durable cross-instance provider quota. [Implementation](security/VSP_FCM_WORKER_PACING_48_04_2026-11-17.md).
+- **49.01:** [Offline Deno retention tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44159951170) for whitelist-only read/unread 90/180 day candidate classification; **NO deletion job**, no approved legal retention duration or live data mutation. [Scope](security/VSP_NOTIFICATION_INBOX_RETENTION_POLICY_49_01_2026-11-17.md).
+- **54.02:** [Flutter targeted CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44159405807) for player/owner retention segmentation with consent, UTC, D1/D7/D30, aggregate privacy suppression; NOT a live measured VSP cohort. [Scope](VSP_RETENTION_SEGMENTATION_54_02_2026-11-17.md).
+- Accepted 3 **preexisting** task IDs, 633 total / 277 accepted / 356 open (43.76%). No Staging/Production write, live notification deletion, push send, APK or main merge.
+
 ## 2026-11-17 — ACCEPTED 49.04 scoped notification settings and 54.01 active-return metric definition (+2)
 
 [Exact-commit Flutter CI SUCCESS, 30 tests plus Analyze](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44144855159) at `bc293e3`. Local preferences saving and per-account UI recovery now verified at source/unit level (**49.04 narrowly accepted**, not real FCM unsubscribe). Meaningful D1/D7/D30 role, consent, identity and UTC event rules verified (**54.01 narrowly accepted**, not live cohort analytics). [Storage audit 742 files SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44143356917), no hosted version or independent-account security proof; 85.01–85.03 remain open. [Issue 38 evidence](https://github.com/mohamedsalh333555/VSP.App/issues/38).

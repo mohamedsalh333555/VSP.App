@@ -16,3 +16,7 @@ The new pure Dart `VSPRetentionCohorts.segment` groups analytics-consented authe
 New `test/core/services/retention_cohort_contract_test.dart` covers six-account D1/D7/D30 dedup, owner/player split, anonymous and non-consented suppression, earliest-first-value regardless of input order, group-size suppression, future events and cross-offset UTC day boundaries. New source/tests are included in both push and PR scoped Flutter CI workflow paths.
 
 **Acceptance limit:** Implements 54.02 as a **pure, privacy-preserving cohort segmentation algorithm only**, pending CI on the exact SHA. It does **not** deploy a live analytics pipeline, validate consent record retention, compute actual VSP customer cohorts or fulfill 54.06 live measurement. No Supabase schema or production changes; 54.03–54.08 stay open until separately validated.
+
+## Acceptance evidence (17 November 2026)
+
+**54.02 ACCEPTED, narrowly scoped to the pure cohort segmentation algorithm.** [Specialized Flutter CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44159405807) on commit [a6c21ba](https://github.com/mohamedsalh333555/VSP.App/commit/a6c21baa673ffa910bd38aa9d37c6b9e839384e6). No live retention cohort has been measured and no analytics data source was connected.

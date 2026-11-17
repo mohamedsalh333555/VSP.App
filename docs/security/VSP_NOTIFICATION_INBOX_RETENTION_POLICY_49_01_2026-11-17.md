@@ -16,3 +16,7 @@ Staging and Production `public.notifications` have identical columns: `id` UUID,
 `supabase/functions/_shared/notification_retention_policy.ts` returns a typed decision without fetching, logging or modifying row data. The offline Deno CI exercises day boundaries, unread grace, transaction/booking/audit exclusions, malformed timestamps and Cairo offset comparison. No cron, migration or production access.
 
 **49.01 narrowly eligible for documentation/decision-contract acceptance only after exact commit CI**; 49.02/03/05/06/07 remain open. In isolation this source cannot fulfill legal compliance or user deletion requests.
+
+## Acceptance evidence (17 November 2026)
+
+**49.01 ACCEPTED, narrowly scoped to the technical retention decision contract; no cleanup rollout.** [Deno offline CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44159951170) on commit [692ef37](https://github.com/mohamedsalh333555/VSP.App/commit/692ef37384feeecb67d12ee35d696008c8669b90). Duration choices still require product/legal review before actual deletion.
