@@ -27,8 +27,8 @@ class TeamSkillsPublishedDetails extends StatelessWidget {
         label = item.trim();
       } else if (item is Map) {
         final fields = isArabic
-            ? ['title_ar', 'name_ar', 'title', 'name']
-            : ['title', 'name', 'title_ar', 'name_ar'];
+            ? ['title_ar', 'name_ar', 'award_ar', 'prize_ar', 'title', 'name', 'award', 'prize']
+            : ['title', 'name', 'award', 'prize', 'title_ar', 'name_ar', 'award_ar', 'prize_ar'];
         for (final key in fields) {
           final candidate = item[key];
           if (candidate is String && candidate.trim().isNotEmpty) {

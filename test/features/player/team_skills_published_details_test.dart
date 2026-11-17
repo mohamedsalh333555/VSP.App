@@ -18,7 +18,7 @@ void main() {
           'hospitality_fee': 75,
           'prizes': [
             {'title_ar': 'كأس الفريق البطل'},
-            'ميداليات',
+            {'place': 2, 'award': 'ميداليات'},
           ],
         },
       ))),
