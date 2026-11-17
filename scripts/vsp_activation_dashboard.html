@@ -104,6 +104,9 @@ th,td{padding:10px;border-bottom:1px solid #414348}th{font-weight:700}
     }
     for (let i = 1; i < report.stages.length; i++) {
       const previous = report.stages[i - 1], current = report.stages[i];
+      if (previous.accounts === null && current.accounts !== null) {
+        throw Error("تم كشف عدد بعد مرحلة محجوبة.");
+      }
       if (previous.accounts === null || current.accounts === null) {
         if (current.dropOffFromPrevious !== null ||
             current.conversionFromPrevious !== null) {
@@ -113,6 +116,9 @@ th,td{padding:10px;border-bottom:1px solid #414348}th{font-weight:700}
       }
       if (current.accounts > previous.accounts) throw Error("العدد يزداد بين خطوات التحويل.");
       const lost = previous.accounts - current.accounts;
+      if (lost > 0 && lost < 5) {
+        throw Error("يمكن استنتاج عدد صغير من الفرق بين مرحلتين.");
+      }
       const expectedDrop = lost === 0 || lost >= 5 ? lost : null;
       const expectedRate = expectedDrop === null || previous.accounts === 0
         ? null : current.accounts / previous.accounts;
@@ -165,11 +171,17 @@ th,td{padding:10px;border-bottom:1px solid #414348}th{font-weight:700}
       }
       const parts = [1,7,30].map(day => {
         const eligible = c["eligibleD"+day], active = c["activeD"+day];
-        if (!Number.isSafeInteger(eligible) || !Number.isSafeInteger(active) ||
-            eligible < 0 || eligible > c.accounts || active < 0 || active > eligible) {
+        if (!safeCount(eligible) || !safeCount(active) ||
+            (eligible === null && active !== null) ||
+            (eligible !== null && eligible > c.accounts) ||
+            (eligible !== null && active !== null && active > eligible)) {
           throw Error("عدادات العودة النشطة غير صالحة.");
         }
-        return eligible >= 5 && (active === 0 || active >= 5)
+        if (eligible !== null && active !== null &&
+            eligible - active > 0 && eligible - active < 5) {
+          throw Error("يمكن استنتاج مجموعة عودة صغيرة.");
+        }
+        return eligible !== null && active !== null
           ? active + " / " + eligible : "محجوب";
       });
       const row = document.createElement("tr");
