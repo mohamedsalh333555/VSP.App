@@ -7,6 +7,8 @@ import '../providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'notification/match_reminder_schedule_contract.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
 import '../../features/player/screens/chat_screen.dart';
 import '../services/logger_service.dart';
@@ -222,31 +224,61 @@ class NotificationService {
    }
  }
 
- Future<void> scheduleMatchReminder({required String bookingId, required String stadiumName, required DateTime matchTime}) async {
-   if (kIsWeb) return;
-   final userId = Supabase.instance.client.auth.currentUser?.id;
-   if (userId == null || userId.isEmpty) return;
-   final prefs = await SharedPreferences.getInstance();
-   if (Supabase.instance.client.auth.currentUser?.id != userId ||
-       !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_general')) ?? true) ||
-       !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_match_reminders')) ?? true)) return;
-   final reminderTime = matchTime.subtract(const Duration(hours: 2));
-   if (reminderTime.isBefore(DateTime.now())) return;
-   const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-     'match_reminders', 'Match Reminders',
-     channelDescription: 'Reminders sent 2 hours before a match starts',
-     importance: Importance.high, priority: Priority.high,
-   );
-   await _localNotifications.show(
-     bookingId.hashCode, 'Match Reminder',
-     'Your match at $stadiumName starts in 2 hours! Don\'t forget your gear.',
-     const NotificationDetails(android: androidDetails),
-     payload: jsonEncode({'type': 'booking', 'id': bookingId, 'recipientUserId': userId}),
-   );
-   VSPLogger.i('Scheduled reminder for $bookingId at $reminderTime');
- }
+ Future<void> scheduleMatchReminder({
+    required String bookingId, required String stadiumName, required DateTime matchTime,
+  }) async {
+    if (kIsWeb) return;
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty || bookingId.trim().isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (Supabase.instance.client.auth.currentUser?.id != userId ||
+        !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_general')) ?? true) ||
+        !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_match_reminders')) ?? true)) return;
+    final when = VSPMatchReminderSchedule.reminderUtc(
+      matchTime: matchTime, now: DateTime.now(),
+    );
+    if (when == null) return;
+    final id = VSPMatchReminderSchedule.reminderId(userId, bookingId);
+    // UTC absolute instant avoids Cairo DST wall-clock ambiguity.
+    final scheduledAt = tz.TZDateTime.utc(when.year, when.month, when.day,
+        when.hour, when.minute, when.second, when.millisecond, when.microsecond);
+    await _localNotifications.zonedSchedule(
+      id, 'Match Reminder',
+      'Your match at $stadiumName starts in 2 hours! Don\'t forget your gear.',
+      scheduledAt,
+      const NotificationDetails(
+        android: AndroidNotificationDetails('match_reminders', 'Match Reminders',
+            channelDescription: 'Two-hour match reminders', importance: Importance.high,
+            priority: Priority.high),
+        iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: jsonEncode({'type': 'booking_confirmed', 'bookingId': bookingId,
+          'recipientUserId': userId}),
+    );
+    if (Supabase.instance.client.auth.currentUser?.id != userId) {
+      await _localNotifications.cancel(id);
+      return;
+    }
+    final key = VSPMatchReminderSchedule.preferenceKey(userId);
+    final ids = prefs.getStringList(key)?.toSet() ?? <String>{};
+    ids.add(id.toString());
+    await prefs.setStringList(key, ids.toList());
+  }
 
- void _handleNotificationClick(Map<String, dynamic> data) async {
+  Future<void> cancelScheduledMatchRemindersForUser(String userId) async {
+    if (kIsWeb || userId.trim().isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final key = VSPMatchReminderSchedule.preferenceKey(userId);
+    for (final raw in prefs.getStringList(key) ?? const <String>[]) {
+      final id = int.tryParse(raw);
+      if (id != null && id >= 0) await _localNotifications.cancel(id);
+    }
+    await prefs.remove(key);
+  }
+
+  void _handleNotificationClick(Map<String, dynamic> data) async {
    final context = _navigatorKey?.currentContext;
    if (context == null || !context.mounted) return;
    // Reject callbacks for other accounts and legacy recipient-free pushes.

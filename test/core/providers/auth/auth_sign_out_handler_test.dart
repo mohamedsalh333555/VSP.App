@@ -20,12 +20,19 @@ class FakeAuthService implements AuthService {
 class FakeNotificationService implements NotificationService {
   bool stoppedListening = false;
   String? unlinkedUserId;
+  String? cancelledRemindersUserId;
   final List<String> operations = [];
 
   @override
   Future<void> unregisterCurrentDeviceForUser(String userId) async {
     unlinkedUserId = userId;
     operations.add('unlink');
+  }
+
+  @override
+  Future<void> cancelScheduledMatchRemindersForUser(String userId) async {
+    cancelledRemindersUserId = userId;
+    operations.add('cancel_reminders');
   }
 
   @override
@@ -67,6 +74,8 @@ void main() {
     );
     expect(fakeNotif.unlinkedUserId, user.id);
     expect(fakeNotif.operations.first, 'unlink');
+    expect(fakeNotif.cancelledRemindersUserId, user.id);
+    expect(fakeNotif.operations.take(2).toList(), ['unlink', 'cancel_reminders']);
     expect(fakeAuth.signOutCalled, isTrue);
   });
 

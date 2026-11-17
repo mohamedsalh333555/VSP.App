@@ -24,6 +24,10 @@ class AuthSignOutHandler {
       } catch (_) {
         // Do not trap the user in a signed-in state when Firebase is offline.
       }
+      // Native alerts must not leak old-account details after sign-out.
+      try {
+        await notificationService.cancelScheduledMatchRemindersForUser(user.id);
+      } catch (_) {}
       try {
         await Supabase.instance.client
             .from('users')
