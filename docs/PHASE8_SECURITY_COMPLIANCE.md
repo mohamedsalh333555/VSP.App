@@ -1,5 +1,10 @@
 # PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
 
+## 2026-11-17 — Paymob refund-queue input and ledger follow-up (source-only)
+
+[Verified Deno/Flutter financial CI and exact open production gates](security/VSP_PAYMOB_REFUND_QUEUE_VALIDATION_LEDGER_BATCH_2026-11-17.md): reject digit-stripped provider transaction IDs and nonpiaster amounts; check each ledger UPDATE returned one row before queue completion or user success notice; reject contradictory provider refund flags. Partial PostgREST writes are not atomic and require a future SQL settlement RPC. No Paymob Sandbox/hosted migration or production release. 0 financial tasks accepted; independent 32.09 captain test accepted separately (633/268/365).
+
+
 ## 2026-11-17 — signed direct-refund replay claims and release HOLD dependencies
 
 [Scoped remediation, CI evidence and remaining Paymob Sandbox/hosted migration blockers](security/VSP_PAYMOB_DIRECT_REFUND_DISPATCH_CLAIMS_2026-11-17.md). Added a unique, service-role-only, RLS-enabled dispatch record for the **legacy 1v1** and **already-cancelled booking** direct refund paths; a duplicate signed callback or unavailable claim table can no longer issue a second refund request from those paths. Deno/Flutter financial and disposable PostgreSQL contracts passed; production/Staging migration + genuine user access tests still open. The release security declaration explicitly blocks enabling the modified Edge Functions before `20261117173000` and `20261117174500` migration verification. Existing SEC-06/SEC-10 / 30.* / 31.* tasks stay OPEN; **633 unique / 267 accepted / 366 open**, no new task IDs or accepted completions.

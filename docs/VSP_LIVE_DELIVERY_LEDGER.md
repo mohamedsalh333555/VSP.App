@@ -1,3 +1,9 @@
+## 2026-11-17 — Captain transfer two-session invariant ACCEPTED 32.09 (+1; 268/365)
+
+- **Task 32.09 accepted narrowly:** [same-source staging+production captain transfer snapshot](security/VSP_TEAM_CAPTAIN_TRANSFER_32_09_ACCEPTANCE_2026-11-17.md) with matching SHA and [disposable PostgreSQL 17 CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44122001956). Tests noncaptain, blocked/nonmember/different region, active game/league, successful handoff and two competing old-captain transfers with **one successful successor**. No hosted JWT or production write, no `main` merge.
+- **Code-only financial batch, zero additional task acceptances:** [strict Paymob transaction ID/amount](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44119879534), [post-gateway ledger verification](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44120494385), [conflicting-refund-flags](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44121083855) all **financial Deno+Flutter SUCCESS**. [Exact report](security/VSP_PAYMOB_REFUND_QUEUE_VALIDATION_LEDGER_BATCH_2026-11-17.md). Still requires provider Sandbox and atomic DB settlement testing.
+- **Current authoritative count:** **633 unique / 268 accepted / 365 open; +1 accepted, +0 unique IDs (42.34%).** No production release.
+
 ## 2026-11-17 — Direct Paymob refund dispatch-claim uniqueness and release dependency (267/366)
 
 - **Direct refund double-dispatch guards:** [aba61c3](https://github.com/mohamedsalh333555/VSP.App/commit/aba61c3fc8ec62b96ae75fd1e167c3e2b8b2698c) reserves a service-only, unique provider transaction before legacy 1v1 or cancelled-booking auto-refund. Duplicate callback, missing table or failed claim returns manual reconciliation, **without sending Paymob**.
