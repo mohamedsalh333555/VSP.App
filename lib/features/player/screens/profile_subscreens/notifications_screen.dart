@@ -96,13 +96,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
   }
 
-  Future<void> _saveSetting(String key, bool value) async {
+  Future<bool> _saveSetting(String key, bool value) async {
     final userId = _settingsUserId;
-    if (userId == null || userId.isEmpty) return;
+    if (userId == null || userId.isEmpty) return false;
     try {
       final prefs = await SharedPreferences.getInstance();
       // Do not persist a delayed toggle under a different account.
-      if (!mounted || _settingsUserId != userId) return;
+      if (!mounted || _settingsUserId != userId) return false;
       final saved = await prefs.setBool(_prefKey(userId, key), value);
       if (!saved && mounted && _settingsUserId == userId) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -113,8 +113,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           )),
         );
       }
+      return saved;
     } catch (_) {
-      if (!mounted || _settingsUserId != userId) return;
+      if (!mounted || _settingsUserId != userId) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(
           Localizations.localeOf(context).languageCode == 'ar'
@@ -122,6 +123,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               : 'Could not save notification preference.',
         )),
       );
+      return false;
     }
   }
 
@@ -167,9 +169,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     isAr ? 'إشعارات عامة' : 'General Notifications',
                     isAr ? 'تلقي التحديثات والإعلانات الهامة' : 'Receive important updates and announcements',
                     _generalNotifications,
-                    (v) {
-                      setState(() => _generalNotifications = v);
-                      _saveSetting('notif_general', v);
+                    (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_general', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _generalNotifications = v);
+                      }
                     },
                   ),
                   const SizedBox(height: 20),
@@ -177,9 +184,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     isAr ? 'تنبيهات صوتية' : 'Sound Alerts',
                     isAr ? 'تفعيل التنبيهات الصوتية للإشعارات' : 'Enable sound alerts for notifications',
                     _soundAlerts,
-                    (v) {
-                      setState(() => _soundAlerts = v);
-                      _saveSetting('notif_sound', v);
+                    (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_sound', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _soundAlerts = v);
+                      }
                     },
                   ),
 
@@ -203,10 +215,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         : (isAr ? 'تنبيه عند استلام رسائل جديدة في محادثات التحدي أو الفريق' : 'Alerts for new messages in team or match chats'),
                     _chatNotifications,
                     _generalNotifications
-                        ? (v) {
-                            setState(() => _chatNotifications = v);
-                            _saveSetting('notif_chat', v);
-                          }
+                        ? (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_chat', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _chatNotifications = v);
+                      }
+                    }
                         : null,
                   ),
 
@@ -218,10 +235,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       isAr ? 'إشعار فوري عند قيام لاعب بحجز موعد جديد في ملعبك' : 'Instant alert when a player places a new booking on your pitch',
                       _ownerNewBookings,
                       _generalNotifications
-                          ? (v) {
-                              setState(() => _ownerNewBookings = v);
-                              _saveSetting('notif_owner_new_bookings', v);
-                            }
+                          ? (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_owner_new_bookings', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _ownerNewBookings = v);
+                      }
+                    }
                           : null,
                     ),
                     const SizedBox(height: 20),
@@ -230,10 +252,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       isAr ? 'تنبيهات استلام مبالغ العربون والدفع الإلكتروني' : 'Alerts for received digital deposits and payout settlements',
                       _ownerPayouts,
                       _generalNotifications
-                          ? (v) {
-                              setState(() => _ownerPayouts = v);
-                              _saveSetting('notif_owner_payouts', v);
-                            }
+                          ? (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_owner_payouts', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _ownerPayouts = v);
+                      }
+                    }
                           : null,
                     ),
                     const SizedBox(height: 20),
@@ -242,10 +269,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       isAr ? 'تذكير يومي بقائمة حجوزات الملعب وساعات التشغيل' : 'Daily summary reminder of upcoming pitch bookings and schedule',
                       _ownerDailySchedule,
                       _generalNotifications
-                          ? (v) {
-                              setState(() => _ownerDailySchedule = v);
-                              _saveSetting('notif_owner_daily_schedule', v);
-                            }
+                          ? (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_owner_daily_schedule', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _ownerDailySchedule = v);
+                      }
+                    }
                           : null,
                     ),
                   ] else ...[
@@ -256,10 +288,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       isAr ? 'تأكيد أو تعديل موعد حجز الملعب والعربون' : 'Confirmation or status updates for your pitch bookings',
                       _playerBookingConfirmations,
                       _generalNotifications
-                          ? (v) {
-                              setState(() => _playerBookingConfirmations = v);
-                              _saveSetting('notif_cash_bookings', v);
-                            }
+                          ? (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_cash_bookings', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _playerBookingConfirmations = v);
+                      }
+                    }
                           : null,
                     ),
                     const SizedBox(height: 20),
@@ -268,10 +305,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       isAr ? 'تذكير تلقائي على جهازك قبل بدء المباراة بساعتين' : 'Automatic reminder 2 hours before your match kickoff',
                       _playerMatchReminders,
                       _generalNotifications
-                          ? (v) {
-                              setState(() => _playerMatchReminders = v);
-                              _saveSetting('notif_match_reminders', v);
-                            }
+                          ? (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_match_reminders', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _playerMatchReminders = v);
+                      }
+                    }
                           : null,
                     ),
                     const SizedBox(height: 20),
@@ -280,10 +322,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       isAr ? 'طلبات انضمام اللاعبين وتحديثات تشكيلة الفريق' : 'Join requests and squad roster updates',
                       _playerTeamTransfers,
                       _generalNotifications
-                          ? (v) {
-                              setState(() => _playerTeamTransfers = v);
-                              _saveSetting('notif_team_transfers', v);
-                            }
+                          ? (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_team_transfers', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _playerTeamTransfers = v);
+                      }
+                    }
                           : null,
                     ),
                     const SizedBox(height: 20),
@@ -292,10 +339,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       isAr ? 'تنبيه عند اعتماد نتيجة مباراة أو اعتراض المنافس' : 'Alert when a challenge score is submitted or disputed',
                       _playerChallengeResults,
                       _generalNotifications
-                          ? (v) {
-                              setState(() => _playerChallengeResults = v);
-                              _saveSetting('notif_challenge_results', v);
-                            }
+                          ? (v) async {
+                      // Commit first: a failed local preference write must not
+                      // leave a misleading enabled/disabled switch on screen.
+                      final requestUserId = _settingsUserId;
+                      if (await _saveSetting('notif_challenge_results', v) &&
+                          mounted && _settingsUserId == requestUserId) {
+                        setState(() => _playerChallengeResults = v);
+                      }
+                    }
                           : null,
                     ),
                   ],
