@@ -175,4 +175,4 @@ BEGIN
     'payment_status',   CASE WHEN v_is_final THEN 'paid' ELSE 'partially_paid' END
   );
 END;
-$function$
+$function$;
