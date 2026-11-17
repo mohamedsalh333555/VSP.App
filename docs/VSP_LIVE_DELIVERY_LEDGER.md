@@ -1,7 +1,7 @@
 ## 2026-11-17 — Direct Paymob refund dispatch-claim uniqueness and release dependency (267/366)
 
 - **Direct refund double-dispatch guards:** [aba61c3](https://github.com/mohamedsalh333555/VSP.App/commit/aba61c3fc8ec62b96ae75fd1e167c3e2b8b2698c) reserves a service-only, unique provider transaction before legacy 1v1 or cancelled-booking auto-refund. Duplicate callback, missing table or failed claim returns manual reconciliation, **without sending Paymob**.
-- **Tests:** [financial Deno/Flutter SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142495); [disposable SQL RLS/unique claim SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142761). [Actual anon/authenticated SQL negative test](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116637117) initially in progress.
+- **Tests:** [financial Deno/Flutter SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142495); [disposable SQL RLS/unique claim SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142761). [Actual anon/authenticated SQL role-negative CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116637117).
 - **Release HOLD explicitly lists new financial migrations** [802d60df](https://github.com/mohamedsalh333555/VSP.App/commit/802d60dffe06d35a532782fd5fb0d4199e582bac); neither migration deployed to Staging/production; no live refund. [Full evidence](security/VSP_PAYMOB_DIRECT_REFUND_DISPATCH_CLAIMS_2026-11-17.md).
 - **Counter unchanged this batch:** **633** unique / **267** accepted / **366** open, +0 accepted/+0 unique IDs. No production actions and no merge to `main`.
 

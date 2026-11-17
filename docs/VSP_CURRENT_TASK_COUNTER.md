@@ -9,7 +9,7 @@
 ## دفعة حماية الـWebhook من استردادين مباشرين لنفس العملية
 
 - **الكود المنفذ:** سجل `paymob_refund_dispatch_claims` فريد لكل معاملة ومغلق بصلاحيات service_role وRLS، وحجز إرسال قبل Paymob لمساري استرداد 1v1 القديم والحجز الملغي. رد Webhook مكرر يرجع متابعة تسوية دون طلب مالي جديد.
-- **اختبارات مثبتة:** [Deno وFlutter المالية ناجحة](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142495)، [عقد PostgreSQL الفريد وRLS ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142761)، و[اختبار SQL بأدوار anon/authenticated الحقيقية](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116637117) (راجع نتيجته النهائية).
+- **اختبارات مثبتة:** [Deno وFlutter المالية ناجحة](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142495)، [عقد PostgreSQL الفريد وRLS ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142761)، و[اختبار رفض anon/authenticated ونجاح service_role على PostgreSQL مؤقت: **SUCCESS**](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116637117).
 - **قيد إصدار:** التعديلات تحتاج نشر Migration للجدول الجديد **قبل** نشر Webhook، وMigration حالات دوري الفرق قبل Edge Function الانسحاب. لم يتم أي نشر أو تشغيل Paymob Sandbox حقيقي؛ بوابة الإصدار **HOLD**.
 - [تقرير تفصيلي](security/VSP_PAYMOB_DIRECT_REFUND_DISPATCH_CLAIMS_2026-11-17.md).
 - **العداد:** 633 فريدة، **267 مكتملة مقبولة**، **366 مفتوحة**، 0 إغلاقات نهائية و0 مهام فريدة جديدة في الدفعة. النسبة **42.18%**.

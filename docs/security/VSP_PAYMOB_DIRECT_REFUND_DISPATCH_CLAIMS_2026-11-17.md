@@ -21,7 +21,7 @@ A new server-only persistent dispatch claim closes that specific code path. It d
 ## Verified isolated tests
 
 - [Deno and focused Flutter financial regressions — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142495) at commit `aba61c3`, including duplicate replay mock and fail-closed missing-table behavior.
-- [Disposable PostgreSQL 17 schema and access contract — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142761) at `aba61c3`: primary-key duplicate, invalid refund context, RLS and grants. The subsequent [actual-role negative CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116637117) was **running when first recorded**. Check the run's final status before calling it successful.
+- [Disposable PostgreSQL 17 schema and access contract — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142761) at `aba61c3`: primary-key duplicate, invalid refund context, RLS and grants. The subsequent [actual-role negative CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116637117) is **SUCCESS**, including actual failed attempts under anon/authenticated roles and a successful service_role insert on disposable PostgreSQL.
 - [VSP release-gate isolated CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116461595) at `802d60df`, with financial migration dependencies named as current P0 blockers.
 - No real Paymob Sandbox refund, database privilege check with genuine signed user JWT, storage compliance test or hosted migration was performed.
 
