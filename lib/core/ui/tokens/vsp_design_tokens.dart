@@ -93,7 +93,8 @@ abstract final class VSPDSSemanticColors {
 
   static const Color textPrimary = VSPDSColors.zinc100;
   static const Color textSecondary = VSPDSColors.zinc400;
-  static const Color textMuted = VSPDSColors.gray500;
+  // Contrast-safe neutral for small muted labels on dark surfaces.
+  static const Color textMuted = VSPDSColors.zinc400;
 
   static const Color border = Color(0xFF262626);
   static const Color borderMedium = Color(0x33262626);
