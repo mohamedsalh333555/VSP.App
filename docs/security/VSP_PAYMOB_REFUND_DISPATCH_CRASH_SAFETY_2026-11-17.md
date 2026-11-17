@@ -12,7 +12,7 @@
 ## Tests
 
 - [Tournament Deno + Flutter financial CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44109232647) on `44b07d18`.
-- [Booking refund Deno + focused Flutter financial CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110166202) on `a9ea11cd`, if current status remains successful; verify workflow run when closing acceptance.
+- [Booking-specific financial CI at `a9ea11cd`](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110166202) was **CANCELLED** by a subsequent branch push; it is **not** proof of success. The later [financial CI at `9129d652` passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110257615), including the booking refund Deno guard test. Actual hosted claim CAS still requires Staging verification.
 - [Three durable queue dispatch guards Deno + Flutter financial CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110931520) on `68e76686`.
 - [Webhook audit minimization CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110257615).
 - Added synthetic CAS/zero-row and disallowed-table tests. These are not two-worker live race tests.
