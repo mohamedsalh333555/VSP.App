@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only consistency check for VSP's active 630-subtask execution scope.
+"""Read-only consistency check for VSP's active 633-subtask execution scope.
 
 This checks inventory/accounting only. It never promotes code or tests to VERIFIED.
 """
@@ -17,18 +17,20 @@ def main():
     ids = [task_id for _, task_id in rows]
     plan_ids = re.findall(r"^- (\d{2}\.\d{2}) —", plan, re.M)
     errors = []
-    if len(ids) != 630 or len(set(ids)) != 630:
-        errors.append("The active scope must contain exactly 630 unique subtask IDs.")
+    if len(ids) != 633 or len(set(ids)) != 633:
+        errors.append("The active scope must contain exactly 633 unique subtask IDs.")
     if len(plan_ids) != len(ids) or set(plan_ids) != set(ids):
         errors.append("The execution plan loses, duplicates, or adds core subtask IDs.")
-    if len({task_id.split('.')[0] for task_id in ids}) != 83:
-        errors.append("Expected 83 active parent items.")
+    if len({task_id.split('.')[0] for task_id in ids}) != 84:
+        errors.append("Expected 84 active parent items.")
     if any(task_id.startswith("56.") for task_id in ids + plan_ids):
         errors.append("Cancelled group 56 must not reappear in the active scope.")
     if not all(f"83.{index:02d}" in ids for index in range(1, 8)):
         errors.append("The seven screenshot-triage tasks in group 83 are missing.")
     if not all(f"84.{index:02d}" in ids for index in range(1, 13)):
         errors.append("The twelve deduplicated RESULT tasks in group 84 are missing.")
+    if not all(f"85.{index:02d}" in ids for index in range(1, 4)):
+        errors.append("The three independent Storage advisory audits in group 85 are missing.")
     accepted = sum(mark == "x" for mark, _ in rows)
     match = re.search(r"^## .*?\((\d+)/(\d+)\)\s*$", ledger, re.M)
     if not match or tuple(map(int, match.groups())) != (accepted, len(ids) - accepted):
