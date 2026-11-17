@@ -1,3 +1,12 @@
+## 2026-11-18 — Four scoped owner subscription/funnel contracts accepted (+4; 289/344)
+
+- **52.01:** dashboard `owner_dashboard_viewed` event only for the signed-in owner on visible home; same-account session deduplication, switch-account isolation and failed-send retry verified in Dart. Firebase live totals not verified.
+- **52.03:** Free/Pro comparison lists only server-row-enabled Pro-only differences and verified capacity uplift. Free-plan zero-price consistency and conditional Copilot badge keep copy truthful.
+- **52.04:** owner upgrade URL is restricted to the official HTTPS `accept.paymob.com/unifiedcheckout/` format with required query tokens. Invalid, phishing and non-HTTPS links rejected; no activated event from the checkout-start screen. No Paymob Sandbox transaction or hosted subscription activation verified.
+- **52.06:** paid/trial expiry banners tested in Arabic/English at exact and Cairo-offset boundaries with no notice for active or inapplicable accounts. No real-device/push delivery.
+- [Focused Flutter Analyze + owner tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44187634461) at [1b68fbe](https://github.com/mohamedsalh333555/VSP.App/commit/1b68fbe0d5d223e2c308554abbe7d63b5e1c34c4). [Evidence and exclusions](VSP_OWNER_PLANS_FUNNEL_ACCEPTANCE_52_01_52_03_52_04_52_06_2026-11-18.md).
+- **633 unique / 289 accepted / 344 open (45.66%)**, 4 pre-existing tasks newly accepted, 0 added IDs. Subscription activation analytics, hosted Paymob and release checks remain open; no production write, APK or main merge.
+
 ## 2026-11-17 — Exact-cent booking quote and fee disclosure accepted (+2; 285/348)
 
 - **53.02:** booking widget tests verify precise selected total 107.75 EGP, optional ball, upfront deposit, and no stale price on slot deselection; quote source rechecks against fresh venue data. Source/UI scope only, not real live venues.
