@@ -1,3 +1,10 @@
+## 2026-11-17 — Paymob booking refund proof and signed audit minimization (0 new accepted)
+
+- **Code fixes:** [e25c26ed](https://github.com/mohamedsalh333555/VSP.App/commit/e25c26ede601aa3600bbcf66fc286ad4e2429794) requires explicit refund acceptance and omits provider error bodies in booking refund diagnostics; [9129d652](https://github.com/mohamedsalh333555/VSP.App/commit/9129d652d30a868c82c1519a2f5d5db349b6086a) redacts signed webhook payload records and accounting error text.
+- **CI:** [booking refund proof](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44109650071) and [sanitized audit](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110257615) **SUCCESS**, Deno + focused Flutter. [Task accounting](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110274887) SUCCESS. The tested Staging payment receipt procedure still receives all its required signed reconciliation fields.
+- Existing separate commit `a9ea11cd` prevents repeated booking refund dispatch and `44b07d18` covers tournament refund ambiguity; **do not duplicate their task counts**. No new production secrets/data access or live refund; existing SEC-03/06/10/30/31/63 and 85.* still open. [Exact evidence](security/VSP_PAYMOB_REFUND_PROOF_AUDIT_MINIMIZATION_2026-11-17.md).
+- **Counter remains 633 unique / 266 accepted / 367 open**, 0 newly accepted/0 newly created.
+
 ## 2026-11-17 — Paymob source-only integration/order/refund hardening (0 accepted) (266/367)
 
 - **Five source issues corrected:** refund from signed historical gross, integration allow-list, mandatory existing order correlation, late-failure update guarded by `paymob_order_id`, and checked/reflected over-capacity refund ledger RPC outcomes. [Commits and exact safeguards](security/VSP_PAYMOB_INTEGRATION_ORDER_REFUND_RECONCILIATION_2026-11-17.md).
