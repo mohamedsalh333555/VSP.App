@@ -7,7 +7,7 @@ import subprocess
 import sys
 from test_team_skills_rls_isolated import psql,reject_nonlocal_targets
 ROOT=Path(__file__).resolve().parents[1]
-SQL=ROOT/"supabase/migrations/20261117071000_notifications_reserved_financial_events_rls.sql"
+SQL=ROOT/"supabase/migrations/20261117161000_notifications_reserved_team_invitation_events_rls.sql"
 FIXTURE=ROOT/"supabase/tests/notifications_reserved_events_rls_isolated_contract.sql"
 DB="vsp_notifications_reserved_events_isolated"
 def main()->int:
@@ -23,7 +23,7 @@ def main()->int:
         if result.returncode:
             print("RESERVED_NOTIFICATION_RLS_FAIL: "+result.stderr[-3400:],file=sys.stderr)
             return 1
-        print("PASS: generic self-notification allowed; user fake Paymob/refund/Team Skills notices denied")
+        print("PASS: generic self-notification allowed; payment, Team Skills, team invitation forgeries denied")
         return 0
     finally:
         removed=psql("postgres",command="DROP DATABASE IF EXISTS "+DB+" WITH (FORCE)")

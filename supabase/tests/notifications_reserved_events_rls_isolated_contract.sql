@@ -50,7 +50,10 @@ begin
     ('info','booking','booking_cancelled'),
     ('info','team_skills_cup','phase_score_approved'),
     ('info','team_skills_cup','knockout_advancement'),
-    ('info','team_skills_cup','award_announced')
+    ('info','team_skills_cup','award_announced'),
+    ('info','team_membership','invitation_received'),
+    ('info','team_membership','invitation_accepted'),
+    ('info','team_membership','invitation_declined')
   ) as v(a,b,c)
  loop
    denied:=false;
