@@ -31,7 +31,6 @@ import 'dart:async';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'core/config/app_env.dart';
 import 'core/utils/deep_link_helper.dart';
-import 'core/services/secure_storage_service.dart';
 import 'core/services/remote_config_service.dart';
 import 'shared/widgets/vsp_network_banner.dart';
 
@@ -320,33 +319,32 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
     debugPrint('⚡ Handling deep link: scheme=${uri.scheme}, host=${uri.host}, path=${uri.path}');
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
 
- // 1. Supabase OAuth callback bypass
+ // 1. Supabase handles authentication and PKCE verification. Never
+ // trust a role query on an external callback: AuthOAuthCoordinator already
+ // stored the role selected before the OAuth flow was launched.
  if (DeepLinkHelper.isOAuthCallback(uri)) {
- debugPrint(' OAuth callback detected — forwarding to Supabase auth handler.');
- final role = uri.queryParameters['role'];
- if (role != null && (role == 'owner' || role == 'player')) {
- auth.setUserType(role);
- SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_oauth_role', role));
- SecureStorageService.writeSecure('pending_oauth_role', role);
- }
- return;
+   debugPrint('Trusted OAuth callback received; SDK owns authentication.');
+   return;
  }
 
- // 2. Auth Guard: حفظ الرابط لوقت لاحق إن لم يكن مسجلاً
- if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
- debugPrint(' Saving pending deep link for after login: $uri');
- SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_deep_link', uri.toString()));
- return;
- }
-
- // 3. التحليل والتوجيه الآمن
+ // 2. Reject unsupported URLs *before* persisting pending deep links.
+ // A malicious website, unbounded ID or fragment is not navigation input.
  final parsed = DeepLinkHelper.parse(uri);
- if (parsed != null) {
- _router.push(parsed.routePath);
- } else {
- debugPrint(' Invalid or unrecognized deep link: $uri');
- _router.go('/');
+ if (parsed == null) {
+   debugPrint('Unsupported or untrusted deep link ignored.');
+   return;
  }
+
+ // 3. Resume recognized requests only after a real profile is ready.
+ if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
+   SharedPreferences.getInstance().then(
+     (prefs) => prefs.setString('pending_deep_link', uri.toString()),
+   );
+   return;
+ }
+
+ // GoRouter applies the verified account's role restrictions.
+ _router.push(parsed.routePath);
  }
 
  @override
