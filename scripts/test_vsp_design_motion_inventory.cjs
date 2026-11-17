@@ -13,11 +13,15 @@ function withTree(callback) {
     fs.mkdirSync(path.join(dir, 'generated'), { recursive: true });
     fs.writeFileSync(path.join(dir, 'features', 'colors.dart'), `
 final x = VSPColors.accent;
+final x2 = VSPDSColors.zinc950;
+final x3 = VSPDSSemanticColors.accent;
 final y = Color(0xFF112233);
 final z = Colors.green;
 final a = VSPSpacing.sm;
+final a2 = VSPDSSpacing.sm;
 final b = EdgeInsets.all(12);
 final radius = VSPRadius.card;
+final radius2 = VSPDSRadius.card;
 final label = TextStyle(fontSize: 14, fontFamily: 'Fixture');
 `);
     fs.writeFileSync(path.join(dir, 'features', 'motion.dart'), `
@@ -45,10 +49,15 @@ test('inventory identifies tokens, literals, type and motion across handwritten 
       'motionToken', 'animatedWidget', 'explicitMotionDuration',
       'reduceMotionGate',
     ]) {
-      assert.equal(inventory.groups[category].matches, 1, category);
+      assert.equal(inventory.groups[category].matches,
+        category === 'colorToken' ? 3 :
+        category === 'spacingToken' || category === 'radiusToken' ? 2 : 1, category);
       assert.equal(inventory.groups[category].files, 1, category);
       assert.equal(inventory.groups[category].samples[0].line > 0, true);
     }
+    assert.equal(inventory.groups.colorToken.matches, 3);
+    assert.equal(inventory.groups.spacingToken.matches, 2);
+    assert.equal(inventory.groups.radiusToken.matches, 2);
     const summary = toMarkdown(inventory);
     assert.match(summary, /Inspected 2 non-generated Dart files/);
     assert.match(summary, /\| `motionToken` \| 1 \| 1 \|/);
