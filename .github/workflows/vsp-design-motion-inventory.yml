@@ -1,0 +1,49 @@
+name: VSP Source Design and Motion Inventory
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-design-motion-inventory.yml"
+      - "scripts/audit_vsp_design_tokens_motion.cjs"
+      - "scripts/test_vsp_design_motion_inventory.cjs"
+      - "lib/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-design-motion-inventory.yml"
+      - "scripts/audit_vsp_design_tokens_motion.cjs"
+      - "scripts/test_vsp_design_motion_inventory.cjs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vsp-design-inventory-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check deterministic source inventory classifier
+        run: node --test scripts/test_vsp_design_motion_inventory.cjs
+      - name: Generate non-destructive comprehensive source inventory
+        run: |
+          node scripts/audit_vsp_design_tokens_motion.cjs --markdown > /tmp/vsp-design-motion-inventory.md
+          node scripts/audit_vsp_design_tokens_motion.cjs --json > /tmp/vsp-design-motion-inventory.json
+          cat /tmp/vsp-design-motion-inventory.md >> "$GITHUB_STEP_SUMMARY"
+          sed -n '1,36p' /tmp/vsp-design-motion-inventory.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsp-design-motion-source-inventory
+          path: |
+            /tmp/vsp-design-motion-inventory.md
+            /tmp/vsp-design-motion-inventory.json
+          retention-days: 14
