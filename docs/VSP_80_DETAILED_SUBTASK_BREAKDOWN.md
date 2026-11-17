@@ -2,7 +2,7 @@
 
 > 2026-11-07 — تمت مراجعة الفجوات وإضافة اختبارات قبول وحالات أمان وتزامن إلى البنود المناسبة. هذا حصر تفصيلي للمهام المطلوبة، **وليس إثباتًا لإنجازها**. كل سطر يمثل نتيجة قابلة للفحص. يمكن تعديل النطاق بعد مراجعة الكود دون احتساب التكرار. البند 33 كان له سابقًا 13 سطرًا في دفتر المتابعة؛ البند 33 هنا يحتوي 14 مهمة مفصّلة، بينما دفتر المتابعة يجمع بعض خطوات CI في مهمة واحدة (13 مهمة). لا يعني الاختلاف تنفيذ مهمة إضافية.
 
-**إجمالي البنود الرئيسية النشطة: 83 (المجموعة 56 أُلغيت بطلب المالك). إجمالي المهام الفرعية المحددة: 630. الحالة الحالية المدققة: 254 مقبولة و376 غير مقبولة نهائيًا بعد؛ مصدر العد الحالي هو `VSP_LIVE_DELIVERY_LEDGER.md`. التغييرات المصنفة CODE_DONE بعد آخر تحقق لا تُحسب VERIFIED حتى المراجعة المجمعة المؤجلة.**
+**إجمالي البنود الرئيسية النشطة: 83 (المجموعة 56 أُلغيت بطلب المالك). إجمالي المهام الفرعية المحددة: 630. الحالة الحالية المدققة: 262 مقبولة و368 غير مقبولة نهائيًا بعد؛ مصدر العد الحالي هو `VSP_LIVE_DELIVERY_LEDGER.md`. التغييرات المصنفة CODE_DONE بعد آخر تحقق لا تُحسب VERIFIED حتى المراجعة المجمعة المؤجلة.**
 
 ## الملخص
 
@@ -595,10 +595,10 @@
 - [x] 45.01 — إشعار إنشاء الحجز — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
 - [x] 45.02 — إشعار تأكيد الحجز — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
 - [x] 45.03 — إشعار الإلغاء — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
-- [ ] 45.04 — إشعار الدفع
+- [x] 45.04 — إشعار الدفع — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
 - [x] 45.05 — التحقق من المستلم — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
 - [x] 45.06 — اختبار القوالب والتسليم — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
-- [ ] 45.07 — اختبار عدم إرسال إشعار دفع ناجح قبل تأكيد الخادم
+- [x] 45.07 — اختبار عدم إرسال إشعار دفع ناجح قبل تأكيد الخادم — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
 
 ### 46 — Challenge/team notifications (7)
 
@@ -763,7 +763,7 @@
 - [x] 62.04 — تحديد حقل مرجعي — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
 - [ ] 62.05 — اختبار التحويل
 - [x] 62.06 — توثيق التوافق — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
-- [ ] 62.07 — اختبار صحة حالة الحجز عند اختلاف حالات الدفع القديمة
+- [x] 62.07 — اختبار صحة حالة الحجز عند اختلاف حالات الدفع القديمة — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
 
 ### 63 — Paymob transaction IDs (7)
 
@@ -771,19 +771,19 @@
 - [x] 63.02 — تتبع استخدامها في webhook [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
 - [x] 63.03 — تحديد المفتاح الفريد [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
 - [x] 63.04 — تدقيق القيم المكررة [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
-- [ ] 63.05 — اختبار الربط
+- [x] 63.05 — اختبار الربط — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
 - [x] 63.06 — توثيق القرار — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
-- [ ] 63.07 — اختبار عدم قبول معرف معاملة تابع لحجز آخر
+- [x] 63.07 — اختبار عدم قبول معرف معاملة تابع لحجز آخر — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
 
 ### 64 — Payment method/source (7)
 
 - [x] 64.01 — جرد حقول وسيلة الدفع — [جرد الحقول من الكود](VSP_LEGACY_FINANCIAL_FIELD_INVENTORY_61_64.md)، commit `e2cddaf`
-- [ ] 64.02 — توحيد قيم الوسائل
+- [x] 64.02 — توحيد قيم الوسائل — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
 - [x] 64.03 — تحديد مصدر الدفع — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
-- [ ] 64.04 — اختبار التحويل
+- [x] 64.04 — اختبار التحويل — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
 - [ ] 64.05 — تحديث الاستعلامات
 - [x] 64.06 — توثيق القرار — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
-- [ ] 64.07 — اختبار تمييز الدفع النقدي من الدفع الإلكتروني في التقارير
+- [x] 64.07 — اختبار تمييز الدفع النقدي من الدفع الإلكتروني في التقارير — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
 
 ### 65 — Three refund queue designs (8)
 
