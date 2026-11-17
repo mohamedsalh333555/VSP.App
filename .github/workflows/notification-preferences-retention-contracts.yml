@@ -10,9 +10,11 @@ on:
       - 'lib/features/player/screens/profile_subscreens/notifications_screen.dart'
       - 'lib/core/services/notification/notification_filter_service.dart'
       - 'lib/core/services/retention_event_contract.dart'
+      - 'lib/core/services/retention_cohort_contract.dart'
       - 'lib/core/services/analytics_service.dart'
       - 'test/core/services/notification/notification_filter_service_test.dart'
       - 'test/core/services/retention_event_contract_test.dart'
+      - 'test/core/services/retention_cohort_contract_test.dart'
       - 'test/architecture/notification_preferences_*'
       - '.github/workflows/notification-preferences-retention-contracts.yml'
   pull_request:
@@ -21,9 +23,11 @@ on:
       - 'lib/features/player/screens/profile_subscreens/notifications_screen.dart'
       - 'lib/core/services/notification/notification_filter_service.dart'
       - 'lib/core/services/retention_event_contract.dart'
+      - 'lib/core/services/retention_cohort_contract.dart'
       - 'lib/core/services/analytics_service.dart'
       - 'test/core/services/notification/notification_filter_service_test.dart'
       - 'test/core/services/retention_event_contract_test.dart'
+      - 'test/core/services/retention_cohort_contract_test.dart'
       - 'test/architecture/notification_preferences_*'
       - '.github/workflows/notification-preferences-retention-contracts.yml'
   workflow_dispatch:
@@ -48,6 +52,7 @@ jobs:
           flutter test --no-pub \
             test/core/services/notification/notification_filter_service_test.dart \
             test/core/services/retention_event_contract_test.dart \
+            test/core/services/retention_cohort_contract_test.dart \
             test/architecture/notification_preferences_account_isolation_test.dart \
             test/architecture/notification_preferences_commit_guard_test.dart \
             test/architecture/notification_preferences_lifecycle_guard_test.dart \
