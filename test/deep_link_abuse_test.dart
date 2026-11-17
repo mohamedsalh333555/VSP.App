@@ -195,6 +195,8 @@ void main() {
      '/facility-onboarding',
      '/documentation',
      '/copilot',
+     '/owner-ledger',
+     '/subscription-plans',
      '/owner?tab=financial',
      '/documentation?step=files',
    ]) {
@@ -251,11 +253,20 @@ void main() {
    expect(AppRouter.redirectLogic(
      DummyBuildContext(), FakeGoRouterState('/copilot'), owner,
    ), isNull);
+   for (final ownerBillingPath in [
+     '/subscription-plans',
+     '/owner-ledger',
+   ]) {
+     expect(AppRouter.redirectLogic(
+       DummyBuildContext(), FakeGoRouterState(ownerBillingPath), owner,
+     ), isNull, reason: 'Owner billing notification route should be registered');
+   }
  });
 
  test('6. Unknown roles fail closed and exact path matches prevent false positives', () {
    for (final path in [
      '/owner', '/documentation', '/facility-onboarding', '/copilot',
+     '/subscription-plans', '/owner-ledger',
    ]) {
      expect(AppRouteRoleGuard.redirectForRole(
        path: path, isOwner: false, isAdmin: false,
