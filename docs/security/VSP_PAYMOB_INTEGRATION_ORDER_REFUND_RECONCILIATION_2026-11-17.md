@@ -21,7 +21,7 @@ These are **confirmed source-code weaknesses** addressed in the development bran
 - [Financial CI at `2afc8d87` — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44106409594) (Deno + focused Flutter).
 - [Financial CI at `2dabff4a` — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44106689595) (Deno + focused Flutter).
 - [Financial CI at `b3609fd6` — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107059958) (Deno + focused Flutter).
-- [Financial CI for `9d32f6d0`](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107568234): **Deno job SUCCESS**; focused Flutter job **in progress at initial review**. Check live run before calling this total workflow SUCCESS.
+- [Financial CI at `9d32f6d0` — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107568234): both Deno synthetic HMAC/refund-ledger tests and focused Flutter financial regressions passed.
 - [Owner checkout security](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107079564), [isolated SQL security](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107078173), [ledger accounting](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107078152): SUCCESS on prior `b3609fd6` SHA. Latest docs/security CI is separate.
 
 ## Storage / webhook log evidence (read-only)
