@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vsp_application/core/providers/auth/auth_sign_out_handler.dart';
 import 'package:vsp_application/core/services/auth_service.dart';
