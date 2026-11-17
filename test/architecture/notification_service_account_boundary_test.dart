@@ -44,7 +44,7 @@ void main() {
     final block = source.substring(from, to);
     expect(block, contains('isRecipientCurrentUser(data, userId)'));
     expect(block, contains('resolveDeepLinkRoute(data)'));
-    expect(block, contains("RegExp(r'^[a-zA-Z0-9_-]{1,128}$')"));
+    expect(block, contains("!RegExp(r'[^a-zA-Z0-9_-]').hasMatch(tournamentId)"));
     expect(block, isNot(contains("VSPLogger.i('Handling notification click:")));
   });
 }
