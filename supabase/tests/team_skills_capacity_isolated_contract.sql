@@ -112,6 +112,8 @@ end $admin_rejection$;
 select public.team_skills_review_registration(
   '00000000-0000-0000-0000-000000000116',
   'rejected','Roster is ineligible');
+-- Inspect private audit and roster with fixture owner, not authenticated.
+reset role;
 do $reject_verified$
 declare denied boolean:=false;
 begin
