@@ -16,6 +16,7 @@ on:
       - 'test/architecture/paymob_verified_notification_contract_test.dart'
       - 'test/architecture/paymob_refund_accounting_notification_guard_test.dart'
       - 'supabase/functions/paymob_webhook/index.ts'
+      - 'supabase/functions/create_paymob_intention/index.ts'
       - 'supabase/functions/_shared/paymob_hmac.ts'
       - 'supabase/functions/tests/paymob_hmac_test.ts'
   workflow_dispatch:
