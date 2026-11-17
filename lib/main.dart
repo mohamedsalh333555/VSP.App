@@ -322,10 +322,18 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
          final prefs = await SharedPreferences.getInstance();
          if (!sameVerifiedAccount()) return;
          final raw = prefs.getString('pending_deep_link');
+         final storedForUserId = prefs.getString('pending_deep_link_user_id');
          if (raw == null || raw.isEmpty) return;
+         if (storedForUserId != null && storedForUserId.isNotEmpty &&
+             storedForUserId != expectedUserId) {
+           await prefs.remove('pending_deep_link');
+           await prefs.remove('pending_deep_link_user_id');
+           return;
+         }
          final uri = Uri.tryParse(raw);
          final parsed = uri == null ? null : DeepLinkHelper.parse(uri);
          await prefs.remove('pending_deep_link');
+         await prefs.remove('pending_deep_link_user_id');
          if (parsed == null || !sameVerifiedAccount()) return;
          _router.push(parsed.routePath);
        } finally {
@@ -359,9 +367,22 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
 
  // 3. Resume recognized requests only after a real profile is ready.
  if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
-   SharedPreferences.getInstance().then(
-     (prefs) => prefs.setString('pending_deep_link', uri.toString()),
-   );
+   final linkForUserId = auth.currentUser?.id;
+   SharedPreferences.getInstance().then((prefs) async {
+     // Account may change while preferences initialize. A delayed callback
+     // must not put an old-account link into the new account's preferences.
+     if (auth.currentUser?.id != linkForUserId) return;
+     await prefs.setString('pending_deep_link_user_id', linkForUserId ?? '');
+     if (auth.currentUser?.id != linkForUserId) {
+       await prefs.remove('pending_deep_link_user_id');
+       return;
+     }
+     await prefs.setString('pending_deep_link', uri.toString());
+     if (auth.currentUser?.id != linkForUserId) {
+       await prefs.remove('pending_deep_link');
+       await prefs.remove('pending_deep_link_user_id');
+     }
+   });
    return;
  }
 
