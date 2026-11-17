@@ -542,8 +542,8 @@
 - [ ] 40.02 — إنشاء جدول المباريات
 - [x] 40.03 — توليد أدوار خروج المغلوب — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
 - [x] 40.04 — تطبيق التأهل — [SQL قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_ADVANCEMENT_RANKING_ACCEPTANCE_2026-11-17.md) (التأهل/الترتيب المعتمد في SQL فقط؛ JWT والأجهزة مفتوحة)
-- [ ] 40.05 — معالجة التعادل
-- [ ] 40.06 — إعادة توليد آمنة
+- [x] 40.05 — معالجة التعادل — [قبول Team Skills للترجيح وإعادة التوليد الآمنة](VSP_TEAM_SKILLS_PENALTIES_REGENERATION_ACCEPTANCE_2026-11-17.md) (بطولة المهارات فقط، SQL معزول + Staging RPC + Admin CI؛ JWT E2E لم يُعتمد)
+- [x] 40.06 — إعادة توليد آمنة — [قبول Team Skills للترجيح وإعادة التوليد الآمنة](VSP_TEAM_SKILLS_PENALTIES_REGENERATION_ACCEPTANCE_2026-11-17.md) (بطولة المهارات فقط، SQL معزول + Staging RPC + Admin CI؛ JWT E2E لم يُعتمد)
 - [x] 40.07 — اختبار عدد مشاركين مختلف — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
 - [x] 40.08 — اختبار عدم تكرار مباراة عند إعادة توليد الجدول — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
 
