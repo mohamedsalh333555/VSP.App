@@ -197,6 +197,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   DashboardAnalytics _dashboardAnalytics = const DashboardAnalytics();
   bool _isLoadingAnalytics = false;
   bool _hasLoadedAnalytics = false;
+
+  // Previous successful responses must not be presented as current after
+  // the owner changes venue/date or a refresh fails.
+  bool get _hasVerifiedCurrentAnalytics =>
+      _hasLoadedAnalytics && !_isLoadingAnalytics && _analyticsError == null;
   String? _analyticsError;
   int _analyticsRequestGeneration = 0;
 
@@ -575,6 +580,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   onlineHeld: _dashboardAnalytics.revenue.onlineUnavailable,
                   availableBalance: availableBalance,
                   balanceVerified: balanceVerified,
+                  revenueVerified: _hasVerifiedCurrentAnalytics,
+                  revenueLoading: _isLoadingAnalytics,
                   upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
                   isProOwner: isProOwner,
                   onUpgrade: () => _showProUpgradeSheet(context),
@@ -783,9 +790,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       stadiums: stadiums,
                       selectedTimePeriod: _selectedTimePeriod,
                       selectedStadiumFilter: _selectedStadiumFilter,
-                      analytics: _dashboardAnalytics,
-                      isInitialLoading: !_hasLoadedAnalytics && _isLoadingAnalytics,
-                      hasInitialLoadError: !_hasLoadedAnalytics && _analyticsError != null,
+                      analytics: _hasVerifiedCurrentAnalytics ? _dashboardAnalytics : null,
+                      isInitialLoading: _isLoadingAnalytics,
+                      hasInitialLoadError: _analyticsError != null,
                       dashboardFilter: _currentFilter,
                       onCustomRangeSelected: (start, end) {
                         final filter = DashboardFilter.custom(start, end).copyWith(
