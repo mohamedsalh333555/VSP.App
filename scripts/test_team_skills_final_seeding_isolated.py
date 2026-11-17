@@ -14,6 +14,7 @@ from test_team_skills_rls_isolated import psql, reject_nonlocal_targets
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "supabase/tests/team_skills_final_seeding_isolated_contract.sql"
 MIGRATION = ROOT / "supabase/migrations/20261116084000_team_skills_final_seeding_freeze.sql"
+REGENERATION = ROOT / "supabase/migrations/20261117022000_team_skills_knockout_safe_regeneration.sql"
 DATABASE = "vsp_team_skills_final_seed_isolated"
 
 
@@ -38,7 +39,17 @@ def actual_sql() -> str:
     marker = "-- FINAL_SEEDING_FUNCTIONS_HERE"
     if fixture.count(marker) != 1:
         raise RuntimeError("Expected one final-seeding injection marker")
-    return fixture.replace(marker, "\n".join(blocks))
+    regen_source = REGENERATION.read_text(encoding="utf-8")
+    regen_marker = "create or replace function public.team_skills_regenerate_knockout("
+    if regen_source.count(regen_marker) != 1:
+        raise RuntimeError("Expected one safe-regeneration SQL function")
+    regen_function = regen_source[regen_source.index(regen_marker):
+        regen_source.index("end $;",regen_source.index(regen_marker))+len("end $;")]
+    insert = "-- SAFE_REGENERATION_FUNCTION_HERE"
+    if fixture.count(insert) != 1:
+        raise RuntimeError("Expected one safe-regeneration fixture insertion marker")
+    return fixture.replace(marker, "\n".join(blocks)).replace(
+        insert, regen_function)
 
 
 def main() -> int:
@@ -52,7 +63,7 @@ def main() -> int:
         if result.returncode:
             print("TEAM_SKILLS_FINAL_SEED_FAIL: " + result.stderr[-2600:], file=sys.stderr)
             return 1
-        print("PASS: incomplete stages cannot seed; 4-8 teams seed with correct byes; repeat cannot duplicate; scores frozen")
+        print("PASS: 4-8 team brackets regenerated safely in place, all match IDs/byes preserved; played, awarded and completed cups protected; skills scores frozen")
         return 0
     finally:
         dropped = psql("postgres", command="DROP DATABASE IF EXISTS " + DATABASE + " WITH (FORCE)")
