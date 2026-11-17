@@ -97,3 +97,25 @@ Deno.test("Paymob intention provider errors log status only, never response body
   assert(source.includes("httpStatus: intentionRes.status"),
     "provider error log must retain a non-sensitive HTTP status");
 });
+
+
+Deno.test("Refund and checkout error paths never echo provider or internal diagnostics", async () => {
+  const webhook = await Deno.readTextFile(
+    new URL("../paymob_webhook/index.ts", import.meta.url),
+  );
+  const checkout = await Deno.readTextFile(
+    new URL("../create_paymob_intention/index.ts", import.meta.url),
+  );
+  assert(!/Paymob Refund API Response:\s*["'][^"']*["']\s*,\s*JSON\.stringify\(refundData\)/.test(webhook),
+    "raw refund provider response must not be logged");
+  assert(!/authErrText\s*=\s*await authRes\.text\(\)/.test(webhook),
+    "provider authentication response body must not be copied into exceptions");
+  assert(!/refundErrorMsg\s*=\s*refundData\.(?:message|detail)/.test(webhook),
+    "refund ledger diagnostics must not persist raw third-party responses");
+  assert(!/refundErrorMsg\s*=\s*refundEx(?:\?\.)?\.message/.test(webhook),
+    "refund ledger diagnostics must not persist exception text");
+  assert(!/JSON\.stringify\(\{\s*error:\s*err\?\.message\s*\|\|\s*String\(err\)/.test(checkout),
+    "checkout must never return raw internal errors to Flutter");
+  assert(checkout.includes('error: "Unable to create a payment session"'),
+    "checkout failure must return a stable, sanitized message");
+});
