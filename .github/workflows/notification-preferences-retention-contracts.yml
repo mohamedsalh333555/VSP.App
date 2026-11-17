@@ -1,0 +1,55 @@
+name: VSP Notification preferences and active retention contracts
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'lib/features/player/screens/profile_subscreens/notifications_screen.dart'
+      - 'lib/core/services/notification/notification_filter_service.dart'
+      - 'lib/core/services/retention_event_contract.dart'
+      - 'lib/core/services/analytics_service.dart'
+      - 'test/core/services/notification/notification_filter_service_test.dart'
+      - 'test/core/services/retention_event_contract_test.dart'
+      - 'test/architecture/notification_preferences_*'
+      - '.github/workflows/notification-preferences-retention-contracts.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/features/player/screens/profile_subscreens/notifications_screen.dart'
+      - 'lib/core/services/notification/notification_filter_service.dart'
+      - 'lib/core/services/retention_event_contract.dart'
+      - 'lib/core/services/analytics_service.dart'
+      - 'test/core/services/notification/notification_filter_service_test.dart'
+      - 'test/core/services/retention_event_contract_test.dart'
+      - 'test/architecture/notification_preferences_*'
+      - '.github/workflows/notification-preferences-retention-contracts.yml'
+  workflow_dispatch:
+
+jobs:
+  focused-preferences-retention:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - name: Resolve packages
+        run: flutter pub get
+      - name: Confirm Flutter source and test types
+        run: flutter analyze --no-fatal-infos
+      - name: Test notification preferences, account scope and active retention contracts
+        run: |
+          flutter test --no-pub \
+            test/core/services/notification/notification_filter_service_test.dart \
+            test/core/services/retention_event_contract_test.dart \
+            test/architecture/notification_preferences_account_isolation_test.dart \
+            test/architecture/notification_preferences_commit_guard_test.dart \
+            test/architecture/notification_preferences_lifecycle_guard_test.dart \
+            test/architecture/notification_preferences_load_recovery_test.dart \
+            test/architecture/notification_preferences_storage_failure_test.dart
