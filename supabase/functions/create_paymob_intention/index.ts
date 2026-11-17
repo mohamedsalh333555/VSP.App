@@ -378,7 +378,8 @@ serve(async (req: Request) => {
     const intentionData = await intentionRes.json();
 
     if (!intentionRes.ok) {
-      console.error("❌ Paymob Intention API Error:", intentionData);
+      // Provider error bodies may echo customer billing details or tokens.
+      console.error("Paymob intention creation failed", { httpStatus: intentionRes.status });
       return new Response(
         JSON.stringify({ error: "Failed to generate Paymob checkout session" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
