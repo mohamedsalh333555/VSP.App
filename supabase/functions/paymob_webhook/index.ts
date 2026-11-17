@@ -2,54 +2,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { verifyOwnerSubscriptionPayment } from "../_shared/owner_subscription_payment.ts";
+import { computePaymobHMAC, verifyPaymobHmacSignature } from "../_shared/paymob_hmac.ts";
 
 declare const Deno: any;
 
 console.log("⚡ Paymob Webhook Edge Function Initialized (Hardened & Unified)!");
-
-/**
- * Calculates Paymob SHA-512 HMAC signature
- */
-async function computePaymobHMAC(obj: any, hmacSecret: string): Promise<string> {
-  const concatenatedValues = [
-    obj.amount_cents,
-    obj.created_at,
-    obj.currency,
-    obj.error_occured,
-    obj.has_parent_transaction,
-    obj.id,
-    obj.integration_id,
-    obj.is_3d_secure,
-    obj.is_auth,
-    obj.is_capture,
-    obj.is_refunded,
-    obj.is_standalone_payment,
-    obj.is_voided,
-    obj.order?.id ?? obj.order,
-    obj.owner,
-    obj.pending,
-    obj.source_data?.pan ?? "",
-    obj.source_data?.sub_type ?? "",
-    obj.source_data?.type ?? "",
-    obj.success,
-  ].join("");
-
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(hmacSecret);
-  const messageData = encoder.encode(concatenatedValues);
-
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "HMAC", hash: "SHA-512" },
-    false,
-    ["sign"]
-  );
-
-  const signatureBuffer = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
-  const hashArray = Array.from(new Uint8Array(signatureBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 serve(async (req: Request) => {
   // Paymob webhook is server-to-server. It does not expose browser CORS.
@@ -73,8 +30,7 @@ serve(async (req: Request) => {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const rawUrl = req.url;
-    const url = new URL(rawUrl);
+    const url = new URL(req.url);
     const receivedHmac = url.searchParams.get("hmac");
 
     let payload: any = {};
@@ -85,10 +41,10 @@ serve(async (req: Request) => {
         await supabase.from("webhook_logs").insert({
           provider: "paymob",
           event_type: "invalid_json",
-          payload: { error: "Failed to parse JSON body", rawUrl },
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "rejected",
-          error_message: `JSON parse error: ${parseErr?.message}`,
+          error_message: "Invalid JSON body",
         });
       } catch (_) {}
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
@@ -122,7 +78,7 @@ serve(async (req: Request) => {
           txn_id: transactionId || null,
           order_id: orderId || null,
           booking_id: bookingId,
-          payload: payload,
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "rejected",
           error_message: "Missing obj or obj.id in payload",
@@ -145,7 +101,7 @@ serve(async (req: Request) => {
           txn_id: transactionId || null,
           order_id: orderId || null,
           booking_id: bookingId,
-          payload: payload,
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "server_error",
           error_message: "PAYMOB_HMAC_SECRET environment variable is missing on server",
@@ -167,7 +123,7 @@ serve(async (req: Request) => {
           txn_id: transactionId || null,
           order_id: orderId || null,
           booking_id: bookingId,
-          payload: { ...payload, queryParams: Object.fromEntries(url.searchParams.entries()) },
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "rejected",
           error_message: "Missing HMAC signature in query parameters (?hmac=...)",
@@ -181,14 +137,7 @@ serve(async (req: Request) => {
 
     // 🔒 5. Compute & verify HMAC signature
     const calculatedHmac = await computePaymobHMAC(obj, hmacSecret);
-    const received = receivedHmac.toLowerCase();
-    const calculated = calculatedHmac.toLowerCase();
-    let diff = received.length ^ calculated.length;
-    const maxLen = Math.max(received.length, calculated.length);
-    for (let i = 0; i < maxLen; i++) {
-      diff |= (received.charCodeAt(i) || 0) ^ (calculated.charCodeAt(i) || 0);
-    }
-    const isHmacValid = diff === 0;
+    const isHmacValid = verifyPaymobHmacSignature(receivedHmac, calculatedHmac);
 
     if (!isHmacValid) {
       console.error("❌ Paymob Webhook HMAC Verification Failed! Signatures do not match.");
@@ -199,16 +148,7 @@ serve(async (req: Request) => {
           txn_id: transactionId || null,
           order_id: orderId || null,
           booking_id: bookingId,
-          payload: {
-            receivedHmac,
-            calculatedHmacPrefix: calculatedHmac.substring(0, 8) + "...",
-            objSummary: {
-              id: obj.id,
-              order: obj.order?.id ?? obj.order,
-              amount_cents: obj.amount_cents,
-              success: obj.success,
-            },
-          },
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "rejected",
           error_message: "HMAC signatures do not match",
@@ -236,7 +176,7 @@ serve(async (req: Request) => {
 
     console.log("✅ HMAC Signature Verified Successfully!");
 
-    const isSuccess = Boolean(obj.success) && !Boolean(obj.pending);
+    const isSuccess = obj.success === true && obj.pending === false;
 
     console.log(`🔔 Webhook received for Booking: ${bookingId} | Success: ${isSuccess} | Tx: ${transactionId}`);
 
