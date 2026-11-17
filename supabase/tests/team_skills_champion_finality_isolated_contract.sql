@@ -59,6 +59,22 @@ update public.team_skills_leaderboard
 set completed_stages=12,all_stages_approved=true,
     points=case when team_id='00000000-0000-0000-0000-000000000201'
                 then 100 else 50 end;
+-- A losing team cannot claim an undisputed 100-point skills title.
+do $wrong_team_claim$
+declare blocked boolean:=false;
+begin
+ begin
+  insert into public.team_skills_awards(cup_id,award_type,team_id)
+  values('00000000-0000-0000-0000-000000000001','team_champion',
+         '00000000-0000-0000-0000-000000000202');
+ exception when others then
+  if position('wrong team' in lower(sqlerrm))>0 then
+    blocked:=true;else raise;end if;
+ end;
+ if not blocked then raise exception 'LOSING_TEAM_CLAIMED_SKILLS_TITLE';end if;
+ if (select count(*) from public.team_skills_awards)<>0
+ then raise exception 'DISPUTED_SKILLS_TITLE_LEFT_AWARD';end if;
+end $wrong_team_claim$;
 insert into public.team_skills_awards(cup_id,award_type,team_id)
 values('00000000-0000-0000-0000-000000000001','team_champion',
        '00000000-0000-0000-0000-000000000201');

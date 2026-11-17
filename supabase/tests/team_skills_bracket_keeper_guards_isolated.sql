@@ -61,6 +61,23 @@ begin
 end $tie$;
 update public.team_skills_goalkeeper_trials set saves=4
 where goalkeeper_id='00000000-0000-0000-0000-000000000102';
+-- After the tie resolves, the former tied (now lower-scoring)
+-- goalkeeper must not be able to claim the prize.
+do $losing_keeper_claim$
+declare blocked boolean:=false;
+begin
+ begin
+  insert into public.team_skills_awards(cup_id,award_type,player_id)
+  values('00000000-0000-0000-0000-000000000010','best_goalkeeper',
+         '00000000-0000-0000-0000-000000000102');
+ exception when others then
+  if position('not objective winner' in lower(sqlerrm))>0 then
+    blocked:=true;else raise;end if;
+ end;
+ if not blocked then raise exception 'LOSING_KEEPER_CLAIMED_PRIZE';end if;
+ if (select count(*) from public.team_skills_awards)<>0
+ then raise exception 'DISPUTED_KEEPER_PRIZE_LEFT_AWARD';end if;
+end $losing_keeper_claim$;
 insert into public.team_skills_awards(cup_id,award_type,player_id)
 values('00000000-0000-0000-0000-000000000010','best_goalkeeper',
        '00000000-0000-0000-0000-000000000101');
