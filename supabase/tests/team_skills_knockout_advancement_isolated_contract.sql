@@ -29,6 +29,9 @@ create table public.team_skills_knockout(
    or first_registration_id<>second_registration_id));
 create table public.team_skills_audit(
  cup_id uuid,actor_id uuid,action text,subject_id uuid,details jsonb);
+-- The real read-only knockout view permits authenticated SELECT; the
+-- security-definer RPC still exclusively owns writes and authorization.
+grant select on public.team_skills_knockout to authenticated;
 -- INJECT_REAL_BRACKET_GENERATOR
 -- INJECT_REAL_MATCH_APPROVAL
 
