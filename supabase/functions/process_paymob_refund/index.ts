@@ -187,12 +187,31 @@ serve(async (req: Request) => {
       return out({ success: false, message: "تعذر تجهيز الاسترداد." }, 409);
     }
 
-    const paymobTxnId = String(claim.paymob_transaction_id || "").replace(/\D/g, "");
+    const paymobTxnId = String(claim.paymob_transaction_id || "").trim();
     const refundAmount = Math.round(Number(claim.refund_amount || 0) * 100) / 100;
     const originalGrossAmount = Math.round(Number(claim.refund_gross_amount || refundAmount) * 100) / 100;
 
-    if (!paymobTxnId || refundAmount <= 0 || originalGrossAmount <= 0) {
+    if (!/^[1-9][0-9]*$/.test(paymobTxnId) || !Number.isSafeInteger(Number(paymobTxnId)) || refundAmount <= 0 || originalGrossAmount <= 0) {
       return out({ success: false, message: "بيانات دفعة Paymob القابلة للاسترداد غير صالحة." }, 409);
+    }
+
+    // The five-minute SQL lease can expire even if Paymob already processed
+    // the request. Refuse another dispatch when a durable marker exists.
+    const { data: refundClaimRow, error: refundClaimLookupError } = await admin
+      .from("transactions")
+      .select("id, status, metadata")
+      .eq("id", claim.refund_transaction_id)
+      .maybeSingle();
+    if (refundClaimLookupError || !refundClaimRow || refundClaimRow.status !== "pending") {
+      return out({ success: false, refund_pending: true, manual_review: true,
+        message: "تعذر تأكيد سجل الاسترداد. يلزم التحقق المالي." }, 409);
+    }
+    const refundClaimMetadata = refundClaimRow.metadata &&
+      typeof refundClaimRow.metadata === "object" && !Array.isArray(refundClaimRow.metadata)
+      ? refundClaimRow.metadata : {};
+    if (refundClaimMetadata.gateway_refund_dispatched_at) {
+      return out({ success: false, refund_pending: true, manual_review: true,
+        message: "تم إرسال استرداد سابق. يلزم التحقق قبل إعادة المحاولة." }, 200);
     }
 
     const authRes = await fetch("https://accept.paymob.com/api/auth/tokens", {
@@ -206,7 +225,7 @@ serve(async (req: Request) => {
         .from("transactions")
         .update({
           metadata: {
-            ...(claim || {}),
+            ...refundClaimMetadata,
             gateway_error: "Paymob authentication failed",
             refund_lease_expires_at: new Date().toISOString(),
           },
@@ -228,6 +247,28 @@ serve(async (req: Request) => {
       return out({ success: false, refund_pending: true, message: "Paymob لم يرجع رمز مصادقة صالح." }, 200);
     }
 
+    // Compare-and-set the dispatch guard BEFORE the external refund API.
+    // Keep the claim leased until an operator reconciles ambiguous outcomes.
+    const dispatchedAt = new Date().toISOString();
+    const dispatchedMetadata = {
+      ...refundClaimMetadata,
+      gateway_refund_dispatched_at: dispatchedAt,
+      gateway_refund_dispatch_status: "requires_reconciliation",
+      refund_lease_expires_at: "9999-12-31T00:00:00Z",
+    };
+    const { data: dispatchClaim, error: dispatchClaimError } = await admin
+      .from("transactions")
+      .update({ metadata: dispatchedMetadata, updated_at: dispatchedAt })
+      .eq("id", claim.refund_transaction_id)
+      .eq("status", "pending")
+      .is("metadata->>gateway_refund_dispatched_at", null)
+      .select("id")
+      .maybeSingle();
+    if (dispatchClaimError || !dispatchClaim) {
+      return out({ success: false, refund_pending: true, manual_review: true,
+        message: "تعذر تثبيت حجز الاسترداد قبل الاتصال ببوابة الدفع." }, 409);
+    }
+
     let refundResponse: any = {};
     let refundHttpOk = false;
     try {
@@ -247,9 +288,9 @@ serve(async (req: Request) => {
         .from("transactions")
         .update({
           metadata: {
-            ...(claim || {}),
+            ...dispatchedMetadata,
             gateway_error: "PAYMOB_REFUND_RESULT_UNKNOWN_RECONCILE_BEFORE_RETRY",
-            refund_lease_expires_at: new Date().toISOString(),
+            refund_lease_expires_at: "9999-12-31T00:00:00Z",
           },
           updated_at: new Date().toISOString(),
         })
@@ -272,9 +313,9 @@ serve(async (req: Request) => {
         .from("transactions")
         .update({
           metadata: {
-            ...(claim || {}),
+            ...dispatchedMetadata,
             gateway_error: "PAYMOB_REFUND_NOT_CONFIRMED_RECONCILIATION_REQUIRED",
-            refund_lease_expires_at: new Date().toISOString(),
+            refund_lease_expires_at: "9999-12-31T00:00:00Z",
           },
           updated_at: new Date().toISOString(),
         })

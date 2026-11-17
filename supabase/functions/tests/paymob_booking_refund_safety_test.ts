@@ -31,3 +31,22 @@ Deno.test("Booking refund processor never stores raw Paymob error bodies", async
   assert(providerGate > 0 && ledger > providerGate && notification > ledger,
     "refund success message must follow verified refund and DB ledger recording");
 });
+
+Deno.test("Booking refund must persist a compare-and-set gateway dispatch marker", async () => {
+  const src = await Deno.readTextFile(new URL("../process_paymob_refund/index.ts", import.meta.url));
+  const read = src.indexOf('.select("id, status, metadata")');
+  const existing = src.indexOf("if (refundClaimMetadata.gateway_refund_dispatched_at)",read);
+  const marker = src.indexOf("gateway_refund_dispatched_at: dispatchedAt",existing);
+  const cas = src.indexOf('.is("metadata->>gateway_refund_dispatched_at", null)',marker);
+  const denied = src.indexOf('if (dispatchClaimError || !dispatchClaim)',cas);
+  const call = src.indexOf('const rr = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund"',denied);
+  assert(read > 0 && existing > read && marker > existing && cas > marker && denied > cas && call > denied,
+    "refund must be claimed durably and checked before gateway call");
+  assert(src.includes('refund_lease_expires_at: "9999-12-31T00:00:00Z"'),
+    "SQL lease expiry could permit duplicate gateway dispatch");
+  const postDispatch = src.slice(marker,src.indexOf("const refundTxnId",marker));
+  assert((postDispatch.match(/\.\.\.dispatchedMetadata/g)||[]).length >= 2,
+    "ambiguous gateway responses must retain the dispatch marker");
+  assert(!src.includes('String(claim.paymob_transaction_id || "").replace(/\\D/g, "")'),
+    "invalid refund ID could be silently converted into a different transaction");
+});
