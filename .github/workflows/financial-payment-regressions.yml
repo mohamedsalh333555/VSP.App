@@ -16,6 +16,8 @@ on:
       - 'test/architecture/paymob_verified_notification_contract_test.dart'
       - 'test/architecture/paymob_refund_accounting_notification_guard_test.dart'
       - 'supabase/functions/paymob_webhook/index.ts'
+      - 'supabase/functions/_shared/paymob_hmac.ts'
+      - 'supabase/functions/tests/paymob_hmac_test.ts'
   workflow_dispatch:
 
 concurrency:
@@ -23,6 +25,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  paymob-hmac-rejection-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.2.12"
+      - name: Verify offline SHA-512 vectors and reject unsigned/untrusted logs
+        run: deno test --no-config --allow-read supabase/functions/tests/paymob_hmac_test.ts
+
   financial-methods-and-receipts:
     runs-on: ubuntu-latest
     timeout-minutes: 25
