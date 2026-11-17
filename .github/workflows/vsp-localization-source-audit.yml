@@ -1,0 +1,47 @@
+name: VSP Arabic English Localization Source Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-localization-source-audit.yml"
+      - "scripts/audit_vsp_localization_copy.cjs"
+      - "scripts/test_vsp_localization_copy.cjs"
+      - "lib/l10n/*.arb"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-localization-source-audit.yml"
+      - "scripts/audit_vsp_localization_copy.cjs"
+      - "scripts/test_vsp_localization_copy.cjs"
+      - "lib/l10n/*.arb"
+permissions:
+  contents: read
+concurrency:
+  group: vsp-localization-review-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  localization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check ARB and hardcoded-copy scanner
+        run: node --test scripts/test_vsp_localization_copy.cjs
+      - name: Produce reproducible Arabic English source review
+        run: |
+          node scripts/audit_vsp_localization_copy.cjs --markdown > /tmp/vsp-localization-audit.md
+          node scripts/audit_vsp_localization_copy.cjs --json > /tmp/vsp-localization-audit.json
+          cat /tmp/vsp-localization-audit.md >> "$GITHUB_STEP_SUMMARY"
+          sed -n '1,38p' /tmp/vsp-localization-audit.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsp-localization-source-audit
+          path: |
+            /tmp/vsp-localization-audit.md
+            /tmp/vsp-localization-audit.json
+          retention-days: 14
