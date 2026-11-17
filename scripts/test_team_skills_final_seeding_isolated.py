@@ -52,7 +52,7 @@ def main() -> int:
         if result.returncode:
             print("TEAM_SKILLS_FINAL_SEED_FAIL: " + result.stderr[-2600:], file=sys.stderr)
             return 1
-        print("PASS: incomplete stages cannot seed; complete stages seed; existing scores cannot change")
+        print("PASS: incomplete stages cannot seed; 4-8 teams seed with correct byes; repeat cannot duplicate; scores frozen")
         return 0
     finally:
         dropped = psql("postgres", command="DROP DATABASE IF EXISTS " + DATABASE + " WITH (FORCE)")
