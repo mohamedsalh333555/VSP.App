@@ -18,6 +18,14 @@ class FakeAuthService implements AuthService {
 
 class FakeNotificationService implements NotificationService {
   bool stoppedListening = false;
+  String? unlinkedUserId;
+  final List<String> operations = [];
+
+  @override
+  Future<void> unregisterCurrentDeviceForUser(String userId) async {
+    unlinkedUserId = userId;
+    operations.add('unlink');
+  }
 
   @override
   void stopRealtimeNotificationsListener() {
@@ -36,6 +44,29 @@ void main() {
       'temp_stadium_draft': 'draft_data',
       'vsp_draft_stadium_user_123_abc': 'draft_data_2',
     });
+  });
+
+  test('AuthSignOutHandler unlinks current device before auth invalidation', () async {
+    final fakeAuth = FakeAuthService();
+    final fakeNotif = FakeNotificationService();
+    final user = User.fromJson({
+      'id': '00000000-0000-0000-0000-000000000001',
+      'aud': 'authenticated',
+      'role': 'authenticated',
+      'created_at': '2026-01-01T00:00:00.000Z',
+      'app_metadata': <String, dynamic>{},
+      'user_metadata': <String, dynamic>{},
+    });
+    await AuthSignOutHandler.performSignOut(
+      user: user,
+      userModelUid: user.id,
+      authService: fakeAuth,
+      notificationService: fakeNotif,
+      onClearRealtime: () { fakeNotif.operations.add('realtime'); },
+    );
+    expect(fakeNotif.unlinkedUserId, user.id);
+    expect(fakeNotif.operations.first, 'unlink');
+    expect(fakeAuth.signOutCalled, isTrue);
   });
 
   test('AuthSignOutHandler.performSignOut triggers cleanup callbacks and teardown', () async {

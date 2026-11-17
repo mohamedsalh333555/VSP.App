@@ -75,6 +75,28 @@ class NotificationService {
    }, onConflict: 'token');
  }
 
+ /// Unlink the current physical device before auth.signOut revokes the JWT.
+ /// RLS requires the old user's session to delete their token association.
+ /// Token invalidation is attempted even if database cleanup fails.
+ Future<void> unregisterCurrentDeviceForUser(String userId) async {
+   if (kIsWeb || userId.trim().isEmpty ||
+       Supabase.instance.client.auth.currentUser?.id != userId) return;
+   final token = _latestFcmToken?.trim();
+   if (token == null || token.isEmpty) return;
+   try {
+     await Supabase.instance.client.from('user_device_tokens')
+         .delete().eq('user_id', userId).eq('token', token);
+   } catch (_) {
+     VSPLogger.w('Could not unlink current FCM device token from previous account.');
+   }
+   try {
+     await _firebaseMessaging.deleteToken();
+     _latestFcmToken = null;
+   } catch (_) {
+     VSPLogger.w('Could not invalidate current FCM device token after sign-out.');
+   }
+ }
+
  Future<void> _registerTokenForUser(String userId, String token) async {
    await _storeDeviceToken(userId, token);
    await Supabase.instance.client.from('users').update({'fcm_token': token.trim()}).eq('id', userId);

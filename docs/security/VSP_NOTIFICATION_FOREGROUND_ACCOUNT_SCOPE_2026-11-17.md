@@ -31,3 +31,9 @@ Candidate scope: `49.04` user preferences and `79.08` cross-account notification
 - Removed fallback push delivery from `users.fcm_token`: that column can remain stale after a shared-device account switch. FCM now selects only `user_device_tokens` entries for `user_id` and checks the owner a second time before sending. Token cleanup was already constrained to the same `user_id`.
 - Defensive failure: device-token lookup errors return 503 rather than incorrectly classifying the user as having no devices. No database columns, policies or schema were changed.
 - Added isolated Deno tests for two accounts with a shared device, invalid rows, deduplication, and missing recipient. Source-only; production FCM sender deployment is separate and remains on HOLD until Staging real-account tests.
+
+## Fourth batch: unlink FCM device token on normal logout
+
+- Read-only inspection of actual staging/production RLS shows `user_device_tokens` INSERT/SELECT/UPDATE/DELETE are scoped to `auth.uid() = user_id`. Consequently an upsert from a new account **cannot safely reassign** a token owned by an old account.
+- Previously `AuthSignOutHandler` cleared legacy `users.fcm_token` but did not remove the `user_device_tokens` association. Added `NotificationService.unregisterCurrentDeviceForUser`, called **before** `AuthService.signOut`, to delete only the current account's current token and attempt Firebase token invalidation. Missing/current wrong account is denied. An offline cleanup failure is logged in generic terms and does not block sign-out.
+- Added unit and architecture tests for old-user cleanup ordering, owner-only token deletion and Firebase token invalidation attempt. Source-only. **Abnormal app kill, lost login credentials, failed Firebase token deletion and old app versions remain an unresolved hosted/token lifecycle risk** needing a server-side expiry/re-registration strategy and two-account physical-device test.
