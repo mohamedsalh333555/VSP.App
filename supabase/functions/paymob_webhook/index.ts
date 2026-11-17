@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { verifyOwnerSubscriptionPayment } from "../_shared/owner_subscription_payment.ts";
 import { computePaymobHMAC, verifyPaymobHmacSignature } from "../_shared/paymob_hmac.ts";
 import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
+import { isAuthorizedPaymobIntegration } from "../_shared/paymob_integration_guard.ts";
 
 declare const Deno: any;
 
@@ -179,6 +180,21 @@ serve(async (req: Request) => {
     ) {
       return new Response(JSON.stringify({ error: "Invalid payment payload" }), {
         status: 400,
+        headers: { "Content-Type": "application/json", "X-Content-Type-Options": "nosniff" },
+      });
+    }
+
+    // A valid HMAC proves authenticity but not membership in a VSP
+    // integration. Reject unexpected integrations before financial writes.
+    if (!isAuthorizedPaymobIntegration(
+      obj.integration_id,
+      Deno.env.get("PAYMOB_INTEGRATION_ID_CARD"),
+      Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET"),
+      Deno.env.get("PAYMOB_WEBHOOK_ALLOWED_INTEGRATION_IDS") ?? "",
+    )) {
+      console.error("Rejected Paymob callback: unauthorized integration");
+      return new Response(JSON.stringify({ error: "Payment integration is not authorized" }), {
+        status: 403,
         headers: { "Content-Type": "application/json", "X-Content-Type-Options": "nosniff" },
       });
     }

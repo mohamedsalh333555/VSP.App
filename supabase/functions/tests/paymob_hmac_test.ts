@@ -4,6 +4,7 @@ import {
 } from "../_shared/paymob_hmac.ts";
 import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
 import { isPersistedPaymobOrder } from "../_shared/paymob_order_binding.ts";
+import { isAuthorizedPaymobIntegration } from "../_shared/paymob_integration_guard.ts";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -205,4 +206,30 @@ Deno.test("Over-capacity tournament refunds always use the signed gross amount",
     assert(!section.includes("let amountCents ="),
       name + " refund shadows HMAC-verified amount with a fee fallback");
   }
+});
+
+Deno.test("Paymob transaction callback integration must be server-authorized", () => {
+  assert(isAuthorizedPaymobIntegration(1234, "1234", "5678"), "card integration should be accepted");
+  assert(isAuthorizedPaymobIntegration("5678", "1234", 5678), "wallet integration should be accepted");
+  assert(isAuthorizedPaymobIntegration(9999, "1234", "5678", "9999, 1010"), "explicit historic integration should be accepted");
+  for (const value of [null, undefined, 0, -1, "0", "1234foo", "1.2", "9999", 1e20]) {
+    assert(!isAuthorizedPaymobIntegration(value, "1234", "5678"), "unrecognized or malformed integration accepted");
+  }
+  assert(!isAuthorizedPaymobIntegration(1234, undefined, "5678"), "missing current card configuration accepted");
+  assert(!isAuthorizedPaymobIntegration(5678, "1234", ""), "missing wallet configuration accepted");
+  assert(!isAuthorizedPaymobIntegration("9999", "1234", "5678", "9999bad"), "malformed historic integration accepted");
+});
+
+Deno.test("Verified Paymob integration gate precedes all financial processing", async () => {
+  const src = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const hmac = src.indexOf("verifyPaymobHmacSignature(receivedHmac, calculatedHmac)");
+  const currency = src.indexOf('if (obj?.currency !== "EGP")');
+  const amount = src.indexOf("!Number.isInteger(amountCents)");
+  const integration = src.indexOf("if (!isAuthorizedPaymobIntegration(");
+  const verifiedLog = src.indexOf('event_type: "transaction_response"');
+  const payment = src.indexOf('if (specialReference.startsWith("OWNER_SUB_"))');
+  assert(hmac >= 0 && currency > hmac && amount > currency && integration > amount, "integration must be checked after signed financial fields");
+  assert(verifiedLog > integration && payment > verifiedLog, "unauthorized integration can reach verified payment processing");
+  assert(src.includes('Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")'), "server-side card configuration missing");
+  assert(src.includes('Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")'), "server-side wallet configuration missing");
 });
