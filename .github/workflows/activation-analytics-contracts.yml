@@ -15,6 +15,10 @@ on:
       - "test/core/services/activation_funnel_contract_test.dart"
       - "test/core/services/retention_cohort_contract_test.dart"
       - "test/architecture/no_fabricated_scarcity_copy_contract_test.dart"
+      - "test/core/services/booking_completion_network_analytics_test.dart"
+      - "test/features/booking/booking_confirmation_status_contract_test.dart"
+      - "lib/features/player/screens/booking_success_screen.dart"
+      - "lib/features/player/widgets/booking/booking_status_presentation.dart"
 
 permissions:
   contents: read
@@ -52,6 +56,8 @@ jobs:
           test/core/services/analytics_service_test.dart
           test/core/services/activation_funnel_contract_test.dart
           test/core/services/retention_cohort_contract_test.dart
+          test/core/services/booking_completion_network_analytics_test.dart
+          test/features/booking/booking_confirmation_status_contract_test.dart
           test/architecture/no_fabricated_scarcity_copy_contract_test.dart
       - name: Run isolated analytics and cohort tests
         run: >-
@@ -59,4 +65,6 @@ jobs:
           test/core/services/analytics_service_test.dart
           test/core/services/activation_funnel_contract_test.dart
           test/core/services/retention_cohort_contract_test.dart
+          test/core/services/booking_completion_network_analytics_test.dart
+          test/features/booking/booking_confirmation_status_contract_test.dart
           test/architecture/no_fabricated_scarcity_copy_contract_test.dart
