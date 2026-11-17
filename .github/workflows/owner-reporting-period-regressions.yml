@@ -9,6 +9,8 @@ on:
       - "lib/models/dashboard_filter.dart"
       - "lib/core/utils/owner_financial_calculator.dart"
       - "lib/features/owner/screens/owner_dashboard_screen.dart"
+      - "lib/features/owner/widgets/dashboard/owner_operational_finance_card.dart"
+      - "test/features/owner/owner_finance_unverified_state_test.dart"
       - "test/features/owner/owner_reporting_period_boundaries_test.dart"
       - "lib/features/owner/widgets/bookings/owner_booking_schedule_filter.dart"
       - "lib/features/owner/screens/owner_bookings_screen.dart"
@@ -21,6 +23,8 @@ on:
       - "lib/models/dashboard_filter.dart"
       - "lib/core/utils/owner_financial_calculator.dart"
       - "lib/features/owner/screens/owner_dashboard_screen.dart"
+      - "lib/features/owner/widgets/dashboard/owner_operational_finance_card.dart"
+      - "test/features/owner/owner_finance_unverified_state_test.dart"
       - "test/features/owner/owner_reporting_period_boundaries_test.dart"
       - "lib/features/owner/widgets/bookings/owner_booking_schedule_filter.dart"
       - "lib/features/owner/screens/owner_bookings_screen.dart"
@@ -48,10 +52,13 @@ jobs:
           lib/models/dashboard_filter.dart
           lib/core/utils/owner_financial_calculator.dart
           lib/features/owner/screens/owner_dashboard_screen.dart
+          lib/features/owner/widgets/dashboard/owner_operational_finance_card.dart
+          test/features/owner/owner_finance_unverified_state_test.dart
           test/features/owner/owner_reporting_period_boundaries_test.dart
           lib/features/owner/widgets/bookings/owner_booking_schedule_filter.dart
           lib/features/owner/screens/owner_bookings_screen.dart
           test/features/owner/owner_booking_schedule_filter_test.dart
+          test/features/owner/owner_finance_unverified_state_test.dart
       - name: Test reporting period and revenue source contracts
         run: >-
           flutter test --concurrency=1
