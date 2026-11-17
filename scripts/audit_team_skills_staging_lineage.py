@@ -33,8 +33,19 @@ def audit() -> int:
         if FILENAME.fullmatch(p.name)
     )
     recorded = [x["local_file"] for x in entries]
-    missing = sorted(set(paths) - set(recorded))
-    stale = sorted(set(recorded) - set(paths))
+    # Brand-new checked-in migrations may be intentionally unapplied.
+    # Never manufacture a staging version or present them as deployed.
+    unapplied = manifest.get("unapplied_source_files", [])
+    if not isinstance(unapplied, list) or any(
+        not isinstance(path, str) for path in unapplied
+    ):
+        raise ValueError("Unapplied source list is malformed")
+    if len(unapplied) != len(set(unapplied)) or unapplied != sorted(unapplied):
+        raise ValueError("Unapplied migrations repeat or are unordered")
+    if set(recorded) & set(unapplied):
+        raise ValueError("A migration cannot be staged and unapplied simultaneously")
+    missing = sorted(set(paths) - set(recorded) - set(unapplied))
+    stale = sorted((set(recorded) | set(unapplied)) - set(paths))
     if missing or stale:
         raise ValueError(f"Lineage snapshot mismatch: unmapped={missing}, missing_source={stale}")
     if len(recorded) != len(set(recorded)) or recorded != sorted(recorded):
@@ -65,7 +76,8 @@ def audit() -> int:
     # Supabase MCP generated an independent staging timestamp for each apply.
     # Their application order can differ from the sorted GitHub filenames;
     # do not reject correct provenance merely because those orders differ.
-    print(f"PASS: {len(entries)} repo migrations have unique source timestamps and staging provenance")
+    print(f"PASS: {len(entries)} recorded staging migrations and {len(unapplied)} explicitly unapplied source migrations")
+    print("UNAPPLIED (not deployed): " + (", ".join(unapplied) if unapplied else "none"))
     print("WARNING: SQL parity, production deployment and history reconciliation remain unverified")
     return 0
 
