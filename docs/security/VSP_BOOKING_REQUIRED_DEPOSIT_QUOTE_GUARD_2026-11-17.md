@@ -15,7 +15,7 @@
 
 `test/features/booking/booking_required_deposit_quote_guard_test.dart` covers valid partial/full deposit, over-collection, required-zero, invalid or negative totals, NaN/infinity and precision boundaries, and source integration in `BookingConfirmationHandler.run`.
 
-`.github/workflows/financial-payment-regressions.yml` invokes this new test and Flutter Analyze alongside the existing financial and HMAC regressions. **Acceptance remains pending the latest exact-SHA workflow conclusion**; do not claim a passing test from an older SHA.
+`.github/workflows/financial-payment-regressions.yml` invokes this new test and Flutter Analyze alongside the existing financial and HMAC regressions. **Focused CI SUCCESS:** [Financial payment regressions run 44185646898](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44185646898) on code SHA [1729e778](https://github.com/mohamedsalh333555/VSP.App/commit/1729e7786b53a0e25bdd8a6be375b3be024232ea), with Flutter Analyze, the deposit/price/fee widget regression tests and the Paymob HMAC-negative suite. This is **source-level verification only**, not a real checkout or staging test.
 
 ## Outstanding safety constraints
 
