@@ -31,7 +31,7 @@ abstract final class AppRouteRoleGuard {
     required bool isAdmin,
   }) {
     if (isAdmin) return null;
-    if (isOwner && isPlayerOnly(path)) return '/';
+    if (isOwner && isPlayerOnly(path)) return '/owner';
     if (!isOwner && isOwnerOnly(path)) return '/';
     return null;
   }
