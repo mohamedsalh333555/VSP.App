@@ -2,7 +2,7 @@
 
 > 2026-11-07 — تمت مراجعة الفجوات وإضافة اختبارات قبول وحالات أمان وتزامن إلى البنود المناسبة. هذا حصر تفصيلي للمهام المطلوبة، **وليس إثباتًا لإنجازها**. كل سطر يمثل نتيجة قابلة للفحص. يمكن تعديل النطاق بعد مراجعة الكود دون احتساب التكرار. البند 33 كان له سابقًا 13 سطرًا في دفتر المتابعة؛ البند 33 هنا يحتوي 14 مهمة مفصّلة، بينما دفتر المتابعة يجمع بعض خطوات CI في مهمة واحدة (13 مهمة). لا يعني الاختلاف تنفيذ مهمة إضافية.
 
-**إجمالي البنود الرئيسية النشطة: 83 (المجموعة 56 أُلغيت بطلب المالك). إجمالي المهام الفرعية المحددة: 630. الحالة المدققة: 211 VERIFIED و419 غير مقبولة نهائيًا بعد؛ مصدر العد الحالي هو `VSP_LIVE_DELIVERY_LEDGER.md`. التغييرات المصنفة CODE_DONE بعد آخر تحقق لا تُحسب VERIFIED حتى المراجعة المجمعة المؤجلة.**
+**إجمالي البنود الرئيسية النشطة: 83 (المجموعة 56 أُلغيت بطلب المالك). إجمالي المهام الفرعية المحددة: 630. الحالة الحالية المدققة: 254 مقبولة و376 غير مقبولة نهائيًا بعد؛ مصدر العد الحالي هو `VSP_LIVE_DELIVERY_LEDGER.md`. التغييرات المصنفة CODE_DONE بعد آخر تحقق لا تُحسب VERIFIED حتى المراجعة المجمعة المؤجلة.**
 
 ## الملخص
 
@@ -592,12 +592,12 @@
 
 ### 45 — Booking/payment notifications (7)
 
-- [ ] 45.01 — إشعار إنشاء الحجز
-- [ ] 45.02 — إشعار تأكيد الحجز
-- [ ] 45.03 — إشعار الإلغاء
+- [x] 45.01 — إشعار إنشاء الحجز — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 45.02 — إشعار تأكيد الحجز — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 45.03 — إشعار الإلغاء — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
 - [ ] 45.04 — إشعار الدفع
-- [ ] 45.05 — التحقق من المستلم
-- [ ] 45.06 — اختبار القوالب والتسليم
+- [x] 45.05 — التحقق من المستلم — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 45.06 — اختبار القوالب والتسليم — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
 - [ ] 45.07 — اختبار عدم إرسال إشعار دفع ناجح قبل تأكيد الخادم
 
 ### 46 — Challenge/team notifications (7)
@@ -606,7 +606,7 @@
 - [ ] 46.02 — إشعار قبول أو رفض الدعوة
 - [ ] 46.03 — إشعار التحدي
 - [ ] 46.04 — إشعار قبول أو رفض التحدي
-- [ ] 46.05 — اختبار عدم تكرار الإرسال
+- [x] 46.05 — اختبار عدم تكرار الإرسال — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
 - [ ] 46.06 — اختبار الوصول للوجهة
 - [x] 46.07 — اختبار منع كشف بيانات الفريق في إشعار لمستلم خاطئ — [قبول محدود موثق](VSP_TEAM_SKILLS_PUBLISH_BADGES_AWARD_RECIPIENT_ACCEPTANCE_38_05_46_07_81_10_2026-11-17.md) (Team Skills award SQL/Staging فقط؛ بدون ادعاء JWT/أجهزة حقيقية)
 
@@ -615,8 +615,8 @@
 - [x] 47.01 — إشعار التسجيل بالبطولة — [قبول SQL محدود](VSP_TEAM_SKILLS_NOTIFICATION_DISPUTE_ACCEPTANCE_44_07_47_01_47_06_2026-11-17.md) (Team Skills in-app only; FCM/دفع/الإنتاج مفتوح)
 - [ ] 47.02 — إشعار جدول المباراة
 - [ ] 47.03 — إشعار تغيير الموعد
-- [ ] 47.04 — إشعار النتيجة
-- [ ] 47.05 — إشعار التأهل
+- [x] 47.04 — إشعار النتيجة — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 47.05 — إشعار التأهل — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
 - [x] 47.06 — اختبار توقيت الإشعارات — [قبول SQL محدود](VSP_TEAM_SKILLS_NOTIFICATION_DISPUTE_ACCEPTANCE_44_07_47_01_47_06_2026-11-17.md) (Team Skills in-app only; FCM/دفع/الإنتاج مفتوح)
 - [ ] 47.07 — اختبار عدم إرسال إشعار مباراة ملغاة باعتبارها قائمة
 
@@ -627,7 +627,7 @@
 - [ ] 48.03 — إعادة محاولة الفشل
 - [ ] 48.04 — ضبط حدود الإرسال
 - [ ] 48.05 — اختبار فشل المزود
-- [ ] 48.06 — اختبار تسليم واحد منطقي
+- [x] 48.06 — اختبار تسليم واحد منطقي — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
 - [ ] 48.07 — اختبار إعادة التسليم بعد انقطاع مزود الإشعارات
 
 ### 49 — Retention rules (7)

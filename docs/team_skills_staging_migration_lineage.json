@@ -4,7 +4,7 @@
   "project_ref": "vtwgqyxglevcsxwdmhop",
   "recorded_date": "2026-11-17",
   "branch": "uxlp-44-implementation",
-  "note": "Read-only staging lineage snapshot. Staging versions reflect verified supabase_migrations.schema_migrations entries for Team Skills penalty tie-break and safe in-place regeneration. Local SQL contract CI passed; signed-in multi-account browser/mobile E2E and production SQL body parity remain unverified. Never blindly db push to production. Source 20261117023000 is applied on staging only as version 20261117023518; production remains unchanged. Read-only catalog check verified staging migration 20261117023518 for Team Skills governorate eligibility guard; no production deployment. Stadium governorate creation guard source was applied and verified on staging only. Read-only staging catalog verified create-cup region guard applied at version 20261117025416; no production release. Staging version 20261117032927 applied and verified active-roster champion-notification recipient exclusion; no production rollout or customer rows modified.",
+  "note": "Read-only staging lineage snapshot. Staging versions reflect verified supabase_migrations.schema_migrations entries for Team Skills penalty tie-break and safe in-place regeneration. Local SQL contract CI passed; signed-in multi-account browser/mobile E2E and production SQL body parity remain unverified. Never blindly db push to production. Source 20261117023000 is applied on staging only as version 20261117023518; production remains unchanged. Read-only catalog check verified staging migration 20261117023518 for Team Skills governorate eligibility guard; no production deployment. Stadium governorate creation guard source was applied and verified on staging only. Read-only staging catalog verified create-cup region guard applied at version 20261117025416; no production release. Staging version 20261117032927 applied and verified active-roster champion-notification recipient exclusion; no production rollout or customer rows modified. Score-approval and knockout-advancement transactional notification triggers passed isolated CI, were applied and checked on Staging at 20261117035855/20261117035859 respectively; production unchanged. Booking cash/cancellation changes tracked separately in VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md.",
   "migrations": [
     {
       "local_file": "supabase/migrations/20261116030000_team_skills_cup_foundation.sql",
@@ -132,14 +132,24 @@
       "staging_migration_name": "team_skills_champion_finality_uuid_fix_20261116"
     },
     {
-      "local_file": "supabase/migrations/20261116100000_team_skills_registration_withdrawal.sql",
-      "staging_version": "20261116162452",
-      "staging_migration_name": "team_skills_registration_withdrawal_20261116"
+      "local_file": "supabase/migrations/20261116163000_team_skills_notifications_realtime_staging.sql",
+      "staging_version": "20261116150557",
+      "staging_migration_name": "team_skills_notifications_realtime_staging_20261116"
     },
     {
       "local_file": "supabase/migrations/20261116101000_team_skills_captain_pending_withdrawal.sql",
       "staging_version": "20261116151313",
       "staging_migration_name": "team_skills_captain_pending_withdrawal_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116164000_team_skills_blocked_captain_roster_guard.sql",
+      "staging_version": "20261116151450",
+      "staging_migration_name": "team_skills_blocked_captain_roster_guard_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116100000_team_skills_registration_withdrawal.sql",
+      "staging_version": "20261116162452",
+      "staging_migration_name": "team_skills_registration_withdrawal_20261116"
     },
     {
       "local_file": "supabase/migrations/20261116102000_team_skills_waitlist_review_capacity.sql",
@@ -165,16 +175,6 @@
       "local_file": "supabase/migrations/20261116106000_team_skills_preapproval_roster_corrections.sql",
       "staging_version": "20261116170755",
       "staging_migration_name": "team_skills_preapproval_roster_corrections_20261116"
-    },
-    {
-      "local_file": "supabase/migrations/20261116163000_team_skills_notifications_realtime_staging.sql",
-      "staging_version": "20261116150557",
-      "staging_migration_name": "team_skills_notifications_realtime_staging_20261116"
-    },
-    {
-      "local_file": "supabase/migrations/20261116164000_team_skills_blocked_captain_roster_guard.sql",
-      "staging_version": "20261116151450",
-      "staging_migration_name": "team_skills_blocked_captain_roster_guard_20261116"
     },
     {
       "local_file": "supabase/migrations/20261117020000_team_skills_reject_score_audited.sql",
@@ -205,10 +205,17 @@
       "local_file": "supabase/migrations/20261117033000_team_skills_award_notification_active_roster_guard.sql",
       "staging_version": "20261117032927",
       "staging_migration_name": "team_skills_award_notification_active_roster_guard_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117061000_team_skills_approved_phase_score_notification.sql",
+      "staging_version": "20261117035855",
+      "staging_migration_name": "team_skills_approved_phase_score_notification_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117062000_team_skills_knockout_approved_advancement_notification.sql",
+      "staging_version": "20261117035859",
+      "staging_migration_name": "team_skills_knockout_approved_advancement_notification_20261117"
     }
   ],
-  "unapplied_source_files": [
-    "supabase/migrations/20261117061000_team_skills_approved_phase_score_notification.sql",
-    "supabase/migrations/20261117062000_team_skills_knockout_approved_advancement_notification.sql"
-  ]
+  "unapplied_source_files": []
 }
