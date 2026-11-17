@@ -48,4 +48,48 @@ void main() {
     expect(find.bySemanticsLabel('3 verified stadium championships, 2 one versus one champion players'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Arabic RTL badge remains accessible at narrow width and 180% text',
+      (tester) async {
+    tester.view.physicalSize = const Size(280, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(const MaterialApp(
+      locale: Locale('ar'),
+      supportedLocales: [Locale('ar'), Locale('en')],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 270,
+            child: MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(1.8)),
+              child: TeamAchievementBadges(
+                summary: TeamAchievementSummary(
+                  stadiumChampionships: 12,
+                  oneVsOneChampionPlayers: 15,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
+    expect(
+      Directionality.of(tester.element(find.byType(TeamAchievementBadges))),
+      TextDirection.rtl,
+    );
+    expect(
+      find.bySemanticsLabel('12 بطولات ملاعب رسمية، 15 أبطال واحد ضد واحد'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
