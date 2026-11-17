@@ -35,3 +35,13 @@ The existing `docs/CONVERSION_ANALYTICS.md` documents event triggers and privacy
 ## Safety and accounting
 
 No external system, database, Paymob workflow, production setting, public site, or main branch was modified. No APK or merge. The live task counter at the start of this batch was **633 total / 279 accepted / 354 open**. Source additions are *implemented pending verification*; do not decrement the outstanding count without linked passing CI and scoped acceptance. Neither synthetic metrics nor source inspection count as live proof.
+
+## Continuation — source privacy regression and runnable viewer checks
+
+- **Complementary disclosure corrected:** showing consecutive funnel stage counts of 10 and 6 indirectly revealed a suppressed four-account drop-off. `VSPActivationFunnels.build` now masks the count and every downstream stage after a small/suppressed transition, not just the separate exit column. `toJson()` exports the masked result.
+- The offline HTML importer independently rejects a leaked 10→6 count difference, an exposed stage after a suppressed one, invalid cross-stage arithmetic, and unsafe cohort combinations. It never uses network APIs or external scripts.
+- `VSPRetentionCohortSegment.toPrivacySafeJson()` now provides a restricted D1/D7/D30 export. Small active, eligible, or complementary inactive counts are masked. Use this method rather than serializing the segment fields directly.
+- Added seven Node-based HTML viewer regression scenarios (valid and invalid imports, small groups, masks, corrupted/oversized JSON), plus Dart regression scenarios for account counts, cohort suppression and export privacy.
+- `.github/workflows/activation-analytics-contracts.yml` includes an offline Node test job and a scoped Flutter source/test gate. These are evidence for implementation correctness, **not live cohort validity**.
+
+**Boundary:** no production identities, actual first-value cohorts, consent-withdrawal history, Firebase export, dashboard publication, conversion change or cross-cohort re-identification audit was performed. Do not publish this viewer as a production analytics dashboard or count 50.04/50.05/54.06/55.06 complete without their full acceptance evidence. The latest confirmed counter at the beginning of this continuation was **280 accepted / 353 open of 633**, unchanged by these source-only changes.
