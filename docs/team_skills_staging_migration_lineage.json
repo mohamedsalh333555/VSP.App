@@ -183,6 +183,7 @@
     }
   ],
   "unapplied_source_files": [
-    "supabase/migrations/20261117021000_team_skills_knockout_penalty_tie_break.sql"
+    "supabase/migrations/20261117021000_team_skills_knockout_penalty_tie_break.sql",
+    "supabase/migrations/20261117022000_team_skills_knockout_safe_regeneration.sql"
   ]
 }
