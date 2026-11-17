@@ -11,11 +11,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const SOURCE_PATTERNS = {
-  colorToken: /\bVSP(?:DS)?Colors?\.\w+/g,
+  colorToken: /\b(?:VSPColors|VSPDSColors|VSPDSSemanticColors)\.\w+/g,
   directMaterialColor: /\bColors\.\w+/g,
   literalColor: /\bColor\s*\(\s*0x[\da-fA-F]{6,8}\s*\)/g,
-  spacingToken: /\bVSPSpacing\.\w+/g,
-  radiusToken: /\bVSPRadius\.\w+/g,
+  spacingToken: /\b(?:VSPSpacing|VSPDSSpacing)\.\w+/g,
+  radiusToken: /\b(?:VSPRadius|VSPDSRadius)\.\w+/g,
   textFontSize: /\bfontSize\s*:\s*(?:\d+(?:\.\d+)?)/g,
   textFontFamily: /\bfontFamily\s*:\s*['"][^'"]+['"]/g,
   edgeInsets: /\bEdgeInsets(?:Directional)?\.(?:all|only|symmetric|fromLTRB|fromSTEB)/g,
