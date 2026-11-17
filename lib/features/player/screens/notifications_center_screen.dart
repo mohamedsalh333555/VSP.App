@@ -450,7 +450,14 @@ class _NotificationCard extends StatelessWidget {
       return;
     }
 
+    // Notifications are untrusted navigation hints. Even a forged or stale
+    // owner billing alert must not open private screens for a player.
+    final currentAuth = context.read<AuthProvider>();
+    final mayOpenOwnerBilling = currentAuth.isOwner &&
+        currentAuth.userModel?.isBlocked != true &&
+        currentAuth.currentUser?.id == userId;
     if (type == 'subscription') {
+      if (!mayOpenOwnerBilling) return;
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
@@ -459,6 +466,7 @@ class _NotificationCard extends StatelessWidget {
     }
 
     if (type == 'payout' || type == 'debt_warning' || type == 'debt_grace' || type == 'account_blocked') {
+      if (!mayOpenOwnerBilling) return;
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
