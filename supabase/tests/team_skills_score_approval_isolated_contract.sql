@@ -16,20 +16,43 @@ as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 create function vsp_skills_private.is_admin() returns boolean
 language sql stable set search_path=''
 as $$ select auth.uid()='00000000-0000-0000-0000-000000009001'::uuid $$;
+create table public.team_skills_registrations (
+ id uuid primary key,cup_id uuid not null,team_id uuid not null,
+ status text not null
+);
 create table public.team_skills_scores (
- id uuid primary key, cup_id uuid not null, status text not null,
- computed_points numeric not null, approved_by uuid, approved_at timestamptz
+ id uuid primary key, cup_id uuid not null, registration_id uuid not null,
+ status text not null, computed_points numeric not null,
+ approved_by uuid, approved_at timestamptz
 );
 create table public.team_skills_audit (
  cup_id uuid not null, actor_id uuid not null, action text not null,
  subject_id uuid not null, details jsonb not null
 );
+-- ACTUAL_TEAM_SKILLS_LEADERBOARD_VIEW_HERE
 -- ACTUAL_TEAM_SKILLS_APPROVE_SCORE_FUNCTION_HERE
-insert into public.team_skills_scores(id,cup_id,status,computed_points) values
+insert into public.team_skills_registrations(id,cup_id,team_id,status) values
+('00000000-0000-0000-0000-000000000201',
+ '00000000-0000-0000-0000-000000000001',
+ '00000000-0000-0000-0000-000000000301','approved'),
+('00000000-0000-0000-0000-000000000202',
+ '00000000-0000-0000-0000-000000000001',
+ '00000000-0000-0000-0000-000000000302','approved');
+insert into public.team_skills_scores(
+ id,cup_id,registration_id,status,computed_points) values
 ('00000000-0000-0000-0000-000000000111',
- '00000000-0000-0000-0000-000000000001','pending',8.75),
+ '00000000-0000-0000-0000-000000000001',
+ '00000000-0000-0000-0000-000000000201','pending',8.75),
 ('00000000-0000-0000-0000-000000000112',
- '00000000-0000-0000-0000-000000000001','pending',10);
+ '00000000-0000-0000-0000-000000000001',
+ '00000000-0000-0000-0000-000000000202','pending',10);
+do $pending_not_ranked$
+begin
+ if (select count(*) from public.team_skills_leaderboard
+     where cup_id='00000000-0000-0000-0000-000000000001'
+      and points=0 and completed_stages=0)<>2
+ then raise exception 'UNAPPROVED_SCORE_LEAKED_INTO_RANKING';end if;
+end $pending_not_ranked$;
 
 begin;
 set local role authenticated;
@@ -81,6 +104,15 @@ begin
  if (select status from public.team_skills_scores
      where id='00000000-0000-0000-0000-000000000112')<>'pending'
  then raise exception 'APPROVAL_TOUCHED_WRONG_SCORE';end if;
+ if not exists(
+   select 1 from public.team_skills_leaderboard
+   where registration_id='00000000-0000-0000-0000-000000000201'
+     and points=8.75 and completed_stages=1 and all_stages_approved=false)
+ or not exists(
+   select 1 from public.team_skills_leaderboard
+   where registration_id='00000000-0000-0000-0000-000000000202'
+     and points=0 and completed_stages=0)
+ then raise exception 'APPROVAL_NOT_REFLECTED_IN_SCOPED_STANDINGS';end if;
 end $verified$;
 
 set local role authenticated;
@@ -115,5 +147,8 @@ begin
     (select count(*) from public.team_skills_scores
       where status='approved')<>1
  then raise exception 'DUPLICATE_APPROVAL_CREATED_SIDE_EFFECT';end if;
+ if (select points from public.team_skills_leaderboard where
+    registration_id='00000000-0000-0000-0000-000000000201')<>8.75
+ then raise exception 'DUPLICATE_APPROVAL_CHANGED_STANDINGS';end if;
 end $final_audit$;
 rollback;
