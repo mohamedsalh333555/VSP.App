@@ -46,8 +46,10 @@ test('actual VSP semantic design tokens produce stable reviewable threshold resu
     'lib/core/ui/tokens/vsp_design_tokens.dart', 'utf8',
   );
   const result = audit(actual);
-  assert.equal(result.checks.length, 11);
-  assert.equal(result.passed + result.flagged, 11);
+  assert.equal(result.checks.length, 12);
+  assert.equal(result.passed + result.flagged, 12);
+  assert.equal(result.flagged, 0,
+    'canonical text and status token pairs must clear sampled thresholds');
   assert.ok(result.passed > 0);
   const primary = result.checks.find(x =>
     x.foreground.endsWith('.textPrimary') && x.background.endsWith('.background'));
@@ -55,6 +57,18 @@ test('actual VSP semantic design tokens produce stable reviewable threshold resu
   const muted = result.checks.find(x =>
     x.foreground.endsWith('.textMuted'));
   assert.ok(muted, 'muted text review point must remain visible');
+  assert.equal(muted.meetsThreshold, true);
+
+  const legacy = actual.replace(
+    'static const Color textMuted = VSPDSColors.zinc400;',
+    'static const Color textMuted = VSPDSColors.gray500;',
+  );
+  assert.notEqual(legacy, actual, 'expected semantic token source');
+  const historical = audit(legacy);
+  assert.equal(historical.checks.find(x =>
+    x.foreground.endsWith('.textMuted') &&
+    x.background.endsWith('.surface')).meetsThreshold, false,
+    'the old low-contrast token must fail the same audit');
   const output = markdown(result);
   assert.match(output, /Canonical semantic contrast source audit/);
   assert.match(output, /review purpose/i);
