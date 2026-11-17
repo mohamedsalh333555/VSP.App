@@ -4,11 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('product copy does not hard-code unverified limited-availability claims', () {
-    final root = Directory('lib');
-    final files = root
-        .listSync(recursive: true, followLinks: false)
+    // Include source localizations and web entry pages, not only Dart
+    // widgets. Never scan generated binary/build assets as user copy.
+    final roots = ['lib', 'web', 'web_dist'];
+    final extensions = ['.dart', '.arb', '.html', '.js', '.ts'];
+    final files = roots
+        .map(Directory.new)
+        .where((root) => root.existsSync())
+        .expand((root) => root.listSync(recursive: true, followLinks: false))
         .whereType<File>()
-        .where((file) => file.path.endsWith('.dart'));
+        .where((file) => extensions.any(file.path.endsWith));
 
     // User-facing hard-coded artificial countdowns and numerical scarcity
     // claims are disallowed. A true availability count must instead be
@@ -19,6 +24,10 @@ void main() {
       RegExp(r'limited\s+spots?\s+left', caseSensitive: false),
       RegExp(r'باق[ىي]\s+\d+\s+(?:أماكن|اماكن|مواعيد|مقاعد)'),
       RegExp(r'آخر\s+فرصة\s+للحجز'),
+      RegExp(r'only\s+\d+\s+(?:spots?|tickets?|places?)\s+left', caseSensitive: false),
+      RegExp(r'hurry\s+and\s+book\s+before\s+it\s+is\s+gone', caseSensitive: false),
+      RegExp(r'فاضل\s+\d+\s+(?:أماكن|اماكن|مواعيد|مقاعد)'),
+      RegExp(r'متبقي\s+\d+\s+(?:أماكن|اماكن|مواعيد|مقاعد)'),
     ];
 
     final violations = <String>[];
