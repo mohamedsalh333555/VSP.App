@@ -169,18 +169,29 @@ th,td{padding:10px;border-bottom:1px solid #414348}th{font-weight:700}
           !Number.isSafeInteger(c.accounts) || c.accounts < 5) {
         throw Error("ملف العودة النشطة يحتوي بيانات ناقصة أو مجموعة صغيرة.");
       }
+      let previousEligible = c.accounts;
       const parts = [1,7,30].map(day => {
         const eligible = c["eligibleD"+day], active = c["activeD"+day];
         if (!safeCount(eligible) || !safeCount(active) ||
             (eligible === null && active !== null) ||
-            (eligible !== null && eligible > c.accounts) ||
+            (previousEligible === null && eligible !== null) ||
+            (eligible !== null && eligible > previousEligible) ||
             (eligible !== null && active !== null && active > eligible)) {
           throw Error("عدادات العودة النشطة غير صالحة.");
+        }
+        // A cohort of 10 with 6 eligible accounts exposes four not-yet-
+        // eligible users even if active returns are hidden. Also block
+        // differences of 1–4 between successive eligible-day counts.
+        if (eligible !== null && previousEligible !== null &&
+            previousEligible - eligible > 0 &&
+            previousEligible - eligible < 5) {
+          throw Error("يمكن استنتاج عدد صغير من المؤهلين بالمقارنة.");
         }
         if (eligible !== null && active !== null &&
             eligible - active > 0 && eligible - active < 5) {
           throw Error("يمكن استنتاج مجموعة عودة صغيرة.");
         }
+        previousEligible = eligible;
         return eligible !== null && active !== null
           ? active + " / " + eligible : "محجوب";
       });
