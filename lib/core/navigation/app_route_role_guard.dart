@@ -7,6 +7,8 @@ abstract final class AppRouteRoleGuard {
     '/facility-onboarding',
     '/documentation',
     '/copilot',
+    '/subscription-plans',
+    '/owner-ledger',
   };
 
   static const Set<String> playerOnly = {
