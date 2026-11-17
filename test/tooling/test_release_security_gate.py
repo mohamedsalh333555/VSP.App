@@ -63,6 +63,14 @@ class ReleaseSecurityGateTest(unittest.TestCase):
         state = json.loads((ROOT / "docs/security/VSP_RELEASE_GATE_STATE.json").read_text())
         self.assertIn("security_release_not_approved", module.blockers(state, SHA))
 
+    def test_financial_schema_deployment_preconditions_keep_release_blocked(self):
+        state = json.loads((ROOT / "docs/security/VSP_RELEASE_GATE_STATE.json").read_text())
+        findings = "\\n".join(state["open_critical_findings"])
+        self.assertIn("20261117173000", findings)
+        self.assertIn("20261117174500", findings)
+        self.assertEqual("hold", state["status"])
+        self.assertIn("critical_findings_not_cleared", module.blockers(state, SHA))
+
     def test_build_workflow_blocks_before_build_and_signing(self):
         source = (ROOT / ".github/workflows/build-release-apk.yml").read_text()
         gate = source.find("python3 scripts/check_release_security_gate.py")
