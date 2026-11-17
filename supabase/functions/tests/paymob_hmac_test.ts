@@ -80,7 +80,7 @@ Deno.test("No unauthenticated raw URL, HMAC proof or payload persisted by webhoo
     "the callback must verify the HMAC before processing payment state");
   assert(!/rawUrl|calculatedHmacPrefix|queryParams:|payload: payload,/.test(unauthenticated),
     "the rejection audit persists untrusted raw data");
-  assert(!/^\\s*receivedHmac,/m.test(unauthenticated),
+  assert(!/^\s*receivedHmac,/m.test(unauthenticated),
     "the rejection audit persists the untrusted HMAC string");
   assert((unauthenticated.match(/rejected_before_authentication: true/g) || []).length >= 5,
     "one or more rejection paths lacks minimal audit metadata");
