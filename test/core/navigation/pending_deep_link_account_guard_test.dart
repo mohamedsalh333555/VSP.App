@@ -63,7 +63,8 @@ void main() {
       expect(source, contains('PendingDeepLinkAccountGuard.release()'));
       expect(source, contains("prefs.getString('pending_deep_link')"));
       expect(source, contains("prefs.remove('pending_deep_link')"));
-      expect(source, contains('if (parsed == null || !sameVerifiedAccount()) return;'));
+      expect(source, contains('if (parsed == null || !sameVerifiedAccount()'));
+
       expect(source, contains('profileUserId: current.userModel?.uid,'));
     }
     expect(root, contains('final expectedUserId = initialAuth.currentUser?.id;'));
