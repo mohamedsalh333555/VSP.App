@@ -1,3 +1,10 @@
+## 2026-11-17 — Exact-cent booking quote and fee disclosure accepted (+2; 285/348)
+
+- **53.02:** booking widget tests verify precise selected total 107.75 EGP, optional ball, upfront deposit, and no stale price on slot deselection; quote source rechecks against fresh venue data. Source/UI scope only, not real live venues.
+- **53.07:** corrected checkout fee row, grand total and Arabic/English payment CTA from one-decimal rounding to `VSPMoneyFormatter.amount`. Runtime PaymobFeePolicy supplies fee totals and unavailable fee policy disables the final payment CTA. Focused widget and fee calculations prove exact 100 + 7.75 = 107.75 (not 107.8) before Paymob.
+- [Financial Flutter analyze, widget/source and payment-negative CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44185016978) at [c41b1d1](https://github.com/mohamedsalh333555/VSP.App/commit/c41b1d1f2661de862d6dc1b4b977bc69d0b96822); [acceptance evidence and limits](VSP_PRICE_DISCLOSURE_CENTS_53_02_53_07_ACCEPTANCE_2026-11-17.md). No live gateway amount comparison, schema change or actual charge.
+- **633 unique / 285 accepted / 348 open (45.02%)**, +2 pre-existing IDs, +0 new IDs. No production, Paymob Sandbox transaction, APK or main merge.
+
 ## 2026-11-17 — Booking trust and offline analytics interruptions accepted narrowly (+3; 283/350)
 
 - **51.07** — simulated loss/recovery of analytics transport; a confirmed booking's `booking_completed` is eligible only after authoritative confirmation, with retry after offline failure and one accepted event per in-process session. No actual Firebase, Android airplane mode or cross-device test.
