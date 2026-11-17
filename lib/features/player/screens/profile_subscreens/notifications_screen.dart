@@ -32,7 +32,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _playerChallengeResults = true;
 
   bool _isLoading = true;
+  bool _settingsLoadFailed = false;
   String? _settingsUserId;
+
+  // Reset synchronously on account switch, even if the next account's
+  // SharedPreferences read throws. Never show previous user's toggles.
+  void _resetNotificationSettings() {
+    _generalNotifications = true;
+    _soundAlerts = true;
+    _chatNotifications = true;
+    _ownerNewBookings = true;
+    _ownerPayouts = true;
+    _ownerDailySchedule = true;
+    _playerBookingConfirmations = true;
+    _playerTeamTransfers = true;
+    _playerMatchReminders = true;
+    _playerChallengeResults = true;
+  }
 
   @override
   void didChangeDependencies() {
@@ -40,6 +56,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final userId = context.watch<AuthProvider>().currentUser?.id ?? '';
     if (_settingsUserId != userId) {
       _settingsUserId = userId;
+      _resetNotificationSettings();
+      _settingsLoadFailed = false;
       _isLoading = true;
       _loadSettings(userId);
     }
@@ -54,16 +72,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!mounted || _settingsUserId != userId) return;
       // didChangeDependencies already triggers a build. Do not call setState
       // synchronously from that lifecycle when the account signs out.
-      _generalNotifications = true;
-      _soundAlerts = true;
-      _chatNotifications = true;
-      _ownerNewBookings = true;
-      _ownerPayouts = true;
-      _ownerDailySchedule = true;
-      _playerBookingConfirmations = true;
-      _playerTeamTransfers = true;
-      _playerMatchReminders = true;
-      _playerChallengeResults = true;
+      _resetNotificationSettings();
+      _settingsLoadFailed = false;
       _isLoading = false;
       return;
     }
@@ -71,9 +81,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       prefs = await SharedPreferences.getInstance();
     } catch (_) {
-      // Storage may be unavailable on the device; keep safe defaults
-      // and let the user reopen settings later rather than spin forever.
+      // Never show default/old-account toggles as if they were persisted
+      // when the local preference store is unavailable.
       if (!mounted || _settingsUserId != userId) return;
+      _settingsLoadFailed = true;
       setState(() => _isLoading = false);
       return;
     }
@@ -82,6 +93,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (!mounted || _settingsUserId != userId) return;
     bool read(String key) => prefs.getBool(_prefKey(userId, key)) ?? true;
     setState(() {
+      _settingsLoadFailed = false;
       _generalNotifications = read('notif_general');
       _soundAlerts = read('notif_sound');
       _chatNotifications = read('notif_chat');
@@ -156,7 +168,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل الإشعارات' : 'Loading notifications',
                 message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث تفضيلات الإشعارات.' : 'Fetching notification preferences.',
               )
-            : SingleChildScrollView(
+            : _settingsLoadFailed
+                ? VSPStateView(
+                    state: VSPUiState.error,
+                    title: isAr
+                        ? 'تعذر تحميل إعدادات الإشعارات'
+                        : 'Could not load notification preferences',
+                    message: isAr
+                        ? 'لم نقدر نتحقق من الإعدادات المحفوظة لهذا الحساب. جرّب مرة تانية.'
+                        : 'Saved settings for this account could not be verified. Please retry.',
+                    onRetry: () {
+                      final userId = _settingsUserId;
+                      if (!mounted || userId == null || userId.isEmpty) return;
+                      setState(() {
+                        _isLoading = true;
+                        _settingsLoadFailed = false;
+                      });
+                      _loadSettings(userId);
+                    },
+                  )
+                : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
               child: Column(
