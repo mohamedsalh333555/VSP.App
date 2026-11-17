@@ -382,23 +382,9 @@ serve(async (req: Request) => {
           let refundSuccess = false;
           let refundId = null;
           let refundErrorMsg = null;
-          // Use the exact gross amount charged by Paymob when available.
-          // If the webhook omits it, rebuild the same server-side gross used by checkout.
-          let amountCents = Math.round(Number(obj.amount_cents || 0));
-          if (amountCents <= 0) {
-            const { data: feeConfig } = await supabase
-              .from("platform_fee_config")
-              .select("booking_vsp_rate, booking_paymob_local_rate, booking_paymob_fixed_fee")
-              .eq("id", 1)
-              .maybeSingle();
-            const principal = Number(tournResult?.amount || 0);
-            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
-            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
-            const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
-            const vspFee = Math.round(principal * vspRate * 100) / 100;
-            const gatewayFee = Math.round((principal * gatewayRate + gatewayFixed) * 100) / 100;
-            amountCents = Math.round((principal + vspFee + gatewayFee) * 100);
-          }
+          // The signed callback's amountCents was HMAC-verified and validated
+          // before this branch. Never reconstruct historical charges from a
+          // mutable, current fee policy when refunding an over-capacity order.
 
           try {
             const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
@@ -529,21 +515,9 @@ serve(async (req: Request) => {
             const authData = await authRes.json();
             const authToken = authData.token;
 
-            // Step B: Rebuild the same gross amount charged by the intention service:
-            // principal + VSP fee + Paymob local fee + fixed fee.
-            const { data: feeConfig } = await supabase
-              .from("platform_fee_config")
-              .select("booking_vsp_rate, booking_paymob_local_rate, booking_paymob_fixed_fee")
-              .eq("id", 1)
-              .maybeSingle();
-            const principal = Number(tournResult.amount || 0);
-            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
-            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
-            const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
-            const vspFee = Math.round(principal * vspRate * 100) / 100;
-            const gatewayFee = Math.round((principal * gatewayRate + gatewayFixed) * 100) / 100;
-            const grossAmount = Math.round((principal + vspFee + gatewayFee) * 100) / 100;
-            const amountCents = Math.round(grossAmount * 100);
+            // Step B: Use the exact HMAC-verified Paymob transaction amount.
+            // Recomputing from current fee settings can over/under-refund if
+            // pricing has changed since this payment was actually captured.
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },

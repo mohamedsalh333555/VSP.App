@@ -183,3 +183,26 @@ Deno.test("Every payment intention type requires a matching persisted row before
   assert(block.includes('if (!bindingCompleted) throw new Error("Unsupported payment order correlation")'),
     "unrecognized payment order type can return an unbound checkout URL");
 });
+
+Deno.test("Over-capacity tournament refunds always use the signed gross amount", async () => {
+  const src = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const start = src.indexOf("const amountCents = Number(obj?.amount_cents)");
+  const hmacGate = src.indexOf("verifyPaymobHmacSignature(receivedHmac, calculatedHmac)");
+  const amountGuard = src.indexOf("!Number.isInteger(amountCents)");
+  const oneVsOneStart = src.indexOf('if (specialReference.startsWith("TOURN_1V1_"))');
+  const teamStart = src.indexOf('if (specialReference.startsWith("TOURN_"))', oneVsOneStart);
+  const bookingsStart = src.indexOf("if (!bookingId)", teamStart);
+  assert(hmacGate >= 0 && start > hmacGate && amountGuard > start, "refund amount must be signed and positive");
+  assert(oneVsOneStart > amountGuard && teamStart > oneVsOneStart && bookingsStart > teamStart,
+    "cannot isolate the actual over-capacity refund routes");
+  const oneVsOne = src.slice(oneVsOneStart, teamStart);
+  const team = src.slice(teamStart, bookingsStart);
+  for (const [name, section] of [["1v1", oneVsOne], ["team", team]] as const) {
+    assert(section.includes("amount_cents: amountCents"), name + " refund must use verified cents");
+    assert(section.includes("p_refund_amount: amountCents / 100"), name + " accounting must use verified cents");
+    assert(!section.includes("const amountCents = Math.round(grossAmount * 100)"),
+      name + " refund recomputes stale gross amount");
+    assert(!section.includes("let amountCents ="),
+      name + " refund shadows HMAC-verified amount with a fee fallback");
+  }
+});
