@@ -82,4 +82,66 @@ begin
     raise exception 'VALID_WAITLIST_PROMOTION_DID_NOT_RESTORE_FOUR_TEAM_LIMIT';
  end if;
 end $after_slot$;
+
+-- Explicit administrative reject path, auditable reason and idempotent
+-- non-reviewable terminal state. Use the actual current review RPC.
+reset role;
+insert into public.team_skills_registrations(id,cup_id,status)
+values('00000000-0000-0000-0000-000000000116',
+       '00000000-0000-0000-0000-000000000001','waitlist');
+insert into public.team_skills_roster(registration_id,active)
+values('00000000-0000-0000-0000-000000000116',true);
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000009001',true);
+do $admin_rejection$
+declare denied boolean:=false;
+begin
+ begin
+   perform public.team_skills_review_registration(
+     '00000000-0000-0000-0000-000000000116','rejected','bad');
+ exception when others then
+   if position('documented rejection' in lower(sqlerrm))>0 then
+     denied:=true;
+   else raise;end if;
+ end;
+ if not denied then raise exception 'REJECT_WITHOUT_REASON_ACCEPTED';end if;
+ if (select status from public.team_skills_registrations
+    where id='00000000-0000-0000-0000-000000000116')<>'waitlist'
+ then raise exception 'INVALID_REJECTION_CHANGED_APPLICATION';end if;
+end $admin_rejection$;
+select public.team_skills_review_registration(
+  '00000000-0000-0000-0000-000000000116',
+  'rejected','Roster is ineligible');
+do $reject_verified$
+declare denied boolean:=false;
+begin
+ if not exists(
+   select 1 from public.team_skills_registrations
+   where id='00000000-0000-0000-0000-000000000116'
+     and status='rejected'
+     and rejection_reason='Roster is ineligible'
+     and reviewed_by='00000000-0000-0000-0000-000000009001'
+     and reviewed_at is not null
+ ) then raise exception 'REJECTION_NOT_PERSISTED';end if;
+ if exists(select 1 from public.team_skills_roster where
+   registration_id='00000000-0000-0000-0000-000000000116' and active)
+ then raise exception 'REJECTED_TEAM_STILL_ACTIVE';end if;
+ if (select count(*) from public.team_skills_audit
+   where action='review_registration' and
+     subject_id='00000000-0000-0000-0000-000000000116')<>1
+ then raise exception 'REJECTION_AUDIT_NOT_EXACTLY_ONCE';end if;
+ begin
+   perform public.team_skills_review_registration(
+     '00000000-0000-0000-0000-000000000116','rejected','Repeated rejection');
+ exception when others then
+   if position('not reviewable' in lower(sqlerrm))>0 then
+     denied:=true;
+   else raise;end if;
+ end;
+ if not denied then raise exception 'REPEATED_REJECTION_ACCEPTED';end if;
+ if (select count(*) from public.team_skills_audit
+   where action='review_registration' and
+     subject_id='00000000-0000-0000-0000-000000000116')<>1
+ then raise exception 'REPEATED_REJECTION_DUPLICATED_AUDIT';end if;
+end $reject_verified$;
 rollback;
