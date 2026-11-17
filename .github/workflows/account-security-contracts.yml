@@ -48,6 +48,7 @@ on:
       - 'test/tooling/test_blocked_admin_policy_plan.py'
       - 'test/tooling/test_admin_rpc_guard_plan.py'
       - 'test/tooling/test_account_security_runner.py'
+      - 'scripts/test_team_skills_registration_concurrency.py'
       - 'scripts/test_owner_stadium_capacity_concurrency.py'
       - 'test/tooling/test_owner_stadium_capacity_target_guard.py'
       - 'docs/security/sql/owner_trial_365_day_default_candidate.sql'
@@ -142,6 +143,8 @@ jobs:
         run: python3 scripts/test_team_skills_capacity_isolated.py
       - name: Verify two independent SQL clients cannot approve the same final cup slot
         run: python3 scripts/test_team_skills_capacity_concurrency.py
+      - name: Verify captain signup concurrency at the final cup slot
+        run: python3 scripts/test_team_skills_registration_concurrency.py
       - name: Verify captain-authenticated bounded auto-waitlist enrollment
         run: python3 scripts/test_team_skills_auto_waitlist_isolated.py
       - name: Verify captain withdrawal and audited admin cancellations preserve team capacity
