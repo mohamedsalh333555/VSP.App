@@ -239,6 +239,11 @@ class NotificationService {
     );
     if (when == null) return;
     final id = VSPMatchReminderSchedule.reminderId(userId, bookingId);
+    final key = VSPMatchReminderSchedule.preferenceKey(userId);
+    if (!VSPMatchReminderSchedule.allowsScheduling(
+      records: prefs.getStringList(key) ?? const <String>[],
+      notificationId: id, reminderUtc: when,
+    )) return;
     // UTC absolute instant avoids Cairo DST wall-clock ambiguity.
     final scheduledAt = tz.TZDateTime.utc(when.year, when.month, when.day,
         when.hour, when.minute, when.second, when.millisecond, when.microsecond);
@@ -261,10 +266,18 @@ class NotificationService {
       await _localNotifications.cancel(id);
       return;
     }
-    final key = VSPMatchReminderSchedule.preferenceKey(userId);
-    final ids = prefs.getStringList(key)?.toSet() ?? <String>{};
-    ids.add(id.toString());
-    await prefs.setStringList(key, ids.toList());
+    final existing = prefs.getStringList(key) ?? const <String>[];
+    if (!VSPMatchReminderSchedule.allowsScheduling(
+      records: existing, notificationId: id, reminderUtc: when,
+    )) {
+      await _localNotifications.cancel(id);
+      return;
+    }
+    await prefs.setStringList(
+      key, VSPMatchReminderSchedule.withScheduled(
+        records: existing, notificationId: id, reminderUtc: when,
+      ),
+    );
   }
 
   Future<void> cancelScheduledMatchRemindersForUser(String userId) async {
@@ -272,8 +285,8 @@ class NotificationService {
     final prefs = await SharedPreferences.getInstance();
     final key = VSPMatchReminderSchedule.preferenceKey(userId);
     for (final raw in prefs.getStringList(key) ?? const <String>[]) {
-      final id = int.tryParse(raw);
-      if (id != null && id >= 0) await _localNotifications.cancel(id);
+      final id = VSPMatchReminderSchedule.notificationIdFromRecord(raw);
+      if (id != null) await _localNotifications.cancel(id);
     }
     await prefs.remove(key);
   }

@@ -33,9 +33,47 @@ void main() {
     expect(schedule, contains("'recipientUserId': userId"));
     expect(schedule, contains("'bookingId': bookingId"));
     expect(schedule, contains('await _localNotifications.cancel(id)'));
-    expect(schedule, contains('prefs.setStringList(key, ids.toList())'));
+    expect(schedule, contains('VSPMatchReminderSchedule.allowsScheduling('));
+    expect(schedule, contains('VSPMatchReminderSchedule.withScheduled('));
+    expect(service, contains('VSPMatchReminderSchedule.notificationIdFromRecord(raw)'));
     final out = File('lib/core/providers/auth/auth_sign_out_handler.dart').readAsStringSync();
     expect(out.indexOf('cancelScheduledMatchRemindersForUser(user.id)'),
         lessThan(out.indexOf('await authService.signOut()')));
+  });
+
+  test('daily quota caps at 3, while same booking reschedules without extra slots', () {
+    final day = DateTime.utc(2026, 11, 17, 18);
+    final records = [
+      for (var i = 1; i <= 3; i++) VSPMatchReminderSchedule.quotaRecord(i, day),
+    ];
+    expect(VSPMatchReminderSchedule.maxRemindersPerUtcDay, 3);
+    expect(VSPMatchReminderSchedule.allowsScheduling(
+      records: records, notificationId: 4, reminderUtc: day,
+    ), isFalse);
+    expect(VSPMatchReminderSchedule.allowsScheduling(
+      records: records, notificationId: 2, reminderUtc: day,
+    ), isTrue);
+    expect(VSPMatchReminderSchedule.allowsScheduling(
+      records: records, notificationId: 4,
+      reminderUtc: DateTime.utc(2026, 11, 18),
+    ), isTrue);
+  });
+
+  test('booking move replaces old UTC day, legacy numeric IDs remain cancellable', () {
+    final from = DateTime.utc(2026, 11, 17, 18);
+    final records = VSPMatchReminderSchedule.withScheduled(
+      records: [
+        VSPMatchReminderSchedule.quotaRecord(200, from),
+        VSPMatchReminderSchedule.quotaRecord(201, from),
+        '190',
+      ],
+      notificationId: 200, reminderUtc: DateTime.utc(2026, 11, 18, 18),
+    );
+    expect(records.where((s) => s.endsWith('|200')).length, 1);
+    expect(records.any((s) => s.startsWith('2026-11-18|200')), isTrue);
+    expect(records.any((s) => s.startsWith('2026-11-17|200')), isFalse);
+    expect(VSPMatchReminderSchedule.notificationIdFromRecord('190'), 190);
+    expect(VSPMatchReminderSchedule.notificationIdFromRecord('2026-11-18|200'), 200);
+    expect(VSPMatchReminderSchedule.notificationIdFromRecord('invalid'), isNull);
   });
 }
