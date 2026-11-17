@@ -25,6 +25,11 @@ create table public.team_skills_phases(
  metric text not null,target numeric,best_ms integer,worst_ms integer);
 create table public.team_skills_audit(
  cup_id uuid not null,actor_id uuid not null,action text not null);
+-- Mirror the existing authenticated SELECT grants on the live cup,
+-- phase configuration and admin-visible audit tables for positive readback.
+-- In this disposable fixture only, readback is not a cross-account RLS test.
+grant select on public.team_skills_cups,public.team_skills_phases,
+ public.team_skills_audit to authenticated;
 -- ACTUAL_TEAM_SKILLS_ADMIN_CHECK
 -- ACTUAL_TEAM_SKILLS_CREATE_CUP
 grant usage on schema vsp_skills_private to authenticated;
