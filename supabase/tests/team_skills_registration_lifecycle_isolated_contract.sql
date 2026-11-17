@@ -33,7 +33,7 @@ grant execute on function public.team_skills_set_status(uuid,text) to authentica
 grant execute on function public.team_skills_register(uuid,uuid,uuid[],uuid,uuid)
 to authenticated;
 grant select on public.team_skills_cups,public.team_skills_registrations,
- public.team_skills_roster,public.team_skills_audit to authenticated;
+ public.team_skills_roster,public.team_skills_audit,public.team_members to authenticated;
 insert into public.team_skills_cups(id,status,starts_at,max_teams) values
 ('00000000-0000-0000-0000-000000000001','draft',now()+interval '2 days',4),
 ('00000000-0000-0000-0000-000000000002','draft',now()+interval '2 days',4),
