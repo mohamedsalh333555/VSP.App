@@ -15,6 +15,8 @@ import '../../features/auth/screens/select_role_screen.dart';
 import '../../features/owner/screens/facility_onboarding_screen.dart';
 import '../../features/owner/screens/owner_documentation_wizard.dart';
 import '../../features/owner/screens/owner_main_screen.dart';
+import '../../features/owner/screens/subscription_plans_screen.dart';
+import '../../features/owner/screens/owner_ledger_screen.dart';
 
 import '../../features/player/screens/player_home_screen.dart';
 import '../../features/player/screens/match_details_screen.dart';
@@ -111,6 +113,15 @@ class AppRouter {
  path: '/player',
  builder: (context, state) => const PlayerHomeScreen(),
  ),
+ GoRoute(
+ path: '/subscription-plans',
+ builder: (context, state) => const SubscriptionPlansScreen(),
+ ),
+ GoRoute(
+ path: '/owner-ledger',
+ builder: (context, state) => const OwnerLedgerScreen(),
+ ),
+
       GoRoute(
         path: '/copilot',
         redirect: (context, state) {
