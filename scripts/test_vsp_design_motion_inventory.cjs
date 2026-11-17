@@ -27,6 +27,8 @@ final label = TextStyle(fontSize: 14, fontFamily: 'Fixture');
     fs.writeFileSync(path.join(dir, 'features', 'motion.dart'), `
 final p = VSPDSMotion.selection;
 final animation = AnimatedContainer(duration: Duration(milliseconds: 350));
+final fade = FadeTransition(opacity: controller, child: content);
+final route = MaterialPageRoute(builder: (_) => content);
 final reduced = MediaQuery.disableAnimationsOf(context);
 `);
     fs.writeFileSync(path.join(dir, 'features', 'some.g.dart'),
@@ -46,12 +48,13 @@ test('inventory identifies tokens, literals, type and motion across handwritten 
     for (const category of [
       'colorToken', 'directMaterialColor', 'literalColor', 'spacingToken',
       'radiusToken', 'textFontSize', 'textFontFamily', 'edgeInsets',
-      'motionToken', 'animatedWidget', 'explicitMotionDuration',
+      'motionToken', 'animatedWidget', 'routeTransition', 'explicitMotionDuration',
       'reduceMotionGate',
     ]) {
       assert.equal(inventory.groups[category].matches,
         category === 'colorToken' ? 3 :
-        category === 'spacingToken' || category === 'radiusToken' ? 2 : 1, category);
+        category === 'spacingToken' || category === 'radiusToken' ||
+        category === 'animatedWidget' ? 2 : 1, category);
       assert.equal(inventory.groups[category].files, 1, category);
       assert.equal(inventory.groups[category].samples[0].line > 0, true);
     }
