@@ -306,5 +306,39 @@ void main() {
  });
 
 
+ test('8. Expired session denies private routes even with a stale hydrated owner', () {
+   final expiredAuth = FakeAuthProvider(
+     isAuthenticated: false,
+     isOwner: true,
+     userModel: UserModel(
+       uid: 'prior-account',
+       email: 'prior@example.invalid',
+       role: 'owner',
+       phone: '01012345678',
+       hasStadium: true,
+       isEmailVerified: true,
+       isOnboardingConfirmed: true,
+       isRegistrationComplete: true,
+     ),
+   );
+   for (final path in [
+     '/',
+     '/owner',
+     '/owner-ledger',
+     '/subscription-plans',
+     '/documentation',
+     '/match/previous-booking',
+     '/team/previous-team',
+     '/notifications',
+   ]) {
+     expect(AppRouter.redirectLogic(
+       DummyBuildContext(), FakeGoRouterState(path), expiredAuth,
+     ), '/welcome', reason: 'logout must invalidate $path');
+   }
+   expect(AppRouter.redirectLogic(
+     DummyBuildContext(), FakeGoRouterState('/login'), expiredAuth,
+   ), isNull);
+ });
+
  });
 }
