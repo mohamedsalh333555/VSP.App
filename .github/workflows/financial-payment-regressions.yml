@@ -11,6 +11,12 @@ on:
       - '.github/workflows/financial-payment-regressions.yml'
       - 'lib/data/models/booking_models.dart'
       - 'lib/core/utils/owner_financial_calculator.dart'
+      - 'lib/core/services/paymob_service.dart'
+      - 'lib/core/utils/vsp_money_formatter.dart'
+      - 'lib/features/player/widgets/payment/payment_breakdown_card.dart'
+      - 'lib/features/player/widgets/payment/payment_security_footer.dart'
+      - 'lib/features/player/screens/payment_gateway_screen.dart'
+      - 'test/features/booking/payment_fee_cent_precision_test.dart'
       - 'test/unit/financial_calculator_test.dart'
       - 'test/core/utils/owner_financial_calculator_test.dart'
       - 'test/architecture/paymob_verified_notification_contract_test.dart'
@@ -63,6 +69,12 @@ jobs:
           cache: true
       - name: Install Flutter dependencies
         run: flutter pub get
+      - name: Analyze payment amount disclosure sources
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/player/widgets/payment/payment_breakdown_card.dart
+          lib/features/player/widgets/payment/payment_security_footer.dart
+          test/features/booking/payment_fee_cent_precision_test.dart
       - name: Verify normalized venue cash vs wallets and financial receipts
         run: >-
           flutter test --concurrency=2
@@ -70,3 +82,4 @@ jobs:
           test/unit/financial_calculator_test.dart
           test/architecture/paymob_verified_notification_contract_test.dart
           test/architecture/paymob_refund_accounting_notification_guard_test.dart
+          test/features/booking/payment_fee_cent_precision_test.dart
