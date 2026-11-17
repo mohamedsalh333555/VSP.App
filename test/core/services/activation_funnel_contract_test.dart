@@ -143,6 +143,26 @@ void main() {
     expect(report.stages[1].conversionFromPrevious, isNull);
   });
 
+  test('JSON export contains only aggregate fields, never account keys', () {
+    final events = <VSPRetentionCohortEvent>[];
+    for (var i = 0; i < 5; i++) {
+      for (var s = 0; s < booking.length; s++) {
+        events.add(signal('private-key-$i', 'player', booking[s],
+            '2026-11-01T0$s:00:00Z'));
+      }
+    }
+    final report = VSPActivationFunnels.build(
+        journey: 'player_booking', events: events, observedThrough: cutoff)!;
+    final payload = report.toJson();
+    expect(payload.keys, containsAll([
+      'journey', 'role', 'observedThroughUtc', 'stages',
+    ]));
+    expect(payload.toString().contains('private-key'), isFalse);
+    final stages = payload['stages'] as List;
+    expect(stages.length, 5);
+    expect((stages.last as Map)['accounts'], 5);
+  });
+
   test('rejects unknown journey rather than fabricating a metric', () {
     expect(() => VSPActivationFunnels.build(
       journey: 'made_up', events: const <VSPRetentionCohortEvent>[],
