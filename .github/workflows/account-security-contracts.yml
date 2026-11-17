@@ -39,6 +39,7 @@ on:
       - 'scripts/test_accept_join_request_isolated.py'
       - 'scripts/test_accept_join_request_concurrency.py'
       - 'scripts/test_team_invitation_isolated.py'
+      - 'scripts/test_team_invitation_status_notifications_isolated.py'
       - 'scripts/test_team_roster_order_isolated.py'
       - 'scripts/test_matchup_fee_migration_rebuild.py'
       - 'scripts/test_reject_join_request_isolated.py'
@@ -144,6 +145,8 @@ jobs:
         run: python3 -m unittest discover -s test/tooling -p test_team_invitation_isolated.py -v
       - name: Verify invitation authorization and expiry on isolated PostgreSQL
         run: python3 scripts/test_team_invitation_isolated.py
+      - name: Verify team invitation creation and response notices on isolated PostgreSQL
+        run: python3 scripts/test_team_invitation_status_notifications_isolated.py
       - name: Verify private team-roster runner target guard
         run: python3 -m unittest discover -s test/tooling -p test_team_roster_order_isolated.py -v
       - name: Verify member-only roster and join-time ordering on isolated PostgreSQL
