@@ -928,35 +928,22 @@ serve(async (req: Request) => {
         });
       }
 
+      // The verified financial RPC writes the booking and transaction
+      // atomically. Its database trigger creates one in-app receipt only
+      // when the signed successful Paymob log, gross amount and ledger match.
+      // Never re-create payment notifications from a webhook replay.
+      if (paymentResult.idempotent === true) {
+        return new Response(JSON.stringify({
+          status: "already_processed",
+          type: "booking_payment",
+          success: true,
+          booking_id: bookingId,
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+
       const finalPayment = paymentResult.is_final_payment === true;
       const remainingAmount = Number(paymentResult.remaining_amount || 0);
       const principalPaid = Number(paymentResult.principal_amount || principalAmount);
-
-      const playerUserId = existingBooking.created_by_user_id || existingBooking.user_id;
-      const amountText = principalPaid.toFixed(2);
-
-      await supabase.from("notifications").insert([
-        {
-          user_id: existingBooking.owner_id,
-          title: isDepositOnly ? "تم استلام عربون حجز" : "تم استلام دفعة حجز مؤكدة",
-          body: isDepositOnly
-            ? `تم دفع عربون بقيمة ${amountText} ج.م لحجز ${existingBooking.stadium_name || "الملعب"}. المتبقي: ${remainingAmount.toFixed(2)} ج.م`
-            : `تم تأكيد سداد مبلغ ${amountText} ج.م لحجز ${existingBooking.stadium_name || "الملعب"}.`,
-          type: isDepositOnly ? "deposit_received" : "payment_received",
-          booking_id: bookingId,
-          is_read: false,
-        },
-        {
-          user_id: playerUserId,
-          title: finalPayment ? "تأكيد الحجز والدفع" : "تأكيد سداد العربون",
-          body: finalPayment
-            ? `تم سداد حجزك بالكامل بنجاح في ${existingBooking.stadium_name || "الملعب"}.`
-            : `تم سداد العربون بقيمة ${amountText} ج.م بنجاح. المتبقي: ${remainingAmount.toFixed(2)} ج.م.`,
-          type: finalPayment ? "booking_confirmed" : "deposit_received",
-          booking_id: bookingId,
-          is_read: false,
-        },
-      ]);
 
       return new Response(JSON.stringify({
         status: "processed",
