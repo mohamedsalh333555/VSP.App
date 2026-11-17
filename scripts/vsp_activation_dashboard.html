@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VSP | تقرير التحويل التجميعي المحلي</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:#18191b;color:#f3f4f6}
+*{box-sizing:border-box}body{margin:0 auto;padding:24px;max-width:1080px;line-height:1.7}
+h1{font-size:1.65rem;margin:0}h2{font-size:1.16rem}p,small{color:#c6c9ce}
+header{border-bottom:1px solid #424448;padding-bottom:16px;margin-bottom:20px}
+section{background:#24262a;border:1px solid #45474b;border-radius:14px;padding:18px;margin:16px 0}
+section:focus-within{border-color:#969ba3}input{max-width:100%;font:inherit}
+label{display:block;font-weight:600;margin-bottom:8px}
+button{border:1px solid #aeb3ba;background:#34373b;color:white;border-radius:10px;padding:9px 16px;font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #dedfe2;outline-offset:3px}
+table{width:100%;border-collapse:collapse;min-width:580px;text-align:right}
+th,td{padding:10px;border-bottom:1px solid #414348}th{font-weight:700}
+.scroll{overflow-x:auto}.muted{color:#c6c9ce}.warn{color:#f1c994}
+.status{min-height:1.6em;margin-top:12px}strong{color:white}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+<h1>VSP — لوحة قمع التسجيل والحجز</h1>
+<p>أداة محلية لمراجعة أرقام <strong>تجميعية فقط</strong>. لا تتصل بقاعدة البيانات أو Firebase أو أي خادم، ولا تعرض أرقام مستخدمين حقيقية تلقائيًا.</p>
+</header>
+<section>
+<label for="report">افتح ملف JSON يحتوي على نتائج مجمعة، وليس سجلات مستخدمين</label>
+<input id="report" type="file" accept=".json,application/json" aria-describedby="description" />
+<p id="description"><small>يمكن استخدام مخرجات <code>VSPFunnelReport.toJson()</code> مباشرة، أو ملف فيه <code>funnels</code> و<code>cohorts</code>. لا تضع أسماء أو أرقام هواتف أو معرفات حسابات في الملف.</small></p>
+<button id="clear" type="button">مسح النتائج المعروضة</button>
+<p id="status" class="status" role="status" aria-live="polite">لم يُحمّل أي تقرير بعد.</p>
+</section>
+<div id="results" hidden>
+<section>
+<h2>مسارات التحويل ومغادرة الخطوات</h2>
+<div id="funnels"></div>
+</section>
+<section>
+<h2>العودة النشطة D1 / D7 / D30</h2>
+<p>فترات حسب اليوم في UTC، وليست زيارات التطبيق أو معدلات الاحتفاظ المقاسة تلقائيًا.</p>
+<div id="cohorts" class="scroll"></div>
+</section>
+</div>
+<script>
+"use strict";
+(() => {
+  const fileInput = document.getElementById("report");
+  const status = document.getElementById("status");
+  const results = document.getElementById("results");
+  const funnelRoot = document.getElementById("funnels");
+  const cohortRoot = document.getElementById("cohorts");
+  const allowed = new Set(["player_booking", "player_match", "owner_activation", "owner_subscription"]);
+  const labels = {
+    app_opened:"فتح التطبيق",signup_completed:"إتمام التسجيل",
+    venue_viewed:"مشاهدة ملعب",booking_started:"بدء الحجز",
+    booking_completed:"تأكيد الحجز",match_viewed:"مشاهدة مباراة",
+    match_joined:"الانضمام للمباراة",owner_registration_started:"بدء تسجيل المالك",
+    owner_registration_completed:"إتمام تسجيل المالك",
+    owner_dashboard_viewed:"فتح لوحة المالك",
+    subscription_viewed:"مشاهدة الباقات",subscription_activated:"اشتراك مؤكد"
+  };
+  const clean = () => {
+    funnelRoot.replaceChildren();cohortRoot.replaceChildren();
+    results.hidden = true;
+  };
+  const cell = (row, tag, value) => {
+    const el = document.createElement(tag);
+    el.textContent = String(value);
+    row.appendChild(el);
+  };
+  const displayCount = (n) => n === null ? "محجوب" : String(n);
+  const safeCount = (value) =>
+    value === null || (Number.isSafeInteger(value) && value >= 0 && (value === 0 || value >= 5));
+  const safeRate = (value) =>
+    value === null || (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1);
+
+  function drawFunnel(report) {
+    if (!report || !allowed.has(report.journey) ||
+        !Array.isArray(report.stages) || !report.stages.length || report.stages.length > 6 ||
+        !report.stages.every(s => s && Object.hasOwn(labels,s.event) &&
+          safeCount(s.accounts) && safeCount(s.dropOffFromPrevious) &&
+          safeRate(s.conversionFromPrevious))) {
+      throw Error("صيغة مسار التحويل أو حدود الخصوصية غير صحيحة.");
+    }
+    const h = document.createElement("h3");
+    h.textContent = report.journey + " — " + (report.role === "owner" ? "مالك" : "لاعب");
+    funnelRoot.appendChild(h);
+    const scroller = document.createElement("div");
+    scroller.className = "scroll";
+    const table = document.createElement("table");
+    const header = document.createElement("tr");
+    ["المرحلة","حسابات مختلفة","نسبة الانتقال","المنسحبون"].forEach(t => cell(header,"th",t));
+    table.appendChild(header);
+    for (const stage of report.stages) {
+      const row = document.createElement("tr");
+      cell(row,"td",labels[stage.event]);
+      cell(row,"td",displayCount(stage.accounts));
+      cell(row,"td",stage.conversionFromPrevious === null ? "—" :
+        (stage.conversionFromPrevious * 100).toFixed(1) + "%");
+      cell(row,"td",stage.dropOffFromPrevious === null ? "—" :
+        displayCount(stage.dropOffFromPrevious));
+      table.appendChild(row);
+    }
+    scroller.appendChild(table);
+    funnelRoot.appendChild(scroller);
+  }
+
+  function drawCohorts(cohorts) {
+    if (!cohorts.length) {
+      cohortRoot.textContent = "لا توجد مجموعات عودة نشطة مرفقة في هذا التقرير.";
+      return;
+    }
+    const table = document.createElement("table");
+    const h = document.createElement("tr");
+    ["الدور","أول قيمة","بداية المجموعة UTC","الحسابات","D1","D7","D30"]
+      .forEach(x => cell(h,"th",x));
+    table.appendChild(h);
+    for (const c of cohorts) {
+      if (!c || !["player","owner"].includes(c.role) ||
+          !Object.hasOwn(labels,c.firstValueEvent) ||
+          typeof c.cohortDayUtc !== "string" ||
+          !Number.isSafeInteger(c.accounts) || c.accounts < 5) {
+        throw Error("ملف العودة النشطة يحتوي بيانات ناقصة أو مجموعة صغيرة.");
+      }
+      const parts = [1,7,30].map(day => {
+        const eligible = c["eligibleD"+day], active = c["activeD"+day];
+        if (!Number.isSafeInteger(eligible) || !Number.isSafeInteger(active) ||
+            eligible < 0 || eligible > c.accounts || active < 0 || active > eligible) {
+          throw Error("عدادات العودة النشطة غير صالحة.");
+        }
+        return eligible >= 5 && (active === 0 || active >= 5)
+          ? active + " / " + eligible : "محجوب";
+      });
+      const row = document.createElement("tr");
+      [c.role,labels[c.firstValueEvent],c.cohortDayUtc,c.accounts,...parts]
+        .forEach(x => cell(row,"td",x));
+      table.appendChild(row);
+    }
+    cohortRoot.appendChild(table);
+  }
+
+  fileInput.addEventListener("change", async () => {
+    clean();
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) {
+      status.textContent = "الملف كبير جدًا. استخدم تقريرًا مجمعًا أصغر من 1 ميجابايت.";
+      return;
+    }
+    try {
+      const parsed = JSON.parse(await file.text());
+      const funnels = Array.isArray(parsed.funnels) ? parsed.funnels :
+        (parsed.journey ? [parsed] : []);
+      const cohorts = Array.isArray(parsed.cohorts) ? parsed.cohorts : [];
+      if (!funnels.length && !cohorts.length) throw Error("لا توجد مجموعات قابلة للعرض.");
+      funnels.forEach(drawFunnel);
+      drawCohorts(cohorts);
+      results.hidden = false;
+      status.textContent = "تم عرض تقرير محلي مجمع؛ لا يُعتبر إثباتًا لقياس حي.";
+    } catch (_) {
+      clean();
+      status.textContent = "تعذر فتح التقرير. تأكد أن JSON مجمع وصالح ولا يحتوي على صفوف المستخدمين.";
+    }
+  });
+  document.getElementById("clear").addEventListener("click", () => {
+    fileInput.value = "";clean();
+    status.textContent = "تم مسح النتائج من الصفحة.";
+  });
+})();
+</script>
+</body>
+</html>
