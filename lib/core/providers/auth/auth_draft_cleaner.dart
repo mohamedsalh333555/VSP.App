@@ -19,6 +19,8 @@ class AuthDraftCleaner {
         if (k.startsWith('temp_stadium_') ||
             k.startsWith('temp_tournament_') ||
             k == 'vsp_draft_booking' ||
+            k == 'pending_deep_link' ||
+            k == 'pending_deep_link_user_id' ||
             (uid != null &&
                 uid.isNotEmpty &&
                 (k.startsWith('vsp_draft_stadium_${uid}_') ||
