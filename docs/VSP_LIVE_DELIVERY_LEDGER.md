@@ -1,3 +1,9 @@
+## 2026-11-17 — 54.05 local match reminder cap accepted narrowly (+1; 279/354)
+
+- **54.05** implements a best-effort per-account cap of 3 native match reminders per UTC day, with booking ID reuse, moved-booking day replacement, old reminder invalidation and legacy ID cancellation.
+- [Specialized Flutter analyze and tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44163293430) on [55e294f](https://github.com/mohamedsalh333555/VSP.App/commit/55e294f567abd6c98e1d9e39e2af7f74a3e2bedc). Not a persistent cross-device global FCM quota or physical OS delivery check.
+- **633 unique / 279 accepted / 354 open (44.08%)**, +1 existing ID, no schema, remote push or production payments change, no main merge.
+
 ## 2026-11-17 — 54.03 match-reminder timing accepted, narrow local scope (+1; 278/355)
 
 - Replaced incorrect immediate `show` with kickoff-minus-2-hour `zonedSchedule` at UTC instant; per-account/booking stable IDs and account-scoped preferences; cancel on normal sign-out and saved general/reminder opt-out. [Sources and limits](VSP_MATCH_REMINDER_SCHEDULE_54_03_2026-11-17.md).
