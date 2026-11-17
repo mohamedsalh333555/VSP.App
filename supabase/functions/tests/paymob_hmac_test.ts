@@ -271,9 +271,11 @@ Deno.test("A late failed callback cannot cancel a newer pending checkout order",
     "late callback can cancel pending booking with a newer Paymob order");
 });
 
-Deno.test("Over-capacity refund requires ledger confirmation before reporting success", async () => {
+Deno.test("Legacy 1v1 direct refund requires ledger confirmation; team refunds use queue", async () => {
   const src = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
-  for (const fn of ["record_1v1_refund_status_atomic", "record_tournament_refund_status_atomic"]) {
+  // Team tournaments no longer call the direct refund endpoint or its ledger
+  // RPC: confirm_tournament_order_atomic atomically inserts the refund queue.
+  for (const fn of ["record_1v1_refund_status_atomic"]) {
     const call = src.indexOf('await supabase.rpc("' + fn + '"');
     const guard = src.indexOf("refundRecordingError || refundRecorded?.success !== true", call);
     const manual = src.indexOf('status: "requires_reconciliation"', guard);
