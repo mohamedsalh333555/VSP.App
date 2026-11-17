@@ -6,6 +6,27 @@ class OwnerSubscriptionRepository {
   OwnerSubscriptionRepository({SupabaseClient? client})
       : _supabase = client ?? Supabase.instance.client;
 
+  /// Validate the checkout destination before passing it to the OS browser.
+  /// The deployed create_paymob_intention handler currently constructs an
+  /// accept.paymob.com/unifiedcheckout URL; other hosts are not trusted.
+  static Uri? trustedPaymobCheckoutUri(String? value) {
+    final raw = value?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    final uri = Uri.tryParse(raw);
+    if (uri == null ||
+        uri.scheme != 'https' ||
+        uri.host != 'accept.paymob.com' ||
+        uri.userInfo.isNotEmpty ||
+        (uri.hasPort && uri.port != 443) ||
+        uri.path != '/unifiedcheckout/' ||
+        uri.fragment.isNotEmpty ||
+        (uri.queryParameters['publicKey']?.trim().isNotEmpty != true) ||
+        (uri.queryParameters['clientSecret']?.trim().isNotEmpty != true)) {
+      return null;
+    }
+    return uri;
+  }
+
   Future<List<Map<String, dynamic>>> fetchPublicPlans() async {
     final response = await _supabase
         .from('public_subscription_plans')
@@ -56,12 +77,10 @@ class OwnerSubscriptionRepository {
       body: {'subscription_order_id': subscriptionOrderId},
     );
     final data = Map<String, dynamic>.from(response.data as Map);
-    final checkoutUrl = data['checkout_url']?.toString().trim();
-    final checkoutUri =
-        checkoutUrl == null ? null : Uri.tryParse(checkoutUrl);
-    if (checkoutUri == null ||
-        checkoutUri.scheme != 'https' ||
-        checkoutUri.host.isEmpty) {
+    final checkoutUri = trustedPaymobCheckoutUri(
+      data['checkout_url']?.toString(),
+    );
+    if (checkoutUri == null) {
       throw StateError('checkout_url_missing_or_unsafe');
     }
     return checkoutUri.toString();
