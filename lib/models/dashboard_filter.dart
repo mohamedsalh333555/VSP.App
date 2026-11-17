@@ -74,7 +74,7 @@ class DashboardFilter {
     return DashboardFilter(
       type: DateFilterType.today,
       startDate: start,
-      endDate: start.add(const Duration(days: 1)),
+      endDate: DateTime(start.year, start.month, start.day + 1),
     );
   }
 
@@ -96,7 +96,7 @@ class DashboardFilter {
     return DashboardFilter(
       type: DateFilterType.thisWeek,
       startDate: s,
-      endDate: DateTime(now.year, now.month, now.day).add(const Duration(days: 1)),
+      endDate: DateTime(now.year, now.month, now.day + 1),
     );
   }
 
@@ -122,7 +122,7 @@ class DashboardFilter {
     return DashboardFilter(
       type: DateFilterType.custom,
       startDate: DateTime(start.year, start.month, start.day),
-      endDate: DateTime(end.year, end.month, end.day).add(const Duration(days: 1)),
+      endDate: DateTime(end.year, end.month, end.day + 1),
     );
   }
 
