@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/vsp_1v1_trophy_badge.dart';
 
@@ -59,6 +60,12 @@ void main() {
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(const MaterialApp(
       locale: Locale('ar'),
+      supportedLocales: [Locale('ar'), Locale('en')],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: Scaffold(body: Vsp1v1TrophyBadge(titles: 2)),
     ));
     expect(find.text('🏆 ×2'), findsOneWidget);
