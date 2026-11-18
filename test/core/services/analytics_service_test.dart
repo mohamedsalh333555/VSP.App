@@ -101,7 +101,7 @@ void main() {
   test('analytics transport failures never print raw provider exceptions', () {
     final source = File('lib/core/services/analytics_service.dart').readAsStringSync();
     expect(source, contains('Analytics delivery failed (details redacted)'));
-    expect(source, isNot(contains("Analytics Error: $e")));
+    expect(source, isNot(contains(r"Analytics Error: $e")));
     expect(source, isNot(contains("VSPLogger.e('Analytics Error")));
   });
 
