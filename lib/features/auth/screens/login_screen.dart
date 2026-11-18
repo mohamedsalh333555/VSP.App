@@ -263,13 +263,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Row(
     children: [
       const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(
-          AppLocalizations.of(context)!.orContinueWith,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: VSPColors.textSecondary.withValues(alpha: 0.6),
-              ),
+      Flexible(
+        flex: 4,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            AppLocalizations.of(context)!.orContinueWith,
+            softWrap: true,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: VSPColors.textSecondary.withValues(alpha: 0.6),
+                ),
+          ),
         ),
       ),
       const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
