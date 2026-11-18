@@ -252,4 +252,37 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('pull to refresh remains pending until the authoritative request resolves',
+      (tester) async {
+    final repo = _ListingRepository();
+    final provider = StadiumProvider(repository: repo);
+    final connectivity = ValueNotifier<bool>(true);
+    addTearDown(provider.dispose);
+    addTearDown(connectivity.dispose);
+    await showListing(tester, provider, connectivity: connectivity);
+
+    final venue = Stadium.fromFirestore({
+      'id': 'first-venue', 'name': 'First Venue',
+      'governorate': 'Cairo', 'is_verified': true,
+      'is_blocked': false, 'is_deleted_by_owner': false,
+    }, 'first-venue');
+    repo.request('Cairo', 0).complete({'items': <Stadium>[venue], 'lastDoc': 1});
+    await tester.pumpAndSettle();
+
+    final done = Completer<void>();
+    final refresh = tester.state<RefreshIndicatorState>(
+      find.byType(RefreshIndicator),
+    );
+    refresh.show().then((_) => done.complete());
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(repo.requests['Cairo'], hasLength(2));
+    expect(done.isCompleted, isFalse);
+
+    repo.request('Cairo', 1).complete({'items': <Stadium>[venue], 'lastDoc': 1});
+    await tester.pumpAndSettle();
+    expect(done.isCompleted, isTrue);
+    expect(find.text('First Venue'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
