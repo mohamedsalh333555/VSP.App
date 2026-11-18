@@ -100,6 +100,8 @@ class _SignupScreenState extends State<SignupScreen> {
       password: _passwordController.text,
       confirmPassword: _confirmPasswordController.text,
       dateOfBirth: _dateOfBirth,
+      requirePlayerPosition: !widget.isOwner,
+      selectedPosition: _selectedPosition,
     );
 
     if (!validation.isValid) {

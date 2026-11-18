@@ -145,6 +145,38 @@ void main() {
       expect(res.normalizedPhone, equals('01099887766'));
     });
 
+
+    test('football position must be explicitly selected and recognized for players', () {
+      SignupValidationResult validate(String? position, {bool require = true}) =>
+          SignupValidationService.validateForm(
+            agreedToTerms: true,
+            firstName: 'Ahmed',
+            lastName: 'Salah',
+            rawPhone: '01012345678',
+            email: 'captain@example.com',
+            password: 'StrongPassword123!',
+            confirmPassword: 'StrongPassword123!',
+            dateOfBirth: DateTime(2000, 1, 1),
+            selectedPosition: position,
+            requirePlayerPosition: require,
+          );
+      expect(validate(null).error, SignupValidationError.invalidPosition);
+      expect(validate('ST').error, SignupValidationError.invalidPosition);
+      expect(validate('Basketball').error, SignupValidationError.invalidPosition);
+      for (final position in ['GK', 'DF', 'MF', 'FW']) {
+        expect(validate(position).isValid, isTrue, reason: position);
+      }
+      expect(validate(null, require: false).isValid, isTrue);
+    });
+
+    test('player payload never assumes a goalkeeper position when unselected', () {
+      final noChoice = SignupValidationService.buildUserDataPayload(
+        fullName: 'Player', normalizedPhone: '01012345678',
+        isOwner: false,
+      );
+      expect(noChoice['position'], isNull);
+    });
+
     test('calculatePasswordStrength evaluates score, label, and colors', () {
       final empty = SignupValidationService.calculatePasswordStrength('');
       expect(empty.score, equals(0.0));

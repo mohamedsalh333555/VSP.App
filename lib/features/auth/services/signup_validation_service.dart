@@ -13,6 +13,7 @@ enum SignupValidationError {
   invalidEmail,
   passwordMismatch,
   passwordTooShort,
+  invalidPosition,
 }
 
 class SignupValidationResult {
@@ -74,6 +75,8 @@ class SignupValidationService {
     required String password,
     required String confirmPassword,
     required DateTime? dateOfBirth,
+    bool requirePlayerPosition = false,
+    String? selectedPosition,
   }) {
     if (!agreedToTerms) {
       return SignupValidationResult.invalid(SignupValidationError.pleaseAgreeToTerms);
@@ -119,6 +122,14 @@ class SignupValidationService {
       return SignupValidationResult.invalid(SignupValidationError.passwordTooShort);
     }
 
+    if (requirePlayerPosition) {
+      final allowed = SportPositionsRegistry.getPositionsForSport('Football')
+          .map((position) => position.code);
+      if (selectedPosition == null || !allowed.contains(selectedPosition)) {
+        return SignupValidationResult.invalid(SignupValidationError.invalidPosition);
+      }
+    }
+
     return SignupValidationResult.valid(
       normalizedPhone: normalizedPhone,
       fullName: '$trimmedFirst $trimmedLast',
@@ -154,6 +165,10 @@ class SignupValidationService {
         return l10n.passwordMismatch;
       case SignupValidationError.passwordTooShort:
         return l10n.passwordTooShort;
+      case SignupValidationError.invalidPosition:
+        return l10n.localeName.startsWith('ar')
+            ? 'اختار مركز لعب صحيح قبل إنشاء الحساب.'
+            : 'Choose a valid playing position before creating your account.';
     }
   }
 
@@ -197,7 +212,8 @@ class SignupValidationService {
     return {
       'name': fullName,
       'phone': normalizedPhone,
-      'position': isOwner ? null : (selectedPosition ?? 'GK'),
+      // Never silently register a player as goalkeeper when no choice exists.
+      'position': isOwner ? null : selectedPosition,
       'date_of_birth': dateOfBirth?.toUtc().toIso8601String(),
     };
   }

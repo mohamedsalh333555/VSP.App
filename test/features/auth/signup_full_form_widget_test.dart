@@ -68,7 +68,9 @@ Widget host(FakeRegisterAuth fake, {required String language, required bool owne
       ),
     );
 
-Future<void> fillRequiredDetails(WidgetTester tester, String language) async {
+Future<void> fillRequiredDetails(WidgetTester tester, String language, {
+  bool choosePosition = false,
+}) async {
   await tester.tap(find.descendant(
     of: find.byType(SignupDateOfBirthField),
     matching: find.byType(InkWell),
@@ -100,6 +102,12 @@ Future<void> fillRequiredDetails(WidgetTester tester, String language) async {
     await tester.enterText(find.byType(TextFormField).at(i), values[i]);
     await tester.pump();
   }
+  if (choosePosition) {
+    final option = find.text(language == 'ar' ? 'مهاجم' : 'Forward');
+    await tester.ensureVisible(option);
+    await tester.tap(option);
+    await tester.pump();
+  }
   final terms = find.descendant(
     of: find.byType(VSPTermsCheckbox), matching: find.byType(InkWell),
   ).first;
@@ -123,7 +131,7 @@ void main() {
         final fake = FakeRegisterAuth();
         await tester.pumpWidget(host(fake, language: language, owner: owner));
         await tester.pump();
-        await fillRequiredDetails(tester, language);
+        await fillRequiredDetails(tester, language, choosePosition: !owner);
         await submit(tester);
         expect(fake.registrationCalls, 1);
         expect(fake.registrationEmail, 'captain@example.com');
@@ -132,15 +140,35 @@ void main() {
         expect(fake.registrationMetadata?['name'], 'Ahmed Salah');
         expect(fake.registrationMetadata?['phone'], '01012345678');
         expect(fake.registrationMetadata?['date_of_birth'], isNotNull);
-        if (owner) {
-          expect(fake.registrationMetadata?['position'], isNull);
-        }
+        expect(fake.registrationMetadata?['position'],
+            owner ? isNull : equals('FW'));
         expect(find.textContaining('Provider private trace'), findsNothing);
         await tester.pump(const Duration(seconds: 4));
         await tester.pump();
         expect(tester.takeException(), isNull);
       });
     }
+
+
+    testWidgets('player cannot submit without a chosen playing position in $language',
+        (tester) async {
+      final fake = FakeRegisterAuth();
+      await tester.pumpWidget(host(fake, language: language, owner: false));
+      await tester.pump();
+      await fillRequiredDetails(tester, language);
+      await submit(tester);
+      expect(fake.registrationCalls, 0);
+      final option = find.text(language == 'ar' ? 'مهاجم' : 'Forward');
+      await tester.ensureVisible(option);
+      await tester.tap(option);
+      await tester.pump();
+      await submit(tester);
+      expect(fake.registrationCalls, 1);
+      expect(fake.registrationMetadata?['position'], 'FW');
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
 
     testWidgets('registration can recover from provider exception in $language',
         (tester) async {
