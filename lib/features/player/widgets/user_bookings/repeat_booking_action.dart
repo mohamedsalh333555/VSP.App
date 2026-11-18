@@ -41,9 +41,19 @@ class _RepeatBookingActionState extends State<RepeatBookingAction> {
     }
   }
 
+  // An auth provider may be disposed while logging out or switching accounts.
+  // A failed permission check is a denial, never an unhandled exception.
+  bool _currentViewerAllowed() {
+    try {
+      return widget.canContinue();
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _openCurrentVenue() async {
     if (_loading || widget.stadiumId.trim().isEmpty ||
-        !widget.canContinue()) {
+        !_currentViewerAllowed()) {
       return;
     }
 
@@ -56,7 +66,7 @@ class _RepeatBookingActionState extends State<RepeatBookingAction> {
       // Unlike a cached booking, this query fails closed if offline or stale.
       final latest = await (widget.loadLatestStadium ??
           StadiumRepository().getStadiumByIdStrict)(widget.stadiumId);
-      if (!mounted || requestId != _requestEpoch || !widget.canContinue()) {
+      if (!mounted || requestId != _requestEpoch || !_currentViewerAllowed()) {
         return;
       }
       if (latest == null || latest.id != widget.stadiumId ||
@@ -73,7 +83,7 @@ class _RepeatBookingActionState extends State<RepeatBookingAction> {
             StadiumDetailsScreen(stadium: latest),
       ));
     } catch (_) {
-      if (mounted && requestId == _requestEpoch && widget.canContinue()) {
+      if (mounted && requestId == _requestEpoch && _currentViewerAllowed()) {
         setState(() => _hasError = true);
       }
     } finally {

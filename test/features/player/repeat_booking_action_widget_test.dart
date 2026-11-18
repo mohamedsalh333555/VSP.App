@@ -174,4 +174,47 @@ void main() {
     expect(find.text('NOT_ALLOWED'), findsNothing);
     expect(find.textContaining('Could not verify'), findsOneWidget);
   });
+  testWidgets('permission provider exception fails closed before venue lookup',
+      (tester) async {
+    var calls = 0;
+    await tester.pumpWidget(_screen(RepeatBookingAction(
+      stadiumId: 'venue-1',
+      canContinue: () => throw StateError('PRIVATE_AUTH_ERROR'),
+      loadLatestStadium: (_) async {
+        calls++;
+        return _stadium();
+      },
+      detailsBuilder: (_) => const Text('SHOULD_NOT_OPEN'),
+    )));
+    await tester.tap(find.text('Book again'));
+    await tester.pumpAndSettle();
+    expect(calls, 0);
+    expect(find.text('SHOULD_NOT_OPEN'), findsNothing);
+    expect(find.textContaining('PRIVATE_AUTH_ERROR'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('permission exception after fresh lookup blocks old-account navigation',
+      (tester) async {
+    final pending = Completer<Stadium?>();
+    var allowed = true;
+    await tester.pumpWidget(_screen(RepeatBookingAction(
+      stadiumId: 'venue-1',
+      canContinue: () {
+        if (!allowed) throw StateError('STALE_AUTH_PROVIDER');
+        return true;
+      },
+      loadLatestStadium: (_) => pending.future,
+      detailsBuilder: (_) => const Text('WRONG_USER'),
+    )));
+    await tester.tap(find.text('Book again'));
+    await tester.pump();
+    allowed = false;
+    pending.complete(_stadium());
+    await tester.pumpAndSettle();
+    expect(find.text('WRONG_USER'), findsNothing);
+    expect(find.textContaining('STALE_AUTH_PROVIDER'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
 }
