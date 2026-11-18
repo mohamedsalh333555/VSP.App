@@ -184,6 +184,37 @@ void main() {
       expect(ownerPayload['position'], isNull);
     });
 
+
+    test('formatSignupError never leaks an unknown provider response', () {
+      for (final isArabic in [true, false]) {
+        for (final message in [
+          'PostgrestException: users.phone 01012345678',
+          'User already registered: player@private.example',
+          'database url secret=example',
+          'Could not insert auth.users row',
+        ]) {
+          final result = SignupValidationService.formatSignupError(
+            message, isArabic: isArabic,
+          );
+          expect(result, isArabic ? 'فشل إنشاء الحساب' : 'Account creation failed');
+          expect(result, isNot(contains('01012345678')));
+          expect(result, isNot(contains('private.example')));
+          expect(result, isNot(contains('auth.users')));
+        }
+      }
+    });
+
+    test('registration only returns allowlisted localized provider messages', () {
+      final age = SignupValidationService.formatSignupError(
+        'REGISTRATION_REQUIRES_18_PLUS', isArabic: true,
+      );
+      expect(age, contains('18'));
+      final mailing = SignupValidationService.formatSignupError(
+        'unexpected_failure', isArabic: false,
+      );
+      expect(mailing, contains('confirmation email'));
+    });
+
     test('formatSignupError localizes confirmation email failures correctly', () {
       final arMsg = SignupValidationService.formatSignupError(
         'error with confirmation email send',

@@ -66,17 +66,18 @@ void main() {
     expect(AppLocalizationsEn().invalidEmail, isNotEmpty);
   });
 
-  test('registration UI checks email before phone lookup and sign-up RPC', () {
+  test('registration validates email before the authoritative signup call, without exposing phone accounts', () {
     final screen = File('lib/features/auth/screens/signup_screen.dart')
         .readAsStringSync();
     final validate = screen.indexOf('SignupValidationService.validateForm(');
     final failed = screen.indexOf('if (!validation.isValid)', validate);
-    final phone = screen.indexOf('getUserByPhone(', failed);
-    final signup = screen.indexOf('authProvider.signUp(', phone);
+    final signup = screen.indexOf('authProvider.signUp(', failed);
     expect(validate, greaterThanOrEqualTo(0));
     expect(failed, greaterThan(validate));
-    expect(phone, greaterThan(failed));
-    expect(signup, greaterThan(phone));
+    expect(signup, greaterThan(failed));
+    expect(screen, isNot(contains('getUserByPhone(')));
+    expect(screen, isNot(contains('UserRepository()')));
+    expect(screen, isNot(contains("debugPrintStack(stackTrace: stackTrace)")));
     expect(screen, contains(
       'SignupValidationService.getLocalizedErrorMessage(validation.error!, l10n)',
     ));

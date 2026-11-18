@@ -92,7 +92,7 @@ class SignupValidationService {
       return SignupValidationResult.invalid(SignupValidationError.fillAllFields);
     }
 
-    // Check email syntax before any phone lookup or registration network call.
+    // Reject invalid email syntax before starting any registration request.
     // The backend remains authoritative for actual email verification.
     if (!EmailAddressValidator.isValid(trimmedEmail)) {
       return SignupValidationResult.invalid(SignupValidationError.invalidEmail);
@@ -227,6 +227,9 @@ class SignupValidationService {
           : 'Could not send confirmation email. Please check email settings.';
     }
 
-    return errorMsg;
+    // Raw auth/provider messages can disclose account existence, SQL details,
+    // internal IDs or transport traces. Only the explicitly recognized error
+    // codes above are safe to expose; all other responses stay generic.
+    return defaultMsg;
   }
 }

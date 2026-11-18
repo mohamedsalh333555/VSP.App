@@ -6,7 +6,6 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/repositories/user_repository.dart';
 import '../../../core/services/secure_storage_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -117,24 +116,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
 
-    // Pre-check phone uniqueness to give instant, friendly feedback
-    try {
-      final existingPhoneUser = await UserRepository().getUserByPhone(normalizedPhone);
-      if (existingPhoneUser != null) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          final isAr = Localizations.localeOf(context).languageCode == 'ar';
-          VSPFeedback.showError(
-            context,
-            isAr ? 'رقم الهاتف مسجل مسبقاً بحساب آخر ' : 'This phone number is already registered to another account ',
-          );
-        }
-        return;
-      }
-    } catch (_) {
-      // Continue to signUp if network pre-check fails
-    }
-
+    // Do not query other users' phone numbers to preflight registration.
+    // Existence checks are enumerable and also race the real insert. The
+    // authorized server registration transaction is the source of truth.
     if (!mounted) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -150,6 +134,7 @@ class _SignupScreenState extends State<SignupScreen> {
     );
 
     var success = false;
+    var providerThrew = false;
     try {
       success = await authProvider.signUp(
         email: email,
@@ -157,9 +142,10 @@ class _SignupScreenState extends State<SignupScreen> {
         role: role,
         userData: userData,
       );
-    } catch (error, stackTrace) {
-      debugPrint('Signup request failed unexpectedly: $error');
-      debugPrintStack(stackTrace: stackTrace);
+    } catch (_) {
+      providerThrew = true;
+      // Never log sensitive provider responses or show them to the user.
+      debugPrint('Signup request failed unexpectedly (details redacted)');
       if (mounted) {
         final isAr = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
@@ -176,9 +162,8 @@ class _SignupScreenState extends State<SignupScreen> {
     if (success) {
       try {
         await SecureStorageService.writeSecure('pending_verification_email', email);
-      } catch (error, stackTrace) {
-        debugPrint('Signup succeeded but pending verification email could not be stored: $error');
-        debugPrintStack(stackTrace: stackTrace);
+      } catch (_) {
+        debugPrint('Signup verification details could not be stored (details redacted)');
         if (mounted) {
           final isAr = Localizations.localeOf(context).languageCode == 'ar';
           VSPFeedback.showError(
@@ -189,7 +174,7 @@ class _SignupScreenState extends State<SignupScreen> {
           );
         }
       }
-    } else if (mounted) {
+    } else if (mounted && !providerThrew) {
       final isAr = Localizations.localeOf(context).languageCode == 'ar';
       final errorMsg = SignupValidationService.formatSignupError(authProvider.errorMessage, isArabic: isAr);
       VSPFeedback.showError(context, errorMsg);
