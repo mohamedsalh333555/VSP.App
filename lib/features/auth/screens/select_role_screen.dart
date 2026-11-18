@@ -25,11 +25,14 @@ class _SelectRoleScreenState extends State<SelectRoleScreen> {
   Future<void> _switchAccount() async {
     if (_signOutPending) return;
     final auth = context.read<AuthProvider>();
+    // Hold the router independently of this widget. Auth redirects may remove
+    // the role screen before signOut() completes; navigation still must finish.
+    final router = GoRouter.of(context);
     setState(() => _signOutPending = true);
     try {
       // Never navigate to login with the old session still active.
       await auth.signOut();
-      if (mounted) context.go('/login');
+      router.go('/login');
     } catch (_) {
       if (!mounted) return;
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
