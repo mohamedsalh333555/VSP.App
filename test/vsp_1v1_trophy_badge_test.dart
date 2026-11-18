@@ -56,6 +56,8 @@ void main() {
   });
   testWidgets('legacy medal is clearly historical for Arabic screen readers',
       (tester) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
     await tester.pumpWidget(const MaterialApp(
       locale: Locale('ar'),
       home: Scaffold(body: Vsp1v1TrophyBadge(titles: 2)),

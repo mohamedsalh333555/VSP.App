@@ -104,7 +104,9 @@ void main() {
       of: find.byType(VSPFadeInItem),
       matching: find.byType(FadeTransition),
     );
-    expect(tester.widget<FadeTransition>(fade).opacity.value, 1);
+    // Reduced motion bypasses transitions entirely: content appears now.
+    expect(fade, findsNothing);
+    expect(find.text('Content'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 5));
     expect(tester.takeException(), isNull);

@@ -35,25 +35,47 @@ class TeamSkillsHistorySection extends StatefulWidget {
   /// presentation guard prevents malformed/duplicate rows from becoming
   /// apparent trophies when data or API versions diverge.
   static List<Map<String, dynamic>> visibleAwards(
-    Iterable<Map<String, dynamic>> rows,
-  ) {
+    Iterable<Map<String, dynamic>> rows, {
+    String? participantId,
+    bool? isTeam,
+  }) {
     const knownTypes = {
       'team_champion',
       'one_v_one_champion',
       'best_goalkeeper',
     };
+    final expectedId = participantId?.trim();
     final seen = <String>{};
     final visible = <Map<String, dynamic>>[];
     for (final row in rows) {
       final cupId = row['cup_id'];
+      final cupName = row['cup_name'];
+      final teamId = row['team_id'];
+      final playerId = row['player_id'];
       final awardType = row['award_type'];
       final announced = row['announced_at'];
       if (cupId is! String || cupId.trim().isEmpty ||
+          cupName is! String || cupName.trim().isEmpty ||
+          teamId is! String || teamId.trim().isEmpty ||
           awardType is! String || !knownTypes.contains(awardType) ||
           announced is! String || DateTime.tryParse(announced) == null) {
         continue;
       }
-      final key = '${cupId.trim()}::${awardType}::${row['player_id'] ?? row['team_id'] ?? ''}';
+      // Individual awards must identify the player who earned them.
+      if (awardType != 'team_champion' &&
+          (playerId is! String || playerId.trim().isEmpty)) {
+        continue;
+      }
+      // Views also scope these records; check again before display to
+      // prevent cached/contract-mismatched results crossing teams or users.
+      if (expectedId != null) {
+        if (expectedId.isEmpty || isTeam == null ||
+            (isTeam && teamId != expectedId) ||
+            (!isTeam && playerId != expectedId)) {
+          continue;
+        }
+      }
+      final key = '${cupId.trim()}::${awardType}::${teamId.trim()}::${playerId is String ? playerId.trim() : ''}';
       if (seen.add(key)) visible.add(row);
     }
     return visible;
@@ -132,6 +154,8 @@ class _TeamSkillsHistorySectionState extends State<TeamSkillsHistorySection> {
         }
         final history = TeamSkillsHistorySection.visibleAwards(
           snapshot.data ?? const <Map<String, dynamic>>[],
+          participantId: widget.participantId,
+          isTeam: widget.isTeam,
         );
         if (history.isEmpty) return const SizedBox.shrink();
         return Container(

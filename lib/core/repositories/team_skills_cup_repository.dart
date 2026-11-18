@@ -310,14 +310,14 @@ class TeamSkillsCupRepository {
 
   Future<List<Map<String, dynamic>>> getTeamHistory(String teamId) async {
     final rows = await _client.from('team_skills_team_history')
-        .select('cup_id,cup_name,governorate,award_type,player_id,announced_at')
+        .select('cup_id,cup_name,governorate,team_id,award_type,player_id,announced_at')
         .eq('team_id',teamId).order('announced_at',ascending:false);
     return (rows as List).cast<Map<String,dynamic>>();
   }
 
   Future<List<Map<String, dynamic>>> getPlayerHistory(String playerId) async {
     final rows = await _client.from('team_skills_player_history')
-        .select('cup_id,cup_name,award_type,team_id,announced_at')
+        .select('cup_id,cup_name,award_type,team_id,player_id,announced_at')
         .eq('player_id',playerId).order('announced_at',ascending:false);
     return (rows as List).cast<Map<String,dynamic>>();
   }

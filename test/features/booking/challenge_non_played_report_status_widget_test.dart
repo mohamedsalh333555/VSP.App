@@ -98,8 +98,8 @@ void main() {
         ));
         await tester.pumpAndSettle();
         expect(find.text(language == 'ar'
-            ? 'تم اعتماد النتيجة. يمكنك مراجعة ترتيب الفرق.'
-            : 'Result confirmed. You can check the team standings.'),
+            ? 'تم اعتماد النتيجة. راجع ملف فريقك وسجل مواجهاته.'
+            : 'Result confirmed. View your team profile and match history.'),
             findsOneWidget);
         expect(tester.takeException(), isNull);
       });
@@ -161,8 +161,8 @@ void main() {
             ? 'تمت استعادة المباراة بعد المراجعة'
             : 'Match restored after review'), findsOneWidget);
         expect(find.text(language == 'ar'
-            ? 'تم اعتماد النتيجة. يمكنك مراجعة ترتيب الفرق.'
-            : 'Result confirmed. You can check the team standings.'), findsOneWidget);
+            ? 'تم اعتماد النتيجة. راجع ملف فريقك وسجل مواجهاته.'
+            : 'Result confirmed. View your team profile and match history.'), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }

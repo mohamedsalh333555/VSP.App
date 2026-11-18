@@ -59,6 +59,8 @@ void main() {
 
   testWidgets('team achievement badge semantics remain visible at large text',
       (tester) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
@@ -81,7 +83,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(
-      find.bySemanticsLabel('3 بطولات ملاعب رسمية، 2 أبطال واحد ضد واحد'),
+      find.bySemanticsLabel('3 بطولات ملاعب رسمية، 2 أبطال واحد ضد واحد (تاريخي)'),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);

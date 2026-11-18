@@ -83,43 +83,53 @@ void main() {
     expect(TeamProfileHeadToHeadSection.validCount(3), 3);
   });
 
-  test('only announced Team Skills awards are displayed; repeats are removed', () {
+  test('announced awards exclude invalid recipients and duplicates', () {
     final rows = <Map<String, dynamic>>[
-      {
-        'cup_id': 'cup-a', 'cup_name': 'Cup A',
-        'award_type': 'team_champion', 'announced_at': '2026-11-17T18:00:00Z',
-        'team_id': 'team-a',
-      },
-      {
-        'cup_id': 'cup-a', 'cup_name': 'Cup A',
-        'award_type': 'team_champion', 'announced_at': '2026-11-17T18:00:00Z',
-        'team_id': 'team-a',
-      },
-      {
-        'cup_id': 'cup-b', 'cup_name': 'Cup B',
-        'award_type': 'best_goalkeeper', 'announced_at': '2026-11-18T18:00:00Z',
-        'player_id': 'player-1',
-      },
-      {
-        'cup_id': 'cup-c', 'award_type': 'team_champion',
-        'announced_at': null,
-      },
-      {
-        'cup_id': 'cup-d', 'award_type': 'team_champion',
-        'announced_at': 'not-a-date',
-      },
-      {
-        'cup_id': '', 'award_type': 'team_champion',
-        'announced_at': '2026-11-17T18:00:00Z',
-      },
-      {
-        'cup_id': 'cup-e', 'award_type': 'unverified_award',
-        'announced_at': '2026-11-17T18:00:00Z',
-      },
+      {'cup_id': 'cup-a', 'cup_name': 'Cup A', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': '2026-11-17T18:00:00Z'},
+      {'cup_id': 'cup-a', 'cup_name': 'Cup A', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': '2026-11-17T18:00:00Z'},
+      {'cup_id': 'cup-b', 'cup_name': 'Cup B', 'team_id': 'team-b',
+       'award_type': 'best_goalkeeper', 'announced_at': '2026-11-18T18:00:00Z',
+       'player_id': 'keeper-b'},
+      {'cup_id': 'cup-c', 'cup_name': 'Cup C', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': null},
+      {'cup_id': 'cup-d', 'cup_name': 'Cup D', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': 'not-a-date'},
+      {'cup_id': '', 'cup_name': 'Cup E', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': '2026-11-17T18:00:00Z'},
+      {'cup_id': 'cup-e', 'cup_name': 'Cup E', 'team_id': 'team-a',
+       'award_type': 'unverified_award', 'announced_at': '2026-11-17T18:00:00Z'},
+      {'cup_id': 'cup-f', 'cup_name': '', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': '2026-11-17T18:00:00Z'},
+      {'cup_id': 'cup-g', 'cup_name': 'Cup G', 'team_id': 'team-a',
+       'award_type': 'best_goalkeeper', 'announced_at': '2026-11-17T18:00:00Z'},
     ];
     final awards = TeamSkillsHistorySection.visibleAwards(rows);
     expect(awards.map((row) => row['cup_id']), ['cup-a', 'cup-b']);
-    expect(awards.length, 2);
+  });
+
+  test('team and player history cannot show another team or player award', () {
+    final rows = <Map<String, dynamic>>[
+      {'cup_id': 'cup-a', 'cup_name': 'Cup A', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': '2026-11-16T15:00:00Z'},
+      {'cup_id': 'cup-b', 'cup_name': 'Cup B', 'team_id': 'team-b',
+       'player_id': 'player-b', 'award_type': 'best_goalkeeper',
+       'announced_at': '2026-11-17T15:00:00Z'},
+      {'cup_id': 'cup-c', 'cup_name': 'Cup C', 'team_id': 'team-a',
+       'player_id': 'player-a', 'award_type': 'one_v_one_champion',
+       'announced_at': '2026-11-18T15:00:00Z'},
+    ];
+    expect(TeamSkillsHistorySection.visibleAwards(rows,
+      participantId: 'team-a', isTeam: true).map((row) => row['cup_id']),
+      ['cup-a', 'cup-c']);
+    expect(TeamSkillsHistorySection.visibleAwards(rows,
+      participantId: 'player-b', isTeam: false).map((row) => row['cup_id']),
+      ['cup-b']);
+    expect(TeamSkillsHistorySection.visibleAwards(rows,
+      participantId: 'other-team', isTeam: true), isEmpty);
+    expect(TeamSkillsHistorySection.visibleAwards(rows,
+      participantId: '', isTeam: true), isEmpty);
   });
 
   test('a team history query cannot interpolate malformed PostgREST identifiers', () {

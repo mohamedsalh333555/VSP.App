@@ -193,12 +193,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Match report status unavailable. Please retry.'),
         findsOneWidget);
-    expect(find.text('Result confirmed. You can check the team standings.'),
+    expect(find.text('Result confirmed. View your team profile and match history.'),
         findsNothing);
     await tester.tap(find.byIcon(Icons.refresh));
     await tester.pumpAndSettle();
     expect(calls, 2);
-    expect(find.text('Result confirmed. You can check the team standings.'),
+    expect(find.text('Result confirmed. View your team profile and match history.'),
         findsOneWidget);
     expect(tester.takeException(), isNull);
   });
