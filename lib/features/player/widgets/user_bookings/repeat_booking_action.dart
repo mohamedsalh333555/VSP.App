@@ -32,8 +32,9 @@ class _RepeatBookingActionState extends State<RepeatBookingAction> {
   @override
   void didUpdateWidget(covariant RepeatBookingAction oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.stadiumId != widget.stadiumId ||
-        oldWidget.canContinue != widget.canContinue) {
+    // A newly allocated callback on parent rebuild is not a new venue.
+    // The current callback is checked after fetching for account safety.
+    if (oldWidget.stadiumId != widget.stadiumId) {
       _requestEpoch++;
       _loading = false;
       _hasError = false;

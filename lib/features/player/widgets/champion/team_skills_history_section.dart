@@ -9,6 +9,8 @@ class TeamSkillsHistorySection extends StatefulWidget {
   final String participantId;
   final bool isTeam;
   final TeamSkillsCupRepository? repository;
+  /// Incremented only for an explicit user-initiated profile refresh.
+  final int refreshRevision;
 
   /// No RPC may run when the staging/project rollout gate is closed.
   static bool shouldLoad({required bool enabled, required String participantId}) =>
@@ -62,6 +64,7 @@ class TeamSkillsHistorySection extends StatefulWidget {
     required this.participantId,
     required this.isTeam,
     this.repository,
+    this.refreshRevision = 0,
   });
 
   @override
@@ -79,7 +82,8 @@ class _TeamSkillsHistorySectionState extends State<TeamSkillsHistorySection> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.participantId != widget.participantId ||
         oldWidget.isTeam != widget.isTeam ||
-        oldWidget.repository != widget.repository) {
+        oldWidget.repository != widget.repository ||
+        oldWidget.refreshRevision != widget.refreshRevision) {
       _refresh();
     }
   }

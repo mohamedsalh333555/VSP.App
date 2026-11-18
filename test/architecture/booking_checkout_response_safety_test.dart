@@ -7,7 +7,9 @@ void main() {
     final source = File(
       'lib/core/repositories/booking/booking_creation_coordinator.dart',
     ).readAsStringSync();
-    expect(source, contains("rpcResult['code'] ?? rpcResult['error']"));
+    expect(source, contains("final rawCode = response['code'] ?? response['error'];"));
+    expect(source, contains('throw Exception(safeRpcFailureMessage(rpcResult));'));
+    expect(source, isNot(contains("throw Exception(rpcResult['error'])")));
     expect(source, contains("rpcResult is! Map || rpcResult['success'] != true"));
     final guard = source.indexOf("rpcResult is! Map || rpcResult['success'] != true");
     final bookingId = source.indexOf("final bookingId = rpcResult['booking_id']");

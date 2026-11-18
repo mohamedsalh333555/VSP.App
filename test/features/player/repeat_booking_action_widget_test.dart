@@ -97,6 +97,50 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('rebuilding the card keeps one live venue query', (tester) async {
+    final pending = Completer<Stadium?>();
+    var calls = 0;
+    Future<Stadium?> load(String _) {
+      calls++;
+      return pending.future;
+    }
+    Widget screen() => _screen(RepeatBookingAction(
+      stadiumId: 'venue-1',
+      canContinue: () => true,
+      loadLatestStadium: load,
+      detailsBuilder: (_) => const Scaffold(body: Text('CURRENT_VENUE')),
+    ));
+    await tester.pumpWidget(screen());
+    await tester.tap(find.text('Book again'));
+    await tester.pump();
+    await tester.pumpWidget(screen());
+    expect(calls, 1);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    pending.complete(_stadium());
+    await tester.pumpAndSettle();
+    expect(find.text('CURRENT_VENUE'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('new callback cannot use a switched account to rebook', (tester) async {
+    final pending = Completer<Stadium?>();
+    var permission = true;
+    Widget screen() => _screen(RepeatBookingAction(
+      stadiumId: 'venue-1',
+      canContinue: () => permission,
+      loadLatestStadium: (_) => pending.future,
+      detailsBuilder: (_) => const Scaffold(body: Text('NOT_PERMITTED')),
+    ));
+    await tester.pumpWidget(screen());
+    await tester.tap(find.text('Book again'));
+    await tester.pump();
+    permission = false;
+    await tester.pumpWidget(screen());
+    pending.complete(_stadium());
+    await tester.pumpAndSettle();
+    expect(find.text('NOT_PERMITTED'), findsNothing);
+  });
+
   testWidgets('unexpected provider failure is sanitized, then can retry',
       (tester) async {
     var calls = 0;

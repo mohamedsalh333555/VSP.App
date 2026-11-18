@@ -50,6 +50,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   bool _isLoadingHeadToHead = true;
   bool _hasHeadToHeadLoadError = false;
   bool _isGeneratingCode = false;
+  int _awardsRefreshRevision = 0;
   int _rosterRequestVersion = 0;
   int _headToHeadRequestVersion = 0;
   int _championRequestVersion = 0;
@@ -109,6 +110,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   Future<void> _refreshTeamProfile() async {
     final teamId = widget.team?.id ?? widget.teamId;
     if (teamId == null) return;
+    // Team Skills history owns its own future: refresh it alongside the team.
+    if (mounted) setState(() => _awardsRefreshRevision++);
     if (widget.team == null) {
       await _loadTeamAndMembers();
       if (!mounted || (widget.team?.id ?? widget.teamId) != teamId ||
@@ -485,7 +488,11 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             // 5. Achievements
             TeamProfileAchievementsSection(team: team),
             const SizedBox(height: VSPSpacing.md),
-            TeamSkillsHistorySection(participantId: team.id, isTeam: true),
+            TeamSkillsHistorySection(
+              participantId: team.id,
+              isTeam: true,
+              refreshRevision: _awardsRefreshRevision,
+            ),
             if (_championVerificationFailed) ...[
               const SizedBox(height: VSPSpacing.sm),
               Container(
