@@ -20,6 +20,7 @@ Widget host(RoleAuth auth, {String lang = 'en'}) =>
       value: auth,
       child: MaterialApp(
         locale: Locale(lang),
+        supportedLocales: const [Locale('ar'), Locale('en')],
         home: const SelectRoleScreen(),
       ),
     );
