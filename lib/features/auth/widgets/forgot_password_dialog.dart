@@ -8,123 +8,152 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../services/password_reset_privacy_message.dart';
 
-/// Modal dialog for requesting a password reset email.
+/// Public password recovery never reveals whether a submitted email exists.
 class ForgotPasswordDialog {
   const ForgotPasswordDialog._();
 
-  static Future<void> show(BuildContext context) {
-    final hostContext = context;
-    final resetEmailController = TextEditingController();
-    return showDialog(
-      context: context,
-      useSafeArea: true,
-      builder: (dialogContext) {
-        bool isLoading = false;
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              scrollable: true,
-              backgroundColor: VSPColors.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(VSPRadius.lg),
-              ),
-              title: Text(
-                AppLocalizations.of(context)!.forgotPassword,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.forgotPasswordSubtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: VSPColors.textSecondary,
-                          height: 1.5,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: resetEmailController,
-                    keyboardType: TextInputType.emailAddress,
-                    hintText: AppLocalizations.of(context)!.emailAddress,
-                    prefixIcon: Iconsax.sms_copy,
-                  ),
-                ],
-              ),
-              actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              actions: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(dialogContext),
-                        style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
-                        child: Text(
-                          AppLocalizations.of(context)!.cancel,
-                          style: const TextStyle(color: VSPColors.textSecondary),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: isLoading
-                            ? null
-                            : () async {
-                                final email = resetEmailController.text.trim();
-                                if (email.isEmpty || !email.contains('@')) {
-                                  VSPFeedback.showError(context, AppLocalizations.of(context)!.invalidEmail);
-                                  return;
-                                }
-                                setDialogState(() => isLoading = true);
-                                final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                                try {
-                                  // Success and failure must show the same
-                                  // acknowledgement to prevent email enumeration.
-                                  await authProvider.resetPassword(email);
-                                } catch (_) {
-                                  // Do not expose provider errors or account
-                                  // existence through public recovery feedback.
-                                }
-                                if (!dialogContext.mounted) return;
-                                Navigator.pop(dialogContext);
-                                // The dialog's own BuildContext is disposed
-                                // during pop. Show feedback on the host screen.
-                                if (hostContext.mounted) {
-                                  final isArabic = Localizations.localeOf(hostContext).languageCode == 'ar';
-                                  VSPFeedback.showSuccess(
-                                    hostContext,
-                                    PasswordResetPrivacyMessage.acknowledgement(isArabic: isArabic),
-                                  );
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(0, 48),
-                          backgroundColor: VSPColors.accent,
-                          foregroundColor: VSPColors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(VSPRadius.md),
-                          ),
-                        ),
-                        child: isLoading
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
-                              )
-                            : Text(
-                                AppLocalizations.of(context)!.submit,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                      ),
-                    ),
-                  ],
+  static Future<void> show(BuildContext context) => showDialog<void>(
+        context: context,
+        useSafeArea: true,
+        builder: (_) => _ForgotPasswordDialogContent(hostContext: context),
+      );
+}
+
+/// The dialog owns its editing controller until its widget is actually
+/// unmounted. Disposing when showDialog's Future completes can occur during
+/// the exit animation, while TextFormField still listens to the controller.
+class _ForgotPasswordDialogContent extends StatefulWidget {
+  const _ForgotPasswordDialogContent({required this.hostContext});
+
+  final BuildContext hostContext;
+
+  @override
+  State<_ForgotPasswordDialogContent> createState() =>
+      _ForgotPasswordDialogContentState();
+}
+
+class _ForgotPasswordDialogContentState
+    extends State<_ForgotPasswordDialogContent> {
+  final _emailController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_isLoading) return;
+    final l10n = AppLocalizations.of(context)!;
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      VSPFeedback.showError(context, l10n.invalidEmail);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    final auth = context.read<AuthProvider>();
+    try {
+      // Both successful and unsuccessful requests show exactly the same
+      // generic acknowledgement. Do not reveal raw provider errors.
+      await auth.resetPassword(email);
+    } catch (_) {
+      // Do not expose email existence or transport errors on this public UI.
+    }
+    if (!mounted) return;
+
+    final hostContext = widget.hostContext;
+    Navigator.of(context).pop();
+    // The dialog's own context is removed after pop; use the originating
+    // screen's context to display the neutral acknowledgement.
+    if (!hostContext.mounted) return;
+    final isArabic = Localizations.localeOf(hostContext).languageCode == 'ar';
+    VSPFeedback.showSuccess(
+      hostContext,
+      PasswordResetPrivacyMessage.acknowledgement(isArabic: isArabic),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      scrollable: true,
+      backgroundColor: VSPColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+      ),
+      title: Text(
+        l10n.forgotPassword,
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.forgotPasswordSubtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: VSPColors.textSecondary,
+                  height: 1.5,
                 ),
-              ],
-            );
-          },
-        );
-      },
-    ).then((_) => resetEmailController.dispose());
+          ),
+          const SizedBox(height: 16),
+          CustomTextField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            hintText: l10n.emailAddress,
+            prefixIcon: Iconsax.sms_copy,
+          ),
+        ],
+      ),
+      actionsPadding: const EdgeInsets.symmetric(
+        horizontal: 16, vertical: 12,
+      ),
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, 48),
+                ),
+                child: Text(
+                  l10n.cancel,
+                  style: const TextStyle(color: VSPColors.textSecondary),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(0, 48),
+                  backgroundColor: VSPColors.accent,
+                  foregroundColor: VSPColors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2, color: VSPColors.black,
+                        ),
+                      )
+                    : Text(
+                        l10n.submit,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
