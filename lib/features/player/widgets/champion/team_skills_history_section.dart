@@ -45,8 +45,10 @@ class TeamSkillsHistorySection extends StatefulWidget {
       'best_goalkeeper',
     };
     final expectedId = participantId?.trim();
-    final seen = <String>{};
-    final visible = <Map<String, dynamic>>[];
+    // Only one award of a type can exist per cup in the canonical database.
+    // If a response violates that invariant, do not show either candidate.
+    final byCupAward = <String, Map<String, dynamic>>{};
+    final conflicting = <String>{};
     for (final row in rows) {
       final cupId = row['cup_id'];
       final cupName = row['cup_name'];
@@ -66,19 +68,27 @@ class TeamSkillsHistorySection extends StatefulWidget {
           (playerId is! String || playerId.trim().isEmpty)) {
         continue;
       }
-      // Views also scope these records; check again before display to
-      // prevent cached/contract-mismatched results crossing teams or users.
-      if (expectedId != null) {
-        if (expectedId.isEmpty || isTeam == null ||
-            (isTeam && teamId != expectedId) ||
-            (!isTeam && playerId != expectedId)) {
-          continue;
-        }
+      final awardKey = '${cupId.trim()}::${awardType}';
+      if (conflicting.contains(awardKey)) continue;
+      final previous = byCupAward[awardKey];
+      if (previous == null) {
+        byCupAward[awardKey] = row;
+      } else if (previous['team_id'] != teamId ||
+          (previous['player_id'] is String
+                  ? (previous['player_id'] as String).trim() : '') !=
+              (playerId is String ? playerId.trim() : '') ||
+          previous['cup_name'] != cupName) {
+        byCupAward.remove(awardKey);
+        conflicting.add(awardKey);
       }
-      final key = '${cupId.trim()}::${awardType}::${teamId.trim()}::${playerId is String ? playerId.trim() : ''}';
-      if (seen.add(key)) visible.add(row);
     }
-    return visible;
+    // Views scope these records, but validate again after integrity checks.
+    // This prevents a cross-team response from hiding a contradictory winner.
+    if (expectedId == null) return byCupAward.values.toList(growable: false);
+    if (expectedId.isEmpty || isTeam == null) return const [];
+    return byCupAward.values.where((row) =>
+        isTeam ? row['team_id'] == expectedId :
+            row['player_id'] == expectedId).toList(growable: false);
   }
 
   const TeamSkillsHistorySection({

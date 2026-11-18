@@ -393,4 +393,36 @@ void main() {
     });
   }
 
+  test('official cup rejects every contradictory award recipient, never picking first', () {
+    const stamp = '2026-11-18T12:00:00Z';
+    final rows = <Map<String, dynamic>>[
+      {'cup_id': 'cup-conflict', 'cup_name': 'Cup', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': stamp},
+      {'cup_id': 'cup-conflict', 'cup_name': 'Cup', 'team_id': 'team-b',
+       'award_type': 'team_champion', 'announced_at': stamp},
+      {'cup_id': 'cup-conflict', 'cup_name': 'Cup', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': stamp},
+      {'cup_id': 'cup-valid', 'cup_name': 'Other Cup', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': stamp},
+    ];
+    expect(TeamSkillsHistorySection.visibleAwards(rows)
+        .map((row) => row['cup_id']), ['cup-valid']);
+    expect(TeamSkillsHistorySection.visibleAwards(rows,
+        participantId: 'team-a', isTeam: true)
+        .map((row) => row['cup_id']), ['cup-valid']);
+  });
+
+  test('same cup cannot crown two individual finalists with different player IDs', () {
+    const stamp = '2026-11-18T12:00:00Z';
+    final rows = <Map<String, dynamic>>[
+      {'cup_id': 'cup-1', 'cup_name': 'Cup', 'team_id': 'team-a',
+       'player_id': 'first', 'award_type': 'one_v_one_champion',
+       'announced_at': stamp},
+      {'cup_id': 'cup-1', 'cup_name': 'Cup', 'team_id': 'team-a',
+       'player_id': 'second', 'award_type': 'one_v_one_champion',
+       'announced_at': stamp},
+    ];
+    expect(TeamSkillsHistorySection.visibleAwards(rows), isEmpty);
+  });
+
 }
