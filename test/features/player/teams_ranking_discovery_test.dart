@@ -17,7 +17,7 @@ class _AnonymousAuth extends ChangeNotifier implements AuthProvider {
   }
 }
 
-Team _team(String id, String name, String governorate, String sport) => Team(
+Team _team(String id, String name, String governorate, String sport, {int points = 0}) => Team(
       id: id,
       name: name,
       captainName: 'Captain',
@@ -29,6 +29,8 @@ Team _team(String id, String name, String governorate, String sport) => Team(
       maxPlayers: 10,
       governorate: governorate,
       sportType: sport,
+      points: points,
+      matchesPlayed: points > 0 ? 1 : 0,
     );
 
 void main() {
@@ -108,4 +110,51 @@ void main() {
     expect(find.text('Team profile: aswan-team'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  test('tied points get identical ranks and no unverified podium', () {
+    final tied = [
+      _team('a','A','Aswan','Football',points:12),
+      _team('b','B','Aswan','Football',points:12),
+      _team('c','C','Aswan','Football',points:10),
+      _team('d','D','Aswan','Football',points:8),
+    ];
+    expect([for (var i = 0; i < tied.length; i++)
+      TeamsRankingTab.rankAt(tied, i)], [1,1,3,4]);
+    expect(TeamsRankingTab.podiumIsAmbiguous(tied), isTrue);
+    expect(TeamsRankingTab.rankAt(tied,-1),0);
+    expect(TeamsRankingTab.rankAt(tied,99),0);
+    expect(TeamsRankingTab.podiumIsAmbiguous([
+      _team('a','A','Aswan','Football',points:12),
+      _team('b','B','Aswan','Football',points:11),
+      _team('c','C','Aswan','Football',points:10),
+      _team('d','D','Aswan','Football',points:10),
+    ]),isTrue);
+  });
+
+  testWidgets('tie in top three stays a list instead of arbitrary medals',
+      (tester) async {
+    await tester.pumpWidget(ChangeNotifierProvider<AuthProvider>(
+      create: (_) => _AnonymousAuth(),
+      child: MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: TeamsRankingTab(
+          teamsStream: Stream.value([
+            _team('a','First','Aswan','Football',points:12),
+            _team('b','Second','Aswan','Football',points:12),
+            _team('c','Third','Aswan','Football',points:10),
+          ]),
+          selectedLocation: 'Aswan',
+          selectedSport: 'Football',
+          onRetry: () {},
+        )),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('First'),findsOneWidget);
+    expect(find.text('Second'),findsOneWidget);
+    expect(find.text('Third'),findsOneWidget);
+    expect(tester.takeException(),isNull);
+  });
+
 }

@@ -16,6 +16,25 @@ import 'champion_podium_components.dart';
 import 'champion_empty_state.dart';
 
 class TeamsRankingTab extends StatefulWidget {
+  /// Shared rank for tied points; a visual sort is not a tie-break rule.
+  static int rankAt(List<Team> teams, int index) {
+    if (index < 0 || index >= teams.length) return 0;
+    var start = index;
+    while (start > 0 && teams[start - 1].points == teams[index].points) {
+      start--;
+    }
+    return start + 1;
+  }
+
+  /// Hide medals when points tie in the top three or at its boundary.
+  static bool podiumIsAmbiguous(List<Team> teams) {
+    if (teams.length < 3) return false;
+    for (var i = 1; i < teams.length && i <= 3; i++) {
+      if (teams[i].points == teams[i - 1].points) return true;
+    }
+    return false;
+  }
+
   final Stream<List<Team>>? teamsStream;
   final String selectedLocation;
   final String selectedSport;
@@ -149,8 +168,11 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
           );
         }
 
-        // Sort by points desc
-        teams.sort((a, b) => b.points.compareTo(a.points));
+        // Equal points have deterministic list order, not different ranks.
+        teams.sort((a, b) {
+          final difference = b.points.compareTo(a.points);
+          return difference != 0 ? difference : a.id.compareTo(b.id);
+        });
 
         final totalTeams = teams.length;
         final top3 = teams.take(3).toList();
@@ -166,11 +188,11 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
 
         final myTeamIndex = teams.indexWhere((t) => isUserTeam(t));
         final myTeam = myTeamIndex != -1 ? teams[myTeamIndex] : null;
-        final myTeamRank = myTeamIndex != -1 ? myTeamIndex + 1 : null;
+        final myTeamRank = myTeamIndex != -1 ? TeamsRankingTab.rankAt(teams, myTeamIndex) : null;
 
         Widget content;
 
-        if (teams.length < 3) {
+        if (teams.length < 3 || TeamsRankingTab.podiumIsAmbiguous(teams)) {
           content = ListView.builder(
             padding: EdgeInsets.fromLTRB(16, VSPSpacing.md, 16, MediaQuery.of(context).padding.bottom + (myTeam != null ? 80 : 24)),
             physics: const BouncingScrollPhysics(),
@@ -179,7 +201,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
               index: i,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _buildRankListItem(context, teams[i], i + 1, isMyTeam: isUserTeam(teams[i]), totalTeams: totalTeams),
+                child: _buildRankListItem(context, teams[i], TeamsRankingTab.rankAt(teams, i), isMyTeam: isUserTeam(teams[i]), totalTeams: totalTeams),
               ),
             ),
           );
@@ -262,7 +284,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                 // Expanded Ranking List (#4, #5...)
                 ...List.generate(rest.length, (index) {
                   final team = rest[index];
-                  final rank = index + 4;
+                  final rank = TeamsRankingTab.rankAt(teams, index + 3);
                   return VSPFadeInItem(
                     index: index + 3,
                     child: Padding(
