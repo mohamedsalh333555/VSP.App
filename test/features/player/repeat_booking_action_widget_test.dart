@@ -50,7 +50,7 @@ void main() {
     expect(calls, 1);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     // The pending button is disabled until authoritative data arrives.
-    expect(tester.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed, isNull);
+    expect(tester.widget<OutlinedButton>(find.byWidgetPredicate((w) => w is OutlinedButton)).onPressed, isNull);
     expect(find.textContaining('Latest venue:'), findsNothing);
     request.complete(_stadium());
     await tester.pumpAndSettle();

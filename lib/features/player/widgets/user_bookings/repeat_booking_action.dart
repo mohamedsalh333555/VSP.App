@@ -42,7 +42,9 @@ class _RepeatBookingActionState extends State<RepeatBookingAction> {
 
   Future<void> _openCurrentVenue() async {
     if (_loading || widget.stadiumId.trim().isEmpty ||
-        !widget.canContinue()) return;
+        !widget.canContinue()) {
+      return;
+    }
 
     final requestId = ++_requestEpoch;
     setState(() {
