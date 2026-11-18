@@ -103,6 +103,29 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('cancel and Android back leave password recovery unsubmitted',
+      (tester) async {
+    final auth = FakePasswordAuth('success');
+    await tester.pumpWidget(recoveryHost(auth));
+    await tester.tap(find.text('Open recovery'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'a@example.com');
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(auth.calls, 0);
+    expect(find.text('Open recovery'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('Open recovery'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'b@example.com');
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(auth.calls, 0);
+    expect(find.text('Open recovery'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('acknowledgements never include provider responses or account status', () {
     final en = PasswordResetPrivacyMessage.acknowledgement(isArabic: false);
     final ar = PasswordResetPrivacyMessage.acknowledgement(isArabic: true);
