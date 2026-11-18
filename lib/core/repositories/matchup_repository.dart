@@ -195,7 +195,7 @@ class MatchupRepository {
   Future<List<Map<String, dynamic>>> getAllHeadToHeadForTeamStrict(
       String teamId) async {
     if (!isCanonicalTeamId(teamId)) {
-      throw ArgumentError.value(teamId, 'teamId', 'Invalid canonical team ID');
+      throw const FormatException('Invalid canonical team ID');
     }
     final response = await _supabase
         .from('team_head_to_head')
