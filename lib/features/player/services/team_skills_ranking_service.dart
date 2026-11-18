@@ -42,8 +42,9 @@ abstract final class TeamSkillsRankingService {
       output.add(RankedTeamSkillsEntry(
         data: row,
         rank: currentRank,
-        complete: row['all_stages_approved'] == true &&
-            row['completed_stages']?.toString() == '12',
+        // The verified server view is the authority for stage completion:
+        // valid competitions may have a different number of stages.
+        complete: row['all_stages_approved'] == true,
       ));
     }
     return output;

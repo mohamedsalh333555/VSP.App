@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/champion/team_skills_published_details.dart';
 import 'package:vsp_application/features/player/widgets/champion/team_skills_cup_tab.dart';
+import 'package:vsp_application/features/player/widgets/champion/team_skills_cup_tab.dart';
 
 void main() {
   testWidgets('published cup shows venue, scheduled times, fee, cap and prizes',
@@ -86,6 +87,33 @@ void main() {
         'Tournament details and standings');
     expect(TeamSkillsCupTab.actionLabel('registration', isArabic: false),
         'Details and registration');
+  });
+
+  test('Team Skills stage label uses published count, not twelve by default', () {
+    expect(TeamSkillsCupTab.publishedStageSummary(
+      const [], isArabic: false), 'Competition stages have not been announced yet');
+    expect(TeamSkillsCupTab.publishedStageSummary(
+      const [{'stage_no': 1}, {'stage_no': 2}, {'stage_no': 3}],
+      isArabic: false), '3 announced stages');
+  });
+
+  test('a live cup never shows unannounced winners, even if award rows exist', () {
+    const winner = {
+      'team_id': 'team-a', 'award_type': 'team_champion',
+      'announced_at': '2026-11-18T10:00:00Z',
+    };
+    const pending = {
+      'team_id': 'team-a', 'award_type': 'best_goalkeeper',
+      'player_id': null, 'announced_at': '2026-11-18T10:00:00Z',
+    };
+    expect(TeamSkillsCupTab.visiblePublishedAwards(
+      cup: {'id': 'cup-1', 'name': 'Cup', 'status': 'live'},
+      awards: [winner]), isEmpty);
+    final visible = TeamSkillsCupTab.visiblePublishedAwards(
+      cup: {'id': 'cup-1', 'name': 'Cup', 'status': 'completed'},
+      awards: [winner, winner, pending]);
+    expect(visible.length, 1);
+    expect(visible.first['award_type'], 'team_champion');
   });
 
 }

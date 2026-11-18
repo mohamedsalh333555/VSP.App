@@ -6,6 +6,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/team_skills_cup_repository.dart';
 import 'team_skills_roster_correction_screen.dart';
 import 'team_skills_published_details.dart';
+import 'team_skills_history_section.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../services/team_skills_ranking_service.dart';
 
@@ -16,6 +17,38 @@ class TeamSkillsCupTab extends StatefulWidget {
   final String selectedLocation;
   final TeamSkillsCupRepository? repository;
   const TeamSkillsCupTab({super.key, required this.selectedLocation, this.repository});
+  /// Never invent a fixed 12-stage format for an unpublished plan.
+  static String publishedStageSummary(
+    Iterable<Map<String, dynamic>> phases, {required bool isArabic}
+  ) {
+    final count = phases.length;
+    if (count <= 0) {
+      return isArabic
+          ? 'مراحل البطولة لم تُعلن بعد'
+          : 'Competition stages have not been announced yet';
+    }
+    return isArabic ? '${count} مرحلة معلنة' : '${count} announced stages';
+  }
+
+  /// The existence of a row in the awards table is not publication.
+  /// Results display only after the cup is completed and announcement was
+  /// recorded, with a known recipient for every individual award.
+  static List<Map<String, dynamic>> visiblePublishedAwards({
+    required Map<String, dynamic>? cup,
+    required Iterable<Map<String, dynamic>> awards,
+  }) {
+    if (cup?['status'] != 'completed') return const [];
+    final cupId = cup?['id'];
+    final cupName = cup?['name'];
+    if (cupId is! String || cupId.trim().isEmpty ||
+        cupName is! String || cupName.trim().isEmpty) return const [];
+    return TeamSkillsHistorySection.visibleAwards(
+      awards.map((row) => <String, dynamic>{
+        ...row, 'cup_id': cupId, 'cup_name': cupName,
+      }),
+    );
+  }
+
   /// Use only fields from a published cup. Missing capacity or location
   /// must not become the literal string "null", or an invented seat count.
   static String publishedMetadata(
@@ -731,12 +764,12 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
               ]),
               const SizedBox(height: 12),
             ],
-            Text(ar ? '6 اختبارات • 12 مرحلة • 100 نقطة'
-                : '6 disciplines • 12 stages • 100 points',
+            Text(TeamSkillsCupTab.publishedStageSummary(
+                _phases, isArabic: ar),
                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(ar ? 'مدة البطولة المستهدفة من ساعتين إلى 3 ساعات. الفريق الأعلى نقاطًا هو بطل المهارات. ختام 1 ضد 1 وجائزة الحارس مستقلان.'
-                : '2–3 hours. Highest skills score wins; 1v1 and best goalkeeper awards are independent.',
+            Text(ar ? 'الجوائز الرسمية تُعلن بعد اعتماد نتائج البطولة.'
+                : 'Official awards appear after the competition results are approved.',
                 style: const TextStyle(color: VSPColors.textSecondary)),
             const SizedBox(height: 8),
             TeamSkillsPublishedDetails(
@@ -750,7 +783,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
             ..._phases.map((phase)=>ListTile(
               dense:true,
               title:Text(phase['name_ar']?.toString() ?? '',style:style),
-              trailing:Text('${phase['weight']} / 100',
+              trailing:Text(phase['weight'] is num && (phase['weight'] as num) > 0
+                  ? '${phase['weight']} ${ar ? 'نقطة' : 'points'}'
+                  : '—',
                   style:const TextStyle(color:VSPColors.accent)),
             )),
             const SizedBox(height: 18),
@@ -767,7 +802,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                 title: Text('#${entry.rank} ${_teamNames[entry.data['team_id'].toString()] ?? entry.data['team_id']}',
                     style: style),
                 subtitle: Text(
-                    '${entry.data['points']} / 100 • ${entry.data['completed_stages']}/12 • '
+                    '${entry.data['points']} ${ar ? 'نقطة' : 'points'} • '
+                    '${entry.data['completed_stages']}${_phases.isEmpty ? '' : '/${_phases.length}'} • '
                     '${entry.complete ? (ar ? 'مكتمل' : 'Complete') : (ar ? 'قيد الاعتماد' : 'Pending stages')}',
                     style: const TextStyle(color: VSPColors.accent)),
                 children: [
@@ -791,12 +827,20 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
               );
             }),
             const SizedBox(height: 14),
-            if (_awards.isNotEmpty) ...[
-              Text(ar ? 'الأبطال المعتمدون' : 'Official winners',style:style),
-              ..._awards.map((a)=>ListTile(
-                title:Text(a['award_type'].toString(),style:style),
-                subtitle:Text(_teamNames[a['team_id'].toString()] ?? '',
-                    style:const TextStyle(color:VSPColors.textSecondary)),
+            if (TeamSkillsCupTab.visiblePublishedAwards(
+                cup: visibleCup, awards: _awards).isNotEmpty) ...[
+              Text(ar ? 'الجوائز الرسمية المعلنة' : 'Published official awards',
+                  style: style),
+              ...TeamSkillsCupTab.visiblePublishedAwards(
+                  cup: visibleCup, awards: _awards).map((award) => ListTile(
+                title: Text(TeamSkillsHistorySection.awardTitle(
+                    award['award_type']?.toString(), isArabic: ar),
+                    style: style),
+                subtitle: Text(
+                  _teamNames[award['team_id']?.toString()] ??
+                      (ar ? 'فريق غير متاح' : 'Team unavailable'),
+                  style: const TextStyle(color: VSPColors.textSecondary),
+                ),
               )),
             ],
             if (myRegistrations.isNotEmpty) ...[
