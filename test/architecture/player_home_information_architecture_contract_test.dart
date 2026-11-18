@@ -64,7 +64,7 @@ void main() {
       ['calendar_1_copy', 'calendar_1'],
       ['user_copy', 'user'],
     ];
-    expect(RegExp(r'VspNavItem\\(').allMatches(home).length, 5);
+    expect(RegExp(r'VspNavItem\(').allMatches(home).length, 5);
     for (final pair in iconPairs) {
       expect(home, contains('inactiveIcon: Iconsax.${pair[0]},'));
       expect(home, contains('activeIcon: Iconsax.${pair[1]},'));
