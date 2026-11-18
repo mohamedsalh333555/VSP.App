@@ -16,16 +16,17 @@
 - [CI: VSP Login Input and Exception Recovery — passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44213691637). Includes `test/features/auth/login_submission_regression_widget_test.dart`.
 - **Not accepted:** live Supabase authentication with multiple actual user accounts, SMS/email verification, OAuth return to app, rate limiting, or network/device E2E. They remain under 11.01/11.04–11.07 and staging security work.
 
-## 07.06 and 05.03 — Progress only, remain open
+## 07.06 — Sensitive modal back behavior (accepted, limited) / 05.03 still open
 - In-flight password recovery dialog now prevents accidental Android back or scrim dismissals until the request finishes; the neutral reply is preserved. Cancellation **before** request remains possible.
 - The widget test exercises system back, outside tap, pending request and eventual completion. The test initially attempted `pumpAndSettle` during an infinite spinner, which was correctly replaced with fixed-duration pumps.
 - [CI: Recovery/Navigation Widget Regression — passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44213691731).
-- Other money-related confirmation dialogs, owner booking sheets, camera/pickup/tournament modals and hardware back on a device have not been covered. `07.06` is not accepted from one dialog. Likewise `05.03` remains open until all interactive components meet target sizes.
+- Separate account-deletion tests, in Arabic and English, now verify idle Android back without deleting, outside taps, prevention of cancellation/repeat while deletion is pending, and retry after a failed attempt. [Current CI passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44214357012) at [`076e903e`](https://github.com/mohamedsalh333555/VSP.App/commit/076e903ee0ad5c8c8e4b93a746ba3620307ecb57).
+- The preexisting recovery checks plus account-deletion checks provide narrow accepted regression evidence for two security-sensitive dialogs. Other money-related confirmations, owner booking sheets, camera/pickup/tournament modals and hardware back on a physical device have **not** been covered. These remain release/QA follow-ups. `05.03` remains open until all interactive components meet target sizes.
 
 ## Accounting
 - Original unique tasks: **633** (unchanged).
 - Previously accepted: **306**.
-- Accepted with documented limited scope: **07.02, 11.02** (+2).
-- Current: **308 accepted / 325 open (48.66%)**.
+- Accepted with documented limited scope: **07.02, 11.02, 07.06** (+3 across two batches).
+- After the second documented acceptance: **309 accepted / 324 open (48.82%)** (+3 total in this continuation: 07.02, 11.02 and 07.06).
 - Full [Flutter CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44213691855) was in progress at documentation checkpoint, **not claimed successful**.
 - No changes to Supabase, production, payments, bookings, release APK or main branch. PR #35 remains draft. Migration/server-level security checks remain open.
