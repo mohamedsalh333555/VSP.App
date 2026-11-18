@@ -129,9 +129,9 @@ class AnalyticsService {
       );
       VSPLogger.i('Analytics Event: $name | $safeParameters');
       return true;
-    } catch (e) {
+    } catch (_) {
       // Analytics is auxiliary and must never block a user journey.
-      VSPLogger.e('Analytics Error: $e');
+      VSPLogger.e('Analytics delivery failed (details redacted)');
       return false;
     }
   }
