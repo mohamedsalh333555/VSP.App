@@ -480,4 +480,20 @@ void main() {
         isFalse);
   });
 
+  test('conflicting announcement dates never publish arbitrary official cup history', () {
+    final rows = <Map<String, dynamic>>[
+      {'cup_id': 'cup-date', 'cup_name': 'Cup', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': '2026-11-17T12:00:00Z'},
+      {'cup_id': 'cup-date', 'cup_name': 'Cup', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': '2026-11-18T12:00:00Z'},
+      {'cup_id': 'cup-safe', 'cup_name': 'Other Cup', 'team_id': 'team-a',
+       'award_type': 'team_champion', 'announced_at': '2026-11-18T12:00:00Z'},
+    ];
+    expect(TeamSkillsHistorySection.visibleAwards(rows).map((award) =>
+        award['cup_id']), ['cup-safe']);
+    expect(TeamSkillsHistorySection.visibleAwards(rows,
+        participantId: 'team-a', isTeam: true).map((award) =>
+        award['cup_id']), ['cup-safe']);
+  });
+
 }

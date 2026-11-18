@@ -80,7 +80,8 @@ class TeamSkillsHistorySection extends StatefulWidget {
           (previous['player_id'] is String
                   ? (previous['player_id'] as String).trim() : '') !=
               (playerId is String ? playerId.trim() : '') ||
-          previous['cup_name'] != cupName) {
+          previous['cup_name'] != cupName ||
+          previous['announced_at'] != announced) {
         byCupAward.remove(awardKey);
         conflicting.add(awardKey);
       }
