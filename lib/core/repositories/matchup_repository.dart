@@ -179,12 +179,24 @@ class MatchupRepository {
     }
   }
 
+  /// Team IDs are canonical UUIDs. PostgREST's .or() accepts a filter
+  /// expression, so never interpolate an untrusted deep-link or UI string
+  /// without validating it first.
+  static bool isCanonicalTeamId(String id) =>
+      RegExp(
+        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-'
+        r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+      ).hasMatch(id);
+
   /// A failed source read is UNKNOWN, not verified empty history. This
   /// propagates transport/RLS errors so the team-profile screen can display
   /// its existing retryable failure state instead of a false "no matches".
   /// Matchup-only history is distinct from captain-agreed challenge results.
   Future<List<Map<String, dynamic>>> getAllHeadToHeadForTeamStrict(
       String teamId) async {
+    if (!isCanonicalTeamId(teamId)) {
+      throw ArgumentError.value(teamId, 'teamId', 'Invalid canonical team ID');
+    }
     final response = await _supabase
         .from('team_head_to_head')
         .select('*, team_a:teams!team_head_to_head_team_a_id_fkey(id, name, logo_url), team_b:teams!team_head_to_head_team_b_id_fkey(id, name, logo_url)')
