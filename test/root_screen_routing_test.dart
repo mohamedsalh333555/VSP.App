@@ -1,268 +1,128 @@
-// root_screen_routing_test.dart
-//
-// Pure unit tests for the RootScreen routing logic.
-// All lifecycle gates are tested:
-//   - Unauthenticated → WelcomeScreen
-//   - Missing phone → SocialOnboardingScreen
-//   - Registration incomplete → VerifyEmailScreen
-//   - Owner, no stadium → FacilityOnboardingScreen
-//   - Owner, has stadium, not identity-verified → OwnerDocumentationWizard
-//   - Blocked player → Suspended/Blocked Screen
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/models/user_model.dart';
+import 'package:vsp_application/core/navigation/app_router.dart';
+import 'helpers/router_auth_fakes.dart';
 
-// ─── Routing Decision Enum ──────────────────────────────────────────────────
-enum RouteDecision {
-  welcome,            // Not authenticated
-  loading,            // Authenticated but no user data yet
-  socialOnboarding,   // Missing phone number
-  verifyEmail,        // isRegistrationComplete == false
-  suspended,          // isBlocked == true (player only)
-  facilityOnboarding, // Owner, hasStadium == false
-  ownerDocumentation, // Owner, isIdentityVerified == false
-  ownerDashboard,     // Fully onboarded owner (blocked or unblocked)
-  playerHome,         // Fully registered player
-}
+UserModel profile({
+  required String role,
+  bool blocked = false,
+  bool verified = true,
+  bool hasStadium = false,
+  bool completedOwnerOnboarding = false,
+  String phone = '01012345678',
+}) => UserModel(
+  uid: 'fixture-$role',
+  email: 'fixture@example.invalid',
+  role: role,
+  phone: phone,
+  isBlocked: blocked,
+  isEmailVerified: verified,
+  isRegistrationComplete: true,
+  hasStadium: hasStadium,
+  isOnboardingConfirmed: completedOwnerOnboarding,
+);
 
-/// Pure function that mirrors new router decision tree exactly.
-RouteDecision resolveRoute({
-  required bool isAuthenticated,
-  required bool isMaintenanceMode,
-  UserModel? user,
-}) {
-  if (isMaintenanceMode) return RouteDecision.welcome;
-
-  if (!isAuthenticated) return RouteDecision.welcome;
-
-  if (user == null) return RouteDecision.loading;
-
-  // Missing phone → Social onboarding
-  if (user.phone == null || user.phone!.isEmpty) {
-    return RouteDecision.socialOnboarding;
-  }
-
-
-
-  // Administrative Block check
-  if (user.isBlocked) {
-    if (user.role == 'owner') {
-      // Blocked owners proceed to owner dashboard with alert
-      return RouteDecision.ownerDashboard;
-    } else {
-      // Blocked players locked out completely
-      return RouteDecision.suspended;
-    }
-  }
-
-  // Owner flow
-  if (user.role == 'owner') {
-    if (!user.hasStadium) return RouteDecision.facilityOnboarding;
-    if (!user.isIdentityVerified) return RouteDecision.ownerDocumentation;
-    return RouteDecision.ownerDashboard;
-  }
-
-  // Player
-  return RouteDecision.playerHome;
-}
+String? redirect(String path, FakeAuthProvider auth) =>
+    AppRouter.redirectLogic(
+      DummyBuildContext(), FakeGoRouterState(path), auth,
+    );
 
 void main() {
-  group('RootScreen Auth Lifecycle Routing Tests', () {
-
-    test('Gate 1: Unauthenticated user → WelcomeScreen', () {
-      final result = resolveRoute(
-        isAuthenticated: false,
-        isMaintenanceMode: false,
-        user: null,
-      );
-      expect(result, RouteDecision.welcome);
+  group('Root route gates — production AppRouter, not duplicated policy', () {
+    test('signed out sessions cannot access owner and player content', () {
+      final auth = FakeAuthProvider(isAuthenticated: false);
+      for (final path in [
+        '/', '/owner', '/owner-ledger', '/match/booking-id',
+        '/team/team-id', '/notifications',
+      ]) {
+        expect(redirect(path, auth), '/welcome', reason: path);
+      }
+      expect(redirect('/login', auth), isNull);
     });
 
-    test('Gate 2: Authenticated but user data still loading → SplashScreen', () {
-      final result = resolveRoute(
-        isAuthenticated: true,
-        isMaintenanceMode: false,
-        user: null,
-      );
-      expect(result, RouteDecision.loading);
+    test('initialization and incomplete profile are sent to splash', () {
+      final initializing = FakeAuthProvider(isInitializing: true);
+      expect(redirect('/owner', initializing), '/splash');
+      expect(redirect('/splash', initializing), isNull);
+      final loading = FakeAuthProvider(isLoading: true);
+      expect(redirect('/owner', loading), '/splash');
     });
 
-    test('Test 3: Social Login (Google/Apple) incomplete profile (no phone) → SocialOnboardingScreen', () {
-      final user = UserModel(
-        uid: '456',
-        email: 'social@test.com',
-        name: 'Social User',
-        phone: '',
-        role: 'player',
-        isRegistrationComplete: false,
-        isEmailVerified: true,
-        hasStadium: false,
-        isIdentityVerified: false,
-      );
-
-      final result = resolveRoute(
-        isAuthenticated: true,
-        isMaintenanceMode: false,
-        user: user,
-      );
-
-      expect(result, RouteDecision.socialOnboarding);
+    test('new OAuth accounts must finish onboarding for their role', () {
+      for (final role in ['owner', 'player']) {
+        final auth = FakeAuthProvider(isGhostUser: true, userType: role);
+        final destination =
+            role == 'owner' ? '/onboarding-owner' : '/onboarding-player';
+        expect(redirect('/owner', auth), destination);
+        expect(redirect(destination, auth), isNull);
+      }
     });
 
-    test('Test 1: Player email sign-up, registration incomplete → playerHome', () {
-      final user = UserModel(
-        uid: '123',
-        email: 'player@test.com',
-        name: 'Player One',
-        phone: '0501234567',
-        role: 'player',
-        isRegistrationComplete: false,
-        isEmailVerified: false,
-        hasStadium: false,
-        isIdentityVerified: false,
+    test('missing phone goes to the correct onboarding surface', () {
+      final player = FakeAuthProvider(userModel: profile(role: 'player', phone: ''));
+      final owner = FakeAuthProvider(
+        isOwner: true, userModel: profile(role: 'owner', phone: ''),
       );
-
-      final result = resolveRoute(
-        isAuthenticated: true,
-        isMaintenanceMode: false,
-        user: user,
-      );
-
-      expect(result, RouteDecision.playerHome);
+      expect(redirect('/notifications', player), '/onboarding-player');
+      expect(redirect('/owner', owner), '/onboarding-owner');
     });
 
-    test('Test 4a: Owner registration complete, NO stadium → FacilityOnboardingScreen', () {
-      final user = UserModel(
-        uid: '789',
-        email: 'owner@test.com',
-        name: 'Stadium Owner',
-        phone: '0509876543',
-        role: 'owner',
-        isRegistrationComplete: true,
-        isEmailVerified: true,
-        hasStadium: false,
-        isIdentityVerified: false,
+    test('unverified email is blocked before dashboards', () {
+      final player = FakeAuthProvider(
+        userModel: profile(role: 'player', verified: false),
       );
-
-      final result = resolveRoute(
-        isAuthenticated: true,
-        isMaintenanceMode: false,
-        user: user,
+      final owner = FakeAuthProvider(
+        isOwner: true, userModel: profile(role: 'owner', verified: false),
       );
-
-      expect(result, RouteDecision.facilityOnboarding);
+      expect(redirect('/player', player), '/verify-email');
+      expect(redirect('/owner', owner), '/verify-email');
+      expect(redirect('/verify-email', player), isNull);
     });
 
-    test('Test 4b: Owner has stadium, NOT identity-verified → OwnerDocumentationWizard', () {
-      final user = UserModel(
-        uid: '789',
-        email: 'owner@test.com',
-        name: 'Stadium Owner',
-        phone: '0509876543',
-        role: 'owner',
-        isRegistrationComplete: true,
-        isEmailVerified: true,
-        hasStadium: true,
-        isIdentityVerified: false,
-      );
-
-      final result = resolveRoute(
-        isAuthenticated: true,
-        isMaintenanceMode: false,
-        user: user,
-      );
-
-      expect(result, RouteDecision.ownerDocumentation);
+    test('suspension blocks owners and players equally', () {
+      for (final role in ['owner', 'player']) {
+        final auth = FakeAuthProvider(
+          isOwner: role == 'owner',
+          userModel: profile(
+            role: role, blocked: true, verified: true,
+            hasStadium: role == 'owner',
+            completedOwnerOnboarding: role == 'owner',
+          ),
+        );
+        for (final path in ['/owner', '/player', '/notifications']) {
+          expect(redirect(path, auth), '/suspended',
+              reason: 'Suspended $role must never access $path');
+        }
+        expect(redirect('/suspended', auth), isNull);
+      }
     });
 
-    test('Fully verified owner → OwnerDashboard', () {
-      final user = UserModel(
-        uid: '789',
-        email: 'owner@test.com',
-        name: 'Stadium Owner',
-        phone: '0509876543',
-        role: 'owner',
-        isRegistrationComplete: true,
-        isEmailVerified: true,
-        hasStadium: true,
-        isIdentityVerified: true,
+    test('owner stadium onboarding must complete before dashboard', () {
+      final noStadium = FakeAuthProvider(
+        isOwner: true, userModel: profile(role: 'owner'),
       );
-
-      final result = resolveRoute(
-        isAuthenticated: true,
-        isMaintenanceMode: false,
-        user: user,
+      expect(redirect('/owner', noStadium), '/facility-onboarding');
+      final unfinished = FakeAuthProvider(
+        isOwner: true,
+        userModel: profile(role: 'owner', hasStadium: true),
       );
-
-      expect(result, RouteDecision.ownerDashboard);
+      expect(redirect('/owner', unfinished), '/facility-onboarding');
+      final complete = FakeAuthProvider(
+        isOwner: true,
+        userModel: profile(
+          role: 'owner', hasStadium: true, completedOwnerOnboarding: true,
+        ),
+      );
+      expect(redirect('/owner', complete), isNull);
+      expect(redirect('/documentation', complete), isNull);
+      expect(redirect('/player', complete), '/owner');
     });
 
-    test('Fully registered player → PlayerHome', () {
-      final user = UserModel(
-        uid: '999',
-        email: 'player@test.com',
-        name: 'Valid Player',
-        phone: '0503330000',
-        role: 'player',
-        isRegistrationComplete: true,
-        isEmailVerified: true,
-        hasStadium: false,
-        isIdentityVerified: false,
-      );
-
-      final result = resolveRoute(
-        isAuthenticated: true,
-        isMaintenanceMode: false,
-        user: user,
-      );
-
-      expect(result, RouteDecision.playerHome);
-    });
-
-    test('Blocked player → Suspended (route to block screen)', () {
-      final user = UserModel(
-        uid: '111',
-        email: 'bad@test.com',
-        name: 'Bad Actor',
-        phone: '0500000001',
-        role: 'player',
-        isRegistrationComplete: true,
-        isEmailVerified: true,
-        hasStadium: false,
-        isIdentityVerified: false,
-        isBlocked: true,
-      );
-
-      final result = resolveRoute(
-        isAuthenticated: true,
-        isMaintenanceMode: false,
-        user: user,
-      );
-
-      expect(result, RouteDecision.suspended);
-    });
-
-    test('Blocked owner → OwnerDashboard (allowed entry, warning shown on dashboard)', () {
-      final user = UserModel(
-        uid: '222',
-        email: 'blockedowner@test.com',
-        name: 'Blocked Owner',
-        phone: '0500000002',
-        role: 'owner',
-        isRegistrationComplete: true,
-        isEmailVerified: true,
-        hasStadium: true,
-        isIdentityVerified: true,
-        isBlocked: true,
-      );
-
-      final result = resolveRoute(
-        isAuthenticated: true,
-        isMaintenanceMode: false,
-        user: user,
-      );
-
-      expect(result, RouteDecision.ownerDashboard);
+    test('signed-in players cannot open owner billing', () {
+      final auth = FakeAuthProvider(userModel: profile(role: 'player'));
+      expect(redirect('/owner-ledger', auth), '/');
+      expect(redirect('/subscription-plans', auth), '/');
+      expect(redirect('/notifications', auth), isNull);
     });
   });
 }

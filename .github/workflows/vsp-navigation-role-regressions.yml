@@ -14,6 +14,9 @@ on:
       - "lib/core/services/notification_service.dart"
       - "lib/features/player/screens/notifications_center_screen.dart"
       - "test/deep_link_abuse_test.dart"
+      - "test/root_screen_routing_test.dart"
+      - "test/auth_forgot_password_and_roles_test.dart"
+      - "test/helpers/router_auth_fakes.dart"
       - "lib/core/utils/deep_link_helper.dart"
       - "lib/main.dart"
       - "lib/core/providers/auth/auth_oauth_coordinator.dart"
@@ -31,6 +34,9 @@ on:
       - "lib/core/navigation/app_route_role_guard.dart"
       - "lib/features/player/screens/notifications_center_screen.dart"
       - "test/deep_link_abuse_test.dart"
+      - "test/root_screen_routing_test.dart"
+      - "test/auth_forgot_password_and_roles_test.dart"
+      - "test/helpers/router_auth_fakes.dart"
       - "lib/core/utils/deep_link_helper.dart"
       - "lib/main.dart"
       - "lib/core/providers/auth/auth_oauth_coordinator.dart"
@@ -69,12 +75,18 @@ jobs:
           test/core/utils/deep_link_origin_validation_test.dart
           lib/features/player/screens/notifications_center_screen.dart
           test/deep_link_abuse_test.dart
+          test/root_screen_routing_test.dart
+          test/auth_forgot_password_and_roles_test.dart
+          test/helpers/router_auth_fakes.dart
           test/core/navigation/pending_deep_link_account_guard_test.dart
           test/architecture/notification_role_billing_route_guard_test.dart
       - name: Test deep links, signed-in role redirects, notification account scope
         run: >-
           flutter test --concurrency=1
           test/deep_link_abuse_test.dart
+          test/root_screen_routing_test.dart
+          test/auth_forgot_password_and_roles_test.dart
+          test/helpers/router_auth_fakes.dart
           test/core/utils/deep_link_origin_validation_test.dart
           test/architecture/notification_role_billing_route_guard_test.dart
           test/architecture/notification_navigation_account_guard_test.dart
