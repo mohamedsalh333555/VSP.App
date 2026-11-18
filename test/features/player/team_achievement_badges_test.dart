@@ -23,7 +23,7 @@ void main() {
         ),
       ),
     ));
-    expect(find.bySemanticsLabel('0 بطولات ملاعب رسمية، 0 أبطال واحد ضد واحد'), findsOneWidget);
+    expect(find.bySemanticsLabel('0 بطولات ملاعب رسمية، 0 أبطال واحد ضد واحد (تاريخي)'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -45,7 +45,7 @@ void main() {
         ),
       ),
     ));
-    expect(find.bySemanticsLabel('3 verified stadium championships, 2 one versus one champion players'), findsOneWidget);
+    expect(find.bySemanticsLabel('3 verified stadium championships, 2 historical one versus one champion players'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -87,7 +87,7 @@ void main() {
       TextDirection.rtl,
     );
     expect(
-      find.bySemanticsLabel('12 بطولات ملاعب رسمية، 15 أبطال واحد ضد واحد'),
+      find.bySemanticsLabel('12 بطولات ملاعب رسمية، 15 أبطال واحد ضد واحد (تاريخي)'),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
