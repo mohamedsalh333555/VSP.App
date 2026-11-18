@@ -6,7 +6,7 @@ import 'package:vsp_application/features/auth/services/password_reset_privacy_me
 import 'package:vsp_application/features/auth/widgets/forgot_password_dialog.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
-class FakePasswordAuth implements AuthProvider {
+class FakePasswordAuth extends ChangeNotifier implements AuthProvider {
   FakePasswordAuth(this.behavior);
 
   final String behavior;
@@ -28,7 +28,7 @@ class FakePasswordAuth implements AuthProvider {
 }
 
 Widget recoveryHost(FakePasswordAuth auth, {String language = 'en'}) =>
-    Provider<AuthProvider>.value(
+    ChangeNotifierProvider<AuthProvider>.value(
       value: auth,
       child: MaterialApp(
         locale: Locale(language),
