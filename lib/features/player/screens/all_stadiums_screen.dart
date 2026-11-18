@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import '../../../core/services/connectivity_service.dart';
 
 import 'package:flutter/material.dart';
 import '../../../core/ui/vsp_ui.dart';
@@ -23,12 +25,15 @@ class AllStadiumsScreen extends StatefulWidget {
   final String? initialGovernorate;
   final String? initialSearchQuery;
   final Widget Function(Stadium)? detailsBuilder;
+  /// Observable connectivity, injectable for deterministic widget tests.
+  final ValueListenable<bool>? connectivityListenable;
 
   const AllStadiumsScreen({
     super.key,
     this.initialGovernorate,
     this.initialSearchQuery,
     this.detailsBuilder,
+    this.connectivityListenable,
   });
 
   @override
@@ -42,10 +47,16 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
   String _selectedFloorType = 'All';
   StadiumSortOption _sortOption = StadiumSortOption.featured;
   Timer? _searchDebounce;
+  late ValueListenable<bool> _connectivity;
+  late bool _wasOnline;
 
   @override
   void initState() {
     super.initState();
+    _connectivity = widget.connectivityListenable ??
+        ConnectivityService.instance.isOnlineNotifier;
+    _wasOnline = _connectivity.value;
+    _connectivity.addListener(_onConnectivityChanged);
     if (widget.initialGovernorate != null && widget.initialGovernorate!.isNotEmpty) {
       _selectedGovernorate = widget.initialGovernorate!;
     }
@@ -56,13 +67,38 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
 
     // Refresh stadiums on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_connectivity.value) return;
       final provider = Provider.of<StadiumProvider>(context, listen: false);
       _applyServerFilters(provider);
     });
   }
 
+  void _onConnectivityChanged() {
+    final nowOnline = _connectivity.value;
+    final recovered = !_wasOnline && nowOnline;
+    _wasOnline = nowOnline;
+    if (!recovered) return;
+    // The provider's generation ignores obsolete pre-disconnect responses.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_connectivity.value) return;
+      _refreshServerFilters(context.read<StadiumProvider>());
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant AllStadiumsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.connectivityListenable == widget.connectivityListenable) return;
+    _connectivity.removeListener(_onConnectivityChanged);
+    _connectivity = widget.connectivityListenable ??
+        ConnectivityService.instance.isOnlineNotifier;
+    _wasOnline = _connectivity.value;
+    _connectivity.addListener(_onConnectivityChanged);
+  }
+
   @override
   void dispose() {
+    _connectivity.removeListener(_onConnectivityChanged);
     _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
@@ -72,7 +108,8 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
     _searchDebounce?.cancel();
     setState(() => _searchQuery = value);
     _searchDebounce = Timer(const Duration(milliseconds: 400), () {
-      if (!mounted || value != _searchController.text) return;
+      if (!mounted || !_connectivity.value ||
+          value != _searchController.text) return;
       _applyServerFilters(context.read<StadiumProvider>());
     });
   }
@@ -93,6 +130,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
   };
 
   void _applyServerFilters(StadiumProvider provider, {bool isRefresh = true}) {
+    if (!_connectivity.value) return;
     if (isRefresh) {
       provider.applyFilters(_serverFilterMap());
     } else {
@@ -108,6 +146,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
 
   // Refresh the current query without clearing the last authoritative page.
   void _refreshServerFilters(StadiumProvider provider) {
+    if (!_connectivity.value) return;
     provider.fetchStadiumsWithParams(
       isRefresh: true,
       governorate: _selectedGovernorate,
@@ -162,8 +201,25 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
 
           // 2. Stadiums List
           Expanded(
-            child: Consumer<StadiumProvider>(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: _connectivity,
+              builder: (context, isOnline, _) => Consumer<StadiumProvider>(
               builder: (context, provider, _) {
+                if (!isOnline && provider.stadiums.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: VSPStateView(
+                        state: VSPUiState.offline,
+                        icon: Iconsax.wifi_square_copy,
+                        title: isArabic ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection',
+                        message: isArabic
+                            ? 'سنحدّث النتائج تلقائيًا عند رجوع الاتصال.'
+                            : 'Results will refresh automatically when your connection returns.',
+                      ),
+                    ),
+                  );
+                }
                 if (provider.isLoading && provider.stadiums.isEmpty) {
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -256,7 +312,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                   onRefresh: () async => _refreshServerFilters(provider),
                   child: Column(
                     children: [
-                      if (provider.errorMessage != null)
+                      if (provider.errorMessage != null || !isOnline)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                           child: Container(
@@ -271,11 +327,17 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    isArabic ? 'تعذر تحديث القائمة. نعرض آخر بيانات متاحة.' : 'Could not refresh the list. Showing the last available results.',
+                                    !isOnline
+                                        ? (isArabic
+                                            ? 'الاتصال مقطوع. نعرض آخر بيانات متاحة حتى يعود الإنترنت.'
+                                            : 'Offline. Showing the last available results until you reconnect.')
+                                        : (isArabic
+                                            ? 'تعذر تحديث القائمة. نعرض آخر بيانات متاحة.'
+                                            : 'Could not refresh the list. Showing the last available results.'),
                                     style: const TextStyle(color: VSPColors.warning, fontSize: 11.5),
                                   ),
                                 ),
-                                TextButton(
+                                if (isOnline) TextButton(
                                   onPressed: () {
                                     final filters = provider.currentFilters;
                                     if (provider.isFilterActive && filters != null) {
@@ -323,7 +385,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                       Expanded(
                         child: ListView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                          itemCount: filteredStadiums.length + (provider.hasMore ? 1 : 0),
+                          itemCount: filteredStadiums.length + (provider.hasMore && isOnline ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index >= filteredStadiums.length) {
                               if (provider.isLoadingMore) {
@@ -375,6 +437,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                   ),
                 );
               },
+            ),
             ),
           ),
         ],
