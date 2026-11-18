@@ -5,13 +5,16 @@ import '../../../../l10n/app_localizations.dart';
 
 class TeamProfileStatsGrid extends StatelessWidget {
   final Team team;
-  final int totalMembersCount;
+  final int? totalMembersCount;
 
   const TeamProfileStatsGrid({
     super.key,
     required this.team,
     required this.totalMembersCount,
   });
+
+  static String memberCountText(int? count) =>
+      count == null || count < 0 ? '—' : count.toString();
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +36,22 @@ class TeamProfileStatsGrid extends StatelessWidget {
             SizedBox(width: itemWidth, child: _buildStatCard(context, team.wins.toString(), l10n.wins)),
             SizedBox(width: itemWidth, child: _buildStatCard(context, team.draws.toString(), isArabic ? 'تعادل' : 'Draws')),
             SizedBox(width: itemWidth, child: _buildStatCard(context, team.losses.toString(), isArabic ? 'خسارة' : 'Losses')),
-            SizedBox(width: itemWidth, child: _buildStatCard(context, totalMembersCount.toString(), l10n.members)),
+            SizedBox(width: itemWidth, child: _buildStatCard(
+              context,
+              memberCountText(totalMembersCount),
+              l10n.members,
+              spokenValue: totalMembersCount == null
+                  ? (isArabic ? 'غير متاح' : 'Unavailable')
+                  : null,
+            )),
           ],
         );
       },
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String value, String label) {
+  Widget _buildStatCard(BuildContext context, String value, String label,
+      {String? spokenValue}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
       decoration: BoxDecoration(
@@ -51,7 +62,7 @@ class TeamProfileStatsGrid extends StatelessWidget {
       child: Column(
         children: [
           Semantics(
-            label: '$label: $value',
+            label: '$label: ${spokenValue ?? value}',
             child: ExcludeSemantics(
               child: Text(
                 value,

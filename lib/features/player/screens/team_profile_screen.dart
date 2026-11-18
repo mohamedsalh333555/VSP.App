@@ -273,11 +273,12 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     }
   }
 
-  int get _teamMemberCount {
-    final ids = {...?_verifiedMemberIds};
-    if (_verifiedMemberIds == null) {
-      ids.addAll(team.memberUids.where((id) => id.isNotEmpty));
-    }
+  int? get _teamMemberCount {
+    // A cached public team card may have stale memberUids. Until the
+    // membership source succeeds, an unavailable count is safer than
+    // presenting cached or guessed roster size as verified.
+    if (_verifiedMemberIds == null) return null;
+    final ids = {..._verifiedMemberIds!};
     if (team.captainId.isNotEmpty) ids.add(team.captainId);
     return ids.length;
   }
