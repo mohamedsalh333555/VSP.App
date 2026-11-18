@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/repositories/team_skills_cup_repository.dart';
+import 'package:vsp_application/core/repositories/matchup_repository.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/features/player/widgets/champion/team_skills_history_section.dart';
 import 'package:vsp_application/features/player/widgets/team_profile/team_profile_head_to_head_section.dart';
@@ -119,6 +120,17 @@ void main() {
     final awards = TeamSkillsHistorySection.visibleAwards(rows);
     expect(awards.map((row) => row['cup_id']), ['cup-a', 'cup-b']);
     expect(awards.length, 2);
+  });
+
+  test('a team history query cannot interpolate malformed PostgREST identifiers', () {
+    expect(MatchupRepository.isCanonicalTeamId(
+      '08c5fc4b-189d-4f41-b1e0-5798d1f9a804'), isTrue);
+    expect(MatchupRepository.isCanonicalTeamId('team-a'), isFalse);
+    expect(MatchupRepository.isCanonicalTeamId(''), isFalse);
+    expect(MatchupRepository.isCanonicalTeamId(
+      '08c5fc4b-189d-4f41-b1e0-5798d1f9a804,team_b_id.neq.null'), isFalse);
+    expect(MatchupRepository.isCanonicalTeamId(
+      '08c5fc4b-189d-4f41-b1e0-5798d1f9a804)or(true'), isFalse);
   });
 
   test('head-to-head rows must involve exactly the displayed team', () {
