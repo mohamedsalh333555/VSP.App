@@ -15,8 +15,8 @@ class TeamAchievementBadges extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Semantics(
       label: isArabic
-          ? '${summary.stadiumChampionships} بطولات ملاعب رسمية، ${summary.oneVsOneChampionPlayers} أبطال واحد ضد واحد'
-          : '${summary.stadiumChampionships} verified stadium championships, ${summary.oneVsOneChampionPlayers} one versus one champion players',
+          ? '${summary.stadiumChampionships} بطولات ملاعب رسمية، ${summary.oneVsOneChampionPlayers} أبطال واحد ضد واحد (تاريخي)'
+          : '${summary.stadiumChampionships} verified stadium championships, ${summary.oneVsOneChampionPlayers} historical one versus one champion players',
       child: ExcludeSemantics(
         child: LayoutBuilder(
         builder: (context, constraints) => Wrap(
@@ -35,7 +35,7 @@ class TeamAchievementBadges extends StatelessWidget {
             maxWidth: constraints.maxWidth,
             icon: Iconsax.medal_copy,
             count: summary.oneVsOneChampionPlayers,
-            label: isArabic ? 'أبطال 1 ضد 1' : '1v1 champions',
+            label: isArabic ? 'أبطال 1 ضد 1 (تاريخي)' : 'Historical 1v1 champions',
             suffix: '×',
           ),
         ],
