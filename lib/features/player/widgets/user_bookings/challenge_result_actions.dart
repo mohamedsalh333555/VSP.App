@@ -9,7 +9,7 @@ import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_animated_button.dart';
-import '../../screens/player_home_screen.dart';
+import '../../screens/team_profile_screen.dart';
 import '../match_result_modal.dart';
 import 'challenge_non_played_report_status.dart';
 import 'challenge_non_played_appeal_dialog.dart';
@@ -26,6 +26,8 @@ class ChallengeResultActions extends StatelessWidget {
   /// Only enable through the server-gated captain card.
   final bool allowAppeal;
   final VoidCallback? onReportChanged;
+  /// Test-only destination injection; runtime uses the established team profile.
+  final Widget Function(String teamId)? teamProfileBuilder;
   final Future<ChallengeReportCommandReceipt> Function(String reason)?
       appealSubmitOverride;
 
@@ -37,6 +39,7 @@ class ChallengeResultActions extends StatelessWidget {
     this.reportLookupRequired = false,
     this.allowAppeal = false,
     this.onReportChanged,
+    this.teamProfileBuilder,
     this.appealSubmitOverride,
   });
 
@@ -249,6 +252,16 @@ class ChallengeResultActions extends StatelessWidget {
     }
   }
 
+  void _openTeamProfile(BuildContext context, String teamId) {
+    if (teamId.isEmpty ||
+        (teamId != booking.playerTeamId &&
+            teamId != booking.opponentTeamId)) return;
+    Navigator.of(context).push<void>(MaterialPageRoute<void>(
+      builder: (_) => teamProfileBuilder?.call(teamId) ??
+          TeamProfileScreen(teamId: teamId),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -457,8 +470,8 @@ class ChallengeResultActions extends StatelessWidget {
             Expanded(
               child: Text(
                 isArabic
-                    ? 'تم اعتماد النتيجة. يمكنك مراجعة ترتيب الفرق.'
-                    : 'Result confirmed. You can check the team standings.',
+                    ? 'تم اعتماد النتيجة. راجع ملف فريقك وسجل مواجهاته.'
+                    : 'Result confirmed. View your team profile and match history.',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -467,8 +480,8 @@ class ChallengeResultActions extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () => navigateToTeamsStandings(context),
-              child: Text(isArabic ? 'الترتيب' : 'Standings'),
+              onPressed: () => _openTeamProfile(context, currentTeamId),
+              child: Text(isArabic ? 'ملف الفريق' : 'Team profile'),
             ),
           ],
         ),

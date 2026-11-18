@@ -28,10 +28,10 @@ void main() {
     final panel = source.substring(confirmed);
     expect(panel, contains('if (booking.finalOutcome == null)'));
     expect(panel, contains('Result currently unavailable'));
-    expect(panel, contains('Result confirmed. You can check the team standings.'));
+    expect(panel, contains('Result confirmed. View your team profile and match history.'));
     expect(panel, isNot(contains('Result confirmed and team standings updated.')));
     expect(panel.indexOf('if (booking.finalOutcome == null)'),
-        lessThan(panel.indexOf('Result confirmed. You can check the team standings.')));
+        lessThan(panel.indexOf('Result confirmed. View your team profile and match history.')));
   });
 
 }

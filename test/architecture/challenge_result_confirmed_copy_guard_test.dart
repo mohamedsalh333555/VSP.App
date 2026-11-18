@@ -12,9 +12,9 @@ void main() {
       'if (booking.matchResultStatus == MatchResultStatus.confirmed)', start);
     expect(confirmed, greaterThan(start));
     final branch = source.substring(confirmed);
-    expect(branch, contains('تم اعتماد النتيجة. يمكنك مراجعة ترتيب الفرق.'));
-    expect(branch, contains('Result confirmed. You can check the team standings.'));
+    expect(branch, contains('تم اعتماد النتيجة. راجع ملف فريقك وسجل مواجهاته.'));
+    expect(branch, contains('Result confirmed. View your team profile and match history.'));
     expect(branch, isNot(contains('team standings updated')));
-    expect(branch, contains('navigateToTeamsStandings(context)'));
+    expect(branch, contains('_openTeamProfile(context, currentTeamId)'));
   });
 }
