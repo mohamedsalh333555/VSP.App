@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,8 @@ import 'package:vsp_application/shared/widgets/primary_button.dart';
 class FakeProfileAuth extends ChangeNotifier implements AuthProvider {
   UserModel profile;
   final bool success;
+  Completer<bool>? pendingSave;
+  bool throwOnSave = false;
   int updates = 0;
   Map<String, dynamic>? submitted;
   FakeProfileAuth({required this.profile, this.success = true});
@@ -27,6 +30,8 @@ class FakeProfileAuth extends ChangeNotifier implements AuthProvider {
   Future<bool> updateProfile(Map<String, dynamic> data) async {
     updates++;
     submitted = Map<String, dynamic>.from(data);
+    if (throwOnSave) throw StateError('Private database exception');
+    if (pendingSave != null) return pendingSave!.future;
     return success;
   }
 
@@ -130,6 +135,65 @@ void main() {
       await tester.pump(const Duration(seconds: 4));
       await tester.pump();
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('save button cannot submit twice while update is pending in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person())
+        ..pendingSave = Completer<bool>();
+      await tester.pumpWidget(host(auth, language));
+      final button = find.byType(PrimaryButton);
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pump();
+      expect(auth.updates, 1);
+      expect(tester.widget<PrimaryButton>(button).isLoading, isTrue);
+
+      // Submitting a second time must not enqueue another server update.
+      await tester.tap(button, warnIfMissed: false);
+      await tester.pump();
+      expect(auth.updates, 1);
+      auth.pendingSave!.complete(false);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump();
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('unexpected provider error is redacted and form remains editable in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person())..throwOnSave = true;
+      await tester.pumpWidget(host(auth, language));
+      await tester.enterText(find.byType(TextFormField).first, 'Safe Edited Name');
+      await save(tester);
+      expect(auth.updates, 1);
+      expect(find.textContaining('Private database exception'), findsNothing);
+      expect(find.text('Safe Edited Name'), findsOneWidget);
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('account replacement during an in-flight update cannot show another account success in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person())
+        ..pendingSave = Completer<bool>();
+      await tester.pumpWidget(host(auth, language));
+      await tester.ensureVisible(find.byType(PrimaryButton));
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pump();
+      expect(auth.updates, 1);
+
+      auth.profile = person(owner: true, position: null);
+      auth.notifyListeners();
+      await tester.pump();
+      auth.pendingSave!.complete(true);
+      await tester.pump();
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(auth.submitted?.containsKey('role'), isFalse);
+      expect(tester.takeException(), isNull);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump();
     });
   }
 }
