@@ -58,9 +58,23 @@ begin
    where n.nspname='public' and p.proname like 'team_skills_%'
      and p.proname not in ('team_skills_register',
                            'team_skills_record_score',
-                           'team_skills_record_goalkeeper')
+                           'team_skills_record_goalkeeper',
+                           'team_skills_correct_roster',
+                           'team_skills_withdraw_application')
      and position('vsp_skills_private.is_admin()' in p.prosrc)=0
  ) then raise exception 'Team Skills administrative RPC missing is_admin guard';end if;
+
+ -- Captain-only commands are intentionally callable by authenticated
+ -- players. They must instead verify the active actor and canonical captain.
+ if exists(
+   select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='public'
+     and p.proname in ('team_skills_correct_roster','team_skills_withdraw_application')
+     and (not p.prosecdef
+       or position('auth.uid()' in p.prosrc)=0
+       or position('captain_id' in p.prosrc)=0
+       or position('t.captain_id=v_actor' in p.prosrc)=0)
+ ) then raise exception 'Team Skills captain RPC lacks canonical ownership check';end if;
 
  if exists(
    select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
