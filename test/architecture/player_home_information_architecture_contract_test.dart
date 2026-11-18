@@ -75,4 +75,20 @@ void main() {
     expect(home, contains('AppLocalizations.of(context)!.bookedNav'));
     expect(home, contains('AppLocalizations.of(context)!.profileNav'));
   });
+
+  test('player feed and team data errors never disclose raw backend messages', () {
+    final feedSections = File(
+      'lib/features/player/widgets/home/home_feed_sections.dart',
+    ).readAsStringSync();
+    final teamDashboard = File(
+      'lib/features/player/screens/team_dashboard_screen.dart',
+    ).readAsStringSync();
+    expect(feedSections, contains('Matches stream failed (details redacted)'));
+    expect(feedSections, contains('Championships stream failed (details redacted)'));
+    expect(feedSections, isNot(contains('snapshot.error')));
+    expect(teamDashboard, contains('Error loading user teams (details redacted)'));
+    expect(teamDashboard, contains('Error loading active team league (details redacted)'));
+    expect(teamDashboard, isNot(contains('Error loading user teams:')));
+    expect(teamDashboard, isNot(contains('Error loading active team league:')));
+  });
 }
