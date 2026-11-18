@@ -172,6 +172,26 @@ void main() {
     ]), hasLength(1));
   });
 
+  test('completion requires a verified announced phase set matching the server', () {
+    const phases = <Map<String, dynamic>>[
+      {'stage_no': 1, 'name_ar': 'Sprint', 'metric': 'time_ms', 'weight': 10},
+      {'stage_no': 2, 'name_ar': 'Shots', 'metric': 'count', 'weight': 15},
+    ];
+    bool check(List<Map<String,dynamic>> rows, {bool approved = true, dynamic done = 2}) =>
+      TeamSkillsCupTab.canShowVerifiedCompletion(
+        serverApproved: approved, completedStages: done, phases: rows);
+    expect(check(phases), isTrue);
+    expect(check([...phases, phases.first]), isTrue);
+    expect(check(phases, approved: false), isFalse);
+    expect(check(phases, done: 1), isFalse);
+    expect(check(phases, done: '2'), isFalse);
+    expect(check([]), isFalse);
+    expect(check([phases.first, {...phases[1], 'weight': 22}, phases[1]]), isFalse);
+    expect(check([phases.first, {...phases[1], 'weight': null}]), isFalse);
+    expect(check([phases.first, {...phases[1], 'weight': 26}]), isFalse);
+    expect(check([phases.first, {...phases[1], 'stage_no': 101}]), isFalse);
+  });
+
   test('a live cup never shows unannounced winners, even if award rows exist', () {
     const winner = {
       'cup_id': 'cup-1', 'team_id': 'team-a', 'award_type': 'team_champion',

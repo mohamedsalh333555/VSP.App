@@ -89,6 +89,36 @@ class TeamSkillsCupTab extends StatefulWidget {
     return [for (final n in sorted) byNumber[n]!];
   }
 
+  /// A server completion flag is necessary but insufficient to display a
+  /// complete stage count when the public phase list is partial, invalid or
+  /// contradictory. Duplicate identical phase rows are harmless.
+  static bool canShowVerifiedCompletion({
+    required bool serverApproved,
+    required dynamic completedStages,
+    required Iterable<Map<String, dynamic>> phases,
+  }) {
+    if (!serverApproved || completedStages is! int || completedStages < 1) {
+      return false;
+    }
+    final source = phases.toList(growable: false);
+    final announced = visiblePublishedPhases(source);
+    if (announced.isEmpty || announced.length != completedStages) {
+      return false;
+    }
+    final stageNos = <int>{};
+    for (final phase in source) {
+      final n = phase['stage_no'];
+      final weight = phase['weight'];
+      if (n is! int || n < 1 || n > 100 ||
+          weight is! num || !weight.isFinite || weight <= 0 ||
+          weight > 25) return false;
+      stageNos.add(n);
+    }
+    // A duplicate with conflicting metadata reduces announced, but does not
+    // reduce the unique source stage number count.
+    return stageNos.length == announced.length;
+  }
+
   /// Never invent a fixed 12-stage format for an unpublished plan.
   static String publishedStageSummary(
     Iterable<Map<String, dynamic>> phases, {required bool isArabic}
@@ -885,6 +915,11 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
               final approvedForTeam = _approvedScores
                   .where((score) => score['registration_id']?.toString() == registrationId)
                   .toList();
+              final verifiedCompletion = TeamSkillsCupTab.canShowVerifiedCompletion(
+                serverApproved: entry.complete,
+                completedStages: entry.data['completed_stages'],
+                phases: _phases,
+              );
               return ExpansionTile(
                 iconColor: VSPColors.accent,
                 collapsedIconColor: VSPColors.textSecondary,
@@ -894,7 +929,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                     '${entry.data['points']} ${ar ? 'نقطة' : 'points'} • '
                     '${entry.data['completed_stages'] is int && entry.data['completed_stages'] >= 0 && entry.data['completed_stages'] <= visiblePhases.length ? entry.data['completed_stages'] : '—'}' 
                     '${visiblePhases.isEmpty ? '' : '/${visiblePhases.length}'} • '
-                    '${entry.complete ? (ar ? 'مكتمل' : 'Complete') : (ar ? 'قيد الاعتماد' : 'Pending stages')}',
+                    '${verifiedCompletion ? (ar ? 'مكتمل' : 'Complete') : entry.complete ? (ar ? 'تعذر التحقق من الاكتمال' : 'Completion unverified') : (ar ? 'قيد الاعتماد' : 'Pending stages')}',
                     style: const TextStyle(color: VSPColors.accent)),
                 children: [
                   ...visiblePhases.map((phase) {
