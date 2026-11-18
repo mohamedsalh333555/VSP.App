@@ -208,6 +208,70 @@ void main() {
     expect(TeamProfileHeadToHeadSection.recordsForTeam(' ', rows), isEmpty);
   });
 
+  test('mirrored and identical repeated opponent rows appear once', () {
+    const original = <String, dynamic>{
+      'team_a_id': 'team-a', 'team_b_id': 'team-b',
+      'team_a_wins': 3, 'team_b_wins': 1, 'draws': 2,
+    };
+    const mirrored = <String, dynamic>{
+      'team_a_id': 'team-b', 'team_b_id': 'team-a',
+      'team_a_wins': 1, 'team_b_wins': 3, 'draws': 2,
+    };
+    final visible = TeamProfileHeadToHeadSection.recordsForTeam(
+      'team-a', [original, mirrored, original]);
+    expect(visible, hasLength(1));
+    final totals = TeamProfileHeadToHeadSection.recordedTotals(
+      'team-a', [original, mirrored, original]);
+    expect(totals?.wins, 3);
+    expect(totals?.draws, 2);
+    expect(totals?.losses, 1);
+  });
+
+  test('contradictory opponent aggregates fail closed, even after repeats', () {
+    const baseline = <String, dynamic>{
+      'team_a_id': 'team-a', 'team_b_id': 'team-b',
+      'team_a_wins': 3, 'team_b_wins': 1, 'draws': 2,
+    };
+    const contradiction = <String, dynamic>{
+      'team_a_id': 'team-b', 'team_b_id': 'team-a',
+      'team_a_wins': 2, 'team_b_wins': 3, 'draws': 2,
+    };
+    const trustworthy = <String, dynamic>{
+      'team_a_id': 'team-a', 'team_b_id': 'team-c',
+      'team_a_wins': 1, 'team_b_wins': 0, 'draws': 0,
+    };
+    final visible = TeamProfileHeadToHeadSection.recordsForTeam(
+      'team-a', [baseline, contradiction, baseline, trustworthy]);
+    expect(visible, hasLength(1));
+    expect(visible.single['team_b_id'], 'team-c');
+    final totals = TeamProfileHeadToHeadSection.recordedTotals(
+      'team-a', [baseline, contradiction, baseline, trustworthy]);
+    expect(totals?.wins, 1);
+    expect(totals?.opponents, 1);
+    expect(TeamProfileHeadToHeadSection.recordedTotals(
+      'team-a', [baseline, contradiction]), isNull);
+  });
+
+  testWidgets('contradictory matchup is not presented as a result',
+      (tester) async {
+    await tester.pumpWidget(_wrap(TeamProfileHeadToHeadSection(
+      team: _team(),
+      headToHeadRecords: const [
+        {'team_a_id': 'team-a', 'team_b_id': 'team-b',
+         'team_a_wins': 3, 'team_b_wins': 1, 'draws': 1},
+        {'team_a_id': 'team-a', 'team_b_id': 'team-b',
+         'team_a_wins': 2, 'team_b_wins': 1, 'draws': 1},
+      ],
+    ), const Locale('en')));
+    await tester.pumpAndSettle();
+    expect(find.text('3 wins'), findsNothing);
+    expect(find.text('Head-to-head totals only, not a ranking change'),
+        findsNothing);
+    expect(find.text('Available head-to-head records cannot be verified'),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final locale in const [Locale('ar'), Locale('en')]) {
     testWidgets('localized team matchup totals render independently of current score: ${locale.languageCode}',
         (tester) async {
@@ -245,7 +309,8 @@ void main() {
       expect(find.text(ar
           ? 'إجمالي المواجهات المباشرة فقط، وليس تغييرًا في الترتيب'
           : 'Head-to-head totals only, not a ranking change'), findsOneWidget);
-      expect(find.text('3 - 1'), findsOneWidget);
+      expect(find.text('3 - 1'), findsNothing);
+      expect(find.text(ar ? '3 فوز' : '3 wins'), findsOneWidget);
       expect(find.text('—'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

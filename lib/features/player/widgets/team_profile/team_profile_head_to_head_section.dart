@@ -19,21 +19,52 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
   static int? validCount(dynamic value) =>
       value is int && value >= 0 ? value : null;
 
-  /// Fail closed if an aggregate row belongs to another team or references
-  /// the same team on both sides. A cached/malformed response must not be
-  /// presented as this team's confirmed sporting history.
+  /// Normalize aggregates relative to the displayed team. A mirrored
+  /// record must compare equal to its original (W/D/L, not A/B position).
+  static (int?, int?, int?) _countsForTeam(
+    String teamId,
+    Map<String, dynamic> row,
+  ) {
+    final isA = row['team_a_id'] == teamId;
+    return (
+      validCount(isA ? row['team_a_wins'] : row['team_b_wins']),
+      validCount(row['draws']),
+      validCount(isA ? row['team_b_wins'] : row['team_a_wins']),
+    );
+  }
+
+  /// A repeated row for the same opponent must not create duplicate cards.
+  /// If two rows disagree, neither can be trusted: hide that opponent rather
+  /// than silently selecting the first or showing contradictory results.
+  /// Unrelated, self-play and incomplete team identifiers are also excluded.
   static List<Map<String, dynamic>> recordsForTeam(
     String teamId,
     Iterable<Map<String, dynamic>> records,
   ) {
     final id = teamId.trim();
     if (id.isEmpty) return const [];
-    return records.where((row) {
+    final byOpponent = <String, Map<String, dynamic>>{};
+    final conflicts = <String>{};
+    for (final row in records) {
       final a = row['team_a_id'];
       final b = row['team_b_id'];
-      return (a == id && b is String && b.trim().isNotEmpty && b != id) ||
-          (b == id && a is String && a.trim().isNotEmpty && a != id);
-    }).toList(growable: false);
+      String? opponentId;
+      if (a == id && b is String && b.trim().isNotEmpty && b != id) {
+        opponentId = b;
+      } else if (b == id && a is String &&
+          a.trim().isNotEmpty && a != id) {
+        opponentId = a;
+      }
+      if (opponentId == null || conflicts.contains(opponentId)) continue;
+      final previous = byOpponent[opponentId];
+      if (previous == null) {
+        byOpponent[opponentId] = row;
+      } else if (_countsForTeam(id, previous) != _countsForTeam(id, row)) {
+        byOpponent.remove(opponentId);
+        conflicts.add(opponentId);
+      }
+    }
+    return byOpponent.values.toList(growable: false);
   }
 
   /// Aggregate only authenticated head-to-head counters belonging to this
@@ -188,7 +219,10 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      complete ? '$teamWins - $opponentWins' : '—',
+                      complete
+                          ? (isArabic ? '$teamWins فوز'
+                              : (teamWins == 1 ? '1 win' : '$teamWins wins'))
+                          : '—',
                       style: TextStyle(
                         color: ahead ? VSPColors.success : VSPColors.white,
                         fontWeight: FontWeight.bold,

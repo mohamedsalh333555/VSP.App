@@ -205,24 +205,27 @@ class MatchupRepository {
         .select('team_a_id,team_b_id,team_a_wins,team_b_wins,draws')
         .or('team_a_id.eq.$teamId,team_b_id.eq.$teamId');
     final rows = List<Map<String, dynamic>>.from(raw as List);
+    // Only request public opponent names for rows truly involving this team.
+    // Never broaden a second query using unrelated or malformed upstream IDs.
+    final scopedRows = rows.where((row) {
+      final a = row['team_a_id'];
+      final b = row['team_b_id'];
+      return a is String && b is String && a != b &&
+          isCanonicalTeamId(a) && isCanonicalTeamId(b) &&
+          (a == teamId || b == teamId);
+    }).toList(growable: false);
+    if (scopedRows.isEmpty) return [];
     final participantIds = <String>{
-      for (final row in rows)
-        if (row['team_a_id'] is String &&
-            isCanonicalTeamId(row['team_a_id'] as String))
-          row['team_a_id'] as String,
-      for (final row in rows)
-        if (row['team_b_id'] is String &&
-            isCanonicalTeamId(row['team_b_id'] as String))
-          row['team_b_id'] as String,
+      for (final row in scopedRows) row['team_a_id'] as String,
+      for (final row in scopedRows) row['team_b_id'] as String,
     };
-    if (participantIds.isEmpty) return [];
     final teams = await _supabase
         .from('teams_public')
         .select('id,name,logo_url')
         .inFilter('id', participantIds.toList());
     return withPublicTeamNames(
       teamId,
-      rows,
+      scopedRows,
       List<Map<String, dynamic>>.from(teams as List),
     );
   }
