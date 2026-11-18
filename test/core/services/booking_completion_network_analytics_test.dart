@@ -112,7 +112,7 @@ void main() {
       ));
       expect(analytics, contains('if (await send()) return true;'));
       expect(analytics, contains('parameters: safeParameters.isEmpty ? null : safeParameters,'));
-      expect(analytics, contains('catch (e)'));
+      expect(analytics, contains('catch (_)'));
       expect(analytics, contains('return false;'));
       // A failed analytics upload is auxiliary, never a booking failure gate.
       expect(receipt, contains('unawaited('));
