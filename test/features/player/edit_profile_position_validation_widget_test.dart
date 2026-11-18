@@ -59,6 +59,10 @@ Future<void> save(WidgetTester tester) async {
   await tester.ensureVisible(button);
   await tester.tap(button);
   await tester.pump();
+  // Feedback is an overlay toast with a three-second timer. Finish the
+  // user-visible feedback before closing this widget test.
+  await tester.pump(const Duration(seconds: 4));
+  await tester.pump();
 }
 
 void main() {
