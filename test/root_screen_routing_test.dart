@@ -113,7 +113,8 @@ void main() {
           role: 'owner', hasStadium: true, completedOwnerOnboarding: true,
         ),
       );
-      expect(redirect('/owner', complete), isNull);
+      // Completed owners enter the dashboard through RootScreen at '/'.
+      expect(redirect('/owner', complete), '/');
       expect(redirect('/documentation', complete), isNull);
       expect(redirect('/player', complete), '/owner');
     });

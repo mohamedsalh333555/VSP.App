@@ -40,7 +40,8 @@ void main() {
 
     test('verified owner can open dashboard but not player screens', () {
       final auth = session(role: 'owner');
-      expect(redirect('/owner', auth), isNull);
+      // The owner shell is reached through the canonical root destination.
+      expect(redirect('/owner', auth), '/');
       expect(redirect('/subscription-plans', auth), isNull);
       expect(redirect('/match/match-id', auth), '/owner');
     });
