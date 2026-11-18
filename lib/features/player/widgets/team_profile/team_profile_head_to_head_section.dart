@@ -19,9 +19,27 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
   static int? validCount(dynamic value) =>
       value is int && value >= 0 ? value : null;
 
+  /// Fail closed if an aggregate row belongs to another team or references
+  /// the same team on both sides. A cached/malformed response must not be
+  /// presented as this team's confirmed sporting history.
+  static List<Map<String, dynamic>> recordsForTeam(
+    String teamId,
+    Iterable<Map<String, dynamic>> records,
+  ) {
+    final id = teamId.trim();
+    if (id.isEmpty) return const [];
+    return records.where((row) {
+      final a = row['team_a_id'];
+      final b = row['team_b_id'];
+      return (a == id && b is String && b.trim().isNotEmpty && b != id) ||
+          (b == id && a is String && a.trim().isNotEmpty && a != id);
+    }).toList(growable: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final visibleRecords = recordsForTeam(team.id, headToHeadRecords);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,13 +55,23 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: VSPSpacing.sm),
+        if (visibleRecords.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md),
+            child: Text(
+              isArabic
+                  ? 'بيانات المواجهات المتاحة غير صالحة للعرض'
+                  : 'Available head-to-head records cannot be verified',
+              style: const TextStyle(color: VSPColors.textSecondary),
+            ),
+          ),
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: headToHeadRecords.length,
+          itemCount: visibleRecords.length,
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
-            final rec = headToHeadRecords[index];
+            final rec = visibleRecords[index];
             final isTeamA = rec['team_a_id'] == team.id;
             final dynamic opponent = isTeamA ? rec['team_b'] : rec['team_a'];
             final opponentMap = opponent is Map ? opponent : const {};
