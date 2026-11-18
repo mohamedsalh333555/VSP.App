@@ -94,4 +94,50 @@ void main() {
     );
     expect(current.canBook, isTrue);
   });
+  test('live maintenance and invalid price or deposit disable booking', () {
+    final route = venue('venue-a', 'Pitch A');
+    final cases = <Map<String, dynamic>>[
+      {'maintenance_until': DateTime.now().add(const Duration(days: 2)).toUtc().toIso8601String()},
+      {'price_per_hour': 0, 'pricePerHour': 0, 'base_price': 0, 'basePrice': 0},
+      {'price_per_hour': -1, 'pricePerHour': -1, 'base_price': -1, 'basePrice': -1},
+      {'price_per_hour': 'NaN', 'pricePerHour': 'NaN', 'base_price': 'NaN', 'basePrice': 'NaN'},
+      {'price_per_hour': 100, 'pricePerHour': 100, 'base_price': 0, 'basePrice': 0},
+      {'needs_deposit': true, 'needsDeposit': true, 'deposit_amount': 0, 'depositAmount': 0},
+      {'needs_deposit': true, 'needsDeposit': true, 'deposit_amount': -1, 'depositAmount': -1},
+      {'needs_deposit': false, 'needsDeposit': false, 'deposit_amount': 'NaN', 'depositAmount': 'NaN'},
+    ];
+    for (final fields in cases) {
+      final result = StadiumSnapshotResolver().resolve(
+        routeStadium: route,
+        snapshot: live({...route.toMap(), 'id': route.id, ...fields}),
+      );
+      expect(result.canBook, isFalse, reason: 'Unverified booking fields: $fields');
+    }
+    final bookable = StadiumSnapshotResolver().resolve(
+      routeStadium: route,
+      snapshot: live({
+        ...route.toMap(), 'id': route.id, 'needs_deposit': true,
+        'needsDeposit': true, 'deposit_amount': 20, 'depositAmount': 20,
+      }),
+    );
+    expect(bookable.canBook, isTrue);
+  });
+
+  test('duplicate venue source rows are ambiguous even when first is valid', () {
+    final route = venue('venue-a', 'Pitch A');
+    final resolver = StadiumSnapshotResolver();
+    final good = {...route.toMap(), 'id': route.id};
+    final first = resolver.resolve(routeStadium: route, snapshot: live(good));
+    expect(first.canBook, isTrue);
+    final ambiguous = resolver.resolve(
+      routeStadium: route,
+      snapshot: AsyncSnapshot.withData(ConnectionState.active, [
+        good, {...good, 'name': 'Different venue', 'price_per_hour': 1},
+      ]),
+    );
+    expect(ambiguous.canBook, isFalse);
+    expect(ambiguous.parseFailed, isTrue);
+    expect(ambiguous.stadium.name, first.stadium.name);
+  });
+
 }

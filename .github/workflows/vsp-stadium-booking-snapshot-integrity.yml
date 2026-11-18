@@ -1,0 +1,38 @@
+name: VSP Stadium Booking Snapshot Integrity
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'lib/features/player/widgets/stadium_details/stadium_snapshot_resolver.dart'
+      - 'test/features/player/stadium_snapshot_resolver_test.dart'
+      - '.github/workflows/vsp-stadium-booking-snapshot-integrity.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/features/player/widgets/stadium_details/stadium_snapshot_resolver.dart'
+      - 'test/features/player/stadium_snapshot_resolver_test.dart'
+      - '.github/workflows/vsp-stadium-booking-snapshot-integrity.yml'
+permissions:
+  contents: read
+concurrency:
+  group: stadium-booking-integrity-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verified-live-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/player/widgets/stadium_details/stadium_snapshot_resolver.dart
+          test/features/player/stadium_snapshot_resolver_test.dart
+      - run: flutter test --concurrency=1 test/features/player/stadium_snapshot_resolver_test.dart

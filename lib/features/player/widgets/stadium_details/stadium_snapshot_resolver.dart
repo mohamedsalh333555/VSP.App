@@ -19,7 +19,9 @@ class StadiumSnapshotResolver {
 
     var stadium = _lastValid ?? routeStadium;
     var parseFailed = false;
-    final hasRow = snapshot.hasData && snapshot.data!.isNotEmpty;
+    final hasRow = snapshot.hasData && snapshot.data!.length == 1;
+    // A primary-key filtered venue feed must contain exactly one source row.
+    // Duplicates are ambiguous: never select rows.first and allow booking.
     if (snapshot.connectionState == ConnectionState.active &&
         !snapshot.hasError && hasRow) {
       try {
@@ -34,12 +36,21 @@ class StadiumSnapshotResolver {
       }
     }
 
+    final priceIsValid = stadium.basePrice.isFinite &&
+        stadium.basePrice > 0 && stadium.pricePerHour.isFinite &&
+        stadium.pricePerHour > 0;
+    final depositIsValid = stadium.depositAmount.isFinite &&
+        stadium.depositAmount >= 0 &&
+        (!stadium.needsDeposit || stadium.depositAmount > 0);
+
     return StadiumSnapshotResolution(
       stadium: stadium,
-      parseFailed: parseFailed,
+      parseFailed: parseFailed || (snapshot.hasData && snapshot.data!.length > 1),
       canBook: snapshot.connectionState == ConnectionState.active &&
           !snapshot.hasError && !parseFailed && hasRow &&
-          stadium.isVerified && !stadium.isBlocked,
+          stadium.isVerified && !stadium.isBlocked &&
+          !stadium.isUnderMaintenance &&
+          priceIsValid && depositIsValid,
     );
   }
 }
