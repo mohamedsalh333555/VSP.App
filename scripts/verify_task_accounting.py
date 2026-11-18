@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only consistency check for VSP's active 633-subtask execution scope.
+"""Read-only consistency check for VSP's active 640-subtask execution scope.
 
 This checks inventory/accounting only. It never promotes code or tests to VERIFIED.
 """
@@ -17,12 +17,17 @@ def main():
     ids = [task_id for _, task_id in rows]
     plan_ids = re.findall(r"^- (\d{2}\.\d{2}) —", plan, re.M)
     errors = []
-    if len(ids) != 633 or len(set(ids)) != 633:
-        errors.append("The active scope must contain exactly 633 unique subtask IDs.")
+    if len(ids) != 640 or len(set(ids)) != 640:
+        errors.append("The active scope must contain exactly 640 unique subtask IDs.")
+    original = [task_id for task_id in ids if not task_id.startswith("86.")]
+    if len(original) != 633 or len(set(original)) != 633:
+        errors.append("Original 633 unique IDs must remain intact.")
+    if sorted(task_id for task_id in ids if task_id.startswith("86.")) != [f"86.{i:02d}" for i in range(1, 8)]:
+        errors.append("The seven new Phase 10 task IDs must be exactly 86.01-86.07.")
     if len(plan_ids) != len(ids) or set(plan_ids) != set(ids):
         errors.append("The execution plan loses, duplicates, or adds core subtask IDs.")
-    if len({task_id.split('.')[0] for task_id in ids}) != 84:
-        errors.append("Expected 84 active parent items.")
+    if len({task_id.split('.')[0] for task_id in ids}) != 85:
+        errors.append("Expected 85 active parent items.")
     if any(task_id.startswith("56.") for task_id in ids + plan_ids):
         errors.append("Cancelled group 56 must not reappear in the active scope.")
     if not all(f"83.{index:02d}" in ids for index in range(1, 8)):

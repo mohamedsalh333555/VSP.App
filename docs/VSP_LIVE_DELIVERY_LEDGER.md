@@ -1,3 +1,9 @@
+## 2026-11-18 — Full Product Experience scoped intake: 7 new open tasks (328/312)
+
+- **633 original unique IDs preserved**; group **86.01–86.07** contains **7 NEW OPEN tasks**, so **640 active / 328 accepted / 312 open (51.25%)**.
+- The other nine behavioral principles and five implementation batches are linked to existing IDs without double-counting; [scope and matrix](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md).
+- Documentation and accounting only: no feature claimed complete, no production/Paymob/main/APK changes.
+
 ## 2026-11-18 — Neutral password recovery and safe dialog close (+1; 306/327)
 
 - **11.08:** bilingual public recovery acknowledgement now stays identical for successful requests, unrecognized accounts, false outcomes or thrown provider exceptions. No message includes account-existence or raw backend information. Fixed a Flutter use-after-dispose crash by moving `TextEditingController` ownership into a stateful dialog until the close transition fully unmounts.
