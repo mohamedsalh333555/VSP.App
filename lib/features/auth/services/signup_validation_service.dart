@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/phone_utils.dart';
+import '../../../core/utils/email_address_validator.dart';
 import '../../../l10n/app_localizations.dart';
 
 enum SignupValidationError {
@@ -93,7 +94,7 @@ class SignupValidationService {
 
     // Check email syntax before any phone lookup or registration network call.
     // The backend remains authoritative for actual email verification.
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$').hasMatch(trimmedEmail)) {
+    if (!EmailAddressValidator.isValid(trimmedEmail)) {
       return SignupValidationResult.invalid(SignupValidationError.invalidEmail);
     }
 

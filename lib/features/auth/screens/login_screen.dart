@@ -11,6 +11,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/email_address_validator.dart';
 import '../widgets/forgot_password_dialog.dart';
 import '../widgets/login_footer.dart';
 import '../widgets/login_social_auth_row.dart';
@@ -47,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
  if (_isLoading) return;
  // Basic Validation
  final email = _emailController.text.trim().toLowerCase();
- final isValidEmail = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
+ final isValidEmail = EmailAddressValidator.isValid(email);
  if (!isValidEmail || _passwordController.text.isEmpty) {
  HapticFeedback.heavyImpact();
  final isAr = Localizations.localeOf(context).languageCode == 'ar';

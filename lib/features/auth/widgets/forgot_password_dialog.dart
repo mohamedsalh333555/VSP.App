@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/email_address_validator.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../services/password_reset_privacy_message.dart';
@@ -47,7 +48,7 @@ class _ForgotPasswordDialogContentState
     if (_isLoading) return;
     final l10n = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
+    if (!EmailAddressValidator.isValid(email)) {
       VSPFeedback.showError(context, l10n.invalidEmail);
       return;
     }

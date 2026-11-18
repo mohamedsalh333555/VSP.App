@@ -6,18 +6,22 @@ on:
     branches: [uxlp-44-implementation]
     paths:
       - ".github/workflows/vsp-signup-error-validation.yml"
+      - "lib/core/utils/email_address_validator.dart"
       - "lib/features/auth/services/signup_validation_service.dart"
       - "lib/features/auth/screens/signup_screen.dart"
       - "test/unit/signup_invalid_email_contract_test.dart"
+      - "test/core/utils/email_address_validator_test.dart"
       - "test/unit/signup_validation_service_test.dart"
       - "test/features/auth/signup_components_test.dart"
   pull_request:
     branches: [main]
     paths:
       - ".github/workflows/vsp-signup-error-validation.yml"
+      - "lib/core/utils/email_address_validator.dart"
       - "lib/features/auth/services/signup_validation_service.dart"
       - "lib/features/auth/screens/signup_screen.dart"
       - "test/unit/signup_invalid_email_contract_test.dart"
+      - "test/core/utils/email_address_validator_test.dart"
       - "test/unit/signup_validation_service_test.dart"
 permissions:
   contents: read
@@ -39,8 +43,11 @@ jobs:
       - name: Analyze signup validation and bilingual error tests
         run: >-
           flutter analyze --no-fatal-infos
+          lib/core/utils/email_address_validator.dart
+          test/core/utils/email_address_validator_test.dart
           lib/features/auth/services/signup_validation_service.dart
           lib/features/auth/screens/signup_screen.dart
+          test/core/utils/email_address_validator_test.dart
           test/unit/signup_invalid_email_contract_test.dart
           test/unit/signup_validation_service_test.dart
           test/features/auth/signup_components_test.dart

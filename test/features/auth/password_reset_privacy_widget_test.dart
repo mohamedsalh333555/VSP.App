@@ -103,6 +103,34 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('recovery rejects malformed email before contacting the provider',
+      (tester) async {
+    final auth = FakePasswordAuth('success');
+    await tester.pumpWidget(recoveryHost(auth));
+    await tester.tap(find.text('Open recovery'));
+    await tester.pumpAndSettle();
+    for (final email in [
+      '@',
+      'user@',
+      'user@host',
+      'user@@example.com',
+      'user name@example.com',
+      'user@host.',
+      'user@host.c',
+    ]) {
+      await tester.enterText(find.byType(TextFormField).first, email);
+      await tester.tap(find.byType(ElevatedButton).last);
+      await tester.pump();
+      expect(auth.calls, 0, reason: 'Malformed address must not submit: $email');
+      expect(find.byType(AlertDialog), findsOneWidget);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump();
+    }
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('cancel and Android back leave password recovery unsubmitted',
       (tester) async {
     final auth = FakePasswordAuth('success');
