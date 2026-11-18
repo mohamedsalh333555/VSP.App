@@ -82,6 +82,61 @@ void main() {
     expect(TeamProfileHeadToHeadSection.validCount(3), 3);
   });
 
+  test('only announced Team Skills awards are displayed; repeats are removed', () {
+    final rows = <Map<String, dynamic>>[
+      {
+        'cup_id': 'cup-a', 'cup_name': 'Cup A',
+        'award_type': 'team_champion', 'announced_at': '2026-11-17T18:00:00Z',
+        'team_id': 'team-a',
+      },
+      {
+        'cup_id': 'cup-a', 'cup_name': 'Cup A',
+        'award_type': 'team_champion', 'announced_at': '2026-11-17T18:00:00Z',
+        'team_id': 'team-a',
+      },
+      {
+        'cup_id': 'cup-b', 'cup_name': 'Cup B',
+        'award_type': 'best_goalkeeper', 'announced_at': '2026-11-18T18:00:00Z',
+        'player_id': 'player-1',
+      },
+      {
+        'cup_id': 'cup-c', 'award_type': 'team_champion',
+        'announced_at': null,
+      },
+      {
+        'cup_id': 'cup-d', 'award_type': 'team_champion',
+        'announced_at': 'not-a-date',
+      },
+      {
+        'cup_id': '', 'award_type': 'team_champion',
+        'announced_at': '2026-11-17T18:00:00Z',
+      },
+      {
+        'cup_id': 'cup-e', 'award_type': 'unverified_award',
+        'announced_at': '2026-11-17T18:00:00Z',
+      },
+    ];
+    final awards = TeamSkillsHistorySection.visibleAwards(rows);
+    expect(awards.map((row) => row['cup_id']), ['cup-a', 'cup-b']);
+    expect(awards.length, 2);
+  });
+
+  test('head-to-head rows must involve exactly the displayed team', () {
+    final rows = <Map<String, dynamic>>[
+      {'team_a_id': 'team-a', 'team_b_id': 'team-b', 'team_a_wins': 1},
+      {'team_a_id': 'team-c', 'team_b_id': 'team-a', 'team_b_wins': 2},
+      {'team_a_id': 'team-x', 'team_b_id': 'team-y', 'team_a_wins': 40},
+      {'team_a_id': 'team-a', 'team_b_id': 'team-a', 'team_a_wins': 99},
+      {'team_a_id': 'team-a', 'team_b_id': null},
+      {'team_a_id': 'team-a', 'team_b_id': '  '},
+    ];
+    final visible = TeamProfileHeadToHeadSection.recordsForTeam('team-a', rows);
+    expect(visible.length, 2);
+    expect(visible[0]['team_b_id'], 'team-b');
+    expect(visible[1]['team_a_id'], 'team-c');
+    expect(TeamProfileHeadToHeadSection.recordsForTeam(' ', rows), isEmpty);
+  });
+
   for (final locale in const [Locale('ar'), Locale('en')]) {
     testWidgets('localized team matchup totals render independently of current score: ${locale.languageCode}',
         (tester) async {
