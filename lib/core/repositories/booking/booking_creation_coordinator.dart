@@ -170,7 +170,9 @@ class BookingCreationCoordinator {
           e.message.toLowerCase().contains('exclude')) {
         throw Exception('عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.');
       }
-      rethrow;
+      // PostgrestException can include SQL diagnostics, raw account IDs and
+      // backend details. Never bubble those to a UI caller unredacted.
+      throw Exception(safeRpcFailureMessage({'code': e.code}));
     } catch (e) {
       VSPLogger.e('Atomic booking creation failed (details redacted)');
       rethrow;

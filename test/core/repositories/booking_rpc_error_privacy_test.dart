@@ -32,6 +32,18 @@ void main() {
       expect(actual, 'PRICE_MISMATCH');
     });
 
+    test('database error codes and private details stay generic', () {
+      for (final rawCode in ['23505', '42501', 'P0001', 'INTERNAL_DB_ERROR']) {
+        final actual = BookingCreationCoordinator.safeRpcFailureMessage({
+          'code': rawCode,
+          'message': 'select * from auth.users where phone=01001234567',
+        });
+        expect(actual, contains('تعذر إتمام الحجز'));
+        expect(actual, isNot(contains('auth.users')));
+        expect(actual, isNot(contains('01001234567')));
+      }
+    });
+
     test('unknown codes and raw provider messages are not exposed', () {
       const privateData = 'customer@example.com 01001234567 token=secret';
       for (final response in <Map<String, dynamic>>[
