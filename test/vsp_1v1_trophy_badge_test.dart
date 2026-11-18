@@ -57,14 +57,18 @@ void main() {
   testWidgets('legacy medal is clearly historical for Arabic screen readers',
       (tester) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     await tester.pumpWidget(const MaterialApp(
       locale: Locale('ar'),
       home: Scaffold(body: Vsp1v1TrophyBadge(titles: 2)),
     ));
     expect(find.text('🏆 ×2'), findsOneWidget);
-    expect(find.bySemanticsLabel('ألقاب 1 ضد 1 التاريخية: 2'),
-        findsOneWidget);
+    expect(
+      find.byWidgetPredicate((widget) =>
+          widget is Semantics &&
+          widget.properties.label == 'ألقاب 1 ضد 1 التاريخية: 2'),
+      findsOneWidget,
+    );
+    semantics.dispose();
   });
 
   testWidgets('historical title lookup does not repeat on a normal rebuild',

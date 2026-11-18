@@ -26,6 +26,7 @@ class Vsp1v1TrophyBadge extends StatelessWidget {
     final label = titles == 1 ? '🏆 1' : '🏆 ×$titles';
 
     return Semantics(
+      container: true,
       label: description,
       child: ExcludeSemantics(
         child: Tooltip(
