@@ -17,6 +17,11 @@ class TeamProfileRosterSection extends StatelessWidget {
     this.onRetry,
   });
 
+  static String publicMemberName(String? name, {required bool isArabic}) {
+    final value = name?.trim() ?? '';
+    return value.isEmpty ? (isArabic ? 'لاعب' : 'Player') : value;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -73,7 +78,7 @@ class TeamProfileRosterSection extends StatelessWidget {
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: members.map((member) => _buildMemberChip(member)).toList(),
+                          children: members.map((member) => _buildMemberChip(member, isArabic)).toList(),
                         ),
                       ],
                     ),
@@ -82,7 +87,7 @@ class TeamProfileRosterSection extends StatelessWidget {
     );
   }
 
-  Widget _buildMemberChip(UserModel user) {
+  Widget _buildMemberChip(UserModel user, bool isArabic) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -108,7 +113,7 @@ class TeamProfileRosterSection extends StatelessWidget {
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              (user.name?.trim().isNotEmpty ?? false) ? user.name!.trim() : 'Player',
+              publicMemberName(user.name, isArabic: isArabic),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
