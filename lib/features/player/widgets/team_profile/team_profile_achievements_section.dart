@@ -60,6 +60,13 @@ class TeamProfileAchievementsSection extends StatelessWidget {
           TeamAchievementBadges(summary: verifiedSummary!),
         ],
         const SizedBox(height: VSPSpacing.md),
+        Text(
+          isArabic
+              ? 'شارات نشاط الفريق — ليست ألقاب بطولات رسمية'
+              : 'Team activity badges — not official tournament titles',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+        ),
+        const SizedBox(height: VSPSpacing.sm),
         SizedBox(
           height: MediaQuery.textScalerOf(context).scale(1) > 1.4 ? 152 : 122,
           child: ListView.separated(
