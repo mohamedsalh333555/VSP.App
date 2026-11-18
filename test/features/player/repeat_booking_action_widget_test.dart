@@ -162,6 +162,24 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('missing or invalid current rent never opens an invented free booking',
+      (tester) async {
+    for (final price in [0.0, -1.0, double.nan, double.infinity]) {
+      await tester.pumpWidget(_screen(RepeatBookingAction(
+        key: ValueKey('price-$price'),
+        stadiumId: 'venue-1',
+        canContinue: () => true,
+        loadLatestStadium: (_) async => _stadium(price: price),
+        detailsBuilder: (_) => const Text('UNSAFE_REBOOKING'),
+      )));
+      await tester.tap(find.text('Book again'));
+      await tester.pumpAndSettle();
+      expect(find.text('UNSAFE_REBOOKING'), findsNothing);
+      expect(find.textContaining('Could not verify the latest venue details'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('wrong venue id from adapter is rejected', (tester) async {
     await tester.pumpWidget(_screen(RepeatBookingAction(
       stadiumId: 'venue-1',

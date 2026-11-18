@@ -70,7 +70,8 @@ class _RepeatBookingActionState extends State<RepeatBookingAction> {
         return;
       }
       if (latest == null || latest.id != widget.stadiumId ||
-          !latest.isVerified || latest.isBlocked || latest.isUnderMaintenance) {
+          !latest.isVerified || latest.isBlocked || latest.isUnderMaintenance ||
+          !latest.basePrice.isFinite || latest.basePrice <= 0) {
         setState(() => _hasError = true);
         return;
       }
