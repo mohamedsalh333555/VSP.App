@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,7 @@ class FakePasswordAuth extends ChangeNotifier implements AuthProvider {
   final String behavior;
   int calls = 0;
   String? lastEmail;
+  final Completer<bool> pendingRequest = Completer<bool>();
 
   @override
   Future<bool> resetPassword(String email) async {
@@ -20,6 +22,7 @@ class FakePasswordAuth extends ChangeNotifier implements AuthProvider {
     if (behavior == 'throws') {
       throw StateError('Backend details must not be shown');
     }
+    if (behavior == 'pending') return pendingRequest.future;
     return behavior == 'success';
   }
 
@@ -152,6 +155,39 @@ void main() {
     expect(auth.calls, 0);
     expect(find.text('Open recovery'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Android back and barrier do not abandon an in-flight recovery',
+      (tester) async {
+    final auth = FakePasswordAuth('pending');
+    await tester.pumpWidget(recoveryHost(auth));
+    await tester.tap(find.text('Open recovery'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'captain@example.com');
+    await tester.tap(find.byType(ElevatedButton).last);
+    await tester.pump();
+    expect(auth.calls, 1);
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    // System back and outside taps cannot silently close an active request.
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(auth.calls, 1);
+
+    auth.pendingRequest.complete(false);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text(PasswordResetPrivacyMessage.acknowledgement(
+      isArabic: false,
+    )), findsOneWidget);
+    expect(auth.calls, 1);
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump();
   });
 
   test('acknowledgements never include provider responses or account status', () {

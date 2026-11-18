@@ -65,6 +65,7 @@ class _ForgotPasswordDialogContentState
     if (!mounted) return;
 
     final hostContext = widget.hostContext;
+    setState(() => _isLoading = false);
     Navigator.of(context).pop();
     // The dialog's own context is removed after pop; use the originating
     // screen's context to display the neutral acknowledgement.
@@ -79,7 +80,11 @@ class _ForgotPasswordDialogContentState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return AlertDialog(
+    return PopScope(
+      // While the provider request is pending, Android back and barrier taps
+      // cannot dismiss the form and leave an ambiguous background request.
+      canPop: !_isLoading,
+      child: AlertDialog(
       scrollable: true,
       backgroundColor: VSPColors.surface,
       shape: RoundedRectangleBorder(
@@ -155,6 +160,7 @@ class _ForgotPasswordDialogContentState
           ],
         ),
       ],
+      ),
     );
   }
 }
