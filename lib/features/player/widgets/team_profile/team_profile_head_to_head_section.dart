@@ -36,10 +36,38 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
     }).toList(growable: false);
   }
 
+  /// Aggregate only authenticated head-to-head counters belonging to this
+  /// team. An invalid response, duplicate opponent, or unplayed zero row must
+  /// never be presented as progress or a ranking movement.
+  static ({int wins, int draws, int losses, int opponents})? recordedTotals(
+    String teamId,
+    Iterable<Map<String, dynamic>> records,
+  ) {
+    final seenOpponents = <String>{};
+    var wins = 0, draws = 0, losses = 0;
+    for (final row in recordsForTeam(teamId, records)) {
+      final isHome = row['team_a_id'] == teamId;
+      final opponent = isHome ? row['team_b_id'] : row['team_a_id'];
+      if (opponent is! String || seenOpponents.contains(opponent)) continue;
+      final w = validCount(isHome ? row['team_a_wins'] : row['team_b_wins']);
+      final l = validCount(isHome ? row['team_b_wins'] : row['team_a_wins']);
+      final d = validCount(row['draws']);
+      if (w == null || l == null || d == null || w + l + d == 0) continue;
+      seenOpponents.add(opponent);
+      wins += w;
+      losses += l;
+      draws += d;
+    }
+    if (seenOpponents.isEmpty) return null;
+    return (wins: wins, draws: draws, losses: losses,
+      opponents: seenOpponents.length);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final visibleRecords = recordsForTeam(team.id, headToHeadRecords);
+    final totals = recordedTotals(team.id, headToHeadRecords);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,6 +83,23 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: VSPSpacing.sm),
+        if (totals != null) ...[
+          Text(
+            isArabic
+                ? 'المواجهات المسجلة: ${totals.wins} فوز • ${totals.draws} تعادل • ${totals.losses} خسارة'
+                : 'Recorded matchups: ${totals.wins} W • ${totals.draws} D • ${totals.losses} L',
+            style: const TextStyle(
+              color: VSPColors.textPrimary, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            isArabic
+                ? 'إجمالي المواجهات المباشرة فقط، وليس تغييرًا في الترتيب'
+                : 'Head-to-head totals only, not a ranking change',
+            style: const TextStyle(
+              color: VSPColors.textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: VSPSpacing.sm),
+        ],
         if (visibleRecords.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md),

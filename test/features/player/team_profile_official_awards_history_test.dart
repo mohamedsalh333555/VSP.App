@@ -143,6 +143,29 @@ void main() {
       '08c5fc4b-189d-4f41-b1e0-5798d1f9a804)or(true'), isFalse);
   });
 
+  test('team match progress is deduplicated and never invents a rank', () {
+    final history = <Map<String, dynamic>>[
+      {'team_a_id': 'team-a', 'team_b_id': 'team-b',
+       'team_a_wins': 3, 'team_b_wins': 1, 'draws': 2},
+      {'team_a_id': 'team-b', 'team_b_id': 'team-a',
+       'team_a_wins': 1, 'team_b_wins': 3, 'draws': 2},
+      {'team_a_id': 'team-a', 'team_b_id': 'team-c',
+       'team_a_wins': -1, 'team_b_wins': 0, 'draws': 1},
+      {'team_a_id': 'team-a', 'team_b_id': 'team-d',
+       'team_a_wins': 0, 'team_b_wins': 0, 'draws': 0},
+      {'team_a_id': 'team-x', 'team_b_id': 'team-y',
+       'team_a_wins': 50, 'team_b_wins': 0, 'draws': 0},
+    ];
+    final totals = TeamProfileHeadToHeadSection.recordedTotals('team-a', history);
+    expect(totals, isNotNull);
+    expect(totals!.wins, 3);
+    expect(totals.draws, 2);
+    expect(totals.losses, 1);
+    expect(totals.opponents, 1);
+    expect(TeamProfileHeadToHeadSection.recordedTotals(
+      'outsider', history), isNull);
+  });
+
   test('head-to-head rows must involve exactly the displayed team', () {
     final rows = <Map<String, dynamic>>[
       {'team_a_id': 'team-a', 'team_b_id': 'team-b', 'team_a_wins': 1},
@@ -190,6 +213,12 @@ void main() {
                            : 'Wins: 3 | Draws: 2 | Losses: 1'), findsOneWidget);
       expect(find.text(ar ? 'بيانات المواجهات غير مكتملة'
                           : 'Head-to-head counts unavailable'), findsOneWidget);
+      expect(find.text(ar
+          ? 'المواجهات المسجلة: 3 فوز • 2 تعادل • 1 خسارة'
+          : 'Recorded matchups: 3 W • 2 D • 1 L'), findsOneWidget);
+      expect(find.text(ar
+          ? 'إجمالي المواجهات المباشرة فقط، وليس تغييرًا في الترتيب'
+          : 'Head-to-head totals only, not a ranking change'), findsOneWidget);
       expect(find.text('3 - 1'), findsOneWidget);
       expect(find.text('—'), findsOneWidget);
       expect(tester.takeException(), isNull);
