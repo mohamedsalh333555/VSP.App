@@ -171,10 +171,12 @@ void main() {
 
     // System back and outside taps cannot silently close an active request.
     await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
+    // The spinner intentionally animates while the request is pending.
+    // pumpAndSettle must not be used for an in-flight async operation.
+    await tester.pump(const Duration(milliseconds: 350));
     expect(find.byType(AlertDialog), findsOneWidget);
     await tester.tapAt(const Offset(10, 10));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 350));
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(auth.calls, 1);
 
