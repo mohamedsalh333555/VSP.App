@@ -5,6 +5,8 @@ import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/features/auth/screens/create_account_screen.dart';
 import 'package:vsp_application/features/auth/screens/login_screen.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations_ar.dart';
+import 'package:vsp_application/l10n/app_localizations_en.dart';
 import 'package:vsp_application/shared/widgets/vsp_animated_button.dart';
 
 class FakeEntryAuth extends ChangeNotifier implements AuthProvider {
@@ -77,7 +79,9 @@ void main() {
         ));
         await tester.pump();
         expect(auth.lastRole, owner ? 'owner' : 'player');
-        final loginLabel = lang == 'ar' ? 'تسجيل الدخول' : 'Log in';
+        final loginLabel = lang == 'ar'
+            ? AppLocalizationsAr().login
+            : AppLocalizationsEn().login;
         // The text of the link and localized auth copy remain visible in the tree.
         expect(find.text(loginLabel), findsWidgets);
         await tester.ensureVisible(find.text(loginLabel).last);
