@@ -119,8 +119,8 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       if (activeTeam != null) {
         await _loadActiveLeagueForTeam(activeTeam, userId, generation);
       }
-    } catch (e) {
-      debugPrint('Error loading user teams: $e');
+    } catch (_) {
+      debugPrint('Error loading user teams (details redacted)');
       if (mounted &&
           generation == _userTeamRequestGeneration &&
           context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
@@ -149,8 +149,8 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
               activeLeague.status == 'open')) {
         setState(() => _selectedMainTab = 1);
       }
-    } catch (e) {
-      debugPrint('Error loading active team league: $e');
+    } catch (_) {
+      debugPrint('Error loading active team league (details redacted)');
       if (mounted &&
           generation == _userTeamRequestGeneration &&
           context.read<app_auth.AuthProvider>().currentUser?.id == userId &&
