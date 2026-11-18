@@ -9,7 +9,7 @@ Stadium _stadium({String id = 'venue-1', double price = 250}) =>
     Stadium.fromFirestore({
       'id': id,
       'name': 'Current Pitch',
-      'base_price': price,
+      'price_per_hour': price,
       'is_verified': true,
       'is_blocked': false,
       'is_deleted_by_owner': false,
