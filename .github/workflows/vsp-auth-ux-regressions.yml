@@ -16,6 +16,7 @@ on:
       - "test/features/auth/auth_reduced_motion_widget_test.dart"
       - "test/features/auth/select_role_accessibility_widget_test.dart"
       - "test/features/auth/signup_responsive_name_fields_test.dart"
+      - "test/features/auth/auth_screen_keyboard_responsive_test.dart"
   pull_request:
     branches: [main]
     paths:
@@ -29,6 +30,7 @@ on:
       - "test/features/auth/auth_reduced_motion_widget_test.dart"
       - "test/features/auth/select_role_accessibility_widget_test.dart"
       - "test/features/auth/signup_responsive_name_fields_test.dart"
+      - "test/features/auth/auth_screen_keyboard_responsive_test.dart"
 permissions:
   contents: read
 concurrency:
@@ -57,6 +59,7 @@ jobs:
           test/features/auth/auth_reduced_motion_widget_test.dart
           test/features/auth/select_role_accessibility_widget_test.dart
           test/features/auth/signup_responsive_name_fields_test.dart
+          test/features/auth/auth_screen_keyboard_responsive_test.dart
       - name: Test animations, role choice, screen sizes and Arabic RTL
         run: >-
           flutter test --concurrency=1
