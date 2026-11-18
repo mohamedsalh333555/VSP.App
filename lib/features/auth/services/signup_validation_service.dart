@@ -91,140 +91,9 @@ class SignupValidationService {
       return SignupValidationResult.invalid(SignupValidationError.fillAllFields);
     }
 
-    // Validate the email before any phone-uniqueness lookup or sign-up
-    // request. Keep this a conservative syntax check; the auth provider
-    // remains responsible for validating and verifying the address.
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}
-
-    if (!isAtLeast18(dateOfBirth)) {
-      return SignupValidationResult.invalid(SignupValidationError.mustBe18OrOlder);
-    }
-
-    final normalizedPhone = PhoneUtils.normalize(trimmedPhone);
-    if (normalizedPhone == null || normalizedPhone.length != 11 || !normalizedPhone.startsWith("01")) {
-      return SignupValidationResult.invalid(SignupValidationError.invalidPhone);
-    }
-
-    if (password != confirmPassword) {
-      return SignupValidationResult.invalid(SignupValidationError.passwordMismatch);
-    }
-
-    if (password.length < 8) {
-      return SignupValidationResult.invalid(SignupValidationError.passwordTooShort);
-    }
-
-    return SignupValidationResult.valid(
-      normalizedPhone: normalizedPhone,
-      fullName: '$trimmedFirst $trimmedLast',
-    );
-  }
-
-  /// Returns true only when the user has reached their 18th birthday.
-  static bool isAtLeast18(DateTime dateOfBirth, {DateTime? today}) {
-    final current = today ?? DateTime.now();
-    if (dateOfBirth.isAfter(current)) return false;
-    var age = current.year - dateOfBirth.year;
-    final birthdayThisYear = DateTime(current.year, dateOfBirth.month, dateOfBirth.day);
-    if (birthdayThisYear.isAfter(current)) age--;
-    return age >= 18;
-  }
-
-  /// Maps validation error enum to localized text.
-  static String getLocalizedErrorMessage(SignupValidationError error, AppLocalizations l10n) {
-    switch (error) {
-      case SignupValidationError.pleaseAgreeToTerms:
-        return l10n.pleaseAgreeToTerms;
-      case SignupValidationError.fillAllFields:
-        return l10n.fillAllFields;
-      case SignupValidationError.pleaseEnterDob:
-        return l10n.pleaseEnterDob;
-      case SignupValidationError.mustBe18OrOlder:
-        return l10n.mustBe18OrOlder;
-      case SignupValidationError.invalidPhone:
-        return l10n.invalidPhone;
-      case SignupValidationError.invalidEmail:
-        return l10n.invalidEmail;
-      case SignupValidationError.passwordMismatch:
-        return l10n.passwordMismatch;
-      case SignupValidationError.passwordTooShort:
-        return l10n.passwordTooShort;
-    }
-  }
-
-  /// Computes password strength, percentage and visual color indicator.
-  static PasswordStrength calculatePasswordStrength(
-    String password, {bool isArabic = false}
-  ) {
-    double strength = 0.0;
-    if (password.length >= 8) strength += 0.2;
-    if (RegExp(r'[a-z]').hasMatch(password)) strength += 0.2;
-    if (RegExp(r'[A-Z]').hasMatch(password)) strength += 0.2;
-    if (RegExp(r'[0-9]').hasMatch(password)) strength += 0.2;
-    if (RegExp(r'[!@#\$&*~]').hasMatch(password)) strength += 0.2;
-
-    Color color = Colors.red;
-    String label = isArabic ? 'ضعيفة' : 'Weak';
-    if (strength > 0.4) {
-      color = Colors.orange;
-      label = isArabic ? 'متوسطة' : 'Medium';
-    }
-    if (strength >= 0.8) {
-      color = VSPColors.accent;
-      label = isArabic ? 'قوية' : 'Strong';
-    }
-
-    return PasswordStrength(
-      score: strength,
-      label: label,
-      color: color,
-    );
-  }
-
-  /// Builds standardized user profile payload for Supabase auth metadata.
-  static Map<String, dynamic> buildUserDataPayload({
-    required String fullName,
-    required String normalizedPhone,
-    required bool isOwner,
-    String? selectedPosition,
-    DateTime? dateOfBirth,
-  }) {
-    return {
-      'name': fullName,
-      'phone': normalizedPhone,
-      'position': isOwner ? null : (selectedPosition ?? 'GK'),
-      'date_of_birth': dateOfBirth?.toUtc().toIso8601String(),
-    };
-  }
-
-  /// Formats and localizes backend signup error messages.
-  static String formatSignupError(String? rawError, {required bool isArabic}) {
-    final defaultMsg = isArabic ? 'فشل إنشاء الحساب' : 'Account creation failed';
-    final errorMsg = rawError ?? defaultMsg;
-
-    if (errorMsg.contains('VSP_AGE_RESTRICTED') ||
-        errorMsg.contains('REGISTRATION_REQUIRES_18_PLUS') ||
-        errorMsg.contains('DATE_OF_BIRTH_REQUIRED_18_PLUS')) {
-      return isArabic
-          ? 'يجب أن يكون عمرك 18 سنة فأكثر لاستخدام VSP.'
-          : 'You must be 18 or older to use VSP.';
-    }
-
-    if (errorMsg.contains('REGISTRATION_COMPLETION_FAILED')) {
-      return isArabic
-          ? 'تعذر إكمال التسجيل حالياً. يرجى المحاولة مرة أخرى.'
-          : 'We could not complete registration right now. Please try again.';
-    }
-
-    if (errorMsg.contains('confirmation email') || errorMsg.contains('unexpected_failure')) {
-      return isArabic
-          ? 'تعذر إرسال إيميل التأكيد. يرجى مراجعة إعدادات البريد.'
-          : 'Could not send confirmation email. Please check email settings.';
-    }
-
-    return errorMsg;
-  }
-}
-).hasMatch(trimmedEmail)) {
+    // Check email syntax before any phone lookup or registration network call.
+    // The backend remains authoritative for actual email verification.
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$').hasMatch(trimmedEmail)) {
       return SignupValidationResult.invalid(SignupValidationError.invalidEmail);
     }
 
@@ -278,6 +147,8 @@ class SignupValidationService {
         return l10n.mustBe18OrOlder;
       case SignupValidationError.invalidPhone:
         return l10n.invalidPhone;
+      case SignupValidationError.invalidEmail:
+        return l10n.invalidEmail;
       case SignupValidationError.passwordMismatch:
         return l10n.passwordMismatch;
       case SignupValidationError.passwordTooShort:
