@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('secure storage never writes provider exception payloads to logs', () {
     final source = File('lib/core/services/secure_storage_service.dart').readAsStringSync();
-    final logCalls = RegExp(r'VSPLogger\\.w\\((.*?)\\);', dotAll: true)
+    final logCalls = RegExp(r'VSPLogger\.w\((.*?)\);', dotAll: true)
         .allMatches(source).map((m) => m.group(1)!).toList();
     expect(logCalls, isNotEmpty);
     for (final message in logCalls) {
