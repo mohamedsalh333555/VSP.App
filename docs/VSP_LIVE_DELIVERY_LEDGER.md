@@ -1,3 +1,11 @@
+## 2026-11-18 — Discovery refresh, Home architecture guard and privacy-safe player logs (+0 accepted)
+
+- **Actual code on `uxlp-44-implementation`**: made the one-venue stadium discovery list always scrollable, and replaced programmatic refresh testing with a real drag while checking the server request remains pending until resolved. Existing offline/stale-data tests also pass. [Latest focused Flutter CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314625899) at source `163d564be33376bd51a105b4ca7aa332e54bd860`; [first green focused run](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314057657).
+- **86.01 partial guard only, task remains OPEN**: added `test/architecture/player_home_information_architecture_contract_test.dart` to lock existing Home banner/discovery/matches/competitions ordering, five outline/filled navigation icon pairs and no achievement/ranking/rebooking card on Home. No visual Home redesign. Automated static checks are not bilingual widget/physical-device acceptance.
+- **Privacy hardening**: home match/championship stream and team-dashboard lookup failures now log redacted descriptions instead of raw backend errors; source regression tests cover the redaction. No user-facing flow change.
+- [Task accounting CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314626144). Full [Flutter CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314625693) was still running when this evidence was recorded; no unverified all-suite claim. No staging/production Supabase or Paymob changes, no APK/release and no `main` merge.
+- **Conservative count unchanged: 640 unique / 328 accepted / 312 open (51.25%).** Improvements do not close 86.01 or the server/device-gated retention journeys.
+
 ## 2026-11-18 — Full Product Experience scoped intake: 7 new open tasks (328/312)
 
 - **633 original unique IDs preserved**; group **86.01–86.07** contains **7 NEW OPEN tasks**, so **640 active / 328 accepted / 312 open (51.25%)**.
