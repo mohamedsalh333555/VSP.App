@@ -1,3 +1,9 @@
+## 2026-11-18 — Neutral password recovery and safe dialog close (+1; 306/327)
+
+- **11.08:** bilingual public recovery acknowledgement now stays identical for successful requests, unrecognized accounts, false outcomes or thrown provider exceptions. No message includes account-existence or raw backend information. Fixed a Flutter use-after-dispose crash by moving `TextEditingController` ownership into a stateful dialog until the close transition fully unmounts.
+- [Password Recovery Privacy CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44206384812) on [SHA d6579b1](https://github.com/mohamedsalh333555/VSP.App/commit/d6579b12a0b93d7ac834048a80c15f5b9261e689): Flutter Analyze and **6 successful focused widget/unit assertions** for registered/unknown/failure/Arabic/invalid-input outcomes. [Evidence and backend exclusions](VSP_PASSWORD_RECOVERY_PRIVACY_ACCEPTANCE_11_08_2026-11-18.md).
+- **633 unique / 306 accepted / 327 open (48.34%)**. One pre-existing ID, zero new. Backend email enumeration via timing/response/rate-limit still requires staging tests; no production, RLS, payments or main merge.
+
 ## 2026-11-18 — Localized registration form error validation (+1; 305/328)
 
 - **08.04:** added a proper invalid-email client error before the signup form's phone lookup and account-creation requests, mapped to existing Arabic and English messages. New unit tests verify valid/malformed email samples and UI validation order; existing Flutter signup component tests and unit tests cover consent, 18+ DOB, Egyptian phone and password mismatches.
