@@ -40,7 +40,11 @@ Team _team() => Team(
 Widget _wrap(Widget child, Locale locale) => MaterialApp(
   locale: locale,
   supportedLocales: const [Locale('ar'), Locale('en')],
-  localizationsDelegates: GlobalMaterialLocalizations.delegates,
+  localizationsDelegates: const [
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ],
   home: Scaffold(body: SingleChildScrollView(child: child)),
 );
 
