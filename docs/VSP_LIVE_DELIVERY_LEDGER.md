@@ -1,3 +1,9 @@
+## 2026-11-18 — Localized registration form error validation (+1; 305/328)
+
+- **08.04:** added a proper invalid-email client error before the signup form's phone lookup and account-creation requests, mapped to existing Arabic and English messages. New unit tests verify valid/malformed email samples and UI validation order; existing Flutter signup component tests and unit tests cover consent, 18+ DOB, Egyptian phone and password mismatches.
+- [Signup Input and Error Validation CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44204735513) at [SHA 70964e7](https://github.com/mohamedsalh333555/VSP.App/commit/70964e7ee9e431f13011ee3d43c71dd2678ad525). [Evidence and limits](VSP_SIGNUP_FORM_ERRORS_ACCEPTANCE_08_04_2026-11-18.md).
+- **633 total / 305 accepted / 328 open (48.18%)**, one previously open ID, zero new tasks. Client form only: not live SMTP/registration, all owner onboarding forms or Android keyboard tests. No production writes or main merge.
+
 ## 2026-11-18 — Deferred links bound to active account and cleared on logout (+1; 304/329)
 
 - **07.05:** prevented pending deep links opened during auth recovery from crossing a logout/account switch: account ID and hydrated profile recheck before/after asynchronous SharedPreferences reads, persisted original-account binding, logout cleanup, and exclusive lease against duplicate pushes from `main.dart` and `RootScreen`. Logout routes still redirect private URLs to `/welcome`.
