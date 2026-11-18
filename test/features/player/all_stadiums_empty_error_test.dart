@@ -59,7 +59,11 @@ void main() {
     StadiumProvider provider, {
     Locale locale = const Locale('en'),
     Widget Function(Stadium)? detailsBuilder,
+    ValueListenable<bool>? connectivity,
   }) async {
+    final source = connectivity ?? ValueNotifier<bool>(true);
+    if (connectivity == null) addTearDown((source as ValueNotifier<bool>).dispose);
+
     await tester.pumpWidget(
       MultiProvider(
         providers: [
@@ -73,6 +77,7 @@ void main() {
           home: AllStadiumsScreen(
             initialGovernorate: 'Cairo',
             detailsBuilder: detailsBuilder,
+            connectivityListenable: source,
           ),
         ),
       ),
@@ -168,4 +173,82 @@ void main() {
     expect(find.text('Details: chosen-stadium'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('offline opening offers a truthful state and waits for reconnect', (tester) async {
+    final repo = _ListingRepository();
+    final provider = StadiumProvider(repository: repo);
+    final connectivity = ValueNotifier<bool>(false);
+    addTearDown(provider.dispose);
+    addTearDown(connectivity.dispose);
+    await showListing(tester, provider, connectivity: connectivity);
+    expect(find.text('No Internet Connection'), findsOneWidget);
+    expect(find.text('No Stadiums Found'), findsNothing);
+    expect(repo.requests, isEmpty);
+
+    connectivity.value = true;
+    await tester.pump();
+    await tester.pump();
+    expect(repo.requests['Cairo'], hasLength(1));
+    repo.request('Cairo', 0).complete({'items': <Stadium>[], 'lastDoc': 0});
+    await tester.pumpAndSettle();
+    expect(find.text('No Stadiums Found'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Arabic network loss mid-request ignores stale reply after reconnect', (tester) async {
+    final repo = _ListingRepository();
+    final provider = StadiumProvider(repository: repo);
+    final connectivity = ValueNotifier<bool>(true);
+    addTearDown(provider.dispose);
+    addTearDown(connectivity.dispose);
+    await showListing(tester, provider,
+        locale: const Locale('ar'), connectivity: connectivity);
+    expect(repo.requests['Cairo'], hasLength(1));
+
+    connectivity.value = false;
+    await tester.pump();
+    expect(find.text('لا يوجد اتصال بالإنترنت'), findsOneWidget);
+    expect(find.text('لم يتم العثور على ملاعب'), findsNothing);
+
+    connectivity.value = true;
+    await tester.pump();
+    await tester.pump();
+    expect(repo.requests['Cairo'], hasLength(2));
+
+    repo.request('Cairo', 1).complete({'items': <Stadium>[], 'lastDoc': 0});
+    await tester.pumpAndSettle();
+    expect(find.text('لم يتم العثور على ملاعب'), findsOneWidget);
+    final stale = Stadium.fromFirestore({
+      'id': 'stale-venue', 'name': 'Stale Venue',
+      'governorate': 'Cairo', 'is_verified': true,
+      'is_blocked': false, 'is_deleted_by_owner': false,
+    }, 'stale-venue');
+    repo.request('Cairo', 0).complete({'items': [stale], 'lastDoc': 1});
+    await tester.pumpAndSettle();
+    expect(find.text('Stale Venue'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cached venues stay visible with offline warning and no new pagination', (tester) async {
+    final repo = _ListingRepository();
+    final provider = StadiumProvider(repository: repo);
+    final connectivity = ValueNotifier<bool>(true);
+    addTearDown(provider.dispose);
+    addTearDown(connectivity.dispose);
+    await showListing(tester, provider, connectivity: connectivity);
+    final stadium = Stadium.fromFirestore({
+      'id': 'cached-venue', 'name': 'Cached Venue',
+      'governorate': 'Cairo', 'is_verified': true,
+      'is_blocked': false, 'is_deleted_by_owner': false,
+    }, 'cached-venue');
+    repo.request('Cairo', 0).complete({'items': [stadium], 'lastDoc': 1});
+    await tester.pumpAndSettle();
+    expect(find.text('Cached Venue'), findsOneWidget);
+    connectivity.value = false;
+    await tester.pump();
+    expect(find.text('Cached Venue'), findsOneWidget);
+    expect(find.textContaining('Offline. Showing the last available results'), findsOneWidget);
+    expect(find.text('No Internet Connection'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
 }
