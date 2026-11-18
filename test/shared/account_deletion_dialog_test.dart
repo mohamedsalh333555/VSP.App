@@ -41,6 +41,28 @@ void main() {
       expect(calls, 0); expect(result, isFalse);
     });
 
+    testWidgets('$language: Android back exits an idle deletion dialog safely', (tester) async {
+      var calls = 0;
+      var finished = false;
+      bool? result;
+      await open(
+        tester,
+        onDelete: (_) async { calls++; return true; },
+        onResult: (value) { finished = true; result = value; },
+      );
+      // A stray outside tap must never act like a deletion confirmation.
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pump();
+      expect(find.byType(AccountDeletionDialog), findsOneWidget);
+      expect(calls, 0);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byType(AccountDeletionDialog), findsNothing);
+      expect(finished, isTrue);
+      expect(result, isNull);
+      expect(calls, 0);
+    });
+
     testWidgets('$language: pending deletion prevents repeat, cancel, barrier and back', (tester) async {
       final pending = Completer<bool>();
       var calls = 0;

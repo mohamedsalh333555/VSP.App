@@ -12,6 +12,7 @@ on:
       - "lib/features/auth/services/password_reset_privacy_message.dart"
       - "lib/features/auth/widgets/forgot_password_dialog.dart"
       - "test/features/auth/password_reset_privacy_widget_test.dart"
+      - "test/shared/account_deletion_dialog_test.dart"
       - "lib/shared/widgets/vsp_auth_header.dart"
       - "lib/shared/widgets/vsp_back_button.dart"
       - "test/shared/widgets/vsp_auth_header_back_navigation_test.dart"
@@ -26,6 +27,7 @@ on:
       - "lib/features/auth/services/password_reset_privacy_message.dart"
       - "lib/features/auth/widgets/forgot_password_dialog.dart"
       - "test/features/auth/password_reset_privacy_widget_test.dart"
+      - "test/shared/account_deletion_dialog_test.dart"
       - "lib/shared/widgets/vsp_auth_header.dart"
       - "lib/shared/widgets/vsp_back_button.dart"
       - "test/shared/widgets/vsp_auth_header_back_navigation_test.dart"
@@ -60,5 +62,6 @@ jobs:
           lib/shared/widgets/vsp_back_button.dart
           test/shared/widgets/vsp_auth_header_back_navigation_test.dart
           test/features/auth/password_reset_privacy_widget_test.dart
+          test/shared/account_deletion_dialog_test.dart
       - name: Test neutral recovery copy against success failure and exceptions
-        run: flutter test --concurrency=1 test/core/utils/email_address_validator_test.dart test/shared/widgets/custom_text_field_email_validation_test.dart test/features/auth/password_reset_privacy_widget_test.dart test/shared/widgets/vsp_auth_header_back_navigation_test.dart
+        run: flutter test --concurrency=1 test/core/utils/email_address_validator_test.dart test/shared/widgets/custom_text_field_email_validation_test.dart test/features/auth/password_reset_privacy_widget_test.dart test/shared/widgets/vsp_auth_header_back_navigation_test.dart test/shared/account_deletion_dialog_test.dart
