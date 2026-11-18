@@ -5,12 +5,43 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../core/ui/vsp_ui.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
-class SelectRoleScreen extends StatelessWidget {
+class SelectRoleScreen extends StatefulWidget {
   const SelectRoleScreen({super.key});
 
+  @override
+  State<SelectRoleScreen> createState() => _SelectRoleScreenState();
+}
+
+class _SelectRoleScreenState extends State<SelectRoleScreen> {
+  bool _signOutPending = false;
+
   void _selectRole(BuildContext context, String role) {
+    if (_signOutPending) return;
     context.read<AuthProvider>().setUserType(role);
+  }
+
+  Future<void> _switchAccount() async {
+    if (_signOutPending) return;
+    final auth = context.read<AuthProvider>();
+    setState(() => _signOutPending = true);
+    try {
+      // Never navigate to login with the old session still active.
+      await auth.signOut();
+      if (mounted) context.go('/login');
+    } catch (_) {
+      if (!mounted) return;
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر تسجيل الخروج الآن. حاول مرة أخرى.'
+            : 'Could not sign out right now. Please try again.',
+      );
+    } finally {
+      if (mounted) setState(() => _signOutPending = false);
+    }
   }
 
   @override
@@ -81,17 +112,12 @@ class SelectRoleScreen extends StatelessWidget {
                   button: true,
                   label: isArabic ? 'تسجيل الدخول بحساب آخر' : 'Log in with another account',
                   excludeSemantics: true,
-                  onTap: () {
-                    context.read<AuthProvider>().signOut();
-                    context.go('/login');
-                  },
+                  enabled: !_signOutPending,
+                  onTap: _signOutPending ? null : _switchAccount,
                   child: InkWell(
                     excludeFromSemantics: true,
                     borderRadius: BorderRadius.circular(VSPDSRadius.sm),
-                    onTap: () {
-                      context.read<AuthProvider>().signOut();
-                      context.go('/login');
-                    },
+                    onTap: _signOutPending ? null : _switchAccount,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(
                         minHeight: VSPDSAccessibility.minimumTapTarget,
