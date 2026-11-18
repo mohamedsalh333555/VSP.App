@@ -66,3 +66,4 @@ jobs:
           test/features/auth/auth_reduced_motion_widget_test.dart
           test/features/auth/select_role_accessibility_widget_test.dart
           test/features/auth/signup_responsive_name_fields_test.dart
+          test/features/auth/auth_screen_keyboard_responsive_test.dart
