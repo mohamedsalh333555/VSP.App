@@ -65,16 +65,35 @@ class TeamSkillsCupTab extends StatefulWidget {
     return score.toString();
   }
 
+  /// Announced stages must have one unambiguous definition. Overlapping
+  /// pages may repeat identical stages, but conflicting stage metadata must
+  /// not make a duplicate drill or a fabricated completion denominator.
+  static List<Map<String, dynamic>> visiblePublishedPhases(
+      Iterable<Map<String, dynamic>> phases) {
+    final byNumber = <int, Map<String, dynamic>>{};
+    final conflicting = <int>{};
+    for (final phase in phases) {
+      final n = phase['stage_no'];
+      if (n is! int || n < 1 || n > 100 || conflicting.contains(n)) continue;
+      final previous = byNumber[n];
+      if (previous == null) {
+        byNumber[n] = phase;
+      } else if (previous['name_ar'] != phase['name_ar'] ||
+          previous['weight'] != phase['weight'] ||
+          previous['metric'] != phase['metric']) {
+        byNumber.remove(n);
+        conflicting.add(n);
+      }
+    }
+    final sorted = byNumber.keys.toList()..sort();
+    return [for (final n in sorted) byNumber[n]!];
+  }
+
   /// Never invent a fixed 12-stage format for an unpublished plan.
   static String publishedStageSummary(
     Iterable<Map<String, dynamic>> phases, {required bool isArabic}
   ) {
-    final stageNos = <int>{};
-    for (final phase in phases) {
-      final n = phase['stage_no'];
-      if (n is int && n > 0 && n <= 100) stageNos.add(n);
-    }
-    final count = stageNos.length;
+    final count = visiblePublishedPhases(phases).length;
     if (count <= 0) {
       return isArabic
           ? 'مراحل البطولة لم تُعلن بعد'
@@ -820,6 +839,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
               child: Text(ar ? 'تعذر التحميل — إعادة المحاولة' : 'Retry loading cup'),
             ));
           }
+          final visiblePhases = TeamSkillsCupTab.visiblePublishedPhases(_phases);
           return ListView(padding: const EdgeInsets.all(16), children: [
             if (_hasLiveRefreshError) ...[
               Row(children: [
@@ -834,7 +854,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
               const SizedBox(height: 12),
             ],
             Text(TeamSkillsCupTab.publishedStageSummary(
-                _phases, isArabic: ar),
+                visiblePhases, isArabic: ar),
                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(ar ? 'الجوائز الرسمية تُعلن بعد اعتماد نتائج البطولة.'
@@ -849,7 +869,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
             const SizedBox(height: 20),
             Text(ar ? 'مراحل البطولة' : 'Skills stages',
                 style: const TextStyle(color: VSPColors.white,fontSize:18,fontWeight:FontWeight.bold)),
-            ..._phases.map((phase)=>ListTile(
+            ...visiblePhases.map((phase)=>ListTile(
               dense:true,
               title:Text(phase['name_ar']?.toString() ?? '',style:style),
               trailing:Text(phase['weight'] is num && (phase['weight'] as num) > 0
@@ -872,11 +892,12 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                     style: style),
                 subtitle: Text(
                     '${entry.data['points']} ${ar ? 'نقطة' : 'points'} • '
-                    '${entry.data['completed_stages']}${_phases.isEmpty ? '' : '/${_phases.length}'} • '
+                    '${entry.data['completed_stages'] is int && entry.data['completed_stages'] >= 0 && entry.data['completed_stages'] <= visiblePhases.length ? entry.data['completed_stages'] : '—'}' 
+                    '${visiblePhases.isEmpty ? '' : '/${visiblePhases.length}'} • '
                     '${entry.complete ? (ar ? 'مكتمل' : 'Complete') : (ar ? 'قيد الاعتماد' : 'Pending stages')}',
                     style: const TextStyle(color: VSPColors.accent)),
                 children: [
-                  ..._phases.map((phase) {
+                  ...visiblePhases.map((phase) {
                     final stageNo = phase['stage_no']?.toString();
                     final rows = approvedForTeam.where(
                       (score) => score['stage_no']?.toString() == stageNo,

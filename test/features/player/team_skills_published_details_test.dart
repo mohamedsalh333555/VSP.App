@@ -152,6 +152,24 @@ void main() {
       {'stage_no': 1}, {'stage_no': 1}, {'stage_no': 2},
       {'stage_no': -1}, {'stage_no': null},
     ], isArabic: false), '2 announced stages');
+    final phases = <Map<String, dynamic>>[
+      {'stage_no': 3, 'name_ar': 'A', 'weight': 10},
+      {'stage_no': 1, 'name_ar': 'First', 'weight': 5},
+      {'stage_no': 1, 'name_ar': 'Different', 'weight': 9},
+      {'stage_no': 2, 'name_ar': 'Second', 'weight': 7},
+      {'stage_no': 3, 'name_ar': 'A', 'weight': 10},
+      {'stage_no': -1, 'name_ar': 'Invalid', 'weight': 12},
+    ];
+    final visible = TeamSkillsCupTab.visiblePublishedPhases(phases);
+    expect(visible.map((p) => p['stage_no']), [2, 3]);
+    expect(TeamSkillsCupTab.publishedStageSummary(
+      phases, isArabic: false), '2 announced stages');
+    expect(TeamSkillsCupTab.publishedStageSummary(
+      phases, isArabic: true), '2 مرحلة معلنة');
+    expect(TeamSkillsCupTab.visiblePublishedPhases([
+      {'stage_no': 8, 'name_ar': 'Same'},
+      {'stage_no': 8, 'name_ar': 'Same'},
+    ]), hasLength(1));
   });
 
   test('a live cup never shows unannounced winners, even if award rows exist', () {
