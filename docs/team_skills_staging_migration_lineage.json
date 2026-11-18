@@ -2,9 +2,9 @@
   "kind": "read_only_staging_migration_lineage_snapshot",
   "database": "vsp-staging",
   "project_ref": "vtwgqyxglevcsxwdmhop",
-  "recorded_date": "2026-11-17",
+  "recorded_date": "2026-11-18",
   "branch": "uxlp-44-implementation",
-  "note": "Read-only staging lineage snapshot. Staging versions reflect verified supabase_migrations.schema_migrations entries for Team Skills penalty tie-break and safe in-place regeneration. Local SQL contract CI passed; signed-in multi-account browser/mobile E2E and production SQL body parity remain unverified. Never blindly db push to production. Source 20261117023000 is applied on staging only as version 20261117023518; production remains unchanged. Read-only catalog check verified staging migration 20261117023518 for Team Skills governorate eligibility guard; no production deployment. Stadium governorate creation guard source was applied and verified on staging only. Read-only staging catalog verified create-cup region guard applied at version 20261117025416; no production release. Staging version 20261117032927 applied and verified active-roster champion-notification recipient exclusion; no production rollout or customer rows modified. Score-approval and knockout-advancement transactional notification triggers passed isolated CI, were applied and checked on Staging at 20261117035855/20261117035859 respectively; production unchanged. Booking cash/cancellation changes tracked separately in VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md.",
+  "note": "Read-only staging migration versions checked against the Supabase migration inventory on 2026-11-18. Team Skills dynamic phase finality + status/knockout/regeneration guards are recorded under real applied staging versions 20261118153330 and 20261118154934. Read-only pg_get_viewdef/pg_get_functiondef review confirmed dynamic phase-count aggregate, invoker view, admin gate and advisory locks. This does NOT establish byte-for-byte SQL body parity, production deployment, client-role staging tests, or a safe production release. Prior verification notes and remaining limitations are preserved in historical docs.",
   "migrations": [
     {
       "local_file": "supabase/migrations/20261116030000_team_skills_cup_foundation.sql",
@@ -215,6 +215,16 @@
       "local_file": "supabase/migrations/20261117062000_team_skills_knockout_approved_advancement_notification.sql",
       "staging_version": "20261117035859",
       "staging_migration_name": "team_skills_knockout_approved_advancement_notification_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261118150000_team_skills_dynamic_phase_finality.sql",
+      "staging_version": "20261118153330",
+      "staging_migration_name": "team_skills_dynamic_phase_finality"
+    },
+    {
+      "local_file": "supabase/migrations/20261118151000_team_skills_server_finality_gates.sql",
+      "staging_version": "20261118154934",
+      "staging_migration_name": "team_skills_server_finality_gates"
     }
   ],
   "unapplied_source_files": []

@@ -65,7 +65,11 @@ def audit() -> int:
             raise ValueError(f"Unexpected staging migration version: {version}")
         # Server migration names end in the source's own YYYYMMDD date;
         # older sources are 20261116 and this batch adds a 20261117 entry.
-        if name != match.group(2) + "_" + match.group(1)[:8]:
+        # Real staging history contains both the legacy day-suffixed names
+        # and later exact-slug names. Require one of those TWO concrete
+        # variants: a fabricated or unrelated migration name must still fail.
+        valid_names = {match.group(2), match.group(2) + "_" + match.group(1)[:8]}
+        if name not in valid_names:
             raise ValueError(f"Staging migration slug does not match file: {filename}")
         versions.append(version)
         source_versions.append(match.group(1))
