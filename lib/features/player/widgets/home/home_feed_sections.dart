@@ -161,7 +161,7 @@ class _HomeMatchesSectionState extends State<HomeMatchesSection> {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         final matches = snapshot.data ?? [];
         if (snapshot.hasError && matches.isEmpty) {
-          debugPrint('Matches Stream Error: ${snapshot.error}');
+          debugPrint('Matches stream failed (details redacted)');
           return VSPStateView(
             state: VSPUiState.error,
             title: isArabic ? 'تعذر تحميل المباريات' : 'Could not load matches',
@@ -277,7 +277,7 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         final championships = snapshot.data ?? [];
         if (snapshot.hasError && championships.isEmpty) {
-          debugPrint('Championships Stream Error: ${snapshot.error}');
+          debugPrint('Championships stream failed (details redacted)');
           return VSPStateView(
             state: VSPUiState.error,
             title: isArabic ? 'تعذر تحميل البطولات' : 'Could not load tournaments',
