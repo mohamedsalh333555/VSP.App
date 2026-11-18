@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:vsp_application/shared/widgets/vsp_fade_in_item.dart';
 import 'package:vsp_application/shared/widgets/vsp_animated_button.dart';
 import 'package:vsp_application/shared/widgets/custom_text_field.dart';
 import 'package:vsp_application/shared/widgets/vsp_terms_checkbox.dart';
 
 Widget host(Widget child, {required bool reduced}) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: MediaQuery(
         data: MediaQueryData(disableAnimations: reduced),
         child: Scaffold(body: Center(child: child)),

@@ -35,7 +35,7 @@ void main() {
       final ownerLabel = lang == 'ar' ? 'صاحب ملعب' : 'Stadium owner';
       expect(find.text(playerLabel), findsOneWidget);
       expect(find.text(ownerLabel), findsOneWidget);
-      expect(find.bySemanticsLabel(RegExp(lang == 'ar' ? r'^لاعب\\.' : r'^Player\\.')), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(lang == 'ar' ? r'^لاعب\.' : r'^Player\.')), findsOneWidget);
       await tester.tap(find.text(playerLabel));
       await tester.pump();
       expect(auth.selected, 'player');
