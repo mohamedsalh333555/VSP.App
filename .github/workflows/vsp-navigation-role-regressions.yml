@@ -86,7 +86,6 @@ jobs:
           test/deep_link_abuse_test.dart
           test/root_screen_routing_test.dart
           test/auth_forgot_password_and_roles_test.dart
-          test/helpers/router_auth_fakes.dart
           test/core/utils/deep_link_origin_validation_test.dart
           test/architecture/notification_role_billing_route_guard_test.dart
           test/architecture/notification_navigation_account_guard_test.dart
