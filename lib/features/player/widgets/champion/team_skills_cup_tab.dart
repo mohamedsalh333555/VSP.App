@@ -16,6 +16,49 @@ class TeamSkillsCupTab extends StatefulWidget {
   final String selectedLocation;
   final TeamSkillsCupRepository? repository;
   const TeamSkillsCupTab({super.key, required this.selectedLocation, this.repository});
+  /// Use only fields from a published cup. Missing capacity or location
+  /// must not become the literal string "null", or an invented seat count.
+  static String publishedMetadata(
+    Map<String, dynamic> cup, {required bool isArabic}
+  ) {
+    final parts = <String>[];
+    final governorate = cup['governorate'];
+    if (governorate is String && governorate.trim().isNotEmpty) {
+      parts.add(governorate.trim());
+    }
+    final maxTeams = cup['max_teams'];
+    if (maxTeams is int && maxTeams > 0) {
+      parts.add('$maxTeams ${isArabic ? 'فرق' : 'teams'}');
+    }
+    return parts.join(' • ');
+  }
+
+  static String statusLabel(String? status, {required bool isArabic}) {
+    switch (status) {
+      case 'registration':
+        return isArabic ? 'التسجيل مفتوح' : 'Registration open';
+      case 'live':
+        return isArabic ? 'البطولة جارية' : 'In progress';
+      case 'completed':
+        return isArabic ? 'بطولة منتهية' : 'Completed';
+      default:
+        return isArabic ? 'حالة البطولة غير متاحة' : 'Tournament status unavailable';
+    }
+  }
+
+  static String actionLabel(String? status, {required bool isArabic}) {
+    switch (status) {
+      case 'registration':
+        return isArabic ? 'التفاصيل والتسجيل' : 'Details and registration';
+      case 'live':
+        return isArabic ? 'تفاصيل البطولة والترتيب' : 'Tournament details and standings';
+      case 'completed':
+        return isArabic ? 'النتائج والجوائز المعلنة' : 'Results and announced awards';
+      default:
+        return isArabic ? 'تفاصيل البطولة' : 'Tournament details';
+    }
+  }
+
 
   @override
   State<TeamSkillsCupTab> createState() => _TeamSkillsCupTabState();
@@ -65,8 +108,8 @@ class _TeamSkillsCupTabState extends State<TeamSkillsCupTab> {
       return Center(child: Padding(
         padding: const EdgeInsets.all(24),
         child: Text(
-          ar ? 'بطولة مهارات الفرق قيد التجهيز. قريبًا ستقدر تشارك بفريقك في 12 مرحلة، والفريق الأعلى نقاطًا يتوج بالبطل.'
-              : 'Team Skills Cup is being prepared. Your team will compete across 12 skills stages for 100 points.',
+          ar ? 'بطولة مهارات الفرق قيد التجهيز. تفاصيل المراحل والتسجيل هتظهر بعد الإعلان الرسمي.'
+              : 'Team Skills Cup is being prepared. Stages and registration details will appear once officially announced.',
           textAlign: TextAlign.center,
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 15),
         ),
@@ -120,16 +163,15 @@ class _TeamSkillsCupTabState extends State<TeamSkillsCupTab> {
                       style: const TextStyle(color: VSPColors.white,
                           fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
-                  Text('${cup['governorate']} • ${cup['max_teams']} ${ar ? 'فرق' : 'teams'} • 100 ${ar ? 'نقطة' : 'points'}',
-                      style: const TextStyle(color: VSPColors.textSecondary)),
-                  const SizedBox(height: 6),
-                  Text(status == 'registration'
-                      ? (ar ? 'التسجيل مفتوح' : 'Registration open')
-                      : status == 'live'
-                          ? (ar ? 'البطولة جارية' : 'In progress')
-                          : (ar ? 'بطولة منتهية' : 'Completed'),
+                  if (TeamSkillsCupTab.publishedMetadata(
+                      cup, isArabic: ar).isNotEmpty) ...[
+                    Text(TeamSkillsCupTab.publishedMetadata(cup, isArabic: ar),
+                        style: const TextStyle(color: VSPColors.textSecondary)),
+                    const SizedBox(height: 6),
+                  ],
+                  Text(TeamSkillsCupTab.statusLabel(status, isArabic: ar),
                       style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w700)),
-                  Text(ar ? 'التفاصيل والتسجيل والترتيب' : 'Details, registration & leaderboard',
+                  Text(TeamSkillsCupTab.actionLabel(status, isArabic: ar),
                       style: const TextStyle(color: VSPColors.textPrimary)),
                 ]),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/champion/team_skills_published_details.dart';
+import 'package:vsp_application/features/player/widgets/champion/team_skills_cup_tab.dart';
 
 void main() {
   testWidgets('published cup shows venue, scheduled times, fee, cap and prizes',
@@ -61,4 +62,30 @@ void main() {
       'prizes': {'not': 'an array'},
     }, isArabic: true), isEmpty);
   });
+  test('cup discovery never invents points, team capacity or a completed state', () {
+    expect(TeamSkillsCupTab.publishedMetadata(<String, dynamic>{},
+        isArabic: false), '');
+    expect(TeamSkillsCupTab.publishedMetadata(
+        {'governorate': null, 'max_teams': null}, isArabic: true), '');
+    expect(TeamSkillsCupTab.publishedMetadata(
+        {'governorate': 'Aswan', 'max_teams': 8}, isArabic: false),
+        'Aswan • 8 teams');
+    expect(TeamSkillsCupTab.publishedMetadata(
+        {'governorate': 'Aswan', 'max_teams': -1}, isArabic: true),
+        'Aswan');
+    expect(TeamSkillsCupTab.statusLabel(null, isArabic: false),
+        'Tournament status unavailable');
+    expect(TeamSkillsCupTab.statusLabel('registration', isArabic: true),
+        'التسجيل مفتوح');
+  });
+
+  test('a completed cup does not advertise new registration', () {
+    expect(TeamSkillsCupTab.actionLabel('completed', isArabic: false),
+        'Results and announced awards');
+    expect(TeamSkillsCupTab.actionLabel('live', isArabic: false),
+        'Tournament details and standings');
+    expect(TeamSkillsCupTab.actionLabel('registration', isArabic: false),
+        'Details and registration');
+  });
+
 }
