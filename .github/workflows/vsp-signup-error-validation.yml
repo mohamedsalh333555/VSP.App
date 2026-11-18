@@ -66,3 +66,4 @@ jobs:
           test/unit/signup_invalid_email_contract_test.dart
           test/unit/signup_validation_service_test.dart
           test/features/auth/signup_components_test.dart
+          test/features/auth/signup_full_form_widget_test.dart
