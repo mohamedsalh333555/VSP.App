@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/ui/tokens/vsp_design_tokens.dart';
+import '../../core/utils/email_address_validator.dart';
 
 /// حقل إدخال نص مخصص بتصميم داكن مع دعم التحقق المباشر (Inline Live Validation)
 class CustomTextField extends StatelessWidget {
@@ -57,8 +58,7 @@ class CustomTextField extends StatelessWidget {
     if (trimmed.isEmpty) return false;
 
     if (keyboardType == TextInputType.emailAddress) {
-      final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-      return emailRegex.hasMatch(trimmed);
+      return EmailAddressValidator.isValid(trimmed);
     } else if (keyboardType == TextInputType.phone) {
       final clean = trimmed.replaceAll(RegExp(r'[\s-]'), '');
       final phoneRegex = RegExp(r'^(01[0125][0-9]{8}|(\+?201)[0125][0-9]{8})$');

@@ -7,6 +7,8 @@ on:
     paths:
       - ".github/workflows/vsp-signup-error-validation.yml"
       - "lib/core/utils/email_address_validator.dart"
+      - "lib/shared/widgets/custom_text_field.dart"
+      - "test/shared/widgets/custom_text_field_email_validation_test.dart"
       - "lib/features/auth/services/signup_validation_service.dart"
       - "lib/features/auth/screens/signup_screen.dart"
       - "test/unit/signup_invalid_email_contract_test.dart"
@@ -18,6 +20,8 @@ on:
     paths:
       - ".github/workflows/vsp-signup-error-validation.yml"
       - "lib/core/utils/email_address_validator.dart"
+      - "lib/shared/widgets/custom_text_field.dart"
+      - "test/shared/widgets/custom_text_field_email_validation_test.dart"
       - "lib/features/auth/services/signup_validation_service.dart"
       - "lib/features/auth/screens/signup_screen.dart"
       - "test/unit/signup_invalid_email_contract_test.dart"
@@ -44,10 +48,13 @@ jobs:
         run: >-
           flutter analyze --no-fatal-infos
           lib/core/utils/email_address_validator.dart
+          lib/shared/widgets/custom_text_field.dart
+          test/shared/widgets/custom_text_field_email_validation_test.dart
           test/core/utils/email_address_validator_test.dart
           lib/features/auth/services/signup_validation_service.dart
           lib/features/auth/screens/signup_screen.dart
           test/core/utils/email_address_validator_test.dart
+          test/shared/widgets/custom_text_field_email_validation_test.dart
           test/unit/signup_invalid_email_contract_test.dart
           test/unit/signup_validation_service_test.dart
           test/features/auth/signup_components_test.dart

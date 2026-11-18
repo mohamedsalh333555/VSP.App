@@ -7,6 +7,8 @@ on:
     paths:
       - ".github/workflows/vsp-recovery-privacy-regressions.yml"
       - "lib/core/utils/email_address_validator.dart"
+      - "lib/shared/widgets/custom_text_field.dart"
+      - "test/shared/widgets/custom_text_field_email_validation_test.dart"
       - "lib/features/auth/services/password_reset_privacy_message.dart"
       - "lib/features/auth/widgets/forgot_password_dialog.dart"
       - "test/features/auth/password_reset_privacy_widget_test.dart"
@@ -16,6 +18,8 @@ on:
     paths:
       - ".github/workflows/vsp-recovery-privacy-regressions.yml"
       - "lib/core/utils/email_address_validator.dart"
+      - "lib/shared/widgets/custom_text_field.dart"
+      - "test/shared/widgets/custom_text_field_email_validation_test.dart"
       - "lib/features/auth/services/password_reset_privacy_message.dart"
       - "lib/features/auth/widgets/forgot_password_dialog.dart"
       - "test/features/auth/password_reset_privacy_widget_test.dart"
@@ -41,9 +45,11 @@ jobs:
         run: >-
           flutter analyze --no-fatal-infos
           lib/core/utils/email_address_validator.dart
+          lib/shared/widgets/custom_text_field.dart
+          test/shared/widgets/custom_text_field_email_validation_test.dart
           test/core/utils/email_address_validator_test.dart
           lib/features/auth/services/password_reset_privacy_message.dart
           lib/features/auth/widgets/forgot_password_dialog.dart
           test/features/auth/password_reset_privacy_widget_test.dart
       - name: Test neutral recovery copy against success failure and exceptions
-        run: flutter test --concurrency=1 test/core/utils/email_address_validator_test.dart test/features/auth/password_reset_privacy_widget_test.dart
+        run: flutter test --concurrency=1 test/core/utils/email_address_validator_test.dart test/shared/widgets/custom_text_field_email_validation_test.dart test/features/auth/password_reset_privacy_widget_test.dart
