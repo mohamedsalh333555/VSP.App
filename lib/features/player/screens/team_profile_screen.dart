@@ -17,7 +17,7 @@ import '../widgets/team_profile/team_profile_captain_card.dart';
 import '../widgets/team_profile/team_profile_roster_section.dart';
 import '../widgets/team_profile/team_profile_achievements_section.dart';
 import '../widgets/champion/team_skills_history_section.dart';
-import '../widgets/team_profile/team_profile_head_to_head_section.dart';
+import '../widgets/team_profile/team_profile_head_to_head_panel.dart';
 import '../widgets/team_profile/team_profile_action_bar.dart';
 import '../widgets/team_profile/team_matchup_invite_modal.dart';
 
@@ -137,6 +137,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       setState(() {
         _isLoadingHeadToHead = true;
         _hasHeadToHeadLoadError = false;
+        _headToHeadRecords = []; // Previous verified data is not this read.
       });
     }
     try {
@@ -530,54 +531,17 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
               ),
             ],
 
-            // 6. Head to Head History
-            if (_headToHeadRecords.isNotEmpty) ...[
-              const SizedBox(height: 32),
-              TeamProfileHeadToHeadSection(
-                team: team,
-                headToHeadRecords: _headToHeadRecords,
-              ),
-            ] else if (_isLoadingHeadToHead) ...[
-              const SizedBox(height: 32),
-              VSPStateView(
-                state: VSPUiState.loading,
-                title: isArabic
-                    ? 'جارٍ تحميل سجل المواجهات'
-                    : 'Loading match history',
-                message: isArabic
-                    ? 'نحدّث نتائج الفريق السابقة.'
-                    : 'Updating the team’s previous results.',
-              ),
-            ] else if (_hasHeadToHeadLoadError) ...[
-              const SizedBox(height: 32),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(VSPSpacing.md),
-                decoration: BoxDecoration(
-                  color: VSPColors.surface,
-                  borderRadius: BorderRadius.circular(VSPRadius.card),
-                  border: Border.all(color: VSPColors.divider),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      isArabic
-                          ? 'تعذر تحميل سجل المواجهات. لا يتم عرض السجل كأنه فارغ.'
-                          : 'Match history could not be loaded. It is not being shown as empty.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: VSPColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: VSPSpacing.sm),
-                    TextButton(
-                      onPressed: () => _loadHeadToHead(team.id),
-                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            // 6. Head-to-head history: the read state always takes priority
+            // over any previously loaded rows. A successful empty read is
+            // explicitly visible instead of making the section disappear.
+            const SizedBox(height: 32),
+            TeamProfileHeadToHeadPanel(
+              team: team,
+              headToHeadRecords: _headToHeadRecords,
+              isLoading: _isLoadingHeadToHead,
+              hasError: _hasHeadToHeadLoadError,
+              onRetry: () => _loadHeadToHead(team.id),
+            ),
 
             const SizedBox(height: 32),
 
