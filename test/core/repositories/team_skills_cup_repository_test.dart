@@ -331,7 +331,12 @@ void main() {
     expect(repo, contains("'cup_id,team_id,registration_id,points,completed_stages,all_stages_approved'"));
     expect(tab, contains('ExpansionTile('));
     expect(tab, contains('_approvedScores'));
-    expect(tab, contains("rows.first['computed_points']"));
+    // The screen now verifies exactly one approved row rather than
+    // arbitrarily trusting rows.first. An absent or conflicting row is unknown.
+    expect(tab, contains('TeamSkillsCupTab.verifiedStagePoints(rows)'));
+    expect(tab, contains("values.single['computed_points']"));
+    expect(tab, contains("if (values.length != 1) return '—';"));
+    expect(tab, isNot(contains("rows.first['computed_points']")));
   });
 
   test('roster edit feedback reflects the latest admin review, not an assumed pending state', () {
