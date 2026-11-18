@@ -188,6 +188,23 @@ class MatchupRepository {
         r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
       ).hasMatch(id);
 
+  /// An unexpectedly broad or malformed head-to-head response must not
+  /// silently become a verified empty history or an unrelated team's record.
+  static bool everyHeadToHeadRowBelongsToTeam(
+      String teamId, Iterable<Map<String, dynamic>> rows) {
+    if (!isCanonicalTeamId(teamId)) return false;
+    for (final row in rows) {
+      final a = row['team_a_id'];
+      final b = row['team_b_id'];
+      if (a is! String || b is! String || a == b ||
+          !isCanonicalTeamId(a) || !isCanonicalTeamId(b) ||
+          (a != teamId && b != teamId)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// A failed source read is UNKNOWN, not verified empty history. This
   /// deliberately avoids embedding the private teams table in a public
   /// head-to-head read: only the approved teams_public projection supplies
@@ -205,6 +222,9 @@ class MatchupRepository {
         .select('team_a_id,team_b_id,team_a_wins,team_b_wins,draws')
         .or('team_a_id.eq.$teamId,team_b_id.eq.$teamId');
     final rows = List<Map<String, dynamic>>.from(raw as List);
+    if (!everyHeadToHeadRowBelongsToTeam(teamId, rows)) {
+      throw const FormatException('Unverified team matchup scope');
+    }
     // Only request public opponent names for rows truly involving this team.
     // Never broaden a second query using unrelated or malformed upstream IDs.
     final scopedRows = rows.where((row) {

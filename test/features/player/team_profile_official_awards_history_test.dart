@@ -143,6 +143,31 @@ void main() {
       '08c5fc4b-189d-4f41-b1e0-5798d1f9a804)or(true'), isFalse);
   });
 
+  test('strict team matchup query rejects cross-team or corrupt server rows', () {
+    const a = '82e73247-e111-4ab9-abd5-04cf6fe6779a';
+    const b = '741f2b99-5097-4a38-98b0-7d818e266a12';
+    const c = 'dd13cc05-c234-4902-a3e8-bd9e215c99d7';
+    const valid = <String, dynamic>{
+      'team_a_id': a, 'team_b_id': b, 'team_a_wins': 2,
+    };
+    expect(MatchupRepository.everyHeadToHeadRowBelongsToTeam(a, []), isTrue);
+    expect(MatchupRepository.everyHeadToHeadRowBelongsToTeam(a, [valid]), isTrue);
+    expect(MatchupRepository.everyHeadToHeadRowBelongsToTeam(a, [
+      valid, {'team_a_id': b, 'team_b_id': a},
+    ]), isTrue);
+    for (final suspicious in <Map<String, dynamic>>[
+      {'team_a_id': b, 'team_b_id': c},
+      {'team_a_id': a, 'team_b_id': a},
+      {'team_a_id': a, 'team_b_id': 'other'},
+      {'team_a_id': a, 'team_b_id': null},
+    ]) {
+      expect(MatchupRepository.everyHeadToHeadRowBelongsToTeam(
+        a, [valid, suspicious]), isFalse);
+    }
+    expect(MatchupRepository.everyHeadToHeadRowBelongsToTeam(
+      'not-a-uuid', [valid]), isFalse);
+  });
+
   test('team matchup read only joins public names, never private team data', () {
     const a = '82e73247-e111-4ab9-abd5-04cf6fe6779a';
     const b = '741f2b99-5097-4a38-98b0-7d818e266a12';
