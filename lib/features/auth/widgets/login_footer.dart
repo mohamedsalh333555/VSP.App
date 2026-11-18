@@ -155,9 +155,15 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: VSPColors.transparent,
-      child: InkWell(
+    return Semantics(
+      button: true,
+      label: '$title. $subtitle',
+      excludeSemantics: true,
+      onTap: onTap,
+      child: Material(
+        color: VSPColors.transparent,
+        child: InkWell(
+        excludeFromSemantics: true,
         borderRadius: BorderRadius.circular(VSPRadius.card),
         onTap: onTap,
         child: Container(
@@ -223,6 +229,7 @@ class _RoleCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
         ),
       ),

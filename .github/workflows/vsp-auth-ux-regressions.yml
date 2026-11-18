@@ -12,6 +12,8 @@ on:
       - "lib/shared/widgets/custom_text_field.dart"
       - "lib/features/auth/screens/select_role_screen.dart"
       - "lib/features/auth/screens/create_account_screen.dart"
+      - "lib/features/auth/widgets/login_footer.dart"
+      - "lib/shared/widgets/vsp_terms_checkbox.dart"
       - "lib/features/auth/screens/login_screen.dart"
       - "lib/features/auth/screens/signup_screen.dart"
       - "lib/features/auth/widgets/login_social_auth_row.dart"
@@ -22,6 +24,8 @@ on:
       - "test/features/auth/select_role_accessibility_widget_test.dart"
       - "test/features/auth/signup_responsive_name_fields_test.dart"
       - "test/features/auth/auth_screen_keyboard_responsive_test.dart"
+      - "test/features/auth/login_footer_accessibility_widget_test.dart"
+      - "test/features/auth/auth_layout_matrix_widget_test.dart"
   pull_request:
     branches: [main]
     paths:
@@ -32,6 +36,8 @@ on:
       - "lib/shared/widgets/custom_text_field.dart"
       - "lib/features/auth/screens/select_role_screen.dart"
       - "lib/features/auth/screens/create_account_screen.dart"
+      - "lib/features/auth/widgets/login_footer.dart"
+      - "lib/shared/widgets/vsp_terms_checkbox.dart"
       - "lib/features/auth/screens/login_screen.dart"
       - "lib/features/auth/screens/signup_screen.dart"
       - "lib/features/auth/widgets/login_social_auth_row.dart"
@@ -41,6 +47,8 @@ on:
       - "test/features/auth/select_role_accessibility_widget_test.dart"
       - "test/features/auth/signup_responsive_name_fields_test.dart"
       - "test/features/auth/auth_screen_keyboard_responsive_test.dart"
+      - "test/features/auth/login_footer_accessibility_widget_test.dart"
+      - "test/features/auth/auth_layout_matrix_widget_test.dart"
 permissions:
   contents: read
 concurrency:
@@ -66,6 +74,7 @@ jobs:
           lib/shared/widgets/custom_text_field.dart
           lib/features/auth/screens/select_role_screen.dart
           lib/features/auth/screens/create_account_screen.dart
+          lib/features/auth/widgets/login_footer.dart
           lib/features/auth/screens/login_screen.dart
           lib/features/auth/screens/signup_screen.dart
           lib/features/auth/widgets/login_social_auth_row.dart
@@ -75,6 +84,8 @@ jobs:
           test/features/auth/select_role_accessibility_widget_test.dart
           test/features/auth/signup_responsive_name_fields_test.dart
           test/features/auth/auth_screen_keyboard_responsive_test.dart
+          test/features/auth/login_footer_accessibility_widget_test.dart
+          test/features/auth/auth_layout_matrix_widget_test.dart
       - name: Test animations, role choice, screen sizes and Arabic RTL
         run: >-
           flutter test --concurrency=1
@@ -82,3 +93,5 @@ jobs:
           test/features/auth/select_role_accessibility_widget_test.dart
           test/features/auth/signup_responsive_name_fields_test.dart
           test/features/auth/auth_screen_keyboard_responsive_test.dart
+          test/features/auth/login_footer_accessibility_widget_test.dart
+          test/features/auth/auth_layout_matrix_widget_test.dart
