@@ -150,4 +150,38 @@ void main() {
     expect(visible.first['award_type'], 'team_champion');
   });
 
+  test('published cup discovery filters fake IDs, unpublished states and other governorates', () {
+    const cupId = '82e73247-e111-4ab9-abd5-04cf6fe6779a';
+    const otherId = '741f2b99-5097-4a38-98b0-7d818e266a12';
+    final rows = <Map<String, dynamic>>[
+      {'id': cupId, 'name': 'Aswan Skills', 'status': 'registration',
+       'governorate': 'Aswan'},
+      {'id': cupId, 'name': 'Aswan Skills', 'status': 'registration',
+       'governorate': 'Aswan'},
+      {'id': otherId, 'name': 'Alex Cup', 'status': 'completed',
+       'governorate': 'Alexandria'},
+      {'id': 'not-a-uuid', 'name': 'Fake Cup', 'status': 'registration'},
+      {'id': 'dd13cc05-c234-4902-a3e8-bd9e215c99d7',
+       'name': '', 'status': 'live'},
+      {'id': '6d201c45-6099-46e3-a6f4-d60ebcb7c70d',
+       'name': 'Draft cup', 'status': 'draft'},
+    ];
+    expect(TeamSkillsCupTab.visiblePublishedCups(rows).length, 2);
+    expect(TeamSkillsCupTab.visiblePublishedCups(rows,
+        selectedLocation: 'Aswan').map((cup) => cup['name']),
+        ['Aswan Skills']);
+    expect(TeamSkillsCupTab.visiblePublishedCups(rows,
+        selectedLocation: 'Cairo'), isEmpty);
+  });
+
+  test('conflicting copies of same published cup ID never choose first row', () {
+    const id = '82e73247-e111-4ab9-abd5-04cf6fe6779a';
+    final rows = <Map<String, dynamic>>[
+      {'id': id, 'name': 'First', 'status': 'registration'},
+      {'id': id, 'name': 'First', 'status': 'completed'},
+      {'id': id, 'name': 'First', 'status': 'registration'},
+    ];
+    expect(TeamSkillsCupTab.visiblePublishedCups(rows), isEmpty);
+  });
+
 }
