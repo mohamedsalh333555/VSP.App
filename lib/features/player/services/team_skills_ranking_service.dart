@@ -24,6 +24,24 @@ abstract final class TeamSkillsRankingService {
 
   /// Same competition rank for equal points: e.g. 1, 1, 3.
   static List<RankedTeamSkillsEntry> rank(List<Map<String, dynamic>> rows) {
+    // One public row per team. Duplicates or missing IDs can fabricate a
+    // rank/placement; fail closed rather than showing contradictory awards.
+    final seen = <String>{};
+    for (final row in rows) {
+      final id = row['team_id'];
+      if (id is! String || id.trim().isEmpty || !seen.add(id.trim())) {
+        throw const FormatException('Invalid Team Skills ranking identity');
+      }
+      final completed = row['completed_stages'];
+      if (completed != null && (completed is! int || completed < 0)) {
+        throw const FormatException('Invalid Team Skills stage count');
+      }
+      final approved = row['all_stages_approved'];
+      if (approved != null && approved is! bool) {
+        throw const FormatException('Invalid Team Skills approval flag');
+      }
+      _points(row);
+    }
     final ordered = List<Map<String, dynamic>>.of(rows)
       ..sort((a, b) {
         final score = _points(b).compareTo(_points(a));

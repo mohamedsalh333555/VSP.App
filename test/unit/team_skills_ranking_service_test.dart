@@ -28,4 +28,28 @@ void main() {
     }
     expect(TeamSkillsRankingService.rank([]),isEmpty);
   });
+  test('no leaderboard rank is published for duplicate or invalid team identities', () {
+    final base = <String, dynamic>{
+      'team_id': 'team-a', 'points': '65',
+      'completed_stages': 3, 'all_stages_approved': true,
+    };
+    expect(() => TeamSkillsRankingService.rank([base, {...base}]), throwsFormatException);
+    expect(() => TeamSkillsRankingService.rank([{...base, 'team_id': ''}]), throwsFormatException);
+    expect(() => TeamSkillsRankingService.rank([{...base, 'team_id': null}]), throwsFormatException);
+    expect(() => TeamSkillsRankingService.rank([{...base, 'team_id': '  '}]), throwsFormatException);
+  });
+
+  test('malformed approval and stage-count values never imply finished stages', () {
+    const base = {'team_id':'team-a','points':55};
+    for (final stage in [-1, 3.5, '3']) {
+      expect(() => TeamSkillsRankingService.rank([{...base, 'completed_stages':stage}]),
+        throwsFormatException);
+    }
+    for (final approved in ['true', 1, 0]) {
+      expect(() => TeamSkillsRankingService.rank([{...base, 'all_stages_approved':approved}]),
+        throwsFormatException);
+    }
+    expect(TeamSkillsRankingService.rank([{...base}]).single.complete, false);
+  });
+
 }
