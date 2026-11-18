@@ -87,8 +87,7 @@ Future<void> fillRequiredDetails(WidgetTester tester, String language) async {
     of: find.byType(VspDatePickerDayStep), matching: find.text('01'),
   ).first);
   await tester.pumpAndSettle();
-  await tester.tap(find.text(language == 'ar' ? 'تأكيد التاريخ' : 'Confirm Date'));
-  await tester.pumpAndSettle();
+  // Selecting the day commits the date and dismisses the picker itself.
   expect(find.text('2008-01-01'), findsOneWidget);
 
   // Name, phone, email and both passwords are the six text form fields.
