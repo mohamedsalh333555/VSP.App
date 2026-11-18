@@ -1,0 +1,40 @@
+name: VSP Repeat Booking Fresh Venue Guard
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'lib/features/player/widgets/user_bookings/repeat_booking_action.dart'
+      - 'lib/features/player/widgets/user_bookings/player_booking_card.dart'
+      - 'test/features/player/repeat_booking_action_widget_test.dart'
+      - '.github/workflows/vsp-repeat-booking-fresh-venue.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/features/player/widgets/user_bookings/repeat_booking_action.dart'
+      - 'lib/features/player/widgets/user_bookings/player_booking_card.dart'
+      - 'test/features/player/repeat_booking_action_widget_test.dart'
+      - '.github/workflows/vsp-repeat-booking-fresh-venue.yml'
+permissions:
+  contents: read
+concurrency:
+  group: vsp-repeat-booking-fresh-venue-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  repeat-booking:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/player/widgets/user_bookings/repeat_booking_action.dart
+          lib/features/player/widgets/user_bookings/player_booking_card.dart
+          test/features/player/repeat_booking_action_widget_test.dart
+      - run: flutter test --concurrency=1 test/features/player/repeat_booking_action_widget_test.dart

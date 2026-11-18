@@ -22,6 +22,7 @@ import 'challenge_report_aware_actions.dart';
 import 'player_booking_cancel_dialog.dart';
 import 'refund_badge_widget.dart';
 import 'reschedule_action_banner.dart';
+import 'repeat_booking_action.dart';
 
 /// Comprehensive individual booking card for upcoming and history bookings in player bookings screen.
 class PlayerBookingCard extends StatelessWidget {
@@ -552,6 +553,23 @@ class PlayerBookingCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+          // A previous personal booking is only a route back to the venue.
+          // Never reuse its price, payment, or old date/slot.
+          if (isHistory &&
+              booking.bookingType == BookingType.personal &&
+              booking.createdByUserId.isNotEmpty &&
+              booking.endTime.isBefore(DateTime.now()) &&
+              (booking.status == BookingStatus.completed ||
+                  booking.status == BookingStatus.confirmed ||
+                  booking.status == BookingStatus.upcoming)) ...[
+            const SizedBox(height: VSPSpacing.md),
+            RepeatBookingAction(
+              stadiumId: booking.stadiumId,
+              canContinue: () => context.mounted &&
+                  context.read<AuthProvider>().currentUser?.id ==
+                      booking.createdByUserId,
             ),
           ],
           if (isHistory &&
