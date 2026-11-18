@@ -20,15 +20,21 @@ class FakeSwitchAuth extends ChangeNotifier implements AuthProvider {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-Widget buildApp(FakeSwitchAuth auth, {String language = 'en'}) {
+Widget buildApp(FakeSwitchAuth auth, {
+  String language = 'en',
+  void Function(GoRouter)? onRouter,
+}) {
   final router = GoRouter(
     initialLocation: '/roles',
     routes: [
       GoRoute(path: '/roles', builder: (_, __) => const SelectRoleScreen()),
       GoRoute(path: '/login', builder: (_, __) =>
           const Scaffold(body: Text('New login destination'))),
+      GoRoute(path: '/welcome', builder: (_, __) =>
+          const Scaffold(body: Text('Welcome after session redirect'))),
     ],
   );
+  onRouter?.call(router);
   return ChangeNotifierProvider<AuthProvider>.value(
     value: auth,
     child: MaterialApp.router(
@@ -64,6 +70,30 @@ void main() {
       expect(find.text('New login destination'), findsOneWidget);
       expect(tester.takeException(), isNull);
       semantics.dispose();
+    });
+
+    testWidgets('logout completion navigates even after router redirects away in $language',
+        (tester) async {
+      final auth = FakeSwitchAuth();
+      GoRouter? router;
+      await tester.pumpWidget(buildApp(
+        auth,
+        language: language,
+        onRouter: (value) => router = value,
+      ));
+      await tester.tap(find.bySemanticsLabel(label));
+      await tester.pump();
+      expect(auth.signOutCalls, 1);
+
+      // Auth state may redirect to welcome and unmount the old role screen.
+      router!.go('/welcome');
+      await tester.pumpAndSettle();
+      expect(find.text('Welcome after session redirect'), findsOneWidget);
+
+      auth.logout.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('New login destination'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('failed logout preserves current role screen in $language',
