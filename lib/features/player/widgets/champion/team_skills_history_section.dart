@@ -63,9 +63,13 @@ class TeamSkillsHistorySection extends StatefulWidget {
           announced is! String || DateTime.tryParse(announced) == null) {
         continue;
       }
-      // Individual awards must identify the player who earned them.
-      if (awardType != 'team_champion' &&
-          (playerId is! String || playerId.trim().isEmpty)) {
+      // The database requires no individual recipient for team titles, and
+      // a known actual recipient for individual titles. Reject mismatches on
+      // the client as well, consistent with the Admin archive.
+      if ((awardType == 'team_champion' &&
+              playerId is String && playerId.trim().isNotEmpty) ||
+          (awardType != 'team_champion' &&
+              (playerId is! String || playerId.trim().isEmpty))) {
         continue;
       }
       final awardKey = '${cupId.trim()}::${awardType}';

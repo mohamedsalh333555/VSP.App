@@ -425,4 +425,17 @@ void main() {
     expect(TeamSkillsHistorySection.visibleAwards(rows), isEmpty);
   });
 
+  test('team champion cannot be assigned an arbitrary individual recipient', () {
+    final rows = <Map<String, dynamic>>[
+      {'cup_id': 'cup-a', 'cup_name': 'Cup', 'team_id': 'team-a',
+       'player_id': 'unverified', 'award_type': 'team_champion',
+       'announced_at': '2026-11-18T12:00:00Z'},
+      {'cup_id': 'cup-b', 'cup_name': 'Cup', 'team_id': 'team-a',
+       'award_type': 'team_champion',
+       'announced_at': '2026-11-18T12:00:00Z'},
+    ];
+    expect(TeamSkillsHistorySection.visibleAwards(rows).map((e) => e['cup_id']),
+        ['cup-b']);
+  });
+
 }
