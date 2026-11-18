@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/champion/team_skills_published_details.dart';
 import 'package:vsp_application/features/player/widgets/champion/team_skills_cup_tab.dart';
-import 'package:vsp_application/features/player/widgets/champion/team_skills_cup_tab.dart';
+
 
 void main() {
   testWidgets('published cup shows venue, scheduled times, fee, cap and prizes',
