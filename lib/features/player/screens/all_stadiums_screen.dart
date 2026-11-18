@@ -145,9 +145,11 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
   }
 
   // Refresh the current query without clearing the last authoritative page.
-  void _refreshServerFilters(StadiumProvider provider) {
+  Future<void> _refreshServerFilters(StadiumProvider provider) async {
     if (!_connectivity.value) return;
-    provider.fetchStadiumsWithParams(
+    // Keep the refresh affordance active until the latest server attempt has
+    // actually resolved; do not present an immediately completed refresh.
+    await provider.fetchStadiumsWithParams(
       isRefresh: true,
       governorate: _selectedGovernorate,
       floorType: _selectedFloorType,
@@ -309,7 +311,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                 return RefreshIndicator(
                   color: VSPColors.accent,
                   backgroundColor: VSPColors.surface,
-                  onRefresh: () async => _refreshServerFilters(provider),
+                  onRefresh: () => _refreshServerFilters(provider),
                   child: Column(
                     children: [
                       if (provider.errorMessage != null || !isOnline)
