@@ -165,14 +165,22 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
             final opponentWins = validCount(isTeamA ? rec['team_b_wins'] : rec['team_a_wins']);
             final draws = validCount(rec['draws']);
             final complete = teamWins != null && opponentWins != null && draws != null;
-            final ahead = complete && teamWins > opponentWins;
-            final summary = complete
+            // A valid 0/0/0 summary means no played fixture, not a
+            // verified defeat, clean sheet, or winning record.
+            final played = complete &&
+                teamWins + opponentWins + draws > 0;
+            final ahead = played && teamWins > opponentWins;
+            final summary = !complete
                 ? (isArabic
-                    ? 'فوز: $teamWins | تعادل: $draws | خسارة: $opponentWins'
-                    : 'Wins: $teamWins | Draws: $draws | Losses: $opponentWins')
-                : (isArabic
                     ? 'بيانات المواجهات غير مكتملة'
-                    : 'Head-to-head counts unavailable');
+                    : 'Head-to-head counts unavailable')
+                : !played
+                    ? (isArabic
+                        ? 'لم تُلعب مواجهات مسجلة مع هذا الفريق'
+                        : 'No recorded games played against this team')
+                    : (isArabic
+                        ? 'فوز: $teamWins | تعادل: $draws | خسارة: $opponentWins'
+                        : 'Wins: $teamWins | Draws: $draws | Losses: $opponentWins');
 
             return Container(
               padding: const EdgeInsets.all(12),
@@ -223,7 +231,7 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      complete
+                      played
                           ? (isArabic ? '$teamWins فوز'
                               : (teamWins == 1 ? '1 win' : '$teamWins wins'))
                           : '—',

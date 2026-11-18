@@ -368,4 +368,29 @@ void main() {
     expect(find.text('Includes a 1v1 champion'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+  for (final locale in const [Locale('ar'), Locale('en')]) {
+    testWidgets('unplayed opponent aggregate is not displayed as a real win: ${locale.languageCode}',
+        (tester) async {
+      await tester.pumpWidget(_wrap(TeamProfileHeadToHeadSection(
+        team: _team(),
+        headToHeadRecords: const [{
+          'team_a_id': 'team-a', 'team_b_id': 'team-b',
+          'team_b': {'name': 'Wolves', 'logo_url': ''},
+          'team_a_wins': 0, 'team_b_wins': 0, 'draws': 0,
+        }],
+      ), locale));
+      await tester.pumpAndSettle();
+      final ar = locale.languageCode == 'ar';
+      expect(find.text(ar ? 'ضد Wolves' : 'vs Wolves'), findsOneWidget);
+      expect(find.text(ar ? 'لم تُلعب مواجهات مسجلة مع هذا الفريق'
+                          : 'No recorded games played against this team'), findsOneWidget);
+      expect(find.text(ar ? '0 فوز' : '0 wins'), findsNothing);
+      expect(find.text(ar
+          ? 'المواجهات المسجلة: 0 فوز • 0 تعادل • 0 خسارة'
+          : 'Recorded matchups: 0 W • 0 D • 0 L'), findsNothing);
+      expect(find.text('—'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
 }
