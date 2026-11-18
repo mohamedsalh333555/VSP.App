@@ -7,6 +7,8 @@ class OtpBox extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool hasError;
+  /// One-based field position for accessible six-digit verification input.
+  final int? digitPosition;
   final double width;
   final ValueChanged<String> onChanged;
   final void Function(KeyEvent) onKey;
@@ -16,6 +18,7 @@ class OtpBox extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     required this.hasError,
+    this.digitPosition,
     this.width = 46,
     required this.onChanged,
     required this.onKey,
@@ -24,7 +27,7 @@ class OtpBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFilled = controller.text.isNotEmpty;
-    return Container(
+    final inputBox = Container(
       width: width,
       height: 56,
       margin: const EdgeInsets.symmetric(horizontal: 5),
@@ -72,6 +75,15 @@ class OtpBox extends StatelessWidget {
           onChanged: onChanged,
         ),
       ),
+    );
+
+    if (digitPosition == null) return inputBox;
+    final isArabic = Localizations.maybeLocaleOf(context)?.languageCode == 'ar';
+    return Semantics(
+      label: isArabic
+          ? 'رمز التحقق، الرقم $digitPosition من 6'
+          : 'Verification code digit $digitPosition of 6',
+      child: inputBox,
     );
   }
 }

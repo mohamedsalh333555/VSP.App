@@ -1,0 +1,47 @@
+name: VSP OTP Accessibility
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-otp-accessibility.yml"
+      - "lib/features/auth/widgets/verify_email/otp_box.dart"
+      - "lib/features/auth/screens/verify_email_screen.dart"
+      - "test/features/auth/verify_email_accessibility_widget_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-otp-accessibility.yml"
+      - "lib/features/auth/widgets/verify_email/otp_box.dart"
+      - "lib/features/auth/screens/verify_email_screen.dart"
+      - "test/features/auth/verify_email_accessibility_widget_test.dart"
+permissions:
+  contents: read
+concurrency:
+  group: vsp-otp-accessibility-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  otp-accessibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter gen-l10n
+      - name: Analyze OTP input and accessibility tests
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/auth/widgets/verify_email/otp_box.dart
+          lib/features/auth/screens/verify_email_screen.dart
+          test/features/auth/verify_email_accessibility_widget_test.dart
+      - name: Verify English and Arabic screen-reader input labels
+        run: >-
+          flutter test --concurrency=1
+          test/features/auth/verify_email_accessibility_widget_test.dart
+          test/features/auth/verify_email_components_test.dart

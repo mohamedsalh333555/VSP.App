@@ -287,6 +287,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                         children: List.generate(
                           6,
                           (i) => OtpBox(
+                            digitPosition: i + 1,
                             width: boxWidth,
                             controller: _controllers[i],
                             focusNode: _focusNodes[i],
@@ -306,12 +307,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                   child: _errorMessage != null
                       ? Padding(
                           padding: const EdgeInsets.only(top: VSPSpacing.md),
-                          child: Text(
-                            _errorMessage!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: VSPColors.error,
-                              fontSize: 13,
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              _errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: VSPColors.error,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         )
