@@ -30,7 +30,9 @@ class StadiumBottomBookingBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final hasDeposit = stadium.needsDeposit && stadium.depositAmount > 0.0;
+    final hasDeposit = stadium.needsDeposit &&
+        stadium.depositAmount.isFinite && stadium.depositAmount > 0.0;
+    final unverifiedDeposit = stadium.needsDeposit && !hasDeposit;
 
     final priceDetails = Column(
       mainAxisSize: MainAxisSize.min,
@@ -65,7 +67,17 @@ class StadiumBottomBookingBar extends StatelessWidget {
         ),
         AnimatedSwitcher(
           duration: VSPDSMotion.standard,
-          child: hasDeposit
+          child: unverifiedDeposit
+              ? Text(
+                  isArabic ? 'العربون غير متاح حاليًا' : 'Deposit amount unavailable',
+                  key: const ValueKey('deposit-unavailable'),
+                  softWrap: true,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: VSPColors.textSecondary,
+                        fontSize: 10,
+                      ),
+                )
+              : hasDeposit
               ? Row(
                   key: const ValueKey('deposit'),
                   mainAxisSize: MainAxisSize.min,
