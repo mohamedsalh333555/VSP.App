@@ -143,6 +143,32 @@ void main() {
       '08c5fc4b-189d-4f41-b1e0-5798d1f9a804)or(true'), isFalse);
   });
 
+  test('team matchup read only joins public names, never private team data', () {
+    const a = '82e73247-e111-4ab9-abd5-04cf6fe6779a';
+    const b = '741f2b99-5097-4a38-98b0-7d818e266a12';
+    const c = 'dd13cc05-c234-4902-a3e8-bd9e215c99d7';
+    final visible = MatchupRepository.withPublicTeamNames(a, [
+      {'team_a_id': a, 'team_b_id': b, 'team_a_wins': 2,
+       'team_b_wins': 0, 'draws': 1, 'secret': 'DO_NOT_LEAK'},
+      {'team_a_id': b, 'team_b_id': c, 'team_a_wins': 42,
+       'team_b_wins': 0, 'draws': 0},
+      {'team_a_id': a, 'team_b_id': a, 'team_a_wins': 99},
+      {'team_a_id': a, 'team_b_id': 'malformed', 'team_a_wins': 99},
+    ], [
+      {'id': a, 'name': 'Team A', 'logo_url': '/a.png',
+       'invite_code': 'DO_NOT_LEAK'},
+      {'id': b, 'name': 'Team B', 'logo_url': '/b.png',
+       'captain_phone': 'DO_NOT_LEAK'},
+    ]);
+    expect(visible, hasLength(1));
+    expect(visible.single['team_a_wins'], 2);
+    expect((visible.single['team_b'] as Map)['name'], 'Team B');
+    expect(visible.single.containsKey('secret'), isFalse);
+    expect((visible.single['team_b'] as Map).containsKey('captain_phone'),
+        isFalse);
+    expect(MatchupRepository.withPublicTeamNames('not-a-uuid', [], []), isEmpty);
+  });
+
   test('team match progress is deduplicated and never invents a rank', () {
     final history = <Map<String, dynamic>>[
       {'team_a_id': 'team-a', 'team_b_id': 'team-b',

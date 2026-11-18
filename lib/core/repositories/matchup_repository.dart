@@ -189,19 +189,80 @@ class MatchupRepository {
       ).hasMatch(id);
 
   /// A failed source read is UNKNOWN, not verified empty history. This
-  /// propagates transport/RLS errors so the team-profile screen can display
-  /// its existing retryable failure state instead of a false "no matches".
-  /// Matchup-only history is distinct from captain-agreed challenge results.
+  /// deliberately avoids embedding the private teams table in a public
+  /// head-to-head read: only the approved teams_public projection supplies
+  /// opponent names and logos.
+  ///
+  /// The arguments for the PostgREST OR filter are UUIDs, never arbitrary
+  /// text from a deep link or player input.
   Future<List<Map<String, dynamic>>> getAllHeadToHeadForTeamStrict(
       String teamId) async {
     if (!isCanonicalTeamId(teamId)) {
       throw const FormatException('Invalid canonical team ID');
     }
-    final response = await _supabase
+    final raw = await _supabase
         .from('team_head_to_head')
-        .select('*, team_a:teams!team_head_to_head_team_a_id_fkey(id, name, logo_url), team_b:teams!team_head_to_head_team_b_id_fkey(id, name, logo_url)')
+        .select('team_a_id,team_b_id,team_a_wins,team_b_wins,draws')
         .or('team_a_id.eq.$teamId,team_b_id.eq.$teamId');
-    return List<Map<String, dynamic>>.from(response as List);
+    final rows = List<Map<String, dynamic>>.from(raw as List);
+    final participantIds = <String>{
+      for (final row in rows)
+        if (row['team_a_id'] is String &&
+            isCanonicalTeamId(row['team_a_id'] as String))
+          row['team_a_id'] as String,
+      for (final row in rows)
+        if (row['team_b_id'] is String &&
+            isCanonicalTeamId(row['team_b_id'] as String))
+          row['team_b_id'] as String,
+    };
+    if (participantIds.isEmpty) return [];
+    final teams = await _supabase
+        .from('teams_public')
+        .select('id,name,logo_url')
+        .inFilter('id', participantIds.toList());
+    return withPublicTeamNames(
+      teamId,
+      rows,
+      List<Map<String, dynamic>>.from(teams as List),
+    );
+  }
+
+  /// Reject cross-team results even if an upstream cache returns mixed rows.
+  /// Copy ONLY the approved aggregate counts and public team metadata.
+  static List<Map<String, dynamic>> withPublicTeamNames(
+    String teamId,
+    Iterable<Map<String, dynamic>> records,
+    Iterable<Map<String, dynamic>> publicTeams,
+  ) {
+    if (!isCanonicalTeamId(teamId)) return const [];
+    final teamsById = <String, Map<String, dynamic>>{
+      for (final team in publicTeams)
+        if (team['id'] is String &&
+            isCanonicalTeamId(team['id'] as String))
+          team['id'] as String: <String, dynamic>{
+            'id': team['id'],
+            if (team['name'] is String) 'name': team['name'],
+            if (team['logo_url'] is String) 'logo_url': team['logo_url'],
+          },
+    };
+    final safe = <Map<String, dynamic>>[];
+    for (final rec in records) {
+      final a = rec['team_a_id'];
+      final b = rec['team_b_id'];
+      if (a is! String || b is! String || a == b ||
+          !isCanonicalTeamId(a) || !isCanonicalTeamId(b) ||
+          (a != teamId && b != teamId)) continue;
+      safe.add({
+        'team_a_id': a,
+        'team_b_id': b,
+        'team_a_wins': rec['team_a_wins'],
+        'team_b_wins': rec['team_b_wins'],
+        'draws': rec['draws'],
+        if (teamsById.containsKey(a)) 'team_a': teamsById[a],
+        if (teamsById.containsKey(b)) 'team_b': teamsById[b],
+      });
+    }
+    return safe;
   }
 
   /// حساب جدول الترتيب اللحظي (النقاط = 3 × الفوز + 1 × التعادل)
