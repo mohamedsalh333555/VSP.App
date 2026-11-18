@@ -58,11 +58,43 @@ void main() {
         {'unrecognized': 'secret'},
         {'title': 'Announcement'},
       ],
-    }, isArabic: true), ['اسم عربي', 'جائزة 2', 'Announcement']);
+    }, isArabic: true), ['اسم عربي', 'Announcement']);
     expect(TeamSkillsPublishedDetails.publishedPrizeLabels({
       'prizes': {'not': 'an array'},
     }, isArabic: true), isEmpty);
   });
+  test('published fee and capacity are validated without inventing a price', () {
+    expect(TeamSkillsPublishedDetails.publishedFee({'hospitality_fee': 0}), '0');
+    expect(TeamSkillsPublishedDetails.publishedFee({'hospitality_fee': '75.25'}), '75.25');
+    expect(TeamSkillsPublishedDetails.publishedFee({'hospitality_fee': -1}), '—');
+    expect(TeamSkillsPublishedDetails.publishedFee({'hospitality_fee': double.nan}), '—');
+    expect(TeamSkillsPublishedDetails.publishedFee({'hospitality_fee': 'not money'}), '—');
+    expect(TeamSkillsPublishedDetails.publishedCapacity({'max_teams': 8}), '8');
+    expect(TeamSkillsPublishedDetails.publishedCapacity({'max_teams': '8'}), '—');
+    expect(TeamSkillsPublishedDetails.publishedCapacity({'max_teams': -8}), '—');
+  });
+
+  testWidgets('unknown prize objects and invalid fee never become public claims', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(
+      body: SingleChildScrollView(child: TeamSkillsPublishedDetails(
+        isArabic: false, stadiumName: null, cup: {
+          'max_teams': -8, 'hospitality_fee': -50,
+          'prizes': [
+            {'unrecognized': 'not-a-prize'},
+            {'title': 'Official cup'},
+            {'title': 'Official cup'},
+          ],
+        },
+      )),
+    )));
+    expect(find.text('Maximum teams: —'), findsOneWidget);
+    expect(find.text('Team hospitality: Not announced'), findsOneWidget);
+    expect(find.text('• Official cup'), findsOneWidget);
+    expect(find.textContaining('Prize 1'), findsNothing);
+    expect(find.textContaining('not-a-prize'), findsNothing);
+    expect(find.textContaining('-50 EGP'), findsNothing);
+  });
+
   test('cup discovery never invents points, team capacity or a completed state', () {
     expect(TeamSkillsCupTab.publishedMetadata(<String, dynamic>{},
         isArabic: false), '');
