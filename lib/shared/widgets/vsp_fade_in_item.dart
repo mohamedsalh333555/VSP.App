@@ -68,6 +68,8 @@ class _VSPFadeInItemState extends State<VSPFadeInItem>
 
   @override
   Widget build(BuildContext context) {
+    // Prefer immediate, complete content over delayed/staggered motion.
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
     return FadeTransition(
       opacity: _opacity,
       child: SlideTransition(position: _slide, child: widget.child),

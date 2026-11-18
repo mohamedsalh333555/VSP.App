@@ -1,0 +1,65 @@
+name: VSP Auth UX Motion, Role and Responsive Acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-auth-ux-regressions.yml"
+      - "lib/shared/widgets/vsp_fade_in_item.dart"
+      - "lib/shared/widgets/vsp_animated_button.dart"
+      - "lib/shared/widgets/vsp_terms_checkbox.dart"
+      - "lib/shared/widgets/custom_text_field.dart"
+      - "lib/features/auth/screens/select_role_screen.dart"
+      - "lib/features/auth/screens/create_account_screen.dart"
+      - "lib/features/auth/widgets/signup/signup_name_fields.dart"
+      - "test/features/auth/auth_reduced_motion_widget_test.dart"
+      - "test/features/auth/select_role_accessibility_widget_test.dart"
+      - "test/features/auth/signup_responsive_name_fields_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-auth-ux-regressions.yml"
+      - "lib/shared/widgets/vsp_fade_in_item.dart"
+      - "lib/shared/widgets/vsp_animated_button.dart"
+      - "lib/shared/widgets/vsp_terms_checkbox.dart"
+      - "lib/shared/widgets/custom_text_field.dart"
+      - "lib/features/auth/screens/select_role_screen.dart"
+      - "lib/features/auth/screens/create_account_screen.dart"
+      - "test/features/auth/auth_reduced_motion_widget_test.dart"
+      - "test/features/auth/select_role_accessibility_widget_test.dart"
+      - "test/features/auth/signup_responsive_name_fields_test.dart"
+permissions:
+  contents: read
+concurrency:
+  group: vsp-auth-ux-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  auth-ux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze auth animations, roles, responsive widgets
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/shared/widgets/vsp_fade_in_item.dart
+          lib/shared/widgets/vsp_terms_checkbox.dart
+          lib/shared/widgets/custom_text_field.dart
+          lib/features/auth/screens/select_role_screen.dart
+          lib/features/auth/screens/create_account_screen.dart
+          test/features/auth/auth_reduced_motion_widget_test.dart
+          test/features/auth/select_role_accessibility_widget_test.dart
+          test/features/auth/signup_responsive_name_fields_test.dart
+      - name: Test animations, role choice, screen sizes and Arabic RTL
+        run: >-
+          flutter test --concurrency=1
+          test/features/auth/auth_reduced_motion_widget_test.dart
+          test/features/auth/select_role_accessibility_widget_test.dart
+          test/features/auth/signup_responsive_name_fields_test.dart

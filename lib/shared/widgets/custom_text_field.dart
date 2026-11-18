@@ -129,7 +129,9 @@ class CustomTextField extends StatelessWidget {
                 : null,
             suffixIcon: effectiveSuffix != null
                 ? AnimatedSwitcher(
-                    duration: VSPDSMotion.fast,
+                    duration: MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : VSPDSMotion.fast,
                     child: effectiveSuffix,
                   )
                 : null,

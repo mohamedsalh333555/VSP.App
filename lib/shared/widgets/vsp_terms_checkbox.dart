@@ -84,7 +84,9 @@ class _VSPTermsCheckboxState extends State<VSPTermsCheckbox> {
               height: VSPSize.touchTarget,
               child: Center(
                 child: AnimatedContainer(
-                  duration: VSPDSMotion.navigationSwitch,
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : VSPDSMotion.navigationSwitch,
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(

@@ -79,15 +79,26 @@ class SelectRoleScreen extends StatelessWidget {
               Center(
                 child: Semantics(
                   button: true,
+                  label: isArabic ? 'تسجيل الدخول بحساب آخر' : 'Log in with another account',
+                  excludeSemantics: true,
+                  onTap: () {
+                    context.read<AuthProvider>().signOut();
+                    context.go('/login');
+                  },
                   child: InkWell(
+                    excludeFromSemantics: true,
                     borderRadius: BorderRadius.circular(VSPDSRadius.sm),
                     onTap: () {
                       context.read<AuthProvider>().signOut();
                       context.go('/login');
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.all(VSPDSSpacing.xs),
-                      child: RichText(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: VSPDSAccessibility.minimumTapTarget,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(VSPDSSpacing.xs),
+                        child: Center(child: RichText(
                         textAlign: TextAlign.center,
                         textDirection: Directionality.of(context),
                         text: TextSpan(
@@ -101,7 +112,7 @@ class SelectRoleScreen extends StatelessWidget {
                               style: VSPDSTypography.actionLabel,
                             ),
                           ],
-                        ),
+                        )),
                       ),
                     ),
                   ),
@@ -135,10 +146,13 @@ class _RoleCard extends StatelessWidget {
     return Semantics(
       button: true,
       label: '$title. $subtitle',
+      excludeSemantics: true,
+      onTap: onTap,
       child: Material(
         color: VSPDSSemanticColors.surface,
         borderRadius: BorderRadius.circular(VSPDSRadius.card),
         child: InkWell(
+          excludeFromSemantics: true,
           onTap: onTap,
           borderRadius: BorderRadius.circular(VSPDSRadius.card),
           child: Container(
