@@ -386,6 +386,10 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                       // List of Stadiums
                       Expanded(
                         child: ListView.builder(
+                          // A short list (even one venue) must allow pull-to-refresh.
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
                           padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                           itemCount: filteredStadiums.length + (provider.hasMore && isOnline ? 1 : 0),
                           itemBuilder: (context, index) {
