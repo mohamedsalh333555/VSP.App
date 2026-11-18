@@ -1,0 +1,49 @@
+name: VSP Profile Edit Position and Validation Regression
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-profile-edit-regressions.yml"
+      - "lib/features/player/screens/profile_subscreens/edit_profile_screen.dart"
+      - "lib/shared/widgets/vsp_position_selector.dart"
+      - "test/features/player/edit_profile_position_validation_widget_test.dart"
+      - "test/shared/widgets/vsp_position_selector_responsive_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-profile-edit-regressions.yml"
+      - "lib/features/player/screens/profile_subscreens/edit_profile_screen.dart"
+      - "lib/shared/widgets/vsp_position_selector.dart"
+      - "test/features/player/edit_profile_position_validation_widget_test.dart"
+      - "test/shared/widgets/vsp_position_selector_responsive_test.dart"
+
+permissions:
+  contents: read
+concurrency:
+  group: vsp-profile-edit-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze profile edit and position contract
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/player/screens/profile_subscreens/edit_profile_screen.dart
+          test/features/player/edit_profile_position_validation_widget_test.dart
+          test/shared/widgets/vsp_position_selector_responsive_test.dart
+      - name: Test editable player and owner profiles in Arabic and English
+        run: >-
+          flutter test --concurrency=1
+          test/features/player/edit_profile_position_validation_widget_test.dart
+          test/shared/widgets/vsp_position_selector_responsive_test.dart
