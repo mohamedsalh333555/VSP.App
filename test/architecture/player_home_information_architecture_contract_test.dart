@@ -90,5 +90,13 @@ void main() {
     expect(teamDashboard, contains('Error loading active team league (details redacted)'));
     expect(teamDashboard, isNot(contains('Error loading user teams:')));
     expect(teamDashboard, isNot(contains('Error loading active team league:')));
+    final ownedTeam = File(
+      'lib/features/player/screens/profile_subscreens/my_team_screen.dart',
+    ).readAsStringSync();
+    expect(ownedTeam, contains('Membership realtime stream failed (details redacted)'));
+    expect(ownedTeam, contains('Team roster could not be verified (details redacted)'));
+    expect(ownedTeam, isNot(contains('stackTrace')));
+    expect(ownedTeam, isNot(contains('VSPLogger.e(')));
+    expect(ownedTeam, isNot(contains('onError: (err)')));
   });
 }
