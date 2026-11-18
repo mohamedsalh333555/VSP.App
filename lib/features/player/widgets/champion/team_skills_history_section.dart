@@ -66,8 +66,7 @@ class TeamSkillsHistorySection extends StatefulWidget {
       // The database requires no individual recipient for team titles, and
       // a known actual recipient for individual titles. Reject mismatches on
       // the client as well, consistent with the Admin archive.
-      if ((awardType == 'team_champion' &&
-              playerId is String && playerId.trim().isNotEmpty) ||
+      if ((awardType == 'team_champion' && playerId != null) ||
           (awardType != 'team_champion' &&
               (playerId is! String || playerId.trim().isEmpty))) {
         continue;

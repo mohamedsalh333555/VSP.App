@@ -438,4 +438,19 @@ void main() {
         ['cup-b']);
   });
 
+  test('a team trophy is never tied to a malformed non-null individual recipient', () {
+    const stamp = '2026-11-18T16:00:00Z';
+    final rows = <Map<String, dynamic>>[
+      for (final bad in ['', 0, false, <String, dynamic>{}])
+        {'cup_id': 'bad-${bad.runtimeType}', 'cup_name': 'Invalid',
+         'team_id': 'team-a', 'player_id': bad,
+         'award_type': 'team_champion', 'announced_at': stamp},
+      {'cup_id': 'valid', 'cup_name': 'Valid', 'team_id': 'team-a',
+       'player_id': null, 'award_type': 'team_champion',
+       'announced_at': stamp},
+    ];
+    expect(TeamSkillsHistorySection.visibleAwards(rows).map((a) => a['cup_id']),
+        ['valid']);
+  });
+
 }
