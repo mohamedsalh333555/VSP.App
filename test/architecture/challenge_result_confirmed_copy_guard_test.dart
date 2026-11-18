@@ -16,5 +16,6 @@ void main() {
     expect(branch, contains('Result confirmed. View your team profile and match history.'));
     expect(branch, isNot(contains('team standings updated')));
     expect(branch, contains('_openTeamProfile(context, currentTeamId)'));
+    expect(branch, contains('if (!hasCompletedChallengeResult(booking))'));
   });
 }

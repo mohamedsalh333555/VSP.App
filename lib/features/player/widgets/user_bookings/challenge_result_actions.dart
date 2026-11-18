@@ -43,6 +43,17 @@ class ChallengeResultActions extends StatelessWidget {
     this.appealSubmitOverride,
   });
 
+  /// A result is not final for player-facing progress until both captains
+  /// agreed, the booking actually completed, and an outcome is present.
+  /// This does not claim that Elo/points were processed or that no later
+  /// official correction was issued by the server.
+  static bool hasCompletedChallengeResult(Booking booking) =>
+      booking.bookingType == BookingType.challenge &&
+      booking.status == BookingStatus.completed &&
+      booking.matchResultStatus == MatchResultStatus.confirmed &&
+      booking.finalOutcome != null &&
+      !booking.endTime.isAfter(VSPTimeService.now);
+
   static Widget buildChallengeStatusBadge(
     BuildContext context, {
     required Booking booking,
@@ -77,6 +88,12 @@ class ChallengeResultActions extends StatelessWidget {
     final isAway = currentTeamId == booking.opponentTeamId;
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
+      if (!hasCompletedChallengeResult(booking)) {
+        return buildStatusBadge(
+          isArabic ? 'النتيجة النهائية غير متاحة' : 'Final result unavailable',
+          VSPColors.warning,
+        );
+      }
       final outcome = booking.finalOutcome;
       // A confirmed flag without a final outcome is inconsistent data.
       // Never label it as a loss just because the outcome is missing.
@@ -440,6 +457,12 @@ class ChallengeResultActions extends StatelessWidget {
     }
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
+      if (!hasCompletedChallengeResult(booking)) {
+        return buildStatusBadge(
+          isArabic ? 'النتيجة النهائية غير متاحة' : 'Final result unavailable',
+          VSPColors.warning,
+        );
+      }
       if (booking.finalOutcome == null) {
         return buildStatusBadge(
           isArabic ? 'النتيجة غير متاحة حاليًا' : 'Result currently unavailable',

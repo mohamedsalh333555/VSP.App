@@ -7,6 +7,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 Booking booking({
   MatchResultStatus result = MatchResultStatus.confirmed,
   MatchOutcome? outcome = MatchOutcome.homeWin,
+  BookingStatus bookingStatus = BookingStatus.completed,
 }) => Booking(
   id: 'booking-1',
   stadiumId: 'venue-1',
@@ -21,7 +22,7 @@ Booking booking({
   rentBall: false,
   totalPrice: 250,
   paymentMethod: 'cash',
-  status: BookingStatus.completed,
+  status: bookingStatus,
   createdByUserId: 'captain-a',
   createdAt: DateTime(2026, 11, 15),
   matchResultStatus: result,
@@ -71,6 +72,22 @@ void main() {
       expect(find.text('Team profile'), findsNothing);
       expect(tester.takeException(), isNull);
     }
+  });
+
+  testWidgets('cancelled or unfinished challenge is not an official win',
+      (tester) async {
+    for (final data in [
+      booking(bookingStatus: BookingStatus.cancelled),
+      booking(bookingStatus: BookingStatus.confirmed),
+    ]) {
+      expect(ChallengeResultActions.hasCompletedChallengeResult(data), isFalse);
+      await tester.pumpWidget(host(data));
+      await tester.pumpAndSettle();
+      expect(find.text('Team profile'), findsNothing);
+      expect(find.text('Final result unavailable'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+    expect(ChallengeResultActions.hasCompletedChallengeResult(booking()), isTrue);
   });
 
   testWidgets('unrelated team cannot open a participant profile', (tester) async {
