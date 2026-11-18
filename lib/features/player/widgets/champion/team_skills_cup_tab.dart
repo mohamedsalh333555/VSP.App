@@ -55,13 +55,22 @@ class TeamSkillsCupTab extends StatefulWidget {
 
   /// One verified numeric stage record: zero is real; missing or disputed
   /// values are unknown and must never display as an invented zero.
-  static String verifiedStagePoints(Iterable<Map<String, dynamic>> rows) {
+  static String verifiedStagePoints(Iterable<Map<String, dynamic>> rows) =>
+      verifiedWeightedStagePoints(rows, 25);
+
+  /// The configured stage's weight is a stricter limit than the global
+  /// database score cap. A missing/invalid weight must never invent points.
+  static String verifiedWeightedStagePoints(
+    Iterable<Map<String, dynamic>> rows,
+    Object? stageWeight,
+  ) {
+    if (stageWeight is! num || !stageWeight.isFinite ||
+        stageWeight <= 0 || stageWeight > 25) return '—';
     final values = rows.toList(growable: false);
     if (values.length != 1) return '—';
     final score = values.single['computed_points'];
-    if (score is! num || !score.isFinite || score < 0 || score > 25) {
-      return '—';
-    }
+    if (score is! num || !score.isFinite ||
+        score < 0 || score > stageWeight) return '—';
     return score.toString();
   }
 
@@ -937,12 +946,13 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                     final rows = approvedForTeam.where(
                       (score) => score['stage_no']?.toString() == stageNo,
                     ).toList();
-                    final verified = TeamSkillsCupTab.verifiedStagePoints(rows);
+                    final verified = TeamSkillsCupTab.verifiedWeightedStagePoints(
+                      rows, phase['weight']);
                     return ListTile(
                       dense: true,
                       title: Text(phase['name_ar']?.toString() ?? '',
                           style: const TextStyle(color: VSPColors.textPrimary)),
-                      trailing: Text('$verified / ${phase['weight']}',
+                      trailing: Text('$verified / ${phase['weight'] is num && (phase['weight'] as num).isFinite && (phase['weight'] as num) > 0 && (phase['weight'] as num) <= 25 ? phase['weight'] : '—'}',
                           style: const TextStyle(color: VSPColors.textSecondary)),
                     );
                   }),

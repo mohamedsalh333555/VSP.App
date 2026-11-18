@@ -142,6 +142,27 @@ void main() {
     }
   });
 
+  test('published stage points cannot exceed the real configured stage weight', () {
+    expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
+      const [{'computed_points': 0}], 10), '0');
+    expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
+      const [{'computed_points': 10}], 10), '10');
+    expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
+      const [{'computed_points': 11}], 10), '—');
+    expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
+      const [{'computed_points': 5}], null), '—');
+    expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
+      const [{'computed_points': 5}], '10'), '—');
+    expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
+      const [{'computed_points': 5}], -1), '—');
+    expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
+      const [{'computed_points': 5}], double.nan), '—');
+    expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
+      const [{'computed_points': 5}], 26), '—');
+    expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
+      const [{'computed_points': 2}, {'computed_points': 4}], 10), '—');
+  });
+
   test('Team Skills stage label uses published count, not twelve by default', () {
     expect(TeamSkillsCupTab.publishedStageSummary(
       const [], isArabic: false), 'Competition stages have not been announced yet');
