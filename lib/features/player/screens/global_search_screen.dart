@@ -11,6 +11,7 @@ import 'stadium_details_screen.dart';
 import 'championship_details_screen.dart';
 import 'team_profile_screen.dart';
 import '../widgets/collective_match_invite_sheet.dart';
+import '../widgets/collective_code_entry_dialog.dart';
 import '../../../core/repositories/match_repository.dart';
 
 class GlobalSearchScreen extends StatefulWidget {
@@ -96,43 +97,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
 
   Future<void> _openCollectiveInviteCode() async {
-    final controller = TextEditingController();
     final ar = Localizations.localeOf(context).languageCode == 'ar';
-    final code = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(
-          ar ? 'كود التجميعية' : 'Collective match code',
-          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w800),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.characters,
-          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w800, letterSpacing: 1.2),
-          decoration: InputDecoration(
-            hintText: ar ? 'مثال: AB12CD34' : 'e.g. AB12CD34',
-            hintStyle: const TextStyle(color: VSPColors.textSecondary),
-            filled: true,
-            fillColor: VSPColors.surfaceAlt,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(VSPRadius.md),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(ar ? 'إلغاء' : 'Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim().toUpperCase()),
-            child: Text(ar ? 'فتح' : 'Open'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
+    final code = await CollectiveCodeEntryDialog.show(context);
     if (code == null || code.isEmpty || !mounted) return;
 
     final data = await MatchRepository().getPrivateCollectiveInviteByCode(code);
