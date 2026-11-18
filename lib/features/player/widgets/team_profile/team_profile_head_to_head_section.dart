@@ -135,9 +135,13 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md),
             child: Text(
-              isArabic
-                  ? 'بيانات المواجهات المتاحة غير صالحة للعرض'
-                  : 'Available head-to-head records cannot be verified',
+              headToHeadRecords.isEmpty
+                  ? (isArabic
+                      ? 'لا توجد مواجهات مسجلة حتى الآن'
+                      : 'No recorded matchups yet')
+                  : (isArabic
+                      ? 'بيانات المواجهات المتاحة غير صالحة للعرض'
+                      : 'Available head-to-head records cannot be verified'),
               style: const TextStyle(color: VSPColors.textSecondary),
             ),
           ),

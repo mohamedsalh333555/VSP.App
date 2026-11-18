@@ -287,7 +287,7 @@ void main() {
             'draws': 2,
           },
           {
-            'team_a_id': 'team-b',
+            'team_a_id': 'team-c',
             'team_b_id': 'team-a',
             'team_a': {'name': 'Lions', 'logo_url': ''},
             'team_a_wins': 2,
@@ -312,6 +312,24 @@ void main() {
       expect(find.text('3 - 1'), findsNothing);
       expect(find.text(ar ? '3 فوز' : '3 wins'), findsOneWidget);
       expect(find.text('—'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final locale in const [Locale('ar'), Locale('en')]) {
+    testWidgets('an empty verified read is a friendly empty state: ${locale.languageCode}',
+        (tester) async {
+      await tester.pumpWidget(_wrap(TeamProfileHeadToHeadSection(
+        team: _team(), headToHeadRecords: const [],
+      ), locale));
+      await tester.pumpAndSettle();
+      final ar = locale.languageCode == 'ar';
+      expect(find.text(ar
+          ? 'لا توجد مواجهات مسجلة حتى الآن'
+          : 'No recorded matchups yet'), findsOneWidget);
+      expect(find.text(ar
+          ? 'بيانات المواجهات المتاحة غير صالحة للعرض'
+          : 'Available head-to-head records cannot be verified'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }
