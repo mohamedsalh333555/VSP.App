@@ -1,0 +1,43 @@
+name: VSP Password Recovery Privacy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-recovery-privacy-regressions.yml"
+      - "lib/features/auth/services/password_reset_privacy_message.dart"
+      - "lib/features/auth/widgets/forgot_password_dialog.dart"
+      - "test/features/auth/password_reset_privacy_widget_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-recovery-privacy-regressions.yml"
+      - "lib/features/auth/services/password_reset_privacy_message.dart"
+      - "lib/features/auth/widgets/forgot_password_dialog.dart"
+      - "test/features/auth/password_reset_privacy_widget_test.dart"
+permissions:
+  contents: read
+concurrency:
+  group: vsp-recovery-privacy-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  privacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze recovery UI and privacy regressions
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/auth/services/password_reset_privacy_message.dart
+          lib/features/auth/widgets/forgot_password_dialog.dart
+          test/features/auth/password_reset_privacy_widget_test.dart
+      - name: Test neutral recovery copy against success failure and exceptions
+        run: flutter test --concurrency=1 test/features/auth/password_reset_privacy_widget_test.dart
