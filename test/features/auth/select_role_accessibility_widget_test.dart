@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/features/auth/screens/select_role_screen.dart';
@@ -20,7 +21,8 @@ Widget host(RoleAuth auth, {String lang = 'en'}) =>
       value: auth,
       child: MaterialApp(
         locale: Locale(lang),
-        supportedLocales: const [Locale('ar'), Locale('en')],
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         home: const SelectRoleScreen(),
       ),
     );
