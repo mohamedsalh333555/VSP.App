@@ -324,7 +324,7 @@ class TeamSkillsCupRepository {
 
   Future<List<Map<String, dynamic>>> getAwards(String cupId) async {
     final rows = await _client.from('team_skills_awards')
-        .select('award_type,team_id,player_id,announced_at')
+        .select('cup_id,award_type,team_id,player_id,announced_at')
         .eq('cup_id', cupId);
     return (rows as List).cast<Map<String, dynamic>>();
   }

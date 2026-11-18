@@ -131,11 +131,11 @@ void main() {
 
   test('a live cup never shows unannounced winners, even if award rows exist', () {
     const winner = {
-      'team_id': 'team-a', 'award_type': 'team_champion',
+      'cup_id': 'cup-1', 'team_id': 'team-a', 'award_type': 'team_champion',
       'announced_at': '2026-11-18T10:00:00Z',
     };
     const pending = {
-      'team_id': 'team-a', 'award_type': 'best_goalkeeper',
+      'cup_id': 'cup-1', 'team_id': 'team-a', 'award_type': 'best_goalkeeper',
       'player_id': null, 'announced_at': '2026-11-18T10:00:00Z',
     };
     expect(TeamSkillsCupTab.visiblePublishedAwards(
@@ -143,7 +143,9 @@ void main() {
       awards: [winner]), isEmpty);
     final visible = TeamSkillsCupTab.visiblePublishedAwards(
       cup: {'id': 'cup-1', 'name': 'Cup', 'status': 'completed'},
-      awards: [winner, winner, pending]);
+      awards: [winner, winner, pending,
+        {...winner, 'cup_id': 'another-cup'},
+        {...winner, 'cup_id': null}]);
     expect(visible.length, 1);
     expect(visible.first['award_type'], 'team_champion');
   });

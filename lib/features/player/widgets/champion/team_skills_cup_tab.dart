@@ -43,9 +43,11 @@ class TeamSkillsCupTab extends StatefulWidget {
     if (cupId is! String || cupId.trim().isEmpty ||
         cupName is! String || cupName.trim().isEmpty) return const [];
     return TeamSkillsHistorySection.visibleAwards(
-      awards.map((row) => <String, dynamic>{
-        ...row, 'cup_id': cupId, 'cup_name': cupName,
-      }),
+      awards.where((row) =>
+          row['cup_id'] is String && row['cup_id'] == cupId)
+          .map((row) => <String, dynamic>{
+            ...row, 'cup_name': cupName,
+          }),
     );
   }
 
