@@ -6,6 +6,7 @@ import 'package:vsp_application/features/auth/screens/signup_screen.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:vsp_application/shared/widgets/vsp_terms_checkbox.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
+import 'package:vsp_application/shared/widgets/vsp_position_selector.dart';
 import 'package:vsp_application/features/auth/widgets/signup/signup_date_of_birth_field.dart';
 import 'package:vsp_application/shared/widgets/date_picker/vsp_date_picker_step_views.dart';
 
@@ -158,10 +159,15 @@ void main() {
       await fillRequiredDetails(tester, language);
       await submit(tester);
       expect(fake.registrationCalls, 0);
-      final option = find.text(language == 'ar' ? 'مهاجم' : 'Forward');
-      await tester.ensureVisible(option);
-      await tester.tap(option);
+      // Dismiss the validation toast; changing the option uses the real
+      // selector callback, avoiding a viewport-dependent offscreen tap.
+      await tester.pump(const Duration(seconds: 4));
       await tester.pump();
+      tester.widget<VSPPositionSelector>(find.byType(VSPPositionSelector))
+          .onPositionSelected('FW');
+      await tester.pump();
+      expect(tester.widget<VSPPositionSelector>(
+          find.byType(VSPPositionSelector)).selectedPosition, 'FW');
       await submit(tester);
       expect(fake.registrationCalls, 1);
       expect(fake.registrationMetadata?['position'], 'FW');
