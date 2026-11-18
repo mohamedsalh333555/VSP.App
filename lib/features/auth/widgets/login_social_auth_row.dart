@@ -136,12 +136,18 @@ class LoginSocialAuthRow extends StatelessWidget {
                   height: 22,
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  AppLocalizations.of(context)!.continueWithGoogle,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: VSPColors.textPrimary,
-                      ),
+                Flexible(
+                  child: Text(
+                    AppLocalizations.of(context)!.continueWithGoogle,
+                    textAlign: TextAlign.center,
+                    softWrap: true,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: VSPColors.textPrimary,
+                        ),
+                  ),
                 ),
               ],
             ),

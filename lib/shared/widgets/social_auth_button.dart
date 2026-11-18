@@ -42,16 +42,17 @@ class SocialAuthButton extends StatelessWidget {
                 stops: const [0.0, 0.5, 1.0],
               ),
             ),
-            child: SizedBox(
-              width: double.infinity,
-              height: height ?? VSPDSizes.buttonHeight,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: VSPDSSpacing.inputHorizontal,
-                  ),
-                  child: iconWidget,
+            // Keep the 56dp resting size, but grow for text scaling.
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: height ?? VSPDSizes.buttonHeight,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: VSPDSSpacing.inputHorizontal,
+                  vertical: VSPDSSpacing.xs,
                 ),
+                child: Center(child: iconWidget),
               ),
             ),
           ),

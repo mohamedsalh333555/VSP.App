@@ -184,11 +184,14 @@ class _LoginScreenState extends State<LoginScreen> {
  ),
  ),
  const SizedBox(width: 12),
- Text(
+ Expanded(
+ child: Text(
  AppLocalizations.of(context)!.credentialAccess,
+ softWrap: true,
  style: Theme.of(context).textTheme.titleSmall?.copyWith(
  letterSpacing: 1.1,
  color: VSPColors.textPrimary,
+ ),
  ),
  ),
  ],

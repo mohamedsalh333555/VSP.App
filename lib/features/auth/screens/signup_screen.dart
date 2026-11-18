@@ -284,11 +284,14 @@ class _SignupScreenState extends State<SignupScreen> {
  ),
  ),
  const SizedBox(width: 12),
- Text(
+ Expanded(
+ child: Text(
  AppLocalizations.of(context)!.personalInformation,
+ softWrap: true,
  style: Theme.of(context).textTheme.titleSmall?.copyWith(
  letterSpacing: 1.1,
  color: VSPColors.textPrimary,
+ ),
  ),
  ),
  ],
