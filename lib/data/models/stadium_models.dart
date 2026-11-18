@@ -222,10 +222,10 @@ class Stadium {
  }
  }
 
-  final rawPPH = data['pricePerHour'] ?? data['price_per_hour'];
+  final rawPPH = data['price_per_hour'] ?? data['pricePerHour'];
   final double parsedPricePerHour = rawPPH == null ? 0.0 : (rawPPH is num ? rawPPH.toDouble() : (double.tryParse(rawPPH.toString()) ?? 0.0));
 
-  final rawBasePrice = data['basePrice'] ?? data['pricePerHour'] ?? data['price_per_hour'];
+  final rawBasePrice = data['base_price'] ?? data['basePrice'] ?? data['price_per_hour'] ?? data['pricePerHour'];
   double parsedBasePrice = rawBasePrice == null ? 0.0 : (rawBasePrice is num ? rawBasePrice.toDouble() : (double.tryParse(rawBasePrice.toString()) ?? 0.0));
   
 
@@ -269,7 +269,7 @@ class Stadium {
  notes: (data['notes'] as String?) ?? '', // Read notes
  contractUrl: data['contractUrl'] ?? data['contract_url'],
  ownerIdUrl: data['ownerIdUrl'] ?? data['owner_id_url'],
- isVerified: data['isVerified'] ?? data['is_verified'] ?? false,
+ isVerified: data['is_verified'] ?? data['isVerified'] ?? false,
  // Administrative venue blocking is read-only in the public model. It must
  // travel from the live database snapshot to the booking-availability gate.
  isBlocked: (data['is_blocked'] ?? data['isBlocked']) == true,
