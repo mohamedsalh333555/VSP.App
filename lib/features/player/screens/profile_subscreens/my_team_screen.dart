@@ -120,8 +120,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
             return;
           }
           if (_activeUserId == uid) _initialLoad(uid);
-        }, onError: (err) {
-          VSPLogger.w('Membership realtime stream notice: $err');
+        }, onError: (_) {
+          VSPLogger.w('Membership realtime stream failed (details redacted)');
           if (mounted && _activeUserId == uid) {
             setState(() {
               _hasTeamLoadError = true;
@@ -225,8 +225,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
             _isLoadingMembers = true;
           });
           await _loadMemberDetails(updatedTeam, generation, uid);
-        } catch (err) {
-          VSPLogger.w('Team realtime refresh could not be verified: $err');
+        } catch (_) {
+          VSPLogger.w('Team realtime refresh could not be verified (details redacted)');
           if (_isCurrentTeamRequest(generation, uid)) {
             setState(() {
               _hasTeamLoadError = true;
@@ -234,8 +234,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
             });
           }
         }
-      }, onError: (err) {
-        VSPLogger.w('Team realtime stream notice: $err');
+      }, onError: (_) {
+        VSPLogger.w('Team realtime stream failed (details redacted)');
         if (_isCurrentTeamRequest(generation, uid)) {
           setState(() {
             _hasTeamLoadError = true;
@@ -245,8 +245,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
       });
 
       await _loadMemberDetails(team, generation, uid);
-    } catch (err, stackTrace) {
-      VSPLogger.e('Team profile could not be verified', err, stackTrace);
+    } catch (_) {
+      VSPLogger.w('Team profile could not be verified (details redacted)');
       if (_isCurrentTeamRequest(generation, uid)) {
         setState(() {
           _hasTeamLoadError = true;
@@ -278,8 +278,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
         _isLoadingMembers = false;
         _hasTeamLoadError = false;
       });
-    } catch (err, stackTrace) {
-      VSPLogger.e('Team roster could not be verified', err, stackTrace);
+    } catch (_) {
+      VSPLogger.w('Team roster could not be verified (details redacted)');
       if (_isCurrentTeamRequest(generation, uid) &&
           rosterGeneration == _rosterGeneration) {
         setState(() {
