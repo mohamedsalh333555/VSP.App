@@ -258,16 +258,32 @@ class MatchupRepository {
     Iterable<Map<String, dynamic>> publicTeams,
   ) {
     if (!isCanonicalTeamId(teamId)) return const [];
-    final teamsById = <String, Map<String, dynamic>>{
-      for (final team in publicTeams)
-        if (team['id'] is String &&
-            isCanonicalTeamId(team['id'] as String))
-          team['id'] as String: <String, dynamic>{
-            'id': team['id'],
-            if (team['name'] is String) 'name': team['name'],
-            if (team['logo_url'] is String) 'logo_url': team['logo_url'],
-          },
-    };
+    // Duplicate public identities can be inconsistent if a cache or
+    // provider returns overlapping pages. Never silently choose the last
+    // name/logo and present it as an authenticated opponent identity.
+    final teamsById = <String, Map<String, dynamic>>{};
+    final ambiguousIds = <String>{};
+    for (final team in publicTeams) {
+      final id = team['id'];
+      if (id is! String || !isCanonicalTeamId(id) ||
+          ambiguousIds.contains(id)) continue;
+      final name = team['name'];
+      final logo = team['logo_url'];
+      final safe = <String, dynamic>{
+        'id': id,
+        if (name is String && name.trim().isNotEmpty) 'name': name.trim(),
+        if (logo is String && logo.trim().isNotEmpty)
+          'logo_url': logo.trim(),
+      };
+      final previous = teamsById[id];
+      if (previous == null) {
+        teamsById[id] = safe;
+      } else if (previous['name'] != safe['name'] ||
+          previous['logo_url'] != safe['logo_url']) {
+        teamsById.remove(id);
+        ambiguousIds.add(id);
+      }
+    }
     final safe = <Map<String, dynamic>>[];
     for (final rec in records) {
       final a = rec['team_a_id'];

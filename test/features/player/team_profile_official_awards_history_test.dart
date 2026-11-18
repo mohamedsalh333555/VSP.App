@@ -453,4 +453,31 @@ void main() {
         ['valid']);
   });
 
+  test('conflicting public opponent metadata is never silently chosen by row order', () {
+    const a = '82e73247-e111-4ab9-abd5-04cf6fe6779a';
+    const b = '741f2b99-5097-4a38-98b0-7d818e266a12';
+    const matchup = <Map<String, dynamic>>[
+      {'team_a_id': a, 'team_b_id': b,
+       'team_a_wins': 2, 'team_b_wins': 1, 'draws': 0},
+    ];
+    final withoutIdentity = MatchupRepository.withPublicTeamNames(a, matchup, [
+      {'id': b, 'name': 'Wolves', 'logo_url': '/wolves.png'},
+      {'id': b, 'name': 'Falcons', 'logo_url': '/falcons.png'},
+      {'id': b, 'name': 'Wolves', 'logo_url': '/wolves.png'},
+    ]);
+    expect(withoutIdentity, hasLength(1));
+    expect(withoutIdentity.single.containsKey('team_b'), isFalse,
+        reason: 'a conflicting name must not become an asserted opponent');
+    expect(withoutIdentity.single['team_a_wins'], 2,
+        reason: 'the verified aggregate itself still belongs to this team');
+    final consistentCopies = MatchupRepository.withPublicTeamNames(a, matchup, [
+      {'id': b, 'name': ' Wolves ', 'logo_url': '/wolves.png',
+       'private_phone': 'DO_NOT_LEAK'},
+      {'id': b, 'name': 'Wolves', 'logo_url': ' /wolves.png '},
+    ]);
+    expect((consistentCopies.single['team_b'] as Map)['name'], 'Wolves');
+    expect((consistentCopies.single['team_b'] as Map).containsKey('private_phone'),
+        isFalse);
+  });
+
 }

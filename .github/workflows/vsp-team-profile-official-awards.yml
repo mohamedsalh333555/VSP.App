@@ -5,6 +5,7 @@ on:
     branches: [uxlp-44-implementation]
     paths:
       - 'lib/features/player/widgets/champion/team_skills_history_section.dart'
+      - 'lib/core/repositories/matchup_repository.dart'
       - 'lib/features/player/widgets/team_profile/team_profile_head_to_head_section.dart'
       - 'lib/features/player/widgets/team_profile/team_profile_head_to_head_panel.dart'
       - 'lib/features/player/widgets/team_profile/team_profile_hero_header.dart'
@@ -23,6 +24,7 @@ on:
     branches: [main]
     paths:
       - 'lib/features/player/widgets/champion/team_skills_history_section.dart'
+      - 'lib/core/repositories/matchup_repository.dart'
       - 'lib/features/player/widgets/team_profile/team_profile_head_to_head_section.dart'
       - 'lib/features/player/widgets/team_profile/team_profile_head_to_head_panel.dart'
       - 'lib/features/player/widgets/team_profile/team_profile_hero_header.dart'
