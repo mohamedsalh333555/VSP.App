@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/config/app_env.dart';
 import '../../../../core/repositories/team_skills_cup_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
@@ -8,6 +9,24 @@ class TeamSkillsHistorySection extends StatefulWidget {
   final String participantId;
   final bool isTeam;
   final TeamSkillsCupRepository? repository;
+
+  /// No RPC may run when the staging/project rollout gate is closed.
+  static bool shouldLoad({required bool enabled, required String participantId}) =>
+      enabled && participantId.trim().isNotEmpty;
+
+  static String awardTitle(String? type, {required bool isArabic}) {
+    switch (type) {
+      case 'team_champion':
+        return isArabic ? 'بطل مهارات الفرق' : 'Team Skills champion';
+      case 'one_v_one_champion':
+        // This is the final stage WITHIN Team Skills, not the retired 1v1 cup.
+        return isArabic ? 'بطل نهائي المهارات' : 'Skills final champion';
+      case 'best_goalkeeper':
+        return isArabic ? 'أفضل حارس' : 'Best goalkeeper';
+      default:
+        return isArabic ? 'إنجاز بطولة' : 'Tournament award';
+    }
+  }
 
   const TeamSkillsHistorySection({
     super.key,
@@ -30,12 +49,20 @@ class _TeamSkillsHistorySectionState extends State<TeamSkillsHistorySection> {
   void didUpdateWidget(covariant TeamSkillsHistorySection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.participantId != widget.participantId ||
-        oldWidget.isTeam != widget.isTeam) {
+        oldWidget.isTeam != widget.isTeam ||
+        oldWidget.repository != widget.repository) {
       _refresh();
     }
   }
 
   void _refresh() {
+    if (!TeamSkillsHistorySection.shouldLoad(
+      enabled: AppEnv.teamSkillsCupEnabled,
+      participantId: widget.participantId,
+    )) {
+      _future = Future.value(const <Map<String, dynamic>>[]);
+      return;
+    }
     final repo = widget.repository ?? TeamSkillsCupRepository();
     _future = widget.isTeam
         ? repo.getTeamHistory(widget.participantId)
@@ -44,10 +71,10 @@ class _TeamSkillsHistorySectionState extends State<TeamSkillsHistorySection> {
 
   @override
   Widget build(BuildContext context) {
-    const enabled = bool.fromEnvironment(
-      'VSP_ENABLE_TEAM_SKILLS_CUP', defaultValue: false,
-    );
-    if (!enabled || widget.participantId.isEmpty) {
+    if (!TeamSkillsHistorySection.shouldLoad(
+      enabled: AppEnv.teamSkillsCupEnabled,
+      participantId: widget.participantId,
+    )) {
       return const SizedBox.shrink();
     }
     final ar = Localizations.localeOf(context).languageCode == 'ar';
@@ -72,14 +99,6 @@ class _TeamSkillsHistorySectionState extends State<TeamSkillsHistorySection> {
         }
         final history = snapshot.data ?? const <Map<String, dynamic>>[];
         if (history.isEmpty) return const SizedBox.shrink();
-        String awardTitle(String? type) {
-          switch (type) {
-            case 'team_champion': return ar ? 'بطل مهارات الفرق' : 'Team Skills champion';
-            case 'one_v_one_champion': return ar ? 'بطل ختام 1 ضد 1' : '1v1 knockout champion';
-            case 'best_goalkeeper': return ar ? 'أفضل حارس' : 'Best goalkeeper';
-            default: return ar ? 'إنجاز بطولة' : 'Tournament award';
-          }
-        }
         return Container(
           padding: const EdgeInsets.all(VSPSpacing.md),
           decoration: BoxDecoration(
@@ -94,7 +113,8 @@ class _TeamSkillsHistorySectionState extends State<TeamSkillsHistorySection> {
             ...history.map((item)=>ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.emoji_events_outlined, color: VSPColors.accent),
-              title: Text(awardTitle(item['award_type']?.toString()),
+              title: Text(TeamSkillsHistorySection.awardTitle(
+                item['award_type']?.toString(), isArabic: ar),
                 style: const TextStyle(color: VSPColors.textPrimary)),
               subtitle: Text(item['cup_name']?.toString() ?? '',
                 style: const TextStyle(color: VSPColors.textSecondary)),

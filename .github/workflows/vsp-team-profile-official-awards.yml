@@ -1,0 +1,45 @@
+name: VSP Team Profile and Official Awards UX
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'lib/features/player/widgets/champion/team_skills_history_section.dart'
+      - 'lib/features/player/widgets/team_profile/team_profile_head_to_head_section.dart'
+      - 'lib/features/player/widgets/team_profile/team_profile_hero_header.dart'
+      - 'test/features/player/team_profile_official_awards_history_test.dart'
+      - '.github/workflows/vsp-team-profile-official-awards.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/features/player/widgets/champion/team_skills_history_section.dart'
+      - 'lib/features/player/widgets/team_profile/team_profile_head_to_head_section.dart'
+      - 'lib/features/player/widgets/team_profile/team_profile_hero_header.dart'
+      - 'test/features/player/team_profile_official_awards_history_test.dart'
+      - '.github/workflows/vsp-team-profile-official-awards.yml'
+permissions:
+  contents: read
+concurrency:
+  group: vsp-team-profile-official-awards-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  team-profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze team profile and award presentation
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/player/widgets/champion/team_skills_history_section.dart
+          lib/features/player/widgets/team_profile/team_profile_head_to_head_section.dart
+          lib/features/player/widgets/team_profile/team_profile_hero_header.dart
+          test/features/player/team_profile_official_awards_history_test.dart
+      - name: Test team profile, official award visibility and RTL/English totals
+        run: flutter test --concurrency=1 test/features/player/team_profile_official_awards_history_test.dart

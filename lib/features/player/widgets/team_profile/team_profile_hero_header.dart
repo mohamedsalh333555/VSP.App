@@ -85,7 +85,7 @@ class TeamProfileHeroHeader extends StatelessWidget {
                   const Icon(Iconsax.crown_1_copy, color: VSPColors.warning, size: 13),
                   const SizedBox(width: 4),
                   Flexible(child: Text(
-                    isArabic ? 'يضم بطل 1 ضد 1' : 'Includes a 1v1 champion',
+                    isArabic ? 'إنجاز تاريخي: بطل 1 ضد 1' : 'Historical 1v1 champion',
                     style: const TextStyle(
                       color: VSPColors.textPrimary,
                       fontSize: 12,

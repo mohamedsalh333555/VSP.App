@@ -4,6 +4,7 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../../data/models.dart';
 
+/// Aggregate opponent history, not a single-match score or live ranking.
 class TeamProfileHeadToHeadSection extends StatelessWidget {
   final Team team;
   final List<Map<String, dynamic>> headToHeadRecords;
@@ -13,6 +14,10 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
     required this.team,
     required this.headToHeadRecords,
   });
+
+  /// Never invent a 0-0 record when the source omits or corrupts counters.
+  static int? validCount(dynamic value) =>
+      value is int && value >= 0 ? value : null;
 
   @override
   Widget build(BuildContext context) {
@@ -25,10 +30,10 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
           children: [
             const Icon(Iconsax.status_up_copy, color: VSPColors.accent, size: 20),
             const SizedBox(width: 8),
-            Text(
-              isArabic ? 'سجل المواجهات المباشرة (Head-to-Head)' : 'Head-to-Head History',
+            Expanded(child: Text(
+              isArabic ? 'إجمالي المواجهات مع الفرق' : 'Head-to-head totals',
               style: Theme.of(context).textTheme.titleLarge,
-            ),
+            )),
           ],
         ),
         const SizedBox(height: VSPSpacing.sm),
@@ -40,13 +45,26 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
           itemBuilder: (context, index) {
             final rec = headToHeadRecords[index];
             final isTeamA = rec['team_a_id'] == team.id;
-            final opponent = isTeamA ? rec['team_b'] : rec['team_a'];
-            final opponentName = opponent?['name']?.toString() ?? 'فريق منافس';
-            final opponentLogo = opponent?['logo_url']?.toString() ?? '';
+            final dynamic opponent = isTeamA ? rec['team_b'] : rec['team_a'];
+            final opponentMap = opponent is Map ? opponent : const {};
+            final opponentName = opponentMap['name']?.toString().trim();
+            final displayName = opponentName == null || opponentName.isEmpty
+                ? (isArabic ? 'فريق منافس' : 'Opponent team')
+                : opponentName;
+            final opponentLogo = opponentMap['logo_url']?.toString() ?? '';
 
-            final teamWins = isTeamA ? (rec['team_a_wins'] ?? 0) : (rec['team_b_wins'] ?? 0);
-            final opponentWins = isTeamA ? (rec['team_b_wins'] ?? 0) : (rec['team_a_wins'] ?? 0);
-            final draws = rec['draws'] ?? 0;
+            final teamWins = validCount(isTeamA ? rec['team_a_wins'] : rec['team_b_wins']);
+            final opponentWins = validCount(isTeamA ? rec['team_b_wins'] : rec['team_a_wins']);
+            final draws = validCount(rec['draws']);
+            final complete = teamWins != null && opponentWins != null && draws != null;
+            final ahead = complete && teamWins > opponentWins;
+            final summary = complete
+                ? (isArabic
+                    ? 'فوز: $teamWins | تعادل: $draws | خسارة: $opponentWins'
+                    : 'Wins: $teamWins | Draws: $draws | Losses: $opponentWins')
+                : (isArabic
+                    ? 'بيانات المواجهات غير مكتملة'
+                    : 'Head-to-head counts unavailable');
 
             return Container(
               padding: const EdgeInsets.all(12),
@@ -74,12 +92,12 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ضد $opponentName',
+                          isArabic ? 'ضد $displayName' : 'vs $displayName',
                           style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'فوز: $teamWins | تعادل: $draws | خسارة: $opponentWins',
+                          summary,
                           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                         ),
                       ],
@@ -88,18 +106,18 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: teamWins > opponentWins
+                      color: ahead
                           ? VSPColors.success.withValues(alpha: 0.15)
                           : VSPColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: teamWins > opponentWins ? VSPColors.success : VSPColors.borderLight,
+                        color: ahead ? VSPColors.success : VSPColors.borderLight,
                       ),
                     ),
                     child: Text(
-                      '$teamWins - $opponentWins',
+                      complete ? '$teamWins - $opponentWins' : '—',
                       style: TextStyle(
-                        color: teamWins > opponentWins ? VSPColors.success : VSPColors.white,
+                        color: ahead ? VSPColors.success : VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
