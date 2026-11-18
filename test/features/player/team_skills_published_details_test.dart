@@ -121,12 +121,37 @@ void main() {
         'Details and registration');
   });
 
+  test('verified stage zero is distinct from unknown or conflicting results', () {
+    expect(TeamSkillsCupTab.verifiedStagePoints(const []), '—');
+    expect(TeamSkillsCupTab.verifiedStagePoints(const [
+      {'computed_points': null}
+    ]), '—');
+    expect(TeamSkillsCupTab.verifiedStagePoints(const [
+      {'computed_points': 0}
+    ]), '0');
+    expect(TeamSkillsCupTab.verifiedStagePoints(const [
+      {'computed_points': 25}
+    ]), '25');
+    expect(TeamSkillsCupTab.verifiedStagePoints(const [
+      {'computed_points': 0}, {'computed_points': 25}
+    ]), '—');
+    for (final invalid in [-1, 26, double.nan, double.infinity, '0']) {
+      expect(TeamSkillsCupTab.verifiedStagePoints([
+        {'computed_points': invalid}
+      ]), '—');
+    }
+  });
+
   test('Team Skills stage label uses published count, not twelve by default', () {
     expect(TeamSkillsCupTab.publishedStageSummary(
       const [], isArabic: false), 'Competition stages have not been announced yet');
     expect(TeamSkillsCupTab.publishedStageSummary(
       const [{'stage_no': 1}, {'stage_no': 2}, {'stage_no': 3}],
       isArabic: false), '3 announced stages');
+    expect(TeamSkillsCupTab.publishedStageSummary(const [
+      {'stage_no': 1}, {'stage_no': 1}, {'stage_no': 2},
+      {'stage_no': -1}, {'stage_no': null},
+    ], isArabic: false), '2 announced stages');
   });
 
   test('a live cup never shows unannounced winners, even if award rows exist', () {

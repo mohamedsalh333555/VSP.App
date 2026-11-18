@@ -53,11 +53,28 @@ class TeamSkillsCupTab extends StatefulWidget {
     return byId.values.toList(growable: false);
   }
 
+  /// One verified numeric stage record: zero is real; missing or disputed
+  /// values are unknown and must never display as an invented zero.
+  static String verifiedStagePoints(Iterable<Map<String, dynamic>> rows) {
+    final values = rows.toList(growable: false);
+    if (values.length != 1) return '—';
+    final score = values.single['computed_points'];
+    if (score is! num || !score.isFinite || score < 0 || score > 25) {
+      return '—';
+    }
+    return score.toString();
+  }
+
   /// Never invent a fixed 12-stage format for an unpublished plan.
   static String publishedStageSummary(
     Iterable<Map<String, dynamic>> phases, {required bool isArabic}
   ) {
-    final count = phases.length;
+    final stageNos = <int>{};
+    for (final phase in phases) {
+      final n = phase['stage_no'];
+      if (n is int && n > 0 && n <= 100) stageNos.add(n);
+    }
+    final count = stageNos.length;
     if (count <= 0) {
       return isArabic
           ? 'مراحل البطولة لم تُعلن بعد'
@@ -864,9 +881,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                     final rows = approvedForTeam.where(
                       (score) => score['stage_no']?.toString() == stageNo,
                     ).toList();
-                    final verified = rows.isNotEmpty
-                        ? rows.first['computed_points']?.toString() ?? '0'
-                        : '—';
+                    final verified = TeamSkillsCupTab.verifiedStagePoints(rows);
                     return ListTile(
                       dense: true,
                       title: Text(phase['name_ar']?.toString() ?? '',
