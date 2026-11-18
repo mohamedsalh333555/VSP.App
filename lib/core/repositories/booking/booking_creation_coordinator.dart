@@ -26,6 +26,33 @@ class BookingCreationCoordinator {
         _teamRepository = teamRepository;
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
+  /// Only approved public error codes may reach the booking UI. A caller
+  /// must never see raw RPC message/error payloads, which may contain SQL,
+  /// account identifiers or infrastructure diagnostics.
+  static String safeRpcFailureMessage(Map<dynamic, dynamic> response) {
+    final rawCode = response['code'] ?? response['error'];
+    final code = rawCode is String ? rawCode.trim() : '';
+    switch (code) {
+      case 'CHALLENGE_CODE_INVALID_OR_USED':
+        return 'كود التحدي غير صالح أو تم استخدامه من قبل.';
+      case 'CALLER_NOT_A_CAPTAIN':
+        return 'يجب أن تكون كابتن فريق لتأكيد حجز التحدي.';
+      case 'CANNOT_CHALLENGE_OWN_TEAM':
+        return 'لا يمكن تحدي فريقك نفسه.';
+      case 'OPPONENT_TEAM_NOT_FOUND':
+        return 'تعذر العثور على الفريق المنافس.';
+      case 'SLOT_LOCKED_OR_TAKEN':
+        return 'عذراً، هذا الموعد محجوز لمباراة أخرى.';
+      case 'PRICE_MISMATCH':
+        // Keep this stable internal sentinel for AppErrorHandler translation.
+        return 'PRICE_MISMATCH';
+      case 'IDEMPOTENCY_KEY_CONFLICT':
+        return 'تعذر إعادة استخدام هذا الطلب لحجز مختلف. راجع بيانات الحجز وأعد المحاولة.';
+      default:
+        return 'تعذر إتمام الحجز حاليًا. راجع الموعد وحاول مرة أخرى.';
+    }
+  }
+
   /// Converts domain [BookingType] to canonical database string (SSOT: personal | open_join | challenge).
   static String dbBookingType(BookingType type) {
     switch (type) {
@@ -112,43 +139,7 @@ class BookingCreationCoordinator {
       }
 
       if (rpcResult is Map && rpcResult['success'] == false) {
-        // Atomic RPCs return either `code` or legacy `error`.
-        // Use both so the user sees the correct conflict/challenge error.
-        final err = (rpcResult['code'] ?? rpcResult['error'])?.toString() ?? '';
-        if (err == 'CHALLENGE_CODE_INVALID_OR_USED') {
-          throw Exception('كود التحدي غير صالح أو تم استخدامه من قبل.');
-        } else if (err == 'CALLER_NOT_A_CAPTAIN') {
-          throw Exception('يجب أن تكون كابتن فريق لتأكيد حجز التحدي.');
-        } else if (err == 'CANNOT_CHALLENGE_OWN_TEAM') {
-          throw Exception('لا يمكن تحدي فريقك نفسه.');
-        } else if (err == 'OPPONENT_TEAM_NOT_FOUND') {
-          throw Exception('تعذر العثور على الفريق المنافس.');
-        } else if (err == 'SLOT_LOCKED_OR_TAKEN') {
-          throw Exception('عذراً، هذا الموعد محجوز لمباراة أخرى.');
-        } else if (err == 'PRICE_MISMATCH') {
-          throw Exception('PRICE_MISMATCH');
-        }
-
-        String errorMessage = rpcResult['message']?.toString() ??
-            rpcResult['error']?.toString() ??
-            'عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.';
-        final errorCode = rpcResult['code']?.toString() ?? err;
-
-        if (errorMessage.contains('???')) {
-          if (errorCode == 'SLOT_LOCKED_OR_TAKEN') {
-            errorMessage = 'عذراً، هذا الموعد محجوز أو قيد الدفع من قِبل لاعب آخر حالياً.';
-          } else if (errorMessage.contains('????? ???? ?? ????? ??????')) {
-            errorMessage = 'حسابك مقيد عن الحجز النقدي بسبب تكرار عدم الحضور. يرجى السداد إلكترونياً.';
-          } else if (errorMessage.contains('???? ??? ???? ??? ??????')) {
-            errorMessage = 'لديك حجز نقدي نشط بالفعل. يرجى إنهاء الحجز السابق أو الدفع إلكترونياً.';
-          } else if (errorMessage.contains('????? ???? ??????')) {
-            errorMessage = 'حسابك مقيد حالياً. يرجى التواصل مع إدارة التطبيق.';
-          } else {
-            errorMessage = 'عذراً، تعذر إتمام الحجز. يرجى التأكد من الموعد والمحاولة لاحقاً.';
-          }
-        }
-
-        throw Exception(errorMessage);
+        throw Exception(safeRpcFailureMessage(rpcResult));
       }
 
       // Never treat an explicitly unsuccessful or malformed RPC response as

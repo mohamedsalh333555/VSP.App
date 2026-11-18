@@ -1,0 +1,41 @@
+name: VSP Booking RPC Response Privacy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-booking-rpc-response-privacy.yml"
+      - "lib/core/repositories/booking/booking_creation_coordinator.dart"
+      - "test/core/repositories/booking_rpc_error_privacy_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-booking-rpc-response-privacy.yml"
+      - "lib/core/repositories/booking/booking_creation_coordinator.dart"
+      - "test/core/repositories/booking_rpc_error_privacy_test.dart"
+
+permissions:
+  contents: read
+concurrency:
+  group: vsp-booking-rpc-privacy-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  booking-rpc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze atomic booking error redaction
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/core/repositories/booking/booking_creation_coordinator.dart
+          test/core/repositories/booking_rpc_error_privacy_test.dart
+      - name: Test mapped business errors and private response redaction
+        run: flutter test --concurrency=1 test/core/repositories/booking_rpc_error_privacy_test.dart
