@@ -16,7 +16,13 @@ class RankedTeamSkillsEntry {
 abstract final class TeamSkillsRankingService {
   static double _points(Map<String, dynamic> row) {
     final value = double.tryParse(row['points']?.toString() ?? '');
-    if (value == null || !value.isFinite || value < 0 || value > 100) {
+    // Staging SQL allows 0–25 points PER approved stage. Competitions
+    // configure their own number of stages; a global 100-point ceiling
+    // rejects legitimate 10–13-stage tournaments and larger totals.
+    final stages = row['completed_stages'];
+    if (stages is! int || stages < 0 ||
+        value == null || !value.isFinite || value < 0 ||
+        value > stages * 25) {
       throw const FormatException('Invalid verified Team Skills points');
     }
     return value;
