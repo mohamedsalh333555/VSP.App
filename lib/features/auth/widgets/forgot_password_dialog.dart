@@ -6,12 +6,14 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/custom_text_field.dart';
+import '../services/password_reset_privacy_message.dart';
 
 /// Modal dialog for requesting a password reset email.
 class ForgotPasswordDialog {
   const ForgotPasswordDialog._();
 
   static Future<void> show(BuildContext context) {
+    final hostContext = context;
     final resetEmailController = TextEditingController();
     return showDialog(
       context: context,
@@ -76,16 +78,23 @@ class ForgotPasswordDialog {
                                 }
                                 setDialogState(() => isLoading = true);
                                 final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                                await authProvider.resetPassword(email);
+                                try {
+                                  // Success and failure must show the same
+                                  // acknowledgement to prevent email enumeration.
+                                  await authProvider.resetPassword(email);
+                                } catch (_) {
+                                  // Do not expose provider errors or account
+                                  // existence through public recovery feedback.
+                                }
                                 if (!dialogContext.mounted) return;
                                 Navigator.pop(dialogContext);
-                                if (context.mounted) {
-                                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                                // The dialog's own BuildContext is disposed
+                                // during pop. Show feedback on the host screen.
+                                if (hostContext.mounted) {
+                                  final isArabic = Localizations.localeOf(hostContext).languageCode == 'ar';
                                   VSPFeedback.showSuccess(
-                                    context,
-                                    isArabic
-                                        ? 'لو البريد مسجل عندنا، هتوصلك رسالة استعادة خلال دقائق.'
-                                        : 'If the email is registered, a recovery message will arrive shortly.',
+                                    hostContext,
+                                    PasswordResetPrivacyMessage.acknowledgement(isArabic: isArabic),
                                   );
                                 }
                               },
