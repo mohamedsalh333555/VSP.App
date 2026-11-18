@@ -57,7 +57,7 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
             final opponentWins = validCount(isTeamA ? rec['team_b_wins'] : rec['team_a_wins']);
             final draws = validCount(rec['draws']);
             final complete = teamWins != null && opponentWins != null && draws != null;
-            final ahead = complete && teamWins! > opponentWins!;
+            final ahead = complete && teamWins > opponentWins;
             final summary = complete
                 ? (isArabic
                     ? 'فوز: $teamWins | تعادل: $draws | خسارة: $opponentWins'
