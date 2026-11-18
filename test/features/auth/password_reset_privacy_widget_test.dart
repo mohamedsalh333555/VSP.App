@@ -67,6 +67,9 @@ void main() {
       )), findsOneWidget);
       expect(find.textContaining('Backend details must not be shown'),
           findsNothing);
+      // VSPFeedback owns an expected 3-second auto-dismiss timer.
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump();
     });
   }
 
@@ -82,6 +85,8 @@ void main() {
     expect(find.text(PasswordResetPrivacyMessage.acknowledgement(
       isArabic: true,
     )), findsOneWidget);
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump();
   });
 
   testWidgets('invalid email is rejected before a recovery request', (tester) async {
@@ -94,6 +99,8 @@ void main() {
     await tester.pump();
     expect(auth.calls, 0);
     expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pump();
   });
 
   test('acknowledgements never include provider responses or account status', () {
