@@ -269,18 +269,26 @@ void main() {
     repo.request('Cairo', 0).complete({'items': <Stadium>[venue], 'lastDoc': 1});
     await tester.pumpAndSettle();
 
-    final done = Completer<void>();
-    final refresh = tester.state<RefreshIndicatorState>(
-      find.byType(RefreshIndicator),
+    // Drag a real one-item list rather than forcing RefreshIndicator.show().
+    // An unscrollable list would silently prevent users from refreshing.
+    final resultsList = find.descendant(
+      of: find.byType(RefreshIndicator),
+      matching: find.byType(ListView),
     );
-    refresh.show().then((_) => done.complete());
+    expect(resultsList, findsOneWidget);
+    expect(
+      tester.widget<ListView>(resultsList).physics,
+      isA<AlwaysScrollableScrollPhysics>(),
+    );
+    await tester.drag(resultsList, const Offset(0, 450));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(repo.requests['Cairo'], hasLength(2));
-    expect(done.isCompleted, isFalse);
+    expect(provider.isLoading, isTrue);
 
     repo.request('Cairo', 1).complete({'items': <Stadium>[venue], 'lastDoc': 1});
     await tester.pumpAndSettle();
-    expect(done.isCompleted, isTrue);
+    expect(provider.isLoading, isFalse);
     expect(find.text('First Venue'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
