@@ -15,6 +15,7 @@ on:
       - "test/core/utils/email_address_validator_test.dart"
       - "test/unit/signup_validation_service_test.dart"
       - "test/features/auth/signup_components_test.dart"
+      - "test/features/auth/signup_full_form_widget_test.dart"
   pull_request:
     branches: [main]
     paths:
@@ -58,6 +59,7 @@ jobs:
           test/unit/signup_invalid_email_contract_test.dart
           test/unit/signup_validation_service_test.dart
           test/features/auth/signup_components_test.dart
+          test/features/auth/signup_full_form_widget_test.dart
       - name: Test registration form failures and localized feedback
         run: >-
           flutter test --concurrency=1
