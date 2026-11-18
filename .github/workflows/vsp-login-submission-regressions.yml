@@ -1,0 +1,43 @@
+name: VSP Login Input and Exception Recovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-login-submission-regressions.yml"
+      - "lib/features/auth/screens/login_screen.dart"
+      - "lib/core/utils/email_address_validator.dart"
+      - "test/features/auth/login_submission_regression_widget_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-login-submission-regressions.yml"
+      - "lib/features/auth/screens/login_screen.dart"
+      - "lib/core/utils/email_address_validator.dart"
+      - "test/features/auth/login_submission_regression_widget_test.dart"
+
+permissions:
+  contents: read
+concurrency:
+  group: vsp-login-submission-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  login:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze login exception recovery
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/auth/screens/login_screen.dart
+          test/features/auth/login_submission_regression_widget_test.dart
+      - name: Test malformed email and retry after thrown auth request
+        run: flutter test --concurrency=1 test/features/auth/login_submission_regression_widget_test.dart

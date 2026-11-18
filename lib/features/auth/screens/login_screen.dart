@@ -63,10 +63,25 @@ class _LoginScreenState extends State<LoginScreen> {
  setState(() => _isLoading = true);
  
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final success = await authProvider.signIn(
- email: email,
- password: _passwordController.text
- );
+ bool success;
+ try {
+   success = await authProvider.signIn(
+     email: email,
+     password: _passwordController.text,
+   );
+ } catch (_) {
+   // An unexpected auth/network failure must not leave the login form
+   // permanently disabled or expose internal provider details.
+   if (!mounted) return;
+   setState(() => _isLoading = false);
+   final isAr = Localizations.localeOf(context).languageCode == 'ar';
+   VSPFeedback.showError(
+     context,
+     isAr ? 'تعذر تسجيل الدخول الآن. حاول مرة أخرى.'
+          : 'Could not sign in right now. Please try again.',
+   );
+   return;
+ }
  
  if (!mounted) return;
  setState(() => _isLoading = false);
