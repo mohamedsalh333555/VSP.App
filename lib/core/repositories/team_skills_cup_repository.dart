@@ -302,12 +302,35 @@ class TeamSkillsCupRepository {
     return (rows as List).cast<Map<String, dynamic>>();
   }
 
+  /// A team ID must never inherit an arbitrary name from conflicting
+  /// repeated public rows. Keep only nonempty, unambiguous display names.
+  static Map<String, String> verifiedTeamNames(
+      Iterable<Map<String, dynamic>> rows) {
+    final names = <String, String>{};
+    final conflicts = <String>{};
+    for (final row in rows) {
+      final rawId = row['id'];
+      if (rawId is! String || rawId.trim().isEmpty) continue;
+      final id = rawId.trim();
+      if (conflicts.contains(id)) continue;
+      final rawName = row['name'];
+      final name = rawName is String ? rawName.trim() : '';
+      if (name.isEmpty || (names.containsKey(id) && names[id] != name)) {
+        names.remove(id);
+        conflicts.add(id);
+      } else {
+        names[id] = name;
+      }
+    }
+    return names;
+  }
+
   Future<Map<String, String>> getTeamNames(List<String> ids) async {
     if (ids.isEmpty) return const {};
     final rows = await _client.from('teams_public')
         .select('id,name').inFilter('id', ids.toSet().toList());
-    return {for (final row in (rows as List))
-      row['id'].toString(): row['name']?.toString() ?? ''};
+    return verifiedTeamNames(
+        (rows as List).map((row) => Map<String, dynamic>.from(row as Map)));
   }
 
   Future<List<Map<String, dynamic>>> getPhases(String cupId) async {
