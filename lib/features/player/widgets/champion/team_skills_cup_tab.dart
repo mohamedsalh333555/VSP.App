@@ -84,8 +84,7 @@ class TeamSkillsCupTab extends StatefulWidget {
       final governorate = row['governorate'];
       if (id is! String || !uuid.hasMatch(id) ||
           name is! String || name.trim().isEmpty ||
-          !const {'registration', 'live', 'completed'}.contains(status) ||
-          (selectedLocation != 'All' && governorate != selectedLocation)) {
+          !const {'registration', 'live', 'completed'}.contains(status)) {
         continue;
       }
       if (conflicts.contains(id)) continue;
@@ -108,7 +107,12 @@ class TeamSkillsCupTab extends StatefulWidget {
         conflicts.add(id);
       }
     }
-    return byId.values.toList(growable: false);
+    // Detect contradictory copies before applying a location filter.
+    // Otherwise a second copy from another governorate could be discarded
+    // first and the remaining stale page mistakenly advertised as official.
+    return byId.values.where((cup) =>
+        selectedLocation == 'All' ||
+        cup['governorate'] == selectedLocation).toList(growable: false);
   }
 
   /// One verified numeric stage record: zero is real; missing or disputed
