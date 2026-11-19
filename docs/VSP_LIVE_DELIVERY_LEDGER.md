@@ -1,3 +1,10 @@
+## 2026-11-20 — UXLP-44 evidence documentation accepted (349/283)
+
+- **01.05 accepted (+1):** published a reproducible **44/44 rule source-evidence register** showing two concrete representative role screens, a scoped observation from the canonical audit, unresolved source/runtime status, and links to the existing independent acceptance criteria. [Evidence register](VSP_UXLP_44_CONFORMANCE_EVIDENCE_01_05_2026-11-20.md). [Successful documentation integrity CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639503400).
+- **Boundary:** a documentation deliverable, **not** 44 UX rule passes or exhaustive 338-screen/device coverage; 39 runtime pending, five product/server decisions (25/31/38/39/41) still open. Leave 01.04 and 01.06 unresolved.
+- Separate client hardening in this batch: team invitation inbox now refreshes safely on identity switches with widget tests; Team Skills capacity labels use correct Arabic singular/dual/plural. These are **CODE_DONE / QA pending**, and do not close 33.*, 04.07, or 79.*.
+- **632 active = 349 accepted / 283 open; eight historical retired 1v1 tasks preserved outside active scope.** No main merge, production, Paymob or staging writes.
+
 ## 2026-11-19 — Team Skills Cup discovery, roster-refresh and public identity hardening (CODE_DONE; acceptance pending)
 
 - **Published discovery:** [code `02f22e0`](https://github.com/mohamedsalh333555/VSP.App/commit/02f22e029401ddf59d0c1da9b7ca10c8cb416ef9) now evaluates contradictory copies of a cup before location filtering, preventing stale same-ID details from masquerading as a valid local tournament. [Regression `904ff3e`](https://github.com/mohamedsalh333555/VSP.App/commit/904ff3e92ed1250c4ec8327689fac447eab3698b) covers both row orders, all/each governorate, valid identical duplicates.
