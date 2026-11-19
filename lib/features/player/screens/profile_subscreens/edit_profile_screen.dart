@@ -354,7 +354,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white)),
  );
  }).toList(),
- onChanged: (String? newValue) {
+ onChanged: _isLoading ? null : (String? newValue) {
  if (newValue != null) {
  HapticFeedback.selectionClick();
  setState(() {
