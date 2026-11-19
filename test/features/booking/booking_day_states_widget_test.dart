@@ -128,6 +128,30 @@ void main() {
     expect(find.byType(BookingSlotCard), findsOneWidget);
   });
 
+  testWidgets('unsorted slots still highlight the earliest bookable time',
+      (tester) async {
+    final date = DateTime.now().add(const Duration(days: 3));
+    final earlier = TimeSlotItem(
+      startTime: '3:00 PM', endTime: '3:30 PM',
+      key: '3:00 PM', startMinutes: 900,
+    );
+    await tester.pumpWidget(_host(
+      _Availability(),
+      date: date,
+      stadium: _venue(),
+      // A stale provider may return rows in reverse chronological order.
+      slots: [_slot, earlier],
+    ));
+    await tester.pumpAndSettle();
+    final cards = tester.widgetList<BookingSlotCard>(
+        find.byType(BookingSlotCard)).toList();
+    expect(cards, hasLength(2));
+    expect(cards.first.slotItem.key, '3:00 PM');
+    expect(cards.first.isNextAvailable, isFalse,
+        reason: 'next-slot decoration is intended only for today');
+    expect(cards.last.slotItem.key, '4:00 PM');
+  });
+
   testWidgets('closure, full booking, past day and missing hours have distinct states',
       (tester) async {
     final availability = _Availability();

@@ -195,7 +195,10 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
           } on FormatException {
             return false;
           }
-        }).toList(growable: false);
+        }).toList()
+          // Both the display order and "next available" border must use
+          // chronological time, never the network/provider's row order.
+          ..sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
         if (validTimeSlots.isEmpty) {
           return VSPStateView(
             state: VSPUiState.empty,
