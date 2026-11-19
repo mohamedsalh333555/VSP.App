@@ -20,7 +20,14 @@ import '../../../../core/utils/phone_utils.dart';
 import '../../../auth/screens/welcome_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
- const EditProfileScreen({super.key});
+ final Future<XFile?> Function(BuildContext)? pickProfileImage;
+ final Future<XFile?> Function(XFile)? compressProfileImage;
+
+ const EditProfileScreen({
+   super.key,
+   this.pickProfileImage,
+   this.compressProfileImage,
+ });
 
  @override
  State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -54,12 +61,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
  Future<void> _pickImage() async {
  if (_isLoading) return;
- final image = await ImagePickService.pick(
- context,
- aspectRatio: CropAspectRatioPreset.square,
- );
- if (image != null && mounted) {
- setState(() => _newProfileImage = image);
+ final auth = context.read<AuthProvider>();
+ final requestingUserId = auth.userModel?.uid ?? auth.currentUser?.id;
+ try {
+   final image = widget.pickProfileImage != null
+       ? await widget.pickProfileImage!(context)
+       : await ImagePickService.pick(
+           context, aspectRatio: CropAspectRatioPreset.square);
+   if (!mounted ||
+       (auth.userModel?.uid ?? auth.currentUser?.id) != requestingUserId) return;
+   if (image != null) setState(() => _newProfileImage = image);
+ } catch (_) {
+   if (mounted &&
+       (auth.userModel?.uid ?? auth.currentUser?.id) == requestingUserId) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     VSPFeedback.showError(context, isArabic
+         ? 'تعذر اختيار الصورة. حاول مرة أخرى.'
+         : 'Could not choose the image. Please try again.');
+   }
  }
  }
 
@@ -129,8 +148,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  }
 
  if (_newProfileImage != null) {
- final compressed = await StorageService().compressImage(_newProfileImage!);
- final photoSaved = await auth.updateProfilePhoto(compressed ?? _newProfileImage!);
+ bool photoSaved = false;
+ try {
+   final compressed = widget.compressProfileImage != null
+       ? await widget.compressProfileImage!(_newProfileImage!)
+       : await StorageService().compressImage(_newProfileImage!);
+   if (!mounted ||
+       (auth.userModel?.uid ?? auth.currentUser?.id) != submittingUserId) {
+     return;
+   }
+   photoSaved = await auth.updateProfilePhoto(
+       compressed ?? _newProfileImage!);
+ } catch (_) {
+   // Profile fields were already persisted. Keep the selected image
+   // and allow an explicit retry without claiming the full save failed.
+ }
  if (!mounted ||
      (auth.userModel?.uid ?? auth.currentUser?.id) != submittingUserId) {
  return;
@@ -190,6 +222,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  children: [
  // --- Profile Picture Section ---
  GestureDetector(
+ key: const ValueKey('edit-profile-pick-image'),
  onTap: _pickImage,
  child: Stack(
  alignment: AlignmentDirectional.bottomEnd,
