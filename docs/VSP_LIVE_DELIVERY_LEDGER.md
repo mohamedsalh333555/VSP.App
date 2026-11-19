@@ -1,3 +1,8 @@
+## 2026-11-19 — Player personal profile source audit 12.01 (336/304)
+
+- **12.01 (335→336 accepted / 305→304 open):** inspected ProfileScreen, EditProfileScreen and team-profile rendering, current-account scoped team reads, name/avatar/position fallbacks, stale/error states, and identified legacy 1v1 badge plus captain-contact/privacy risks as still open. [Audited findings](VSP_PLAYER_PROFILE_DISPLAY_SOURCE_AUDIT_12_01_2026-11-19.md). **Source review only**, not runtime or server security acceptance.
+- Updated scope: **640 total / 336 accepted / 304 open (52.50%)**. No production, payments, APK or main merge.
+
 ## 2026-11-19 — Three additional scoped accepted tasks (335/305)
 
 - **01.03 (332→333 / 308→307):** classified 44 UXLP-44 gaps and 5 unresolved decisions; [CI PASSED](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426149). No complete runtime screen acceptance.
