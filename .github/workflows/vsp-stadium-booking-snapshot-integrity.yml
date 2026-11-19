@@ -54,6 +54,5 @@ jobs:
           flutter test --concurrency=1
           test/features/player/stadium_snapshot_resolver_test.dart
           test/features/player/stadium_bottom_booking_bar_accessibility_test.dart
-          lib/features/player/widgets/booking/booking_bottom_bar.dart
           test/features/player/booking_bottom_bar_financial_guard_test.dart
           test/architecture/booking_total_and_deposit_label_contract_test.dart
