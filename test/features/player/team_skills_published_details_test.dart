@@ -142,6 +142,23 @@ void main() {
     }
   });
 
+  test('published drills retain their official name with readable language-specific stage labels', () {
+    const stage = <String, dynamic>{
+      'stage_no': 3, 'name_ar': 'تصويب', 'weight': 10,
+    };
+    expect(TeamSkillsCupTab.publishedStageLabel(stage, isArabic: true), 'تصويب');
+    expect(TeamSkillsCupTab.publishedStageLabel(stage, isArabic: false),
+        'Stage 3 · تصويب');
+    expect(TeamSkillsCupTab.publishedStageLabel(
+        const {'stage_no': 4, 'name_ar': '  '}, isArabic: true), 'مرحلة 4');
+    expect(TeamSkillsCupTab.publishedStageLabel(
+        const {'stage_no': 4, 'name_ar': '  '}, isArabic: false), 'Stage 4');
+    expect(TeamSkillsCupTab.publishedStageLabel(
+        const {'stage_no': -1, 'name_ar': null}, isArabic: false), 'Stage —');
+    expect(TeamSkillsCupTab.publishedStageLabel(
+        const {'stage_no': 2, 'name_ar': 123}, isArabic: true), 'مرحلة 2');
+  });
+
   test('published stage points cannot exceed the real configured stage weight', () {
     expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
       const [{'computed_points': 0}], 10), '0');
