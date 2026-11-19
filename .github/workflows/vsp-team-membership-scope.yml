@@ -52,12 +52,13 @@ jobs:
           test/core/repositories/team_membership_lookup_test.dart
           lib/features/player/widgets/team_invitations_sheet.dart
           test/features/player/team_invitations_sheet_test.dart
-          test/features/player/team_invitations_action_test.dart
-          test/team_invitation_inbox_contract_test.dart
           lib/features/player/widgets/team_invitations_action.dart
           test/features/player/team_invitations_action_test.dart
+          test/team_invitation_inbox_contract_test.dart
       - name: Test team memberships with two accounts, duplicates and failure
         run: >-
           flutter test --concurrency=1
           test/core/repositories/team_membership_lookup_test.dart
           test/features/player/team_invitations_sheet_test.dart
+          test/features/player/team_invitations_action_test.dart
+          test/team_invitation_inbox_contract_test.dart
