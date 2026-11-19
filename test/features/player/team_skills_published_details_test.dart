@@ -235,6 +235,19 @@ void main() {
     ]), hasLength(1));
   });
 
+  test('conflicting published stage categories cannot choose an arbitrary version', () {
+    const first = <String, dynamic>{
+      'stage_no': 1, 'name_ar': 'تصويب', 'category': 'shooting',
+      'metric': 'goals', 'weight': 10,
+    };
+    final same = <String, dynamic>{...first};
+    final changed = <String, dynamic>{...first, 'category': 'goalkeeping'};
+    expect(TeamSkillsCupTab.visiblePublishedPhases([first, same]),
+        hasLength(1));
+    expect(TeamSkillsCupTab.visiblePublishedPhases([first, changed]), isEmpty);
+    expect(TeamSkillsCupTab.visiblePublishedPhases([changed, first]), isEmpty);
+  });
+
   test('official phase counts use correct Arabic singular dual and plural', () {
     List<Map<String, dynamic>> stages(int n) => [
       for (var i = 1; i <= n; i++)

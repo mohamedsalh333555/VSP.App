@@ -166,6 +166,7 @@ class TeamSkillsCupTab extends StatefulWidget {
       if (previous == null) {
         byNumber[n] = phase;
       } else if (previous['name_ar'] != phase['name_ar'] ||
+          previous['category'] != phase['category'] ||
           previous['weight'] != phase['weight'] ||
           previous['metric'] != phase['metric']) {
         byNumber.remove(n);

@@ -589,9 +589,10 @@ void main() {
     expect(refresh, contains('_phases = values[5];'));
     expect(refresh.indexOf('generation != _readGeneration'),
         lessThan(refresh.indexOf('_phases = values[5];')));
+    final deps = source.indexOf('void didChangeDependencies()');
     final accountSwitch = source.substring(
-      source.indexOf('void didChangeDependencies()'),
-      source.indexOf('void dispose()'),
+      deps,
+      source.indexOf('void dispose()', deps),
     );
     expect(accountSwitch, contains('_phases = [];'));
   });
