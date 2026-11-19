@@ -333,7 +333,10 @@ void main() {
     expect(tab, contains('_approvedScores'));
     // The screen now verifies exactly one approved row rather than
     // arbitrarily trusting rows.first. An absent or conflicting row is unknown.
-    expect(tab, contains('TeamSkillsCupTab.verifiedStagePoints(rows)'));
+    // The player screen must cap each approved score by the actual published
+    // stage weight, not by a fixed 25-point default.
+    expect(tab, contains('TeamSkillsCupTab.verifiedWeightedStagePoints('));
+    expect(tab, contains("rows, phase['weight']"));
     expect(tab, contains("values.single['computed_points']"));
     expect(tab, contains("if (values.length != 1) return '—';"));
     expect(tab, isNot(contains("rows.first['computed_points']")));
