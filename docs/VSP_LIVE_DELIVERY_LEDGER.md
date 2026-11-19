@@ -1,3 +1,8 @@
+## 2026-11-19 — Bilingual signup network interruption and retry 08.05 (337/303)
+
+- **08.05 (336→337 accepted, 304→303 open):** four new Flutter widget tests keep the player/owner registration form stable when an in-flight request fails, block duplicate submission, preserve filled inputs and explicit retry. [CI PASS, 35 tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44442134318). [Scope and evidence](VSP_SIGNUP_INTERRUPTION_RECOVERY_ACCEPTANCE_08_05_2026-11-19.md).
+- Client/mock-only acceptance; no app-kill draft restoration, live Supabase actor, OTP, staging two-account or physical network proof. Other release gates stay open. **640 total / 337 accepted / 303 open (52.66%)**. No production, Paymob, APK or `main` merge.
+
 ## 2026-11-19 — Player personal profile source audit 12.01 (336/304)
 
 - **12.01 (335→336 accepted / 305→304 open):** inspected ProfileScreen, EditProfileScreen and team-profile rendering, current-account scoped team reads, name/avatar/position fallbacks, stale/error states, and identified legacy 1v1 badge plus captain-contact/privacy risks as still open. [Audited findings](VSP_PLAYER_PROFILE_DISPLAY_SOURCE_AUDIT_12_01_2026-11-19.md). **Source review only**, not runtime or server security acceptance.
