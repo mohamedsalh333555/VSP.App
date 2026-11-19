@@ -53,6 +53,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   bool _isGeneratingCode = false;
   int _inviteRequestVersion = 0;
   String? _inviteAccountId;
+  // Repaint an already-open invite sheet when the displayed team changes.
+  final ValueNotifier<int> _inviteDisplayScope = ValueNotifier<int>(0);
   int _awardsRefreshRevision = 0;
   int _rosterRequestVersion = 0;
   int _headToHeadRequestVersion = 0;
@@ -69,6 +71,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     if (activeId != _inviteAccountId) {
       _inviteAccountId = activeId;
       _inviteRequestVersion++;
+      _inviteDisplayScope.value++;
       _isGeneratingCode = false;
     }
   }
@@ -95,6 +98,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     final currentId = widget.team?.id ?? widget.teamId;
     if (previousId == currentId && oldWidget.team == widget.team) return;
     _inviteRequestVersion++;
+    _inviteDisplayScope.value++;
     _isGeneratingCode = false;
     _rosterRequestVersion++;
     _teamRequestVersion++;
@@ -370,7 +374,10 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
           requestedAccountId: requestedAccountId,
           requestVersion: requestVersion,
         ),
-        authorizationChanges: context.read<app_auth.AuthProvider>(),
+        authorizationChanges: Listenable.merge([
+          context.read<app_auth.AuthProvider>(),
+          _inviteDisplayScope,
+        ]),
       );
     } catch (_) {
       debugPrint('Error generating invite code (details redacted)');
@@ -424,6 +431,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     _headToHeadRequestVersion++;
     _championRequestVersion++;
     _inviteRequestVersion++;
+    _inviteDisplayScope.dispose();
     super.dispose();
   }
 
