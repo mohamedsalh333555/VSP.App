@@ -1,3 +1,8 @@
+## 2026-11-19 — UXLP rule-to-screen mapping 01.01 (339/301)
+
+- **01.01 (338→339 / 302→301):** inventoried all 44 named UXLP rules, linked each to one real player/auth and one real owner/auth source surface (**88 traceable assignments spanning 30 distinct paths**), preserving 39 runtime-pending and 5 unresolved decision statuses. [Full traceable rule map](VSP_UXLP_44_RULE_SCREEN_MAP_01_01_2026-11-19.md) and [dedicated Node CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44455066948). Source-only inventory: 338 screens × state/locale/device audit and 01.02/01.04–01.06 remain open.
+- **640 active / 339 accepted / 301 open (52.97%).** No main merge, production data or payment changes, APK or claimed release readiness.
+
 ## 2026-11-19 — Verified avatar failure/discard/retry 12.06 (338/302)
 
 - **12.06 (337→338 accepted, 303→302 open):** fixed partial-save copy and failed photo selection/compression/update handling; added discard-before-save, kept image pending for explicit retry, and guarded against account switch. **10 new bilingual widget cases** passed in [Profile Edit CI #44443912415](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44443912415), 29 tests total, Flutter Analyze green. [Full bounded evidence](VSP_PROFILE_PHOTO_FAILURE_RETRY_ACCEPTANCE_12_06_2026-11-19.md).
