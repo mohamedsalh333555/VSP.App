@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/team_profile/team_matchup_invite_modal.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('previous captain code disappears if account changes while sheet is open',
@@ -82,6 +83,8 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('ar'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: Builder(builder: (context) => TextButton(
           onPressed: () => showTeamMatchupInviteModal(
