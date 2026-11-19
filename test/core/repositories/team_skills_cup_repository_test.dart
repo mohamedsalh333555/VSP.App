@@ -443,6 +443,32 @@ void main() {
     expect(confirmed('','captain'),isFalse);
   });
 
+  test('duplicate or contradictory withdrawal receipts cannot certify success', () {
+    final withdrawn = <String, dynamic>{
+      'id': 'request-1', 'captain_id': 'captain', 'status': 'withdrawn',
+    };
+    bool confirmed(List<Map<String, dynamic>> rows) =>
+        TeamSkillsCupRepository.isCaptainWithdrawalConfirmed(
+          rows, registrationId: 'request-1', captainId: 'captain');
+
+    expect(confirmed([withdrawn]), isTrue);
+    expect(confirmed([
+      withdrawn,
+      {'id': 'request-2', 'captain_id': 'other', 'status': 'pending'},
+    ]), isTrue);
+    // Neither a conflicting status, a different owner nor an identical
+    // duplicate may turn an ambiguous API response into "withdrawn".
+    expect(confirmed([
+      withdrawn,
+      {'id': 'request-1', 'captain_id': 'captain', 'status': 'pending'},
+    ]), isFalse);
+    expect(confirmed([
+      withdrawn,
+      {'id': 'request-1', 'captain_id': 'other', 'status': 'withdrawn'},
+    ]), isFalse);
+    expect(confirmed([withdrawn, {...withdrawn}]), isFalse);
+  });
+
   test('captain success toasts require a persisted registration or withdrawal', () {
     final source = File(
       'lib/features/player/widgets/champion/team_skills_cup_tab.dart',

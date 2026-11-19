@@ -178,11 +178,20 @@ class TeamSkillsCupRepository {
     List<Map<String, dynamic>> registrations, {
     required String registrationId,
     required String captainId,
-  }) => registrationId.isNotEmpty && captainId.isNotEmpty &&
-      registrations.any((row) =>
-        row['id']?.toString() == registrationId &&
-        row['captain_id']?.toString() == captainId &&
-        row['status'] == 'withdrawn');
+  }) {
+    if (registrationId.trim().isEmpty || captainId.trim().isEmpty) {
+      return false;
+    }
+    // A repeated receipt with contradictory statuses or captains must not
+    // be presented as a confirmed withdrawal, even when one row says yes.
+    final receipts = registrations
+        .where((row) => row['id']?.toString() == registrationId)
+        .toList(growable: false);
+    return receipts.length == 1 &&
+        receipts.any((row) =>
+            row['captain_id']?.toString() == captainId &&
+            row['status'] == 'withdrawn');
+  }
 
   /// UI-only eligibility preview; the server checks canonical captain,
   /// actual account status, event state, money settlement and current roster.
