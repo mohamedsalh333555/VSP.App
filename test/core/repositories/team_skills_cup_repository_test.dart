@@ -576,6 +576,31 @@ void main() {
     ])?['id'], 'application-1');
   });
 
+  test('registration freezes player and role choices across cup status read', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    final submit = source.substring(
+      source.indexOf('Future<void> _submit() async'),
+      source.indexOf('Future<void> _editRegistration('),
+    );
+    final snapshot = submit.indexOf('final submittedPlayers =');
+    final cupRead = submit.indexOf('getCupById(cupId)');
+    final guard = submit.indexOf('submissionGeneration != _readGeneration');
+    final rpc = submit.indexOf('final receiptId = await widget.repository.registerTeam(');
+    expect(snapshot, greaterThanOrEqualTo(0));
+    expect(cupRead, greaterThan(snapshot));
+    expect(guard, greaterThan(cupRead));
+    expect(rpc, greaterThan(guard));
+    expect(submit, contains('submittedGoalkeeperId != _goalkeeperId'));
+    expect(submit, contains('submittedRepresentativeId != _representativeId'));
+    expect(submit, contains('submittedPlayers.every(_selectedPlayers.contains)'));
+    expect(submit, contains('playerIds: submittedPlayers'));
+    expect(submit, contains('goalkeeperId: submittedGoalkeeperId'));
+    expect(submit, contains('representativeId: submittedRepresentativeId'));
+    expect(submit, isNot(contains('playerIds: _selectedPlayers.toList()..sort()')));
+  });
+
   test('captain registration retries query server before showing a failure', () {
     final tab = File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
         .readAsStringSync();

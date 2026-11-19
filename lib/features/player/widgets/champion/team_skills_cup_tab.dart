@@ -711,6 +711,10 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     final viewerId = _viewerUserId;
     if (viewerId == null || viewerId.isEmpty) return;
     final submittedTeamId = _selectedTeamId!;
+    final submittedPlayers = _selectedPlayers.toList()..sort();
+    final submittedGoalkeeperId = _goalkeeperId!;
+    final submittedRepresentativeId = _representativeId!;
+    final submissionGeneration = _readGeneration;
     setState(() { _submitting = true; _feedback = null; });
     try {
       // Read the live published status immediately before submission: a card
@@ -725,14 +729,34 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         });
         return;
       }
+      // A previously pending roster refresh can complete while fetching
+      // the latest cup status. Never submit a silently replaced player list.
+      if (submissionGeneration != _readGeneration ||
+          _selectedTeamId != submittedTeamId ||
+          !TeamSkillsCupTab.canSubmitVerifiedRoster(
+            rosterVerified: _rosterVerified,
+            rosterOptions: _rosterOptions,
+            selectedPlayers: _selectedPlayers,
+            goalkeeperId: _goalkeeperId,
+            representativeId: _representativeId,
+          ) ||
+          submittedGoalkeeperId != _goalkeeperId ||
+          submittedRepresentativeId != _representativeId ||
+          submittedPlayers.length != _selectedPlayers.length ||
+          !submittedPlayers.every(_selectedPlayers.contains)) {
+        setState(() => _feedback =
+            _notice(TeamSkillsRequestNotice.rosterUnavailable));
+        return;
+      }
       setState(() {
         _currentCup = freshCup;
         _cupStateCurrent = true;
       });
       final receiptId = await widget.repository.registerTeam(
         cupId: cupId, teamId: submittedTeamId,
-        playerIds: _selectedPlayers.toList()..sort(),
-        goalkeeperId: _goalkeeperId!, representativeId: _representativeId!,
+        playerIds: submittedPlayers,
+        goalkeeperId: submittedGoalkeeperId,
+        representativeId: submittedRepresentativeId,
       );
       if (!mounted || viewerId != _viewerUserId) return;
       // A periodic refresh may supersede _reload(). Confirm the exact RPC
