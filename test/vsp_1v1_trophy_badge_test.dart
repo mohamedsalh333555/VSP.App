@@ -28,7 +28,7 @@ void main() {
         ),
       );
 
-      expect(find.text('🏆 1'), findsOneWidget);
+      expect(find.text('🏆 1 · Legacy'), findsOneWidget);
     });
 
     testWidgets('renders 🏆 ×2 when titles is 2', (tester) async {
@@ -40,7 +40,7 @@ void main() {
         ),
       );
 
-      expect(find.text('🏆 ×2'), findsOneWidget);
+      expect(find.text('🏆 ×2 · Legacy'), findsOneWidget);
     });
 
     testWidgets('renders 🏆 ×5 when titles is 5', (tester) async {
@@ -52,7 +52,7 @@ void main() {
         ),
       );
 
-      expect(find.text('🏆 ×5'), findsOneWidget);
+      expect(find.text('🏆 ×5 · Legacy'), findsOneWidget);
     });
   });
   testWidgets('legacy medal is clearly historical for Arabic screen readers',
@@ -67,7 +67,7 @@ void main() {
       ],
       home: Scaffold(body: Vsp1v1TrophyBadge(titles: 2)),
     ));
-    expect(find.text('🏆 ×2'), findsOneWidget);
+    expect(find.text('🏆 ×2 · تاريخي'), findsOneWidget);
     expect(find.bySemanticsLabel('ألقاب 1 ضد 1 التاريخية: 2'), findsOneWidget);
   });
 
@@ -88,7 +88,7 @@ void main() {
     await tester.pumpWidget(screen());
     await tester.pumpAndSettle();
     expect(queries, 1);
-    expect(find.text('🏆 ×2'), findsOneWidget);
+    expect(find.text('🏆 ×2 · Legacy'), findsOneWidget);
     await tester.pumpWidget(screen());
     await tester.pumpAndSettle();
     expect(queries, 1);
@@ -110,15 +110,15 @@ void main() {
 
     await tester.pumpWidget(screen('player-a'));
     await tester.pumpAndSettle();
-    expect(find.text('🏆 ×5'), findsOneWidget);
+    expect(find.text('🏆 ×5 · Legacy'), findsOneWidget);
     await tester.pumpWidget(screen('player-b'));
     await tester.pump();
-    expect(find.text('🏆 ×5'), findsNothing);
+    expect(find.text('🏆 ×5 · Legacy'), findsNothing);
     expect(queries, 2);
     waiting.complete(1);
     await tester.pumpAndSettle();
-    expect(find.text('🏆 1'), findsOneWidget);
-    expect(find.text('🏆 ×5'), findsNothing);
+    expect(find.text('🏆 1 · Legacy'), findsOneWidget);
+    expect(find.text('🏆 ×5 · Legacy'), findsNothing);
   });
 
 }
