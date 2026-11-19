@@ -270,6 +270,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ],
  ),
  ),
+ if (_newProfileImage != null) ...[
+   const SizedBox(height: VSPSpacing.xs),
+   TextButton(
+     key: const ValueKey('edit-profile-discard-image'),
+     onPressed: _isLoading
+         ? null
+         : () => setState(() => _newProfileImage = null),
+     child: Text(
+       Localizations.localeOf(context).languageCode == 'ar'
+           ? 'إلغاء اختيار الصورة'
+           : 'Discard selected photo',
+       style: const TextStyle(color: VSPColors.textSecondary),
+     ),
+   ),
+ ],
  const SizedBox(height: VSPSpacing.xxl),
 
  // --- Form Fields ---
