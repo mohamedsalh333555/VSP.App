@@ -140,25 +140,23 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
           await SecureStorageService.deleteSecure('pending_verification_email');
           final prefs = await SharedPreferences.getInstance();
           await prefs.remove('pending_verification_email');
-        } catch (error) {
-          // OTP verification already succeeded; cleanup failure must not
-          // leave the verification action spinning or report a false failure.
-          debugPrint('Pending verification email cleanup failed: $error');
+        } catch (_) {
+          // Do not log private secure-storage exception details.
+          debugPrint('Pending verification email cleanup failed (redacted)');
         }
       } else {
         HapticFeedback.vibrate();
         _shakeController.forward(from: 0);
         setState(() {
-          _errorMessage = auth.errorMessage ??
-              (isAr
-                  ? 'رمز التفعيل خاطئ أو انتهت صلاحيته. يرجى المحاولة مجدداً'
-                  : 'Invalid or expired code. Please try again.');
+          // Never display raw provider errors containing email/token details.
+          _errorMessage = isAr
+              ? 'رمز التفعيل خاطئ أو انتهت صلاحيته. يرجى المحاولة مجدداً'
+              : 'Invalid or expired code. Please try again.';
           _isVerifying = false;
         });
       }
-    } catch (error, stackTrace) {
-      debugPrint('Email OTP verification failed unexpectedly: $error');
-      debugPrintStack(stackTrace: stackTrace);
+    } catch (_) {
+      debugPrint('Email OTP verification failed (details redacted)');
       if (!mounted) return;
       setState(() {
         _isVerifying = false;
@@ -202,9 +200,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
             ? 'فشل إعادة إرسال الرمز. يرجى المحاولة لاحقاً.'
             : 'Failed to resend OTP. Try again.');
       }
-    } catch (error, stackTrace) {
-      debugPrint('Email OTP resend failed unexpectedly: $error');
-      debugPrintStack(stackTrace: stackTrace);
+    } catch (_) {
+      debugPrint('Email OTP resend failed (details redacted)');
       if (!mounted) return;
       setState(() {
         _isResending = false;
