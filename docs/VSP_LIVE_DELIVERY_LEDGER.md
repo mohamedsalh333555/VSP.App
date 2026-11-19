@@ -1,3 +1,11 @@
+## 2026-11-19 — Verified UXLP review, auth-scoped private fields and football position preference (+3; 342/298)
+
+- **01.02 (339→340 / 301→300):** reviewed 44 UXLP code-rule source-evidence rows and 88 real screen associations; 39 still need runtime, 5 need decisions. [Bounded evidence](VSP_ACCEPTANCE_BATCH_01_02_12_04_13_06_2026-11-19.md), [rule CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222174).
+- **12.04 (340→341 / 300→299):** invalid/mismatched session hides stale profile name, phone, avatar and form; blocks cross-identity writes and late results. [Profile CI: 37 tests passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222222). Client-only; staging actor/RLS and public captain privacy remain open.
+- **13.06 (341→342 / 299→298):** change selected football position with role-isolated payload; lock dropdown while saving. Arabic/English widget regression. Same [37 passing profile tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222222). Not secondary-position or hosted persistence acceptance.
+- [Sequential batch acceptance](VSP_ACCEPTANCE_BATCH_01_02_12_04_13_06_2026-11-19.md). **640 tasks / 342 accepted / 298 open (53.44%).** [Team Skills stage-label and grammar CI passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222218) as a separate partial 04.06/04.07 fix, not counted.
+- No main merge, Production/Paymob changes, release or APK.
+
 ## 2026-11-19 — UXLP rule-to-screen mapping 01.01 (339/301)
 
 - **01.01 (338→339 / 302→301):** inventoried all 44 named UXLP rules, linked each to one real player/auth and one real owner/auth source surface (**88 traceable assignments spanning 30 distinct paths**), preserving 39 runtime-pending and 5 unresolved decision statuses. [Full traceable rule map](VSP_UXLP_44_RULE_SCREEN_MAP_01_01_2026-11-19.md) and [dedicated Node CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44455066948). Source-only inventory: 338 screens × state/locale/device audit and 01.02/01.04–01.06 remain open.
