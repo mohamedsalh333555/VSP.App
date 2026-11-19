@@ -26,6 +26,7 @@ Future<void> showTeamMatchupInviteModal(
   await showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
+    isScrollControlled: true,
     backgroundColor: VSPColors.transparent,
     builder: (ctx) {
       Widget buildScopedSheet(BuildContext ctx) {
@@ -55,7 +56,8 @@ Future<void> showTeamMatchupInviteModal(
             ),
           );
         }
-        return Container(
+        return SingleChildScrollView(
+          child: Container(
         padding: EdgeInsets.fromLTRB(
           VSPSpacing.xl,
           VSPSpacing.xl,
@@ -175,7 +177,8 @@ Future<void> showTeamMatchupInviteModal(
             const SizedBox(height: VSPSpacing.md),
           ],
         ),
-      );
+          ),
+        );
       }
       if (authorizationChanges == null) return buildScopedSheet(ctx);
       return AnimatedBuilder(
