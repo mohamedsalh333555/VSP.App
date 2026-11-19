@@ -1,0 +1,198 @@
+# PHASE 8 — Security, Privacy, Compliance & Store Approval Readiness
+
+## 2026-11-17 — Paymob refund-queue input and ledger follow-up (source-only)
+
+[Verified Deno/Flutter financial CI and exact open production gates](security/VSP_PAYMOB_REFUND_QUEUE_VALIDATION_LEDGER_BATCH_2026-11-17.md): reject digit-stripped provider transaction IDs and nonpiaster amounts; check each ledger UPDATE returned one row before queue completion or user success notice; reject contradictory provider refund flags. Partial PostgREST writes are not atomic and require a future SQL settlement RPC. No Paymob Sandbox/hosted migration or production release. 0 financial tasks accepted; independent 32.09 captain test accepted separately (633/268/365).
+
+
+## 2026-11-17 — signed direct-refund replay claims and release HOLD dependencies
+
+[Scoped remediation, CI evidence and remaining Paymob Sandbox/hosted migration blockers](security/VSP_PAYMOB_DIRECT_REFUND_DISPATCH_CLAIMS_2026-11-17.md). Added a unique, service-role-only, RLS-enabled dispatch record for the **legacy 1v1** and **already-cancelled booking** direct refund paths; a duplicate signed callback or unavailable claim table can no longer issue a second refund request from those paths. Deno/Flutter financial and disposable PostgreSQL contracts passed; production/Staging migration + genuine user access tests still open. The release security declaration explicitly blocks enabling the modified Edge Functions before `20261117173000` and `20261117174500` migration verification. Existing SEC-06/SEC-10 / 30.* / 31.* tasks stay OPEN; **633 unique / 267 accepted / 366 open**, no new task IDs or accepted completions.
+
+
+## 2026-11-17 — eliminate duplicate team refund owner and align League CHECK statuses
+
+[Evidence, commits, isolated PostgreSQL CAS and Deno/Flutter CI](security/VSP_PAYMOB_SINGLE_REFUND_OWNER_LEAGUE_STATUS_CONTRACT_2026-11-17.md). Team tournament over-capacity RPC **already queues refunds**; Webhook no longer makes a competing refund call. Current production/Staging Team League status constraint blocks existing refund/cancellation statuses; migration committed and validated only in disposable PostgreSQL, **not deployed**. Direct paid withdrawal now CAS-claims its payment before gateway POST and rejects unverified financial completion. These **source-only** changes do not close the broader SEC-06/SEC-10/31.* tasks. **633 unique / 267 accepted / 366 open**, 0 new accepted for this batch; continue to hold releases until hosted schema and Paymob Sandbox checks.
+
+
+## 2026-11-17 — Release critical-finding negative gate accepted (80.08)
+
+[Proof: 9/9 GitHub CI tests, source SHA and blocked release workflow](security/VSP_RELEASE_SECURITY_GATE_80_08_ACCEPTANCE_2026-11-17.md). Manual Android release now fails closed when critical findings are listed or when sign-off/evidence/code SHA are missing. The committed release gate remains HOLD. This accepts **80.08 scoped synthetic fail-closed test only**; live Supabase Advisor collection/CI mapping (80.04/80.05), actual remediation (80.06), Sandbox and production release stay open. Current core counter **633 / 267 accepted / 366 open**.
+
+
+## 2026-11-17 — durable pre-dispatch Paymob refund guards
+
+[Source fixes, test runs and remaining release gates](security/VSP_PAYMOB_REFUND_DISPATCH_CRASH_SAFETY_2026-11-17.md): the 5-minute booking refund claim and 15-minute tournament queue leases are insufficient alone after a gateway POST if the process crashes. CAS-saved dispatch marks now block automatic replay in the booking handler and all 3 cancellation queue worker paths. Deno/Flutter financial CI passed for source paths. Live two-session Staging and Paymob Sandbox remain open. No accepted task-ID promotion; **633 total / 266 accepted / 367 open**.
+
+
+## 2026-11-17 — Paymob booking refund proof and verified audit payload minimization
+
+[Source changes and CI evidence](security/VSP_PAYMOB_REFUND_PROOF_AUDIT_MINIMIZATION_2026-11-17.md): explicit refund outcome instead of ID-only; no raw provider refund/auth bodies in booking refund diagnostic records; redact PAN, billing and novel provider fields from future signed Webhook logs while keeping all Staging receipt-check fields. Focused Deno/Flutter finance CI PASS, actual hosted integration/cleanup/deployment OPEN. Existing tasks SEC-03/06/10, 30.* and 31.* remain open. No new IDs or accepted completions. Counter 633/266/367.
+
+
+## 2026-11-17 — Paymob follow-up: server integration/order identity and refund accounting
+
+[Evidence, commits, passing Deno and prior full financial CI](security/VSP_PAYMOB_INTEGRATION_ORDER_REFUND_RECONCILIATION_2026-11-17.md). Five confirmed source-level risk patterns fixed in `uxlp-44-implementation`: refund signed amount instead of current fee config; server integration allow-list; absent Paymob order ID rejection; stale failed-event update bound to intended order; over-capacity refund ledger acknowledgement and manual reconciliation response. Staging RLS does not yet match production policy count (6 vs 20 storage object policies). No actual user access test, provider refund or hosted deployment. These are **source fixes, not P0 release acceptance**. 633/266/367; 0 new unique IDs or accepted IDs.
+
+
+## 2026-11-17 — Paymob signed pending/void/refund safeguards and order binding
+
+- [Latest bounded source security batch, CI and deployment blockers](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md): confirmed locally from source, signed-but-pending webhook previously could cancel a still-pending booking; flags for reversed/authorization-only transactions were not excluded from generic success; duplicate refunded callbacks could repeat direct notices; checkout order binding would not detect a successful zero-row UPDATE. Source-fixed and Deno/Flutter financial CI verified for these paths, **not production tested**.
+- Five checkout types now require verified persisted `paymob_order_id`; unmatched state or identity fails closed before exposing client secret. [CI payment SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103800758), [isolated SQL SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103816555), [owner checkout SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103816707) at `b2c42d4e`.
+- Existing `30.*` / `63.*` / `SEC-06` / `SEC-10` remain OPEN until end-to-end provider and cross-account checks. The three `85.*` Storage advisory applicability checks remain OPEN; no fresh task duplication. **633 total / 266 accepted / 367 open**. No real payment, hosted deployment, secret access or `main` merge.
+
+
+
+## 2026-11-17 — SEC-NEW-01..05 intake and verified Paymob code follow-up
+
+- Official [Supabase Storage advisories and applicability register](security/VSP_SUPABASE_STORAGE_PAYMOB_SECURITY_INTAKE_2026-11-17.md): three **new, distinct** applicability audits `85.01–85.03` (JWT role `none`, S3 SigV4 presigned PUT, signed resumable upload). All are P0 **Needs Verification**, not evidence that VSP is exploitable. Supabase Cloud is used; confirmed hosted Storage component version and Auth hook issuance remain unverified.
+- SEC-NEW-04 Paymob HMAC / webhook replay and SEC-NEW-05 privileged SQL, secrets and RLS map to **existing** SEC-02/06/09/10 and task IDs 30.*, 63.*, 76–80; **do not create duplicates**. Existing signed webhook/ledger checks and isolated DB payment tests remain relevant, but live Sandbox, provider settlement and independent JWT access checks are not complete.
+- Additional Paymob refund diagnostic and checkout-exception redaction source fixes: commits [a161137a](https://github.com/mohamedsalh333555/VSP.App/commit/a161137a059b3320d033e7db609ddabec73247c1), [5bc61a8b](https://github.com/mohamedsalh333555/VSP.App/commit/5bc61a8b1600bcbbb4f08382de5d551d22636398), [23fe3066](https://github.com/mohamedsalh333555/VSP.App/commit/23fe3066a10063eb1b55ee4428a14ca9378fce35). [Financial CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100276777) **SUCCESS** on the source SHA, without live deployments.
+- Supabase read-only security advisors still flag callable `SECURITY DEFINER` functions. Four payment/admin-sensitive functions in each environment have apparent caller checks but not completed negative account tests. Do not bulk revoke or weaken RLS.
+- **Counter unchanged after this additional code-only batch:** 633 unique / 266 accepted / 367 open; 0 extra accepted, 0 additional new IDs. The earlier +3 audit additions remain open. Production webhook deployment, Storage provider version proof, key rotation and production DB changes require separate authorization. No real payments or `main` merge.
+
+
+## Batch10 verified security rollout and release-policy documentation — 2026-11-11
+
+[37-policy/self-unblock deployment and evidence](security/STORE_COMPLIANCE_BATCH_10_2026-11-11.md), [website delivery](security/STORE_COMPLIANCE_BATCH_08_2026-11-11.md), [actual iOS build](security/STORE_COMPLIANCE_BATCH_09_2026-11-11.md) and [release policy80.07](security/RELEASE_ACCEPTANCE_POLICY.md). Core82 accepted/538 pending. SEC-02/09 scoped corrections verified in native CI and staging then production; not completion of all Phase8/9 or store readiness.
+
+## Batch 02 continuation — 2026-11-11
+
+See [privacy, permissions and deletion batch](security/STORE_COMPLIANCE_BATCH_02_2026-11-11.md). Ten app corrections contribute to SEC-01/03/04/08 and SC03/05/07/14: scoped photo picking, optional camera/location hardware, minimal photo metadata requests, auth-bound location cache cleanup, corrupt-cache recovery, guarded deletion confirmation, truthful incomplete-account cleanup, deletion identity snapshots, Android advertising identifier opt-out and known-profile-only automatic cleanup. Application commits: `27b34f7`, `1a89e0d`, `1143044`, `e862fbb`; fixture/CI commits are recorded separately in the report.
+
+Final verified checks at `e862fbb`: Flutter CI 42930897576 SUCCESS — 32 focused privacy/deletion cases and **1120 passed, 10 skipped** in the full suite; Android smoke and actual APK permission gate 42930890192 SUCCESS, including six Python gate tests; Owner checkout security 42930897573 SUCCESS — 39 isolated cases. The APK has no broad media/storage or ad-identifier/attribution permissions and no required camera/GPS hardware. No Supabase deployment, schema/data mutation, production change or main merge in this batch. OAuth deletion, server-side erasure/retention and atomic registration-cancellation checks remain open.
+
+## Current continuation — 2026-11-11
+
+Implementation `00b530fcf5de6ed44324c36f0e623dc572ba7e18`: seven concrete corrections in owner payment verification/correlation/CAPTCHA/inquiry, explicit account deletion confirmation, sensitive auth/deletion logging and malformed-request handling. See [batch evidence](security/STORE_COMPLIANCE_BATCH_01_2026-11-11.md) for exact scope, files, tests, deployment and remaining gates. This is a partial SEC-01/03/04/06/08/10 continuation, not new duplicate Phase 8 scope.
+
+39 isolated real-handler/payment tests passed locally and in Owner checkout security CI run 42922218192. Staging `get_owner_web_checkout_status` v4 and `create_owner_web_checkout` v3 are ACTIVE with JWT verification retained; deployed handler readback matches source. Both reject absent/invalid tokens with 401; expected CORS preflights return 200. Valid-account deployed authorization and Paymob sandbox/signed webhook checks remain open. No production or main changes. This does not mark account deletion, subscriptions or store readiness complete.
+
+Final checkpoint at `daae560e`: Flutter CI 42924535090 SUCCESS (**1088 passed, 10 skipped**, including all 26 deletion tests); Owner checkout security 42924534900 SUCCESS (**39 passed**); Android E2E Smoke 42924534915 SUCCESS. Test-fixture/assertion corrections and earlier failures are documented in the linked batch report. No full 24-journey or store-readiness pass implied.
+
+Last checkpoint: 2026-11-05. Branch: `uxlp-44-implementation`. **Do not merge into main without owner approval.**
+
+## Scope and evidence standard
+
+This phase augments, and does not replace, the existing 24 journeys tracked in [E2E_24_JOURNEYS_EXECUTION.md](E2E_24_JOURNEYS_EXECUTION.md). DONE means the relevant fix **and its test** actually passed; code inspection alone is not DONE. No production mutation or real payment is authorized. Follow the pre-existing `SECURITY_TASKS.md` constraints, including explicit owner approval before production SQL changes and its deferred leaked-password-protection task.
+
+## Baseline (observed)
+
+- Flutter mobile application; Supabase Auth/Postgres/RLS/Storage/Edge Functions; Firebase Android integration; static `web_dist` pages; Paymob integration source.
+- Existing public `web_dist/privacy.html` and `web_dist/terms.html` and owner in-app deletion UI were found; **existence does not establish legal adequacy or a complete deletion workflow**.
+- Payment-related Edge Function source exists in `supabase/functions/{create_paymob_intention,paymob_webhook,process_paymob_refund}`; deployment and secrets must be verified separately.
+- Prior journey evidence: 4 passed, 3 failed, 14 blocked, 3 not run (last recorded E2E report; not a new test run).
+- Latest observed Flutter CI: success (run 42024932555). Android E2E: failure (run 42024932640). A subsequent Android run 42028838602 was in progress at inspection.
+- Earlier security task inventory is in `SECURITY_TASKS.md`. Its staging status may be stale; reverify live environment before taking action.
+- No store approval, production security certification, or verified legal opinion is claimed.
+
+## Phase 8 task register
+
+| ID | Priority | Status | Scope / immediate evidence and next action |
+|---|---|---|---|
+| SEC-01 | P0 | IN PROGRESS | Inspect Supabase auth/session lifecycle, reset and email verification; test cross-account operations |
+| SEC-02 | P0 | IN PROGRESS | Audit RLS, Storage, security-definer RPCs and Edge Function authentication on staging; use isolated accounts |
+| SEC-03 | P1 | NOT STARTED | Build data inventory, retention/access/processor mapping and log minimization |
+| SEC-04 | P1 | IN PROGRESS | Owner deletion UI exists; verify player and web request flows, safe retention and end-to-end deletion |
+| SEC-05 | P1 | NOT STARTED | Separate transactional from marketing consent, opt-out, send authorization and throttling |
+| SEC-06 | P0 | IN PROGRESS | Booking atomicity and payment/webhook/idempotency audit; payment E2E blocked on sandbox |
+| SEC-07 | P1 | IN PROGRESS | Team invitations, challenge acceptance and result permissions have documented gaps in 24-journey report |
+| SEC-08 | P1 | BLOCKED | Official Apple/Google policy verification, developer account metadata and store submission pending; do not assert approval |
+| SEC-09 | P1 | NOT STARTED | Audit static web pages, admin routes, authorization and security headers at hosting layer |
+| SEC-10 | P0 | IN PROGRESS | Audit secrets and CI permissions; never rotate production keys without approval |
+| SEC-11 | P1 | IN PROGRESS | Existing privacy/terms pages require accurate service mapping and legal review; no invented legal identity |
+
+## Journey integration
+
+For each original journey 01–24, preserve its ID and functional acceptance criteria. Add: malformed input, unauthorized role, other-user access, network failure, duplicate request, private-data exposure, and resulting database state. Mark each dimension as PASSED / FAILED / BLOCKED / NOT RUN with evidence. Do not promote the journey to Passed until the required real staging flow succeeds.
+
+## Specific high-priority pre-existing security tasks
+
+Read `SECURITY_TASKS.md` before acting. It identifies `process_tournament_refund`, `create_owner_web_checkout`, `get_owner_web_checkout_status`, `fcm_push`, `paymob_webhook`, and `teams` sensitive fields for targeted review. These are **reported risks pending current verification**, not newly confirmed vulnerabilities. Keep webhooks callable without user JWT only where server-side signature validation is authoritative. No production configuration changes without approval.
+
+## Next executable checkpoint
+
+1. Inspect current deployed Edge Function settings and code against the repository; prioritize refund and owner-checkout authorization.
+2. Run read-only RLS / function privilege checks on staging and cross-account negative tests.
+3. Patch confirmed defects on this branch, add regression tests, and record exact CI run results.
+4. Recheck Android smoke and 24-journey baseline; continue independent tasks when payment or device checks are blocked.
+5. Verify Apple/Google requirements against official current documentation before filling store metadata.
+
+## Release blockers
+
+Paymob sandbox credentials and deployed payment functions; real email inbox confirmation; device push verification; unfinished team/challenge lifecycle; app-admin navigation; official store account actions and legal review. These remain BLOCKED/NOT RUN until independently proven otherwise.
+
+## Commit and test evidence
+
+- Phase 8 register created: commit is the GitHub history entry adding this file.
+- No Phase 8-specific runtime security test has passed yet. This document is a persistent checkpoint, **not completion evidence**.
+
+## SEC-02 / SEC-06 — staging read-only verification, 2026-11-05
+
+**Actually checked:** Staging Edge Function inventory reports `process_tournament_refund` (v1), `create_owner_web_checkout` (v2), and `get_owner_web_checkout_status` (v2) ACTIVE with `verify_jwt=true`. The deployed refund function additionally checks a bearer token against service-role / internal-worker secret or verifies a user and privileged role; its `process_queue` branch rejects non-internal callers. **This is code/config inspection, not a passed live 401/403 test or idempotency test.** The staging inventory returned only these three functions; payment webhook and FCM availability remain unverified/incomplete.
+
+Staging read-only SQL privilege inspection:
+| Function | anon EXECUTE | authenticated EXECUTE |
+|---|---|---|
+| `admin_approve_owner_atomic` | false | true |
+| `get_admin_metrics` | false | true |
+| `claim_next_cancellation_refund_atomic` | false | false |
+
+An authenticated grant alone is **not** proof that admin-only authorization is enforced; the function body and cross-role behavior still require validation. No SQL permissions were modified. No refunds were triggered.
+
+**Next:** inspect `admin_approve_owner_atomic` and `get_admin_metrics` body authorization; verify owner checkout ownership and server-side price; then run staging negative tests without creating charges.
+
+## SEC-06 finding: checkout status authorization (2026-11-05)
+
+**Severity: P1 pending exploit verification; status: BLOCKED for patch.** Source: `supabase/functions/get_owner_web_checkout_status/index.ts`. The status endpoint currently treats either matching `owner_id` or matching `checkout_email` as sufficient ownership. The latter is contact information, not an authorization principal. A verified user whose email matches contact information supplied for a different owner's checkout may pass the authorization branch. The service-role database read happens before that branch, making the server-side check essential.
+
+**Proposed minimal correction:** restrict non-admin access to `order.owner_id === callerUser.id`; retain the separately verified administrator role check. Do not use `checkout_email` as an authorization factor. Preserve existing payment amount and subscription behavior.
+
+**Test matrix (NOT RUN):** owner reads own order; unrelated authenticated user denied even when order contact email matches their verified email; unrelated user denied with different email; admin allowed; unauthenticated 401; malformed order ID 400; no payment inquiry or subscription mutation for unauthorized users. Confirm deployed staging function matches patched source before declaring DONE.
+
+A direct GitHub source update was attempted but the execution tool blocked the write; **no source fix was committed or deployed**. Do not describe this finding as resolved.
+
+## SEC-06 implementation checkpoint (2026-11-05)
+
+- **PATCH COMMITTED** `3fbb2f58`: `supabase/functions/get_owner_web_checkout_status/index.ts` now checks non-admin ownership exclusively by `order.owner_id === callerUser.id`, removing the contact-email fallback.
+- **REGRESSION CONTRACT COMMITTED** `8b6f65d0`: `test/owner_checkout_authorization_contract_test.dart` asserts the server-side owner-id guard, absence of the email fallback, and explicit denial branch. This is a static source regression test, **not** a live cross-account authorization test.
+- **Status:** IN PROGRESS. Await Flutter CI execution of the new test and deploy/reverify the updated function on Staging. No deployment or live 401/403/owner-vs-other-account test has occurred; production remains unchanged.
+- The prior entry noting a blocked write is historical; the subsequent write succeeded.
+
+## Verification checkpoint — 2026-11-05
+
+- GitHub Actions Flutter CI run **42030240411**, commit `0dbe13fa`: **SUCCESS**; both `Analyze` and `Test` steps succeeded. This includes the initial SEC-06 static source regression test at commit `8b6f65d0`. This does **not** establish live deployed authorization correctness.
+- Android E2E Smoke run **42028838602**, commit `497acf4b`: **FAILED**, Android onboarding/login smoke step; logs show the emulator/application started but the driver did not complete within its allotted time. Do not mark the Android journey passed.
+- SEC-03/06 additional code patch `f2c38de6`: checkout status function no longer selects unused `checkout_email`; corresponding regression update `26bcb2d5`. CI result for these newer commits **not yet verified**.
+- Outstanding: deploy to Staging only when deployment process and required settings are verified; run real two-account negative tests and repeat CI. Production not modified.
+
+## SEC-06 verified checkpoint (2026-11-05)
+
+- Staging Edge Function `get_owner_web_checkout_status` deployed ACTIVE v3 with JWT verification enabled. Post-deploy inspection confirmed strict owner-id authorization and removal of checkout-email fallback.
+- Flutter CI run `42033265264` for commit `a83987f1` passed both Analyze and Test. The earlier failing run `42032520519` was corrected by fixing a malformed newline in the static security test.
+- Still required: live two-account and admin authorization tests on staging; static tests and deployed-source inspection are not equivalent to live authorization verification.
+- Android emulator E2E remains failed from run `42028838602`. Production and main were not changed.
+
+## Security verification checkpoint — 2026-11-06
+
+- **Flutter CI SUCCESS**: run `42120695011` at commit `353a23eb`, covering the newly added booking-idempotency source regression contract (`test/booking_idempotency_authorization_contract_test.dart`). Prior intermediate CI runs `42120634642` and `42120658007` were **cancelled by superseding pushes**, not test failures.
+- **Android E2E Smoke SUCCESS**: run `42081295267` at `6a55cb07`. This is a smoke test, not all 24 end-to-end journeys.
+- **Staging read-only function inspection** confirmed `create_booking_atomic` matches both user-scoped idempotency lookup and explicit key-conflict rejection. This is not a live multi-user negative test.
+- **Staging read-only privilege/body inspection**: `admin_set_admin_role_atomic` requires founder-level actor role (or service role), disallows protected-founder and self-role changes, and writes an audit log. `get_admin_metrics` checks administrator role. `activate_vsp_pro` checks admin/co-founder role. No live cross-role tests were performed; SQL body inspection does not prove absence of every exploit.
+- **SEC-02 and SEC-06 remain IN PROGRESS** pending real two-account authorization tests, concurrent booking replay tests, and payment sandbox verification. Production and `main` unchanged.
+
+## SEC-02 / SEC-06 checkpoint — 2026-11-06 (staging only)
+
+- **Applied staging migration** `recheck_booking_idempotency_after_lock` from source `supabase/migrations/20261106010000_recheck_booking_idempotency_after_lock.sql`. Migration tool returned success. Read-only post-deploy function inspection confirmed **two** scoped replay lookups, including one after `pg_advisory_xact_lock`. Flutter CI run `42130448555` passed at `92d3a2fe`. **Live concurrent two-account testing remains NOT RUN**; no production deployment.
+- **NEW SECURITY FINDING (P0 to investigate):** Supabase staging security advisor reports **8 security-definer views**. Read-only privilege checks showed `anon` and `authenticated` have SELECT on all eight. Notably `admin_pending_refunds` exposes player phone and Paymob reference columns, `admin_stadium_settlements` exposes financial aggregates, and `v_financial_reconciliation` exposes owner phone and balances. Their SQL definitions do not contain explicit caller ownership predicates. This creates a **potential sensitive-data exposure**; no unauthenticated HTTP read or exploit has been performed, so actual leakage is **not yet confirmed**. Other flagged views: `courts`, `tournament_clean_sheets`, `owner_subscription_status`, `v_bookings_with_refund`, `public_subscription_plans`.
+- **Next safe action:** trace each view's app/backend callers and underlying RLS, run non-destructive anon/player negative SELECT tests, then remove public SELECT or switch suitable views to `security_invoker` with narrowly scoped policies. Do not blindly change all views: legitimate owner/admin functionality may depend on them. Re-run security advisor afterward. Reference: https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view
+
+
+## 2026-11-11 — SEC-01/02/04/07 implementation checkpoint, batch 03
+
+See [batch 03](security/STORE_COMPLIANCE_BATCH_03_2026-11-11.md): four app corrections and two staging binding repairs. Atomic incomplete-registration cancellation replaces generic cleanup and has no unconditional fallback. Owner completion requires explicit success and matching identity. Conversation read RPC verifies participation before writes and updates the caller counter under a row lock. Staging rollback-fixture checks: 17 cancellation/chat checks and 11 sensitive-profile checks passed; flags explicitly reset between fixture creation and simulated client. Flutter/Android/checkout success at app source 3662402 documented in report. Missing staging UPDATE guard bindings restored using existing bodies; production unchanged. Does not close SC05, full SEC-02, real-JWT/concurrent-device/payment/iOS acceptance, direct profile INSERT/DELETE or environment parity.
+
+
+## 2026-11-11 — Batch 05 / SEC-01/02/09/10
+
+Client role INSERT/UPDATE bypass protected by an invoker trigger; authorized role RPCs and normal legacy registration preserved. Guard deployed to staging and production following owner execution approval; readback matches, no customer rows targeted. Added native PostgreSQL ephemeral CI, profile RLS/lifecycle RPC suites, five broken-guard controls and nine runner target checks. CI 42958578778 succeeded. This closes adding the scoped test foundations 80.01/02/03, not all ACL journeys or release gates. Full report: [batch 05](security/STORE_COMPLIANCE_BATCH_05_2026-11-11.md). Existing advisors remain; no blanket security clearance, full production replay, signing or main merge.

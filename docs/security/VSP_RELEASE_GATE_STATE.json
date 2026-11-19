@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "status": "hold",
+  "reviewed_code_sha": null,
+  "reviewer": null,
+  "open_critical_findings": [
+    "85.01-85.03 Supabase Storage advisory applicability audits still open",
+    "Paymob Sandbox signed webhook/refund and parallel refund verification not completed",
+    "Cross-account production-equivalent JWT, RLS and Storage negative tests not completed",
+    "Required Team League CHECK migration 20261117173000 not yet deployed or verified on hosted Staging",
+    "Required webhook direct refund claim migration 20261117174500 not yet deployed or verified on hosted Staging"
+  ],
+  "evidence_urls": [],
+  "notes": "Release declaration is not a live Supabase Advisor snapshot. Both financial schema migrations are required BEFORE their corresponding Edge Function releases; approval needs verified Staging migration, Paymob Sandbox evidence and separate owner sign-off."
+}

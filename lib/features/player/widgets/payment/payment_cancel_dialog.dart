@@ -17,11 +17,11 @@ class PaymentCancelDialog {
 
     final dialogContent = isChampionship
         ? (isArabic
-            ? 'إذا تراجعت الآن، لن يتم استكمال التسجيل في البطولة وسيمكنك العودة في أي وقت.'
-            : 'If you go back now, your tournament registration will not be completed.')
+            ? 'إذا لم تكن قد أكملت الدفع، سيتوقف التسجيل عند الرجوع. إذا أرسلت عملية الدفع بالفعل، انتظر تأكيد الخادم قبل بدء تسجيل جديد.'
+            : 'If you have not completed payment, registration will stop when you leave. If you already submitted payment, wait for server confirmation before starting a new registration.')
         : (isArabic
-            ? 'إذا تراجعت الآن، لن يتم خصم أي مبالغ وسيمكنك مراجعة حجزك وتعديله في أي وقت.'
-            : 'If you go back now, no charges will be made and you can review your checkout anytime.');
+            ? 'إذا لم تكن قد أكملت الدفع، فلن يتم تحصيل مبلغ عند الرجوع. إذا أرسلت عملية الدفع بالفعل، انتظر تأكيد الخادم قبل محاولة الدفع مرة أخرى.'
+            : 'If you have not completed payment, no charge will be taken when you leave. If you already submitted a payment, wait for server confirmation before trying again.');
 
     final dialogContinueText = isChampionship
         ? (isArabic ? 'متابعة التسجيل' : 'Continue Registration')
@@ -29,16 +29,19 @@ class PaymentCancelDialog {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(dialogTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(dialogTitle, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
         content: Text(
           dialogContent,
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               dialogContinueText,
@@ -46,6 +49,7 @@ class PaymentCancelDialog {
             ),
           ),
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => onConfirmCancel(ctx),
             child: Text(
               isArabic ? 'الرجوع للخلف' : 'Go Back',

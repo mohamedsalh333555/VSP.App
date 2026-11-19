@@ -14,8 +14,20 @@ class TeamProfileHeroHeader extends StatelessWidget {
     required this.has1v1Champion,
   });
 
+  /// The model's rankTitle is a client-side points tier, not a verified
+  /// league rank. Never market it as a placement or show a default zero
+  /// as meaningful progress for a brand-new team.
+  static String? recordedPointsCaption(Team team, {required bool isArabic}) {
+    if (team.matchesPlayed <= 0 || team.points < 0) return null;
+    return isArabic
+        ? 'نقاط الفريق المسجلة: ${team.points}'
+        : 'Recorded team points: ${team.points}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final pointsCaption = recordedPointsCaption(team, isArabic: isArabic);
     return Center(
       child: Column(
         children: [
@@ -33,33 +45,48 @@ class TeamProfileHeroHeader extends StatelessWidget {
           const SizedBox(height: VSPSpacing.md),
           Text(
             team.name,
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: VSPSpacing.xs),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 4,
             children: [
               const Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 14),
-              const SizedBox(width: 4),
               Text(
                 '${team.governorate} • ${team.sportType}',
+                textAlign: TextAlign.center,
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
               ),
             ],
           ),
-          const SizedBox(height: VSPSpacing.xs),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: VSPColors.accentSoft,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: VSPColors.borderAccent),
+          if (pointsCaption != null) ...[
+            const SizedBox(height: VSPSpacing.xs),
+            Container(
+              constraints: const BoxConstraints(maxWidth: 300),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: VSPColors.divider),
+              ),
+              child: Text(
+                pointsCaption,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: VSPColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-            child: Text(
-              team.rankTitle,
-              style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ),
+          ],
           if (has1v1Champion) ...[
             const SizedBox(height: VSPSpacing.xs),
             Container(
@@ -69,19 +96,19 @@ class TeamProfileHeroHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: VSPColors.warning.withValues(alpha: 0.6)),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Iconsax.crown_1_copy, color: VSPColors.warning, size: 13),
-                  SizedBox(width: 4),
-                  Text(
-                    'يضم بطل 1 ضد 1',
-                    style: TextStyle(
+                  const Icon(Iconsax.crown_1_copy, color: VSPColors.warning, size: 13),
+                  const SizedBox(width: 4),
+                  Flexible(child: Text(
+                    isArabic ? 'إنجاز تاريخي: بطل 1 ضد 1' : 'Historical 1v1 champion',
+                    style: const TextStyle(
                       color: VSPColors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
-                  ),
+                  )),
                 ],
               ),
             ),

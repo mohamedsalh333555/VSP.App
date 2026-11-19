@@ -40,7 +40,7 @@ class AuthService {
     data,
   ) {
     debugPrint(
-      '🔥 AUTH STATE CHANGED: event=${data.event}, user=${data.session?.user.email}',
+      'AUTH STATE CHANGED: event=${data.event}',
     );
     if (data.session != null) {
       SecureStorageService.saveAuthToken(data.session!.accessToken);
@@ -50,7 +50,7 @@ class AuthService {
 
   // Internal logger for security auditing
   void _logSecurityEvent(String event, dynamic error) {
-    debugPrint('[SECURITY_LOG] $event: $error');
+    debugPrint('[SECURITY_LOG] $event (${error.runtimeType})');
   }
 
   /// دالة منفصلة للتحقق والدخول التلقائي في حالة وجود حساب سابق لنفس البريد والدور
@@ -276,11 +276,10 @@ class AuthService {
         'delete_user_permanently',
         params: {'p_user_id': uid},
       );
-      if (res is Map && res['success'] == false) {
+      if (res is! Map || res['success'] != true) {
         return {
           'success': false,
-          'message': res['message']?.toString() ?? 'فشل في حذف الحساب.',
-          'error': res['error']?.toString(),
+          'message': 'لم يتم تأكيد حذف الحساب. حاول مرة أخرى أو تواصل مع الدعم.',
         };
       }
       await signOut();

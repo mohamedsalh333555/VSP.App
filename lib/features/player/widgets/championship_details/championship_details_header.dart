@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/ui/vsp_ui.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/vsp_countdown_timer.dart';
 import '../../../../shared/widgets/vsp_icon_badge.dart';
@@ -243,9 +244,9 @@ class ChampionshipDetailsHeader extends StatelessWidget {
                 iconColor: VSPColors.accent,
                 label: isArabic ? 'الجائزة' : 'Prize',
                 value: championship.prizePool > 0
-                    ? '${championship.prizePool.toInt()} ${isArabic ? "ج.م" : "EGP"}'
+                    ? '${VSPMoneyFormatter.amount(championship.prizePool)} ${isArabic ? "ج.م" : "EGP"}'
                     : (championship.grandPrize > 0
-                        ? '${championship.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}'
+                        ? '${VSPMoneyFormatter.amount(championship.grandPrize)} ${isArabic ? "ج.م" : "EGP"}'
                         : (isArabic ? 'كأس وميداليات' : 'Cup & Medals')),
               ),
               const SizedBox(width: 8),
@@ -253,7 +254,7 @@ class ChampionshipDetailsHeader extends StatelessWidget {
                 icon: Iconsax.card_copy,
                 iconColor: VSPColors.accent,
                 label: isArabic ? 'رسوم الاشتراك' : 'Entry Fee',
-                value: '${championship.entryFee.toInt()} ${isArabic ? "ج.م" : "EGP"}',
+                value: '${VSPMoneyFormatter.amount(championship.entryFee)} ${isArabic ? "ج.م" : "EGP"}',
               ),
               const SizedBox(width: 8),
               ChampionshipStatCard(

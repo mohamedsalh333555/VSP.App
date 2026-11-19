@@ -6,17 +6,42 @@ import 'logger_service.dart';
 import '../constants/egypt_governorates.dart';
 
 class LocationService {
+ static int _cacheGeneration = 0;
+ static Future<void> _cacheClear = Future<void>.value();
+ static const _cacheKeys = [
+   'last_location_update', 'last_lat', 'last_lng', 'last_resolved_governorate',
+ ];
+
+ /// Invalidate pending GPS results before removing this session's disk cache.
+ static Future<void> clearCachedLocation() {
+   _cacheGeneration++;
+   return _cacheClear = _removeCachedLocation();
+ }
+
+ static Future<void> _removeCachedLocation() async {
+   final prefs = await SharedPreferences.getInstance();
+   for (final key in _cacheKeys) {
+     if (!await prefs.remove(key)) {
+       throw StateError('Location cache removal was not confirmed.');
+     }
+   }
+ }
+
  Future<(Position?, String?)> getThrottledLocation({bool force = false}) async {
+ final cacheGeneration = _cacheGeneration;
  try {
+ await _cacheClear;
  final prefs = await SharedPreferences.getInstance();
+ if (cacheGeneration != _cacheGeneration) return (null, null);
  final lastUpdateStr = prefs.getString('last_location_update');
  final lastLat = prefs.getDouble('last_lat') ?? 0.0;
  final lastLng = prefs.getDouble('last_lng') ?? 0.0;
 
  final now = DateTime.now();
  
- bool timeThresholdMet = force || lastUpdateStr == null || 
- now.difference(DateTime.parse(lastUpdateStr)).inHours >= 24;
+ final lastUpdate = DateTime.tryParse(lastUpdateStr ?? '');
+ bool timeThresholdMet = force || lastUpdate == null || lastUpdate.isAfter(now) ||
+ now.difference(lastUpdate).inHours >= 24;
 
  LocationPermission permission = await Geolocator.checkPermission();
  if (permission == LocationPermission.denied) {
@@ -73,6 +98,7 @@ class LocationService {
  } catch (_) {}
  }
 
+ if (cacheGeneration != _cacheGeneration) return (null, null);
  if (position == null) {
  final cachedGov = prefs.getString('last_resolved_governorate');
  return (null, cachedGov);
@@ -107,9 +133,13 @@ class LocationService {
  rawGeocodeName: rawName,
  );
  
+ if (cacheGeneration != _cacheGeneration) return (null, null);
  await prefs.setString('last_location_update', now.toIso8601String());
+ if (cacheGeneration != _cacheGeneration) return (null, null);
  await prefs.setDouble('last_lat', position.latitude);
+ if (cacheGeneration != _cacheGeneration) return (null, null);
  await prefs.setDouble('last_lng', position.longitude);
+ if (cacheGeneration != _cacheGeneration) return (null, null);
  await prefs.setString('last_resolved_governorate', newGov);
 
  return (position, newGov);

@@ -7,6 +7,7 @@ import 'package:vsp_application/features/owner/widgets/inbox/user_search_delegat
 
 class _FakeUserRepository extends UserRepository {
   final List<UserModel> fakeUsers;
+  final List<String> searchedQueries = [];
 
   _FakeUserRepository({required this.fakeUsers});
 
@@ -17,6 +18,7 @@ class _FakeUserRepository extends UserRepository {
     String query = '',
     int limit = 50,
   }) async {
+    searchedQueries.add(query);
     return fakeUsers;
   }
 }
@@ -86,6 +88,29 @@ void main() {
       expect(delegate.searchFieldLabel, isNotNull);
       expect(delegate.currentUserId, equals('owner_123'));
       expect(delegate.currentUserRole, equals('owner'));
+    });
+
+    // Prepared only: final-review execution is on hold.
+    testWidgets('reuses unchanged queries across suggestions/results rebuilds', (tester) async {
+      final repo = _FakeUserRepository(fakeUsers: []);
+      final delegate = UserSearchDelegate(currentUserId: 'owner_123', currentUserRole: 'owner', userRepository: repo)..query = 'Ahmed';
+      late StateSetter rebuild;
+      var showResults = false;
+      await tester.pumpWidget(MaterialApp(home: StatefulBuilder(builder: (context, update) {
+        rebuild = update;
+        return Scaffold(body: showResults ? delegate.buildResults(context) : delegate.buildSuggestions(context));
+      })));
+      await tester.pumpAndSettle();
+      rebuild(() => showResults = true);
+      await tester.pumpAndSettle();
+      rebuild(() {});
+      await tester.pumpAndSettle();
+      expect(repo.searchedQueries, ['Ahmed']);
+      rebuild(() => delegate.query = 'Tarek');
+      await tester.pumpAndSettle();
+      expect(repo.searchedQueries, ['Ahmed', 'Tarek']);
+      await tester.pumpWidget(const SizedBox.shrink());
+      delegate.dispose();
     });
 
     testWidgets('renders search results from repository', (tester) async {

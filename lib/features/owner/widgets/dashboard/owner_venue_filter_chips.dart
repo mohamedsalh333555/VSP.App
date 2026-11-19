@@ -35,7 +35,7 @@ class OwnerVenueFilterChips extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           ...stadiums.map((s) => Padding(
-            padding: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsetsDirectional.only(start: 8),
             child: _buildVenueChip(
               id: s.id,
               label: s.name,
@@ -49,19 +49,26 @@ class OwnerVenueFilterChips extends StatelessWidget {
 
   Widget _buildVenueChip({required String id, required String label, required IconData icon}) {
     final isSelected = selectedStadiumId == id;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onStadiumSelected(id);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: InkWell(
+        excludeFromSemantics: true,
+        borderRadius: BorderRadius.circular(VSPRadius.full),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onStadiumSelected(id);
+        },
+        child: AnimatedContainer(
+        duration: VSPDSMotion.navigationSwitch,
+        constraints: const BoxConstraints(minHeight: 48),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.04),
+          color: isSelected ? VSPColors.accent : VSPColors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(VSPRadius.full),
           border: Border.all(
-            color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.08),
+            color: isSelected ? VSPColors.accent : VSPColors.white.withValues(alpha: 0.08),
             width: isSelected ? 1.2 : 0.8,
           ),
         ),
@@ -71,18 +78,19 @@ class OwnerVenueFilterChips extends StatelessWidget {
             Icon(
               icon,
               size: 13,
-              color: isSelected ? Colors.black : VSPColors.textSecondary,
+              color: isSelected ? VSPColors.black : VSPColors.textSecondary,
             ),
             const SizedBox(width: 5),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.black : Colors.white70,
+                color: isSelected ? VSPColors.black : VSPColors.white70,
                 fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
             ),
           ],
+        ),
         ),
       ),
     );

@@ -60,7 +60,7 @@ class BookingSheetDurationSelector extends StatelessWidget {
               final val = opt['value'] as int;
               final isSelected = selectedMinutes == val;
               return Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsetsDirectional.only(end: 8),
                 child: ChoiceChip(
                   label: Text(opt['label'] as String),
                   selected: isSelected,
@@ -69,7 +69,7 @@ class BookingSheetDurationSelector extends StatelessWidget {
                       : (_) => onDurationChanged(val),
                   selectedColor: VSPColors.accent,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.black : VSPColors.textPrimary,
+                    color: isSelected ? VSPColors.black : VSPColors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),

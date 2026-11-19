@@ -6,6 +6,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../services/matchup_dashboard_service.dart';
 import '../widgets/matchup/matchup_record_result_card.dart';
 import '../widgets/matchup/matchup_results_timeline.dart';
@@ -31,6 +32,8 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   List<MatchupStandingsItem> _standings = [];
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _hasLoadError = false;
+  int _matchupLoadGeneration = 0;
 
   // Form State for Recording Result
   String? _selectedTeamAId;
@@ -43,37 +46,85 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     _loadMatchupData();
   }
 
+  @override
+  void didUpdateWidget(covariant MatchupLiveDashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.bookingId == widget.bookingId) return;
+    // A reused route must never show an earlier booking's teams or points.
+    _matchupLoadGeneration++;
+    _teams = [];
+    _results = [];
+    _standings = [];
+    _selectedTeamAId = null;
+    _selectedTeamBId = null;
+    _loadMatchupData();
+  }
+
   Future<void> _loadMatchupData() async {
-    setState(() => _isLoading = true);
+    if (!mounted) return;
+    final requestedBookingId = widget.bookingId;
+    final generation = ++_matchupLoadGeneration;
+    setState(() {
+      _isLoading = true;
+      _hasLoadError = false;
+    });
     try {
-      final teams = await _matchupRepo.getMatchupTeams(widget.bookingId);
-      final results = await _matchupRepo.getMatchupResults(widget.bookingId);
+      // Never reinterpret a failed transport/RLS query as an empty fixture.
+      final teams = await _matchupRepo.getMatchupTeamsStrict(requestedBookingId);
+      if (!mounted || generation != _matchupLoadGeneration ||
+          widget.bookingId != requestedBookingId) return;
+      final results =
+          await _matchupRepo.getMatchupResultsStrict(requestedBookingId);
+      if (!mounted || generation != _matchupLoadGeneration ||
+          widget.bookingId != requestedBookingId) return;
       final standings = _matchupRepo.calculateStandings(teams, results);
 
-      if (mounted) {
-        setState(() {
-          _teams = teams;
-          _results = results;
-          _standings = standings;
-          if (_teams.length >= 2) {
-            _selectedTeamAId ??= _teams[0].teamId;
-            _selectedTeamBId ??= _teams[1].teamId;
+      setState(() {
+        _teams = teams;
+        _results = results;
+        _standings = standings;
+        _hasLoadError = false;
+        if (_teams.length >= 2) {
+          final eligibleIds = _teams.map((team) => team.teamId).toSet();
+          if (!eligibleIds.contains(_selectedTeamAId)) {
+            _selectedTeamAId = _teams[0].teamId;
           }
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading matchup data: $e');
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+          if (!eligibleIds.contains(_selectedTeamBId) ||
+              _selectedTeamBId == _selectedTeamAId) {
+            _selectedTeamBId = _teams.firstWhere(
+              (team) => team.teamId != _selectedTeamAId,
+              orElse: () => _teams[1],
+            ).teamId;
+          }
+        } else {
+          _selectedTeamAId = null;
+          _selectedTeamBId = null;
+        }
+        _isLoading = false;
+      });
+    } catch (_) {
+      debugPrint('Error loading matchup data (details redacted)');
+      if (!mounted || generation != _matchupLoadGeneration ||
+          widget.bookingId != requestedBookingId) return;
+      setState(() {
+        _teams = [];
+        _results = [];
+        _standings = [];
+        _isLoading = false;
+        _hasLoadError = true;
+      });
     }
   }
 
   Future<void> _submitMatchResult() async {
+    if (_isSubmitting) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final validationError = MatchupDashboardService.validateResultSubmission(
       teamAId: _selectedTeamAId,
       teamBId: _selectedTeamBId,
+      eligibleTeamIds: _teams.map((team) => team.teamId),
+      outcome: _selectedOutcome,
+      isArabic: isArabic,
     );
 
     if (validationError != null) {
@@ -85,23 +136,40 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
       return;
     }
 
+    final requestedBookingId = widget.bookingId;
+    // Capture the complete decision before the first await; never let a
+    // later dropdown change alter a request already being submitted.
+    final submittedTeamAId = _selectedTeamAId!;
+    final submittedTeamBId = _selectedTeamBId!;
+    final submittedOutcome = _selectedOutcome;
     setState(() => _isSubmitting = true);
 
     try {
-      await _matchupRepo.recordMatchupResult(
-        bookingId: widget.bookingId,
-        teamAId: _selectedTeamAId!,
-        teamBId: _selectedTeamBId!,
-        outcome: _selectedOutcome,
+      final receipt = await _matchupRepo.recordMatchupResult(
+        bookingId: requestedBookingId,
+        teamAId: submittedTeamAId,
+        teamBId: submittedTeamBId,
+        outcome: submittedOutcome,
       );
 
-      if (!mounted) return;
-      VSPFeedback.showSuccess(context, 'تم تسجيل نتيجة المباراة وتحديث الترتيب بنجاح!');
+      if (!mounted || widget.bookingId != requestedBookingId) return;
+      if (!MatchupDashboardService.isConfirmedMutationReceipt(
+        receipt, bookingId: requestedBookingId, requireResultId: true,
+      )) {
+        throw StateError('MATCHUP_RESULT_RECEIPT_NOT_CONFIRMED');
+      }
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم تسجيل نتيجة المباراة وتحديث الترتيب بنجاح!' : 'Match result recorded and standings updated successfully!',
+      );
       await _loadMatchupData();
-    } catch (e) {
-      debugPrint('Error submitting match result: $e');
-      if (mounted) {
-        VSPFeedback.showError(context, 'فشل تسجيل النتيجة: $e');
+    } catch (_) {
+      debugPrint('Error submitting match result (details redacted)');
+      if (mounted && widget.bookingId == requestedBookingId) {
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر تسجيل النتيجة. حاول مرة أخرى.' : 'Could not record the result. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -109,46 +177,67 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   }
 
   Future<void> _closeMatchup() async {
+    if (_isSubmitting) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (!MatchupDashboardService.canCloseMatchup(_results.length)) {
-      VSPFeedback.showWarning(context, 'يجب تسجيل نتيجة مباراة واحدة على الأقل قبل إغلاق المواجهة');
+      VSPFeedback.showWarning(
+        context,
+        isArabic ? 'يجب تسجيل نتيجة مباراة واحدة على الأقل قبل إغلاق المواجهة' : 'Record at least one match result before closing the matchup.',
+      );
       return;
     }
 
     final confirm = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: const Text('إغلاق المواجهة؟', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text(
-          'بعد إغلاق المواجهة لن تتمكن من إضافة نتائج جديدة لهذه الجلسة وسيتم اعتماد الترتيب النهائي.',
-          style: TextStyle(color: VSPColors.textSecondary),
+        title: Text(isArabic ? 'إغلاق المواجهة؟' : 'Close matchup?', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
+        content: Text(
+          isArabic
+              ? 'بعد إغلاق المواجهة لن تتمكن من إضافة نتائج جديدة لهذه الجلسة وسيتم اعتماد الترتيب النهائي.'
+              : 'After closing, no more results can be added to this session and the final standings will be locked.',
+          style: const TextStyle(color: VSPColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('تراجع', style: TextStyle(color: VSPColors.textSecondary)),
+            child: Text(isArabic ? 'تراجع' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error),
-            child: const Text('إغلاق المواجهة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(isArabic ? 'إغلاق المواجهة' : 'Close matchup', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted || _isSubmitting) return;
 
+    final requestedBookingId = widget.bookingId;
     setState(() => _isSubmitting = true);
     try {
-      await _matchupRepo.closeMatchup(widget.bookingId);
-      if (!mounted) return;
-      VSPFeedback.showSuccess(context, 'تم إغلاق المواجهة واعتماد النتائج النهائية بنجاح!');
+      final receipt = await _matchupRepo.closeMatchup(requestedBookingId);
+      if (!mounted || widget.bookingId != requestedBookingId) return;
+      if (!MatchupDashboardService.isConfirmedMutationReceipt(
+        receipt, bookingId: requestedBookingId,
+      )) {
+        throw StateError('MATCHUP_CLOSE_RECEIPT_NOT_CONFIRMED');
+      }
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم إغلاق المواجهة واعتماد النتائج النهائية بنجاح!' : 'Matchup closed and final standings confirmed!',
+      );
       Navigator.pop(context);
-    } catch (e) {
-      debugPrint('Error closing matchup: $e');
-      if (mounted) {
-        VSPFeedback.showError(context, 'تعذر إغلاق المواجهة: $e');
+    } catch (_) {
+      debugPrint('Error closing matchup (details redacted)');
+      if (mounted && widget.bookingId == requestedBookingId) {
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر إغلاق المواجهة. حاول مرة أخرى.' : 'Could not close the matchup. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -160,9 +249,54 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (_isLoading) {
-      return const VSPScaffold(
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل المواجهة' : 'Loading matchup',
+            message: isArabic ? 'نحدّث تفاصيل المواجهة والإحصائيات.' : 'Fetching matchup details and statistics.',
+          ),
+        ),
+      );
+    }
+
+    if (_hasLoadError) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        appBar: AppBar(
+          backgroundColor: VSPColors.background,
+          elevation: 0,
+          leading: const VSPBackButton(),
+          title: Text(isArabic ? 'لوحة المواجهات الحية' : 'Live Matchup Dashboard'),
+        ),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 42),
+                  const SizedBox(height: VSPSpacing.md),
+                  Text(
+                    isArabic ? 'تعذر تحميل بيانات المواجهة.' : 'Could not load matchup data.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.textPrimary),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  PrimaryButton(
+                    text: isArabic ? 'إعادة المحاولة' : 'Retry',
+                    onPressed: _loadMatchupData,
+                    height: 48,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       );
     }
 
@@ -178,7 +312,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(top: false, bottom: true, child: SingleChildScrollView(
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,9 +329,15 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
               selectedTeamBId: _selectedTeamBId,
               selectedOutcome: _selectedOutcome,
               isSubmitting: _isSubmitting,
-              onTeamAChanged: (val) => setState(() => _selectedTeamAId = val),
-              onTeamBChanged: (val) => setState(() => _selectedTeamBId = val),
-              onOutcomeChanged: (val) => setState(() => _selectedOutcome = val),
+              onTeamAChanged: (val) {
+                if (!_isSubmitting) setState(() => _selectedTeamAId = val);
+              },
+              onTeamBChanged: (val) {
+                if (!_isSubmitting) setState(() => _selectedTeamBId = val);
+              },
+              onOutcomeChanged: (val) {
+                if (!_isSubmitting) setState(() => _selectedOutcome = val);
+              },
               onSubmit: _submitMatchResult,
             ),
 
@@ -228,7 +368,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
             const SizedBox(height: VSPSpacing.lg),
           ],
         ),
-      ),
+      )),
     );
   }
 }

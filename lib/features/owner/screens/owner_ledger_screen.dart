@@ -12,6 +12,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/vsp_ui.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../widgets/ledger/owner_ledger_balance_cards.dart';
 import '../widgets/ledger/owner_ledger_transaction_item.dart';
 import '../widgets/ledger/owner_payout_dialog.dart';
@@ -27,8 +28,9 @@ class OwnerLedgerScreen extends StatefulWidget {
 }
 
 class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
-  late final Stream<List<Map<String, dynamic>>> _transactionsStream;
+  late Stream<List<Map<String, dynamic>>> _transactionsStream;
   Map<String, dynamic>? _summary;
+  bool _summaryLoadError = false;
 
   @override
   void initState() {
@@ -39,14 +41,32 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
     _loadSummary();
   }
 
+  void _retryTransactions() {
+    setState(() {
+      _transactionsStream = widget.payoutOnly
+          ? OwnerRepository().getPayoutSettlementsStream()
+          : OwnerRepository().getTransactionsStream();
+    });
+    _loadSummary();
+  }
+
   Future<void> _loadSummary() async {
     final uid = Supabase.instance.client.auth.currentUser?.id;
-    if (uid == null) return;
-    final res = await OwnerRepository().getOwnerFinancialSummary(uid);
-    if (mounted) {
+    if (uid == null) {
+      if (mounted) setState(() => _summaryLoadError = true);
+      return;
+    }
+    try {
+      final res = await OwnerRepository().getOwnerFinancialSummary(uid);
+      if (!mounted) return;
       setState(() {
         _summary = res;
+        _summaryLoadError = res['success'] != true;
       });
+    } catch (error, stackTrace) {
+      debugPrint('Failed to load owner ledger summary: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (mounted) setState(() => _summaryLoadError = true);
     }
   }
 
@@ -100,7 +120,10 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
                         : rawMethod)
             : rawMethod;
 
-        csv.writeln('"$dateStr","$id","$type","$amount","$method"');
+        final csvRow = [dateStr, id, type, amount, method]
+            .map((value) => '"${value.toString().replaceAll('"', '""')}"')
+            .join(',');
+        csv.writeln(csvRow);
       }
 
       final tempDir = await getTemporaryDirectory();
@@ -115,9 +138,11 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
           subject: isAr ? "كشف الحساب المالي للمنشأة" : "Facility Financial Ledger",
         ),
       );
-    } catch (e) {
+    } catch (error, stackTrace) {
+      debugPrint('Error exporting owner financial ledger: $error');
+      debugPrintStack(stackTrace: stackTrace);
       if (context.mounted) {
-        VSPFeedback.showError(context, isAr ? 'خطأ في تصدير السجل: $e' : 'Error exporting ledger: $e');
+        VSPFeedback.showError(context, isAr ? 'تعذر تصدير السجل المالي. حاول مرة أخرى.' : 'Could not export the financial ledger. Please try again.');
       }
     }
   }
@@ -152,10 +177,10 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
         ),
         centerTitle: true,
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
+      body: SafeArea(top: false, bottom: true, child: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _transactionsStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return VSPStateView(
               state: VSPUiState.loading,
               title: isAr ? 'جاري تحميل السجل المالي' : 'Loading financial ledger',
@@ -164,6 +189,15 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
           }
 
           final rawRows = snapshot.data ?? [];
+          if (snapshot.hasError && rawRows.isEmpty) {
+            return VSPErrorState(
+              customMessage: isAr
+                  ? 'تعذر تحميل السجل المالي. أعد المحاولة لتحديث البيانات.'
+                  : 'Could not load the financial ledger. Retry to refresh the data.',
+              retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
+              onRetry: _retryTransactions,
+            );
+          }
           final transactions = widget.payoutOnly
               ? rawRows.map((row) {
                   final status = row['status']?.toString().toLowerCase();
@@ -191,7 +225,23 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
               ? ((_summary?['cash_revenue'] as num?)?.toDouble() ?? 0.0)
               : 0.0;
 
-          if (transactions.isEmpty && (_summary == null || widget.payoutOnly)) {
+          if (transactions.isEmpty && !widget.payoutOnly && _summary == null) {
+            if (_summaryLoadError) {
+              return VSPErrorState(
+                customMessage: isAr
+                    ? 'تعذر تحميل ملخص الرصيد المالي. أعد المحاولة.'
+                    : 'Could not load the financial balance summary. Please retry.',
+                retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
+                onRetry: _loadSummary,
+              );
+            }
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isAr ? 'جاري تحميل الملخص المالي' : 'Loading financial summary',
+            );
+          }
+
+          if (transactions.isEmpty && widget.payoutOnly) {
             return VSPStateView(
               state: VSPUiState.empty,
               icon: Iconsax.receipt_2_1_copy,
@@ -204,18 +254,123 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
 
           return Column(
             children: [
-              // كارت الرصيد الإلكتروني المتاح للسحب
-              OwnerDigitalBalanceCard(
-                digitalBalance: availableDigital,
-                isAr: isAr,
-                onRequestPayout: () => OwnerPayoutDialog.show(context, availableDigital, isAr),
-                completedBookingsCount: (_summary?['completed_bookings_count'] as num?)?.toInt(),
-                totalWithdrawn: (_summary?['total_withdrawn'] as num?)?.toDouble(),
-                upcomingOnlineRevenue: (_summary?['upcoming_online_revenue'] as num?)?.toDouble(),
-              ),
+              if (snapshot.hasError)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(
+                    VSPSpacing.md,
+                    VSPSpacing.sm,
+                    VSPSpacing.md,
+                    0,
+                  ),
+                  padding: const EdgeInsets.all(VSPSpacing.md),
+                  decoration: BoxDecoration(
+                    color: VSPColors.warning.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(
+                      color: VSPColors.warning.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Iconsax.warning_2_copy,
+                        color: VSPColors.warning,
+                        size: 18,
+                      ),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          isAr
+                              ? 'تعذر تحديث المعاملات. المعروض هو آخر سجل تم تحميله.'
+                              : 'Could not refresh transactions. Showing the last loaded ledger.',
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _retryTransactions,
+                        child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              if (_summaryLoadError)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.all(VSPSpacing.md),
+                  decoration: BoxDecoration(
+                    color: VSPColors.warning.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(
+                      color: VSPColors.warning.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Iconsax.warning_2_copy, color: VSPColors.warning),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          summaryReady
+                              ? (isAr
+                                  ? 'تعذر تحديث ملخص الرصيد. المعروض آخر ملخص تم تحميله.'
+                                  : 'Could not refresh the balance summary. Showing the last loaded summary.')
+                              : (isAr
+                                  ? 'ملخص الرصيد غير متاح حالياً.'
+                                  : 'The balance summary is currently unavailable.'),
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _loadSummary,
+                        child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              // Never present an unconfirmed balance as a verified zero.
+              if (summaryReady)
+                OwnerDigitalBalanceCard(
+                  digitalBalance: availableDigital,
+                  isAr: isAr,
+                  onRequestPayout: () => OwnerPayoutDialog.show(context, availableDigital, isAr),
+                  completedBookingsCount: (_summary?['completed_bookings_count'] as num?)?.toInt(),
+                  totalWithdrawn: (_summary?['total_withdrawn'] as num?)?.toDouble(),
+                  upcomingOnlineRevenue: (_summary?['upcoming_online_revenue'] as num?)?.toDouble(),
+                )
+              else
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.all(VSPSpacing.md),
+                  decoration: BoxDecoration(
+                    color: VSPColors.warning.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Iconsax.warning_2_copy, color: VSPColors.warning),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          isAr
+                              ? 'ملخص الرصيد غير متاح حالياً. لن نعرض رصيداً غير مؤكد.'
+                              : 'The balance summary is unavailable. An unverified balance is hidden.',
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _loadSummary,
+                        child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
 
               // كارت التحصيل النقدي بالملعب (يظهر فقط عند وجود تحصيل نقدي)
-              if (totalPitchCash > 0)
+              if (summaryReady && totalPitchCash > 0)
                 OwnerPitchCashCard(
                   pitchCash: totalPitchCash,
                   isAr: isAr,
@@ -244,6 +399,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
             ],
           );
         },
+      ),
       ),
     );
   }

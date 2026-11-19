@@ -333,7 +333,9 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  ],
  ),
  ),
- body: kIsWeb || _controller == null
+ body: SafeArea(
+ top: false,
+ child: kIsWeb || _controller == null
  ? PaymobWebFallbackView(
      onReopen: () => _launchInWebBrowser(widget.initialUrl),
      onManualVerify: () async {
@@ -361,6 +363,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  ),
  ),
  ],
+ ),
  ),
  );
  }

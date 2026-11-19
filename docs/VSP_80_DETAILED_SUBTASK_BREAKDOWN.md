@@ -1,0 +1,1055 @@
+# VSP.App — تفكيك البنود التنفيذية إلى مهام فرعية قابلة للتحقق
+
+> 2026-11-07 — تمت مراجعة الفجوات وإضافة اختبارات قبول وحالات أمان وتزامن إلى البنود المناسبة. هذا حصر تفصيلي للمهام المطلوبة، **وليس إثباتًا لإنجازها**. كل سطر يمثل نتيجة قابلة للفحص. يمكن تعديل النطاق بعد مراجعة الكود دون احتساب التكرار. البند 33 كان له سابقًا 13 سطرًا في دفتر المتابعة؛ البند 33 هنا يحتوي 14 مهمة مفصّلة، بينما دفتر المتابعة يجمع بعض خطوات CI في مهمة واحدة (13 مهمة). لا يعني الاختلاف تنفيذ مهمة إضافية.
+
+**النطاق الحالي: 84 مجموعة نشطة (56 و43 ملغاة من النطاق التنفيذي) | 640 معرّفًا تاريخيًا = 633 أصلية + 7 في المجموعة 86 | 8 مهام أُلغيت (43.01–43.08) | 632 مهمة نشطة | 351 مقبولة | 281 مفتوحة | 55.54% من النشط. الإلغاء ليس إنجازًا ولا حذفًا للسجلات. CODE_DONE ليس قبولًا.**
+
+## الملخص
+
+> قرار نطاق 2026-11-11: إلغاء المجموعة 56 بالكامل (9 مهام: 3 كانت موثقة مكتملة و6 مفتوحة). لا يُلغى بذلك اختبار Android أو اختبارات الشاشات المستقلة في المجموعات الأخرى. المصفوفة التاريخية محفوظة كمرجع فقط، وليست مهمة نشطة.
+
+
+| البند | الاسم | عدد المهام |
+|---:|---|---:|
+| 01 | Review 44 UX/UI rules | 7 |
+| 02 | Unify design tokens and components | 7 |
+| 03 | Loading/error/empty states | 7 |
+| 04 | Arabic and RTL | 7 |
+| 05 | Accessibility text scaling | 7 |
+| 06 | Reduced motion | 5 |
+| 07 | Navigation review | 7 |
+| 08 | Onboarding and signup UX | 7 |
+| 09 | Responsive device layouts | 7 |
+| 10 | Visual regression and accessibility review | 8 |
+| 11 | Login/signup/recovery | 8 |
+| 12 | Player profile | 7 |
+| 13 | Player positions/preferences | 6 |
+| 14 | Stadium and match discovery | 8 |
+| 15 | Team discovery | 6 |
+| 16 | Booking history | 7 |
+| 17 | Join team/invitations | 8 |
+| 18 | Active team selection | 6 |
+| 19 | Owner onboarding | 7 |
+| 20 | Stadium profile/media | 7 |
+| 21 | Location/pricing/services | 7 |
+| 22 | Operating hours/closures | 7 |
+| 23 | Booking management | 8 |
+| 24 | Owner dashboard | 7 |
+| 25 | Free/pro subscription entitlements | 8 |
+| 26 | Booking overlap prevention | 8 |
+| 27 | Booking state consistency | 8 |
+| 28 | Booking/cancellation lifecycle | 8 |
+| 29 | Payment failure/retry | 8 |
+| 30 | Payment server reconciliation | 8 |
+| 31 | Refund queues and notifications | 8 |
+| 32 | Team creation/management | 9 |
+| 33 | Team invites/membership | 14 |
+| 34 | Challenge invite lifecycle | 13 |
+| 35 | Pickup match joining | 8 |
+| 36 | Result timing and deduplication | 7 |
+| 37 | Ranking/points verification | 7 |
+| 38 | Private/open tournaments | 8 |
+| 39 | Registration/eligibility | 7 |
+| 40 | Groups and knockout brackets | 8 |
+| 41 | League standings/statistics | 7 |
+| 42 | Admin result approval | 8 |
+| 43 | 1v1 registration/matches — RETIRED | 0 نشطة (8 ملغاة) |
+| 44 | Prize/fee/withdrawal rules | 8 |
+| 45 | Booking/payment notifications | 7 |
+| 46 | Challenge/team notifications | 7 |
+| 47 | Competition notifications | 7 |
+| 48 | Delivery and deduplication | 7 |
+| 49 | Retention rules | 7 |
+| 50 | Activation funnel | 7 |
+| 51 | Booking conversion | 7 |
+| 52 | Owner subscription conversion | 7 |
+| 53 | Trust and transparent availability | 7 |
+| 54 | Retention/re-engagement | 8 |
+| 55 | Product analytics instrumentation | 7 |
+| 57 | Flutter analyze/unit tests | 7 |
+| 58 | Android E2E latest changes | 8 |
+| 59 | Staging real-user journeys | 8 |
+| 60 | Performance benchmarks and APK release readiness | 9 |
+| 61 | Championship winner/champion fields | 7 |
+| 62 | Booking payment state fields | 7 |
+| 63 | Paymob transaction IDs | 7 |
+| 64 | Payment method/source | 7 |
+| 65 | Three refund queue designs | 8 |
+| 66 | Stadium vs court operating hours | 7 |
+| 67 | Notification body/message | 7 |
+| 68 | Legacy user cash-debt fields | 7 |
+| 69 | Legacy 1v1 players table | 7 |
+| 70 | Legacy challenge_results IDs | 7 |
+| 71 | Duplicate-named migration versions | 7 |
+| 72 | matchup_extra_team_fee migration sequence | 7 |
+| 73 | Leaked password protection | 6 |
+| 74 | 44 auth RLS initplan warnings | 7 |
+| 75 | 51 multiple permissive policies | 7 |
+| 76 | Four SECURITY DEFINER views | 7 |
+| 77 | 198 callable SECURITY DEFINER RPCs | 11 |
+| 78 | Role-based access matrix | 7 |
+| 79 | Cross-account privacy tests | 8 |
+| 80 | Security regression tests and advisor review | 8 |
+| 81 | Team profile achievement badges | 10 |
+| 82 | Rotating per-match team challenge consent code | 9 |
+| 83 | Stadium details and booking screenshot follow-up | 7 |
+| 84 | Challenge result agreement and not-played reports | 12 |
+| 85 | Phase 8: three published Supabase Storage advisory applicability audits | 3 |
+| 86 | Phase 10: unique full-product experience integration gaps | 7 |
+| **الإجمالي النشط** | **84 بندًا** | **632 مهمة** (و8 مهام ملغاة؛ 640 تاريخيًا) |
+
+
+> إثبات إغلاق 09.01 و10.08: [مصفوفة أحجام الأجهزة ومعايير قبول الاختلافات البصرية](VSP_RESPONSIVE_VISUAL_ACCEPTANCE_MATRIX.md)، commit `655e583aa365c04b3bc629b0425a471b963783a4`. هذا إغلاق للتعريف والتوثيق فقط؛ اختبارات Android واللقطات المرجعية لم تُنفذ بعد.
+
+> إثبات إغلاق 10.01: قائمة الشاشات المرجعية في [مصفوفة الاستجابة والفروق البصرية](VSP_RESPONSIVE_VISUAL_ACCEPTANCE_MATRIX.md). المجموعة 56 الخاصة بمصفوفة 24 رحلة أُلغيت بطلب المالك؛ لا تُحتسب مهامها التسع ضمن النطاق أو الإنجاز.
+
+> إثبات إغلاق 14.01 و14.02 و24.01 و26.01: [تعريف فلاتر الاكتشاف ومؤشرات المالك وقاعدة تعارض الحجز](VSP_BOOKING_DISCOVERY_OWNER_KPI_CONTRACT.md)، commit `0a07982398410865f15df8daae46fd3fe277f8e9`. إغلاق **تعريف القواعد** فقط، لا يعني تنفيذها في التطبيق أو الخادم.
+
+## القوائم التنفيذية
+
+### 01 — Review 44 UX/UI rules (7)
+
+- [x] 01.01 — حصر قواعد UXLP-44 وربط كل قاعدة بالشاشات — [44 قاعدة × سطحين نموذجيين = 88 ربطًا إلى 30 ملفًا موجودًا](VSP_UXLP_44_RULE_SCREEN_MAP_01_01_2026-11-19.md)، [CI تحقق جرد المراجع ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44455066948) (جرد مصدر فقط؛ مراجعة كل 338 شاشة وسلوك الجهاز ضمن 01.02–01.06)
+- [x] 01.02 — مراجعة تطبيق كل قاعدة في الكود — [مراجعة مصدرية للأدلة والفجوات بكل قاعدة من 44](VSP_ACCEPTANCE_BATCH_01_02_12_04_13_06_2026-11-19.md)، [CI جرد ومخاطر ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222174) (39 مصدرية تنتظر تشغيل، و5 قرارات؛ ليست مراجعة جهاز أو إغلاق الفجوات)
+- [x] 01.03 — تحديد الفجوات والتعارضات — [تصنيف فجوات قواعد UXLP-44](VSP_UXLP_44_KNOWN_GAPS_AUDIT_01_03_2026-11-19.md)، [CI ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426149) (قبول جرد مصدر لا يشمل تشغيل كل شاشة)
+- [ ] 01.04 — إصلاح القواعد غير المطبقة
+- [x] 01.05 — توثيق أدلة المطابقة — [سجل أدلة 44 قاعدة](VSP_UXLP_44_CONFORMANCE_EVIDENCE_01_05_2026-11-20.md)، [فحص اتساق المستندات ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639503400) (توثيق وربط مصادر فقط، دون اعتماد تطبيق القواعد أو اختبار الأجهزة)
+- [ ] 01.06 — اختبار مراجعة نهائي
+- [x] 01.07 — إعداد مصفوفة تربط القواعد الـ44 بمعيار قبول مستقل لكل قاعدة — [44 independent criteria](UXLP_44_INDEPENDENT_ACCEPTANCE_CRITERIA_2026-11-13.md) (matrix-only; screen-by-screen runtime verification open)
+
+### 02 — Unify design tokens and components (7)
+
+- [x] 02.01 — جرد الألوان والخطوط والمسافات — [فهرسة مصدرية لـ556 ملف Dart ولون وخط ومسافات](VSP_DESIGN_MOTION_SOURCE_INVENTORY_02_01_06_01_2026-11-18.md)؛ ليست مراجعة بصرية أو توحيد tokens
+- [ ] 02.02 — توحيد design tokens
+- [ ] 02.03 — توحيد الأزرار والحقول
+- [ ] 02.04 — توحيد البطاقات والحوارات
+- [ ] 02.05 — إزالة الأنماط المكررة
+- [ ] 02.06 — اختبار الثيمات والمكونات
+- [ ] 02.07 — اختبار عدم انحراف المكونات المشتركة في شاشات اللاعب والمالك
+
+### 03 — Loading/error/empty states (7)
+
+- [x] 03.01 — جرد حالات التحميل بالشاشات — [فهرسة 132 نمط تحميل في 95 ملف ومداخل الخطأ والفراغ وإعادة المحاولة](VSP_NAVIGATION_LOADING_SOURCE_INVENTORY_03_01_07_01_2026-11-18.md)؛ لا إثبات رحلة دون شبكة
+- [ ] 03.02 — إضافة حالات الخطأ
+- [ ] 03.03 — إضافة الحالات الفارغة
+- [ ] 03.04 — إضافة إعادة المحاولة
+- [x] 03.05 — منع المؤشرات المضللة — [قبول محدود لحجب أرقام التحصيل غير الموثوقة وحالات التوفر والندرة المصطنعة](VSP_BOOKING_AVAILABILITY_OWNER_FINANCE_TRUST_03_05_53_01_2026-11-18.md)؛ لا يثبت مراجعة شاملة لكل واجهات التطبيق أو صحة الإيرادات الحية
+- [ ] 03.06 — اختبار الحالات دون اتصال
+- [ ] 03.07 — اختبار فقد الشبكة أثناء طلب جارٍ واستعادة الحالة بعد الاتصال
+
+### 04 — Arabic and RTL (7)
+
+- [x] 04.01 — مراجعة النصوص غير المترجمة — [جرد 756 مفتاح ARB باللغتين بلا نقص مع مراجعة 33 مرشح Text ثابت](VSP_CONTRAST_LOCALIZATION_ACCEPTANCE_04_01_05_01_2026-11-18.md)؛ لا يثبت ترجمة جميع النصوص الديناميكية
+- [x] 04.02 — استكمال مفاتيح العربية والإنجليزية — [قبول محدود موثق](VSP_ACCEPTANCE_BATCH_04_02_08_01_12_05_13_05_2026-11-19.md) (مجموعتا ARB: 756/756 مفتاح بلا فجوات أو تعارض placeholders؛ النصوص الثابتة المتبقية تحت 04.06 و04.07)
+- [x] 04.03 — اختبار اتجاه RTL — [قبول محدود لاختبار اتجاه اختيار الدور بالعربية وتفاعل البطاقات على شاشة ضيقة مع الخط المكبر](VSP_AUTH_UX_MOTION_RESPONSIVE_ACCEPTANCE_2026-11-18.md)؛ باقي الشاشات والأيقونات خارج القبول
+- [ ] 04.04 — تصحيح الأيقونات والاتجاهات
+- [ ] 04.05 — مراجعة الأرقام والتواريخ
+- [ ] 04.06 — اختبار الشاشات باللغتين
+- [x] 04.07 — اختبار النصوص الطويلة والجمع والتذكير في العربية — [قبول اختبارات عربي/إنجليزي على بطولات المهارات ودعوات الفرق](VSP_ARABIC_LONG_TEXT_AND_GRAMMAR_ACCEPTANCE_04_07_2026-11-20.md)، [13 اختبار دعوات ناجحة](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639977832)، [73 اختبار بطولة ناجحة](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639256095) (نطاق الواجهتين فقط؛ اختبار كل الشاشات والأجهزة ضمن 04.06/09/10)
+
+### 05 — Accessibility text scaling (7)
+
+- [x] 05.01 — تدقيق تباين الألوان — [حساب نسب WCAG لـ12 زوجًا وإصلاح textMuted من 3.66:1 إلى 6.91:1](VSP_CONTRAST_LOCALIZATION_ACCEPTANCE_04_01_05_01_2026-11-18.md)؛ اختبار كل عنصر فعلي على جهاز ما زال مفتوحًا
+- [x] 05.02 — إضافة تسميات قارئ الشاشة — [قبول محدود لتسميات خيارات اللاعب/المالك في نافذة التسجيل، وعناصر الموافقة، مع اختبار AR/EN](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ جرد المكونات الأخرى واختبار TalkBack الفعلي مفتوحان
+- [x] 05.03 — توسيع مناطق اللمس — [تحقق محدود من أهداف 48dp لموافقة الشروط وبطاقات الدور ونموذج المصادقة](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ بقية التطبيق مفتوحة
+- [x] 05.04 — اختبار تكبير الخط — [قبول محدود لشاشات الدخول وإنشاء حساب اللاعب والمالك واختيار الدور وحقول الأسماء عند 1.6x و1.8x](VSP_AUTH_UX_MOTION_RESPONSIVE_ACCEPTANCE_2026-11-18.md)؛ ليس اختبار التطبيق كله
+- [x] 05.05 — إصلاح ترتيب التركيز — [اختبار عملي لانتقال تركيز لوحة المفاتيح من بريد الدخول إلى كلمة المرور في AR/EN](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ باقي الحقول والنوافذ مفتوحة
+- [x] 05.06 — اختبار إمكانية الوصول — [قبول محدود لاختبارات Semantics والتحكم وحجم اللمس والتركيز في واجهات التسجيل](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ قارئ شاشة حقيقي وباقي الميزات لم يُختبرا
+- [ ] 05.07 — اختبار التنقل بقارئ الشاشة دون الاعتماد على اللون وحده
+
+### 06 — Reduced motion (5)
+
+- [x] 06.01 — حصر الحركات والانتقالات — [فهرسة حركات الشاشة وNavigation والتوقيتات وReduced Motion](VSP_DESIGN_MOTION_SOURCE_INVENTORY_02_01_06_01_2026-11-18.md)؛ ليست تجربة Android لإعداد تقليل الحركة
+- [x] 06.02 — احترام تفضيل تقليل الحركة — [قبول محدود لمكوّنات FadeIn والأزرار وموافقة الشروط وحقل الإدخال عند تعطيل الحركة](VSP_AUTH_UX_MOTION_RESPONSIVE_ACCEPTANCE_2026-11-18.md)؛ باقي الحركة وAndroid الحقيقي مفتوح
+- [x] 06.03 — توفير بدائل للحركات الجوهرية — [بديل إظهار المحتوى فورًا دون تأخير أو انزلاق في مكوّن FadeIn المشترك مع اختبار تغيير الإعداد](VSP_AUTH_UX_MOTION_RESPONSIVE_ACCEPTANCE_2026-11-18.md)؛ بدائل بقية الحركات مفتوحة
+- [ ] 06.04 — منع الوميض المفرط
+- [ ] 06.05 — اختبار Android بإعداد تقليل الحركة
+
+### 07 — Navigation review (7)
+
+- [x] 07.01 — حصر مسارات التنقل — [27 مسار GoRouter ومواقع push/pop والـredirect](VSP_NAVIGATION_LOADING_SOURCE_INVENTORY_03_01_07_01_2026-11-18.md)؛ لا يثبت صلاحيات الدور أو سلامة الروابط العميقة
+- [x] 07.02 — اختبار زر الرجوع — [قبول محدود لاختبار زر الرجوع الموحد، Android back من مسار مدفوع، الرجوع إلى welcome عند غياب التاريخ و48dp بالعربية والإنجليزية](VSP_AUTH_BACK_AND_LOGIN_SCOPED_ACCEPTANCE_2026-11-18.md)؛ بقية شاشات الحجز والمالك واختبارات الجهاز مستمرة
+- [x] 07.03 — تدقيق الروابط العميقة — [فلتر HTTPS/host الصحيح وOAuth callback وID محدود مع اختبارات هجومية](VSP_ROLE_DEEPLINK_NOTIFICATION_SECURITY_ACCEPTANCE_07_03_07_04_07_07_2026-11-18.md)؛ ليس اختبار App Links أو OAuth حي
+- [x] 07.04 — حماية المسارات حسب الدور — [رفض مباشر لمسارات المالك من حساب اللاعب والعكس في GoRouter](VSP_ROLE_DEEPLINK_NOTIFICATION_SECURITY_ACCEPTANCE_07_03_07_04_07_07_2026-11-18.md)؛ عزل بيانات RLS في staging مستقل
+- [x] 07.05 — إصلاح التنقل بعد انتهاء الجلسة — [قبول محدود لحماية إعادة فتح الرابط المؤجل بعد logout وتبديل الحساب ومنع التكرار](VSP_DEFERRED_DEEP_LINK_ACCOUNT_SWITCH_ACCEPTANCE_07_05_2026-11-18.md)؛ اختبار انتهاء JWT الحقيقي ما زال في 11.05
+- [x] 07.06 — اختبار الرجوع من النوافذ — [قبول محدود لنوافذ استعادة كلمة المرور وحذف الحساب، إلغاء وAndroid back والضغط الخارجي قبل وأثناء الطلب، بالعربية/الإنجليزية](VSP_AUTH_BACK_AND_LOGIN_SCOPED_ACCEPTANCE_2026-11-18.md)؛ بقية النوافذ المالية واختبارات الأجهزة الحقيقية جزء من QA المتبقي
+- [x] 07.07 — اختبار التنقل من إشعار مباشر إلى شاشة تتطلب صلاحية — [تسجيل مساري الاشتراك/الكشف وحماية إشعارات المالك واللاعب](VSP_ROLE_DEEPLINK_NOTIFICATION_SECURITY_ACCEPTANCE_07_03_07_04_07_07_2026-11-18.md)؛ تسليم FCM حقيقي على جهاز مفتوح
+
+### 08 — Onboarding and signup UX (7)
+
+- [x] 08.01 — مراجعة خطوات التسجيل الأولى — [قبول محدود موثق](VSP_ACCEPTANCE_BATCH_04_02_08_01_12_05_13_05_2026-11-19.md) (مراجعة مصدر Role/Signup/Player and Owner Onboarding وتوثيق الفجوات؛ ليست رحلة تسجيل حقيقية)
+- [ ] 08.02 — تقليل الحقول غير الضرورية
+- [x] 08.03 — توضيح الأدوار والاختيارات — [اختبار تمييز اللاعب/المالك وقيم الدور وأوصاف قارئ الشاشة ورابط تبديل الحساب باللغتين](VSP_AUTH_UX_MOTION_RESPONSIVE_ACCEPTANCE_2026-11-18.md)؛ صلاحيات الخادم مستقلة
+- [x] 08.04 — تحسين أخطاء النماذج — [قبول محدود لفحص أخطاء نموذج إنشاء حساب اللاعب/المالك والبريد غير الصحيح مع رسائل عربية/إنجليزية](VSP_SIGNUP_FORM_ERRORS_ACCEPTANCE_08_04_2026-11-18.md)؛ لا يشمل كل نماذج تسجيل وإدارة الملاعب
+- [x] 08.05 — اختبار الانقطاع والاستئناف — [اختبار انقطاع طلب التسجيل وبقاء البيانات وإعادة المحاولة للاعب والمالك باللغتين](VSP_SIGNUP_INTERRUPTION_RECOVERY_ACCEPTANCE_08_05_2026-11-19.md)، [CI: 35 اختبارًا ناجحًا](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44442134318) (Flutter/mock؛ بدون قتل التطبيق أو اختبار Supabase حي)
+- [ ] 08.06 — قياس إكمال التسجيل
+- [x] 08.07 — اختبار تسجيل اللاعب وصاحب الملعب كلٌ على حدة — [6 اختبارات Flutter تمارس النموذج كاملًا من تاريخ الميلاد والبيانات للموافقة والإرسال أو فشل الخادم لكل دور باللغتين](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ الحسابات الحقيقية والتحقق بالبريد مفتوحان
+
+### 09 — Responsive device layouts (7)
+
+- [x] 09.01 — تحديد أحجام الأجهزة المستهدفة
+- [x] 09.02 — اختبار الهواتف الصغيرة — [قبول محدود لاختبارات Flutter بعرض 320/360 لشاشات الدخول وإنشاء الحساب وحقول الاسم](VSP_AUTH_UX_MOTION_RESPONSIVE_ACCEPTANCE_2026-11-18.md)؛ باقي التطبيق وأجهزة فعلية لم تُختبر
+- [x] 09.03 — اختبار الهواتف الكبيرة — [قبول محدود لتخطيط شاشة الدخول وحساب المالك على هاتف 430dp مع تكبير النص](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ بقية التطبيق مفتوحة
+- [x] 09.04 — معالجة لوحة المفاتيح والقص — [إصلاح overflow حقيقي في عنوان دخول وجوجل والفاصل وروابط إنشاء الحساب مع اختبارات نص مكبر](VSP_AUTH_UX_MOTION_RESPONSIVE_ACCEPTANCE_2026-11-18.md)؛ بقية النماذج مفتوحة
+- [x] 09.05 — اختبار الوضع الأفقي حيث يلزم — [قبول محدود لتخطيط شاشة الدخول وإنشاء حساب المالك بعرض 700 وارتفاع 420 منطقيًا](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ الجهاز الفعلي والشاشات الرياضية مفتوحة
+- [x] 09.06 — فحص اختلاف كثافة الشاشة — [اختبارات واجهة الدخول وإنشاء الحساب بدقة 1080×2400 وكثافة 3.0](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ أجهزة متعددة فعلية وبقية التطبيق مفتوحة
+- [x] 09.07 — اختبار أبعاد الشاشة عند فتح لوحة المفاتيح على الأجهزة الصغيرة — [اختبار Flutter لشاشة الدخول عند 320dp وكيبورد اصطناعي 260dp في العربية والإنجليزية](VSP_AUTH_UX_MOTION_RESPONSIVE_ACCEPTANCE_2026-11-18.md)؛ التحقق على جهاز فعلي باقٍ
+
+### 10 — Visual regression and accessibility review (8)
+
+- [x] 10.01 — تحديد شاشات مرجعية
+- [ ] 10.02 — التقاط لقطات مرجعية
+- [ ] 10.03 — بناء اختبارات اختلاف بصري
+- [ ] 10.04 — فحص التباين واللمس
+- [x] 10.05 — مراجعة RTL وتكبير الخط — [قبول محدود لتخطيطات شاشة الدخول والاختيار والبطاقات بالعربية والإنجليزية وتكبير 1.4x–1.8x](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ لقطات مرجعية وفحص كل الشاشات مفتوحة
+- [ ] 10.06 — إصلاح الفروق الحرجة
+- [ ] 10.07 — اعتماد تقرير المراجعة
+- [x] 10.08 — إنشاء معايير قبول للفروق البصرية بدل الاكتفاء بالصور
+
+### 11 — Login/signup/recovery (8)
+
+- [x] 11.01 — اختبار إنشاء الحساب — [اختبارات Flutter كاملة لنماذج إنشاء حساب اللاعب/المالك مع Fake Auth ورفض أخطاء التسجيل](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ إنشاء حساب حقيقي عبر Supabase وتأكيد البريد مفتوح
+- [x] 11.02 — اختبار تسجيل الدخول — [قبول محدود لاختبار شاشة Flutter في البريد غير الصحيح، الاستثناء، إعادة المحاولة ومنع كشف خطأ الخادم](VSP_AUTH_BACK_AND_LOGIN_SCOPED_ACCEPTANCE_2026-11-18.md)؛ حسابات Supabase الفعلية ومعدلات الطلبات وOAuth ما زالت مفتوحة
+- [x] 11.03 — اختبار استعادة الحساب — [قبول Flutter مُحاكى محدود](VSP_PASSWORD_RECOVERY_BOUNDED_ACCEPTANCE_11_03_2026_11_19.md) و[44 اختبارًا ناجحًا في CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44486325222)؛ يشمل استمارة طلب الرابط، تعيين كلمة المرور، صلاحية النموذج، تبديل الحساب أثناء الطلب والمهلة، والرسائل العربية/الإنجليزية؛ لا يعني وصول البريد فعليًا أو اختبار JWT أو حسابات staging
+- [x] 11.04 — التحقق من البريد أو الهاتف حسب التدفق — [قبول محدود لتدفق البريد الإلكتروني OTP بواجهة Flutter](VSP_EMAIL_OTP_UI_BOUNDED_ACCEPTANCE_11_04_2026_11_19.md) و[19 اختبارًا ناجحًا في CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44487774510)؛ رمز 6 أرقام وإعادة الإرسال ومؤقت الانتظار ورسائل AR/EN مع مزود مصادقة محاكى؛ إرسال البريد والخادم الحي ووسيلة الهاتف غير مثبتة، ولا تتطلب رحلة التطبيق الحالية تحقق الهاتف
+- [ ] 11.05 — اختبار انتهاء الجلسة
+- [ ] 11.06 — اختبار حماية محاولات الدخول
+- [ ] 11.07 — اختبار رحلة فعلية على جهاز
+- [x] 11.08 — اختبار منع كشف وجود البريد عند استعادة الحساب — [قبول محدود لاختبار واجهة الاستعادة برسالة محايدة في النجاح والفشل والاستثناء و6 اختبارات Flutter](VSP_PASSWORD_RECOVERY_PRIVACY_ACCEPTANCE_11_08_2026-11-18.md)؛ لم يُختبر توقيت أو سلوك Supabase الحي
+
+### 12 — Player profile (7)
+
+- [x] 12.01 — مراجعة عرض بيانات اللاعب — [تدقيق مصدر عرض الاسم والصورة والمركز والفريق وحالات التعذر مع فجوات خصوصية 1v1](VSP_PLAYER_PROFILE_DISPLAY_SOURCE_AUDIT_12_01_2026-11-19.md) (تدقيق مصدر فقط، لا إثبات تشغيل على أجهزة أو صلاحيات حسابين)
+- [x] 12.02 — تعديل البيانات والتحقق منها — [اختبارات تعديل الاسم والهاتف والمركز وتقييد الدور](VSP_ACCEPTANCE_BATCH_01_03_12_02_16_01_2026-11-19.md)، [CI ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426000) (Flutter/mock، لا حفظ حقيقي على Supabase)
+- [ ] 12.03 — رفع الصورة الشخصية
+- [x] 12.04 — ضبط خصوصية الحقول — [منع ظهور الاسم/الهاتف/الصورة القديمة أو حفظها بعد تبديل جلسة Flutter](VSP_ACCEPTANCE_BATCH_01_02_12_04_13_06_2026-11-19.md)، [37 اختبارًا ناجحًا](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222222) (خصوصية واجهة التحرير فقط؛ RLS والملفات وخصوصية الكابتن ما زالت مفتوحة)
+- [x] 12.05 — اختبار حفظ التغييرات — [قبول محدود موثق](VSP_ACCEPTANCE_BATCH_04_02_08_01_12_05_13_05_2026-11-19.md) (اختبارات Flutter للنجاح/الفشل/الاستثناء/التكرار/تبديل الحساب بالعربية والإنجليزية؛ تخزين حقيقي غير مشمول)
+- [x] 12.06 — اختبار فشل الرفع والتراجع — [10 اختبارات عربية/إنجليزية لخطأ اختيار/ضغط/رفع الصورة والتراجع وإعادة المحاولة](VSP_PROFILE_PHOTO_FAILURE_RETRY_ACCEPTANCE_12_06_2026-11-19.md)، [CI: 29 اختبار Flutter ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44443912415) (بيانات محاكاة؛ رفع الصورة الحقيقي في 12.03 ما زال مفتوحًا)
+- [ ] 12.07 — اختبار تعارض تعديل الملف الشخصي من جهازين
+
+### 13 — Player positions/preferences (6)
+
+- [x] 13.01 — حصر مراكز اللعب المتاحة — [جرد المراكز](VSP_PLAYER_POSITIONS_INVENTORY_13_01.md)، commit `f8b31ac`
+- [ ] 13.02 — حفظ المركز الأساسي والثانوي
+- [ ] 13.03 — ضبط تفضيلات اللعب
+- [ ] 13.04 — عرض التفضيلات في الاكتشاف
+- [x] 13.05 — التحقق من القيم — [قبول محدود موثق](VSP_ACCEPTANCE_BATCH_04_02_08_01_12_05_13_05_2026-11-19.md) (التحقق من قائمة مراكز اللعب المعتمدة ومنع قيمة غير معروفة قبل حفظ اللاعب؛ اختبارات Flutter باللغتين)
+- [x] 13.06 — اختبار تعديل التفضيلات — [اختبار تغيير مركز اللعب GK→FW بالعربية والإنجليزية وتعطيل التغيير أثناء الحفظ](VSP_ACCEPTANCE_BATCH_01_02_12_04_13_06_2026-11-19.md)، [CI ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222222) (المركز الأساسي في Flutter فقط؛ باقي التفضيلات وSupabase الحي مفتوحة)
+
+### 14 — Stadium and match discovery (8)
+
+- [x] 14.01 — تحديد فلاتر الملاعب
+- [x] 14.02 — تحديد فلاتر المباريات
+- [x] 14.03 — اختبار البحث حسب المحافظة — [اختبار طلب المستودع وفلتر Aswan الصريح](VSP_STADIUM_GOVERNORATE_VISIBILITY_ACCEPTANCE_2026-11-14.md) (بيانات اصطناعية؛ البحث الفعلي في أسوان لم يُثبت)
+- [ ] 14.04 — عرض التوفر الفعلي
+- [x] 14.05 — معالجة عدم وجود نتائج — [اختبار واجهة القائمة والتصفير](VSP_STADIUM_EMPTY_AND_PARTIAL_DATA_ACCEPTANCE_2026-11-14.md) (قائمة الملاعب فقط)
+- [x] 14.06 — اختبار الانتقال للتفاصيل — [اختبار النقر وتمرير الملعب المختار](VSP_STADIUM_NAVIGATION_AND_TEAM_ROSTER_ACCEPTANCE_2026-11-14.md) (انتقال الشاشة فقط؛ تحديث تفاصيل الخادم والحجز مهام منفصلة)
+- [x] 14.07 — اختبار البيانات غير المكتملة — [اختبار صف جزئي واستجابة معطوبة وإعادة المحاولة](VSP_STADIUM_EMPTY_AND_PARTIAL_DATA_ACCEPTANCE_2026-11-14.md) (لا يثبت كل مخططات API)
+- [x] 14.08 — اختبار عدم عرض ملعب غير منشور أو غير متاح للحجز — [فلتر استعلام اللاعب وفحص anon على staging](VSP_STADIUM_GOVERNORATE_VISIBILITY_ACCEPTANCE_2026-11-14.md) (لا يشمل كل مسارات المشاركة أو الحجز)
+
+### 15 — Team discovery (6)
+
+- [x] 15.01 — عرض قائمة الفرق القابلة للاكتشاف — [اختبار عرض القائمة من بيانات اصطناعية](VSP_TEAM_DISCOVERY_ACCEPTANCE_2026-11-14.md) (لا يثبت جلب فرق حقيقية من الخادم)
+- [x] 15.02 — إضافة البحث والفلاتر — [اختبار المحافظة والرياضة ونص البحث](VSP_TEAM_DISCOVERY_ACCEPTANCE_2026-11-14.md) (فلترة واجهة البيانات المحمّلة)
+- [x] 15.03 — عرض تفاصيل الفريق — [اختبار تمرير الفريق المختار لصفحة التفاصيل](VSP_TEAM_DISCOVERY_ACCEPTANCE_2026-11-14.md) (انتقال الشاشة فقط)
+- [x] 15.04 — حماية معلومات الأعضاء — [اختبار دالة القائمة على staging بصلاحيات عضو وغير عضو](VSP_STADIUM_NAVIGATION_AND_TEAM_ROSTER_ACCEPTANCE_2026-11-14.md) (خصوصية roster RPC؛ ليست مراجعة كل بيانات الفرق)
+- [ ] 15.05 — إظهار أهلية الانضمام
+- [ ] 15.06 — اختبار الفرق الخاصة أو غير المتاحة
+
+### 16 — Booking history (7)
+
+- [x] 16.01 — عرض حجوزات اللاعب — [اختبار Widget لحجوزات قادمة وسابقة مرتبة](VSP_ACCEPTANCE_BATCH_01_03_12_02_16_01_2026-11-19.md)، [CI ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426063) (بيانات اختبار؛ التحقق من حسابين بالخادم مستقل)
+- [x] 16.02 — تقسيم الحجوزات حسب الحالة — تغطية pending/upcoming/history وحدود مهلة الدفع، CI `42825931860`
+- [x] 16.03 — عرض التفاصيل والإيصالات — المرجع والسعر والعربون والمتبقي وحالة الاسترداد باللغتين، commit `d18af67`، CI `42827626171`
+- [x] 16.04 — تحديث الحالات من الخادم — اختبارات Realtime وإعادة الاتصال والإلغاء، CI `42825931860`
+- [x] 16.05 — اختبار الحجوزات الملغاة — إخفاء checkout المهجور والاحتفاظ بالسجل المسترد، CI `42825931860`
+- [x] 16.06 — اختبار الترتيب والتصفح — [اختبار الشاشة والتصنيف](VSP_BOOKING_ORDER_BROWSING_ACCEPTANCE_16_06_2026-11-14.md)، Flutter CI `43598491150`
+- [x] 16.07 — التحقق من عزل تاريخ الحجوزات بين الحسابات — [دليل العزل والاختبار](VSP_BOOKING_HISTORY_ACTIVE_TEAM_ACCEPTANCE_2026-11-14.md)
+
+### 17 — Join team/invitations (8)
+
+- [x] 17.01 — عرض دعوات الانضمام — [اختبار واجهة الدعوات](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md)
+- [x] 17.02 — قبول الدعوة — [اختبار الواجهة وعقد RPC المعزول](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md)
+- [x] 17.03 — رفض الدعوة — [اختبار الرفض دون عضوية](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md)
+- [x] 17.04 — تحديث العضوية بعد القبول — [اختبار callback التحديث](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md)
+- [x] 17.05 — منع الانضمام المكرر — [اختبار النقر المتكرر والاستجابة الثانية](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md)
+- [x] 17.06 — اختبار الصلاحيات والمهلة — [عقد PostgreSQL معزول](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md)
+- [ ] 17.07 — اختبار رحلة حسابين
+- [x] 17.08 — التحقق من عدم قبول دعوة منتهية أو موجهة لحساب آخر — [اختبارات هويات ووقت سالبة](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md)
+
+### 18 — Active team selection (6)
+
+- [x] 18.01 — جلب الفرق المرتبط بها اللاعب — [قبول محدود لاختبار طلبات عضويات المستودع](VSP_ACCOUNT_SCOPED_TEAM_MEMBERSHIP_BOUNDED_ACCEPTANCE_18_01_2026_11_19.md) و[5 اختبارات ناجحة](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44488718345)؛ جلب team_members حسب معرف الحساب، عرض فرق teams_public بترتيب ثابت، لا تكرار ومراعاة فشل الطلب؛ العزل الحقيقي بحسابين وRLS مستقلان
+- [x] 18.02 — تحديد الفريق النشط — [اختبار العضويات الموثقة](VSP_BOOKING_HISTORY_ACTIVE_TEAM_ACCEPTANCE_2026-11-14.md)
+- [x] 18.03 — حفظ الاختيار — [دليل الحفظ المرتبط بالحساب](VSP_BOOKING_HISTORY_ACTIVE_TEAM_ACCEPTANCE_2026-11-14.md)
+- [x] 18.04 — تطبيق الفريق النشط على التحديات — [تحقق checkout من العضوية النشطة](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md)
+- [x] 18.05 — معالجة حذف الفريق — [تنظيف الاختيار القديم](VSP_BOOKING_HISTORY_ACTIVE_TEAM_ACCEPTANCE_2026-11-14.md)
+- [x] 18.06 — اختبار التبديل بين الفرق — [اختبار التبديل وعزل الحساب](VSP_BOOKING_HISTORY_ACTIVE_TEAM_ACCEPTANCE_2026-11-14.md)
+
+### 19 — Owner onboarding (7)
+
+- [x] 19.01 — اختبار تسجيل صاحب الملعب — [اختبار نموذج صاحب الملعب والحقول والإرسال المؤهل وفشل الخادم بالعربية والإنجليزية](VSP_SIGNUP_PRIVACY_ACCESSIBILITY_DEVICE_MATRIX_ACCEPTANCE_2026-11-18.md)؛ تفعيل صاحب الملعب وملكية الملعب وموافقات الخادم مفتوحة
+- [ ] 19.02 — التحقق من بيانات النشاط
+- [ ] 19.03 — ربط حساب المالك بالملعب
+- [ ] 19.04 — اختبار الموافقات المطلوبة
+- [ ] 19.05 — معالجة طلبات التسجيل المكررة
+- [ ] 19.06 — اختبار الرحلة كاملة
+- [ ] 19.07 — اختبار رفض المالك غير المصرح له لإدارة ملعب آخر
+
+### 20 — Stadium profile/media (7)
+
+- [ ] 20.01 — إنشاء وتعديل بيانات الملعب
+- [x] 20.02 — رفع الصور وحذفها — [اختبار واجهة الرفع والحذف وحفظ المسودة](VSP_STADIUM_MEDIA_AND_SERVICES_ACCEPTANCE_2026-11-15.md) (تخزين اصطناعي؛ استجابة Storage الحقيقية مفتوحة للتحقق المتكامل)
+- [x] 20.03 — ضبط صورة الغلاف — [اختبار اختيار الغلاف وترتيب الحفظ](VSP_STADIUM_COVER_SELECTION_ACCEPTANCE_2026-11-14.md) (اختيار واجهة المالك؛ لا يثبت عرض الصورة على جهاز اللاعب)
+- [ ] 20.04 — التحقق من ملكية التعديل
+- [x] 20.05 — معالجة فشل التخزين — [اختبار استجابة الفشل والاستثناء في واجهة رفع الصور](VSP_STADIUM_IMAGE_UPLOAD_FAILURE_ACCEPTANCE_2026-11-14.md) (واجهة المالك؛ لا يحاكي انقطاع Storage الحقيقي)
+- [ ] 20.06 — اختبار ظهور البيانات للاعب
+- [ ] 20.07 — اختبار حدود نوع وحجم الصور ومنع الملفات الضارة — فحص التوقيع والنوع والحجم على العميل **[كود واختبارات؛ مفتوح لفحص المحتوى والخادم]**
+
+### 21 — Location/pricing/services (7)
+
+- [x] 21.01 — ضبط الموقع والإحداثيات — [اختبار اختيار الموقع وحفظ المسودة والحمولة](VSP_STADIUM_LOCATION_IMAGE_VALIDATION_2026-11-15.md) (اختيار اصطناعي؛ الخريطة الفعلية واختبار حسابين منفصلان)
+- [ ] 21.02 — ضبط أسعار الوحدات
+- [x] 21.03 — إدارة الخدمات المتاحة — [اختبار اختيار الخدمات وحفظها في المسودة والحمولة](VSP_STADIUM_MEDIA_AND_SERVICES_ACCEPTANCE_2026-11-15.md) (واجهة المالك؛ ظهور الخدمات للاعب اختبار منفصل)
+- [x] 21.04 — التحقق من العملة والمدخلات — [client acceptance boundaries](VSP_OWNER_BOOKING_CLIENT_GUARDS_ACCEPTANCE_2026-11-13.md) (client-only; related server/real-payment gates open)
+- [x] 21.05 — عرض التفاصيل للاعب — [اختبار عرض موقع الملعب والخدمات والسعر من حمولة المالك](VSP_PLAYER_STADIUM_DETAILS_VISIBILITY_2026-11-15.md) (بيانات اصطناعية؛ ظهور تعديل حقيقي عبر حسابين مفتوح)
+- [x] 21.06 — اختبار تحديث الأسعار — [اختبار استجابة حفظ سعر الملعب](VSP_STADIUM_PRICE_UPDATE_RESULT_ACCEPTANCE_2026-11-15.md) (واجهة المالك واستجابة المستودع اصطناعية؛ انعكاس السعر الحي والحجز اختبار منفصل)
+- [x] 21.07 — اختبار اختلاف سعر الفترة المعروض عن السعر المعتمد عند الحجز — [اختبار رفض السعر القديم في التجريبي](VSP_BOOKING_PRICE_MISMATCH_STAGING_2026-11-15.md) (طلب حجز اصطناعي بلا إدراج؛ اختبار الحسابين والدفع الفعلي مستقل)
+
+### 22 — Operating hours/closures (7)
+
+- [ ] 22.01 — ضبط جدول العمل الأسبوعي
+- [ ] 22.02 — إضافة الإغلاقات المؤقتة
+- [ ] 22.03 — معالجة الاستثناءات والعطلات
+- [ ] 22.04 — منع حجز الفترات المغلقة
+- [ ] 22.05 — اختبار المناطق الزمنية — [حماية الساعة المفقودة في القاهرة](VSP_CAIRO_DST_SKIPPED_SLOT_GUARD_2026-11-15.md) (كود واختبارات القاهرة؛ مفتوحة لجهاز بتوقيت مختلف والساعة المكررة وتحقق الخادم)
+- [x] 22.06 — اختبار التعارضات [اختبارات وظائف الحجوزات/عروض Staging](security/VSP_VIEW_AND_BOOKING_WINDOW_ACCEPTANCE_2026-11-13.md) (قبول محدود، دون تطبيق الإصلاح على Staging)
+- [x] 22.07 — اختبار عبور فترة الحجز منتصف الليل [اختبارات وظائف الحجوزات/عروض Staging](security/VSP_VIEW_AND_BOOKING_WINDOW_ACCEPTANCE_2026-11-13.md) (قبول محدود، دون تطبيق الإصلاح على Staging)
+
+### 23 — Booking management (8)
+
+- [ ] 23.01 — عرض حجوزات الملعب
+- [ ] 23.02 — قبول أو رفض الطلب عند انطباق السياسة
+- [ ] 23.03 — إدارة الإلغاء
+- [ ] 23.04 — تحديث الحالات للمستخدمين
+- [x] 23.05 — تصفية الحجوزات — [قبول محدود لفلترة واجهة المالك بالملعب ويوم الوردية واستبعاد الملغي](VSP_OWNER_SCHEDULE_REPORTS_SUBSCRIPTION_ACCEPTANCE_23_05_24_04_24_06_2026-11-18.md)؛ لا يثبت RLS أو حسابين
+- [ ] 23.06 — تسجيل أحداث التغيير
+- [ ] 23.07 — اختبار الصلاحيات
+- [ ] 23.08 — اختبار منع تعديل حجز ملعب آخر
+
+> **24.07 منفذة برمجيًا وتنتظر التحقق النهائي:** حاسبة مؤشرات المالك تستبعد `BookingStatus.cancelled` قبل تجميع الإيرادات والحجوزات؛ أُصلحت حدود الأسبوع وساعات الحجز غير الصحيحة في `OwnerFinancialCalculator` (commits `af3882194fa5c5942f100f600119053ffdbe5f2c` و`c8eaf8960147b40f2282d70b01c0c134cb7f836e`). لا يشمل ذلك تدقيق كل مسارات التقارير الأخرى.
+
+### 24 — Owner dashboard (7)
+
+- [x] 24.01 — تحديد مؤشرات لوحة المالك
+- [ ] 24.02 — حساب الحجوزات والإيرادات
+- [ ] 24.03 — عرض نسب الإشغال
+- [x] 24.04 — عرض حالة الاشتراك — [عرض محلي لحالة Pro المدفوع والتجربة والمجاني والمنتهي بالعربي/الإنجليزي](VSP_OWNER_SCHEDULE_REPORTS_SUBSCRIPTION_ACCEPTANCE_23_05_24_04_24_06_2026-11-18.md)؛ دون منح صلاحيات أو إثبات تجديد حي
+- [ ] 24.05 — التحقق من مصادر الأرقام
+- [x] 24.06 — اختبار فترات التقارير — [اختبارات فترات اليوم/الأسبوع/الشهر/السنة والمخصص ومسح فلتر الملعب](VSP_OWNER_SCHEDULE_REPORTS_SUBSCRIPTION_ACCEPTANCE_23_05_24_04_24_06_2026-11-18.md)؛ خادم التحليلات وبيانات الإيرادات الحية خارج القبول
+- [x] 24.07 — التحقق من عدم احتساب الحجوزات الملغاة ضمن الإيراد المحقق
+
+### 25 — Free/pro subscription entitlements (8)
+
+- [x] 25.01 — توثيق حدود الباقة المجانية — [staging public-plan source inventory](VSP_OWNER_FREE_PRO_ENTITLEMENT_SOURCE_25_01_25_02_2026-11-13.md) (documentation only; server enforcement and paid delivery unverified)
+- [x] 25.02 — توثيق صلاحيات الباقة المدفوعة — [staging public-plan source inventory](VSP_OWNER_FREE_PRO_ENTITLEMENT_SOURCE_25_01_25_02_2026-11-13.md) (documentation only; server enforcement and paid delivery unverified)
+- [ ] 25.03 — تطبيق القيود من الخادم
+- [x] 25.04 — بناء حالات انتهاء الاشتراك — [client acceptance boundaries](VSP_OWNER_BOOKING_CLIENT_GUARDS_ACCEPTANCE_2026-11-13.md) (client-only; related server/real-payment gates open)
+- [ ] 25.05 — اختبار الترقية والتجديد
+- [x] 25.06 — منع تجاوز القيود من العميل — [client acceptance boundaries](VSP_OWNER_BOOKING_CLIENT_GUARDS_ACCEPTANCE_2026-11-13.md) (client-only; related server/real-payment gates open)
+- [ ] 25.07 — اختبار الرجوع للمجانية
+- [ ] 25.08 — اختبار تجديد الاشتراك المتزامن وعدم منح مزايا مرتين
+
+### 26 — Booking overlap prevention (8)
+
+- [x] 26.01 — تحديد قاعدة تعارض المواعيد
+- [ ] 26.02 — تطبيق قفل أو قيد ذري بالخادم
+- [ ] 26.03 — اختبار الحجز المتزامن
+- [ ] 26.04 — اختبار اختلاف الوحدات
+- [ ] 26.05 — اختبار الإلغاء وإعادة الإتاحة
+- [ ] 26.06 — اختبار المنطقة الزمنية
+- [x] 26.07 — توثيق دليل عدم التداخل — [دليل منع التعارض](VSP_BOOKING_OVERLAP_EVIDENCE_26_07.md)، commit `cdfa77a`
+- [ ] 26.08 — اختبار سباق حجزين من جهازين على نفس الفترة
+
+### 27 — Booking state consistency (8)
+
+- [x] 27.01 — حصر حالات الحجز — [جرد الحالات وربطها بالكود](VSP_BOOKING_STATUS_INVENTORY_27_01.md)، commit `4ece7f6`
+- [x] 27.02 — تحديد الانتقالات المسموحة — [عقد انتقالات حالات الحجز](VSP_BOOKING_TRANSITIONS_27_02.md)، commit `f3ddb3d`
+- [ ] 27.03 — منع الانتقالات غير الصالحة
+- [ ] 27.04 — توحيد حالة العميل والخادم
+- [ ] 27.05 — اختبار الطلبات المتكررة
+- [ ] 27.06 — تسجيل تاريخ الحالة
+- [ ] 27.07 — اختبار السباقات
+- [ ] 27.08 — اختبار idempotency لطلبات تغيير حالة الحجز
+
+### 28 — Booking/cancellation lifecycle (8)
+
+- [x] 28.01 — توثيق دورة إنشاء الحجز — [دورة إنشاء الحجز](VSP_BOOKING_CREATION_LIFECYCLE_28_01.md)، commit `0ec3794`
+- [x] 28.02 — توثيق الإلغاء والمواعيد النهائية — [عقد الإلغاء والمواعيد](VSP_BOOKING_CANCELLATION_CUTOFFS_28_02.md)، commit `870a599`
+- [ ] 28.03 — تطبيق سياسة الإلغاء
+- [ ] 28.04 — تحديث التوفر بعد الإلغاء
+- [ ] 28.05 — إرسال الإشعارات
+- [ ] 28.06 — اختبار الصلاحيات
+- [ ] 28.07 — اختبار رحلة الحجز والإلغاء
+- [ ] 28.08 — اختبار سياسة الإلغاء عند الحد الزمني بالضبط
+
+### 29 — Payment failure/retry (8)
+
+- [x] 29.01 — تصنيف فشل الدفع — `PaymentFailureClassifier`، commit `b91cfbc`؛ اختبار حالات التصنيف `7625cef` (تشغيله مؤجل)
+- [x] 29.02 — إظهار الخطأ للمستخدم — [client acceptance boundaries](VSP_OWNER_BOOKING_CLIENT_GUARDS_ACCEPTANCE_2026-11-13.md) (client-only; related server/real-payment gates open)
+- [ ] 29.03 — بناء إعادة المحاولة الآمنة
+- [ ] 29.04 — منع خصم مزدوج
+- [ ] 29.05 — استرجاع الحالة بعد العودة
+- [x] 29.06 — اختبار مهلة الدفع — [client timeout test evidence](VSP_PAYMENT_TIMEOUT_CLIENT_ACCEPTANCE_29_06_2026-11-13.md) (50 ms simulated webhook timeout/cancel; Paymob sandbox and real provider reconciliation still open)
+- [ ] 29.07 — اختبار السيناريوهات الفاشلة
+- [ ] 29.08 — اختبار إعادة فتح التطبيق بعد فشل الدفع واستعادة الحالة
+
+### 30 — Payment server reconciliation (8)
+
+- [x] 30.01 — تحديد مصدر حقيقة الدفع — [مصدر الحقيقة والتسوية](VSP_PAYMENT_SERVER_SOURCE_OF_TRUTH_30_01.md)، commit `41a4552`
+- [ ] 30.02 — التحقق من توقيع webhook
+- [ ] 30.03 — ربط المعاملة بالحجز — [كود Partial/CI، بدون قبول Staging](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md)
+- [ ] 30.04 — معالجة webhook المكرر — [كود Partial/CI، بدون قبول Staging](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md)
+- [ ] 30.05 — تسوية الحالات غير المتطابقة — [كود Partial/CI، بدون قبول Staging](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md)
+- [ ] 30.06 — إضافة سجل تدقيق
+- [ ] 30.07 — اختبار sandbox
+- [ ] 30.08 — اختبار webhook بتوقيع غير صالح وترتيب أحداث معكوس — [كود Partial/CI، بدون قبول Staging](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md)
+
+### 31 — Refund queues and notifications (8)
+
+- [x] 31.01 — تحديد قواعد الاسترداد — [قواعد الاسترداد](VSP_REFUND_RULES_31_01.md)، commit `27dc7b9`
+- [ ] 31.02 — إنشاء طابور الاسترداد
+- [ ] 31.03 — منع طلب الاسترداد المكرر
+- [ ] 31.04 — تتبع حالة الاسترداد
+- [ ] 31.05 — إشعار اللاعب والمالك
+- [ ] 31.06 — تسوية الاسترداد مع الدفع
+- [ ] 31.07 — اختبار الفشل وإعادة المعالجة
+- [ ] 31.08 — اختبار منع تنفيذ الاسترداد مرتين لنفس المعاملة
+
+### 32 — Team creation/management (9)
+
+- [ ] 32.01 — إنشاء الفريق
+- [ ] 32.02 — تعديل بيانات الفريق
+- [ ] 32.03 — تغيير الشعار
+- [ ] 32.04 — إدارة أدوار الأعضاء
+- [ ] 32.05 — مغادرة الفريق
+- [ ] 32.06 — حذف أو أرشفة الفريق
+- [ ] 32.07 — اختبار حدود العضوية
+- [ ] 32.08 — اختبار صلاحيات الكابتن
+- [x] 32.09 — اختبار نقل الكابتن مع الحفاظ على وجود مسؤول واحد — [PostgreSQL وظيفي وتزامن جلستين، قبول معزول](security/VSP_TEAM_CAPTAIN_TRANSFER_32_09_ACCEPTANCE_2026-11-17.md)؛ لا JWT/Flutter E2E مستضاف
+
+### 33 — Team invites/membership (14)
+
+> 33.13: نجح Flutter CI وAndroid E2E Smoke على commit `3b549a23f22fb57a9158621365b45f8a902e04f5` (GitHub Actions runs `42395799199` و`42395799209`). لا يعني نجاح Android login smoke اكتمال Android invitation E2E (33.14).
+
+> تحقق أحدث: نجح Flutter CI (`42398938571`) وAndroid E2E Smoke (`42398938561`) على commit `e259075beb555b7ededc4adc28936bffbf185b75`، بما يشمل اختبارات عقود دعوات الفرق وصندوق الدعوات وواجهة المسودات. هذه اختبارات كود/دخول Android، وليست تجربة إرسال/قبول دعوة على Android بين حسابين (33.09–33.14 ما زالت مفتوحة).
+
+
+> مراجعة مصدر إضافية: 33.02: `inviteTeamMember` يستدعي RPC `invite_team_member` ويتحقق من نجاح الاستجابة ومعرّف الدعوة. 33.03: `respondToTeamInvitation` يستدعي RPC `respond_team_membership_invitation` للقبول والرفض. 33.07: `createTeam` ينشئ الكابتن فقط بواسطة `create_team_with_consent` ثم يرسل الدعوات للمستخدمين المسجلين بدل إضافتهم كأعضاء؛ الأسماء `guest_` مستبعدة. هذه إغلاقات على مستوى ربط الكود فقط؛ اختبارات E2E وصلاحيات staging مستقلة ولم تُغلق.
+
+
+> تحقق مصدر الكود (وليس E2E): أُغلقت 33.04 و33.06 بعد فحص `lib/core/repositories/team_repository.dart` على الفرع الحالي: الاستعلام يقيّد المستلم والحالة pending وتاريخ الانتهاء، وفشل جلب أسماء الفرق يرمي خطأ بدل إظهار صندوق فارغ. اختبارات الحسابين الحقيقيين وCI ما زالت مفتوحة؛ لا يُستنتج من هذا نجاحها.
+
+
+- [ ] 33.01 — إعادة استخدام جدول الدعوات وإزالة النظام المكرر
+- [x] 33.02 — ربط إرسال الدعوات بالمستودع
+- [x] 33.03 — ربط القبول والرفض بالمستودع
+- [x] 33.04 — جلب الدعوات المعلقة غير المنتهية
+- [ ] 33.05 — التحقق من صلاحيات staging
+- [x] 33.06 — إظهار فشل جلب اسم الفريق
+- [x] 33.07 — تحويل الإضافة القديمة إلى دعوة
+- [x] 33.08 — التحقق من وصول صندوق الدعوات بالواجهة — [اختبار زر الدعوات وفتح النافذة وقبول الدعوة بالعربية والإنجليزية](VSP_TEAM_INVITATION_INBOX_ROUTE_ACCEPTANCE_33_08_2026-11-20.md)، [17 اختبار Flutter ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44641310054) (Widget داخل Flutter؛ حسابان حقيقيان واختبار Android للدعوات ما زالا مفتوحين)
+- [ ] 33.09 — اختبار الإرسال بين حسابين
+- [ ] 33.10 — اختبار قبول الدعوة وعضوية واحدة
+- [ ] 33.11 — اختبار الرفض وعدم إضافة العضوية
+- [ ] 33.12 — اختبار الانتهاء والمستلم الخطأ والمحافظة والصلاحيات
+- [x] 33.13 — اجتياز CI وAndroid login smoke
+- [ ] 33.14 — اختبار Android للدعوات وتحديث تقرير الرحلات
+
+### 34 — Challenge invite lifecycle (13)
+
+- [x] 34.01 — تحديد حالات التحدي — [حصر الحالات](VSP_CHALLENGE_STATUS_INVENTORY_34_01.md)، commit `9e4f0e6`
+- [ ] 34.02 — إنشاء الدعوة وإرسالها
+- [ ] 34.03 — عرض التحديات الواردة
+- [ ] 34.04 — قبول التحدي
+- [ ] 34.05 — رفض التحدي
+- [ ] 34.06 — إلغاء التحدي قبل القبول
+- [ ] 34.07 — منع الحجز قبل الموافقة
+- [ ] 34.08 — منع التكرار والسباقات
+- [ ] 34.09 — التحقق من أهلية الفريقين
+- [ ] 34.10 — تحديث حالة الحجز
+- [ ] 34.11 — إشعار الطرفين
+- [ ] 34.12 — اختبار رحلة فريقين
+- [ ] 34.13 — اختبار قبول تحديين متنافسين لنفس موعد الملعب
+
+### 35 — Pickup match joining (8)
+
+- [ ] 35.01 — إنشاء مباراة تجميعية
+- [ ] 35.02 — تحديد السعة والأهلية
+- [ ] 35.03 — عرض المقاعد المتاحة
+- [ ] 35.04 — الانضمام الذري
+- [ ] 35.05 — الانسحاب وإعادة إتاحة المقعد
+- [ ] 35.06 — منع التكرار
+- [ ] 35.07 — اختبار الوصول للسعة القصوى
+- [x] 35.08 — اختبار انضمام لاعبين متزامنين لآخر مقعد — [two-connection isolated PostgreSQL race proof](VSP_PICKUP_LAST_SLOT_CONCURRENCY_ACCEPTANCE_35_08.md) (SQL only; live Staging join routes open)
+
+### 36 — Result timing and deduplication (7)
+
+> معايير قبول تحدي الفرق المكملة للمهام القائمة موثقة في [حزمة RESULT](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md). هذا ربط للمتطلبات دون إضافة مهمة مكررة أو تغيير حالة أي مهمة؛ قواعد المواجهات والبطولات مستقلة.
+
+- [x] 36.01 — تحديد وقت إدخال النتيجة — [تعريف نافذة تقديم نتيجة التحدي وخطوط الفصل](VSP_CHALLENGE_RESULT_SUBMISSION_TIME_POLICY_36_01_2026_11_19.md)، [CI اختبار عقد مصدر SQL ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44548366128) (قبول سياسة فقط؛ لا يثبت نشر RPC أو نتائج حية)
+- [ ] 36.02 — التحقق من صلاحية المُدخل
+- [ ] 36.03 — منع النتائج المكررة
+- [ ] 36.04 — ضبط تغيير النتيجة
+- [ ] 36.05 — تسجيل سجل التعديلات
+- [ ] 36.06 — اختبار النتائج المتزامنة
+- [ ] 36.07 — اختبار تعديل نتيجة بعد اعتمادها ومنع احتساب النقاط مرتين
+
+### 37 — Ranking/points verification (7)
+
+> معايير قبول تحدي الفرق المكملة للمهام القائمة موثقة في [حزمة RESULT](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md). هذا ربط للمتطلبات دون إضافة مهمة مكررة أو تغيير حالة أي مهمة؛ قواعد المواجهات والبطولات مستقلة.
+
+- [x] 37.01 — توثيق معادلة النقاط — [معادلة نقاط التحديات](VSP_CHALLENGE_POINTS_FORMULA_37_01.md)، commit `c5c0438`
+- [ ] 37.02 — التحقق من بيانات المباريات
+- [ ] 37.03 — حساب الترتيب من مصدر موثوق
+- [x] 37.04 — تحديد قواعد فك التعادل — [قواعد ترتيب تحديات الفرق](VSP_CHALLENGE_TIE_POLICY_37_04_2026_11_19.md)، [اختبارات Flutter ناجحة](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44547284353) (لا فك تعادل اعتباطي أو ميداليات دون دليل، ولا قبول لترتيب الدوري أو حسابات staging)
+- [ ] 37.05 — اختبار إعادة الحساب
+- [ ] 37.06 — اختبار النتائج المتنازع عليها
+- [ ] 37.07 — اختبار إعادة ترتيب الفرق بعد تصحيح نتيجة قديمة
+
+### 38 — Private/open tournaments (8)
+
+- [ ] 38.01 — إنشاء بطولة خاصة
+- [x] 38.02 — إنشاء بطولة مفتوحة — [قبول محدود/توثيق (38.02)](VSP_TEAM_SKILLS_ADMIN_CREATION_ROLES_2026-11-17.md) (لا JWT/E2E حقيقي)
+- [x] 38.03 — ضبط عدد المشاركين — [دليل قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_CAPACITY_ACCEPTANCE_38_03_39_03_2026-11-17.md) (Team Skills Cup فقط، اختبارات SQL معزولة وCI؛ الرحلات الحقيقية ما زالت مفتوحة)
+- [x] 38.04 — تحديد الصلاحيات — [قبول محدود/توثيق (38.04)](VSP_TEAM_SKILLS_ADMIN_CREATION_ROLES_2026-11-17.md) (لا JWT/E2E حقيقي)
+- [x] 38.05 — نشر تفاصيل البطولة — [قبول محدود موثق](VSP_TEAM_SKILLS_PUBLISH_BADGES_AWARD_RECIPIENT_ACCEPTANCE_38_05_46_07_81_10_2026-11-17.md) (نشر تفاصيل Team Skills Flutter/Admin/SQL فقط؛ بدون ادعاء JWT/أجهزة حقيقية)
+- [x] 38.06 — إغلاق التسجيل — [SQL قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_REGISTRATION_LIFECYCLE_ACCEPTANCE_2026-11-17.md) (حساب الكابتن والصلاحيات محاكاة محلية؛ JWT والأجهزة مفتوحة)
+- [ ] 38.07 — اختبار دورة البطولة
+- [x] 38.08 — اختبار صلاحيات مدير البطولة مقارنة بالمشارك — [قبول محدود/توثيق (38.08)](VSP_TEAM_SKILLS_ADMIN_CREATION_ROLES_2026-11-17.md) (لا JWT/E2E حقيقي)
+
+### 39 — Registration/eligibility (7)
+
+- [x] 39.01 — تسجيل فريق أو لاعب — [SQL قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_REGISTRATION_LIFECYCLE_ACCEPTANCE_2026-11-17.md) (حساب الكابتن والصلاحيات محاكاة محلية؛ JWT والأجهزة مفتوحة)
+- [x] 39.02 — التحقق من المحافظة والأهلية — [قبول SQL وتجربة Staging لبطولة مهارات الفرق فقط](VSP_TEAM_SKILLS_GOVERNORATE_ELIGIBILITY_ACCEPTANCE_39_02_2026-11-17.md) (اختبارات JWT والأجهزة لا تزال ضمن 59 و79)
+- [x] 39.03 — التحقق من السعة — [دليل قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_CAPACITY_ACCEPTANCE_38_03_39_03_2026-11-17.md) (Team Skills Cup فقط، اختبارات SQL معزولة وCI؛ الرحلات الحقيقية ما زالت مفتوحة)
+- [x] 39.04 — منع التسجيل المكرر — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+- [x] 39.05 — تطبيق موعد الإغلاق — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+- [x] 39.06 — اختبار قبول ورفض التسجيل — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+- [x] 39.07 — اختبار التسجيل عند آخر مقعد بالتزامن — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+
+### 40 — Groups and knockout brackets (8)
+
+- [ ] 40.01 — توزيع المجموعات
+- [ ] 40.02 — إنشاء جدول المباريات
+- [x] 40.03 — توليد أدوار خروج المغلوب — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+- [x] 40.04 — تطبيق التأهل — [SQL قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_ADVANCEMENT_RANKING_ACCEPTANCE_2026-11-17.md) (التأهل/الترتيب المعتمد في SQL فقط؛ JWT والأجهزة مفتوحة)
+- [x] 40.05 — معالجة التعادل — [قبول Team Skills للترجيح وإعادة التوليد الآمنة](VSP_TEAM_SKILLS_PENALTIES_REGENERATION_ACCEPTANCE_2026-11-17.md) (بطولة المهارات فقط، SQL معزول + Staging RPC + Admin CI؛ JWT E2E لم يُعتمد)
+- [x] 40.06 — إعادة توليد آمنة — [قبول Team Skills للترجيح وإعادة التوليد الآمنة](VSP_TEAM_SKILLS_PENALTIES_REGENERATION_ACCEPTANCE_2026-11-17.md) (بطولة المهارات فقط، SQL معزول + Staging RPC + Admin CI؛ JWT E2E لم يُعتمد)
+- [x] 40.07 — اختبار عدد مشاركين مختلف — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+- [x] 40.08 — اختبار عدم تكرار مباراة عند إعادة توليد الجدول — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+
+### 41 — League standings/statistics (7)
+
+- [ ] 41.01 — حساب نقاط الدوري
+- [ ] 41.02 — حساب الأهداف والفارق
+- [ ] 41.03 — ترتيب الفرق
+- [ ] 41.04 — تطبيق فك التعادل
+- [ ] 41.05 — تحديث الجدول بعد اعتماد النتيجة
+- [ ] 41.06 — اختبار صحة الإحصاءات
+- [ ] 41.07 — اختبار ثبات ترتيب الدوري بعد تصحيح نتيجة
+
+### 42 — Admin result approval (8)
+
+- [x] 42.01 — عرض النتائج المعلقة للمشرف — [قبول محدود لبطولة المهارات — مراجعة ورفض النتائج](VSP_TEAM_SKILLS_PENDING_REJECTION_ACCEPTANCE_2026-11-17.md) (Team Skills فقط؛ JWT E2E غير معتمد)
+- [x] 42.02 — التحقق من صلاحيات المشرف — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+- [x] 42.03 — اعتماد النتيجة — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+- [x] 42.04 — رفض النتيجة وإعادتها — [قبول محدود لبطولة المهارات — مراجعة ورفض النتائج](VSP_TEAM_SKILLS_PENDING_REJECTION_ACCEPTANCE_2026-11-17.md) (Team Skills فقط؛ JWT E2E غير معتمد)
+- [x] 42.05 — تحديث الجداول بعد الاعتماد — [SQL قبول محدود لبطولة مهارات الفرق](VSP_TEAM_SKILLS_ADVANCEMENT_RANKING_ACCEPTANCE_2026-11-17.md) (التأهل/الترتيب المعتمد في SQL فقط؛ JWT والأجهزة مفتوحة)
+- [x] 42.06 — تسجيل أثر التدقيق — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+- [x] 42.07 — اختبار منع الاعتماد المكرر — [قبول Team Skills SQL المعزول](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md) (منجز بنطاق بطولة المهارات فقط، وليس قبول JWT أو الإنتاج)
+- [ ] 42.08 — اختبار منع المشرف من اعتماد نتيجة بطولة لا يديرها
+
+### 43 — 1v1 registration/matches (8 RETIRED; 0 active)
+
+> **ملغاة من النطاق التنفيذي بقرار استبدال بطولة 1v1 المستقلة بـTeam Skills Cup.** المعرفات الثمانية محفوظة مشطوبة للتدقيق، ولا تدخل المقبول أو المفتوح. لا يمس القرار ألقاب 1v1 التاريخية أو دفعاتها أو جولة 1v1 الختامية *داخل* بطولة المهارات. [قرار إلغاء النطاق وحدوده](VSP_RETIRED_LEGACY_1V1_TASKS_43_2026_11_19.md).
+
+- ~~43.01 — إنشاء بطولة 1v1~~ **[ملغاة بقرار استبدال بطولة 1v1 المستقلة؛ محفوظة للأرشفة]**
+- ~~43.02 — تسجيل اللاعبين~~ **[ملغاة بقرار استبدال بطولة 1v1 المستقلة؛ محفوظة للأرشفة]**
+- ~~43.03 — التحقق من أهلية المواجهة~~ **[ملغاة بقرار استبدال بطولة 1v1 المستقلة؛ محفوظة للأرشفة]**
+- ~~43.04 — جدولة المباريات~~ **[ملغاة بقرار استبدال بطولة 1v1 المستقلة؛ محفوظة للأرشفة]**
+- ~~43.05 — تسجيل النتيجة~~ **[ملغاة بقرار استبدال بطولة 1v1 المستقلة؛ محفوظة للأرشفة]**
+- ~~43.06 — تطبيق التأهل~~ **[ملغاة بقرار استبدال بطولة 1v1 المستقلة؛ محفوظة للأرشفة]**
+- ~~43.07 — اختبار الترتيب والنتائج~~ **[ملغاة بقرار استبدال بطولة 1v1 المستقلة؛ محفوظة للأرشفة]**
+- ~~43.08 — اختبار عدم إنشاء مواجهة 1v1 مكررة لنفس الجولة~~ **[ملغاة بقرار استبدال بطولة 1v1 المستقلة؛ محفوظة للأرشفة]**
+
+### 44 — Prize/fee/withdrawal rules (8)
+
+- [x] 44.01 — توثيق رسوم التسجيل إن وجدت — [قبول محدود/توثيق (44.01)](VSP_TEAM_SKILLS_FEES_AND_AWARDS_SOURCE_RULES_2026-11-17.md) (لا JWT/E2E حقيقي)
+- [x] 44.02 — توثيق الجوائز — [قبول محدود/توثيق (44.02)](VSP_TEAM_SKILLS_FEES_AND_AWARDS_SOURCE_RULES_2026-11-17.md) (لا JWT/E2E حقيقي)
+- [x] 44.03 — تحديد أهلية الاستحقاق — [قبول محدود/توثيق (44.03)](VSP_TEAM_SKILLS_FEES_AND_AWARDS_SOURCE_RULES_2026-11-17.md) (لا JWT/E2E حقيقي)
+- [ ] 44.04 — حساب المستحقات
+- [ ] 44.05 — تحديد ضوابط السحب
+- [ ] 44.06 — سجل المدفوعات
+- [x] 44.07 — اختبار الحالات المتنازع عليها — [قبول SQL محدود](VSP_TEAM_SKILLS_NOTIFICATION_DISPUTE_ACCEPTANCE_44_07_47_01_47_06_2026-11-17.md) (Team Skills in-app only; FCM/دفع/الإنتاج مفتوح)
+- [ ] 44.08 — اختبار منع سحب جائزة قبل اعتماد الاستحقاق
+
+### 45 — Booking/payment notifications (7)
+
+- [x] 45.01 — إشعار إنشاء الحجز — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 45.02 — إشعار تأكيد الحجز — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 45.03 — إشعار الإلغاء — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 45.04 — إشعار الدفع — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
+- [x] 45.05 — التحقق من المستلم — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 45.06 — اختبار القوالب والتسليم — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 45.07 — اختبار عدم إرسال إشعار دفع ناجح قبل تأكيد الخادم — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
+
+### 46 — Challenge/team notifications (7)
+
+- [x] 46.01 — إشعار دعوة الفريق — [قبول SQL/Staging محدود](VSP_TEAM_INVITES_AND_VERIFIED_CHALLENGE_NOTICES_2026-11-17.md) (in-app فقط؛ Paymob الحقيقي وFCM والأجهزة مفتوحة)
+- [x] 46.02 — إشعار قبول أو رفض الدعوة — [قبول SQL/Staging محدود](VSP_TEAM_INVITES_AND_VERIFIED_CHALLENGE_NOTICES_2026-11-17.md) (in-app فقط؛ Paymob الحقيقي وFCM والأجهزة مفتوحة)
+- [x] 46.03 — إشعار التحدي — [قبول SQL/Staging محدود](VSP_TEAM_INVITES_AND_VERIFIED_CHALLENGE_NOTICES_2026-11-17.md) (in-app فقط؛ Paymob الحقيقي وFCM والأجهزة مفتوحة)
+- [ ] 46.04 — إشعار قبول أو رفض التحدي
+- [x] 46.05 — اختبار عدم تكرار الإرسال — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [ ] 46.06 — اختبار الوصول للوجهة
+- [x] 46.07 — اختبار منع كشف بيانات الفريق في إشعار لمستلم خاطئ — [قبول محدود موثق](VSP_TEAM_SKILLS_PUBLISH_BADGES_AWARD_RECIPIENT_ACCEPTANCE_38_05_46_07_81_10_2026-11-17.md) (Team Skills award SQL/Staging فقط؛ بدون ادعاء JWT/أجهزة حقيقية)
+
+### 47 — Competition notifications (7)
+
+- [x] 47.01 — إشعار التسجيل بالبطولة — [قبول SQL محدود](VSP_TEAM_SKILLS_NOTIFICATION_DISPUTE_ACCEPTANCE_44_07_47_01_47_06_2026-11-17.md) (Team Skills in-app only; FCM/دفع/الإنتاج مفتوح)
+- [ ] 47.02 — إشعار جدول المباراة
+- [ ] 47.03 — إشعار تغيير الموعد
+- [x] 47.04 — إشعار النتيجة — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 47.05 — إشعار التأهل — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 47.06 — اختبار توقيت الإشعارات — [قبول SQL محدود](VSP_TEAM_SKILLS_NOTIFICATION_DISPUTE_ACCEPTANCE_44_07_47_01_47_06_2026-11-17.md) (Team Skills in-app only; FCM/دفع/الإنتاج مفتوح)
+- [x] 47.07 — اختبار عدم إرسال إشعار مباراة ملغاة باعتبارها قائمة — [قبول SQL/Staging محدود](VSP_TEAM_INVITES_AND_VERIFIED_CHALLENGE_NOTICES_2026-11-17.md) (in-app فقط؛ Paymob الحقيقي وFCM والأجهزة مفتوحة)
+
+### 48 — Delivery and deduplication (7)
+
+- [x] 48.01 — تحديد مفتاح إزالة التكرار — [مفتاح التسليم المنطقي](VSP_NOTIFICATION_DELIVERY_DEDUP_KEY_48_01.md)، commit `17eebe2`
+- [ ] 48.02 — تسجيل محاولات الإرسال
+- [x] 48.03 — إعادة محاولة الفشل — [قبول محدود لعامل إشعارات FCM: اختبار Deno معزول للرفض وإعادة المحاولة والتعافي](security/VSP_FCM_QUEUE_DELIVERY_CONTRACT_2026-11-17.md)؛ دون استلام FCM حقيقي أو نشر إنتاج
+- [x] 48.04 — ضبط حدود الإرسال — [قبول محدود: حد 5 إرساليات/تشغيل و2 لكل مستلم داخل نفس الدفعة، واختبارات Deno ناجحة](security/VSP_FCM_WORKER_PACING_48_04_2026-11-17.md)؛ لا يثبت حدًا يوميًا أو متعدد النسخ
+- [x] 48.05 — اختبار فشل المزود — [قبول محدود لعامل إشعارات FCM: اختبار Deno معزول للرفض وإعادة المحاولة والتعافي](security/VSP_FCM_QUEUE_DELIVERY_CONTRACT_2026-11-17.md)؛ دون استلام FCM حقيقي أو نشر إنتاج
+- [x] 48.06 — اختبار تسليم واحد منطقي — [SQL/Staging قبول محدود](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) (داخل notifications فقط؛ FCM/JWT/Paymob الحقيقي غير معتمد)
+- [x] 48.07 — اختبار إعادة التسليم بعد انقطاع مزود الإشعارات — [قبول محدود لعامل إشعارات FCM: اختبار Deno معزول للرفض وإعادة المحاولة والتعافي](security/VSP_FCM_QUEUE_DELIVERY_CONTRACT_2026-11-17.md)؛ دون استلام FCM حقيقي أو نشر إنتاج
+
+### 49 — Retention rules (7)
+
+- [x] 49.01 — تحديد مدد الاحتفاظ — [سياسة تقنية محافظة واختبارات Deno لمدد 90/180 يومًا للتذكيرات غير المرتبطة](security/VSP_NOTIFICATION_INBOX_RETENTION_POLICY_49_01_2026-11-17.md)؛ لا يوجد تنظيف فعلي أو اعتماد قانوني نهائي
+- [ ] 49.02 — تطبيق حذف أو أرشفة الإشعارات
+- [ ] 49.03 — حماية السجلات المطلوبة قانونيًا
+- [x] 49.04 — ضبط تفضيلات المستخدم — [قبول محدود لضبط تفضيلات الإشعارات محليًا لكل حساب والتخزين المؤكد واستعادة حالة الفشل](security/VSP_NOTIFICATION_PREFERENCE_PERSISTENCE_2026-11-17.md)؛ دون حجب إشعارات الخادم
+- [ ] 49.05 — اختبار التنظيف
+- [ ] 49.06 — مراجعة الخصوصية
+- [ ] 49.07 — اختبار حذف الإشعارات دون حذف سجلات التدقيق المطلوبة
+
+### 50 — Activation funnel (7)
+
+- [x] 50.01 — تعريف حدث الزيارة
+- [x] 50.02 — تعريف حدث التسجيل
+- [x] 50.03 — تعريف أول فعل مفيد
+- [ ] 50.04 — بناء لوحة قمع التنشيط
+- [ ] 50.05 — قياس الانسحاب
+- [x] 50.06 — اختبار صحة الأحداث
+- [x] 50.07 — التحقق من عدم احتساب الزيارة الواحدة أكثر من مرة — [دليل اختبار منع التكرار](VSP_ANALYTICS_DEDUPE_ACCEPTANCE_50_07_55_05.md)، CI `43326492976`
+
+### 51 — Booking conversion (7)
+
+- [x] 51.01 — قياس عرض الملعب
+- [x] 51.02 — قياس بدء الحجز
+- [x] 51.03 — قياس إتمام الحجز
+- [ ] 51.04 — تحسين الخطوات المربكة
+- [x] 51.05 — اختبار رسائل التوفر — [دليل عقود الرسائل الآلية وحدود القبول](VSP_BOOKING_AVAILABILITY_COPY_ACCEPTANCE_51_05.md)، CI `43320006151`
+- [ ] 51.06 — قياس التحويل قبل وبعد
+- [x] 51.07 — اختبار أثر انقطاع الشبكة على احتساب إكمال الحجز — [قبول اختبار محاكاة انقطاع التحليلات وعدم التكرار](VSP_BOOKING_TRUST_ANALYTICS_ACCEPTANCE_51_07_53_04_53_05_2026-11-17.md)؛ لا يثبت تسليم Firebase على جهاز حقيقي
+
+### 52 — Owner subscription conversion (7)
+
+- [x] 52.01 — قياس دخول لوحة المالك — [اختبار أحداث دخول المالك وتكرار الجلسة](VSP_OWNER_PLANS_FUNNEL_ACCEPTANCE_52_01_52_03_52_04_52_06_2026-11-18.md)؛ دون قياس Firebase حي
+- [x] 52.02 — قياس مشاهدة الباقات
+- [x] 52.03 — توضيح الفروق بين الباقات — [مقارنة مزايا Pro المفعلة فعلًا مقابل المجاني](VSP_OWNER_PLANS_FUNNEL_ACCEPTANCE_52_01_52_03_52_04_52_06_2026-11-18.md)؛ دون ادعاءات مزايا غير معتمدة
+- [x] 52.04 — تحسين مسار الترقية — [حماية رابط Paymob الرسمي قبل الانتقال](VSP_OWNER_PLANS_FUNNEL_ACCEPTANCE_52_01_52_03_52_04_52_06_2026-11-18.md)؛ دون عملية دفع حقيقية أو تأكيد تفعيل
+- [ ] 52.05 — قياس إتمام الاشتراك
+- [x] 52.06 — اختبار رسائل انتهاء الاشتراك — [عقود انتهاء المدفوع/التجربة بالعربي والإنجليزي](VSP_OWNER_PLANS_FUNNEL_ACCEPTANCE_52_01_52_03_52_04_52_06_2026-11-18.md)؛ محلي فقط دون Push أو اختبار جهاز
+- [x] 52.07 — اختبار عدم قياس الاشتراك المدفوع قبل تأكيد الدفع
+
+### 53 — Trust and transparent availability (7)
+
+- [x] 53.01 — تدقيق صحة التوفر المعروض — [تدقيق عقود عرض المواعيد والحجز المتداخل والملعب الخاطئ وتحديث حالة البث](VSP_BOOKING_AVAILABILITY_OWNER_FINANCE_TRUST_03_05_53_01_2026-11-18.md)؛ بيانات staging والتزامن الحقيقي خارج القبول
+- [x] 53.02 — عرض السعر بوضوح — [قبول محدود لعرض إجمالي الحجز والعربون والكرة بدقة القرش](VSP_PRICE_DISCLOSURE_CENTS_53_02_53_07_ACCEPTANCE_2026-11-17.md)؛ لا يشمل كافة الملاعب الحية
+- [x] 53.03 — توضيح سياسة الإلغاء — [اختبارات العرض باللغتين ورسائل الاسترداد](VSP_CANCELLATION_DISCLOSURE_ACCEPTANCE_2026-11-15.md) (واجهة العميل؛ تنفيذ السياسة والاسترداد الفعلي ضمن 28.xx و31.xx)
+- [x] 53.04 — إظهار حالة التأكيد — [قبول عقود حالة الحجز والعناوين العربية/الإنجليزية](VSP_BOOKING_TRUST_ANALYTICS_ACCEPTANCE_51_07_53_04_53_05_2026-11-17.md)؛ لا يعني اعتماد تسوية دفع حقيقية
+- [x] 53.05 — إزالة الندرة المصطنعة — [فحص آلي لنسخ Flutter/ARB/الويب دون ادعاءات رقمية ثابتة](VSP_BOOKING_TRUST_ANALYTICS_ACCEPTANCE_51_07_53_04_53_05_2026-11-17.md)؛ النصوص الخارجية/الديناميكية تحتاج مراجعة
+- [ ] 53.06 — اختبار الرسائل مع البيانات الفعلية
+- [x] 53.07 — اختبار عرض سعر نهائي شامل أي رسوم قبل التأكيد — [اختبار مبلغ Paymob الإجمالي بدقة القرش باللغتين وفشل سياسة الرسوم بأمان](VSP_PRICE_DISCLOSURE_CENTS_53_02_53_07_ACCEPTANCE_2026-11-17.md)؛ لا إثبات معاملات Sandbox
+
+### 54 — Retention/re-engagement (8)
+
+- [x] 54.01 — تعريف العودة النشطة — [تعريف مُختبَر لأحداث القيمة والعودة D1/D7/D30](VSP_ACTIVE_RETURN_DEFINITION_54_01_2026-11-17.md)؛ لا قياس فعلي
+- [x] 54.02 — تقسيم شرائح المستخدمين — [قبول محدود لخوارزمية تجميع اللاعبين/أصحاب الملاعب بحسب أول قيمة ويوم UTC وقمع الشرائح الصغيرة](VSP_RETENTION_SEGMENTATION_54_02_2026-11-17.md)؛ لم تُقَس بيانات استخدام حقيقية
+- [x] 54.03 — تصميم تذكير مفيد — [قبول محدود لتذكير المباراة المحلي قبل ساعتين وجدولة UTC وإلغاء التنبيهات عند خروج الحساب أو تعطيل التفضيلات](VSP_MATCH_REMINDER_SCHEDULE_54_03_2026-11-17.md)؛ لا إثبات لجهاز حقيقي أو حملة إعادة تفاعل
+- [ ] 54.04 — احترام الموافقة على الإشعارات
+- [x] 54.05 — تحديد سقف التكرار — [قبول محدود: 3 تذكيرات مباريات محلية لكل حساب في اليوم UTC؛ اختبار Flutter ناجح](VSP_LOCAL_REMINDER_FREQUENCY_54_05_2026-11-17.md)؛ لا حد عالمي لـFCM ولا ضمان ذري عبر الأجهزة
+- [ ] 54.06 — قياس الاحتفاظ
+- [x] 54.07 — اختبار إلغاء الاشتراك — [قبول محدود: إلغاء تذكيرات محلية عند إيقاف التفضيل، والرفض بعد جدولة النظام والتحقق من SharedPreferences بحسابين؛ Flutter CI ناجح](VSP_NOTIFICATION_OPTOUT_54_07_ACCEPTANCE_2026-11-17.md)؛ FCM والخادم خارج هذا القبول
+- [ ] 54.08 — اختبار منع إعادة التفاعل لمستخدم أوقف الإشعارات
+
+### 55 — Product analytics instrumentation (7)
+
+- [x] 55.01 — وضع قاموس للأحداث
+- [x] 55.02 — توحيد أسماء الخصائص
+- [x] 55.03 — ربط الأحداث بالرحلات
+- [x] 55.04 — منع إرسال بيانات حساسة
+- [x] 55.05 — اختبار عدم التكرار — [دليل اختبار منع التكرار](VSP_ANALYTICS_DEDUPE_ACCEPTANCE_50_07_55_05.md)، CI `43326492976`
+- [ ] 55.06 — التحقق من لوحات القياس
+- [x] 55.07 — إضافة تحقق آلي لمخطط أسماء أحداث التحليلات
+
+### 57 — Flutter analyze/unit tests (7)
+
+- [x] 57.01 — تشغيل Flutter analyze — [CI evidence](VSP_FLUTTER_CI_VERIFICATION_57.md), run 42486800643
+- [x] 57.02 — تشغيل اختبارات الوحدة — [CI evidence](VSP_FLUTTER_CI_VERIFICATION_57.md), run 42486800643
+- [x] 57.03 — تشغيل اختبارات الواجهات — [CI evidence](VSP_FLUTTER_CI_VERIFICATION_57.md), run 42486800643
+- [x] 57.04 — فحص الانحدار المعماري — [CI evidence](VSP_FLUTTER_CI_VERIFICATION_57.md), run 42486800643
+- [x] 57.05 — إصلاح الإخفاقات — [CI evidence](VSP_FLUTTER_CI_VERIFICATION_57.md), run 42486800643
+- [x] 57.06 — ربط الأدلة بالـcommit — [CI evidence](VSP_FLUTTER_CI_VERIFICATION_57.md), run 42486800643
+- [ ] 57.07 — تثبيت بوابة CI تمنع الدمج عند فشل الاختبارات
+
+### 58 — Android E2E latest changes (8)
+
+- [x] 58.01 — تحديد سيناريوهات Android — [Android smoke evidence](VSP_ANDROID_E2E_SMOKE_VERIFICATION_58.md), run 42489433379
+- [x] 58.02 — تجهيز emulator — [Android smoke evidence](VSP_ANDROID_E2E_SMOKE_VERIFICATION_58.md), run 42489433379
+- [ ] 58.03 — تشغيل تسجيل الدخول
+- [ ] 58.04 — تشغيل رحلات الحجز
+- [ ] 58.05 — تشغيل الفرق والتحديات
+- [x] 58.06 — تجميع سجلات Android smoke — [سجل التشغيل الموثق](VSP_ANDROID_E2E_SMOKE_VERIFICATION_58.md)، run `43302703167` / job `131480962116`
+- [x] 58.07 — توثيق نتائج التشغيل — [Android smoke evidence](VSP_ANDROID_E2E_SMOKE_VERIFICATION_58.md), run 42489433379
+- [ ] 58.08 — إضافة رحلة Android مخصصة لقبول ورفض دعوة فريق
+
+### 59 — Staging real-user journeys (8)
+
+- [ ] 59.01 — تجهيز حسابات staging متعددة الأدوار
+- [ ] 59.02 — اختبار رحلة اللاعب
+- [ ] 59.03 — اختبار رحلة المالك
+- [ ] 59.04 — اختبار دعوات الفرق بحسابين
+- [ ] 59.05 — اختبار الحجز والدفع التجريبي
+- [ ] 59.06 — اختبار صلاحيات الإدارة
+- [x] 59.07 — توثيق العوائق — [دليل القبول المحدود](VSP_PERFORMANCE_BUDGET_AND_STAGING_BLOCKERS_2026-11-13.md)، commit `a613b74e`
+- [x] 59.08 — توثيق عزل staging عن الإنتاج وعدم استعمال بيانات عملاء حقيقية — [staging automated-test boundary evidence](VSP_STAGING_TEST_ISOLATION_59_08_2026-11-13.md) (current CI/public/live-contract scope only; no credentialed staging, payment sandbox or production-data isolation certified)
+
+### 60 — Performance benchmarks and APK release readiness (9)
+
+- [x] 60.01 — تحديد ميزانية الأداء — [دليل القبول المحدود](VSP_PERFORMANCE_BUDGET_AND_STAGING_BLOCKERS_2026-11-13.md)، commit `a613b74e`
+- [ ] 60.02 — قياس بدء التشغيل
+- [ ] 60.03 — قياس استجابة الشاشات
+- [ ] 60.04 — قياس استخدام الذاكرة
+- [ ] 60.05 — فحص حجم APK
+- [ ] 60.06 — اختبار بناء الإصدار
+- [x] 60.07 — تدقيق إعدادات التوقيع — [Android signing source audit](security/VSP_ANDROID_RELEASE_SIGNING_SOURCE_AUDIT_60_07_2026-11-13.md) (source/config only; certificate and Play identity unverified)
+- [x] 60.08 — إصدار تقرير الجاهزية — [تقرير قرار الجاهزية: HOLD](VSP_RELEASE_READINESS_REPORT_60_08_2026-11-13.md) (report issued; app remains NOT release-ready)
+- [ ] 60.09 — اختبار بناء APK نظيف من commit الإصدار النهائي
+
+### 61 — Championship winner/champion fields (7)
+
+- [x] 61.01 — جرد حقول الفائز بالبطولة — [جرد الحقول من الكود](VSP_LEGACY_FINANCIAL_FIELD_INVENTORY_61_64.md)، commit `e2cddaf`
+- [x] 61.02 — تتبع استخدامات الحقول [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
+- [x] 61.03 — تحديد المصدر المعتمد [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
+- [ ] 61.04 — اختبار ترحيل البيانات
+- [ ] 61.05 — تحديث الاستعلامات
+- [x] 61.06 — توثيق القرار — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [ ] 61.07 — اختبار عدم فقد ارتباطات البطولات بعد توحيد الحقول
+
+### 62 — Booking payment state fields (7)
+
+- [x] 62.01 — جرد حقول حالة الدفع — [جرد الحقول من الكود](VSP_LEGACY_FINANCIAL_FIELD_INVENTORY_61_64.md)، commit `e2cddaf`
+- [x] 62.02 — تحديد تعريف كل حالة — [معاني حالات الدفع وأسبقيتها](VSP_PAYMENT_STATE_SEMANTICS_62_02.md)، commit `24476dc`
+- [x] 62.03 — كشف التعارضات [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
+- [x] 62.04 — تحديد حقل مرجعي — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [ ] 62.05 — اختبار التحويل
+- [x] 62.06 — توثيق التوافق — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [x] 62.07 — اختبار صحة حالة الحجز عند اختلاف حالات الدفع القديمة — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
+
+### 63 — Paymob transaction IDs (7)
+
+- [x] 63.01 — جرد معرفات Paymob — [جرد الحقول من الكود](VSP_LEGACY_FINANCIAL_FIELD_INVENTORY_61_64.md)، commit `e2cddaf`
+- [x] 63.02 — تتبع استخدامها في webhook [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
+- [x] 63.03 — تحديد المفتاح الفريد [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
+- [x] 63.04 — تدقيق القيم المكررة [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
+- [x] 63.05 — اختبار الربط — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
+- [x] 63.06 — توثيق القرار — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [x] 63.07 — اختبار عدم قبول معرف معاملة تابع لحجز آخر — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
+
+### 64 — Payment method/source (7)
+
+- [x] 64.01 — جرد حقول وسيلة الدفع — [جرد الحقول من الكود](VSP_LEGACY_FINANCIAL_FIELD_INVENTORY_61_64.md)، commit `e2cddaf`
+- [x] 64.02 — توحيد قيم الوسائل — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
+- [x] 64.03 — تحديد مصدر الدفع — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [x] 64.04 — اختبار التحويل — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
+- [ ] 64.05 — تحديث الاستعلامات
+- [x] 64.06 — توثيق القرار — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [x] 64.07 — اختبار تمييز الدفع النقدي من الدفع الإلكتروني في التقارير — [قبول SQL/Flutter/Staging محدود](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md) (اختبارات مالية محلية + إشعارات in-app؛ لا Paymob/FCM فعلي)
+
+### 65 — Three refund queue designs (8)
+
+- [x] 65.01 — حصر تصاميم طوابير الاسترداد الثلاثة — [فحص staging بالقراءة فقط](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [ ] 65.02 — تحديد المستخدم فعليًا
+- [x] 65.03 — مقارنة الحالات والقيود — [فحص staging بالقراءة فقط](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 65.04 — اختيار التصميم المعتمد — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [x] 65.05 — خطة دمج دون فقد بيانات — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [ ] 65.06 — اختبار التوافق
+- [x] 65.07 — توثيق القرار — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [ ] 65.08 — اختبار استرداد عالق في طابور قديم بعد التوحيد
+
+### 66 — Stadium vs court operating hours (7)
+
+- [x] 66.01 — حصر جداول ساعات الملعب والوحدة — [فحص staging بالقراءة فقط](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 66.02 — تحديد أسبقية الإعدادات — [مصدر البيانات وإعادة إنتاج خطأ الصيانة](security/VSP_STAGING_OPERATING_HOURS_GUARD_REPRO_2026-11-13.md) (التدقيق والاختبار والتوثيق فقط؛ إصلاح SQL ما زال مفتوحًا)
+- [x] 66.03 — تدقيق الاستثناءات — [مصدر البيانات وإعادة إنتاج خطأ الصيانة](security/VSP_STAGING_OPERATING_HOURS_GUARD_REPRO_2026-11-13.md) (التدقيق والاختبار والتوثيق فقط؛ إصلاح SQL ما زال مفتوحًا)
+- [x] 66.04 — اختبار تعارض القواعد — [مصدر البيانات وإعادة إنتاج خطأ الصيانة](security/VSP_STAGING_OPERATING_HOURS_GUARD_REPRO_2026-11-13.md) (التدقيق والاختبار والتوثيق فقط؛ إصلاح SQL ما زال مفتوحًا)
+- [x] 66.05 — تحديد مصدر الحقيقة — [مصدر البيانات وإعادة إنتاج خطأ الصيانة](security/VSP_STAGING_OPERATING_HOURS_GUARD_REPRO_2026-11-13.md) (التدقيق والاختبار والتوثيق فقط؛ إصلاح SQL ما زال مفتوحًا)
+- [x] 66.06 — توثيق القرار — [مصدر البيانات وإعادة إنتاج خطأ الصيانة](security/VSP_STAGING_OPERATING_HOURS_GUARD_REPRO_2026-11-13.md) (التدقيق والاختبار والتوثيق فقط؛ إصلاح SQL ما زال مفتوحًا)
+- [ ] 66.07 — اختبار تعارض ساعات ملعب مع ساعات وحدة داخله
+
+### 67 — Notification body/message (7)
+
+- [x] 67.01 — حصر حقول body وmessage — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
+- [x] 67.02 — تتبع المستهلكين — [تتبع المستهلكين وبيانات Staging المجمعة](security/VSP_STAGING_NOTIFICATION_LEGACY_SOURCES_2026-11-13.md) (تتبع مصدر فقط)
+- [x] 67.03 — تحديد الحقل المرجعي — [قرار التوافق](VSP_NOTIFICATION_FIELD_CANONICAL_AND_COMPATIBILITY_67.md)، commit `7bab47a`
+- [x] 67.04 — اختبار القوالب القديمة — [Legacy notification render tests](VSP_NOTIFICATION_RENDERING_PATCH_2026-11-13.md) (synthetic legacy templates + Flutter CI)
+- [x] 67.05 — خطة التوافق — [قرار التوافق](VSP_NOTIFICATION_FIELD_CANONICAL_AND_COMPATIBILITY_67.md)، commit `7bab47a`
+- [x] 67.06 — توثيق القرار — [تقرير المصدر](VSP_NOTIFICATION_CONSUMERS_AND_DECISION_67.md)، commit `bc6350b`
+- [x] 67.07 — اختبار عرض الإشعارات القديمة بعد اختيار الحقل المعتمد — [Legacy notification display tests](VSP_NOTIFICATION_RENDERING_PATCH_2026-11-13.md) (Flutter Text and metadata fallbacks only)
+
+### 68 — Legacy user cash-debt fields (7)
+
+- [x] 68.01 — حصر حقول الديون النقدية القديمة — [فحص staging بالقراءة فقط](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 68.02 — تحديد الاستخدامات الحالية [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
+- [x] 68.03 — مراجعة البيانات الموجودة [تدقيق مصادر الشيفرة وStaging](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md) (قبول محدود للجرد/التصنيف، لا لتسوية الإنتاج)
+- [x] 68.04 — تحديد سياسة الإبقاء — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [ ] 68.05 — اختبار الأثر
+- [x] 68.06 — توثيق القرار — [قرار مُوثق وحدود النطاق](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) (قرار/خطة فقط، دون تغيير مالي حي)
+- [ ] 68.07 — اختبار عدم فقد سجل دين قائم عند إيقاف الحقول القديمة
+
+### 69 — Legacy 1v1 players table (7)
+
+- [x] 69.01 — جرد جدول لاعبي 1v1 القديم — [تقرير المصدر](VSP_LEGACY_1V1_AND_CHALLENGE_RESULT_INVENTORY.md)، commit `6f7bcce`
+- [x] 69.02 — تحديد علاقاته — [دليل الفحص الموثق](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md) (تحقق موضعي من metadata/ترتيب الإصدارات دون تعديل بيانات)
+- [x] 69.03 — مقارنته بالنظام الحالي — [دليل الفحص الموثق](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md) (تحقق موضعي من metadata/ترتيب الإصدارات دون تعديل بيانات)
+- [x] 69.04 — مراجعة البيانات [نتائج Staging وخطة الحفظ دون فقد بيانات](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md) (قبول محدود للجرد/القرار فقط؛ لم يُنفذ ترحيل)
+- [x] 69.05 — خطة ترحيل أو إبقاء [نتائج Staging وخطة الحفظ دون فقد بيانات](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md) (قبول محدود للجرد/القرار فقط؛ لم يُنفذ ترحيل)
+- [x] 69.06 — توثيق القرار [نتائج Staging وخطة الحفظ دون فقد بيانات](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md) (قبول محدود للجرد/القرار فقط؛ لم يُنفذ ترحيل)
+- [ ] 69.07 — اختبار عدم تكرار لاعب 1v1 بعد ترحيل السجلات
+
+### 70 — Legacy challenge_results IDs (7)
+
+- [x] 70.01 — جرد معرفات challenge_results — [فحص staging بالقراءة فقط](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 70.02 — كشف الازدواج [نتائج Staging وخطة الحفظ دون فقد بيانات](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md) (قبول محدود للجرد/القرار فقط؛ لم يُنفذ ترحيل)
+- [x] 70.03 — تحديد العلاقات المرجعية — [دليل الفحص الموثق](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md) (تحقق موضعي من metadata/ترتيب الإصدارات دون تعديل بيانات)
+- [ ] 70.04 — اختبار سلامة الربط
+- [x] 70.05 — خطة تصحيح آمنة [نتائج Staging وخطة الحفظ دون فقد بيانات](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md) (قبول محدود للجرد/القرار فقط؛ لم يُنفذ ترحيل)
+- [x] 70.06 — توثيق القرار [نتائج Staging وخطة الحفظ دون فقد بيانات](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md) (قبول محدود للجرد/القرار فقط؛ لم يُنفذ ترحيل)
+- [ ] 70.07 — اختبار حفظ الربط بالنتيجة الأصلية بعد توحيد المعرفات
+
+### 71 — Duplicate-named migration versions (7)
+
+- [x] 71.01 — حصر نسخ migrations المتشابهة — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
+- [x] 71.02 — مقارنة المحتوى — [المقارنة الكاملة وحدودها](security/MIGRATION_CONTENT_COMPARISON_2026-11-11.md)، مصدر `906846f`
+- [x] 71.03 — تحديد ترتيب التنفيذ — [دليل الفحص الموثق](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md) (تحقق موضعي من metadata/ترتيب الإصدارات دون تعديل بيانات)
+- [x] 71.04 — التحقق من بيئة staging — [دليل الفحص الموثق](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md) (تحقق موضعي من metadata/ترتيب الإصدارات دون تعديل بيانات)
+- [x] 71.05 — توثيق الفروقات — [دليل الفحص الموثق](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md) (تحقق موضعي من metadata/ترتيب الإصدارات دون تعديل بيانات)
+- [x] 71.06 — منع إعادة التطبيق الخاطئ — [Scoped legacy runner replay prevention + isolated CI](security/VSP_STAGING_MIGRATION_REPLAY_GUARD_ACCEPTANCE_2026-11-13.md) (guarded legacy runner only, not a staging migration or full replay suite)
+- [ ] 71.07 — اختبار تطبيق migrations من قاعدة فارغة وإعادة تطبيق آمنة
+
+### 72 — matchup_extra_team_fee migration sequence (7)
+
+- [x] 72.01 — حصر migrations رسوم الفريق الإضافي — [جرد المصدر](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md)، commit `d96c4f4`
+- [x] 72.02 — تحديد الاعتماديات — [اعتماديات وحد الفرق](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md)، commit `bf0a7b8`
+- [x] 72.03 — مراجعة ترتيب التنفيذ — [دليل الفحص الموثق](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md) (تحقق موضعي من metadata/ترتيب الإصدارات دون تعديل بيانات)
+- [x] 72.04 — اختبار إعادة البناء — [إعادة بناء موضعية في PostgreSQL مؤقت](security/VSP_MATCHUP_FEE_REBUILD_ROLLBACK_ACCEPTANCE_2026-11-14.md) (مسار دالة الرسوم فقط؛ لا يشمل إعادة بناء جميع migrations)
+- [ ] 72.05 — معالجة التباين
+- [x] 72.06 — توثيق القرار — [اعتماديات وحد الفرق](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md)، commit `bf0a7b8`
+- [x] 72.07 — اختبار rollback آمن لترتيب migrations الخاص بالرسوم — [اختبار transaction/savepoint على PostgreSQL مؤقت](security/VSP_MATCHUP_FEE_REBUILD_ROLLBACK_ACCEPTANCE_2026-11-14.md) (لا يثبت rollback نشر قائم أو استرجاع بيانات فعلية)
+
+### 73 — Leaked password protection (6)
+
+- [x] 73.01 — فحص إعداد حماية كلمات المرور المسربة — [فحص staging بالقراءة فقط](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 73.02 — تحديد متطلبات المزود — [دليل الفحص الموثق](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md) (تحقق موضعي من metadata/ترتيب الإصدارات دون تعديل بيانات)
+- [ ] 73.03 — اختبار تفعيل الحماية
+- [ ] 73.04 — اختبار التسجيل والدخول
+- [ ] 73.05 — توثيق إعداد الإنتاج
+- [ ] 73.06 — اختبار إعداد حماية كلمات المرور في staging دون كشف كلمات المرور
+
+### 74 — 44 auth RLS initplan warnings (7)
+
+- [x] 74.01 — حصر تحذيرات RLS initplan الأربعة والأربعين — [فحص staging بالقراءة فقط](security/VSP_STAGING_RLS_ADVISOR_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 74.02 — تصنيف السياسات — [فحص staging بالقراءة فقط](security/VSP_STAGING_RLS_ADVISOR_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [ ] 74.03 — إصلاح الاستدعاءات المتكررة
+- [ ] 74.04 — اختبار التكافؤ الأمني
+- [ ] 74.05 — قياس الأداء
+- [ ] 74.06 — إعادة تشغيل المستشار
+- [ ] 74.07 — مقارنة نواتج RLS قبل وبعد تحسين initplan
+
+### 75 — 51 multiple permissive policies (7)
+
+- [x] 75.01 — حصر السياسات المتساهلة الإحدى والخمسين — [فحص staging بالقراءة فقط](security/VSP_STAGING_RLS_ADVISOR_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 75.02 — تصنيف السياسات حسب الجدول — [فحص staging بالقراءة فقط](security/VSP_STAGING_RLS_ADVISOR_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 75.03 — تحديد التكرار الفعلي — [Staging RLS catalog and Advisor overlap triage](security/VSP_STAGING_POLICY_OVERLAP_AUDIT_2026-11-13.md) (read-only classification, no policy merge)
+- [ ] 75.04 — توحيد السياسات الآمنة
+- [ ] 75.05 — اختبار صلاحيات الأدوار
+- [ ] 75.06 — إعادة تشغيل المستشار
+- [ ] 75.07 — اختبار أن دمج السياسات لا يوسع صلاحيات القراءة أو الكتابة
+
+### 76 — Four SECURITY DEFINER views (7)
+
+- [x] 76.01 — جرد عروض SECURITY DEFINER الأربعة
+- [x] 76.02 — تحديد صلاحيات القراءة — [فحص staging بالقراءة فقط](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 76.03 — تحويل العرض أو حمايته [اختبارات وظائف الحجوزات/عروض Staging](security/VSP_VIEW_AND_BOOKING_WINDOW_ACCEPTANCE_2026-11-13.md) (قبول محدود، دون تطبيق الإصلاح على Staging)
+- [x] 76.04 — اختبار الوصول المسموح — [فحص أدوار staging بصلاحيات SQL](security/VSP_STAGING_VIEW_ROLE_MATRIX_ACCEPTANCE_2026-11-14.md) (قراءة موضعية؛ بيانات نتائج البطولات فارغة)
+- [x] 76.05 — اختبار منع التسريب — [فحص عزل اشتراكات مالكَين ومنع المجهول واللاعب](security/VSP_STAGING_VIEW_ROLE_MATRIX_ACCEPTANCE_2026-11-14.md) (لا يغطي كل تسريبات النظام)
+- [x] 76.06 — توثيق النتيجة [اختبارات وظائف الحجوزات/عروض Staging](security/VSP_VIEW_AND_BOOKING_WINDOW_ACCEPTANCE_2026-11-13.md) (قبول محدود، دون تطبيق الإصلاح على Staging)
+- [x] 76.07 — اختبار سلوك العروض مع مستخدمين من أدوار مختلفة — [مصفوفة anon/player/owner/admin على staging](security/VSP_STAGING_VIEW_ROLE_MATRIX_ACCEPTANCE_2026-11-14.md) (محاكاة دور وجلسة SQL؛ لا تثبت رحلة JWT حقيقية)
+
+### 77 — 198 callable SECURITY DEFINER RPCs (11)
+
+- [x] 77.01 — جرد 198 RPC ذات صلاحيات مرتفعة — [فحص staging بالقراءة فقط](security/VSP_STAGING_PRIVILEGED_RPC_INVENTORY_2026-11-13.md)، 2026-11-13 (الجرد فقط دون تحقق أمني أو تغيير إنتاج)
+- [x] 77.02 — تصنيفها حسب الخطر — [تصنيف المراجعة وهوية التنفيذ](security/VSP_STAGING_PRIVILEGED_RPC_TRIAGE_2026-11-13.md) (تصنيف metadata فقط؛ ليس إثبات خلل أو اختبار صلاحيات)
+- [x] 77.03 — تحديد هوية المنفذ — [تصنيف المراجعة وهوية التنفيذ](security/VSP_STAGING_PRIVILEGED_RPC_TRIAGE_2026-11-13.md) (تصنيف metadata فقط؛ ليس إثبات خلل أو اختبار صلاحيات)
+- [ ] 77.04 — تطبيق قيود الصلاحية
+- [x] 77.05 — اختبار anon — [فحص صلاحية 308 دالة ومحاولة استدعاء ممثلة على staging](security/VSP_STAGING_ANON_PRIVILEGED_RPC_ACCEPTANCE_2026-11-14.md) (صلاحيات التنفيذ فقط؛ لا يثبت ملكية مستخدم مسجل)
+- [ ] 77.06 — اختبار حسابات JWT مختلفة
+- [ ] 77.07 — اختبار منع تجاوز الملكية
+- [ ] 77.08 — إعادة تدقيق الاستدعاءات
+- [x] 77.09 — توثيق الاستثناءات — [سجل استثناءات SECURITY DEFINER المعاد تدقيقه على Staging](security/VSP_PRIVILEGED_RPC_EXCEPTIONS_77_09_2026-11-16.md) (قبول توثيقي فقط؛ 200/0/12، دون اختبار اختراق أو تعديل صلاحيات)
+- [x] 77.10 — ربط تقرير الأمان — [التقرير الموحد المرتبط بـIssue #38/PR #35 وأدلة Staging/CI](security/VSP_SECURITY_FINDINGS_INTEGRATION_77_10_2026-11-16.md) (قبول وثائقي؛ الاختبارات/الإصلاحات باقية)
+- [ ] 77.11 — اختبار فشل RPC عند انتحال معرّف مستخدم في المعاملات
+
+### 78 — Role-based access matrix (7)
+
+- [x] 78.01 — تعريف أدوار اللاعب والمالك والمشرف — [تعريف الأدوار وأدلة المصدر](security/VSP_ROLE_DEFINITIONS_78_01.md)، commit `9e1caf3` (قبول تعريف فقط، دون ادعاء نجاح RLS/E2E)
+- [x] 78.02 — حصر الموارد والعمليات — [جرد الموارد والعمليات مع مصادر الكود](security/VSP_RESOURCE_OPERATION_INVENTORY_78_02.md)، commit `7d6f335` (جرد عائلات الموارد، ليس جرد كل RPC)
+- [x] 78.03 — بناء مصفوفة السماح والمنع — [مصفوفة الأدوار المستهدفة](security/VSP_ROLE_ACCESS_MATRIX_78_03.md)، commit `dd69596` (تصميم صلاحيات وليس إثبات تطبيقها)
+- [ ] 78.04 — اختبار كل دور
+- [ ] 78.05 — اختبار الوصول المجهول
+- [x] 78.06 — توثيق الاستثناءات — [Role and permission exception register](security/VSP_ROLE_PERMISSION_EXCEPTION_REGISTER_78_06_2026-11-13.md) (8 source-grounded classes; documentation only, no cross-account authorization proof)
+- [x] 78.07 — تغطية صلاحيات التخزين والملفات في مصفوفة الأدوار — [مصفوفة التخزين والأدلة والحدود](security/VSP_STORAGE_ACCESS_MATRIX_78_07.md)، commit `8127c3b` (تغطية المصفوفة فقط؛ اختبارات الملفات الفعلية مفتوحة)
+
+### 79 — Cross-account privacy tests (8)
+
+- [ ] 79.01 — تجهيز حسابين مستقلين
+- [ ] 79.02 — اختبار قراءة بيانات الغير
+- [ ] 79.03 — اختبار تعديل بيانات الغير
+- [ ] 79.04 — اختبار دعوات فرق الغير
+- [ ] 79.05 — اختبار حجوزات الغير
+- [ ] 79.06 — اختبار رفع الملفات
+- [ ] 79.07 — توثيق النتائج
+- [ ] 79.08 — اختبار عزل إشعارات المستخدمين بين حسابين
+
+### 80 — Security regression tests and advisor review (8)
+
+- [x] 80.01 — تحديد اختبارات الأمان الدورية — [عقود SQL الأصلية وحدود القبول](security/STORE_COMPLIANCE_BATCH_05_2026-11-11.md)، CI 42958578778
+- [x] 80.02 — إضافة اختبارات RLS — [عقود SQL الأصلية وحدود القبول](security/STORE_COMPLIANCE_BATCH_05_2026-11-11.md)، CI 42958578778
+- [x] 80.03 — إضافة اختبارات RPC — [عقود SQL الأصلية وحدود القبول](security/STORE_COMPLIANCE_BATCH_05_2026-11-11.md)، CI 42958578778
+- [x] 80.04 — إضافة فحص advisor — [قبول محدود بفحص Supabase المباشر للبيئتين وأداة مستقلة مختبرة في CI](security/VSP_SUPABASE_ADVISOR_LIVE_GATE_2026-11-17.md)؛ الفحص الحي من GitHub skipped، لذلك 80.05 مفتوحة
+- [ ] 80.05 — ربطها بالـCI
+- [ ] 80.06 — إصلاح النتائج الحرجة
+- [x] 80.07 — توثيق سياسة الإفراج — قبول توثيقي فقط: [سياسة الإفراج](security/RELEASE_ACCEPTANCE_POLICY.md)، 2026-11-11. يحدد فصل الإصلاح المحدود عن النشر الكامل والأدلة والعوائق والاستثناءات؛ لا يعني اجتياز شروط النشر.
+- [x] 80.08 — اختبار فشل بوابة الإصدار عند ظهور تحذير أمني حرج — [CI قبول اصطناعي محدود (9/9) وبوابة HOLD](security/VSP_RELEASE_SECURITY_GATE_80_08_ACCEPTANCE_2026-11-17.md) (لا يوجد ربط مباشر بـSupabase Advisor؛ 80.04/05/06 مفتوحة)
+
+
+### 81 — Team profile achievement badges (10)
+
+> 81.08 **منفذة وتنتظر التحقق النهائي**: مكوّن شارات عربي/إنجليزي مع الحالة الصفرية، متاح لقسمي الإنجازات ويظهر فقط عند تمرير ملخص نتائج موثوق؛ تم تحسين قيود العرض على الموبايل. commits `70deea57513c07c6a253cdc3f0201d7953b9f95b` و`36a10bba356599d9d84cb932c98f123a7b5b4c17`. الربط الفعلي بالبيانات لم يُنجز بعد.
+
+
+> 81.03 و81.04 و81.06 **تم تنفيذ منطقها وتنتظر التحقق النهائي**: استبعاد البطولات غير الرسمية، منع ازدواج ألقاب الفريق، وحساب أبطال 1 ضد 1 كأعضاء مميزين، مع اختبارات تغيير العضوية. لم تُربط بعد بمصدر النتائج الحقيقي؛ المهام 81.02 و81.05 و81.07 و81.09 تظل مفتوحة. commit `71edebc3643124ed1a501ef3f323d6bb3086f91d`.
+
+> 81.01 **تم تنفيذها وتنتظر التحقق النهائي**: توزيع مرن لإحصاءات الفوز والتعادل والخسارة والأعضاء على شاشة الفريق، مع فصل عداد الألقاب غير الموثق عن شارات البطولات الرسمية. commit `14b01fa8d85484394e5b1abf5f652b63c3914dc3`. لا يعني هذا نجاح اختبارات الواجهة بعد.
+
+
+- [x] 81.01 — تحديد مكان كارت الفريق في البروفايل وتنسيق إحصاءات الفوز والتعادل والخسارة والإنجازات بدون ازدحام
+- [x] 81.02 — حصر مصدر بطولات الفريق المعتمدة التي أنشأها ونظمها مالك ملعب فقط — [verified source trace](security/VSP_VERIFIED_TEAM_BADGE_SOURCE_AUDIT_2026-11-13.md) (source mapping only; live badge not wired)
+- [x] 81.03 — استبعاد بطولات اللاعبين والتحديات والبطولات غير المعتمدة من عدد ألقاب الفريق
+- [x] 81.04 — احتساب ألقاب الفريق من نتائج نهائية معتمدة دون ازدواج
+- [x] 81.05 — حصر الأعضاء الحاليين للفريق وربطهم بأبطال بطولات 1 ضد 1 المعتمدة — [verified source trace](security/VSP_VERIFIED_TEAM_BADGE_SOURCE_AUDIT_2026-11-13.md) (source mapping only; live badge not wired)
+- [x] 81.06 — احتساب عدد اللاعبين الأبطال المميزين لا عدد مرات فوز اللاعب نفسه
+- [ ] 81.07 — تحديث شارة الأبطال عند انضمام أو خروج لاعب أو إلغاء اعتماد لقب
+- [x] 81.08 — عرض شارة بطولات الفريق وشارة أبطال 1 ضد 1 بالعدد والنص العربي والإنجليزي والحالة الصفرية
+- [ ] 81.09 — اختبار صلاحيات البيانات ومطابقة العدادات مع المصدر الرسمي وعدم تضخيم الإنجازات
+- [x] 81.10 — اختبار واجهة الكارت على الموبايل وRTL وإمكانية الوصول وFlutter CI — [قبول محدود موثق](VSP_TEAM_SKILLS_PUBLISH_BADGES_AWARD_RECIPIENT_ACCEPTANCE_38_05_46_07_81_10_2026-11-17.md) (Flutter widget RTL وتكبير الخط فقط؛ بدون ادعاء JWT/أجهزة حقيقية)
+
+
+### 82 — Rotating per-match team challenge consent code (9)
+
+> 82.01 مكتملة كمواصفة قابلة للمراجعة في `docs/VSP_TEAM_CHALLENGE_CODE_CONSENT_SPEC.md` (commit `262dffac3fdce428383b2ade03616db00a4f8b65`). هذا إغلاق **مهمة تحديد القواعد فقط** وليس تنفيذ الكود المتجدد أو اختباره. يجب عدم إعادة استخدام RPC الحالي الذي يجدد الكود عند توليده دون تعديل سلوكه.
+
+
+- [x] 82.01 — تحديد قواعد موافقة الفريق على تحدي مباراة وفصل كود التحدي عن دعوات عضوية اللاعبين
+- [ ] 82.02 — إنشاء كود تحدي عشوائي 8 أرقام لكل فريق مع تخزين آمن ومنع التخمين وإعادة الاستخدام
+- [ ] 82.03 — إظهار الكود وزر النسخ أو مشاركة رابط التحدي في كارت الفريق للكابتن مع حماية الوصول
+- [ ] 82.04 — الإبقاء على الكود ثابتًا عند النسخ والمشاركة وطلبات التحدي غير المؤكدة
+- [ ] 82.05 — ربط استخدام الكود بمباراة محددة وبصلاحية موافقة صاحب الفريق وعدم اعتباره تفويضًا مفتوحًا
+- [ ] 82.06 — تدوير الكود ذريًا بعد تأكيد التحدي الفعلي مرة واحدة فقط وإبطال القديم
+- [ ] 82.07 — منع التحديات المكررة والطلبات المتزامنة وإعادة تشغيل الكود المستهلك
+- [ ] 82.08 — فصل الموافقة على التحدي عن صلاحية إدخال أو اعتماد نتيجة المباراة وحماية الفريق من الخسارة المزيفة
+- [ ] 82.09 — اختبار الرحلة بين فريقين على staging مع إعادة المحاولة والأكواد القديمة وCI وAndroid
+
+> إضافة نطاق بطلب صاحب المشروع: إنجازات كارت الفريق (بطولات ملاك الملاعب وأبطال 1 ضد 1) وكود موافقة تحدي يتغير بعد تأكيد مباراة. كل البنود الجديدة مفتوحة، ولا تُحتسب إنجازًا منفذًا. قاعدة تغيير الكود مربوطة بتأكيد التحدي وليس مجرد مشاركة الكود. تفاصيل اعتماد الموافقة النهائية تُحسم قبل تنفيذ التدفق.
+
+> هذه القوائم تحدد نطاق العمل للتحقق لاحقًا؛ مربعات الاختيار هنا تبدأ فارغة عمدًا حتى تتم مطابقة كل مهمة مع الأدلة. لا تستبدل سجل الإنجاز القائم في `docs/VSP_80_ITEM_EXECUTION_TRACKER.md`.
+
+
+### 83 — Stadium details and booking screenshots: evidence-based UX and availability triage (7)
+
+> Source: two user-provided Android screenshots, 2026-11-11. [Screenshot triage and code references](ux/VSP_STADIUM_BOOKING_SCREENSHOT_TRIAGE_2026-11-11.md), commit `fc64bd0`. The screenshots confirm displayed symptoms, **not** root causes or payment/security defects. All seven tasks are open; overlapping general tasks are not double-counted as accepted.
+
+- [ ] 83.01 — P1: إعادة إنتاج رسالة عدم وجود مواعيد يوم 11 نوفمبر، وفصل إغلاق الملعب عن امتلاء الحجوزات وفشل جلب المواعيد والتوقيت، مع اختبار مصدر ساعات التشغيل
+- [x] 83.02 — P1: تشخيص سبب تحذير تعذر تحديث بيانات الملعب، والتحقق من آخر بيانات موثوقة وإعادة المحاولة وعدم السماح بحجز اعتمادًا على بيانات غير صالحة — [فحص مهلة البث وآخر بيانات موثوقة](VSP_STADIUM_STREAM_IDLE_RECOVERY_2026-11-15.md) (سبب كودي مثبت؛ لا يدّعي سجلات حادث 11 نوفمبر)
+- [x] 83.03 — P1: ضبط ملخص السعر والعربون والمتبقي قبل وبعد اختيار مدة الحجز، والتحقق من حساب الإضافات وتطابق السعر النهائي مع الخادم — [اختبار الملخص وفحص السعر النهائي](VSP_BOOKING_FINANCIAL_SUMMARY_ACCEPTANCE_2026-11-15.md) (ملخص عميل اصطناعي ورفض اختلاف RPC التجريبي؛ دفع فعلي منفصل)
+- [x] 83.04 — P2: اختبار وضوح التقويم وحالات اليوم المتاح والمغلق والماضي وتحميل المواعيد والتاريخ العربي وRTL — [اختبارات حالات المواعيد والتقويم](VSP_BOOKING_DAY_STATES_ACCEPTANCE_2026-11-15.md) (واجهة اصطناعية؛ تجربة الجهاز الفعلية منفصلة)
+- [x] 83.05 — P2: التحقق من مصدر النص الإنجليزي داخل وصف الملعب العربي، وضبط الترجمة والنصوص الطويلة والقص من غير تعديل بيانات المستخدم الأصلية — [Owner description localization tests](VSP_LEGACY_NOTIFICATION_AND_DESCRIPTION_PATCH_2026-11-13.md) (stock labels and long texts, no source edits)
+- [x] 83.06 — P2: اختبار SafeArea والتمرير وشريط السعر الثابت وتداخل الرسائل والنصوص، ومراجعة لون الواجهة مع design tokens الفحمي — [شاشة قصيرة ورسائل متزامنة مع شريط ثابت](VSP_STADIUM_SHORT_SCREEN_LAYOUT_ACCEPTANCE_2026-11-15.md) (واجهة اصطناعية؛ جهاز فعلي منفصل)
+- [x] 83.07 — P2: مراجعة ظهور وتفعيل خيار إيجار الكرة قبل اختيار موعد، واختبار عدم احتساب رسوم إضافية من دون حجز وتحديث الإجمالي بعد الاختيار — [Ball rental state and UI test](VSP_BOOKING_BALL_ADDON_UI_TEST_2026-11-13.md) (client-state and displayed total; backend price validation still open)
+
+## قبول موثق — 2026-11-11
+
+76.01: اكتمل الجرد الحالي لجميع عروض public في staging والإنتاج (metadata فقط). العدد الحالي 9 في كل بيئة بدلاً من الأربعة التاريخية. [الدليل وحدود القبول](security/VIEW_INVENTORY_2026-11-11.md). لا قبول ضمني لبقية مهام 76 أو للنشر.
+
+
+### 84 — Challenge result agreement and not-played reports (12)
+
+> إضافة نطاق بطلب المالك بتاريخ 15 نوفمبر 2026: 12 مهمة جديدة فقط؛ 6 متطلبات أخرى مرتبطة بمهام قديمة كما في [مصفوفة منع التكرار](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#مصفوفة-منع-التكرار). كل المهام هنا مفتوحة، والتسجيل لا يأذن بتنفيذها أو نشرها الآن. المجموعة ضمن B09.
+
+- [ ] 84.01 — RESULT-01: تخزين اختيارات قائدي الفريقين بصورة مستقلة مع إعادة استخدام البنية الصالحة — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-01)
+- [ ] 84.02 — RESULT-02: اعتماد ذري فوري لاتفاق فوز/خسارة أو خسارة/فوز أو تعادل/تعادل دون اعتماد فردي — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-02)
+- [ ] 84.03 — RESULT-03: حجب اختيار المنافس قبل التسجيل عبر القراءة وRPC وRealtime والواجهة والسجل — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-03)
+- [ ] 84.04 — RESULT-06: تدقيق وإيقاف كل مسارات اعتماد نتائج التحديات الفردية والمهلات المخالفة دون كسر الأنواع الأخرى — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-06)
+- [ ] 84.05 — RESULT-09: إجراء بلاغ «المباراة لم تُلعب» لصاحب الملعب المخول بعد الموعد المسموح مع السبب والتدقيق — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-09)
+- [ ] 84.06 — RESULT-10: استبعاد فوري للمباراة وعكس تأثير ترتيب الفريقين مرة واحدة مع حفظ النتائج والبلاغ — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-10)
+- [ ] 84.07 — RESULT-11: اعتراض القائدين ومراجعة مخولة مع استمرار الاستبعاد واستعادة آمنة غير مكررة — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-11)
+- [ ] 84.08 — RESULT-12: فصل صلاحية النتيجة عن owner_record_no_show_atomic وآثاره المالية والعقابية — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-12)
+- [ ] 84.09 — RESULT-14: عرض حالات الانتظار والتعارض والاعتماد والاستبعاد ومراجعة البلاغ ضمن واجهة VSP الحالية — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-14)
+- [ ] 84.10 — RESULT-15: مراجعة تكامل Flutter وSupabase وكل مستهلكي النتائج والترتيب والسجل وفصل أنواع المباريات — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-15)
+- [ ] 84.11 — RESULT-17: اختبارات بلاغ عدم اللعب قبل وبعد الاعتماد والتكرار والاعتراض والاستعادة والعزل والتزامن — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-17)
+- [ ] 84.12 — RESULT-18: اختبارات عدم تغيير المدفوعات والتسوية واللعب النظيف والتكامل دون تكرار مهام اختبار النقاط — [معيار القبول والتبعيات](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md#result-18)
+
+
+### 85 — Phase 8: Supabase Storage advisory applicability audit (3)
+
+> أضيفت 17 نوفمبر 2026 بعد [فحص المستودع وبيئتي Supabase Cloud](security/VSP_SUPABASE_STORAGE_PAYMOB_SECURITY_INTAKE_2026-11-17.md). ثلاث مهام فحص جديدة وفريدة فقط؛ Paymob وSecrets وRLS موجودة بالفعل في 30/63/77–80 وSEC-02/06/10، **ولا تُحتسب مجددًا**. كل البنود هنا مفتوحة حتى الدليل والتحقق، ولا تُعَدّ الثغرة الخارجية ثغرة مؤكدة في VSP.
+
+- [ ] 85.01 — P0 SEC-NEW-01: إثبات انطباق GHSA-fgvp-cqg6-q8h2 عبر إصدار Storage المستضاف/الترقيع وAuth JWT hooks وrole=none وصلاحيات ملفات المستخدمين وحسابين معزولين، أو توثيق عدم الانطباق
+- [ ] 85.02 — P0 conditional SEC-NEW-02: جرد S3 presigned PUT ومصدر الرابط والمفاتيح وصلاحيات Private Buckets ومطابقة GHSA-3m3f-pjv4-x2fp؛ إعلان Not Applicable فقط بعد اكتمال الجرد
+- [ ] 85.03 — P0 SEC-NEW-03: جرد Signed TUS/resumable upload والتحقق من إصدار Storage ومسارات upsert واختبارات رفض الكتابة على ملف حساب آخر وفق GHSA-8rrf-w776-x75g
+
+
+### 86 — Phase 10: seven unique full-product UX integrations (7)
+
+> إضافات 18 نوفمبر 2026. السبعة جديدة ومفتوحة فقط؛ بقية الـFull Product Experience مرتبطة بمهام قائمة دون ازدواج. [تفاصيل الدفعات والتبعيات](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md). لا تنفيذ بمجرد تسجيل النطاق.
+
+- [x] 86.01 — P1: حماية الصفحة الرئيسية من أي كروت إنجازات أو ترتيب شخصي أو إعادة ترتيب وظائف الاكتشاف والحجز والبانر والتنقل، بعقد UI رجوعي بالعربية والإنجليزية — [معيار القبول](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md) — [قبول محدود لعقد الشاشة واللغتين](VSP_HOME_STRUCTURE_BOUNDED_ACCEPTANCE_86_01_2026-11-19.md)، دون إثبات أجهزة فعلية
+- [ ] 86.02 — P1: حلقة بعد المباراة: نتيجة تحدٍ معتمدة ثم أثرها الحقيقي في فريق المستخدم ثم فعل واحد لمباراة أو تحدٍ جديد، بلا مكافأة لنتيجة معلقة أو متنازع عليها — [معيار القبول](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md)
+- [ ] 86.03 — P1: ملخص آخر خمس مواجهات معتمدة وتغير الترتيب وفق نفس المسابقة وقواعد النقاط في Team Profile من دون تكرار الكارت — [معيار القبول](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md)
+- [ ] 86.04 — P1: إزالة عرض 1v1 كمسابقة حالية من أسطح اللاعب وربط بطولة Team Skills Cup بإذن النشر الرسمي مع حفظ السجلات التاريخية والمالية — [معيار القبول](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md)
+- [ ] 86.05 — P1: توحيد عرض مصدر النتائج والبطولات والشارات والجوائز الرسمية عبر Flutter وAdmin Panel والموقع مع صلاحيات نشر المسؤول وحجب بيانات الفريق الخاصة — [معيار القبول](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md)
+- [ ] 86.06 — P2: إجراء احجز تاني من الحجز السابق بعد جلب سعر وتوفر وعربون وسياسة حديثة من الخادم ثم موافقة صريحة وحجز جديد idempotent — [معيار القبول](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md)
+- [ ] 86.07 — P2: ربط مشاركة الفريق أو المباراة بدعوة وانضمام مؤكد بموافقة صريحة وقياس تحويل الإحالات الفعلية دون جمع PII أو كشف الأكواد — [معيار القبول](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md)

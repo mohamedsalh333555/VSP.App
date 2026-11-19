@@ -8,6 +8,7 @@ import '../../../../core/services/image_pick_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../owner_notification_button.dart';
+import '../subscription/owner_subscription_status_presentation.dart';
 import '../../../../shared/widgets/vsp_ai_spark_icon.dart';
 
 /// Sleek header for Owner Dashboard with glow avatar, profile edit badge,
@@ -33,7 +34,18 @@ class OwnerDashboardHeader extends StatelessWidget {
     final String name = (rawName != null && rawName.isNotEmpty)
         ? rawName
         : (isArabic ? 'كابتن الملعب' : 'Pitch Owner');
-    final isTrial = user?.isInActiveTrial == true;
+    final subscriptionState = OwnerSubscriptionStatusPresentation.stateFor(
+      user, DateTime.now(),
+    );
+    final subscriptionLabel = OwnerSubscriptionStatusPresentation.label(
+      subscriptionState, isArabic: isArabic,
+    );
+    final subscriptionBadgeColor =
+        OwnerSubscriptionStatusPresentation.getIsWarning(subscriptionState)
+            ? VSPColors.warning
+            : OwnerSubscriptionStatusPresentation.getIsActivePro(subscriptionState)
+                ? VSPColors.accent
+                : VSPColors.textSecondary;
     final photoUrl = user?.profileImageUrl;
 
     return Row(
@@ -44,8 +56,11 @@ class OwnerDashboardHeader extends StatelessWidget {
           child: Row(
             children: [
               // 1. Avatar with Neon Green Glow Ring & Quick Edit Badge
-              GestureDetector(
-                onTap: () async {
+              Tooltip(
+                message: isArabic ? 'تغيير الصورة الشخصية' : 'Change profile photo',
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () async {
                   HapticFeedback.lightImpact();
                   final picked = await ImagePickService.pick(
                     context,
@@ -92,7 +107,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                         border: isProOwner
                             ? null
                             : Border.all(
-                                color: Colors.white.withValues(alpha: 0.15),
+                                color: VSPColors.white.withValues(alpha: 0.15),
                                 width: 1.5,
                               ),
                         boxShadow: isProOwner
@@ -142,12 +157,12 @@ class OwnerDashboardHeader extends StatelessWidget {
                           color: VSPColors.surfaceAlt,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
+                            color: VSPColors.white.withValues(alpha: 0.3),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.5),
+                              color: VSPColors.black.withValues(alpha: 0.5),
                               blurRadius: 4,
                             ),
                           ],
@@ -155,11 +170,12 @@ class OwnerDashboardHeader extends StatelessWidget {
                         child: const Icon(
                           Iconsax.edit_2_copy,
                           size: 13,
-                          color: Colors.white,
+                          color: VSPColors.white,
                         ),
                       ),
                     ),
                   ],
+                  ),
                 ),
               ),
 
@@ -188,9 +204,9 @@ class OwnerDashboardHeader extends StatelessWidget {
                         ),
                         if (user?.isIdentityVerified == true || user?.verificationStatus == 'approved') ...[
                           const SizedBox(width: 5),
-                          const Tooltip(
-                            message: 'حساب موثق ومعتمد',
-                            child: Icon(
+                          Tooltip(
+                            message: isArabic ? 'حساب موثق ومعتمد' : 'Verified account',
+                            child: const Icon(
                               Icons.verified,
                               color: VSPColors.accent,
                               size: 16,
@@ -211,21 +227,19 @@ class OwnerDashboardHeader extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: isProOwner
                                   ? VSPColors.accent.withValues(alpha: 0.14)
-                                  : Colors.white.withValues(alpha: 0.05),
+                                  : VSPColors.white.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(VSPRadius.full),
                               border: Border.all(
                                 color: isProOwner
                                     ? VSPColors.accent.withValues(alpha: 0.35)
-                                    : Colors.white.withValues(alpha: 0.08),
+                                    : VSPColors.white.withValues(alpha: 0.08),
                                 width: 0.8,
                               ),
                             ),
                             child: Text(
-                              isProOwner
-                                  ? 'PRO'
-                                  : (isTrial ? (isArabic ? 'تجربة Pro' : 'Pro Trial') : (isArabic ? 'مجاني' : 'Free')),
+                              subscriptionLabel,
                               style: TextStyle(
-                                color: isProOwner ? VSPColors.accent : VSPColors.textSecondary,
+                                color: subscriptionBadgeColor,
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.3,
@@ -276,7 +290,7 @@ class OwnerDashboardHeader extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -302,7 +316,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: VSPColors.white24,
                   borderRadius: BorderRadius.circular(VSPRadius.xs),
                 ),
               ),
@@ -339,7 +353,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                   border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35), width: 0.8),
                 ),
                 child: Text(
-                  isArabic ? 'باقة 1000 ج.م الاحترافية (PRO)' : 'PRO Plan Exclusive (1000 EGP)',
+                  isArabic ? 'عرض مزايا باقة Pro' : 'Explore Pro plan features',
                   style: const TextStyle(
                     color: VSPColors.accent,
                     fontSize: 11,
@@ -355,7 +369,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                 isArabic ? 'مساعد الذكاء الاصطناعي VSP Copilot' : 'VSP AI Copilot for Owners',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VSPColors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.3,
@@ -366,8 +380,8 @@ class OwnerDashboardHeader extends StatelessWidget {
               // Description
               Text(
                 isArabic
-                    ? 'الذكاء الاصطناعي ميزة حصرية لمشتركي باقة 1000 ج.م الاحترافية.\nاحصل على تحليلات ذكية لحجوزات ملعبك، اقتراحات تسعير فترات الذروة، ودعم إداري فوري على مدار الساعة.'
-                    : 'AI Copilot is an exclusive feature for 1000 EGP Pro Plan subscribers.\nUnlock intelligent booking forecasts, peak-hour pricing suggestions, and 24/7 automated pitch management.',
+                    ? 'راجع تفاصيل باقة Pro وأسعارها الحالية ومزايا Copilot من صفحة الاشتراكات، قبل طلب الترقية.'
+                    : 'Review current Pro plan pricing and Copilot benefits on the subscription screen before upgrading.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: VSPColors.textSecondary,
@@ -388,7 +402,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
-                    foregroundColor: Colors.black,
+                    foregroundColor: VSPColors.black,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -397,12 +411,12 @@ class OwnerDashboardHeader extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Iconsax.crown_1_copy, color: Colors.black, size: 18),
+                      const Icon(Iconsax.crown_1_copy, color: VSPColors.black, size: 18),
                       const SizedBox(width: 8),
                       Text(
-                        isArabic ? 'ترقية لباقة 1000 ج.م الآن' : 'Upgrade to Pro Plan (1000 EGP)',
+                        isArabic ? 'عرض باقات الاشتراك' : 'View subscription plans',
                         style: const TextStyle(
-                          color: Colors.black,
+                          color: VSPColors.black,
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
                         ),

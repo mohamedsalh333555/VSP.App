@@ -5,6 +5,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../screens/booking_confirmation_screen.dart';
 import '../screens/challenge_select_team_screen.dart';
@@ -21,7 +22,7 @@ class BookingTypeModal extends StatefulWidget {
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => BookingTypeModal(stadium: stadium),
     );
   }
@@ -40,26 +41,41 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
     try {
       final authProvider = context.read<app_auth.AuthProvider>();
       final bookingProvider = context.read<BookingProvider>();
-      final uid = authProvider.currentUser?.uid;
+      final uid = authProvider.currentUser?.id;
 
       if (typeId == 'Challenge Match') {
-        if (uid != null) {
-          final team = await TeamRepository().getUserTeam(uid);
-          if (team == null) {
-            if (!mounted) return;
-            final created = await showModalBottomSheet<bool>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => const CreateTeamSheet(),
-            );
-            if (!mounted) return;
-            if (created != true) {
-              setState(() => _isLoading = false);
-              return;
-            }
+        if (uid == null) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isArabic ? 'سجّل الدخول أولاً لاختيار فريقك.' : 'Sign in first to select your team.',
+          );
+          return;
+        }
+        // A failed membership query must not be mistaken for "no team".
+        final team = await TeamRepository().getUserTeamStrict(uid);
+        if (!mounted) return;
+        if (team == null) {
+          final created = await showModalBottomSheet<bool>(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            backgroundColor: VSPColors.transparent,
+            builder: (_) => const CreateTeamSheet(),
+          );
+          if (!mounted) return;
+          if (created != true) {
+            setState(() => _isLoading = false);
+            return;
           }
         }
+      }
+
+      // A team lookup may finish after the signed-in account changes.
+      // Never create a challenge draft for a different account.
+      if (typeId == 'Challenge Match' &&
+          authProvider.currentUser?.id != uid) {
+        return;
       }
 
       BookingType type = BookingType.personal;
@@ -90,21 +106,33 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
       ));
 
       if (!mounted) return;
-      Navigator.pop(context); // Close Bottom Sheet
+      // Keep the navigator before popping; the sheet context is then stale.
+      final navigator = Navigator.of(context);
+      navigator.pop(); // Close Bottom Sheet
+      if (!navigator.mounted) return;
 
       if (type == BookingType.challenge) {
-        Navigator.push(
-          context,
+        navigator.push(
           MaterialPageRoute(
             builder: (_) => ChallengeSelectTeamScreen(stadium: widget.stadium, bookingType: typeString),
           ),
         );
       } else {
-        Navigator.push(
-          context,
+        navigator.push(
           MaterialPageRoute(
             builder: (_) => BookingConfirmationScreen(stadium: widget.stadium, bookingType: typeString),
           ),
+        );
+      }
+    } catch (_) {
+      debugPrint('Failed to prepare booking type (details redacted)');
+      if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر التحقق من بيانات الفريق أو تجهيز الحجز. حاول مرة أخرى.'
+              : 'Could not verify team details or prepare the booking. Please retry.',
         );
       }
     } finally {
@@ -118,21 +146,31 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
+    final media = MediaQuery.of(context);
+    // The scroll-controlled modal route already applies keyboard/system
+    // insets; this is only a preferred content-height cap.
+    final availableHeight = media.size.height;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         VSPSpacing.md,
         VSPSpacing.md,
         VSPSpacing.md,
-        MediaQuery.of(context).padding.bottom + VSPSpacing.md,
+        media.padding.bottom + VSPSpacing.md,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: availableHeight * 0.82,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // This sheet is secondary to the normal booking CTA.
           // Drag handle
           Center(
@@ -150,9 +188,12 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                isArabic ? 'خيارات المباراة الأخرى' : 'Other match options',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  isArabic ? 'خيارات المباراة الأخرى' : 'Other match options',
+                  softWrap: true,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
@@ -194,7 +235,9 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                 : 'Competitive match between two teams to earn ELO rank points',
             iconData: Iconsax.cup_copy,
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -215,7 +258,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         child: Material(
-          color: Colors.transparent,
+          color: VSPColors.transparent,
           child: InkWell(
             onTap: () => _handleOptionSelect(id),
             child: Padding(
@@ -239,8 +282,9 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                       children: [
                         Text(
                           title,
+                          softWrap: true,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: VSPColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -248,6 +292,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                         const SizedBox(height: 4),
                         Text(
                           subtitle,
+                          softWrap: true,
                           style: const TextStyle(
                             color: VSPColors.textSecondary,
                             fontSize: 11.5,

@@ -262,15 +262,21 @@ class MatchRepository {
  'p_user_id': userId,
  });
 
- // Only non-sensitive match data is read from the public feed.
- final finalDoc = await _supabase
- .from('booking_public_feed')
- .select('stadium_name, current_players, total_field_capacity')
- .eq('id', bookingId)
- .single();
-
  final hostId = joinResult is Map ? (joinResult['host_user_id']?.toString() ?? '') : '';
- final stadiumName = finalDoc['stadium_name'] ?? 'Match';
+ var stadiumName = 'Match';
+ // Enrichment is best effort. The atomic join already succeeded and must not
+ // be reported as failed because a public-feed read used only for notification
+ // copy was unavailable.
+ try {
+   final finalDoc = await _supabase
+       .from('booking_public_feed')
+       .select('stadium_name')
+       .eq('id', bookingId)
+       .single();
+   stadiumName = finalDoc['stadium_name']?.toString() ?? 'Match';
+ } catch (_) {
+   VSPLogger.w('Joined public match; notification enrichment unavailable');
+ }
 
  String joiningUserName = 'A player';
  try {
@@ -317,60 +323,41 @@ class MatchRepository {
 
  Future<bool> acceptJoinRequest(String bookingId, String userId) async {
  try {
- await _supabase.rpc('accept_join_request', params: {'p_booking_id': bookingId, 'p_user_id': userId});
- return true;
- } catch (e) { return false; }
+ final response = await _supabase.rpc(
+ 'accept_join_request',
+ params: {'p_booking_id': bookingId, 'p_user_id': userId},
+ );
+ return response is Map && response['success'] == true;
+ } catch (e, stack) {
+ VSPLogger.e('Failed to accept public-match join request', e, stack);
+ return false;
+ }
  }
 
  Future<bool> rejectJoinRequest(String bookingId, String userId) async {
  try {
- await _supabase.rpc('reject_join_request', params: {'p_booking_id': bookingId, 'p_user_id': userId});
- return true;
- } catch (e) { return false; }
+ final response = await _supabase.rpc(
+ 'reject_join_request',
+ params: {'p_booking_id': bookingId, 'p_user_id': userId},
+ );
+ return response is Map && response['success'] == true;
+ } catch (e, stack) {
+ VSPLogger.e('Failed to reject public-match join request', e, stack);
+ return false;
+ }
  }
 
  Future<bool> leavePublicMatch(String bookingId, String userId) async {
  try {
- final doc = await _supabase
- .from('booking_public_feed')
- .select('id, stadium_name, host_name')
- .eq('id', bookingId)
- .maybeSingle();
-
- final hostId = doc?['created_by_user_id'] ?? doc?['owner_id'] ?? '';
- final stadiumName = doc?['stadium_name'] ?? 'Match';
-
  // PostgreSQL Atomic Leave Match RPC (Prevents Race Conditions)
  await _supabase.rpc('leave_public_match_atomic', params: {
  'p_booking_id': bookingId,
  'p_user_id': userId,
  });
 
- String leavingUserName = 'A player';
- try {
- final user = await UserRepository().getUserData(userId);
- if (user != null) {
- leavingUserName = user['name'] ?? 'A player';
- }
- } catch (_) {}
-
- try {
- if (hostId.isNotEmpty && hostId != userId) {
- await _notificationRepo.sendNotification(
- hostId,
- AppNotification(
- id: '',
- title: 'Player Left Match ',
- body: '$leavingUserName left your match at $stadiumName.',
- type: 'info',
- createdAt: DateTime.now(),
- bookingId: bookingId,
- ),
- );
- }
- } catch (fcmError) {
- VSPLogger.w('FCM sendNotification failed on player leaving: $fcmError');
- }
+ // The public feed intentionally omits host identifiers. Host notification
+ // must be emitted server-side by the atomic leave path; never broaden the
+ // public read merely to obtain a private recipient ID.
  return true;
  } on PostgrestException catch (e) {
  VSPLogger.e('Postgrest error leaving public match', e);
@@ -388,37 +375,44 @@ class MatchRepository {
 
  Future<bool> removeParticipantFromPublicMatch(String bookingId, String userId) async {
  try {
- final doc = await _supabase
- .from('booking_public_feed')
- .select('id, stadium_name')
- .eq('id', bookingId)
- .maybeSingle();
-
- final stadiumName = doc?['stadium_name'] ?? 'Match';
-
  // PostgreSQL Atomic RPC
  await _supabase.rpc('remove_public_match_participant_atomic', params: {
  'p_booking_id': bookingId,
  'p_user_id': userId,
  });
-
- await _notificationRepo.sendNotification(
- userId,
- AppNotification(
- id: '',
- title: 'Match Participation Cancelled ',
- body: 'The host has removed you from the match at $stadiumName.',
- type: 'info',
- createdAt: DateTime.now(),
- bookingId: bookingId,
- ),
- );
-
- return true;
  } catch (e) {
  VSPLogger.e('Error removing participant from public match', e);
  return false;
  }
+
+ var stadiumName = 'Match';
+ try {
+   final doc = await _supabase
+       .from('booking_public_feed')
+       .select('stadium_name')
+       .eq('id', bookingId)
+       .maybeSingle();
+   stadiumName = doc?['stadium_name']?.toString() ?? 'Match';
+ } catch (_) {
+   VSPLogger.w('Participant removed; notification enrichment unavailable');
+ }
+
+ try {
+   await _notificationRepo.sendNotification(
+     userId,
+     AppNotification(
+       id: '',
+       title: 'Match Participation Cancelled',
+       body: 'The host has removed you from the match at $stadiumName.',
+       type: 'info',
+       createdAt: DateTime.now(),
+       bookingId: bookingId,
+     ),
+   );
+ } catch (_) {
+   VSPLogger.w('Participant removed; notification delivery unavailable');
+ }
+ return true;
  }
 
  Future<bool> leavePrivateCollectiveMatch(String bookingId, String userId) async {

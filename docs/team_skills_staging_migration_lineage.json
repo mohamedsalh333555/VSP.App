@@ -1,0 +1,231 @@
+{
+  "kind": "read_only_staging_migration_lineage_snapshot",
+  "database": "vsp-staging",
+  "project_ref": "vtwgqyxglevcsxwdmhop",
+  "recorded_date": "2026-11-18",
+  "branch": "uxlp-44-implementation",
+  "note": "Read-only staging migration versions checked against the Supabase migration inventory on 2026-11-18. Team Skills dynamic phase finality + status/knockout/regeneration guards are recorded under real applied staging versions 20261118153330 and 20261118154934. Read-only pg_get_viewdef/pg_get_functiondef review confirmed dynamic phase-count aggregate, invoker view, admin gate and advisory locks. This does NOT establish byte-for-byte SQL body parity, production deployment, client-role staging tests, or a safe production release. Prior verification notes and remaining limitations are preserved in historical docs.",
+  "migrations": [
+    {
+      "local_file": "supabase/migrations/20261116030000_team_skills_cup_foundation.sql",
+      "staging_version": "20261116024322",
+      "staging_migration_name": "team_skills_cup_foundation_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116040000_team_skills_cup_officials_and_awards.sql",
+      "staging_version": "20261116025208",
+      "staging_migration_name": "team_skills_cup_officials_and_awards_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116050000_team_skills_cup_role_and_configuration.sql",
+      "staging_version": "20261116025638",
+      "staging_migration_name": "team_skills_cup_role_and_configuration_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116060000_team_skills_award_history_notifications.sql",
+      "staging_version": "20261116025950",
+      "staging_migration_name": "team_skills_award_history_notifications_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116070000_team_skills_hospitality_checkin.sql",
+      "staging_version": "20261116030204",
+      "staging_migration_name": "team_skills_hospitality_checkin_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116080000_team_skills_fix_scoped_rls_policies.sql",
+      "staging_version": "20261116042820",
+      "staging_migration_name": "team_skills_fix_scoped_rls_policies_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116081000_team_skills_review_capacity_guard.sql",
+      "staging_version": "20261116043118",
+      "staging_migration_name": "team_skills_review_capacity_guard_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116082000_team_skills_knockout_future_round_slots.sql",
+      "staging_version": "20261116044654",
+      "staging_migration_name": "team_skills_knockout_future_round_slots_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116083000_team_skills_goalkeeper_award_tie_guard.sql",
+      "staging_version": "20261116045239",
+      "staging_migration_name": "team_skills_goalkeeper_award_tie_guard_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116084000_team_skills_final_seeding_freeze.sql",
+      "staging_version": "20261116072405",
+      "staging_migration_name": "team_skills_final_seeding_freeze_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116085000_team_skills_registration_status_notifications.sql",
+      "staging_version": "20261116073010",
+      "staging_migration_name": "team_skills_registration_status_notifications_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116086000_team_skills_blocked_official_guard.sql",
+      "staging_version": "20261116073613",
+      "staging_migration_name": "team_skills_blocked_official_guard_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116087000_team_skills_revoke_official.sql",
+      "staging_version": "20261116091115",
+      "staging_migration_name": "team_skills_revoke_official_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116088000_team_skills_closed_event_write_guards.sql",
+      "staging_version": "20261116091810",
+      "staging_migration_name": "team_skills_closed_event_write_guards_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116089000_team_skills_blocked_official_read_rls.sql",
+      "staging_version": "20261116132346",
+      "staging_migration_name": "team_skills_blocked_official_read_rls_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116090000_team_skills_checkin_hospitality_guard.sql",
+      "staging_version": "20261116133438",
+      "staging_migration_name": "team_skills_checkin_hospitality_guard_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116091000_team_skills_checkin_closed_status_first.sql",
+      "staging_version": "20261116134235",
+      "staging_migration_name": "team_skills_checkin_closed_status_first_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116092000_team_skills_keeper_station_team_conflicts.sql",
+      "staging_version": "20261116134643",
+      "staging_migration_name": "team_skills_keeper_station_team_conflicts_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116093000_team_skills_automatic_waitlist_registration.sql",
+      "staging_version": "20261116140001",
+      "staging_migration_name": "team_skills_automatic_waitlist_registration_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116094000_team_skills_waitlist_promotion_capacity.sql",
+      "staging_version": "20261116140149",
+      "staging_migration_name": "team_skills_waitlist_promotion_capacity_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116095000_team_skills_registration_receipt_notification.sql",
+      "staging_version": "20261116143324",
+      "staging_migration_name": "team_skills_registration_receipt_notification_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116096000_team_skills_hospitality_approved_only.sql",
+      "staging_version": "20261116143929",
+      "staging_migration_name": "team_skills_hospitality_approved_only_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116097000_team_skills_views_select_only.sql",
+      "staging_version": "20261116144238",
+      "staging_migration_name": "team_skills_views_select_only_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116098000_team_skills_champion_finality.sql",
+      "staging_version": "20261116145347",
+      "staging_migration_name": "team_skills_champion_finality_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116099000_team_skills_champion_finality_uuid_fix.sql",
+      "staging_version": "20261116145900",
+      "staging_migration_name": "team_skills_champion_finality_uuid_fix_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116100000_team_skills_registration_withdrawal.sql",
+      "staging_version": "20261116162452",
+      "staging_migration_name": "team_skills_registration_withdrawal_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116101000_team_skills_captain_pending_withdrawal.sql",
+      "staging_version": "20261116151313",
+      "staging_migration_name": "team_skills_captain_pending_withdrawal_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116102000_team_skills_waitlist_review_capacity.sql",
+      "staging_version": "20261116162920",
+      "staging_migration_name": "team_skills_waitlist_review_capacity_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116103000_team_skills_withdraw_compatibility.sql",
+      "staging_version": "20261116164440",
+      "staging_migration_name": "team_skills_withdraw_compatibility_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116104000_team_skills_review_current_roster_guard.sql",
+      "staging_version": "20261116165434",
+      "staging_migration_name": "team_skills_review_current_roster_guard_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116105000_team_skills_withdrawal_receipt_notification.sql",
+      "staging_version": "20261116170103",
+      "staging_migration_name": "team_skills_withdrawal_receipt_notification_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116106000_team_skills_preapproval_roster_corrections.sql",
+      "staging_version": "20261116170755",
+      "staging_migration_name": "team_skills_preapproval_roster_corrections_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116163000_team_skills_notifications_realtime_staging.sql",
+      "staging_version": "20261116150557",
+      "staging_migration_name": "team_skills_notifications_realtime_staging_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261116164000_team_skills_blocked_captain_roster_guard.sql",
+      "staging_version": "20261116151450",
+      "staging_migration_name": "team_skills_blocked_captain_roster_guard_20261116"
+    },
+    {
+      "local_file": "supabase/migrations/20261117020000_team_skills_reject_score_audited.sql",
+      "staging_version": "20261117011700",
+      "staging_migration_name": "team_skills_reject_score_audited_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117021000_team_skills_knockout_penalty_tie_break.sql",
+      "staging_version": "20261117013105",
+      "staging_migration_name": "team_skills_knockout_penalty_tie_break_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117022000_team_skills_knockout_safe_regeneration.sql",
+      "staging_version": "20261117013112",
+      "staging_migration_name": "team_skills_knockout_safe_regeneration_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117023000_team_skills_registration_governorate_guard.sql",
+      "staging_version": "20261117023518",
+      "staging_migration_name": "team_skills_registration_governorate_guard_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117024000_team_skills_create_cup_stadium_governorate_guard.sql",
+      "staging_version": "20261117025416",
+      "staging_migration_name": "team_skills_create_cup_stadium_governorate_guard_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117033000_team_skills_award_notification_active_roster_guard.sql",
+      "staging_version": "20261117032927",
+      "staging_migration_name": "team_skills_award_notification_active_roster_guard_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117061000_team_skills_approved_phase_score_notification.sql",
+      "staging_version": "20261117035855",
+      "staging_migration_name": "team_skills_approved_phase_score_notification_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261117062000_team_skills_knockout_approved_advancement_notification.sql",
+      "staging_version": "20261117035859",
+      "staging_migration_name": "team_skills_knockout_approved_advancement_notification_20261117"
+    },
+    {
+      "local_file": "supabase/migrations/20261118150000_team_skills_dynamic_phase_finality.sql",
+      "staging_version": "20261118153330",
+      "staging_migration_name": "team_skills_dynamic_phase_finality"
+    },
+    {
+      "local_file": "supabase/migrations/20261118151000_team_skills_server_finality_gates.sql",
+      "staging_version": "20261118154934",
+      "staging_migration_name": "team_skills_server_finality_gates"
+    }
+  ],
+  "unapplied_source_files": []
+}

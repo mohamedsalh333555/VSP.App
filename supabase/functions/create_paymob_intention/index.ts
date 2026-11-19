@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { isPersistedPaymobOrder } from "../_shared/paymob_order_binding.ts";
 
 declare const Deno: any;
 
@@ -378,7 +379,8 @@ serve(async (req: Request) => {
     const intentionData = await intentionRes.json();
 
     if (!intentionRes.ok) {
-      console.error("❌ Paymob Intention API Error:", intentionData);
+      // Provider error bodies may echo customer billing details or tokens.
+      console.error("Paymob intention creation failed", { httpStatus: intentionRes.status });
       return new Response(
         JSON.stringify({ error: "Failed to generate Paymob checkout session" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -399,50 +401,63 @@ serve(async (req: Request) => {
     }
 
     const persistPaymobOrder = async () => {
+      let bindingCompleted = false;
+      const requireBinding = (result: unknown) => {
+        if (!isPersistedPaymobOrder(result, intentionOrderId)) {
+          throw new Error("Paymob order correlation not persisted");
+        }
+        bindingCompleted = true;
+      };
       if (isOwnerSubscription) {
-        const { error } = await supabase.from("owner_subscription_orders").update({ paymob_order_id: intentionOrderId }).eq("id", String(subscription_order_id)).eq("owner_id", callerUser.id).eq("status", "pending");
-        if (error) throw error;
+        const binding = await supabase.from("owner_subscription_orders").update({ paymob_order_id: intentionOrderId }).eq("id", String(subscription_order_id)).eq("owner_id", callerUser.id).eq("status", "pending").select("id, paymob_order_id").maybeSingle();
+        requireBinding(binding);
       } else if (is_tournament_payment && typeof booking_id === "string") {
         if (booking_id.startsWith("TOURN_1V1_")) {
-          const { error } = await supabase
+          const binding = await supabase
             .from("vsp_1v1_tournament_orders")
             .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
             .eq("order_reference", booking_id)
             .eq("user_id", callerUser.id)
-            .eq("payment_status", "pending");
-          if (error) throw error;
+            .eq("payment_status", "pending")
+            .select("id, paymob_order_id").maybeSingle();
+          requireBinding(binding);
         } else if (booking_id.startsWith("LEAGUE_")) {
-          const { error } = await supabase
+          const binding = await supabase
             .from("team_league_payments")
             .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
             .eq("order_reference", booking_id)
             .eq("user_id", callerUser.id)
-            .eq("payment_status", "pending");
-          if (error) throw error;
+            .eq("payment_status", "pending")
+            .select("id, paymob_order_id").maybeSingle();
+          requireBinding(binding);
         } else if (booking_id.startsWith("TOURN_")) {
-          const { error } = await supabase
+          const binding = await supabase
             .from("tournament_orders")
             .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
             .eq("order_reference", booking_id)
             .eq("captain_user_id", callerUser.id)
-            .eq("payment_status", "pending");
-          if (error) throw error;
+            .eq("payment_status", "pending")
+            .select("id, paymob_order_id").maybeSingle();
+          requireBinding(binding);
         }
       } else if (!is_tournament_payment && booking_id && !booking_id.startsWith("mock_")) {
-        const { error } = await supabase
+        const binding = await supabase
           .from("bookings")
           .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
           .eq("id", booking_id)
           .eq("status", "pending")
-          .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`);
-        if (error) throw error;
+          .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`)
+          .select("id, paymob_order_id").maybeSingle();
+        requireBinding(binding);
       }
+      if (!bindingCompleted) throw new Error("Unsupported payment order correlation");
     };
 
     try {
       await persistPaymobOrder();
     } catch (persistError) {
-      console.error("Failed to persist Paymob order correlation:", persistError);
+      // Database errors may contain identifiers, SQL or sensitive metadata.
+      console.error("Failed to persist Paymob order correlation");
       return new Response(
         JSON.stringify({ error: "Failed to persist secure payment correlation" }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -473,9 +488,12 @@ serve(async (req: Request) => {
       }
     );
   } catch (err: any) {
-    console.error("Unhandled error in create_paymob_intention:", err);
+    // Do not forward internal/third-party exception messages to Flutter.
+    console.error("Unhandled error in create_paymob_intention", {
+      reason: err instanceof Error ? err.name : "unknown",
+    });
     return new Response(
-      JSON.stringify({ error: err?.message || String(err) }),
+      JSON.stringify({ error: "Unable to create a payment session" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

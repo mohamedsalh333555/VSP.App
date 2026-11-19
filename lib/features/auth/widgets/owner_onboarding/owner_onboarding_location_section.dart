@@ -36,9 +36,12 @@ class OwnerOnboardingLocationSection extends StatelessWidget {
             if (isFetchingLocation)
               const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
             else
-              GestureDetector(
-                onTap: onAutoDetectTapped,
-                child: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
+              IconButton(
+                onPressed: onAutoDetectTapped,
+                tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'تحديد الموقع تلقائياً' : 'Detect location automatically',
+                constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+                padding: EdgeInsets.zero,
+                icon: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
               ),
           ],
         ),
@@ -82,7 +85,7 @@ class OwnerOnboardingLocationSection extends StatelessWidget {
               items: govs
                   .map<DropdownMenuItem<String>>((v) => DropdownMenuItem<String>(
                         value: v,
-                        child: Text(v, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                        child: Text(v, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white)),
                       ))
                   .toList(),
             ),

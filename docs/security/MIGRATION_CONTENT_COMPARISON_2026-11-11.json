@@ -1,0 +1,2698 @@
+{
+  "scope": "forward SQL files; exact bytes and all pairwise line comparisons",
+  "forward_files": 314,
+  "distinct_versions": 254,
+  "excluded_rollback_files": [
+    "202608110001_rls_security_audit.rollback.sql",
+    "202608110002_auto_expire_pending_bookings.rollback.sql",
+    "202608110003_operational_night_shifts.rollback.sql",
+    "202608110005_pgmq_notifications_queue.rollback.sql",
+    "202608110006_auto_approve_matches.rollback.sql",
+    "202608110008_database_indexes.rollback.sql",
+    "202608110009_rate_limiting.rollback.sql",
+    "202608110010_pro_analytics_materialized_views.rollback.sql"
+  ],
+  "unversioned_files": [],
+  "collision_groups": [
+    {
+      "version": "20260823",
+      "files": [
+        {
+          "file": "20260823_chat_and_user_security_patch.sql",
+          "bytes": 2680,
+          "sha256": "62c8d5094c4b9f8e22ff57e82d563eede91c4edc02f1dc63bebf8f0c2fd8830d",
+          "lines": 61
+        },
+        {
+          "file": "20260823_final_audit_remediation_patch.sql",
+          "bytes": 10653,
+          "sha256": "f1ca2f66b6cea3b8f4d7420b5e864c4384423391401ac8b71d2d8fbda87aa7c5",
+          "lines": 281
+        },
+        {
+          "file": "20260823_final_consolidated_production_master.sql",
+          "bytes": 23818,
+          "sha256": "34ede022a4b20a2e0bd60f65bf573ecdd7a2ebbb1e77caf5dfd34bb16e014d49",
+          "lines": 657
+        },
+        {
+          "file": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "bytes": 6986,
+          "sha256": "3154e2a33a65c0f61f3c5109f3892383931a7a430a5f09ecd788880a6b5ce478",
+          "lines": 201
+        },
+        {
+          "file": "20260823_live_match_radar_performance.sql",
+          "bytes": 881,
+          "sha256": "8816abd666e0d2074ff853a45470d6bdc3dae8bc1c3421e8d4ee715bea88cb85",
+          "lines": 15
+        },
+        {
+          "file": "20260823_master_supabase_production_patch.sql",
+          "bytes": 13520,
+          "sha256": "9b632af2bff75f9ea9a9358d416ad806fc98a29bfe98697af19756f48a31ae27",
+          "lines": 357
+        },
+        {
+          "file": "20260823_owner_bookings_atomic_hardening.sql",
+          "bytes": 7401,
+          "sha256": "dd485330604091afef1228043956f4bd0e5f75dbf4780ad3b5278427babb3574",
+          "lines": 235
+        },
+        {
+          "file": "20260823_owner_payout_settlement_hardening.sql",
+          "bytes": 4597,
+          "sha256": "9c15752b5f0cfaa43a3ae6185ec56e3f04bbf092e29a315c6da14b913512729e",
+          "lines": 132
+        },
+        {
+          "file": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "bytes": 3579,
+          "sha256": "40f2bd5e7fee6440a3bed74b12760e1de19b2565b8e222d992e46ca368cbcac3",
+          "lines": 95
+        },
+        {
+          "file": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "bytes": 6812,
+          "sha256": "183df1f5818dcca6aeb9da28f6ee04ecef87e5201075dcf8ca1ea5715cc8e54d",
+          "lines": 180
+        },
+        {
+          "file": "20260823_pass2_performance_and_indexes.sql",
+          "bytes": 4120,
+          "sha256": "ae7bcd09ec7a3bf77896b0812899fad97fb34f8c0536dc34d925ce5b768783ae",
+          "lines": 69
+        },
+        {
+          "file": "20260823_pass2_security_and_performance_hardening.sql",
+          "bytes": 14624,
+          "sha256": "c05a143214c9941f7e292b2f73708e37ab8965a53e0831f259d206de6ceabcfd",
+          "lines": 353
+        },
+        {
+          "file": "20260823_pass2_security_and_rls_hardening.sql",
+          "bytes": 21541,
+          "sha256": "de08ecd9df72ddadfe87c7c191002f5ae69c171f49147e06d6b40e091372c10e",
+          "lines": 563
+        },
+        {
+          "file": "20260823_performance_and_scalability.sql",
+          "bytes": 1516,
+          "sha256": "1ceab2b36c8fa50b921e3479eb8df5c184838b65bdc45494adfe57b882cf3d92",
+          "lines": 30
+        },
+        {
+          "file": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "bytes": 7813,
+          "sha256": "d82b8da6b35df4d93fb15818eaee5d9f99be4d0ddce40de1dc7599b79e0339c9",
+          "lines": 240
+        },
+        {
+          "file": "20260823_production_security_and_performance_master.sql",
+          "bytes": 10768,
+          "sha256": "1ddd7d8a49fea4de344d1e2ae28ea4e397958ec7ef8e1db9d9d46faf8a7dd7fb",
+          "lines": 276
+        },
+        {
+          "file": "20260823_security_integrity_and_concurrency.sql",
+          "bytes": 8088,
+          "sha256": "b49507bf9f7320058b8f156f22046bac79cf6aa348275a93ae39d6beae2ddeed",
+          "lines": 223
+        },
+        {
+          "file": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "bytes": 5662,
+          "sha256": "b60747c597b4fe2f1d49d6014c4476da0b2918e12e8eb5538c8f281444d442b2",
+          "lines": 139
+        },
+        {
+          "file": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "bytes": 5483,
+          "sha256": "13ebc7b2b07a40fb6fe3203e9e990b847e292ffa6204a14736049f35679e1184",
+          "lines": 145
+        },
+        {
+          "file": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "bytes": 12125,
+          "sha256": "d7ba70fcfd19a340e80613f3475ad90bbb6e93ad242276609f603c589b4e4e14",
+          "lines": 308
+        },
+        {
+          "file": "20260823_vsp_production_unified_patch.sql",
+          "bytes": 10710,
+          "sha256": "94d1d5f0d61b7f2fd6c53472712635c136898c17b47c1df7db75baff0c46b90a",
+          "lines": 306
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_final_audit_remediation_patch.sql",
+          "byte_identical": false,
+          "added_lines": 267,
+          "removed_lines": 47
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_final_consolidated_production_master.sql",
+          "byte_identical": false,
+          "added_lines": 643,
+          "removed_lines": 47
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 189,
+          "removed_lines": 49
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_live_match_radar_performance.sql",
+          "byte_identical": false,
+          "added_lines": 11,
+          "removed_lines": 57
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_master_supabase_production_patch.sql",
+          "byte_identical": false,
+          "added_lines": 339,
+          "removed_lines": 43
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_owner_bookings_atomic_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 224,
+          "removed_lines": 50
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_owner_payout_settlement_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 125,
+          "removed_lines": 54
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "byte_identical": false,
+          "added_lines": 88,
+          "removed_lines": 54
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 169,
+          "removed_lines": 50
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 63,
+          "removed_lines": 55
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 340,
+          "removed_lines": 48
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 548,
+          "removed_lines": 46
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 24,
+          "removed_lines": 55
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 229,
+          "removed_lines": 50
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 261,
+          "removed_lines": 46
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 203,
+          "removed_lines": 41
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 132,
+          "removed_lines": 54
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 134,
+          "removed_lines": 50
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 294,
+          "removed_lines": 47
+        },
+        {
+          "left": "20260823_chat_and_user_security_patch.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 292,
+          "removed_lines": 47
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_final_consolidated_production_master.sql",
+          "byte_identical": false,
+          "added_lines": 580,
+          "removed_lines": 204
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 149,
+          "removed_lines": 229
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_live_match_radar_performance.sql",
+          "byte_identical": false,
+          "added_lines": 10,
+          "removed_lines": 276
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_master_supabase_production_patch.sql",
+          "byte_identical": false,
+          "added_lines": 264,
+          "removed_lines": 188
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_owner_bookings_atomic_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 178,
+          "removed_lines": 224
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_owner_payout_settlement_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 63,
+          "removed_lines": 212
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "byte_identical": false,
+          "added_lines": 59,
+          "removed_lines": 245
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 154,
+          "removed_lines": 255
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 51,
+          "removed_lines": 263
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 277,
+          "removed_lines": 205
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 494,
+          "removed_lines": 212
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 22,
+          "removed_lines": 273
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 180,
+          "removed_lines": 221
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 229,
+          "removed_lines": 234
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 215,
+          "removed_lines": 273
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 110,
+          "removed_lines": 252
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 93,
+          "removed_lines": 229
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 171,
+          "removed_lines": 144
+        },
+        {
+          "left": "20260823_final_audit_remediation_patch.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 234,
+          "removed_lines": 209
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 153,
+          "removed_lines": 609
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_live_match_radar_performance.sql",
+          "byte_identical": false,
+          "added_lines": 11,
+          "removed_lines": 653
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_master_supabase_production_patch.sql",
+          "byte_identical": false,
+          "added_lines": 308,
+          "removed_lines": 608
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_owner_bookings_atomic_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 183,
+          "removed_lines": 605
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_owner_payout_settlement_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 94,
+          "removed_lines": 619
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "byte_identical": false,
+          "added_lines": 59,
+          "removed_lines": 621
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 148,
+          "removed_lines": 625
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 52,
+          "removed_lines": 640
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 302,
+          "removed_lines": 606
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 491,
+          "removed_lines": 585
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 22,
+          "removed_lines": 649
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 182,
+          "removed_lines": 599
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 225,
+          "removed_lines": 606
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 196,
+          "removed_lines": 630
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 101,
+          "removed_lines": 619
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 101,
+          "removed_lines": 613
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 241,
+          "removed_lines": 590
+        },
+        {
+          "left": "20260823_final_consolidated_production_master.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 188,
+          "removed_lines": 539
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_live_match_radar_performance.sql",
+          "byte_identical": false,
+          "added_lines": 10,
+          "removed_lines": 196
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_master_supabase_production_patch.sql",
+          "byte_identical": false,
+          "added_lines": 287,
+          "removed_lines": 131
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_owner_bookings_atomic_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 191,
+          "removed_lines": 157
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_owner_payout_settlement_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 104,
+          "removed_lines": 173
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "byte_identical": false,
+          "added_lines": 67,
+          "removed_lines": 173
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 153,
+          "removed_lines": 174
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 55,
+          "removed_lines": 187
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 305,
+          "removed_lines": 153
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 530,
+          "removed_lines": 168
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 22,
+          "removed_lines": 193
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 196,
+          "removed_lines": 157
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 234,
+          "removed_lines": 159
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 197,
+          "removed_lines": 175
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 95,
+          "removed_lines": 157
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 104,
+          "removed_lines": 160
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 249,
+          "removed_lines": 142
+        },
+        {
+          "left": "20260823_google_auth_and_user_trigger_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 268,
+          "removed_lines": 163
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_master_supabase_production_patch.sql",
+          "byte_identical": false,
+          "added_lines": 353,
+          "removed_lines": 11
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_owner_bookings_atomic_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 230,
+          "removed_lines": 10
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_owner_payout_settlement_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 127,
+          "removed_lines": 10
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "byte_identical": false,
+          "added_lines": 90,
+          "removed_lines": 10
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 178,
+          "removed_lines": 13
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 67,
+          "removed_lines": 13
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 349,
+          "removed_lines": 11
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 561,
+          "removed_lines": 13
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 28,
+          "removed_lines": 13
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 235,
+          "removed_lines": 10
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 272,
+          "removed_lines": 11
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 221,
+          "removed_lines": 13
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 134,
+          "removed_lines": 10
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 140,
+          "removed_lines": 10
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 303,
+          "removed_lines": 10
+        },
+        {
+          "left": "20260823_live_match_radar_performance.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 302,
+          "removed_lines": 11
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_owner_bookings_atomic_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 197,
+          "removed_lines": 319
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_owner_payout_settlement_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 95,
+          "removed_lines": 320
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "byte_identical": false,
+          "added_lines": 66,
+          "removed_lines": 328
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 146,
+          "removed_lines": 323
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 50,
+          "removed_lines": 338
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 314,
+          "removed_lines": 318
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 435,
+          "removed_lines": 229
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 21,
+          "removed_lines": 348
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 202,
+          "removed_lines": 319
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 120,
+          "removed_lines": 201
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 160,
+          "removed_lines": 294
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 96,
+          "removed_lines": 314
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 102,
+          "removed_lines": 314
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 208,
+          "removed_lines": 257
+        },
+        {
+          "left": "20260823_master_supabase_production_patch.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 269,
+          "removed_lines": 320
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_owner_payout_settlement_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 86,
+          "removed_lines": 189
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "byte_identical": false,
+          "added_lines": 54,
+          "removed_lines": 194
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 155,
+          "removed_lines": 210
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 49,
+          "removed_lines": 215
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 297,
+          "removed_lines": 179
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 512,
+          "removed_lines": 184
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 22,
+          "removed_lines": 227
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 122,
+          "removed_lines": 117
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 244,
+          "removed_lines": 203
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 207,
+          "removed_lines": 219
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 107,
+          "removed_lines": 203
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 88,
+          "removed_lines": 178
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 247,
+          "removed_lines": 174
+        },
+        {
+          "left": "20260823_owner_bookings_atomic_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 250,
+          "removed_lines": 179
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "byte_identical": false,
+          "added_lines": 50,
+          "removed_lines": 87
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 167,
+          "removed_lines": 119
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 53,
+          "removed_lines": 116
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 315,
+          "removed_lines": 94
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 529,
+          "removed_lines": 98
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 22,
+          "removed_lines": 124
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 187,
+          "removed_lines": 79
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 259,
+          "removed_lines": 115
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 207,
+          "removed_lines": 116
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 108,
+          "removed_lines": 101
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 113,
+          "removed_lines": 100
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 255,
+          "removed_lines": 79
+        },
+        {
+          "left": "20260823_owner_payout_settlement_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 274,
+          "removed_lines": 100
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 167,
+          "removed_lines": 82
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 56,
+          "removed_lines": 82
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 321,
+          "removed_lines": 63
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 533,
+          "removed_lines": 65
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 22,
+          "removed_lines": 87
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 193,
+          "removed_lines": 48
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 259,
+          "removed_lines": 78
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 210,
+          "removed_lines": 82
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 108,
+          "removed_lines": 64
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 113,
+          "removed_lines": 63
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 271,
+          "removed_lines": 58
+        },
+        {
+          "left": "20260823_owner_subscription_and_upgrade_rpc.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 280,
+          "removed_lines": 69
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_pass2_performance_and_indexes.sql",
+          "byte_identical": false,
+          "added_lines": 50,
+          "removed_lines": 161
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 319,
+          "removed_lines": 146
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 515,
+          "removed_lines": 132
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 18,
+          "removed_lines": 168
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 216,
+          "removed_lines": 156
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 243,
+          "removed_lines": 147
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 196,
+          "removed_lines": 153
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 117,
+          "removed_lines": 158
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 120,
+          "removed_lines": 155
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 278,
+          "removed_lines": 150
+        },
+        {
+          "left": "20260823_pass2_category1_database_and_security_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 281,
+          "removed_lines": 155
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_pass2_security_and_performance_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 334,
+          "removed_lines": 50
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 543,
+          "removed_lines": 49
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 20,
+          "removed_lines": 59
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 220,
+          "removed_lines": 49
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 257,
+          "removed_lines": 50
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 203,
+          "removed_lines": 49
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 126,
+          "removed_lines": 56
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 129,
+          "removed_lines": 53
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 293,
+          "removed_lines": 54
+        },
+        {
+          "left": "20260823_pass2_performance_and_indexes.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 289,
+          "removed_lines": 52
+        },
+        {
+          "left": "20260823_pass2_security_and_performance_hardening.sql",
+          "right": "20260823_pass2_security_and_rls_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 380,
+          "removed_lines": 170
+        },
+        {
+          "left": "20260823_pass2_security_and_performance_hardening.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 22,
+          "removed_lines": 345
+        },
+        {
+          "left": "20260823_pass2_security_and_performance_hardening.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 180,
+          "removed_lines": 293
+        },
+        {
+          "left": "20260823_pass2_security_and_performance_hardening.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 207,
+          "removed_lines": 284
+        },
+        {
+          "left": "20260823_pass2_security_and_performance_hardening.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 213,
+          "removed_lines": 343
+        },
+        {
+          "left": "20260823_pass2_security_and_performance_hardening.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 111,
+          "removed_lines": 325
+        },
+        {
+          "left": "20260823_pass2_security_and_performance_hardening.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 101,
+          "removed_lines": 309
+        },
+        {
+          "left": "20260823_pass2_security_and_performance_hardening.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 231,
+          "removed_lines": 276
+        },
+        {
+          "left": "20260823_pass2_security_and_performance_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 240,
+          "removed_lines": 287
+        },
+        {
+          "left": "20260823_pass2_security_and_rls_hardening.sql",
+          "right": "20260823_performance_and_scalability.sql",
+          "byte_identical": false,
+          "added_lines": 20,
+          "removed_lines": 553
+        },
+        {
+          "left": "20260823_pass2_security_and_rls_hardening.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 191,
+          "removed_lines": 514
+        },
+        {
+          "left": "20260823_pass2_security_and_rls_hardening.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 169,
+          "removed_lines": 456
+        },
+        {
+          "left": "20260823_pass2_security_and_rls_hardening.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 149,
+          "removed_lines": 489
+        },
+        {
+          "left": "20260823_pass2_security_and_rls_hardening.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 95,
+          "removed_lines": 519
+        },
+        {
+          "left": "20260823_pass2_security_and_rls_hardening.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 107,
+          "removed_lines": 525
+        },
+        {
+          "left": "20260823_pass2_security_and_rls_hardening.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 232,
+          "removed_lines": 487
+        },
+        {
+          "left": "20260823_pass2_security_and_rls_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 239,
+          "removed_lines": 496
+        },
+        {
+          "left": "20260823_performance_and_scalability.sql",
+          "right": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 232,
+          "removed_lines": 22
+        },
+        {
+          "left": "20260823_performance_and_scalability.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 268,
+          "removed_lines": 22
+        },
+        {
+          "left": "20260823_performance_and_scalability.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 213,
+          "removed_lines": 20
+        },
+        {
+          "left": "20260823_performance_and_scalability.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 131,
+          "removed_lines": 22
+        },
+        {
+          "left": "20260823_performance_and_scalability.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 137,
+          "removed_lines": 22
+        },
+        {
+          "left": "20260823_performance_and_scalability.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 300,
+          "removed_lines": 22
+        },
+        {
+          "left": "20260823_performance_and_scalability.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 298,
+          "removed_lines": 22
+        },
+        {
+          "left": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "right": "20260823_production_security_and_performance_master.sql",
+          "byte_identical": false,
+          "added_lines": 240,
+          "removed_lines": 204
+        },
+        {
+          "left": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 208,
+          "removed_lines": 225
+        },
+        {
+          "left": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 109,
+          "removed_lines": 210
+        },
+        {
+          "left": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 87,
+          "removed_lines": 182
+        },
+        {
+          "left": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 247,
+          "removed_lines": 179
+        },
+        {
+          "left": "20260823_player_booking_and_matchmaking_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 228,
+          "removed_lines": 162
+        },
+        {
+          "left": "20260823_production_security_and_performance_master.sql",
+          "right": "20260823_security_integrity_and_concurrency.sql",
+          "byte_identical": false,
+          "added_lines": 169,
+          "removed_lines": 222
+        },
+        {
+          "left": "20260823_production_security_and_performance_master.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 123,
+          "removed_lines": 260
+        },
+        {
+          "left": "20260823_production_security_and_performance_master.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 116,
+          "removed_lines": 247
+        },
+        {
+          "left": "20260823_production_security_and_performance_master.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 266,
+          "removed_lines": 234
+        },
+        {
+          "left": "20260823_production_security_and_performance_master.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 253,
+          "removed_lines": 223
+        },
+        {
+          "left": "20260823_security_integrity_and_concurrency.sql",
+          "right": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 118,
+          "removed_lines": 202
+        },
+        {
+          "left": "20260823_security_integrity_and_concurrency.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 135,
+          "removed_lines": 213
+        },
+        {
+          "left": "20260823_security_integrity_and_concurrency.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 276,
+          "removed_lines": 191
+        },
+        {
+          "left": "20260823_security_integrity_and_concurrency.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 288,
+          "removed_lines": 205
+        },
+        {
+          "left": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "right": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 113,
+          "removed_lines": 107
+        },
+        {
+          "left": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 270,
+          "removed_lines": 101
+        },
+        {
+          "left": "20260823_stadium_and_document_onboarding_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 283,
+          "removed_lines": 116
+        },
+        {
+          "left": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "right": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 267,
+          "removed_lines": 104
+        },
+        {
+          "left": "20260823_tournament_advancement_and_brackets_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 262,
+          "removed_lines": 101
+        },
+        {
+          "left": "20260823_tournament_payment_and_ledger_production_hardening.sql",
+          "right": "20260823_vsp_production_unified_patch.sql",
+          "byte_identical": false,
+          "added_lines": 228,
+          "removed_lines": 230
+        }
+      ]
+    },
+    {
+      "version": "20260824",
+      "files": [
+        {
+          "file": "20260824_atomic_slot_locking_5min.sql",
+          "bytes": 8821,
+          "sha256": "d4b1bc0f686c3e528aa77478830c1496b2188c337e2d3659241f28340c07d53c",
+          "lines": 219
+        },
+        {
+          "file": "20260824_auto_approve_challenge_matches_24h.sql",
+          "bytes": 3763,
+          "sha256": "d836115efcd9a7a3ded42c93b06540b63039e8d48446543ab7b148f8c0ef9b97",
+          "lines": 101
+        },
+        {
+          "file": "20260824_financial_audit_logs.sql",
+          "bytes": 1931,
+          "sha256": "e2605db7ffdb5259102353b687503bccabf3720e0aa8e79baf189ab49d4a187b",
+          "lines": 44
+        },
+        {
+          "file": "20260824_fix_handle_new_user_trigger.sql",
+          "bytes": 5715,
+          "sha256": "ca487873114c9dc8e7004d14125ef5f7a7b2f03930bd7810cd2175ffdcb03152",
+          "lines": 184
+        },
+        {
+          "file": "20260824_fix_users_rls_infinite_recursion.sql",
+          "bytes": 1741,
+          "sha256": "e01f39a885e032e32bd3fb328aeb4b912be00f1c41c15b0962a9cc72ddc34a8c",
+          "lines": 44
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260824_atomic_slot_locking_5min.sql",
+          "right": "20260824_auto_approve_challenge_matches_24h.sql",
+          "byte_identical": false,
+          "added_lines": 83,
+          "removed_lines": 201
+        },
+        {
+          "left": "20260824_atomic_slot_locking_5min.sql",
+          "right": "20260824_financial_audit_logs.sql",
+          "byte_identical": false,
+          "added_lines": 38,
+          "removed_lines": 213
+        },
+        {
+          "left": "20260824_atomic_slot_locking_5min.sql",
+          "right": "20260824_fix_handle_new_user_trigger.sql",
+          "byte_identical": false,
+          "added_lines": 162,
+          "removed_lines": 197
+        },
+        {
+          "left": "20260824_atomic_slot_locking_5min.sql",
+          "right": "20260824_fix_users_rls_infinite_recursion.sql",
+          "byte_identical": false,
+          "added_lines": 39,
+          "removed_lines": 214
+        },
+        {
+          "left": "20260824_auto_approve_challenge_matches_24h.sql",
+          "right": "20260824_financial_audit_logs.sql",
+          "byte_identical": false,
+          "added_lines": 38,
+          "removed_lines": 95
+        },
+        {
+          "left": "20260824_auto_approve_challenge_matches_24h.sql",
+          "right": "20260824_fix_handle_new_user_trigger.sql",
+          "byte_identical": false,
+          "added_lines": 170,
+          "removed_lines": 87
+        },
+        {
+          "left": "20260824_auto_approve_challenge_matches_24h.sql",
+          "right": "20260824_fix_users_rls_infinite_recursion.sql",
+          "byte_identical": false,
+          "added_lines": 37,
+          "removed_lines": 94
+        },
+        {
+          "left": "20260824_financial_audit_logs.sql",
+          "right": "20260824_fix_handle_new_user_trigger.sql",
+          "byte_identical": false,
+          "added_lines": 177,
+          "removed_lines": 37
+        },
+        {
+          "left": "20260824_financial_audit_logs.sql",
+          "right": "20260824_fix_users_rls_infinite_recursion.sql",
+          "byte_identical": false,
+          "added_lines": 38,
+          "removed_lines": 38
+        },
+        {
+          "left": "20260824_fix_handle_new_user_trigger.sql",
+          "right": "20260824_fix_users_rls_infinite_recursion.sql",
+          "byte_identical": false,
+          "added_lines": 38,
+          "removed_lines": 178
+        }
+      ]
+    },
+    {
+      "version": "20260826",
+      "files": [
+        {
+          "file": "20260826_backend_optimization_cleanup.sql",
+          "bytes": 999,
+          "sha256": "e30b1ec703ebdf676ec2cb13d02fc9ebf7aac8ebcb98251ca0aa647e13349171",
+          "lines": 25
+        },
+        {
+          "file": "20260826_fix_fcm_notification_trigger.sql",
+          "bytes": 947,
+          "sha256": "f7bb0f83826cd9ec0489a6fb55ef3051bb3bd772f1abc73e582d70e1765dbf20",
+          "lines": 33
+        },
+        {
+          "file": "20260826_fix_review_function.sql",
+          "bytes": 3192,
+          "sha256": "1c3e7c99a8037c35bf4bf4be2f22ab6deb219d03f83366418427a90d0194f63b",
+          "lines": 94
+        },
+        {
+          "file": "20260826_fix_users_infinite_recursion_rls.sql",
+          "bytes": 1444,
+          "sha256": "d0737be4b499fb4a1da40a6138b8bec7130a195521aec333312abb4a891bc842",
+          "lines": 41
+        },
+        {
+          "file": "20260826_fix_users_update_policy.sql",
+          "bytes": 473,
+          "sha256": "62c5b6817eda0cdfc6fc5f75cbb63030cc8e41423540fe669deb470941a8b13a",
+          "lines": 13
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260826_backend_optimization_cleanup.sql",
+          "right": "20260826_fix_fcm_notification_trigger.sql",
+          "byte_identical": false,
+          "added_lines": 31,
+          "removed_lines": 23
+        },
+        {
+          "left": "20260826_backend_optimization_cleanup.sql",
+          "right": "20260826_fix_review_function.sql",
+          "byte_identical": false,
+          "added_lines": 90,
+          "removed_lines": 21
+        },
+        {
+          "left": "20260826_backend_optimization_cleanup.sql",
+          "right": "20260826_fix_users_infinite_recursion_rls.sql",
+          "byte_identical": false,
+          "added_lines": 37,
+          "removed_lines": 21
+        },
+        {
+          "left": "20260826_backend_optimization_cleanup.sql",
+          "right": "20260826_fix_users_update_policy.sql",
+          "byte_identical": false,
+          "added_lines": 10,
+          "removed_lines": 22
+        },
+        {
+          "left": "20260826_fix_fcm_notification_trigger.sql",
+          "right": "20260826_fix_review_function.sql",
+          "byte_identical": false,
+          "added_lines": 85,
+          "removed_lines": 24
+        },
+        {
+          "left": "20260826_fix_fcm_notification_trigger.sql",
+          "right": "20260826_fix_users_infinite_recursion_rls.sql",
+          "byte_identical": false,
+          "added_lines": 40,
+          "removed_lines": 32
+        },
+        {
+          "left": "20260826_fix_fcm_notification_trigger.sql",
+          "right": "20260826_fix_users_update_policy.sql",
+          "byte_identical": false,
+          "added_lines": 12,
+          "removed_lines": 32
+        },
+        {
+          "left": "20260826_fix_review_function.sql",
+          "right": "20260826_fix_users_infinite_recursion_rls.sql",
+          "byte_identical": false,
+          "added_lines": 36,
+          "removed_lines": 89
+        },
+        {
+          "left": "20260826_fix_review_function.sql",
+          "right": "20260826_fix_users_update_policy.sql",
+          "byte_identical": false,
+          "added_lines": 10,
+          "removed_lines": 91
+        },
+        {
+          "left": "20260826_fix_users_infinite_recursion_rls.sql",
+          "right": "20260826_fix_users_update_policy.sql",
+          "byte_identical": false,
+          "added_lines": 6,
+          "removed_lines": 34
+        }
+      ]
+    },
+    {
+      "version": "20260829",
+      "files": [
+        {
+          "file": "20260829_comprehensive_security_definer_audit_and_hardening.sql",
+          "bytes": 14365,
+          "sha256": "d3051fc1fce07b39d5eed8fd6f0932dd5c44a5810fd99d737f66dbc16bcd5246",
+          "lines": 372
+        },
+        {
+          "file": "20260829_harden_admin_and_owner_dashboard.sql",
+          "bytes": 13067,
+          "sha256": "543d103128bcc228808489549639c9b0589750a31ae9a6759c2713577c222ada",
+          "lines": 357
+        },
+        {
+          "file": "20260829_harden_auth_roles_and_registration.sql",
+          "bytes": 11675,
+          "sha256": "40bdcbe73b22dc598850c5d4f834c0850b7badf09088fef9a8a3897ea066ea7c",
+          "lines": 335
+        },
+        {
+          "file": "20260829_harden_chat_and_notifications.sql",
+          "bytes": 2597,
+          "sha256": "52080918ca47d32da7308fdc2c96f27e0d5667eeb7a1b2993c4771f2d1387702",
+          "lines": 56
+        },
+        {
+          "file": "20260829_harden_create_booking_atomic_server_price.sql",
+          "bytes": 10107,
+          "sha256": "a7e794632e2d7e5ed7048f2116e63ec0612d7ec72388a469b03b5b3ab019609b",
+          "lines": 228
+        },
+        {
+          "file": "20260829_harden_tournaments_and_teams.sql",
+          "bytes": 14127,
+          "sha256": "66be460343e68a19c2308f2dcc914908105d247c8f8b28ba9a2dd47159b47679",
+          "lines": 341
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260829_comprehensive_security_definer_audit_and_hardening.sql",
+          "right": "20260829_harden_admin_and_owner_dashboard.sql",
+          "byte_identical": false,
+          "added_lines": 281,
+          "removed_lines": 296
+        },
+        {
+          "left": "20260829_comprehensive_security_definer_audit_and_hardening.sql",
+          "right": "20260829_harden_auth_roles_and_registration.sql",
+          "byte_identical": false,
+          "added_lines": 267,
+          "removed_lines": 304
+        },
+        {
+          "left": "20260829_comprehensive_security_definer_audit_and_hardening.sql",
+          "right": "20260829_harden_chat_and_notifications.sql",
+          "byte_identical": false,
+          "added_lines": 33,
+          "removed_lines": 349
+        },
+        {
+          "left": "20260829_comprehensive_security_definer_audit_and_hardening.sql",
+          "right": "20260829_harden_create_booking_atomic_server_price.sql",
+          "byte_identical": false,
+          "added_lines": 201,
+          "removed_lines": 345
+        },
+        {
+          "left": "20260829_comprehensive_security_definer_audit_and_hardening.sql",
+          "right": "20260829_harden_tournaments_and_teams.sql",
+          "byte_identical": false,
+          "added_lines": 219,
+          "removed_lines": 250
+        },
+        {
+          "left": "20260829_harden_admin_and_owner_dashboard.sql",
+          "right": "20260829_harden_auth_roles_and_registration.sql",
+          "byte_identical": false,
+          "added_lines": 266,
+          "removed_lines": 288
+        },
+        {
+          "left": "20260829_harden_admin_and_owner_dashboard.sql",
+          "right": "20260829_harden_chat_and_notifications.sql",
+          "byte_identical": false,
+          "added_lines": 33,
+          "removed_lines": 334
+        },
+        {
+          "left": "20260829_harden_admin_and_owner_dashboard.sql",
+          "right": "20260829_harden_create_booking_atomic_server_price.sql",
+          "byte_identical": false,
+          "added_lines": 199,
+          "removed_lines": 328
+        },
+        {
+          "left": "20260829_harden_admin_and_owner_dashboard.sql",
+          "right": "20260829_harden_tournaments_and_teams.sql",
+          "byte_identical": false,
+          "added_lines": 235,
+          "removed_lines": 251
+        },
+        {
+          "left": "20260829_harden_auth_roles_and_registration.sql",
+          "right": "20260829_harden_chat_and_notifications.sql",
+          "byte_identical": false,
+          "added_lines": 29,
+          "removed_lines": 308
+        },
+        {
+          "left": "20260829_harden_auth_roles_and_registration.sql",
+          "right": "20260829_harden_create_booking_atomic_server_price.sql",
+          "byte_identical": false,
+          "added_lines": 202,
+          "removed_lines": 309
+        },
+        {
+          "left": "20260829_harden_auth_roles_and_registration.sql",
+          "right": "20260829_harden_tournaments_and_teams.sql",
+          "byte_identical": false,
+          "added_lines": 266,
+          "removed_lines": 260
+        },
+        {
+          "left": "20260829_harden_chat_and_notifications.sql",
+          "right": "20260829_harden_create_booking_atomic_server_price.sql",
+          "byte_identical": false,
+          "added_lines": 209,
+          "removed_lines": 37
+        },
+        {
+          "left": "20260829_harden_chat_and_notifications.sql",
+          "right": "20260829_harden_tournaments_and_teams.sql",
+          "byte_identical": false,
+          "added_lines": 317,
+          "removed_lines": 32
+        },
+        {
+          "left": "20260829_harden_create_booking_atomic_server_price.sql",
+          "right": "20260829_harden_tournaments_and_teams.sql",
+          "byte_identical": false,
+          "added_lines": 303,
+          "removed_lines": 190
+        }
+      ]
+    },
+    {
+      "version": "20260831",
+      "files": [
+        {
+          "file": "20260831_add_foreign_key_indexes.sql",
+          "bytes": 1240,
+          "sha256": "5954fcab2646976c0b480797e63bcc3c47fb840287b9553e1ace0a584e3c8047",
+          "lines": 17
+        },
+        {
+          "file": "20260831_atomic_paymob_refund_hardening.sql",
+          "bytes": 5002,
+          "sha256": "00aedf77eef78b56dda39934d5457881f186e6fa670310035a52768085fd4e12",
+          "lines": 125
+        },
+        {
+          "file": "20260831_critical_cron_and_championship_deadline_fix.sql",
+          "bytes": 6745,
+          "sha256": "e823c788062f8b3269d2acd3ddbf56c60d87ff37666b84df0ab9fd80242ef2f4",
+          "lines": 171
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260831_add_foreign_key_indexes.sql",
+          "right": "20260831_atomic_paymob_refund_hardening.sql",
+          "byte_identical": false,
+          "added_lines": 123,
+          "removed_lines": 15
+        },
+        {
+          "left": "20260831_add_foreign_key_indexes.sql",
+          "right": "20260831_critical_cron_and_championship_deadline_fix.sql",
+          "byte_identical": false,
+          "added_lines": 168,
+          "removed_lines": 14
+        },
+        {
+          "left": "20260831_atomic_paymob_refund_hardening.sql",
+          "right": "20260831_critical_cron_and_championship_deadline_fix.sql",
+          "byte_identical": false,
+          "added_lines": 141,
+          "removed_lines": 95
+        }
+      ]
+    },
+    {
+      "version": "20260904",
+      "files": [
+        {
+          "file": "20260904_abort_incomplete_registration.sql",
+          "bytes": 2017,
+          "sha256": "ebe266a989de713629598b1e8f35df9a81251a1f2f353fbb37de36411a36256d",
+          "lines": 60
+        },
+        {
+          "file": "20260904_unify_verification_source_of_truth.sql",
+          "bytes": 2133,
+          "sha256": "1c82b3c84f5e9c17abe3d056e0d27b948aaac9af88c85ae6b684e444ad35c5b4",
+          "lines": 53
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260904_abort_incomplete_registration.sql",
+          "right": "20260904_unify_verification_source_of_truth.sql",
+          "byte_identical": false,
+          "added_lines": 36,
+          "removed_lines": 43
+        }
+      ]
+    },
+    {
+      "version": "20260905",
+      "files": [
+        {
+          "file": "20260905_fix_banners_and_stadiums_admin_rls.sql",
+          "bytes": 1022,
+          "sha256": "1a5da0eac3b4277c050c8c197d85afaa41a2c17500bd21a8cc8cd6b43f25605f",
+          "lines": 19
+        },
+        {
+          "file": "20260905_grant_admins_full_access_for_dashboard_rls.sql",
+          "bytes": 2246,
+          "sha256": "8ca39bb6213eb35a08d6419df80d848b8e2d5d5fbc9a17feae19df70c9dbab08",
+          "lines": 52
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260905_fix_banners_and_stadiums_admin_rls.sql",
+          "right": "20260905_grant_admins_full_access_for_dashboard_rls.sql",
+          "byte_identical": false,
+          "added_lines": 42,
+          "removed_lines": 9
+        }
+      ]
+    },
+    {
+      "version": "20260906",
+      "files": [
+        {
+          "file": "20260906_add_1v1_atomic_functions.sql",
+          "bytes": 17018,
+          "sha256": "225a9ceef42e085e9ef26cf7eea4d938c907543aadd6dce81c91af97295593f8",
+          "lines": 466
+        },
+        {
+          "file": "20260906_add_1v1_governorate_scoping.sql",
+          "bytes": 13308,
+          "sha256": "1af363b792f3823d51362fbbbcf852599bac2feefe1034bcfe15a240a627627c",
+          "lines": 358
+        },
+        {
+          "file": "20260906_add_1v1_paid_prize_pool_schema.sql",
+          "bytes": 3993,
+          "sha256": "1cadb9e4dee4bc3422d8c1d6534f065946a844fa033c1a78674fb6d1771e3d61",
+          "lines": 80
+        },
+        {
+          "file": "20260906_harden_1v1_players_rls_paid_only.sql",
+          "bytes": 992,
+          "sha256": "4c66a292ce99300a7576b6518c384e31a1b4e3092aa42d0675776cb79393d385",
+          "lines": 19
+        },
+        {
+          "file": "20260906_harden_1v1_tournament_lifecycle.sql",
+          "bytes": 14067,
+          "sha256": "5c17dc97761e59165c65c65e795460584f39845224b703b1f93edfd292d9c7ff",
+          "lines": 376
+        },
+        {
+          "file": "20260906_harden_championships_full_flow.sql",
+          "bytes": 27528,
+          "sha256": "3c0e60c67813267274d7f5f31f78c315815ffd1410608cbe349dbba0842a9a39",
+          "lines": 732
+        },
+        {
+          "file": "20260906_harden_tournament_atomic_refund_and_prize_pool.sql",
+          "bytes": 12050,
+          "sha256": "6d177b905b86de5a039ae9e2528d4db8bdd7745c1666d92ab13d2b4ed76f8f99",
+          "lines": 312
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260906_add_1v1_atomic_functions.sql",
+          "right": "20260906_add_1v1_governorate_scoping.sql",
+          "byte_identical": false,
+          "added_lines": 273,
+          "removed_lines": 381
+        },
+        {
+          "left": "20260906_add_1v1_atomic_functions.sql",
+          "right": "20260906_add_1v1_paid_prize_pool_schema.sql",
+          "byte_identical": false,
+          "added_lines": 69,
+          "removed_lines": 455
+        },
+        {
+          "left": "20260906_add_1v1_atomic_functions.sql",
+          "right": "20260906_harden_1v1_players_rls_paid_only.sql",
+          "byte_identical": false,
+          "added_lines": 15,
+          "removed_lines": 462
+        },
+        {
+          "left": "20260906_add_1v1_atomic_functions.sql",
+          "right": "20260906_harden_1v1_tournament_lifecycle.sql",
+          "byte_identical": false,
+          "added_lines": 270,
+          "removed_lines": 360
+        },
+        {
+          "left": "20260906_add_1v1_atomic_functions.sql",
+          "right": "20260906_harden_championships_full_flow.sql",
+          "byte_identical": false,
+          "added_lines": 588,
+          "removed_lines": 322
+        },
+        {
+          "left": "20260906_add_1v1_atomic_functions.sql",
+          "right": "20260906_harden_tournament_atomic_refund_and_prize_pool.sql",
+          "byte_identical": false,
+          "added_lines": 194,
+          "removed_lines": 348
+        },
+        {
+          "left": "20260906_add_1v1_governorate_scoping.sql",
+          "right": "20260906_add_1v1_paid_prize_pool_schema.sql",
+          "byte_identical": false,
+          "added_lines": 70,
+          "removed_lines": 348
+        },
+        {
+          "left": "20260906_add_1v1_governorate_scoping.sql",
+          "right": "20260906_harden_1v1_players_rls_paid_only.sql",
+          "byte_identical": false,
+          "added_lines": 15,
+          "removed_lines": 354
+        },
+        {
+          "left": "20260906_add_1v1_governorate_scoping.sql",
+          "right": "20260906_harden_1v1_tournament_lifecycle.sql",
+          "byte_identical": false,
+          "added_lines": 255,
+          "removed_lines": 237
+        },
+        {
+          "left": "20260906_add_1v1_governorate_scoping.sql",
+          "right": "20260906_harden_championships_full_flow.sql",
+          "byte_identical": false,
+          "added_lines": 649,
+          "removed_lines": 275
+        },
+        {
+          "left": "20260906_add_1v1_governorate_scoping.sql",
+          "right": "20260906_harden_tournament_atomic_refund_and_prize_pool.sql",
+          "byte_identical": false,
+          "added_lines": 276,
+          "removed_lines": 322
+        },
+        {
+          "left": "20260906_add_1v1_paid_prize_pool_schema.sql",
+          "right": "20260906_harden_1v1_players_rls_paid_only.sql",
+          "byte_identical": false,
+          "added_lines": 11,
+          "removed_lines": 72
+        },
+        {
+          "left": "20260906_add_1v1_paid_prize_pool_schema.sql",
+          "right": "20260906_harden_1v1_tournament_lifecycle.sql",
+          "byte_identical": false,
+          "added_lines": 354,
+          "removed_lines": 58
+        },
+        {
+          "left": "20260906_add_1v1_paid_prize_pool_schema.sql",
+          "right": "20260906_harden_championships_full_flow.sql",
+          "byte_identical": false,
+          "added_lines": 723,
+          "removed_lines": 71
+        },
+        {
+          "left": "20260906_add_1v1_paid_prize_pool_schema.sql",
+          "right": "20260906_harden_tournament_atomic_refund_and_prize_pool.sql",
+          "byte_identical": false,
+          "added_lines": 299,
+          "removed_lines": 67
+        },
+        {
+          "left": "20260906_harden_1v1_players_rls_paid_only.sql",
+          "right": "20260906_harden_1v1_tournament_lifecycle.sql",
+          "byte_identical": false,
+          "added_lines": 370,
+          "removed_lines": 13
+        },
+        {
+          "left": "20260906_harden_1v1_players_rls_paid_only.sql",
+          "right": "20260906_harden_championships_full_flow.sql",
+          "byte_identical": false,
+          "added_lines": 727,
+          "removed_lines": 14
+        },
+        {
+          "left": "20260906_harden_1v1_players_rls_paid_only.sql",
+          "right": "20260906_harden_tournament_atomic_refund_and_prize_pool.sql",
+          "byte_identical": false,
+          "added_lines": 308,
+          "removed_lines": 15
+        },
+        {
+          "left": "20260906_harden_1v1_tournament_lifecycle.sql",
+          "right": "20260906_harden_championships_full_flow.sql",
+          "byte_identical": false,
+          "added_lines": 627,
+          "removed_lines": 271
+        },
+        {
+          "left": "20260906_harden_1v1_tournament_lifecycle.sql",
+          "right": "20260906_harden_tournament_atomic_refund_and_prize_pool.sql",
+          "byte_identical": false,
+          "added_lines": 259,
+          "removed_lines": 323
+        },
+        {
+          "left": "20260906_harden_championships_full_flow.sql",
+          "right": "20260906_harden_tournament_atomic_refund_and_prize_pool.sql",
+          "byte_identical": false,
+          "added_lines": 161,
+          "removed_lines": 581
+        }
+      ]
+    },
+    {
+      "version": "20260907",
+      "files": [
+        {
+          "file": "20260907_phase1_financial_integrity_and_payouts.sql",
+          "bytes": 20172,
+          "sha256": "232db32e31cb54523a7ea99dcdda52cf9287475e743b5026f8d52ca12cae6d1f",
+          "lines": 490
+        },
+        {
+          "file": "20260907_phase2_and_3_audit_trail_and_debt_cleanup.sql",
+          "bytes": 6718,
+          "sha256": "c4243b7bc27451119fc507d4a8f39d45e001e9f20bb87afcb0d0cb15d90aabce",
+          "lines": 185
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260907_phase1_financial_integrity_and_payouts.sql",
+          "right": "20260907_phase2_and_3_audit_trail_and_debt_cleanup.sql",
+          "byte_identical": false,
+          "added_lines": 155,
+          "removed_lines": 460
+        }
+      ]
+    },
+    {
+      "version": "20260909",
+      "files": [
+        {
+          "file": "20260909_copilot_rate_limiting.sql",
+          "bytes": 2571,
+          "sha256": "658f33a7a05bd1a290ee24d20f45da5a2eaeffc7414ea46c014d4a9e84e7cd9b",
+          "lines": 74
+        },
+        {
+          "file": "20260909_harden_deposit_accounting_and_payouts.sql",
+          "bytes": 14654,
+          "sha256": "80c01b2b667b05a773c9e9d9e73ad917dd0d9d7af42fdabafb4fa1371423b6ad",
+          "lines": 380
+        },
+        {
+          "file": "20260909_phase96_harden_cron_cash_settlement_and_disputes.sql",
+          "bytes": 15865,
+          "sha256": "5ed4dde890a78798476e06ebb6e697739327ce9de9c61dd8445101fc4bcc7801",
+          "lines": 400
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260909_copilot_rate_limiting.sql",
+          "right": "20260909_harden_deposit_accounting_and_payouts.sql",
+          "byte_identical": false,
+          "added_lines": 360,
+          "removed_lines": 54
+        },
+        {
+          "left": "20260909_copilot_rate_limiting.sql",
+          "right": "20260909_phase96_harden_cron_cash_settlement_and_disputes.sql",
+          "byte_identical": false,
+          "added_lines": 377,
+          "removed_lines": 51
+        },
+        {
+          "left": "20260909_harden_deposit_accounting_and_payouts.sql",
+          "right": "20260909_phase96_harden_cron_cash_settlement_and_disputes.sql",
+          "byte_identical": false,
+          "added_lines": 361,
+          "removed_lines": 341
+        }
+      ]
+    },
+    {
+      "version": "20260912",
+      "files": [
+        {
+          "file": "20260912_align_cancellation_to_6_hours.sql",
+          "bytes": 4564,
+          "sha256": "cb25add67ea5f39d565f8e45acd83caacfb4c1b19a6c485ebbccdad361067179",
+          "lines": 104
+        },
+        {
+          "file": "20260912_revoke_anon_and_harden_critical_rpcs.sql",
+          "bytes": 5957,
+          "sha256": "7c9157a92888930ccd9e0bd022e456a7d66baf9e3b7127baa1c7dce031f26eec",
+          "lines": 64
+        },
+        {
+          "file": "20260912_smart_refund_view_and_schema.sql",
+          "bytes": 2930,
+          "sha256": "8dbecaef1108f76dd857d5813818f87e5f68a0b9747a4ed90a66c9209deea44f",
+          "lines": 76
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260912_align_cancellation_to_6_hours.sql",
+          "right": "20260912_revoke_anon_and_harden_critical_rpcs.sql",
+          "byte_identical": false,
+          "added_lines": 60,
+          "removed_lines": 100
+        },
+        {
+          "left": "20260912_align_cancellation_to_6_hours.sql",
+          "right": "20260912_smart_refund_view_and_schema.sql",
+          "byte_identical": false,
+          "added_lines": 67,
+          "removed_lines": 95
+        },
+        {
+          "left": "20260912_revoke_anon_and_harden_critical_rpcs.sql",
+          "right": "20260912_smart_refund_view_and_schema.sql",
+          "byte_identical": false,
+          "added_lines": 72,
+          "removed_lines": 60
+        }
+      ]
+    },
+    {
+      "version": "20260914",
+      "files": [
+        {
+          "file": "20260914_enforce_stadium_subscription_limits.sql",
+          "bytes": 2879,
+          "sha256": "adb0656d8c4444dd068e69833a4f7071f4ec7152441e85eea53f9a40bc7da1a7",
+          "lines": 82
+        },
+        {
+          "file": "20260914_fix_confirm_cash_booking_atomic.sql",
+          "bytes": 3645,
+          "sha256": "8e44960271a37a041c234380b378450085a4dbe979842b817d206dd8aeea3a5e",
+          "lines": 87
+        },
+        {
+          "file": "20260914_harden_owner_manual_booking_and_extend.sql",
+          "bytes": 7882,
+          "sha256": "51543c3088c17321c47a5394b4f877a885789cc18c83b17d393b7dc005b5af67",
+          "lines": 226
+        },
+        {
+          "file": "20260914_harden_refund_atomic_status.sql",
+          "bytes": 7378,
+          "sha256": "eb550817f1da72bb65aeebc5025937ff6f8d2acda64c5604408deeedc6127fc2",
+          "lines": 159
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260914_enforce_stadium_subscription_limits.sql",
+          "right": "20260914_fix_confirm_cash_booking_atomic.sql",
+          "byte_identical": false,
+          "added_lines": 74,
+          "removed_lines": 69
+        },
+        {
+          "left": "20260914_enforce_stadium_subscription_limits.sql",
+          "right": "20260914_harden_owner_manual_booking_and_extend.sql",
+          "byte_identical": false,
+          "added_lines": 207,
+          "removed_lines": 63
+        },
+        {
+          "left": "20260914_enforce_stadium_subscription_limits.sql",
+          "right": "20260914_harden_refund_atomic_status.sql",
+          "byte_identical": false,
+          "added_lines": 145,
+          "removed_lines": 68
+        },
+        {
+          "left": "20260914_fix_confirm_cash_booking_atomic.sql",
+          "right": "20260914_harden_owner_manual_booking_and_extend.sql",
+          "byte_identical": false,
+          "added_lines": 198,
+          "removed_lines": 59
+        },
+        {
+          "left": "20260914_fix_confirm_cash_booking_atomic.sql",
+          "right": "20260914_harden_refund_atomic_status.sql",
+          "byte_identical": false,
+          "added_lines": 134,
+          "removed_lines": 62
+        },
+        {
+          "left": "20260914_harden_owner_manual_booking_and_extend.sql",
+          "right": "20260914_harden_refund_atomic_status.sql",
+          "byte_identical": false,
+          "added_lines": 123,
+          "removed_lines": 190
+        }
+      ]
+    },
+    {
+      "version": "20260925292000",
+      "files": [
+        {
+          "file": "20260925292000_harden_legacy_tournament_refund.sql",
+          "bytes": 4108,
+          "sha256": "40b501dfcd72d02704c8a4ba588a9099a1031e5b581b56185166ebde707cd6c0",
+          "lines": 33
+        },
+        {
+          "file": "20260925292000_protect_booking_core_fields.sql",
+          "bytes": 2102,
+          "sha256": "78fcaaecb0241531767f113f8dce26005b9e9e20c0c201e705547c5edb149240",
+          "lines": 25
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260925292000_harden_legacy_tournament_refund.sql",
+          "right": "20260925292000_protect_booking_core_fields.sql",
+          "byte_identical": false,
+          "added_lines": 22,
+          "removed_lines": 30
+        }
+      ]
+    },
+    {
+      "version": "20260925293000",
+      "files": [
+        {
+          "file": "20260925293000_harden_cash_confirmation_atomic.sql",
+          "bytes": 4668,
+          "sha256": "9d6c2d04e0ad0ad22d398278efadac4a01d8c35499d55acdfe1d13a80a94ca58",
+          "lines": 38
+        },
+        {
+          "file": "20260925293000_harden_owner_manual_booking_update.sql",
+          "bytes": 4683,
+          "sha256": "5e0f35911790ef7e96c2b9892acd6a2a5816c26e173188f246066c23969a6aba",
+          "lines": 87
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260925293000_harden_cash_confirmation_atomic.sql",
+          "right": "20260925293000_harden_owner_manual_booking_update.sql",
+          "byte_identical": false,
+          "added_lines": 87,
+          "removed_lines": 38
+        }
+      ]
+    },
+    {
+      "version": "20260925296000",
+      "files": [
+        {
+          "file": "20260925296000_restore_admin_payout_rpc_execute.sql",
+          "bytes": 391,
+          "sha256": "7530cfec4a9dfb7cdacff23498de7b5f853cd0fbcc62d3120795b8f6e8b49bfc",
+          "lines": 4
+        },
+        {
+          "file": "20260925296000_secure_financial_record_reads.sql",
+          "bytes": 822,
+          "sha256": "ef724aadef6a7d46e832e4fdc5a25dd538a3bf769e9ea026dea333b3fae6d5d2",
+          "lines": 16
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260925296000_restore_admin_payout_rpc_execute.sql",
+          "right": "20260925296000_secure_financial_record_reads.sql",
+          "byte_identical": false,
+          "added_lines": 16,
+          "removed_lines": 4
+        }
+      ]
+    },
+    {
+      "version": "20260926040000",
+      "files": [
+        {
+          "file": "20260926040000_financial_ledger_cash_completion_coherence.sql",
+          "bytes": 5527,
+          "sha256": "58ebca873d82baaae5e74a09413940c4c69151d89d7c869a66f5f821511ac46b",
+          "lines": 82
+        },
+        {
+          "file": "20260926040000_harden_tournament_orders_rls.sql",
+          "bytes": 782,
+          "sha256": "ec09e7f107b8af542f01e83840c81ac485c3bb3ffb38de31a28c399df294f792",
+          "lines": 12
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260926040000_financial_ledger_cash_completion_coherence.sql",
+          "right": "20260926040000_harden_tournament_orders_rls.sql",
+          "byte_identical": false,
+          "added_lines": 12,
+          "removed_lines": 82
+        }
+      ]
+    },
+    {
+      "version": "20260926060000",
+      "files": [
+        {
+          "file": "20260926060000_fix_matchup_extra_team_fee_column_reference.sql",
+          "bytes": 3043,
+          "sha256": "db9dea654b40a1b16762217138c84fb9d28140d98d8422e4eb57e45858205c17",
+          "lines": 28
+        },
+        {
+          "file": "20260926060000_lock_direct_financial_mutations.sql",
+          "bytes": 365,
+          "sha256": "87e19b3ff2eac9ac9bec99faed14aba8714f4ff3ea01a00f2812dbdbeb2fc78a",
+          "lines": 4
+        },
+        {
+          "file": "20260926060000_lock_legacy_challenge_results.sql",
+          "bytes": 363,
+          "sha256": "000805d46adb08007ebb0d94f6ccf5477f03d849b8d465ce02bd3f04b701e786",
+          "lines": 5
+        },
+        {
+          "file": "20260926060000_remove_legacy_matchup_extra_team_fee.sql",
+          "bytes": 3261,
+          "sha256": "ff79fdeb40739ba6146c2380d48655c49c09281683eee5450b0f4cd2d207a93d",
+          "lines": 116
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260926060000_fix_matchup_extra_team_fee_column_reference.sql",
+          "right": "20260926060000_lock_direct_financial_mutations.sql",
+          "byte_identical": false,
+          "added_lines": 4,
+          "removed_lines": 28
+        },
+        {
+          "left": "20260926060000_fix_matchup_extra_team_fee_column_reference.sql",
+          "right": "20260926060000_lock_legacy_challenge_results.sql",
+          "byte_identical": false,
+          "added_lines": 5,
+          "removed_lines": 28
+        },
+        {
+          "left": "20260926060000_fix_matchup_extra_team_fee_column_reference.sql",
+          "right": "20260926060000_remove_legacy_matchup_extra_team_fee.sql",
+          "byte_identical": false,
+          "added_lines": 115,
+          "removed_lines": 27
+        },
+        {
+          "left": "20260926060000_lock_direct_financial_mutations.sql",
+          "right": "20260926060000_lock_legacy_challenge_results.sql",
+          "byte_identical": false,
+          "added_lines": 5,
+          "removed_lines": 4
+        },
+        {
+          "left": "20260926060000_lock_direct_financial_mutations.sql",
+          "right": "20260926060000_remove_legacy_matchup_extra_team_fee.sql",
+          "byte_identical": false,
+          "added_lines": 116,
+          "removed_lines": 4
+        },
+        {
+          "left": "20260926060000_lock_legacy_challenge_results.sql",
+          "right": "20260926060000_remove_legacy_matchup_extra_team_fee.sql",
+          "byte_identical": false,
+          "added_lines": 116,
+          "removed_lines": 5
+        }
+      ]
+    },
+    {
+      "version": "20260926170000",
+      "files": [
+        {
+          "file": "20260926170000_official_user_lifecycle_write_paths.sql",
+          "bytes": 212,
+          "sha256": "28cf63f0c7a69b898b9b0c1e5765c9c11c3a3bc66439efa67d374b4a14779715",
+          "lines": 3
+        },
+        {
+          "file": "20260926170000_tournament_registration_payment_gate.sql",
+          "bytes": 366,
+          "sha256": "de4063795cc7d62cce829e93e7b2f5f456f904ead5b9bf6c71200b6be4f96905",
+          "lines": 6
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20260926170000_official_user_lifecycle_write_paths.sql",
+          "right": "20260926170000_tournament_registration_payment_gate.sql",
+          "byte_identical": false,
+          "added_lines": 6,
+          "removed_lines": 3
+        }
+      ]
+    },
+    {
+      "version": "20261001110000",
+      "files": [
+        {
+          "file": "20261001110000_booking_journey_batch2_historical_gross_refund.sql",
+          "bytes": 24911,
+          "sha256": "0bf539ee9a38ef0b944650cdff5a4646e8c2b9bdbb0229e18744fc8af99f0a97",
+          "lines": 542
+        },
+        {
+          "file": "20261001110000_phase0_phase1_ssot_reconciliation_and_security.sql",
+          "bytes": 25917,
+          "sha256": "d144b7524a672e3de1da9e1b98d6ce959e0508c2c59e1bf93f1eeaca5e52b4fc",
+          "lines": 580
+        }
+      ],
+      "pairs": [
+        {
+          "left": "20261001110000_booking_journey_batch2_historical_gross_refund.sql",
+          "right": "20261001110000_phase0_phase1_ssot_reconciliation_and_security.sql",
+          "byte_identical": false,
+          "added_lines": 518,
+          "removed_lines": 480
+        }
+      ]
+    }
+  ],
+  "limits": "Textual differences are not SQL semantic equivalence, an execution plan, or evidence of applied migration history."
+}

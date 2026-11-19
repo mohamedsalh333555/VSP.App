@@ -1,0 +1,53 @@
+name: Team Captain Transfer Security Contract
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - '.github/workflows/team-captain-transfer-contract.yml'
+      - 'supabase/tests/team_captain_transfer_isolated_contract.sql'
+      - 'scripts/test_team_captain_transfer_concurrency.sh'
+  workflow_dispatch:
+
+concurrency:
+  group: captain-transfer-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  isolated-captain-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_DB: vsp_captain_transfer_isolated
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: vsp_ephemeral_ci_only
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: vsp_captain_transfer_isolated
+      PGUSER: postgres
+      PGPASSWORD: vsp_ephemeral_ci_only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse non-disposable database
+        run: |
+          test "$PGHOST" = "127.0.0.1"
+          test "$PGDATABASE" = "vsp_captain_transfer_isolated"
+          psql -X -v ON_ERROR_STOP=1 -Atc 'SELECT current_database()' | grep -Fx vsp_captain_transfer_isolated
+      - name: Test canonical captain transfer on isolated PostgreSQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/team_captain_transfer_isolated_contract.sql
+      - name: Test two independent concurrent captain-transfer calls
+        run: bash scripts/test_team_captain_transfer_concurrency.sh

@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import '../../../core/services/connectivity_service.dart';
+
 import 'package:flutter/material.dart';
 import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
@@ -20,11 +24,16 @@ export '../services/stadium_filter_sort_service.dart' show StadiumSortOption;
 class AllStadiumsScreen extends StatefulWidget {
   final String? initialGovernorate;
   final String? initialSearchQuery;
+  final Widget Function(Stadium)? detailsBuilder;
+  /// Observable connectivity, injectable for deterministic widget tests.
+  final ValueListenable<bool>? connectivityListenable;
 
   const AllStadiumsScreen({
     super.key,
     this.initialGovernorate,
     this.initialSearchQuery,
+    this.detailsBuilder,
+    this.connectivityListenable,
   });
 
   @override
@@ -37,10 +46,17 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
   String _selectedGovernorate = 'All';
   String _selectedFloorType = 'All';
   StadiumSortOption _sortOption = StadiumSortOption.featured;
+  Timer? _searchDebounce;
+  late ValueListenable<bool> _connectivity;
+  late bool _wasOnline;
 
   @override
   void initState() {
     super.initState();
+    _connectivity = widget.connectivityListenable ??
+        ConnectivityService.instance.isOnlineNotifier;
+    _wasOnline = _connectivity.value;
+    _connectivity.addListener(_onConnectivityChanged);
     if (widget.initialGovernorate != null && widget.initialGovernorate!.isNotEmpty) {
       _selectedGovernorate = widget.initialGovernorate!;
     }
@@ -51,24 +67,94 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
 
     // Refresh stadiums on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_connectivity.value) return;
       final provider = Provider.of<StadiumProvider>(context, listen: false);
-      provider.fetchStadiums(isRefresh: true);
+      _applyServerFilters(provider);
+    });
+  }
+
+  void _onConnectivityChanged() {
+    final nowOnline = _connectivity.value;
+    final recovered = !_wasOnline && nowOnline;
+    _wasOnline = nowOnline;
+    if (!recovered) return;
+    // The provider's generation ignores obsolete pre-disconnect responses.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_connectivity.value) return;
+      _refreshServerFilters(context.read<StadiumProvider>());
     });
   }
 
   @override
+  void didUpdateWidget(covariant AllStadiumsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.connectivityListenable == widget.connectivityListenable) return;
+    _connectivity.removeListener(_onConnectivityChanged);
+    _connectivity = widget.connectivityListenable ??
+        ConnectivityService.instance.isOnlineNotifier;
+    _wasOnline = _connectivity.value;
+    _connectivity.addListener(_onConnectivityChanged);
+  }
+
+  @override
   void dispose() {
+    _connectivity.removeListener(_onConnectivityChanged);
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  List<Stadium> _filterAndSortStadiums(List<Stadium> allStadiums) {
-    return StadiumFilterSortService.filterAndSortStadiums(
-      allStadiums: allStadiums,
-      selectedGovernorate: _selectedGovernorate,
-      selectedFloorType: _selectedFloorType,
+  void _scheduleSearch(String value) {
+    _searchDebounce?.cancel();
+    setState(() => _searchQuery = value);
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted || !_connectivity.value ||
+          value != _searchController.text) return;
+      _applyServerFilters(context.read<StadiumProvider>());
+    });
+  }
+
+  List<Stadium> _filterAndSortStadiums(List<Stadium> allStadiums) => allStadiums;
+
+  Map<String, dynamic> _serverFilterMap() => {
+    'sports': <String>[],
+    'location': _selectedGovernorate,
+    'sizes': <String>[],
+    'minPrice': 0.0,
+    'maxPrice': 0.0,
+    'noDepositOnly': false,
+    'amenities': <String>[],
+    'floorType': _selectedFloorType,
+    'searchQuery': _searchQuery,
+    'sortBy': _sortOption.name,
+  };
+
+  void _applyServerFilters(StadiumProvider provider, {bool isRefresh = true}) {
+    if (!_connectivity.value) return;
+    if (isRefresh) {
+      provider.applyFilters(_serverFilterMap());
+    } else {
+      provider.fetchStadiumsWithParams(
+        isRefresh: false,
+        governorate: _selectedGovernorate,
+        floorType: _selectedFloorType,
+        searchQuery: _searchQuery,
+        sortBy: _sortOption.name,
+      );
+    }
+  }
+
+  // Refresh the current query without clearing the last authoritative page.
+  Future<void> _refreshServerFilters(StadiumProvider provider) async {
+    if (!_connectivity.value) return;
+    // Keep the refresh affordance active until the latest server attempt has
+    // actually resolved; do not present an immediately completed refresh.
+    await provider.fetchStadiumsWithParams(
+      isRefresh: true,
+      governorate: _selectedGovernorate,
+      floorType: _selectedFloorType,
       searchQuery: _searchQuery,
-      sortOption: _sortOption,
+      sortBy: _sortOption.name,
     );
   }
 
@@ -80,6 +166,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
       _selectedFloorType = 'All';
       _sortOption = StadiumSortOption.featured;
     });
+    _applyServerFilters(context.read<StadiumProvider>());
   }
 
   @override
@@ -97,7 +184,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
           isArabic ? 'جميع الملاعب' : 'All Stadiums',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: Colors.white,
+                color: VSPColors.white,
               ),
         ),
         actions: [
@@ -107,7 +194,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: SafeArea(top: false, bottom: true, child: Column(
         children: [
           // 1. Search Bar & Quick Filters
           _buildSearchHeader(context, isArabic),
@@ -116,8 +203,25 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
 
           // 2. Stadiums List
           Expanded(
-            child: Consumer<StadiumProvider>(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: _connectivity,
+              builder: (context, isOnline, _) => Consumer<StadiumProvider>(
               builder: (context, provider, _) {
+                if (!isOnline && provider.stadiums.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: VSPStateView(
+                        state: VSPUiState.offline,
+                        icon: Iconsax.wifi_square_copy,
+                        title: isArabic ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection',
+                        message: isArabic
+                            ? 'سنحدّث النتائج تلقائيًا عند رجوع الاتصال.'
+                            : 'Results will refresh automatically when your connection returns.',
+                      ),
+                    ),
+                  );
+                }
                 if (provider.isLoading && provider.stadiums.isEmpty) {
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -130,6 +234,44 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                 }
 
                 final filteredStadiums = _filterAndSortStadiums(provider.stadiums);
+
+                if (provider.errorMessage != null && provider.stadiums.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 42),
+                          const SizedBox(height: 12),
+                          Text(
+                            isArabic ? 'تعذر تحميل الملاعب' : 'Could not load stadiums',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            isArabic ? 'تحقق من اتصالك بالإنترنت ثم أعد المحاولة.' : 'Check your connection and try again.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton(
+                            onPressed: () {
+                              final filters = provider.currentFilters;
+                              if (provider.isFilterActive && filters != null) {
+                                _refreshServerFilters(provider);
+                              } else {
+                                _applyServerFilters(provider);
+                              }
+                            },
+                            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
 
                 if (filteredStadiums.isEmpty) {
                   return Center(
@@ -154,7 +296,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                               label: Text(isArabic ? 'إعادة ضبط الفلاتر' : 'Reset Filters'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: VSPColors.accent,
-                                foregroundColor: Colors.black,
+                                foregroundColor: VSPColors.black,
                                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                               ),
@@ -169,9 +311,49 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                 return RefreshIndicator(
                   color: VSPColors.accent,
                   backgroundColor: VSPColors.surface,
-                  onRefresh: () => provider.fetchStadiums(isRefresh: true),
+                  onRefresh: () => _refreshServerFilters(provider),
                   child: Column(
                     children: [
+                      if (provider.errorMessage != null || !isOnline)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: VSPColors.warning.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                              border: Border.all(color: VSPColors.warning.withValues(alpha: 0.30)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    !isOnline
+                                        ? (isArabic
+                                            ? 'الاتصال مقطوع. نعرض آخر بيانات متاحة حتى يعود الإنترنت.'
+                                            : 'Offline. Showing the last available results until you reconnect.')
+                                        : (isArabic
+                                            ? 'تعذر تحديث القائمة. نعرض آخر بيانات متاحة.'
+                                            : 'Could not refresh the list. Showing the last available results.'),
+                                    style: const TextStyle(color: VSPColors.warning, fontSize: 11.5),
+                                  ),
+                                ),
+                                if (isOnline) TextButton(
+                                  onPressed: () {
+                                    final filters = provider.currentFilters;
+                                    if (provider.isFilterActive && filters != null) {
+                                      _refreshServerFilters(provider);
+                                    } else {
+                                      _refreshServerFilters(provider);
+                                    }
+                                  },
+                                  child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       // Results Counter
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -184,17 +366,17 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                                   : '${filteredStadiums.length} stadiums found',
                               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
-                            GestureDetector(
-                              onTap: () => _showFilterBottomSheet(context, isArabic),
-                              child: Row(
-                                children: [
-                                  const Icon(Iconsax.sort_copy, color: VSPColors.accent, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _getSortLabel(isArabic),
-                                    style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
+                            TextButton.icon(
+                              onPressed: () => _showFilterBottomSheet(context, isArabic),
+                              style: TextButton.styleFrom(
+                                minimumSize: const Size(48, 48),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                tapTargetSize: MaterialTapTargetSize.padded,
+                              ),
+                              icon: const Icon(Iconsax.sort_copy, color: VSPColors.accent, size: 16),
+                              label: Text(
+                                _getSortLabel(isArabic),
+                                style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -204,9 +386,40 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                       // List of Stadiums
                       Expanded(
                         child: ListView.builder(
+                          // A short list (even one venue) must allow pull-to-refresh.
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
                           padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                          itemCount: filteredStadiums.length,
+                          itemCount: filteredStadiums.length + (provider.hasMore && isOnline ? 1 : 0),
                           itemBuilder: (context, index) {
+                            if (index >= filteredStadiums.length) {
+                              if (provider.isLoadingMore) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+                                );
+                              }
+                              if (provider.errorMessage != null) {
+                                return Center(
+                                  child: TextButton(
+                                    onPressed: () => _applyServerFilters(provider, isRefresh: false),
+                                    child: Text(isArabic ? 'تعذر تحميل المزيد — إعادة المحاولة' : 'Could not load more — Retry'),
+                                  ),
+                                );
+                              }
+                              if (provider.hasMore) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (mounted && provider.errorMessage == null && !provider.isLoadingMore) {
+                                    _applyServerFilters(provider, isRefresh: false);
+                                  }
+                                });
+                              }
+                              return const Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+                              );
+                            }
                             final stadium = filteredStadiums[index];
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16),
@@ -216,7 +429,8 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => StadiumDetailsScreen(stadium: stadium),
+                                      builder: (_) => widget.detailsBuilder?.call(stadium) ??
+                                          StadiumDetailsScreen(stadium: stadium),
                                     ),
                                   );
                                 },
@@ -230,9 +444,10 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                 );
               },
             ),
+            ),
           ),
         ],
-      ),
+      )),
     );
   }
 
@@ -256,7 +471,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
             Expanded(
               child: TextField(
                 controller: _searchController,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: const TextStyle(color: VSPColors.white, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: isArabic ? 'ابحث باسم الملعب، المدينة أو المحافظة...' : 'Search stadium name or city...',
                   hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
@@ -265,9 +480,11 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val;
-                  });
+                  _scheduleSearch(val);
+                },
+                onSubmitted: (_) {
+                  _searchDebounce?.cancel();
+                  _applyServerFilters(context.read<StadiumProvider>());
                 },
               ),
             ),
@@ -275,10 +492,12 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
               IconButton(
                 icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
                 onPressed: () {
+                  _searchDebounce?.cancel();
                   setState(() {
                     _searchController.clear();
                     _searchQuery = '';
                   });
+                  _applyServerFilters(context.read<StadiumProvider>());
                 },
               ),
           ],
@@ -302,6 +521,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
           _sortOption = sortOption;
           _selectedFloorType = floorType;
         });
+        _applyServerFilters(context.read<StadiumProvider>());
       },
       onReset: _resetFilters,
     );

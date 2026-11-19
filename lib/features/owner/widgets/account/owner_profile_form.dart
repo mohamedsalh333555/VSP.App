@@ -26,7 +26,7 @@ class OwnerProfileForm extends StatelessWidget {
 
   Widget _buildInputLabel(BuildContext context, String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: VSPSpacing.xs, left: 4),
+      padding: const EdgeInsetsDirectional.only(bottom: VSPSpacing.xs, start: 4),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
@@ -63,7 +63,7 @@ class OwnerProfileForm extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Padding(
-            padding: const EdgeInsets.only(left: 4),
+            padding: const EdgeInsetsDirectional.only(start: 4),
             child: Text(
               isArabic
                   ? 'البريد الإلكتروني مرتبط بالحساب ولا يمكن تغييره من هذه الشاشة.'

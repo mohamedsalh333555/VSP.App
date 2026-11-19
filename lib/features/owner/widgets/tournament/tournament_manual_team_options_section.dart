@@ -28,7 +28,7 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
 
   Widget _buildSectionLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6, left: 4),
+      padding: const EdgeInsetsDirectional.only(bottom: 6, start: 4),
       child: Text(
         label,
         style: const TextStyle(
@@ -69,14 +69,14 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                     children: [
                       Icon(
                         Iconsax.tick_circle_copy,
-                        color: isPaidOnCreation ? Colors.black : VSPColors.accent,
+                        color: isPaidOnCreation ? VSPColors.black : VSPColors.accent,
                         size: 16,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         isArabic ? 'تم الدفع ' : 'Paid ',
                         style: TextStyle(
-                          color: isPaidOnCreation ? Colors.black : Colors.white,
+                          color: isPaidOnCreation ? VSPColors.black : VSPColors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -114,7 +114,7 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                       Text(
                         isArabic ? 'معلق / غير مدفوع ' : 'Pending ',
                         style: TextStyle(
-                          color: !isPaidOnCreation ? VSPColors.warning : Colors.white70,
+                          color: !isPaidOnCreation ? VSPColors.warning : VSPColors.white70,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -143,7 +143,7 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                 child: Container(
                   width: 36,
                   height: 36,
-                  margin: const EdgeInsets.only(right: 8),
+                  margin: const EdgeInsetsDirectional.only(end: 8),
                   decoration: BoxDecoration(
                     color: item['color'] as Color,
                     shape: BoxShape.circle,
@@ -155,7 +155,7 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                   child: isSelected
                       ? Icon(
                           Iconsax.tick_circle_copy,
-                          color: item['color'] == Colors.white ? Colors.black : Colors.white,
+                          color: item['color'] == VSPColors.white ? VSPColors.black : VSPColors.white,
                           size: 16,
                         )
                       : null,

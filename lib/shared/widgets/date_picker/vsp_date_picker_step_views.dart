@@ -38,15 +38,26 @@ class VspDatePickerYearStep extends StatelessWidget {
         final year = years[index];
         final isSelected = selectedYear == year;
 
-        return GestureDetector(
+        return Semantics(
+          button: true,
+                excludeSemantics: true,
+          selected: isSelected,
+          onTap: () {
+            VSPFeedback.triggerTap();
+            onYearSelected(year);
+          },
+          label: '$year',
+          child: InkWell(
+            excludeFromSemantics: true,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
           onTap: () {
             VSPFeedback.triggerTap();
             onYearSelected(year);
           },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            duration: VSPDSMotion.fast,
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -70,16 +81,17 @@ class VspDatePickerYearStep extends StatelessWidget {
                 Text(
                   '$year',
                   style: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
+                    color: isSelected ? VSPColors.black : VSPColors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.5,
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
+                  const Icon(Iconsax.tick_circle_copy, color: VSPColors.black, size: 20),
               ],
             ),
+          ),
           ),
         );
       },
@@ -113,15 +125,26 @@ class VspDatePickerMonthStep extends StatelessWidget {
         final isSelected = selectedMonth == monthNum;
         final monthName = VspDatePickerCalculator.getMonthName(monthNum, isArabic: isAr);
 
-        return GestureDetector(
+        return Semantics(
+          button: true,
+                excludeSemantics: true,
+          selected: isSelected,
+          onTap: () {
+            VSPFeedback.triggerTap();
+            onMonthSelected(monthNum);
+          },
+          label: monthName,
+          child: InkWell(
+            excludeFromSemantics: true,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
           onTap: () {
             VSPFeedback.triggerTap();
             onMonthSelected(monthNum);
           },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            height: 54,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            duration: VSPDSMotion.fast,
+            constraints: const BoxConstraints(minHeight: 54),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -145,14 +168,14 @@ class VspDatePickerMonthStep extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.black.withValues(alpha: 0.18) : VSPColors.background,
+                    color: isSelected ? VSPColors.black.withValues(alpha: 0.18) : VSPColors.background,
                     shape: BoxShape.circle,
                   ),
                   child: Center(
                     child: Text(
                       monthNum.toString().padLeft(2, '0'),
                       style: TextStyle(
-                        color: isSelected ? Colors.black : VSPColors.accent,
+                        color: isSelected ? VSPColors.black : VSPColors.accent,
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                       ),
@@ -164,16 +187,17 @@ class VspDatePickerMonthStep extends StatelessWidget {
                   child: Text(
                     monthName,
                     style: TextStyle(
-                      color: isSelected ? Colors.black : Colors.white,
+                      color: isSelected ? VSPColors.black : VSPColors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
+                  const Icon(Iconsax.tick_circle_copy, color: VSPColors.black, size: 20),
               ],
             ),
+          ),
           ),
         );
       },
@@ -213,15 +237,26 @@ class VspDatePickerDayStep extends StatelessWidget {
         final day = days[index];
         final isSelected = selectedDay == day;
 
-        return GestureDetector(
+        return Semantics(
+          button: true,
+                excludeSemantics: true,
+          selected: isSelected,
+          onTap: () {
+            VSPFeedback.triggerTap();
+            onDaySelected(day);
+          },
+          label: day.toString().padLeft(2, '0'),
+          child: InkWell(
+            excludeFromSemantics: true,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
           onTap: () {
             VSPFeedback.triggerTap();
             onDaySelected(day);
           },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            duration: VSPDSMotion.fast,
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -245,15 +280,16 @@ class VspDatePickerDayStep extends StatelessWidget {
                 Text(
                   day.toString().padLeft(2, '0'),
                   style: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
+                    color: isSelected ? VSPColors.black : VSPColors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
+                  const Icon(Iconsax.tick_circle_copy, color: VSPColors.black, size: 20),
               ],
             ),
+          ),
           ),
         );
       },

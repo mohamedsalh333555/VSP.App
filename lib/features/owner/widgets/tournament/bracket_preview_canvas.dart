@@ -142,7 +142,7 @@ class BracketPreviewCanvas extends StatelessWidget {
                           Text(
                             'الفائز بالنهائي',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 10, color: Colors.white70),
+                            style: TextStyle(fontSize: 10, color: VSPColors.white70),
                           ),
                         ],
                       ),
@@ -177,7 +177,7 @@ class _BracketMatchCard extends StatelessWidget {
         border: Border.all(color: VSPColors.divider, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: VSPColors.black.withValues(alpha: 0.3),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -190,15 +190,15 @@ class _BracketMatchCard extends StatelessWidget {
           Text(
             home,
             style: const TextStyle(
-                fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                fontSize: 11.5, fontWeight: FontWeight.bold, color: VSPColors.white),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const Divider(height: 8, color: Colors.white12),
+          const Divider(height: 8, color: VSPColors.white12),
           Text(
             away,
             style: const TextStyle(
-                fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                fontSize: 11.5, fontWeight: FontWeight.bold, color: VSPColors.white),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

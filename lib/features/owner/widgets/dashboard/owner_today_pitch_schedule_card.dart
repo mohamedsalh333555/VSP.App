@@ -115,7 +115,7 @@ class OwnerTodayPitchScheduleCard extends StatelessWidget {
         border: Border.all(color: VSPColors.divider, width: 1.0),
       ),
       child: Material(
-        color: Colors.transparent,
+        color: VSPColors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(VSPRadius.md),
           onTap: () {

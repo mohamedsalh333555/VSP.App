@@ -16,8 +16,8 @@ class MatchupRepository {
         'p_team_id': teamId,
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error generating team invite code: $e');
+    } catch (_) {
+      debugPrint('Error generating team invite code (details redacted)');
       rethrow;
     }
   }
@@ -33,8 +33,8 @@ class MatchupRepository {
         'p_invite_code': inviteCode.trim().toUpperCase(),
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error adding team to matchup by code: $e');
+    } catch (_) {
+      debugPrint('Error adding team to matchup by code (details redacted)');
       rethrow;
     }
   }
@@ -46,8 +46,8 @@ class MatchupRepository {
         'p_booking_id': bookingId,
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error confirming matchup: $e');
+    } catch (_) {
+      debugPrint('Error confirming matchup (details redacted)');
       rethrow;
     }
   }
@@ -67,8 +67,8 @@ class MatchupRepository {
         'p_outcome': outcome,
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error recording matchup result: $e');
+    } catch (_) {
+      debugPrint('Error recording matchup result (details redacted)');
       rethrow;
     }
   }
@@ -80,58 +80,70 @@ class MatchupRepository {
         'p_booking_id': bookingId,
       });
       return Map<String, dynamic>.from(response as Map);
-    } catch (e) {
-      debugPrint('Error closing matchup: $e');
+    } catch (_) {
+      debugPrint('Error closing matchup (details redacted)');
       rethrow;
     }
   }
 
-  /// جلب قائمة الفرق المشاركة في المواجهة
+  /// Historical callers may still expect [] on failure; the live dashboard
+  /// MUST use the strict methods to distinguish an outage from empty data.
   Future<List<MatchupTeam>> getMatchupTeams(String bookingId) async {
     try {
-      final response = await _supabase
-          .from('matchup_teams')
-          .select('*')
-          .eq('booking_id', bookingId)
-          .order('joined_at', ascending: true);
-
-      final rows = (response as List).cast<Map<String, dynamic>>();
-      if (rows.isEmpty) return [];
-
-      final teamIds = rows.map((r) => r['team_id']?.toString()).whereType<String>().toList();
-      final teamsRes = await _supabase
-          .from('teams_public')
-          .select('id, name, logo_url, captain_id')
-          .inFilter('id', teamIds);
-      final teamsMap = {for (var t in (teamsRes as List)) t['id'].toString(): t};
-
-      return rows.map((row) {
-        final teamId = row['team_id']?.toString();
-        final teamData = teamsMap[teamId];
-        final combined = Map<String, dynamic>.from(row);
-        if (teamData != null) combined['teams'] = teamData;
-        return MatchupTeam.fromMap(combined);
-      }).toList();
-    } catch (e) {
-      debugPrint('Error fetching matchup teams: $e');
+      return await getMatchupTeamsStrict(bookingId);
+    } catch (_) {
+      debugPrint('Error fetching matchup teams (details redacted)');
       return [];
     }
   }
 
-  /// جلب سجل مباريات المواجهة
+  Future<List<MatchupTeam>> getMatchupTeamsStrict(String bookingId) async {
+    final response = await _supabase
+        .from('matchup_teams')
+        .select('*')
+        .eq('booking_id', bookingId)
+        .order('joined_at', ascending: true);
+
+    final rows = (response as List).cast<Map<String, dynamic>>();
+    if (rows.isEmpty) return [];
+
+    final teamIds = rows.map((r) => r['team_id']?.toString())
+        .whereType<String>().toList();
+    final teamsRes = await _supabase
+        .from('teams_public')
+        .select('id, name, logo_url, captain_id')
+        .inFilter('id', teamIds);
+    final teamsMap = {
+      for (var t in (teamsRes as List)) t['id'].toString(): t
+    };
+
+    return rows.map((row) {
+      final teamId = row['team_id']?.toString();
+      final teamData = teamsMap[teamId];
+      final combined = Map<String, dynamic>.from(row);
+      if (teamData != null) combined['teams'] = teamData;
+      return MatchupTeam.fromMap(combined);
+    }).toList();
+  }
+
   Future<List<MatchupResult>> getMatchupResults(String bookingId) async {
     try {
-      final response = await _supabase
-          .from('matchup_results')
-          .select('*')
-          .eq('booking_id', bookingId)
-          .order('created_at', ascending: true);
-
-      return (response as List).map((row) => MatchupResult.fromMap(row)).toList();
-    } catch (e) {
-      debugPrint('Error fetching matchup results: $e');
+      return await getMatchupResultsStrict(bookingId);
+    } catch (_) {
+      debugPrint('Error fetching matchup results (details redacted)');
       return [];
     }
+  }
+
+  Future<List<MatchupResult>> getMatchupResultsStrict(String bookingId) async {
+    final response = await _supabase
+        .from('matchup_results')
+        .select('*')
+        .eq('booking_id', bookingId)
+        .order('created_at', ascending: true);
+    return (response as List).map(
+      (row) => MatchupResult.fromMap(row),
+    ).toList();
   }
 
   /// جلب سجل المواجهات المباشرة بين فريقين (Head to Head)
@@ -149,25 +161,147 @@ class MatchupRepository {
 
       if (response == null) return null;
       return TeamHeadToHead.fromMap(response);
-    } catch (e) {
-      debugPrint('Error fetching team head to head: $e');
+    } catch (_) {
+      debugPrint('Error fetching team head to head (details redacted)');
       return null;
     }
   }
 
-  /// جلب كل سجلات المواجهات المباشرة لفريق معين
-  Future<List<Map<String, dynamic>>> getAllHeadToHeadForTeam(String teamId) async {
+  /// Compatibility view: old consumers may treat a failure as no rows.
+  /// Critical result/history screens MUST call the strict version instead.
+  Future<List<Map<String, dynamic>>> getAllHeadToHeadForTeam(
+      String teamId) async {
     try {
-      final response = await _supabase
-          .from('team_head_to_head')
-          .select('*, team_a:teams!team_head_to_head_team_a_id_fkey(id, name, logo_url), team_b:teams!team_head_to_head_team_b_id_fkey(id, name, logo_url)')
-          .or('team_a_id.eq.$teamId,team_b_id.eq.$teamId');
-
-      return List<Map<String, dynamic>>.from(response as List);
-    } catch (e) {
-      debugPrint('Error fetching all head to head for team: $e');
+      return await getAllHeadToHeadForTeamStrict(teamId);
+    } catch (_) {
+      debugPrint('Matchup head-to-head lookup failed (details redacted)');
       return [];
     }
+  }
+
+  /// Team IDs are canonical UUIDs. PostgREST's .or() accepts a filter
+  /// expression, so never interpolate an untrusted deep-link or UI string
+  /// without validating it first.
+  static bool isCanonicalTeamId(String id) =>
+      RegExp(
+        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-'
+        r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+      ).hasMatch(id);
+
+  /// An unexpectedly broad or malformed head-to-head response must not
+  /// silently become a verified empty history or an unrelated team's record.
+  static bool everyHeadToHeadRowBelongsToTeam(
+      String teamId, Iterable<Map<String, dynamic>> rows) {
+    if (!isCanonicalTeamId(teamId)) return false;
+    for (final row in rows) {
+      final a = row['team_a_id'];
+      final b = row['team_b_id'];
+      if (a is! String || b is! String || a == b ||
+          !isCanonicalTeamId(a) || !isCanonicalTeamId(b) ||
+          (a != teamId && b != teamId)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// A failed source read is UNKNOWN, not verified empty history. This
+  /// deliberately avoids embedding the private teams table in a public
+  /// head-to-head read: only the approved teams_public projection supplies
+  /// opponent names and logos.
+  ///
+  /// The arguments for the PostgREST OR filter are UUIDs, never arbitrary
+  /// text from a deep link or player input.
+  Future<List<Map<String, dynamic>>> getAllHeadToHeadForTeamStrict(
+      String teamId) async {
+    if (!isCanonicalTeamId(teamId)) {
+      throw const FormatException('Invalid canonical team ID');
+    }
+    final raw = await _supabase
+        .from('team_head_to_head')
+        .select('team_a_id,team_b_id,team_a_wins,team_b_wins,draws')
+        .or('team_a_id.eq.$teamId,team_b_id.eq.$teamId');
+    final rows = List<Map<String, dynamic>>.from(raw as List);
+    if (!everyHeadToHeadRowBelongsToTeam(teamId, rows)) {
+      throw const FormatException('Unverified team matchup scope');
+    }
+    // Only request public opponent names for rows truly involving this team.
+    // Never broaden a second query using unrelated or malformed upstream IDs.
+    final scopedRows = rows.where((row) {
+      final a = row['team_a_id'];
+      final b = row['team_b_id'];
+      return a is String && b is String && a != b &&
+          isCanonicalTeamId(a) && isCanonicalTeamId(b) &&
+          (a == teamId || b == teamId);
+    }).toList(growable: false);
+    if (scopedRows.isEmpty) return [];
+    final participantIds = <String>{
+      for (final row in scopedRows) row['team_a_id'] as String,
+      for (final row in scopedRows) row['team_b_id'] as String,
+    };
+    final teams = await _supabase
+        .from('teams_public')
+        .select('id,name,logo_url')
+        .inFilter('id', participantIds.toList());
+    return withPublicTeamNames(
+      teamId,
+      scopedRows,
+      List<Map<String, dynamic>>.from(teams as List),
+    );
+  }
+
+  /// Reject cross-team results even if an upstream cache returns mixed rows.
+  /// Copy ONLY the approved aggregate counts and public team metadata.
+  static List<Map<String, dynamic>> withPublicTeamNames(
+    String teamId,
+    Iterable<Map<String, dynamic>> records,
+    Iterable<Map<String, dynamic>> publicTeams,
+  ) {
+    if (!isCanonicalTeamId(teamId)) return const [];
+    // Duplicate public identities can be inconsistent if a cache or
+    // provider returns overlapping pages. Never silently choose the last
+    // name/logo and present it as an authenticated opponent identity.
+    final teamsById = <String, Map<String, dynamic>>{};
+    final ambiguousIds = <String>{};
+    for (final team in publicTeams) {
+      final id = team['id'];
+      if (id is! String || !isCanonicalTeamId(id) ||
+          ambiguousIds.contains(id)) continue;
+      final name = team['name'];
+      final logo = team['logo_url'];
+      final safe = <String, dynamic>{
+        'id': id,
+        if (name is String && name.trim().isNotEmpty) 'name': name.trim(),
+        if (logo is String && logo.trim().isNotEmpty)
+          'logo_url': logo.trim(),
+      };
+      final previous = teamsById[id];
+      if (previous == null) {
+        teamsById[id] = safe;
+      } else if (previous['name'] != safe['name'] ||
+          previous['logo_url'] != safe['logo_url']) {
+        teamsById.remove(id);
+        ambiguousIds.add(id);
+      }
+    }
+    final safe = <Map<String, dynamic>>[];
+    for (final rec in records) {
+      final a = rec['team_a_id'];
+      final b = rec['team_b_id'];
+      if (a is! String || b is! String || a == b ||
+          !isCanonicalTeamId(a) || !isCanonicalTeamId(b) ||
+          (a != teamId && b != teamId)) continue;
+      safe.add({
+        'team_a_id': a,
+        'team_b_id': b,
+        'team_a_wins': rec['team_a_wins'],
+        'team_b_wins': rec['team_b_wins'],
+        'draws': rec['draws'],
+        if (teamsById.containsKey(a)) 'team_a': teamsById[a],
+        if (teamsById.containsKey(b)) 'team_b': teamsById[b],
+      });
+    }
+    return safe;
   }
 
   /// حساب جدول الترتيب اللحظي (النقاط = 3 × الفوز + 1 × التعادل)
@@ -188,7 +322,17 @@ class MatchupRepository {
     }
 
     for (final r in results) {
-      if (!stats.containsKey(r.teamAId) || !stats.containsKey(r.teamBId)) continue;
+      // Only authoritative completed matchup outcomes count. A partial or
+      // malformed record must not magically award a draw and one point.
+      // Team challenge results use a separate two-captain agreement flow.
+      if (!stats.containsKey(r.teamAId) ||
+          !stats.containsKey(r.teamBId) ||
+          r.teamAId == r.teamBId ||
+          (r.outcome != 'team_a_win' &&
+              r.outcome != 'team_b_win' &&
+              r.outcome != 'draw')) {
+        continue;
+      }
 
       stats[r.teamAId]!['played'] = stats[r.teamAId]!['played']! + 1;
       stats[r.teamBId]!['played'] = stats[r.teamBId]!['played']! + 1;
@@ -201,8 +345,7 @@ class MatchupRepository {
         stats[r.teamBId]!['wins'] = stats[r.teamBId]!['wins']! + 1;
         stats[r.teamBId]!['points'] = stats[r.teamBId]!['points']! + 3;
         stats[r.teamAId]!['losses'] = stats[r.teamAId]!['losses']! + 1;
-      } else {
-        // Draw
+      } else if (r.outcome == 'draw') {
         stats[r.teamAId]!['draws'] = stats[r.teamAId]!['draws']! + 1;
         stats[r.teamAId]!['points'] = stats[r.teamAId]!['points']! + 1;
         stats[r.teamBId]!['draws'] = stats[r.teamBId]!['draws']! + 1;

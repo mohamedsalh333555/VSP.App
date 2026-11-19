@@ -1,0 +1,54 @@
+name: VSP Booking Availability Accuracy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/booking-availability-accuracy.yml"
+      - "lib/features/player/widgets/booking/booking_slot_calculator.dart"
+      - "lib/features/player/widgets/booking/booking_slot_card.dart"
+      - "lib/features/player/widgets/booking/booking_slot_stream_section.dart"
+      - "test/features/booking/booking_availability_accuracy_audit_test.dart"
+      - "test/features/booking/booking_day_states_widget_test.dart"
+      - "test/features/booking/booking_stream_freshness_test.dart"
+      - "test/unit/booking_server_operating_hours_precedence_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/booking-availability-accuracy.yml"
+      - "lib/features/player/widgets/booking/booking_slot_calculator.dart"
+      - "lib/features/player/widgets/booking/booking_slot_stream_section.dart"
+      - "test/features/booking/booking_availability_accuracy_audit_test.dart"
+permissions:
+  contents: read
+concurrency:
+  group: vsp-availability-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  availability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TZ: Africa/Cairo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze availability source and regression
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/player/widgets/booking/booking_slot_calculator.dart
+          lib/features/player/widgets/booking/booking_slot_stream_section.dart
+          test/features/booking/booking_availability_accuracy_audit_test.dart
+      - name: Validate client booking availability and Cairo DST guard
+        run: >-
+          flutter test --concurrency=1
+          test/features/booking/booking_availability_accuracy_audit_test.dart
+          test/features/booking/booking_day_states_widget_test.dart
+          test/features/booking/booking_stream_freshness_test.dart
+          test/unit/booking_server_operating_hours_precedence_test.dart

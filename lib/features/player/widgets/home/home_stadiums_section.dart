@@ -34,6 +34,7 @@ class HomeStadiumsSection extends StatelessWidget {
             message: isArabic
                 ? 'حصلت مشكلة أثناء تحديث الملاعب. حاول مرة تانية.'
                 : 'We could not refresh stadiums right now. Please try again.',
+            onRetry: () => provider.fetchStadiums(isRefresh: true),
           );
         }
 
@@ -61,7 +62,7 @@ class HomeStadiumsSection extends StatelessWidget {
                   isAr ? 'لم نصل إلى $cityName بعد! ' : 'We haven\'t reached $cityName yet! ',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -135,7 +136,7 @@ class HomeStadiumsSection extends StatelessWidget {
                         child: Text(
                           AppLocalizations.of(context)!.localeName == 'ar' ? 'تغيير' : 'Change',
                           style: const TextStyle(
-                            color: Colors.black,
+                            color: VSPColors.black,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -177,7 +178,7 @@ class HomeStadiumsSection extends StatelessWidget {
                         final stadium = provider.stadiums[index];
                         return Container(
                           width: 300,
-                          margin: const EdgeInsets.only(right: 6),
+                          margin: const EdgeInsetsDirectional.only(end: 6),
                           child: StadiumCard(
                             stadium: stadium,
                             onTap: () => Navigator.push(

@@ -23,9 +23,16 @@ Future<void> showIncompleteSquadBridgeSheet({
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     builder: (sheetCtx) {
-      return Container(
+      final mediaQuery = MediaQuery.of(sheetCtx);
+      final availableHeight = mediaQuery.size.height -
+          mediaQuery.viewInsets.vertical -
+          (VSPSpacing.xl * 2);
+      return ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: availableHeight > 0 ? availableHeight : 240),
+        child: SingleChildScrollView(
+          child: Container(
         padding: EdgeInsets.fromLTRB(
           VSPSpacing.lg,
           VSPSpacing.lg,
@@ -60,7 +67,7 @@ Future<void> showIncompleteSquadBridgeSheet({
                     isArabic ? 'استكمال تشكيلة البطولة' : 'Tournament Squad Builder',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ],
@@ -75,7 +82,7 @@ Future<void> showIncompleteSquadBridgeSheet({
               ),
               child: Row(
                 children: [
-                  const Icon(Iconsax.info_circle_copy, color: Colors.amber, size: 20),
+                  const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -86,7 +93,7 @@ Future<void> showIncompleteSquadBridgeSheet({
                           : (isArabic
                               ? 'ينقص فريقك [$missingCount] لاعبين للمشاركة في البطولة (الحد الأدنى 5 لاعبين).'
                               : 'Your team needs [$missingCount] more players to meet the 5-player minimum.'),
-                      style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+                      style: const TextStyle(color: VSPColors.white, fontSize: 13, height: 1.4),
                     ),
                   ),
                 ],
@@ -97,30 +104,37 @@ Future<void> showIncompleteSquadBridgeSheet({
               PrimaryButton(
                 text: isArabic ? 'إنشاء فريق الآن في ثوانٍ ' : 'Create Team Now in Seconds ',
                 color: VSPColors.accent,
-                textColor: Colors.black,
+                textColor: VSPColors.black,
                 onPressed: () async {
+                  final auth = Provider.of<AuthProvider>(context, listen: false);
+                  final initiatingUserId = auth.currentUser?.uid;
+                  if (initiatingUserId == null) return;
                   Navigator.pop(sheetCtx);
                   final created = await showModalBottomSheet<bool>(
                     context: context,
                     isScrollControlled: true,
                     useSafeArea: true,
-                    backgroundColor: Colors.transparent,
+                    backgroundColor: VSPColors.transparent,
                     builder: (ctx) => const CreateTeamSheet(),
                   );
-                  if (created == true && context.mounted) {
-                    final auth = Provider.of<AuthProvider>(context, listen: false);
-                    final newTeam = await TeamRepository().getUserTeam(auth.currentUser!.uid);
-                    if (newTeam != null && context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (ctx) => ChampionshipCheckoutScreen(
-                            championship: championship,
-                            team: newTeam,
-                          ),
+                  if (created != true ||
+                      !context.mounted ||
+                      auth.currentUser?.uid != initiatingUserId) {
+                    return;
+                  }
+                  final newTeam = await TeamRepository().getUserTeam(initiatingUserId);
+                  if (newTeam != null &&
+                      context.mounted &&
+                      auth.currentUser?.uid == initiatingUserId) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (ctx) => ChampionshipCheckoutScreen(
+                          championship: championship,
+                          team: newTeam,
                         ),
-                      );
-                    }
+                      ),
+                    );
                   }
                 },
               ),
@@ -128,7 +142,7 @@ Future<void> showIncompleteSquadBridgeSheet({
               PrimaryButton(
                 text: isArabic ? 'متابعة وإضافة أسماء اللاعبين الضيوف ' : 'Continue & Add Guest Players ',
                 color: VSPColors.accent,
-                textColor: Colors.black,
+                textColor: VSPColors.black,
                 onPressed: () {
                   Navigator.pop(sheetCtx);
                   Navigator.push(
@@ -145,6 +159,8 @@ Future<void> showIncompleteSquadBridgeSheet({
             ],
             const SizedBox(height: 10),
           ],
+        ),
+          ),
         ),
       );
     },

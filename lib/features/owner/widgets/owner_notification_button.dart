@@ -39,11 +39,16 @@ class _OwnerNotificationButtonState extends State<OwnerNotificationButton> {
       stream: _unreadStream,
       builder: (context, snapshot) {
         final hasUnread = (snapshot.data ?? 0) > 0;
+        final hasError = snapshot.hasError;
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         return Stack(
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(Iconsax.notification_copy, color: Colors.white),
+              tooltip: hasError
+                  ? (isArabic ? 'تعذر تحديث الإشعارات' : 'Could not refresh notifications')
+                  : (isArabic ? 'الإشعارات' : 'Notifications'),
+              icon: const Icon(Iconsax.notification_copy, color: VSPColors.white),
               onPressed: () {
                 HapticFeedback.lightImpact();
                 Navigator.push(
@@ -52,13 +57,13 @@ class _OwnerNotificationButtonState extends State<OwnerNotificationButton> {
                 );
               },
             ),
-            if (hasUnread)
+            if (hasUnread || hasError)
               Positioned(
                 top: 8,
                 right: 8,
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 400),
+                  duration: VSPDSMotion.fadeIn,
                   curve: Curves.elasticOut,
                   builder: (ctx, val, _) => Transform.scale(
                     scale: val,
@@ -66,11 +71,11 @@ class _OwnerNotificationButtonState extends State<OwnerNotificationButton> {
                       width: 9,
                       height: 9,
                       decoration: BoxDecoration(
-                        color: VSPColors.error,
+                        color: hasError ? VSPColors.warning : VSPColors.error,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: VSPColors.error.withValues(alpha: 0.6),
+                            color: (hasError ? VSPColors.warning : VSPColors.error).withValues(alpha: 0.6),
                             blurRadius: 4,
                             spreadRadius: 1,
                           ),

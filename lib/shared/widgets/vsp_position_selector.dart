@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
+import '../../core/ui/tokens/vsp_tokens.dart' show SportPositionsRegistry;
 
 /// محدد المركز المفضل الموحد لتطبيق VSP لضمان تطابق التصميم والبيانات عبر كل شاشات التسجيل
 class VSPPositionSelector extends StatelessWidget {
@@ -24,61 +25,90 @@ class VSPPositionSelector extends StatelessWidget {
       'label': isAr ? pos.nameAr : pos.nameEn,
     }).toList();
 
-    return Row(
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        final useTwoColumns = availableWidth.isFinite && availableWidth >= 240;
+        final itemWidth = !availableWidth.isFinite
+            ? 160.0
+            : useTwoColumns
+                ? (availableWidth - VSPDSSpacing.xxs) / 2
+                : availableWidth;
+        return Wrap(
+      spacing: VSPDSSpacing.xxs,
+      runSpacing: VSPDSSpacing.xxs,
       children: positions.map((pos) {
         final code = pos['code'] as String;
         final label = pos['label'] as String;
         final isSelected = selectedPosition == code;
 
-        return Expanded(
+        return SizedBox(
+          width: itemWidth,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3.0),
+            padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.xxs),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: reduceMotion ? Duration.zero : VSPDSMotion.fast,
               curve: Curves.easeOutCubic,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
+              child: Semantics(
+                button: true,
+                excludeSemantics: true,
+                inMutuallyExclusiveGroup: true,
+                selected: isSelected,
+                label: label,
+                onTap: () {
+                  if (!reduceMotion) HapticFeedback.selectionClick();
+                  onPositionSelected(code);
+                },
+                child: Material(
+                  color: VSPDSColors.transparent,
+                  child: InkWell(
+                  excludeFromSemantics: true,
                   onTap: () {
-                    HapticFeedback.selectionClick();
+                    if (!reduceMotion) HapticFeedback.selectionClick();
                     onPositionSelected(code);
                   },
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  borderRadius: BorderRadius.circular(VSPDSRadius.md),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                    constraints: const BoxConstraints(
+                      minHeight: VSPDSAccessibility.minimumTapTarget,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: VSPDSSpacing.sm, horizontal: VSPDSSpacing.xxs),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? VSPColors.accent.withValues(alpha: 0.15)
-                          : VSPColors.surface,
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                          ? VSPDSSemanticColors.accentSoft
+                          : VSPDSSemanticColors.surface,
+                      borderRadius: BorderRadius.circular(VSPDSRadius.md),
                       border: Border.all(
-                        color: isSelected ? VSPColors.accent : VSPColors.borderLight,
-                        width: isSelected ? 1.8 : 1.0,
+                        color: isSelected ? VSPDSSemanticColors.accent : VSPDSColors.white15,
+                        width: isSelected ? VSPDSBorders.fieldFocus : VSPDSBorders.standard,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: VSPColors.accent.withValues(alpha: 0.25),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
+                                color: VSPDSComponentEffects.buttonShadow.color,
+                                blurRadius: VSPDSComponentEffects.buttonShadow.blurRadius,
+                                offset: VSPDSComponentEffects.buttonShadow.offset,
                               ),
                             ]
                           : [],
                     ),
                     child: Center(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
+                      child: Align(
+                        alignment: Alignment.center,
                         child: Text(
                           label,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
+                            color: isSelected ? VSPDSSemanticColors.accent : VSPDSSemanticColors.textPrimary,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                            fontSize: 13,
+                            fontSize: VSPDSTypography.bodySmall.fontSize ?? 13,
                           ),
                         ),
                       ),
                     ),
+                  ),
                   ),
                 ),
               ),
@@ -86,6 +116,8 @@ class VSPPositionSelector extends StatelessWidget {
           ),
         );
       }).toList(),
+        );
+      },
     );
   }
 }

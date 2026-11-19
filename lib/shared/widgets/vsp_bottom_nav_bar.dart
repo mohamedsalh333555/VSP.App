@@ -8,12 +8,16 @@ class VspNavItem {
   final IconData inactiveIcon;
   final String label;
   final bool hasNotification;
+  final bool hasWarning;
+  final String? warningLabel;
 
   VspNavItem({
     required this.activeIcon,
     required this.inactiveIcon,
     required this.label,
     this.hasNotification = false,
+    this.hasWarning = false,
+    this.warningLabel,
   });
 }
 
@@ -38,6 +42,7 @@ class VspBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final useBlur = VSPDSGlass.shouldUseBlur;
+    final isArabic = Localizations.maybeLocaleOf(context)?.languageCode == 'ar';
 
     final navContent = Container(
       decoration: BoxDecoration(
@@ -71,14 +76,26 @@ class VspBottomNavBar extends StatelessWidget {
           return Expanded(
             child: Semantics(
               button: true,
+                excludeSemantics: true,
               selected: isSelected,
-              label: item.label,
-              child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onItemTapped(index);
+              },
+              label: <String>[
+                item.label,
+                if (item.hasNotification)
+                  isArabic ? 'لديك إشعار جديد' : 'You have a new notification',
+                if (item.hasWarning && item.warningLabel != null)
+                  item.warningLabel!,
+              ].join(', '),
+              child: InkWell(
+                excludeFromSemantics: true,
+                borderRadius: BorderRadius.circular(VSPDSRadius.md),
                 onTap: () {
                   HapticFeedback.lightImpact();
                   onItemTapped(index);
                 },
-                behavior: HitTestBehavior.opaque,
                 child: SizedBox(
                   height: VSPDSizes.navigationItemHeight,
                   child: Center(
@@ -121,9 +138,9 @@ class VspBottomNavBar extends StatelessWidget {
                           ],
                         ),
                         if (item.hasNotification && !isSelected)
-                          Positioned(
+                          PositionedDirectional(
                             top: VSPDSizes.navigationNotificationTop,
-                            right: VSPDSizes.navigationNotificationRight,
+                            end: VSPDSizes.navigationNotificationRight,
                             child: Container(
                               width: VSPDSizes.notificationDot,
                               height: VSPDSizes.notificationDot,
@@ -134,6 +151,22 @@ class VspBottomNavBar extends StatelessWidget {
                                   VSPDSComponentEffects
                                       .navigationNotificationGlow,
                                 ],
+                              ),
+                            ),
+                          ),
+                        if (item.hasWarning)
+                          PositionedDirectional(
+                            top: VSPDSizes.navigationNotificationTop,
+                            start: VSPDSizes.navigationNotificationRight,
+                            child: Tooltip(
+                              message: item.warningLabel ?? '',
+                              child: Container(
+                                width: VSPDSizes.notificationDot,
+                                height: VSPDSizes.notificationDot,
+                                decoration: const BoxDecoration(
+                                  color: VSPDSSemanticColors.warning,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                             ),
                           ),
@@ -170,7 +203,7 @@ class VspBottomNavBar extends StatelessWidget {
         bottom: true,
         child: SizedBox(
           width: double.infinity,
-          height: VSPDSBottomNavMetrics.height,
+          height: VSPBottomNavMetrics.height,
           child: navCard,
         ),
       ),

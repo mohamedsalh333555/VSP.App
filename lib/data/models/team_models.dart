@@ -282,7 +282,8 @@ class MatchupResult {
       bookingId: map['booking_id']?.toString() ?? '',
       teamAId: map['team_a_id']?.toString() ?? '',
       teamBId: map['team_b_id']?.toString() ?? '',
-      outcome: map['outcome']?.toString() ?? 'draw',
+      // Missing outcomes are unverified, NEVER fabricate a draw.
+      outcome: map['outcome']?.toString() ?? '',
       recordedBy: map['recorded_by']?.toString() ?? '',
       createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'].toString()).toLocal() : DateTime.now(),
     );

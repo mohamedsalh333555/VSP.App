@@ -1,0 +1,43 @@
+name: VSP Supabase Security Advisor
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'scripts/check_supabase_security_advisor.py'
+      - 'test/tooling/test_supabase_security_advisor.py'
+      - '.github/workflows/vsp-supabase-security-advisor.yml'
+      - '.github/workflows/build-release-apk.yml'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Supabase project to audit (read-only)
+        type: choice
+        required: true
+        options: [staging, production]
+        default: staging
+
+jobs:
+  offline-advisor-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate fail-closed advisor parsing and release wiring
+        run: python3 test/tooling/test_supabase_security_advisor.py -v
+
+  live-advisor-read-only:
+    if: github.event_name == 'workflow_dispatch'
+    needs: offline-advisor-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_ADVISORS_READ_TOKEN: ${{ secrets.SUPABASE_ADVISORS_READ_TOKEN }}
+      VSP_SUPABASE_ADVISOR_PROJECT_REF: ${{ inputs.target == 'production' && 'mktqkddbcddrxjxabdua' || 'vtwgqyxglevcsxwdmhop' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get live Supabase Security Advisor findings (read-only; fail-closed)
+        run: python3 scripts/check_supabase_security_advisor.py --strict-warnings

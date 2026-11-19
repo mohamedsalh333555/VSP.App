@@ -33,6 +33,116 @@ void main() {
       expect(booking.rentBall, isTrue);
     });
 
+    test('rejects corrupt server-side price and deposit instead of treating them as zero', () {
+      for (final values in <Map<String, dynamic>>[
+        {'total_price': -1},
+        {'total_price': double.nan},
+        {'total_price': 'invalid'},
+        {'deposit_paid': -1},
+        {'deposit_paid': double.infinity},
+        {'deposit_paid': 'bad'},
+        {'total_price': 100, 'deposit_paid': 101},
+      ]) {
+        expect(
+          () => BookingMapper.fromFirestore({...sampleMap, ...values}, 'booking_999'),
+          throwsFormatException,
+          reason: '$values',
+        );
+      }
+      expect(
+        BookingMapper.fromFirestore({...sampleMap, 'deposit_paid': '25.5'}, 'booking_999').depositPaid,
+        25.5,
+      );
+    });
+
+    test('unknown server booking type is rejected rather than downgraded', () {
+      final corrupted = {...sampleMap, 'booking_type': 'new_challenge_format'};
+      expect(
+        () => BookingMapper.fromFirestore(corrupted, 'booking_999'),
+        throwsFormatException,
+      );
+    });
+
+    test('unknown booking status is rejected rather than becoming pending', () {
+      final corrupted = {...sampleMap, 'status': 'paid_under_review'};
+      expect(
+        () => BookingMapper.fromFirestore(corrupted, 'booking_999'),
+        throwsFormatException,
+      );
+    });
+
+    test('server status is normalized for casing and underscores', () {
+      final upper = {...sampleMap, 'status': ' CONFIRMED '};
+      expect(BookingMapper.fromFirestore(upper, 'booking_999').status,
+          BookingStatus.confirmed);
+      final noShow = {...sampleMap, 'status': 'NO_SHOW'};
+      expect(BookingMapper.fromFirestore(noShow, 'booking_999').status,
+          BookingStatus.noShow);
+    });
+
+    test('server reconciliation state overrides conflicting legacy paid flag', () {
+      final booking = BookingMapper.fromFirestore({
+        ...sampleMap,
+        'is_paid': true,
+        'payment_status': 'paid',
+        'payment_reconcile_state': 'refund_pending',
+      }, 'booking_999');
+
+      expect(booking.effectivePaymentState, 'refund_pending');
+      expect(booking.digitalAmountPaid, 0);
+      expect(booking.pitchCashCollected, 0);
+    });
+
+    test('legacy refund state wins over is_paid when reconciliation is absent', () {
+      final booking = BookingMapper.fromFirestore({
+        ...sampleMap,
+        'is_paid': true,
+        'payment_status': 'refunded',
+        'payment_reconcile_state': null,
+      }, 'booking_999');
+
+      expect(booking.effectivePaymentState, 'refunded');
+      expect(booking.totalAmountPaid, 0);
+    });
+
+    test('partial deposit is not presented as full payment', () {
+      final booking = BookingMapper.fromFirestore({
+        ...sampleMap,
+        'is_paid': false,
+        'payment_status': 'pending',
+        'payment_reconcile_state': null,
+        'deposit_paid': 75,
+      }, 'booking_999');
+
+      expect(booking.effectivePaymentState, 'partially_paid');
+      expect(booking.totalAmountPaid, 75);
+    });
+
+    test('legacy upcoming status maps to canonical confirmed', () {
+      final legacy = {...sampleMap, 'status': 'upcoming'};
+      expect(
+        BookingMapper.fromFirestore(legacy, 'booking_999').status,
+        BookingStatus.confirmed,
+      );
+    });
+
+    test('malformed booking time interval is rejected', () {
+      final invalid = {
+        ...sampleMap,
+        'end_time': sampleMap['start_time'],
+      };
+      expect(
+        () => BookingMapper.fromFirestore(invalid, 'booking_999'),
+        throwsFormatException,
+      );
+    });
+
+    test('legacy enum-qualified booking type is restored', () {
+      final legacy = {...sampleMap, 'booking_type': 'BookingType.open_join'};
+      final booking = BookingMapper.fromFirestore(legacy, 'booking_999');
+      expect(booking.bookingType, BookingType.openJoin);
+    });
+
     test('Booking.fromFirestore and booking.toFirestore round-trip preserves core fields', () {
       final booking = Booking.fromFirestore(sampleMap, 'booking_999');
       final outputMap = booking.toFirestore();

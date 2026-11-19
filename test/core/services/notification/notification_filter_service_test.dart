@@ -21,6 +21,25 @@ void main() {
       expect(NotificationFilterService.getPrefKeyForType(null), isNull);
     });
 
+    test('notification category lookup handles case and surrounding spaces', () {
+      expect(NotificationFilterService.getPrefKeyForType('  CHAT  '), 'notif_chat');
+      expect(NotificationFilterService.getPrefKeyForType(' BOOKING_NEW ', isOwner: true),
+          'notif_owner_new_bookings');
+      expect(NotificationFilterService.getPrefKeyForType('  '), isNull);
+    });
+
+    test('legacy notification type spelling maps to the same preferences', () {
+      expect(NotificationFilterService.getPrefKeyForType('BOOKING-REMINDER'),
+          'notif_cash_bookings');
+      expect(NotificationFilterService.getPrefKeyForType(
+        'booking reminder', isOwner: true,
+      ), 'notif_owner_new_bookings');
+      expect(NotificationFilterService.getPrefKeyForType('MATCH START REMINDER'),
+          'notif_match_reminders');
+      expect(NotificationFilterService.getPrefKeyForType('challenge-result'),
+          'notif_challenge_results');
+    });
+
     test('shouldShowNotification respects general master toggle', () async {
       SharedPreferences.setMockInitialValues({
         'notif_general': false,
@@ -42,6 +61,171 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(await NotificationFilterService.shouldShowNotification('chat', prefs: prefs), isFalse);
       expect(await NotificationFilterService.shouldShowNotification('booking_confirmed', prefs: prefs), isTrue);
+    });
+
+    test('notification preferences respect owner-specific opt-out', () async {
+      SharedPreferences.setMockInitialValues({
+        'notif_general': true,
+        'notif_owner_new_bookings': false,
+        'notif_cash_bookings': true,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      expect(await NotificationFilterService.shouldShowNotification(
+        'BOOKING_NEW', prefs: prefs, isOwner: true,
+      ), isFalse);
+      expect(await NotificationFilterService.shouldShowNotification(
+        'BOOKING_NEW', prefs: prefs,
+      ), isTrue);
+    });
+
+    test('foreground preferences are scoped per account, not legacy device keys', () async {
+      SharedPreferences.setMockInitialValues({
+        'notif_general': false,
+        'notif_chat': false,
+        'vsp_user_player-a_notif_general': false,
+        'vsp_user_player-b_notif_general': true,
+        'vsp_user_player-b_notif_chat': false,
+        'vsp_user_player-c_notif_general': true,
+        'vsp_user_player-c_notif_chat': true,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'player-a', prefs: prefs,
+      ), isFalse);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'player-b', prefs: prefs,
+      ), isFalse);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'player-c', prefs: prefs,
+      ), isTrue);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: '', prefs: prefs,
+      ), isFalse);
+    });
+
+    test('saved general opt-out blocks re-engagement and transactional foreground alerts', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final aKey = NotificationFilterService.scopedPrefKey('player-a', 'notif_general');
+      final bKey = NotificationFilterService.scopedPrefKey('player-b', 'notif_general');
+      expect(await prefs.setBool(aKey, false), isTrue);
+      expect(await prefs.setBool(bKey, true), isTrue);
+      // A new settings read after the save must not restore the default.
+      final reopened = await SharedPreferences.getInstance();
+      for (final type in <String>['reengagement', 'marketing', 'match_reminder', 'booking_confirmed']) {
+        expect(await NotificationFilterService.shouldShowNotificationForUser(
+          type, userId: 'player-a', prefs: reopened,
+        ), isFalse, reason: type);
+      }
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'match_reminder', userId: 'player-b', prefs: reopened,
+      ), isTrue);
+      // Opting back in must be explicit for the same account.
+      expect(await reopened.setBool(aKey, true), isTrue);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'match_reminder', userId: 'player-a', prefs: reopened,
+      ), isTrue);
+    });
+
+    test('foreground push requires recipient of the active authenticated account', () {
+      expect(NotificationFilterService.isRecipientCurrentUser(
+        {'recipientUserId': 'owner-a'}, 'owner-a',
+      ), isTrue);
+      expect(NotificationFilterService.isRecipientCurrentUser(
+        {'recipient_user_id': 'owner-a'}, 'owner-a',
+      ), isTrue);
+      for (final data in <Map<String, dynamic>>[
+        {}, {'recipientUserId': 'owner-b'},
+        {'recipientUserId': ''}, {'recipientUserId': 123},
+      ]) {
+        expect(NotificationFilterService.isRecipientCurrentUser(data, 'owner-a'), isFalse);
+      }
+      expect(NotificationFilterService.isRecipientCurrentUser(
+        {'recipientUserId': 'owner-a'}, null,
+      ), isFalse);
+    });
+
+    test('legacy global opt-out never determines a different account preference', () async {
+      SharedPreferences.setMockInitialValues({
+        'notif_general': false, 'notif_chat': false,
+        'vsp_user_owner-a_notif_general': true,
+        'vsp_user_owner-a_notif_chat': false,
+        'vsp_user_owner-b_notif_general': true,
+        'vsp_user_owner-b_notif_chat': true,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'owner-a', prefs: prefs, isOwner: true,
+      ), isFalse);
+      expect(await NotificationFilterService.shouldShowNotificationForUser(
+        'chat', userId: 'owner-b', prefs: prefs, isOwner: true,
+      ), isTrue);
+    });
+
+    test('deep links accept legacy snake-case IDs and trim whitespace', () {
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({'booking_id': '  b-123  '}),
+        '/match/b-123',
+      );
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({'team_id': 't_456'}),
+        '/team/t_456',
+      );
+    });
+
+    test('malformed modern ID does not hide a valid legacy ID', () {
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({
+          'bookingId': '../admin',
+          'booking_id': 'valid-booking',
+        }),
+        '/match/valid-booking',
+      );
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({
+          'teamId': 42,
+          'team_id': 'valid-team',
+        }),
+        '/team/valid-team',
+      );
+    });
+
+    test('deep links reject route injection, empty IDs and malformed types', () {
+      for (final unsafe in <dynamic>[
+        '../admin',
+        '/admin',
+        'a/b',
+        'a%2Fb',
+        'id?next=admin',
+        'id#fragment',
+        'a b',
+        '  ',
+        'x' * 129,
+        123,
+      ]) {
+        expect(
+          NotificationFilterService.resolveDeepLinkRoute({'bookingId': unsafe}),
+          '/notifications',
+          reason: 'Unsafe booking ID: $unsafe',
+        );
+      }
+      expect(
+        NotificationFilterService.resolveDeepLinkRoute({
+          'bookingId': '../admin',
+          'team_id': 'safe_team',
+        }),
+        '/team/safe_team',
+      );
+    });
+
+    test('unsafe legacy IDs do not override safe modern IDs', () {
+      expect(NotificationFilterService.resolveDeepLinkRoute({
+        'bookingId': 'valid_booking',
+        'booking_id': '../admin',
+      }), '/match/valid_booking');
+      expect(NotificationFilterService.resolveDeepLinkRoute({
+        'teamId': 'safe-team',
+        'team_id': 'bad?redirect',
+      }), '/team/safe-team');
     });
 
     test('resolveDeepLinkRoute returns booking, team, or notification center route', () {

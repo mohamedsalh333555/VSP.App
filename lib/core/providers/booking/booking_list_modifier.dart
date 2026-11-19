@@ -15,6 +15,16 @@ class BookingListModifier {
     list.removeWhere((b) => b.id == bookingId);
   }
 
+  /// Replaces an existing booking with its latest server-confirmed state.
+  static void updateBooking(List<Booking> list, Booking booking) {
+    final index = list.indexWhere((item) => item.id == booking.id);
+    if (index == -1) {
+      list.insert(0, booking);
+    } else {
+      list[index] = booking;
+    }
+  }
+
   /// Updates the payment status of booking with [bookingId] in [list].
   static void updatePaymentStatus(
     List<Booking> list,

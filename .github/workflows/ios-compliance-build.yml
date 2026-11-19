@@ -1,0 +1,59 @@
+name: iOS compliance build
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths: ['ios/**', 'lib/**', 'assets/**', 'pubspec.*', 'l10n.yaml', 'scripts/verify_ios_bundle.py', 'test/tooling/test_ios_bundle_gate.py', '.github/workflows/ios-compliance-build.yml']
+
+concurrency:
+  group: ios-compliance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  device-compile:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      COCOAPODS_DISABLE_STATS: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required Apple toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          python3 - <<'PY'
+          import subprocess
+          sdk = subprocess.check_output(['xcrun','--sdk','iphoneos','--show-sdk-version'],text=True).strip()
+          assert int(sdk.split('.')[0]) >= 26, 'App Store requires iOS SDK 26+'
+          PY
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+          channel: stable
+          cache: true
+      - name: Verify compiled-bundle gate rejects unsafe fixtures
+        run: python3 -m unittest discover -s test/tooling -p test_ios_bundle_gate.py -v
+      - name: Resolve Flutter packages and localization
+        run: |
+          flutter pub get
+          flutter gen-l10n
+      - name: Build unsigned iOS device application
+        run: flutter build ios --release --no-codesign
+      - name: Inspect compiled SDK, identity and privacy manifest inventory
+        run: python3 scripts/verify_ios_bundle.py --bundle build/ios/iphoneos/Runner.app --output build/ios/privacy_inventory.json
+      - name: Preserve dependency lock and compiled metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-audit-${{ github.run_id }}
+          path: |
+            ios/Podfile.lock
+            build/ios/privacy_inventory.json
+            build/ios/iphoneos/Runner.app/Info.plist
+          if-no-files-found: warn
+          retention-days: 14

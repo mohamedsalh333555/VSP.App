@@ -67,12 +67,18 @@ class VerifyEmailHeader extends StatelessWidget {
         ),
         if (maskedEmail.isNotEmpty) ...[
           const SizedBox(height: 4),
-          Text(
-            maskedEmail,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: VSPColors.accent,
-                  fontWeight: FontWeight.bold,
-                ),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              maskedEmail,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: VSPColors.accent,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
           ),
         ],
       ],

@@ -14,6 +14,7 @@ class ChallengeTeamCard extends StatelessWidget {
   final bool isSelected;
   final bool hasChampion;
   final bool isLoadingH2H;
+  final bool hasH2HError;
   final Map<String, int>? h2hStats;
   final VoidCallback onTap;
 
@@ -23,6 +24,7 @@ class ChallengeTeamCard extends StatelessWidget {
     required this.isSelected,
     required this.hasChampion,
     required this.isLoadingH2H,
+    this.hasH2HError = false,
     this.h2hStats,
     required this.onTap,
   });
@@ -31,10 +33,13 @@ class ChallengeTeamCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+    return Material(
+      color: VSPColors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        onTap: onTap,
+        child: AnimatedContainer(
+        duration: VSPDSMotion.indicatorTransition,
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(VSPSpacing.md),
         decoration: BoxDecoration(
@@ -67,6 +72,8 @@ class ChallengeTeamCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               team.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -81,8 +88,10 @@ class ChallengeTeamCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: VSPColors.warning, width: 1),
                               ),
-                              child: const Text(
-                                ' يضم بطل 1 ضد 1',
+                              child: Text(
+                                Localizations.localeOf(context).languageCode == 'ar'
+                                    ? 'يضم بطل 1 ضد 1'
+                                    : 'Includes a 1v1 champion',
                                 style: TextStyle(
                                   color: VSPColors.warning,
                                   fontSize: 10,
@@ -131,6 +140,17 @@ class ChallengeTeamCard extends StatelessWidget {
                 )
               else if (h2hStats != null && h2hStats!['totalMatches']! > 0)
                 _buildH2HContent(context, l10n)
+              else if (hasH2HError)
+                Text(
+                  Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'تعذر تحميل سجل المواجهات السابقة.'
+                      : 'Could not load head-to-head history.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: VSPColors.warning,
+                    fontSize: 12,
+                  ),
+                )
               else if (h2hStats != null)
                 Text(
                   l10n.firstTimePlaying,
@@ -142,6 +162,7 @@ class ChallengeTeamCard extends StatelessWidget {
                 ),
             ],
           ],
+        ),
         ),
       ),
     );

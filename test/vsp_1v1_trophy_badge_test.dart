@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/vsp_1v1_trophy_badge.dart';
 
@@ -26,7 +28,7 @@ void main() {
         ),
       );
 
-      expect(find.text('🏆 1'), findsOneWidget);
+      expect(find.text('🏆 1 · Legacy'), findsOneWidget);
     });
 
     testWidgets('renders 🏆 ×2 when titles is 2', (tester) async {
@@ -38,7 +40,7 @@ void main() {
         ),
       );
 
-      expect(find.text('🏆 ×2'), findsOneWidget);
+      expect(find.text('🏆 ×2 · Legacy'), findsOneWidget);
     });
 
     testWidgets('renders 🏆 ×5 when titles is 5', (tester) async {
@@ -50,7 +52,73 @@ void main() {
         ),
       );
 
-      expect(find.text('🏆 ×5'), findsOneWidget);
+      expect(find.text('🏆 ×5 · Legacy'), findsOneWidget);
     });
   });
+  testWidgets('legacy medal is clearly historical for Arabic screen readers',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      locale: Locale('ar'),
+      supportedLocales: [Locale('ar'), Locale('en')],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: Scaffold(body: Vsp1v1TrophyBadge(titles: 2)),
+    ));
+    expect(find.text('🏆 ×2 · تاريخي'), findsOneWidget);
+    expect(find.bySemanticsLabel('ألقاب 1 ضد 1 التاريخية: 2'), findsOneWidget);
+  });
+
+  testWidgets('historical title lookup does not repeat on a normal rebuild',
+      (tester) async {
+    var queries = 0;
+    Future<int> titles(String userId) async {
+      queries++;
+      expect(userId, 'player-a');
+      return 2;
+    }
+    Widget screen() => MaterialApp(
+      home: Scaffold(
+        body: Vsp1v1UserTrophyBadge(userId: 'player-a', loadTitles: titles),
+      ),
+    );
+
+    await tester.pumpWidget(screen());
+    await tester.pumpAndSettle();
+    expect(queries, 1);
+    expect(find.text('🏆 ×2 · Legacy'), findsOneWidget);
+    await tester.pumpWidget(screen());
+    await tester.pumpAndSettle();
+    expect(queries, 1);
+  });
+
+  testWidgets('account change hides previous medals until verified',
+      (tester) async {
+    final waiting = Completer<int>();
+    var queries = 0;
+    Future<int> titles(String userId) {
+      queries++;
+      return userId == 'player-a' ? Future<int>.value(5) : waiting.future;
+    }
+    Widget screen(String userId) => MaterialApp(
+      home: Scaffold(
+        body: Vsp1v1UserTrophyBadge(userId: userId, loadTitles: titles),
+      ),
+    );
+
+    await tester.pumpWidget(screen('player-a'));
+    await tester.pumpAndSettle();
+    expect(find.text('🏆 ×5 · Legacy'), findsOneWidget);
+    await tester.pumpWidget(screen('player-b'));
+    await tester.pump();
+    expect(find.text('🏆 ×5 · Legacy'), findsNothing);
+    expect(queries, 2);
+    waiting.complete(1);
+    await tester.pumpAndSettle();
+    expect(find.text('🏆 1 · Legacy'), findsOneWidget);
+    expect(find.text('🏆 ×5 · Legacy'), findsNothing);
+  });
+
 }

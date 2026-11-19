@@ -22,7 +22,7 @@ class ScoreCounterColumn extends StatelessWidget {
       children: [
         Text(
           teamName,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
@@ -36,14 +36,14 @@ class ScoreCounterColumn extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(color: VSPColors.surfaceAlt, shape: BoxShape.circle),
-                child: const Icon(Iconsax.minus_cirlce_copy, color: Colors.white, size: 14),
+                child: const Icon(Iconsax.minus_cirlce_copy, color: VSPColors.white, size: 14),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 '$score',
-                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900),
+                style: const TextStyle(color: VSPColors.white, fontSize: 32, fontWeight: FontWeight.w900),
               ),
             ),
             GestureDetector(
@@ -51,7 +51,7 @@ class ScoreCounterColumn extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
-                child: const Icon(Iconsax.add_circle_copy, color: Colors.black, size: 14),
+                child: const Icon(Iconsax.add_circle_copy, color: VSPColors.black, size: 14),
               ),
             ),
           ],

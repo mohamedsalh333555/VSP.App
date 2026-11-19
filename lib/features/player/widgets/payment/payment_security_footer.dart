@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../shared/widgets/primary_button.dart';
 
 /// Footer section displaying the encryption security guarantee, progress indicator, and payment CTA button.
@@ -36,7 +37,7 @@ class PaymentSecurityFooter extends StatelessWidget {
           Text(
             isArabic ? 'جاري إصدار وتأكيد تذكرة الحجز... ' : 'Issuing your booking ticket... ',
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.white,
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
@@ -55,8 +56,8 @@ class PaymentSecurityFooter extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             isArabic
-                ? 'جميع المعاملات تشفير آمن 100% ومحمية بواسطة بوابة الدفع المعتمدة.'
-                : '100% secure encrypted payment via licensed Payment Gateway.',
+                ? 'تتم معالجة الدفع عبر بوابة Paymob. أدخل بيانات الدفع داخل صفحة الدفع الرسمية فقط.'
+                : 'Payments are processed through Paymob. Enter payment details only on the official checkout page.',
             textAlign: TextAlign.center,
             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
           ),
@@ -68,10 +69,10 @@ class PaymentSecurityFooter extends StatelessWidget {
           child: PrimaryButton(
             text: isArabic
                 ? (totalAmount != null
-                    ? 'الانتقال للدفع الآمن • ${totalAmount!.toStringAsFixed(1)} ج.م'
+                    ? 'الانتقال للدفع الآمن • ${VSPMoneyFormatter.amount(totalAmount!)} ج.م'
                     : 'الانتقال للدفع الآمن')
                 : (totalAmount != null
-                    ? 'Proceed to Checkout • ${totalAmount!.toStringAsFixed(1)} EGP'
+                    ? 'Proceed to Checkout • ${VSPMoneyFormatter.amount(totalAmount!)} EGP'
                     : 'Proceed to Secure Checkout'),
             isLoading: isLoading || isAwaitingWebhook,
             onPressed: canProceed ? onProceed : null,

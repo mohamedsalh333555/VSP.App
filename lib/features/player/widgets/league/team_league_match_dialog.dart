@@ -33,9 +33,11 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
   }
 
   Future<void> _submit() async {
+    if (_isLoading) return;
     if (_selectedResult == null) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى اختيار نتيجة فريقك')),
+        SnackBar(content: Text(isArabic ? 'يرجى اختيار نتيجة فريقك' : 'Select your team result first.')),
       );
       return;
     }
@@ -44,10 +46,16 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
     try {
       await widget.onSubmitResult(_selectedResult!);
       if (mounted) Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('League match result submission failed: $e\n$stackTrace');
       if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ أثناء حفظ النتيجة: $e')),
+          SnackBar(
+            content: Text(isArabic
+                ? 'تعذر حفظ نتيجة المباراة. حاول مرة أخرى.'
+                : 'Could not save the match result. Please try again.'),
+          ),
         );
       }
     } finally {
@@ -57,25 +65,36 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final isHome = widget.match.homeTeamId == widget.userTeamId;
     final myTeamName = isHome ? widget.match.homeTeamName : widget.match.awayTeamName;
     final opponentName = isHome ? widget.match.awayTeamName : widget.match.homeTeamName;
 
+    final media = MediaQuery.of(context);
+    final availableHeight = (media.size.height -
+            media.viewInsets.bottom -
+            media.padding.top -
+            media.padding.bottom -
+            24)
+        .clamp(0.0, media.size.height)
+        .toDouble();
     return Container(
+      constraints: BoxConstraints(maxHeight: availableHeight),
       padding: EdgeInsets.only(
         top: 24,
         left: 20,
         right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: media.padding.bottom + 24,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Header
           Row(
             children: [
@@ -88,18 +107,18 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
                 child: const Icon(Iconsax.judge_copy, color: VSPColors.accent, size: 22),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'نتيجة المباراة',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      isArabic ? 'نتيجة المباراة' : 'Match result',
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'ماذا كانت نتيجة فريقك؟',
-                      style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                      isArabic ? 'ماذا كانت نتيجة فريقك؟' : 'What was your team’s result?',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -132,13 +151,13 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
                     color: VSPColors.surface,
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
                   ),
-                  child: const Text('ضد', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                  child: Text(isArabic ? 'ضد' : 'VS', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
                 ),
                 Expanded(
                   child: Text(
                     opponentName,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
               ],
@@ -152,7 +171,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
               // 🟢 WIN
               Expanded(
                 child: _buildChoiceButton(
-                  title: 'فوز',
+                  title: isArabic ? 'فوز' : 'Win',
                   icon: Iconsax.cup_copy,
                   value: 'win',
                   activeColor: VSPColors.accent,
@@ -162,7 +181,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
               // 🟡 DRAW
               Expanded(
                 child: _buildChoiceButton(
-                  title: 'تعادل',
+                  title: isArabic ? 'تعادل' : 'Draw',
                   icon: Iconsax.pause_copy,
                   value: 'draw',
                   activeColor: VSPColors.warning,
@@ -172,7 +191,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
               // 🔴 LOSS
               Expanded(
                 child: _buildChoiceButton(
-                  title: 'خسارة',
+                  title: isArabic ? 'خسارة' : 'Loss',
                   icon: Iconsax.close_circle_copy,
                   value: 'loss',
                   activeColor: VSPColors.error,
@@ -184,11 +203,14 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
 
           // Submit Button
           PrimaryButton(
-            text: widget.match.myTeamSubmission != null ? 'تعديل النتيجة' : 'تأكيد وإرسال النتيجة',
+            text: widget.match.myTeamSubmission != null
+                ? (isArabic ? 'تعديل النتيجة' : 'Edit result')
+                : (isArabic ? 'تأكيد وإرسال النتيجة' : 'Confirm and submit result'),
             isLoading: _isLoading,
             onPressed: _selectedResult == null ? null : _submit,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -201,10 +223,10 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
   }) {
     final isSelected = _selectedResult == value;
     return InkWell(
-      onTap: () => setState(() => _selectedResult = value),
+      onTap: _isLoading ? null : () => setState(() => _selectedResult = value),
       borderRadius: BorderRadius.circular(VSPRadius.lg),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: VSPDSMotion.navigationSwitch,
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
           color: isSelected ? activeColor.withValues(alpha: 0.2) : VSPColors.surfaceAlt,
@@ -221,7 +243,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.white : VSPColors.textSecondary,
+                color: isSelected ? VSPColors.white : VSPColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
                 fontSize: 15,
               ),
@@ -259,48 +281,59 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
     _selectedResolution = widget.match.confirmedOutcome;
   }
 
-  String _formatResultText(String? result) {
-    if (result == 'win') return 'فوز 🟢';
-    if (result == 'draw') return 'تعادل 🟡';
-    if (result == 'loss') return 'خسارة 🔴';
-    return 'لم يسجل بعد';
+  String _formatResultText(String? result, {required bool isArabic}) {
+    if (result == 'win') return isArabic ? 'فوز 🟢' : 'Win 🟢';
+    if (result == 'draw') return isArabic ? 'تعادل 🟡' : 'Draw 🟡';
+    if (result == 'loss') return isArabic ? 'خسارة 🔴' : 'Loss 🔴';
+    return isArabic ? 'لم يسجل بعد' : 'Not submitted';
   }
 
   Future<void> _confirmAndResolve() async {
     if (_selectedResolution == null) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final confirmed = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: const Text('اعتماد نتيجة المباراة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text(
-          'سيتم اعتماد هذه النتيجة وتحديث جدول الدوري.',
-          style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+        title: Text(isArabic ? 'اعتماد نتيجة المباراة' : 'Confirm match result', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
+        content: Text(
+          isArabic ? 'سيتم اعتماد هذه النتيجة وتحديث جدول الدوري.' : 'This result will be confirmed and the league table will be updated.',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('إلغاء', style: TextStyle(color: VSPColors.textSecondary)),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('اعتماد النتيجة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            child: Text(isArabic ? 'اعتماد النتيجة' : 'Confirm result', style: const TextStyle(color: VSPColors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
 
-    if (confirmed != true) return;
+    if (!mounted || confirmed != true) return;
 
     setState(() => _isLoading = true);
     try {
       await widget.onResolveDispute(_selectedResolution!);
       if (mounted) Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('League dispute resolution failed: $e\n$stackTrace');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isArabic
+                ? 'تعذر اعتماد نتيجة المباراة. حاول مرة أخرى.'
+                : 'Could not confirm the match result. Please try again.'),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -309,45 +342,56 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final media = MediaQuery.of(context);
+    final availableHeight = (media.size.height -
+            media.viewInsets.bottom -
+            media.padding.top -
+            media.padding.bottom -
+            24)
+        .clamp(0.0, media.size.height)
+        .toDouble();
     return Container(
+      constraints: BoxConstraints(maxHeight: availableHeight),
       padding: EdgeInsets.only(
         top: 24,
         left: 20,
         right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: media.padding.bottom + 24,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Header
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.15),
+                  color: VSPColors.warning.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Iconsax.info_circle_copy, color: Colors.amber, size: 22),
+                child: const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 22),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'مراجعة نتيجة المباراة',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      isArabic ? 'مراجعة نتيجة المباراة' : 'Review match result',
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'يوجد اختلاف في تسجيل النتيجة بين الفريقين',
-                      style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                      isArabic ? 'يوجد اختلاف في تسجيل النتيجة بين الفريقين' : 'The two teams submitted different results',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -364,30 +408,54 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
               borderRadius: BorderRadius.circular(VSPRadius.lg),
               border: Border.all(
                 color: widget.match.isDisputed 
-                    ? Colors.redAccent.withValues(alpha: 0.4) 
+                    ? VSPColors.error.withValues(alpha: 0.4) 
                     : VSPColors.accent.withValues(alpha: 0.4),
               ),
             ),
             child: Column(
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(widget.match.homeTeamName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    Text(
-                      'سجل: ${_formatResultText(widget.match.homeSubmission)}',
-                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Text(
+                        widget.match.homeTeamName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '${isArabic ? 'سجل' : 'Submitted'}: ${_formatResultText(widget.match.homeSubmission, isArabic: isArabic)}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),
                 const Divider(color: VSPColors.divider, height: 16),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(widget.match.awayTeamName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    Text(
-                      'سجل: ${_formatResultText(widget.match.awaySubmission)}',
-                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Text(
+                        widget.match.awayTeamName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '${isArabic ? 'سجل' : 'Submitted'}: ${_formatResultText(widget.match.awaySubmission, isArabic: isArabic)}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),
@@ -396,36 +464,37 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
           ),
           const SizedBox(height: 18),
 
-          const Text(
-            'اختر النتيجة المعتمدة للمباراة:',
-            style: TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
+          Text(
+            isArabic ? 'اختر النتيجة المعتمدة للمباراة:' : 'Choose the final match result:', 
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
 
           // 3 Resolution Options
           _buildResolutionRadio(
-            title: 'فوز ${widget.match.homeTeamName}',
+            title: isArabic ? 'فوز ${widget.match.homeTeamName}' : '${widget.match.homeTeamName} win',
             value: 'home_win',
           ),
           const SizedBox(height: 8),
           _buildResolutionRadio(
-            title: 'تعادل',
+            title: isArabic ? 'تعادل' : 'Draw',
             value: 'draw',
           ),
           const SizedBox(height: 8),
           _buildResolutionRadio(
-            title: 'فوز ${widget.match.awayTeamName}',
+            title: isArabic ? 'فوز ${widget.match.awayTeamName}' : '${widget.match.awayTeamName} win',
             value: 'away_win',
           ),
           const SizedBox(height: 20),
 
           // Primary Button
           PrimaryButton(
-            text: 'اعتماد النتيجة',
+            text: isArabic ? 'اعتماد النتيجة' : 'Confirm result',
             isLoading: _isLoading,
             onPressed: _selectedResolution == null ? null : _confirmAndResolve,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -453,12 +522,16 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
               size: 20,
             ),
             const SizedBox(width: 10),
-            Text(
-              title,
-              style: TextStyle(
-                color: isSelected ? Colors.white : VSPColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isSelected ? VSPColors.white : VSPColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 14,
+                ),
               ),
             ),
           ],

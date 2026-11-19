@@ -64,7 +64,7 @@ void main() {
     status: BookingStatus.confirmed,
     paymentStatus: 'paid',
     isPaid: true,
-    paymentMethod: 'paymob',
+    paymentMethod: 'cash',
     createdAt: now.subtract(const Duration(hours: 3)),
   );
 

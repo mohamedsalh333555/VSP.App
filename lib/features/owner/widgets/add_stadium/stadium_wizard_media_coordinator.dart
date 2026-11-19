@@ -8,6 +8,25 @@ import 'stadium_wizard_image_service.dart';
 class StadiumWizardMediaCoordinator {
   const StadiumWizardMediaCoordinator._();
 
+  /// The first saved image becomes `imageUrl` on create and update.
+  static void setCoverImage({
+    required Map<String, dynamic> image,
+    required List<Map<String, dynamic>> images,
+    required String? stadiumId,
+    required String? uid,
+    required VoidCallback onStateChanged,
+  }) {
+    final index = images.indexOf(image);
+    if (index <= 0 || image['isUploading'] == true ||
+        image['url']?.toString().trim().isNotEmpty != true) return;
+    images.removeAt(index);
+    images.insert(0, image);
+    onStateChanged();
+    if (stadiumId == null) {
+      StadiumWizardDraftService.saveImages(uid, images);
+    }
+  }
+
   /// Prompts user for photo source and processes single or multiple image uploads.
   static Future<void> pickAndUpload({
     required BuildContext context,
@@ -62,6 +81,7 @@ class StadiumWizardMediaCoordinator {
     required VoidCallback onStateChanged,
     int? currentIndex,
     int? totalCount,
+    Future<String?> Function(XFile, String, void Function(int))? uploadImage,
   }) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final progressLabel = (currentIndex != null && totalCount != null && totalCount > 1)
@@ -72,6 +92,7 @@ class StadiumWizardMediaCoordinator {
       'file': null,
       'url': null,
       'isUploading': true,
+      'isNewUpload': true,
       'progress': 10,
       'statusLabel': progressLabel,
     };
@@ -90,16 +111,32 @@ class StadiumWizardMediaCoordinator {
       return;
     }
 
-    final url = await StadiumWizardImageService.uploadImageFile(
-      xFile: xFile,
-      ownerId: ownerId,
-      onProgress: (progress) {
+    String? url;
+    try {
+      void updateProgress(int progress) {
         imageEntry['progress'] = progress;
-        onStateChanged();
-      },
-    );
+        if (context.mounted) onStateChanged();
+      }
 
-    if (!context.mounted) return;
+      url = uploadImage != null
+          ? await uploadImage(xFile, ownerId, updateProgress)
+          : await StadiumWizardImageService.uploadImageFile(
+              xFile: xFile,
+              ownerId: ownerId,
+              onProgress: updateProgress,
+            );
+    } catch (_) {
+      // Upload failures have the same visible recovery path as a null result.
+      url = null;
+    }
+
+    if (!context.mounted) {
+      if (url != null && url.isNotEmpty) {
+        await StadiumWizardImageService.deleteUploadedImage(url);
+      }
+      images.remove(imageEntry);
+      return;
+    }
 
     if (url == null) {
       images.remove(imageEntry);
@@ -114,7 +151,7 @@ class StadiumWizardMediaCoordinator {
     onStateChanged();
 
     if (stadiumId == null) {
-      StadiumWizardDraftService.saveImages(uid, images);
+      await StadiumWizardDraftService.saveImages(uid, images);
     }
   }
 
@@ -122,17 +159,27 @@ class StadiumWizardMediaCoordinator {
   static Future<void> deleteImage({
     required Map<String, dynamic> image,
     required List<Map<String, dynamic>> images,
+    required Set<String> removedExistingImageUrls,
     required String? stadiumId,
     required String? uid,
     required VoidCallback onStateChanged,
+    Future<bool> Function(String)? deleteUploaded,
   }) async {
-    if (image['url'] != null) {
-      await StadiumWizardImageService.deleteUploadedImage(image['url']!);
+    // Existing stadium images remain referenced by the persisted record until
+    // the edit is successfully saved; never delete them while the wizard is open.
+    final imageUrl = image['url']?.toString().trim();
+    if (imageUrl?.isNotEmpty == true && image['isNewUpload'] == true) {
+      final deleted = await (deleteUploaded?.call(imageUrl!) ??
+          StadiumWizardImageService.deleteUploadedImage(imageUrl!));
+      if (!deleted) return;
+    } else if (stadiumId != null && imageUrl?.isNotEmpty == true) {
+      // Defer deleting persisted media until the record update succeeds.
+      removedExistingImageUrls.add(imageUrl!);
     }
     images.remove(image);
     onStateChanged();
     if (stadiumId == null) {
-      StadiumWizardDraftService.saveImages(uid, images);
+      await StadiumWizardDraftService.saveImages(uid, images);
     }
   }
 }

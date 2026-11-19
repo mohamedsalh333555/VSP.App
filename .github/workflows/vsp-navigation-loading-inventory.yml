@@ -1,0 +1,49 @@
+name: VSP Navigation and Loading Source Inventory
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-navigation-loading-inventory.yml"
+      - "scripts/audit_vsp_navigation_loading.cjs"
+      - "scripts/test_vsp_navigation_loading_inventory.cjs"
+      - "scripts/audit_vsp_design_tokens_motion.cjs"
+      - "lib/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-navigation-loading-inventory.yml"
+      - "scripts/audit_vsp_navigation_loading.cjs"
+      - "scripts/test_vsp_navigation_loading_inventory.cjs"
+
+permissions:
+  contents: read
+concurrency:
+  group: vsp-navigation-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  navigation-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify source inventory logic
+        run: node --test scripts/test_vsp_navigation_loading_inventory.cjs
+      - name: Inventory navigation routes and asynchronous UI states
+        run: |
+          node scripts/audit_vsp_navigation_loading.cjs --markdown > /tmp/vsp-navigation-loading.md
+          node scripts/audit_vsp_navigation_loading.cjs --json > /tmp/vsp-navigation-loading.json
+          cat /tmp/vsp-navigation-loading.md >> "$GITHUB_STEP_SUMMARY"
+          sed -n '1,95p' /tmp/vsp-navigation-loading.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsp-navigation-loading-inventory
+          path: |
+            /tmp/vsp-navigation-loading.md
+            /tmp/vsp-navigation-loading.json
+          retention-days: 14

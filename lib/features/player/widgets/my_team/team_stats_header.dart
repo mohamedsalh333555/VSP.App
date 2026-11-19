@@ -6,7 +6,8 @@ import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../screens/player_home_screen.dart';
 
-/// Header section displaying the 1v1 champion banner and team stat metrics (Points, Members, Trophies, Wins).
+/// Team record metrics. Historical 1v1 titles are never current competitions
+/// or substitutes for officially verified Team Skills awards.
 class TeamStatsHeader extends StatelessWidget {
   final Team team;
   final int membersCount;
@@ -18,6 +19,22 @@ class TeamStatsHeader extends StatelessWidget {
     required this.membersCount,
     required this.isArabic,
   });
+
+  static String historicalChampionTitle({required bool isArabic}) =>
+      isArabic ? 'إنجاز تاريخي: بطل 1 ضد 1' : 'Historical 1v1 champion';
+
+  static String historicalChampionDescription({required bool isArabic}) =>
+      isArabic
+          ? 'أحد لاعبي الفريق فاز سابقًا ببطولة 1 ضد 1، وهي ليست بطولة جارية'
+          : 'A team member previously won the retired 1v1 tournament';
+
+  static String recordedTitlesLabel({required bool isArabic}) =>
+      isArabic ? 'بطولات مسجلة' : 'Recorded titles';
+
+  static String teamPointsExplanation({required bool isArabic}) =>
+      isArabic
+          ? 'دي نقاط الفريق المسجلة حاليًا. راجع جدول الترتيب لعرض المركز الحالي؛ النتائج المعلقة أو المتنازع عليها مش بالضرورة تكون محسوبة.'
+          : 'These are the team’s recorded points. Check current standings for placement; pending or disputed results may not be included.';
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +67,7 @@ class TeamStatsHeader extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isArabic ? 'فريق يضم بطل 1v1 رسمي!' : 'Home of Official 1v1 Champion!',
+                            historicalChampionTitle(isArabic: isArabic),
                             style: const TextStyle(
                               color: VSPColors.warning,
                               fontWeight: FontWeight.bold,
@@ -58,9 +75,7 @@ class TeamStatsHeader extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            isArabic
-                                ? 'أحد لاعبي هذا الفريق حاصل على المركز الأول في بطولة الفردي'
-                                : 'A member of this team won 1st place in the 1v1 tournament',
+                            historicalChampionDescription(isArabic: isArabic),
                             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                           ),
                         ],
@@ -94,7 +109,7 @@ class TeamStatsHeader extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _buildStatCard(context, team.championshipsWon.toString(), l10n.trophies),
+              child: _buildStatCard(context, team.championshipsWon.toString(), recordedTitlesLabel(isArabic: isArabic)),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -162,16 +177,14 @@ class TeamStatsHeader extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                isArabic ? 'ترتيب فريقك الرسمي' : 'Official Elo Rating',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                isArabic ? 'نقاط الفريق' : 'Team points',
+                style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
           ],
         ),
         content: Text(
-          isArabic
-              ? 'نقاط الترتيب تعبر عن الموقع الرسمي لفريقك بين كل فرق المحافظة. ترتفع النقاط وتتقدم في جدول الدوري عند الفوز في التحديات والبطولات.'
-              : 'Elo Rating reflects your official team standing across the governorate. Earn points and climb the leaderboard by winning challenges.',
+          teamPointsExplanation(isArabic: isArabic),
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
         ),
         actions: [
@@ -185,7 +198,7 @@ class TeamStatsHeader extends StatelessWidget {
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
             ),
             icon: const Icon(Iconsax.chart_copy, size: 16),

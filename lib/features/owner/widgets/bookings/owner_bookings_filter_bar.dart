@@ -1,3 +1,4 @@
+import '../../../../core/ui/components/vsp_filter_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -37,36 +38,16 @@ class OwnerBookingsFilterBar extends StatelessWidget {
               Expanded(
                 child: stadiums.isEmpty
                     ? const SizedBox.shrink()
-                    : Container(
-                        height: 44,
-                        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-                        decoration: BoxDecoration(
-                          color: VSPColors.surface,
-                          borderRadius: BorderRadius.circular(VSPRadius.lg),
-                          border: Border.all(color: VSPColors.divider, width: 0.5),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<Stadium>(
-                            value: selectedStadium,
-                            dropdownColor: VSPColors.surface,
-                            icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
-                            isExpanded: true,
-                            items: stadiums.map((s) => DropdownMenuItem(
-                              value: s,
-                              child: Text(
-                                s.name,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: VSPColors.textPrimary,
-                                      fontSize: 13,
-                                    ),
-                              ),
-                            )).toList(),
-                            onChanged: (val) {
-                              if (val != null) onStadiumChanged(val);
-                            },
-                          ),
-                        ),
+                    : VSPFilterDropdown<Stadium>(
+                        value: selectedStadium != null &&
+                                stadiums.contains(selectedStadium)
+                            ? selectedStadium!
+                            : stadiums.first,
+                        items: stadiums,
+                        labelFor: (stadium) => stadium.name,
+                        onChanged: (stadium) {
+                          if (stadium != null) onStadiumChanged(stadium);
+                        },
                       ),
               ),
               const SizedBox(width: 12),
@@ -76,7 +57,7 @@ class OwnerBookingsFilterBar extends StatelessWidget {
                 onTap: onSelectDate,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
                 child: Container(
-                  height: 44,
+                  constraints: const BoxConstraints(minHeight: 48),
                   padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   decoration: BoxDecoration(
                     color: VSPColors.surface,
@@ -118,40 +99,52 @@ class OwnerBookingsFilterBar extends StatelessWidget {
               final String dayName =
                   DateFormat('E', Localizations.localeOf(context).toString()).format(date).toUpperCase();
 
-              return GestureDetector(
-                onTap: () => onDaySelected(index),
-                child: Container(
-                  width: 60,
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? VSPColors.accent : Colors.transparent,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(
-                      color: isSelected ? VSPColors.accent : VSPColors.divider,
-                      width: 1.5,
+              return Semantics(
+                button: true,
+                selected: isSelected,
+                label: DateFormat('EEEE d MMMM', Localizations.localeOf(context).toString()).format(date),
+                child: InkWell(
+                  onTap: () => onDaySelected(index),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  child: Container(
+                    width: 60,
+                    margin: const EdgeInsetsDirectional.only(end: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected ? VSPColors.surfaceAlt : VSPColors.transparent,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(
+                        color: isSelected
+                            ? VSPColors.textSecondary
+                            : VSPColors.divider,
+                        width: 1.5,
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${date.day}',
-                        style: TextStyle(
-                          color: isSelected ? VSPColors.background : VSPColors.textPrimary,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            color: isSelected
+                                ? VSPColors.textPrimary
+                                : VSPColors.textPrimary,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dayName,
-                        style: TextStyle(
-                          color: isSelected ? VSPColors.background : VSPColors.textSecondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(height: 2),
+                        Text(
+                          dayName,
+                          style: TextStyle(
+                            color: isSelected
+                                ? VSPColors.background
+                                : VSPColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );

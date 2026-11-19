@@ -1,0 +1,256 @@
+name: Account SQL security contracts
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/tests/**'
+      - 'scripts/test_challenge_timeout_isolated.py'
+      - 'scripts/test_challenge_captain_private_results.py'
+      - 'scripts/test_challenge_result_two_session_concurrency.py'
+      - 'docs/security/sql/challenge_captain_private_result_candidate.sql'
+      - 'docs/security/sql/challenge_non_played_report_candidate.sql'
+      - 'docs/security/sql/challenge_non_played_review_candidate.sql'
+      - 'docs/security/sql/challenge_public_feed_exclusion_candidate.sql'
+      - 'docs/security/sql/challenge_eligible_head_to_head_candidate.sql'
+      - 'docs/security/sql/challenge_legacy_elo_reconciliation_guard_candidate.sql'
+      - 'docs/security/sql/challenge_excluded_result_scoring_guard_candidate.sql'
+      - 'docs/security/sql/booking_public_feed_logo_sync_fix_candidate.sql'
+      - 'scripts/test_booking_public_feed_logo_sync_isolated.py'
+      - 'scripts/test_cash_booking_confirmed_notification_isolated.py'
+      - 'scripts/test_booking_cancellation_notification_isolated.py'
+      - 'scripts/test_paymob_verified_payment_notification_isolated.py'
+      - 'scripts/test_paymob_transaction_booking_binding_isolated.py'
+      - 'scripts/test_notifications_reserved_events_rls_isolated.py'
+      - 'scripts/test_booking_arabic_payment_reconcile_isolated.py'
+      - 'scripts/test_notifications_read_flag_only_isolated.py'
+      - 'docs/security/sql/record_booking_payment_atomic_staging_source_2026-11-17.sql'
+      - 'test/tooling/test_booking_public_feed_logo_sync_target_guard.py'
+      - 'test/tooling/test_challenge_timeout_isolated.py'
+      - 'scripts/run_account_security_contracts.py'
+      - 'scripts/apply_migration_runner.py'
+      - 'test/tooling/test_migration_replay_guard.py'
+      - 'scripts/test_booking_window_function_isolated.py'
+      - 'scripts/test_accept_join_request_isolated.py'
+      - 'scripts/test_accept_join_request_concurrency.py'
+      - 'scripts/test_team_invitation_isolated.py'
+      - 'scripts/test_team_invitation_status_notifications_isolated.py'
+      - 'scripts/test_online_challenge_verified_confirmation_isolated.py'
+      - 'scripts/test_team_roster_order_isolated.py'
+      - 'scripts/test_matchup_fee_migration_rebuild.py'
+      - 'scripts/test_reject_join_request_isolated.py'
+      - 'scripts/test_refund_dispatcher_isolated.py'
+      - 'test/tooling/test_booking_window_contract_runner.py'
+      - 'test/tooling/test_accept_join_request_isolated.py'
+      - 'test/tooling/test_accept_join_request_concurrency.py'
+      - 'test/tooling/test_team_invitation_isolated.py'
+      - 'test/tooling/test_team_roster_order_isolated.py'
+      - 'test/tooling/test_matchup_fee_migration_rebuild.py'
+      - 'test/tooling/test_reject_join_request_isolated.py'
+      - 'test/tooling/test_refund_dispatcher_isolated.py'
+      - 'scripts/admin_rpc_guard_plan.py'
+      - 'scripts/blocked_admin_policy_plan.py'
+      - 'test/tooling/test_blocked_admin_policy_plan.py'
+      - 'test/tooling/test_admin_rpc_guard_plan.py'
+      - 'test/tooling/test_account_security_runner.py'
+      - 'scripts/test_team_skills_registration_concurrency.py'
+      - 'scripts/test_team_skills_registration_lifecycle_isolated.py'
+      - 'scripts/test_team_skills_published_details_isolated.py'
+      - 'scripts/test_team_skills_cup_creation_isolated.py'
+      - 'scripts/test_team_skills_award_notification_recipients_isolated.py'
+      - 'scripts/test_team_skills_approved_score_notice_isolated.py'
+      - 'scripts/test_team_skills_knockout_advancement_notice_isolated.py'
+      - 'scripts/test_team_skills_score_approval_isolated.py'
+      - 'scripts/test_team_skills_score_rejection_isolated.py'
+      - 'scripts/test_team_skills_knockout_advancement_isolated.py'
+      - 'scripts/test_owner_stadium_capacity_concurrency.py'
+      - 'test/tooling/test_owner_stadium_capacity_target_guard.py'
+      - 'docs/security/sql/owner_trial_365_day_default_candidate.sql'
+      - 'scripts/test_owner_trial_default_isolated.py'
+      - 'test/tooling/test_owner_trial_default_target_guard.py'
+      - 'docs/security/sql/owner_stadium_capacity_guard_candidate.sql'
+      - 'docs/security/sql/stadium_moderation_write_guard_candidate.sql'
+      - '.github/workflows/account-security-contracts.yml'
+
+concurrency:
+  group: account-sql-contracts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_DB: vsp_security_contracts
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: vsp_ephemeral_ci_only
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      VSP_CONTRACT_ISOLATED: '1'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: vsp_security_contracts
+      PGUSER: postgres
+      PGPASSWORD: vsp_ephemeral_ci_only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify runner refuses non-isolated targets
+        run: python3 -m unittest discover -s test/tooling -p test_account_security_runner.py -v
+      - name: Verify source fingerprint planner
+        run: python3 -m unittest discover -s test/tooling -p test_admin_rpc_guard_plan.py -v
+      - name: Verify scoped policy planner
+        run: python3 -m unittest discover -s test/tooling -p test_blocked_admin_policy_plan.py -v
+      - name: Execute SQL authorization suites and negative gate controls
+        run: python3 scripts/run_account_security_contracts.py
+      - name: Verify owner stadium quota runner never targets remote PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_owner_stadium_capacity_target_guard.py -v
+      - name: Verify quota candidate in independent local SQL sessions
+        run: python3 scripts/test_owner_stadium_capacity_concurrency.py
+      - name: Verify owner trial default test cannot reach hosted databases
+        run: python3 -m unittest discover -s test/tooling -p test_owner_trial_default_target_guard.py -v
+      - name: Verify explicit seven-day trial after source-checked default removal on isolated SQL
+        run: python3 scripts/test_owner_trial_default_isolated.py
+      - name: Verify isolated booking validator runner guard and SQL parsing
+        run: python3 -m unittest discover -s test/tooling -p test_booking_window_contract_runner.py -v
+      - name: Verify booking maintenance and overnight split-break SQL on isolated Postgres
+        run: python3 scripts/test_booking_window_function_isolated.py
+      - name: Verify refund dispatcher runner refuses remote databases
+        run: python3 -m unittest discover -s test/tooling -p test_refund_dispatcher_isolated.py -v
+      - name: Verify refund dispatcher queue and project guards on isolated PostgreSQL
+        run: python3 scripts/test_refund_dispatcher_isolated.py
+      - name: Verify legacy migration runner refuses production and colliding versions
+        run: python3 -m unittest discover -s test/tooling -p test_migration_replay_guard.py -v
+      - name: Verify open-join RPC runner refuses remote SQL targets
+        run: python3 -m unittest discover -s test/tooling -p test_accept_join_request_isolated.py -v
+      - name: Verify join consent and authorization in disposable PostgreSQL
+        run: python3 scripts/test_accept_join_request_isolated.py
+      - name: Verify concurrency runner cannot target remote PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_accept_join_request_concurrency.py -v
+      - name: Verify two independent SQL clients cannot join the same final pickup slot
+        run: python3 scripts/test_accept_join_request_concurrency.py
+      - name: Verify team invitation runner cannot target hosted PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_team_invitation_isolated.py -v
+      - name: Verify invitation authorization and expiry on isolated PostgreSQL
+        run: python3 scripts/test_team_invitation_isolated.py
+      - name: Verify team invitation creation and response notices on isolated PostgreSQL
+        run: python3 scripts/test_team_invitation_status_notifications_isolated.py
+      - name: Verify signed online challenge confirmation notifies only captains and never cancelled games
+        run: python3 scripts/test_online_challenge_verified_confirmation_isolated.py
+      - name: Verify private team-roster runner target guard
+        run: python3 -m unittest discover -s test/tooling -p test_team_roster_order_isolated.py -v
+      - name: Verify member-only roster and join-time ordering on isolated PostgreSQL
+        run: python3 scripts/test_team_roster_order_isolated.py
+      - name: Verify Team Skills RLS SQL runner only connects to disposable PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_team_skills_rls_target_guard.py -v
+      - name: Verify Team Skills private results, roster, and goalkeeper scopes
+        run: python3 scripts/test_team_skills_rls_isolated.py
+      - name: Verify blocked event officials cannot read pending scores or goalkeeper data
+        run: python3 scripts/test_team_skills_blocked_official_reads_isolated.py
+      - name: Verify Team Skills public leaderboard and achievement views are SELECT only
+        run: python3 scripts/test_team_skills_views_readonly_isolated.py
+      - name: Verify Team Skills waitlist approval cap and admin role authorization
+        run: python3 scripts/test_team_skills_capacity_isolated.py
+      - name: Verify two independent SQL clients cannot approve the same final cup slot
+        run: python3 scripts/test_team_skills_capacity_concurrency.py
+      - name: Verify captain signup concurrency at the final cup slot
+        run: python3 scripts/test_team_skills_registration_concurrency.py
+      - name: Verify actual Team Skills publish and close enrollment with retained five-player registration
+        run: python3 scripts/test_team_skills_registration_lifecycle_isolated.py
+      - name: Verify published Team Skills details visibility and admin-only publication against real RPC/RLS
+        run: python3 scripts/test_team_skills_published_details_isolated.py
+      - name: Verify Team Skills draft creation and stadium governorate integrity on actual SQL
+        run: python3 scripts/test_team_skills_cup_creation_isolated.py
+      - name: Verify captain-authenticated bounded auto-waitlist enrollment
+        run: python3 scripts/test_team_skills_auto_waitlist_isolated.py
+      - name: Verify captain withdrawal and audited admin cancellations preserve team capacity
+        run: python3 scripts/test_team_skills_withdrawal_waitlist_isolated.py
+      - name: Verify a waiting team's captain and all five players are still eligible at approval
+        run: python3 scripts/test_team_skills_approval_roster_isolated.py
+      - name: Verify captain-only five-player preapproval roster corrections
+        run: python3 scripts/test_team_skills_roster_correction_isolated.py
+      - name: Audit source-to-staging Team Skills migration lineage without database access
+        run: python3 scripts/audit_team_skills_staging_lineage.py
+      - name: Verify future-round knockout slots and tied goalkeeper prizes on isolated SQL
+        run: python3 scripts/test_team_skills_bracket_keeper_isolated.py
+      - name: Verify Team Skills reject, audited correction and reapproval fail-closed lifecycle
+        run: python3 scripts/test_team_skills_score_rejection_isolated.py
+      - name: Verify Team Skills score approval, admin-only authority and single audit
+        run: python3 scripts/test_team_skills_score_approval_isolated.py
+      - name: Verify Team Skills real knockout semi-final to champion progression and negative cases
+        run: python3 scripts/test_team_skills_knockout_advancement_isolated.py
+      - name: Verify Team Skills finals cannot seed from incomplete scores or mutate seeded rankings
+        run: python3 scripts/test_team_skills_final_seeding_isolated.py
+      - name: Verify team champion cannot be awarded until all teams finish and scores are frozen
+        run: python3 scripts/test_team_skills_champion_finality_isolated.py
+      - name: Verify Team Skills captain-only status notifications, including deduplication
+        run: python3 scripts/test_team_skills_registration_notify_isolated.py
+      - name: Verify award notifications exclude inactive and unrelated team members
+        run: python3 scripts/test_team_skills_award_notification_recipients_isolated.py
+      - name: Verify only fully approved live Team Skills stage results notify the correct captain
+        run: python3 scripts/test_team_skills_approved_score_notice_isolated.py
+      - name: Verify approved knockout winners alone receive qualification notifications
+        run: python3 scripts/test_team_skills_knockout_advancement_notice_isolated.py
+      - name: Verify blocked judges and organizers cannot submit protected scores
+        run: python3 scripts/test_team_skills_blocked_judge_isolated.py
+      - name: Verify cash hospitality and waived-fee attendance on isolated PostgreSQL
+        run: python3 scripts/test_team_skills_cash_checkin_isolated.py
+      - name: Verify two goalkeeper stations cannot double-book the same opponent team
+        run: python3 scripts/test_team_skills_keeper_station_concurrency.py
+      - name: Verify matchup fee migration rebuild target guard
+        run: python3 -m unittest discover -s test/tooling -p test_matchup_fee_migration_rebuild.py -v
+      - name: Rebuild and replay matchup fee migration on isolated PostgreSQL
+        run: python3 scripts/test_matchup_fee_migration_rebuild.py
+      - name: Verify reject-join runner refuses remote SQL
+        run: python3 -m unittest discover -s test/tooling -p test_reject_join_request_isolated.py -v
+      - name: Verify reject-join ownership on isolated PostgreSQL
+        run: python3 scripts/test_reject_join_request_isolated.py
+      - name: Verify challenge timeout runner rejects hosted databases
+        run: python3 -m unittest discover -s test/tooling -p test_challenge_timeout_isolated.py -v
+      - name: Verify challenge timeout retirement on isolated PostgreSQL
+        run: python3 scripts/test_challenge_timeout_isolated.py
+      - name: Verify public feed logo-sync test cannot target hosted PostgreSQL
+        run: python3 -m unittest discover -s test/tooling -p test_booking_public_feed_logo_sync_target_guard.py -v
+      - name: Verify existing public feed trigger and logo sync in disposable PostgreSQL
+        run: python3 scripts/test_booking_public_feed_logo_sync_isolated.py
+      - name: Verify canonical stadium recipient and one cash booking confirmation notice
+        run: python3 scripts/test_cash_booking_confirmed_notification_isolated.py
+      - name: Verify booking cancellation receipts, role isolation and no false refund confirmations
+        run: python3 scripts/test_booking_cancellation_notification_isolated.py
+      - name: Verify signed Paymob ledger-only receipts, recipient isolation and idempotency
+        run: python3 scripts/test_paymob_verified_payment_notification_isolated.py
+      - name: Verify a Paymob transaction ID cannot be used for a different booking
+        run: python3 scripts/test_paymob_transaction_booking_binding_isolated.py
+      - name: Verify ordinary clients cannot impersonate server payment or tournament notices
+        run: python3 scripts/test_notifications_reserved_events_rls_isolated.py
+      - name: Verify server Arabic payment methods reject unpaid wallet confirmations
+        run: python3 scripts/test_booking_arabic_payment_reconcile_isolated.py
+      - name: Verify clients can only mark their own notices read without changing official content
+        run: python3 scripts/test_notifications_read_flag_only_isolated.py
+      - name: Verify isolated captain-result private storage and agreement matrix
+        run: python3 scripts/test_challenge_captain_private_results.py
+      - name: Verify captain agreement, venue report and restore races in two isolated PostgreSQL sessions
+        run: python3 scripts/test_challenge_result_two_session_concurrency.py
+      - name: Verify an existing contract database cannot be reinitialised
+        run: |
+          python3 - <<'PY'
+          import subprocess, sys
+          result = subprocess.run([sys.executable, 'scripts/run_account_security_contracts.py'],
+                                  text=True, capture_output=True)
+          if result.returncode == 0 or 'CONTRACT_DATABASE_NOT_FRESH' not in result.stderr:
+              raise SystemExit('Fresh-database protection failed')
+          print('PASS: existing database refused before fixture installation')
+          PY

@@ -12,6 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/vsp_back_button.dart';
+import '../../../../shared/dialogs/account_deletion_dialog.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -19,7 +20,16 @@ import '../../../../core/utils/phone_utils.dart';
 import '../../../auth/screens/welcome_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
- const EditProfileScreen({super.key});
+ final Future<XFile?> Function(BuildContext)? pickProfileImage;
+ final Future<XFile?> Function(XFile)? compressProfileImage;
+ final Widget Function(XFile)? selectedImagePreview;
+
+ const EditProfileScreen({
+   super.key,
+   this.pickProfileImage,
+   this.compressProfileImage,
+   this.selectedImagePreview,
+ });
 
  @override
  State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -31,13 +41,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  String? _selectedPosition;
  String _selectedSport = 'Football';
  bool _isLoading = false;
- bool _isDeleting = false;
+ bool _isDeletionDialogOpen = false;
  XFile? _newProfileImage;
+ String? _initialProfileUserId;
 
  @override
  void initState() {
  super.initState();
- final user = Provider.of<AuthProvider>(context, listen: false).userModel;
+ final auth = Provider.of<AuthProvider>(context, listen: false);
+ final user = auth.userModel;
+ _initialProfileUserId = auth.currentUser?.id == user?.uid ? user?.uid : null;
  _nameController = TextEditingController(text: user?.name ?? '');
  _phoneController = TextEditingController(text: user?.phone ?? '');
  _selectedSport = user?.favoriteSport ?? 'Football';
@@ -51,75 +64,190 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  super.dispose();
  }
 
+ // Do not trust a cached profile as the acting identity: logout or an
+ // account switch may update the Supabase session before profile hydration.
+ String? _verifiedActiveProfileId(AuthProvider auth) {
+   final signedInId = auth.currentUser?.id;
+   final profileId = auth.userModel?.uid;
+   if (signedInId == null || signedInId.isEmpty ||
+       profileId == null || profileId.isEmpty ||
+       signedInId != profileId || signedInId != _initialProfileUserId) return null;
+   return signedInId;
+ }
+
+ bool _stillEditingAccount(AuthProvider auth, String id) =>
+     _verifiedActiveProfileId(auth) == id;
+
  Future<void> _pickImage() async {
- final image = await ImagePickService.pick(
- context,
- aspectRatio: CropAspectRatioPreset.square,
- );
- if (image != null && mounted) {
- final compressed = await StorageService().compressImage(image);
- setState(() => _newProfileImage = compressed ?? image);
+ if (_isLoading) return;
+ final auth = context.read<AuthProvider>();
+ final requestingUserId = _verifiedActiveProfileId(auth);
+ if (requestingUserId == null) return;
+ try {
+   XFile? image;
+   if (widget.pickProfileImage != null) {
+     image = await widget.pickProfileImage!(context);
+   } else {
+     image = await ImagePickService.pick(
+         context, aspectRatio: CropAspectRatioPreset.square);
+   }
+   if (!mounted ||
+       !_stillEditingAccount(auth, requestingUserId)) {
+     return;
+   }
+   if (image != null) {
+     setState(() => _newProfileImage = image);
+   }
+ } catch (_) {
+   if (!mounted) return;
+   if (!_stillEditingAccount(auth, requestingUserId)) {
+     return;
+   }
+   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+   VSPFeedback.showError(context, isArabic
+       ? 'تعذر اختيار الصورة. حاول مرة أخرى.'
+       : 'Could not choose the image. Please try again.');
  }
  }
 
  Future<void> _saveChanges() async {
  // Validation
  final name = _nameController.text.trim();
- final phone = _phoneController.text.trim();
+ final normalizedPhone = PhoneUtils.normalize(_phoneController.text.trim());
+ final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
- if (name.isEmpty) {
+ if (name.length < 2 || name.length > 80) {
  VSPFeedback.showError(context, AppLocalizations.of(context)!.nameEmptyError);
  return;
+ }
+ if (normalizedPhone == null ||
+     normalizedPhone.length != 11 ||
+     !normalizedPhone.startsWith('01')) {
+ VSPFeedback.showError(
+ context,
+ isArabic ? 'اكتب رقم موبايل مصري صحيح.' : 'Enter a valid Egyptian mobile number.',
+ );
+ return;
+ }
+
+ final auth = Provider.of<AuthProvider>(context, listen: false);
+ final submittingUserId = _verifiedActiveProfileId(auth);
+ if (submittingUserId == null || submittingUserId.isEmpty) {
+ VSPFeedback.showError(
+ context,
+ isArabic ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Your session ended. Please sign in again.',
+ );
+ return;
+ }
+ if (auth.isPlayer) {
+ final validPositions = SportPositionsRegistry.getPositionsForSport(_selectedSport)
+     .map((position) => position.code)
+     .toSet();
+ if (_selectedPosition == null || !validPositions.contains(_selectedPosition)) {
+ VSPFeedback.showError(
+ context,
+ isArabic ? 'اختار مركز لعب صحيح قبل الحفظ.' : 'Choose a valid playing position before saving.',
+ );
+ return;
+ }
  }
 
  setState(() => _isLoading = true);
 
- final auth = Provider.of<AuthProvider>(context, listen: false);
-
  try {
- // 1. Upload compressed new image if selected
- if (_newProfileImage != null) {
- final compressed = await StorageService().compressImage(_newProfileImage!);
- await auth.updateProfilePhoto(compressed ?? _newProfileImage!);
- // AuthProvider already handles the Firestore update for the photo
- }
-
- // 2. Update other profile data
+ // Save the text fields first. If the subsequent optional image upload fails,
+ // keep the selected image for an explicit retry and report the partial save.
  final Map<String, dynamic> updateData = {
  'name': name,
- 'phone': PhoneUtils.normalize(phone),
+ 'phone': normalizedPhone,
  };
  if (auth.isPlayer && _selectedPosition != null) {
  updateData['position'] = _selectedPosition;
  }
 
  final success = await auth.updateProfile(updateData);
+ if (!mounted ||
+     !_stillEditingAccount(auth, submittingUserId)) {
+ return;
+ }
+ if (!success) {
+ VSPFeedback.showError(context, AppLocalizations.of(context)!.profileUpdateFailed);
+ return;
+ }
 
- if (mounted) {
- setState(() => _isLoading = false);
- if (success) {
+ if (_newProfileImage != null) {
+ bool photoSaved = false;
+ try {
+   final compressed = widget.compressProfileImage != null
+       ? await widget.compressProfileImage!(_newProfileImage!)
+       : await StorageService().compressImage(_newProfileImage!);
+   if (!mounted ||
+       !_stillEditingAccount(auth, submittingUserId)) {
+     return;
+   }
+   photoSaved = await auth.updateProfilePhoto(
+       compressed ?? _newProfileImage!);
+ } catch (_) {
+   // Profile fields were already persisted. Keep the selected image
+   // and allow an explicit retry without claiming the full save failed.
+ }
+ if (!mounted ||
+     !_stillEditingAccount(auth, submittingUserId)) {
+ return;
+ }
+ if (!photoSaved) {
+ VSPFeedback.showError(
+ context,
+ isArabic
+     ? 'تم حفظ بياناتك، لكن تعذر رفع الصورة. جرّب رفع الصورة مرة أخرى.'
+     : 'Your details were saved, but the photo upload failed. Try the photo again.',
+ );
+ return;
+ }
+ }
+
  VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.profileUpdatedSuccess);
  Navigator.pop(context); // Go back to profile screen
- } else {
+ } catch (e) {
+ if (mounted && _stillEditingAccount(auth, submittingUserId)) {
  VSPFeedback.showError(context, AppLocalizations.of(context)!.profileUpdateFailed);
  }
- }
- } catch (e) {
- if (mounted) {
- setState(() => _isLoading = false);
- VSPFeedback.showError(context, AppLocalizations.of(context)!.errorOccurred(e.toString()));
- }
+ } finally {
+ if (mounted) setState(() => _isLoading = false);
  }
  }
 
  @override
  Widget build(BuildContext context) {
- final userProfileUrl = Provider.of<AuthProvider>(context).userModel?.profileImageUrl;
+ final auth = context.watch<AuthProvider>();
+ // Never expose the old account's name, phone or avatar during a session
+ // change. The form is bound to its opening identity and must be reopened.
+ if (_verifiedActiveProfileId(auth) == null) {
+   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+   return VSPScaffold(
+     backgroundColor: VSPColors.background,
+     appBar: AppBar(
+       title: Text(AppLocalizations.of(context)!.editProfile),
+     ),
+     body: Center(
+       child: Padding(
+         padding: const EdgeInsets.all(VSPSpacing.lg),
+         child: Text(
+           isArabic
+             ? 'لا يمكن عرض بيانات هذا الحساب حاليًا. افتح الملف مرة أخرى بعد التأكد من تسجيل الدخول.'
+             : 'This account cannot be verified right now. Reopen the profile after signing in.',
+           textAlign: TextAlign.center,
+         ),
+       ),
+     ),
+   );
+ }
+ final userProfileUrl = auth.userModel?.profileImageUrl;
 
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  elevation: 0,
  leading: const VSPBackButton(),
  title: Text(
@@ -128,7 +256,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ),
  centerTitle: true,
  ),
- body: SafeArea(
+ body: SafeArea(top: false, bottom: false,
  child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
  padding: EdgeInsets.only(
  left: VSPSpacing.lg,
@@ -145,9 +273,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  children: [
  // --- Profile Picture Section ---
  GestureDetector(
+ key: const ValueKey('edit-profile-pick-image'),
  onTap: _pickImage,
  child: Stack(
- alignment: Alignment.bottomRight,
+ alignment: AlignmentDirectional.bottomEnd,
  children: [
  Container(
  width: 100,
@@ -159,7 +288,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ),
  child: ClipOval(
  child: _newProfileImage != null
- ? Image.file(File(_newProfileImage!.path), fit: BoxFit.cover)
+ ? (widget.selectedImagePreview?.call(_newProfileImage!) ??
+     Image.file(File(_newProfileImage!.path), fit: BoxFit.cover))
  : (userProfileUrl != null && userProfileUrl.isNotEmpty)
  ? CachedNetworkImage(
  imageUrl: userProfileUrl,
@@ -179,11 +309,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  shape: BoxShape.circle,
  border: Border.all(color: VSPColors.background, width: 3),
  ),
- child: const Icon(Iconsax.image_copy, size: 16, color: Colors.black),
+ child: const Icon(Iconsax.image_copy, size: 16, color: VSPColors.black),
  ),
  ],
  ),
  ),
+ if (_newProfileImage != null) ...[
+   const SizedBox(height: VSPSpacing.xs),
+   TextButton(
+     key: const ValueKey('edit-profile-discard-image'),
+     onPressed: _isLoading
+         ? null
+         : () => setState(() => _newProfileImage = null),
+     child: Text(
+       Localizations.localeOf(context).languageCode == 'ar'
+           ? 'إلغاء اختيار الصورة'
+           : 'Discard selected photo',
+       style: const TextStyle(color: VSPColors.textSecondary),
+     ),
+   ),
+ ],
  const SizedBox(height: VSPSpacing.xxl),
 
  // --- Form Fields ---
@@ -247,10 +392,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  final label = isAr ? '${pos.code} - ${pos.nameAr}' : '${pos.code} - ${pos.nameEn}';
  return DropdownMenuItem<String>(
  value: pos.code,
- child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+ child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white)),
  );
  }).toList(),
- onChanged: (String? newValue) {
+ onChanged: _isLoading ? null : (String? newValue) {
  if (newValue != null) {
  HapticFeedback.selectionClick();
  setState(() {
@@ -314,7 +459,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ),
  const SizedBox(height: 2),
  Text(
- isArabic ? 'حذف كافة البيانات والحجوزات نهائياً' : 'Permanently remove your account & data',
+ isArabic ? 'حذف الحساب والبيانات المرتبطة به' : 'Delete your account and associated data',
  style: TextStyle(
  color: VSPColors.textSecondary.withValues(alpha: 0.8),
  fontSize: 11,
@@ -324,10 +469,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ),
  ),
  TextButton(
- onPressed: () => _showDeleteAccountDialog(context),
+ onPressed: _isDeletionDialogOpen ? null : () => _showDeleteAccountDialog(context),
  style: TextButton.styleFrom(
  backgroundColor: VSPColors.error,
- foregroundColor: Colors.white,
+ foregroundColor: VSPColors.white,
  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
  ),
@@ -348,74 +493,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  );
  }
 
- void _showDeleteAccountDialog(BuildContext context) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
- showDialog(
- context: context,
- builder: (context) => StatefulBuilder(
- builder: (context, setDialogState) {
- return AlertDialog(
- backgroundColor: VSPColors.surface,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
- title: Text(
- isArabic ? 'حذف الحساب نهائياً؟ ' : 'Delete Account?', 
- style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
- ),
- content: Text(
- isArabic 
- ? 'هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتك وفريقك وتاريخ مبارياتك نهائياً.' 
- : 'Are you sure? This action cannot be undone. You will lose all your data, teams, and match history permanently.',
- style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
- ),
- actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
- actions: [
- Row(
- children: [
- Expanded(
- child: PrimaryButton(
- text: isArabic ? 'إلغاء' : 'Cancel',
- height: 48,
- color: VSPColors.surfaceAlt,
- textColor: VSPColors.textPrimary,
- onPressed: _isDeleting ? null : () => Navigator.pop(context),
- ),
- ),
- const SizedBox(width: VSPSpacing.md),
- Expanded(
- child: PrimaryButton(
- text: isArabic ? 'حذف' : 'Delete',
- height: 48,
- color: VSPColors.error,
- textColor: VSPColors.background,
- isLoading: _isDeleting,
- onPressed: _isDeleting ? null : () async {
- setDialogState(() => _isDeleting = true);
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final success = await authProvider.deleteAccount();
- 
- if (!context.mounted) return;
- 
- if (success) {
- Navigator.of(context).pushAndRemoveUntil(
- MaterialPageRoute(builder: (_) => const WelcomeScreen()),
- (route) => false,
- );
- } else {
- setDialogState(() => _isDeleting = false);
- VSPFeedback.showError(context, authProvider.errorMessage ?? (isArabic ? "فشل حذف الحساب" : "Failed to delete account"));
- Navigator.pop(context);
- }
- },
- ),
- ),
- ],
- ),
- ],
- );
- }
- ),
- );
+ Future<void> _showDeleteAccountDialog(BuildContext context) async {
+   if (_isDeletionDialogOpen) return;
+   final auth = context.read<AuthProvider>();
+   final uid = auth.currentUser?.id;
+   if (uid == null) return;
+   setState(() => _isDeletionDialogOpen = true);
+   try {
+     final deleted = await showAccountDeletionDialog(
+       context,
+       onDelete: (_) async {
+         if (auth.currentUser?.id != uid) return false;
+         return auth.deleteAccount();
+       },
+     );
+     if (deleted == true && context.mounted) {
+       Navigator.of(context).pushAndRemoveUntil(
+         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+         (route) => false,
+       );
+     }
+   } finally {
+     if (mounted) setState(() => _isDeletionDialogOpen = false);
+   }
  }
 }
-

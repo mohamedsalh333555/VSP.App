@@ -9,11 +9,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/ui/tokens/vsp_tokens.dart';
 import 'core/utils/device_performance.dart';
 import 'core/theme/app_theme.dart';
+import 'core/ui/components/vsp_button.dart';
 import 'core/providers/language_provider.dart';
 import 'core/providers/auth_provider.dart' as app_auth;
 import 'core/providers/stadium_provider.dart';
 import 'core/providers/booking_provider.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/analytics_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'core/services/logger_service.dart';
@@ -24,12 +26,12 @@ import 'package:app_links/app_links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/vsp_time_service.dart';
 import 'core/navigation/app_router.dart';
+import 'core/navigation/pending_deep_link_account_guard.dart';
 import 'dart:async';
 
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'core/config/app_env.dart';
 import 'core/utils/deep_link_helper.dart';
-import 'core/services/secure_storage_service.dart';
 import 'core/services/remote_config_service.dart';
 import 'shared/widgets/vsp_network_banner.dart';
 
@@ -46,10 +48,11 @@ class _StartupFailureApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       home: const Scaffold(
         backgroundColor: VSPColors.background,
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.all(VSPSpacing.xl),
-            child: Column(
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Iconsax.warning_2_copy, size: 72, color: VSPColors.error),
@@ -62,6 +65,7 @@ class _StartupFailureApp extends StatelessWidget {
                   style: TextStyle(color: VSPColors.textSecondary),
                   textAlign: TextAlign.center),
               ],
+              ),
             ),
           ),
         ),
@@ -76,7 +80,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   VSPLogger.i('Handling a background FCM message: ${message.messageId}');
 }
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DevicePerformance.init();
   usePathUrlStrategy();
@@ -111,7 +115,13 @@ void main() async {
   
   // Initialize Remote Config & App Feature Engine
   final configService = RemoteConfigService();
-  await configService.initialize();
+  try {
+    await configService.initialize().timeout(const Duration(seconds: 8));
+  } catch (e, stack) {
+    VSPLogger.e("Remote configuration initialization failed: $e", e, stack);
+    runApp(_StartupFailureApp(message: e.toString()));
+    return;
+  }
  
  // System UI Style
  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -161,8 +171,9 @@ void main() async {
 
  return Scaffold(
  backgroundColor: VSPColors.background,
- body: Center(
- child: Padding(
+ body: SafeArea(
+ child: Center(
+ child: SingleChildScrollView(
  padding: const EdgeInsets.all(VSPSpacing.xl),
  child: Column(
  mainAxisAlignment: MainAxisAlignment.center,
@@ -187,21 +198,17 @@ void main() async {
  style: TextStyle(color: VSPColors.textSecondary),
  ),
  const SizedBox(height: VSPSpacing.xl),
- ElevatedButton(
+ VSPPrimaryButton(
+ text: 'Try Again',
  onPressed: () {
  final ctx = navigatorKey.currentContext;
  if (ctx != null) {
  ctx.go('/');
  }
  },
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
- padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
- ),
- child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
  ),
  ],
+ ),
  ),
  ),
  ),
@@ -209,6 +216,7 @@ void main() async {
  };
 
  runApp(const VSPApplication());
+ unawaited(AnalyticsService.logAppOpened());
 
  // Background non-critical services (Notifications & Crashlytics)
  unawaited(
@@ -289,19 +297,48 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
  }
 
   Future<void> _replayPendingDeepLink() async {
-   // Links opened from WhatsApp can arrive before authentication/profile loading
-   // finishes. Replay exactly once after the authenticated player is ready.
+   // If the app resumes after OAuth, wait for a fully hydrated account.
    for (var attempt = 0; attempt < 20; attempt++) {
      if (!mounted) return;
      final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-     if (auth.isAuthenticated && auth.userModel?.isRegistrationComplete == true) {
-       final prefs = await SharedPreferences.getInstance();
-       final raw = prefs.getString('pending_deep_link');
-       if (raw == null || raw.isEmpty) return;
-       await prefs.remove('pending_deep_link');
-       final uri = Uri.tryParse(raw);
-       if (uri == null) return;
-       _handleDeepLink(uri);
+     final expectedUserId = auth.currentUser?.id;
+
+     bool sameVerifiedAccount() {
+       if (!mounted) return false;
+       final current = Provider.of<app_auth.AuthProvider>(context, listen: false);
+       return PendingDeepLinkAccountGuard.canReplay(
+         requestedForUserId: expectedUserId,
+         currentUserId: current.currentUser?.id,
+         profileUserId: current.userModel?.uid,
+         isAuthenticated: current.isAuthenticated,
+         isRegistrationComplete: current.userModel?.isRegistrationComplete == true,
+       );
+     }
+
+     if (sameVerifiedAccount()) {
+       // Only one of RootScreen or startup may consume a stored intent.
+       if (!PendingDeepLinkAccountGuard.tryAcquire()) return;
+       try {
+         final prefs = await SharedPreferences.getInstance();
+         if (!sameVerifiedAccount()) return;
+         final raw = prefs.getString('pending_deep_link');
+         final storedForUserId = prefs.getString('pending_deep_link_user_id');
+         if (raw == null || raw.isEmpty) return;
+         if (storedForUserId != null && storedForUserId.isNotEmpty &&
+             storedForUserId != expectedUserId) {
+           await prefs.remove('pending_deep_link');
+           await prefs.remove('pending_deep_link_user_id');
+           return;
+         }
+         final uri = Uri.tryParse(raw);
+         final parsed = uri == null ? null : DeepLinkHelper.parse(uri);
+         await prefs.remove('pending_deep_link');
+         await prefs.remove('pending_deep_link_user_id');
+         if (parsed == null || !sameVerifiedAccount()) return;
+         _router.push(parsed.routePath);
+       } finally {
+         PendingDeepLinkAccountGuard.release();
+       }
        return;
      }
      await Future<void>.delayed(const Duration(milliseconds: 250));
@@ -312,33 +349,45 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
     debugPrint('⚡ Handling deep link: scheme=${uri.scheme}, host=${uri.host}, path=${uri.path}');
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
 
- // 1. Supabase OAuth callback bypass
+ // 1. Supabase handles authentication and PKCE verification. Never
+ // trust a role query on an external callback: AuthOAuthCoordinator already
+ // stored the role selected before the OAuth flow was launched.
  if (DeepLinkHelper.isOAuthCallback(uri)) {
- debugPrint(' OAuth callback detected — forwarding to Supabase auth handler.');
- final role = uri.queryParameters['role'];
- if (role != null && (role == 'owner' || role == 'player')) {
- auth.setUserType(role);
- SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_oauth_role', role));
- SecureStorageService.writeSecure('pending_oauth_role', role);
- }
- return;
+   debugPrint('Trusted OAuth callback received; SDK owns authentication.');
+   return;
  }
 
- // 2. Auth Guard: حفظ الرابط لوقت لاحق إن لم يكن مسجلاً
- if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
- debugPrint(' Saving pending deep link for after login: $uri');
- SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_deep_link', uri.toString()));
- return;
- }
-
- // 3. التحليل والتوجيه الآمن
+ // 2. Reject unsupported URLs *before* persisting pending deep links.
+ // A malicious website, unbounded ID or fragment is not navigation input.
  final parsed = DeepLinkHelper.parse(uri);
- if (parsed != null) {
- _router.push(parsed.routePath);
- } else {
- debugPrint(' Invalid or unrecognized deep link: $uri');
- _router.go('/');
+ if (parsed == null) {
+   debugPrint('Unsupported or untrusted deep link ignored.');
+   return;
  }
+
+ // 3. Resume recognized requests only after a real profile is ready.
+ if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
+   final linkForUserId = auth.currentUser?.id;
+   SharedPreferences.getInstance().then((prefs) async {
+     // Account may change while preferences initialize. A delayed callback
+     // must not put an old-account link into the new account's preferences.
+     if (auth.currentUser?.id != linkForUserId) return;
+     await prefs.setString('pending_deep_link_user_id', linkForUserId ?? '');
+     if (auth.currentUser?.id != linkForUserId) {
+       await prefs.remove('pending_deep_link_user_id');
+       return;
+     }
+     await prefs.setString('pending_deep_link', uri.toString());
+     if (auth.currentUser?.id != linkForUserId) {
+       await prefs.remove('pending_deep_link');
+       await prefs.remove('pending_deep_link_user_id');
+     }
+   });
+   return;
+ }
+
+ // GoRouter applies the verified account's role restrictions.
+ _router.push(parsed.routePath);
  }
 
  @override

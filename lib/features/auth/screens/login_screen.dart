@@ -11,6 +11,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/email_address_validator.dart';
 import '../widgets/forgot_password_dialog.dart';
 import '../widgets/login_footer.dart';
 import '../widgets/login_social_auth_row.dart';
@@ -44,13 +45,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
  void _handleLogin() async {
+ if (_isLoading) return;
  // Basic Validation
- if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+ final email = _emailController.text.trim().toLowerCase();
+ final isValidEmail = EmailAddressValidator.isValid(email);
+ if (!isValidEmail || _passwordController.text.isEmpty) {
  HapticFeedback.heavyImpact();
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
  VSPFeedback.showError(
  context,
- isAr ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور' : 'Please enter email and password',
+ isAr ? 'اكتب بريد إلكتروني صحيح وكلمة المرور' : 'Enter a valid email and password',
  );
  return;
  }
@@ -59,10 +63,25 @@ class _LoginScreenState extends State<LoginScreen> {
  setState(() => _isLoading = true);
  
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final success = await authProvider.signIn(
- email: _emailController.text.trim(),
- password: _passwordController.text
- );
+ bool success;
+ try {
+   success = await authProvider.signIn(
+     email: email,
+     password: _passwordController.text,
+   );
+ } catch (_) {
+   // An unexpected auth/network failure must not leave the login form
+   // permanently disabled or expose internal provider details.
+   if (!mounted) return;
+   setState(() => _isLoading = false);
+   final isAr = Localizations.localeOf(context).languageCode == 'ar';
+   VSPFeedback.showError(
+     context,
+     isAr ? 'تعذر تسجيل الدخول الآن. حاول مرة أخرى.'
+          : 'Could not sign in right now. Please try again.',
+   );
+   return;
+ }
  
  if (!mounted) return;
  setState(() => _isLoading = false);
@@ -87,11 +106,11 @@ class _LoginScreenState extends State<LoginScreen> {
  Widget build(BuildContext context) {
  return AnnotatedRegion<SystemUiOverlayStyle>(
  value: const SystemUiOverlayStyle(
- statusBarColor: Colors.transparent,
+ statusBarColor: VSPColors.transparent,
  statusBarIconBrightness: Brightness.light,
  systemNavigationBarColor: VSPColors.background,
  systemNavigationBarIconBrightness: Brightness.light,
- systemNavigationBarDividerColor: Colors.transparent,
+ systemNavigationBarDividerColor: VSPColors.transparent,
  ),
  child: VSPScaffold(
  backgroundColor: VSPColors.background,
@@ -110,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
  ),
  child: BackdropFilter(
  filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
- child: Container(color: Colors.transparent),
+ child: Container(color: VSPColors.transparent),
  ),
  ),
  ),
@@ -123,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
  left: 24.0, 
  right: 24.0, 
  top: 0, 
- bottom: MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 24,
+ bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
  ),
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,11 +184,14 @@ class _LoginScreenState extends State<LoginScreen> {
  ),
  ),
  const SizedBox(width: 12),
- Text(
+ Expanded(
+ child: Text(
  AppLocalizations.of(context)!.credentialAccess,
+ softWrap: true,
  style: Theme.of(context).textTheme.titleSmall?.copyWith(
  letterSpacing: 1.1,
  color: VSPColors.textPrimary,
+ ),
  ),
  ),
  ],
@@ -211,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
  
   const SizedBox(height: 12),
   Align(
-  alignment: Alignment.centerRight,
+  alignment: AlignmentDirectional.centerEnd,
   child: TextButton(
   onPressed: () => ForgotPasswordDialog.show(context),
   child: Text(
@@ -241,13 +263,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Row(
     children: [
       const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(
-          AppLocalizations.of(context)!.orContinueWith,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: VSPColors.textSecondary.withValues(alpha: 0.6),
-              ),
+      Flexible(
+        flex: 4,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            AppLocalizations.of(context)!.orContinueWith,
+            softWrap: true,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: VSPColors.textSecondary.withValues(alpha: 0.6),
+                ),
+          ),
         ),
       ),
       const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),

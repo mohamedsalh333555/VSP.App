@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/data/models.dart';
+import 'package:vsp_application/core/services/vsp_time_service.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
+import 'package:vsp_application/core/utils/vsp_money_formatter.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
 
 class MatchResultModal extends StatefulWidget {
  final Booking booking;
  final String submittingTeamId;
- final Function(MatchOutcome outcome, double? rating, String? review) onConfirm;
+ final Future<bool> Function(MatchOutcome outcome, double? rating, String? review) onConfirm;
 
  const MatchResultModal({
  super.key, 
@@ -23,6 +25,7 @@ class MatchResultModal extends StatefulWidget {
 class _MatchResultModalState extends State<MatchResultModal> {
  int _selectedIndex = -1; // -1: None, 0: We Won, 1: Draw, 2: We Lost
  double _rating = 0;
+ bool _isSubmitting = false;
  final TextEditingController _reviewController = TextEditingController();
 
  @override
@@ -37,7 +40,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  final bottomPadding = MediaQuery.of(context).padding.bottom;
 
  return Dialog(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  insetPadding: EdgeInsets.fromLTRB(
  16, 
  24, 
@@ -78,11 +81,11 @@ class _MatchResultModalState extends State<MatchResultModal> {
  ),
  ),
  IconButton(
- onPressed: () => Navigator.pop(context),
+ tooltip: isArabic ? 'إغلاق' : 'Close',
+ onPressed: _isSubmitting ? null : () => Navigator.pop(context),
  icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textPrimary),
  padding: EdgeInsets.zero,
- constraints: const BoxConstraints(),
- visualDensity: VisualDensity.compact,
+ constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
  ),
  ],
  ),
@@ -117,11 +120,12 @@ class _MatchResultModalState extends State<MatchResultModal> {
  const SizedBox(height: VSPSpacing.md),
  // Details
  Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
- _buildDetailItem(isArabic ? 'التاريخ' : 'Date', widget.booking.formattedDate),
- _buildDetailItem(isArabic ? 'الملعب' : 'Stadium', widget.booking.stadiumName),
- _buildDetailItem(isArabic ? 'السعر' : 'Price', '${widget.booking.totalPrice.toInt()} ${widget.booking.currency}'),
+ Expanded(child: _buildDetailItem(isArabic ? 'التاريخ' : 'Date', widget.booking.formattedDate)),
+ const SizedBox(width: 8),
+ Expanded(child: _buildDetailItem(isArabic ? 'الملعب' : 'Stadium', widget.booking.stadiumName)),
+ const SizedBox(width: 8),
+ Expanded(child: _buildDetailItem(isArabic ? 'السعر' : 'Price', '${VSPMoneyFormatter.amount(widget.booking.totalPrice)} ${widget.booking.currency}')),
  ],
  ),
  ],
@@ -153,7 +157,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  height: 48,
  color: VSPColors.surfaceAlt,
  textColor: VSPColors.textPrimary,
- onPressed: () => Navigator.pop(context),
+ onPressed: _isSubmitting ? null : () => Navigator.pop(context),
  ),
  ),
  const SizedBox(width: VSPSpacing.md),
@@ -161,8 +165,14 @@ class _MatchResultModalState extends State<MatchResultModal> {
  child: PrimaryButton(
  text: isArabic ? 'إرسال النتيجة' : 'Submit Result',
  height: 48,
- onPressed: _selectedIndex == -1 ? null : _handleSubmit,
- isLoading: false,
+ onPressed: _selectedIndex == -1 ||
+     _isSubmitting ||
+     !_isParticipatingTeam ||
+     widget.booking.matchResultStatus == MatchResultStatus.confirmed ||
+     widget.booking.endTime.isAfter(VSPTimeService.now)
+     ? null
+     : _handleSubmit,
+ isLoading: _isSubmitting,
  ),
  ),
  ],
@@ -174,27 +184,78 @@ class _MatchResultModalState extends State<MatchResultModal> {
  );
  }
 
- void _handleSubmit() {
- late MatchOutcome outcome;
+ bool get _isParticipatingTeam =>
+     widget.submittingTeamId == widget.booking.playerTeamId ||
+     widget.submittingTeamId == widget.booking.opponentTeamId;
 
- final isHome = widget.submittingTeamId == widget.booking.playerTeamId;
+ Future<void> _handleSubmit() async {
+   if (_isSubmitting || _selectedIndex == -1 || !_isParticipatingTeam ||
+       widget.booking.matchResultStatus == MatchResultStatus.confirmed) {
+     return;
+   }
+   // Recheck at submission time even if the dialog was opened earlier.
+   if (widget.booking.endTime.isAfter(VSPTimeService.now)) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+         content: Text(isArabic
+             ? 'يمكن تسجيل النتيجة بعد انتهاء المباراة.'
+             : 'You can submit the result after the match ends.'),
+       ),
+     );
+     return;
+   }
 
- if (_selectedIndex == 0) { // We Won
- outcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
- } else if (_selectedIndex == 1) { // Draw
- outcome = MatchOutcome.draw;
- } else { // We Lost
- outcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
- }
+   late MatchOutcome outcome;
+   final isHome = widget.submittingTeamId == widget.booking.playerTeamId;
 
- widget.onConfirm(
- outcome,
- _rating > 0 ? _rating : null,
- _reviewController.text.trim().isNotEmpty ? _reviewController.text.trim() : null,
- );
- 
- // Trigger rating update logic (could be passed back via the callback in a future iteration,
- // but for now, we assume the callback handles the outcome and the provider handles the rating)
+   if (_selectedIndex == 0) {
+     outcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
+   } else if (_selectedIndex == 1) {
+     outcome = MatchOutcome.draw;
+   } else {
+     outcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
+   }
+
+   setState(() => _isSubmitting = true);
+   try {
+     final success = await widget.onConfirm(
+       outcome,
+       _rating > 0 ? _rating : null,
+       _reviewController.text.trim().isNotEmpty
+           ? _reviewController.text.trim()
+           : null,
+     );
+     if (!mounted) return;
+     if (success) {
+       Navigator.of(context).pop();
+     } else {
+       setState(() => _isSubmitting = false);
+       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text(
+             isArabic
+                 ? 'تعذر إرسال النتيجة. تحقق من البيانات وحاول مرة أخرى.'
+                 : 'Could not submit the result. Check the details and try again.',
+           ),
+         ),
+       );
+     }
+   } catch (_) {
+     if (!mounted) return;
+     setState(() => _isSubmitting = false);
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+         content: Text(
+           isArabic
+               ? 'تعذر إرسال النتيجة. حاول مرة أخرى.'
+               : 'Could not submit the result. Please try again.',
+         ),
+       ),
+     );
+   }
  }
 
  Widget _buildRatingSection(bool isArabic) {
@@ -210,7 +271,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  mainAxisAlignment: MainAxisAlignment.center,
  children: List.generate(5, (index) {
  return GestureDetector(
- onTap: () {
+ onTap: _isSubmitting ? null : () {
  setState(() {
  _rating = index + 1.0;
  });
@@ -226,6 +287,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  const SizedBox(height: VSPSpacing.md),
  TextField(
  controller: _reviewController,
+ enabled: !_isSubmitting,
  style: Theme.of(context).textTheme.bodySmall,
  maxLines: 2,
  decoration: InputDecoration(
@@ -247,7 +309,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  Widget _buildSelectionOption(int index, String label, IconData icon, Color activeColor) {
  final isSelected = _selectedIndex == index;
  return GestureDetector(
- onTap: () => setState(() => _selectedIndex = index),
+ onTap: _isSubmitting ? null : () => setState(() => _selectedIndex = index),
  child: Container(
  width: double.infinity,
  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -320,6 +382,8 @@ class _MatchResultModalState extends State<MatchResultModal> {
  const SizedBox(height: VSPSpacing.xs),
  Text(
  value,
+ maxLines: 2,
+ overflow: TextOverflow.ellipsis,
  style: Theme.of(context).textTheme.labelSmall?.copyWith(
  color: VSPColors.textPrimary,
  fontWeight: FontWeight.bold,

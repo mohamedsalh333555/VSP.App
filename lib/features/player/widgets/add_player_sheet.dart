@@ -1,6 +1,7 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/constants/egypt_governorates.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/widgets/shimmer_image.dart';
@@ -32,10 +33,19 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  bool _isSearching = false;
  bool _hasSearched = false;
  bool _governorateMismatch = false;
+ int _searchGeneration = 0;
+
+ @override
+ void dispose() {
+   _searchGeneration++;
+   _phoneController.dispose();
+   super.dispose();
+ }
 
  Future<void> _searchPlayer() async {
  final phone = _phoneController.text.trim();
  if (phone.isEmpty) return;
+ final generation = ++_searchGeneration;
 
  setState(() {
  _isSearching = true;
@@ -44,14 +54,53 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  });
 
  final normalized = PhoneUtils.normalize(phone);
- final user = normalized != null ? await UserRepository().getUserByPhone(normalized) : null;
+ if (normalized == null) {
+   if (mounted) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     setState(() => _isSearching = false);
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(content: Text(isArabic ? 'أدخل رقم هاتف صحيحاً.' : 'Enter a valid phone number.')),
+     );
+   }
+   return;
+ }
 
+ final requestUserId = context.read<AuthProvider>().currentUser?.id;
+ UserModel? user;
+ try {
+   user = await UserRepository().getUserByPhoneStrict(normalized);
+ } catch (_) {
+   if (!mounted) return;
+   if (generation != _searchGeneration) return;
+   final requestStillMatches =
+       PhoneUtils.normalize(_phoneController.text.trim()) == normalized &&
+       context.read<AuthProvider>().currentUser?.id == requestUserId;
+   setState(() => _isSearching = false);
+   if (requestStillMatches) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(content: Text(isArabic ? 'تعذر البحث عن اللاعب. تحقق من الاتصال وحاول مرة أخرى.' : 'Could not search for this player. Check your connection and try again.')),
+     );
+   }
+   return;
+ }
+
+ if (!mounted) return;
+ // Ignore a late response if the phone field or signed-in account changed
+ // while the lookup was in flight; otherwise an old result can be added.
+ final activeUserId = context.read<AuthProvider>().currentUser?.id;
+ if (generation != _searchGeneration) return;
+ if (PhoneUtils.normalize(_phoneController.text.trim()) != normalized ||
+     activeUserId != requestUserId) {
+   setState(() => _isSearching = false);
+   return;
+ }
  if (mounted) {
  if (user != null) {
- final currentUid = context.read<AuthProvider>().currentUser?.uid;
+ final currentUid = activeUserId;
  if (user.uid == currentUid) {
  ScaffoldMessenger.of(context).showSnackBar(
- const SnackBar(content: Text('كما تعلم.. أنت الكابتن بالفعل! \n(You are the captain!)'), backgroundColor: VSPColors.accent),
+ SnackBar(content: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'أنت قائد الفريق بالفعل.' : 'You are already the team captain.'), backgroundColor: VSPColors.accent),
  );
  setState(() {
  _isSearching = false;
@@ -63,12 +112,15 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
 
  final requiredGov = widget.requiredGovernorate?.trim();
  final playerGov = user?.governorate?.trim();
+ final normalizedRequiredGov = EgyptGovernorates.resolveGoogleName(requiredGov);
+ final normalizedPlayerGov = EgyptGovernorates.resolveGoogleName(playerGov);
  _governorateMismatch = user != null &&
      requiredGov != null &&
      requiredGov.isNotEmpty &&
      (playerGov == null ||
        playerGov.isEmpty ||
-       playerGov.toLowerCase() != requiredGov.toLowerCase());
+       (normalizedPlayerGov ?? playerGov.trim().toLowerCase()) !=
+           (normalizedRequiredGov ?? requiredGov.trim().toLowerCase()));
 
  setState(() {
  _foundUser = user;
@@ -82,11 +134,12 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  @override
  Widget build(BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final bottomPadding = MediaQuery.of(context).padding.bottom;
+ final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
- return Padding(
- padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
- child: Container(
+ // The scroll-controlled modal route already constrains this sheet to the
+ // keyboard-safe viewport. Derive height from those parent constraints rather
+ // than subtracting viewInsets and system padding a second time.
+ return Container(
  padding: EdgeInsets.only(
  top: VSPSpacing.lg,
  left: VSPSpacing.md,
@@ -108,11 +161,17 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  Row(
  mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
- Text(
+ Expanded(
+ child: Text(
  isArabic ? 'إضافة لاعب للفريق' : 'Add Team Member',
+ maxLines: 2,
+ overflow: TextOverflow.ellipsis,
+ softWrap: true,
  style: Theme.of(context).textTheme.displaySmall,
  ),
+ ),
  IconButton(
+ tooltip: isArabic ? 'إغلاق' : 'Close',
  onPressed: () => Navigator.pop(context),
  icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
  ),
@@ -127,6 +186,11 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  child: TextField(
  controller: _phoneController,
  keyboardType: TextInputType.phone,
+ textDirection: TextDirection.ltr,
+ textInputAction: TextInputAction.search,
+ onSubmitted: (_) {
+   if (!_isSearching) _searchPlayer();
+ },
  style: Theme.of(context).textTheme.bodyMedium,
  decoration: InputDecoration(
  hintText: isArabic ? 'مثال: 01012345678' : 'e.g. 01012345678',
@@ -142,13 +206,23 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  ),
  ),
  const SizedBox(width: VSPSpacing.md),
- GestureDetector(
+ Tooltip(
+ message: isArabic ? 'البحث عن اللاعب' : 'Search for player',
+ child: Semantics(
+ button: true,
+ label: isArabic ? 'البحث عن اللاعب' : 'Search for player',
+ child: InkWell(
+ excludeFromSemantics: true,
  onTap: _isSearching ? null : _searchPlayer,
- child: Container(
+ borderRadius: BorderRadius.circular(VSPRadius.md),
+ child: SizedBox(
  height: 50,
  width: 50,
+ child: DecoratedBox(
  decoration: BoxDecoration(
- color: VSPColors.accent,
+ color: _isSearching
+ ? VSPColors.accent.withValues(alpha: 0.55)
+ : VSPColors.accent,
  borderRadius: BorderRadius.circular(VSPRadius.md),
  ),
  child: _isSearching
@@ -157,6 +231,9 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 2),
  )
  : const Icon(Iconsax.search_normal_copy, color: VSPColors.background),
+ ),
+ ),
+ ),
  ),
  ),
  ],
@@ -168,7 +245,6 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  _buildInviteCard(),
  const SizedBox(height: 16),
  ],
- ),
  ),
  ),
  );
@@ -244,14 +320,14 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  else
  SizedBox(
  width: 80,
- height: 40,
+ height: 48,
  child: PrimaryButton(
  text: isArabic ? 'إضافة' : 'Add',
  onPressed: () {
  widget.onPlayerAdded(_foundUser!);
  Navigator.pop(context);
  },
- height: 40,
+ height: 48,
  ),
  ),
  ],
@@ -261,6 +337,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
 
    Widget _buildInviteCard() {
     final phone = _phoneController.text.trim();
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.md),
@@ -277,14 +354,16 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 24),
               const SizedBox(width: 8),
               Text(
-                "رقم غير مسجل في VSP",
+                isArabic ? 'رقم غير مسجل في VSP' : 'This number is not registered on VSP',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            "هذا الرقم لم يسجل حسابه بعد في تطبيق VSP. أرسل له دعوة سريعة عبر واتساب ليحمّل التطبيق وتسجله فوراً في تشكيلة فريقك:",
+            isArabic
+                ? 'الرقم ده لسه مش مسجل في VSP. ابعت له دعوة عشان ينزّل التطبيق وتقدر تضيفه لفريقك.'
+                : 'This number is not registered on VSP yet. Send an invitation so they can install the app and join your team.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
           ),
           const SizedBox(height: 16),
@@ -294,19 +373,21 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
             child: ElevatedButton.icon(
               onPressed: () async {
                 final normalizedPhone = PhoneUtils.normalize(phone) ?? phone;
-                const message = 'يا كابتن! حمل تطبيق VSP الرياضي وسجل برقمك عشان أضيفك في تشكيلة فريقي ونلعب مباريات وتحديات سوى! حمل التطبيق من هنا: https://vsp.app';
+                final message = isArabic
+                    ? 'يا كابتن! حمّل تطبيق VSP وسجّل برقمك عشان أضيفك لفريقي. حمّل التطبيق من هنا: https://vsp.app'
+                    : 'Join my team on VSP. Install the app and register with this phone number: https://vsp.app';
                 await VSPLauncherUtils.openWhatsApp(context, phone: normalizedPhone, message: message);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.whatsApp,
-                foregroundColor: Colors.white,
+                foregroundColor: VSPColors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 elevation: 0,
               ),
-              icon: const Icon(Iconsax.messages_3_copy, color: Colors.white, size: 20),
-              label: const Text(
-                'إرسال دعوة للاعب عبر واتساب',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              icon: const Icon(Iconsax.messages_3_copy, color: VSPColors.white, size: 20),
+              label: Text(
+                isArabic ? 'إرسال دعوة عبر واتساب' : 'Send WhatsApp invitation',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ),
           ),
@@ -315,11 +396,6 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
     );
   }
 
-  @override
-  void dispose() {
- _phoneController.dispose();
- super.dispose();
- }
 }
 
 

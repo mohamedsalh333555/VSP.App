@@ -5,6 +5,7 @@ import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/repositories/owner_repository.dart';
 import '../../../../core/services/notification_handler.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'booking_sheet_cancel_dialog.dart';
@@ -25,18 +26,19 @@ class OwnerBookingSheetCoordinator {
     String? currentUserId,
   }) async {
     setLoading(true);
+    AuthProvider? authProvider;
+    String? initiatingUserId;
     try {
       final repo = ownerRepository ?? OwnerRepository();
       final totalPrice = booking.totalPrice > 0 ? booking.totalPrice : selectedStadium.basePrice;
-      
+
       String? uid = currentUserId;
-      if (uid == null) {
-        try {
-          final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
-          uid = authProvider.currentUser?.id ?? booking.ownerId;
-        } catch (_) {
-          uid = booking.ownerId;
-        }
+      try {
+        authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
+        initiatingUserId = authProvider.currentUser?.id;
+        uid ??= initiatingUserId ?? booking.ownerId;
+      } catch (_) {
+        uid ??= booking.ownerId;
       }
 
       final double remainingCash = (booking.totalPrice - booking.depositPaid).clamp(0.0, 999999.0);
@@ -51,6 +53,13 @@ class OwnerBookingSheetCoordinator {
 
       if (rpcRes is Map && rpcRes['success'] == false) {
         throw Exception(rpcRes['message']?.toString() ?? 'Failed to confirm cash payment');
+      }
+
+      if (!context.mounted ||
+          (authProvider != null &&
+              authProvider.currentUser?.id != initiatingUserId)) {
+        if (context.mounted) setLoading(false);
+        return;
       }
 
       final isAlreadyConfirmed = rpcRes is Map && rpcRes['already_confirmed'] == true;
@@ -69,26 +78,31 @@ class OwnerBookingSheetCoordinator {
         }
       }
 
-      if (context.mounted) {
-        VSPFeedback.showSuccess(
-          context,
-          isAlreadyConfirmed
-              ? (isArabic ? 'الحجز مؤكد ومسدد بالفعل مسبقاً.' : 'Booking is already confirmed and paid.')
-              : (isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز بنجاح.' : 'Cash payment confirmed at pitch successfully.'),
-        );
-      }
-      if (parentContext.mounted) {
+      if (parentContext.mounted &&
+          (authProvider == null ||
+              authProvider.currentUser?.id == initiatingUserId)) {
         try {
-          final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-          final currentUid = currentUserId ?? auth.currentUser?.id;
-          if (currentUid != null) {
-            await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(currentUid, forceRefresh: true);
-          }
+          await Provider.of<BookingProvider>(parentContext, listen: false)
+              .loadOwnerBookings(uid, forceRefresh: true);
         } catch (_) {}
       }
-      if (context.mounted) Navigator.pop(context);
+      if (!context.mounted ||
+          (authProvider != null &&
+              authProvider.currentUser?.id != initiatingUserId)) {
+        if (context.mounted) setLoading(false);
+        return;
+      }
+      VSPFeedback.showSuccess(
+        context,
+        isAlreadyConfirmed
+            ? (isArabic ? 'الحجز مؤكد ومسدد بالفعل مسبقاً.' : 'Booking is already confirmed and paid.')
+            : (isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز بنجاح.' : 'Cash payment confirmed at pitch successfully.'),
+      );
+      Navigator.pop(context);
     } catch (e) {
-      if (context.mounted) {
+      if (context.mounted &&
+          (authProvider == null ||
+              authProvider.currentUser?.id == initiatingUserId)) {
         setLoading(false);
         VSPFeedback.showError(context, '${isArabic ? "تعذر تأكيد الدفع:" : "Failed to confirm cash:"} $e');
       }
@@ -105,12 +119,22 @@ class OwnerBookingSheetCoordinator {
     OwnerRepository? ownerRepository,
   }) async {
     setLoading(true);
+    AuthProvider? authProvider;
+    String? initiatingUserId;
     try {
+      authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
+      initiatingUserId = authProvider.currentUser?.id;
       final repo = ownerRepository ?? OwnerRepository();
       final res = await repo.extendOngoingMatchAtomic(
         bookingId: booking.id,
         addedMinutes: 30,
       );
+
+      if (!context.mounted ||
+          authProvider.currentUser?.id != initiatingUserId) {
+        if (context.mounted) setLoading(false);
+        return;
+      }
 
       if (res is Map && res['success'] == false) {
         if (context.mounted) {
@@ -124,24 +148,28 @@ class OwnerBookingSheetCoordinator {
         return;
       }
 
-      if (context.mounted) {
-        VSPFeedback.showSuccess(
-          context,
-          isArabic ? 'تم تمديد المباراة 30 دقيقة إضافية بنجاح.' : 'Match extended by 30 mins successfully.',
-        );
-      }
-      if (parentContext.mounted) {
+      if (parentContext.mounted &&
+          authProvider.currentUser?.id == initiatingUserId &&
+          initiatingUserId != null) {
         try {
-          final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-          final currentUid = auth.currentUser?.id;
-          if (currentUid != null) {
-            await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(currentUid, forceRefresh: true);
-          }
+          await Provider.of<BookingProvider>(parentContext, listen: false)
+              .loadOwnerBookings(initiatingUserId, forceRefresh: true);
         } catch (_) {}
       }
-      if (context.mounted) Navigator.pop(context);
+      if (!context.mounted ||
+          authProvider.currentUser?.id != initiatingUserId) {
+        if (context.mounted) setLoading(false);
+        return;
+      }
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم تمديد المباراة 30 دقيقة إضافية بنجاح.' : 'Match extended by 30 mins successfully.',
+      );
+      Navigator.pop(context);
     } catch (e) {
-      if (context.mounted) {
+      if (context.mounted &&
+          (authProvider == null ||
+              authProvider.currentUser?.id == initiatingUserId)) {
         setLoading(false);
         final cleanMsg = e.toString().replaceAll('Exception:', '').trim();
         VSPFeedback.showError(context, '${isArabic ? "تعذر تمديد المباراة:" : "Failed to extend match:"} $cleanMsg');
@@ -158,6 +186,10 @@ class OwnerBookingSheetCoordinator {
     required bool isArabic,
     required ValueSetter<bool> setDeleting,
   }) async {
+    if (!context.mounted || !parentContext.mounted) return;
+    final auth = Provider.of<AuthProvider>(parentContext, listen: false);
+    final initiatingUserId = auth.currentUser?.id;
+    if (initiatingUserId == null) return;
     final nav = Navigator.of(context);
     final isManual = (booking.paymentTransactionId?.contains('MANUAL') ?? false) ||
         booking.bookingType == BookingType.personal;
@@ -174,11 +206,14 @@ class OwnerBookingSheetCoordinator {
         return;
       }
 
-      if (!context.mounted || !parentContext.mounted) return;
+      if (!context.mounted ||
+          !parentContext.mounted ||
+          auth.currentUser?.id != initiatingUserId) {
+        return;
+      }
       setDeleting(true);
       try {
-        final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-        final uid = auth.currentUser?.id ?? booking.ownerId;
+        final uid = initiatingUserId;
         final bool refund = decision == ManualBookingCancelDecision.refund;
 
         final res = await OwnerRepository().cancelManualBookingAtomic(
@@ -190,13 +225,18 @@ class OwnerBookingSheetCoordinator {
         if (res is Map && res['success'] == false) {
           throw Exception(res['message']?.toString() ?? 'Failed to cancel manual booking');
         }
+        if (!context.mounted ||
+            !parentContext.mounted ||
+            auth.currentUser?.id != initiatingUserId) {
+          return;
+        }
 
         if (context.mounted) {
           VSPFeedback.showSuccess(
             context,
             refund
                 ? (isArabic
-                    ? 'تم إلغاء الحجز ورد العربون (${booking.depositPaid.toInt()} ج.م) وتسجيل الاسترداد في الدفتر.'
+                    ? 'تم إلغاء الحجز ورد العربون (${VSPMoneyFormatter.amount(booking.depositPaid)} ج.م) وتسجيل الاسترداد في الدفتر.'
                     : 'Booking cancelled & deposit refund recorded.')
                 : (isArabic
                     ? 'تم إلغاء الحجز وتثبيت العربون كشرط جزائي لصالحك.'
@@ -204,15 +244,23 @@ class OwnerBookingSheetCoordinator {
           );
         }
 
-        if (parentContext.mounted) {
-          await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+        if (parentContext.mounted &&
+            auth.currentUser?.id == initiatingUserId) {
+          await Provider.of<BookingProvider>(parentContext, listen: false)
+              .loadOwnerBookings(uid, forceRefresh: true);
+        }
+        if (!context.mounted ||
+            !parentContext.mounted ||
+            auth.currentUser?.id != initiatingUserId) {
+          return;
         }
       } catch (e) {
-        if (context.mounted) {
+        if (context.mounted &&
+            auth.currentUser?.id == initiatingUserId) {
           VSPFeedback.showError(context, e.toString().replaceAll('Exception:', '').trim());
         }
       } finally {
-        setDeleting(false);
+        if (context.mounted) setDeleting(false);
       }
       if (context.mounted) nav.pop();
       return;
@@ -227,12 +275,13 @@ class OwnerBookingSheetCoordinator {
       confirmBtn: l10n.confirmBtn,
     );
 
-    if (confirm == true && context.mounted) {
+    if (confirm == true &&
+        context.mounted &&
+        parentContext.mounted &&
+        auth.currentUser?.id == initiatingUserId) {
       setDeleting(true);
-      if (!parentContext.mounted) return;
       try {
-        final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-        final uid = auth.currentUser?.id ?? booking.ownerId;
+        final uid = initiatingUserId;
 
         if (isManual) {
           final res = await OwnerRepository().cancelManualBookingAtomic(
@@ -243,9 +292,18 @@ class OwnerBookingSheetCoordinator {
           if (res is Map && res['success'] == false) {
             throw Exception(res['message']?.toString() ?? 'Failed to cancel manual booking');
           }
+          if (!context.mounted ||
+              !parentContext.mounted ||
+              auth.currentUser?.id != initiatingUserId) {
+            return;
+          }
         } else {
           final success = await Provider.of<BookingProvider>(parentContext, listen: false).cancelBooking(booking.id);
-          if (!context.mounted) return;
+          if (!context.mounted ||
+              !parentContext.mounted ||
+              auth.currentUser?.id != initiatingUserId) {
+            return;
+          }
           if (!success) {
             final err = Provider.of<BookingProvider>(context, listen: false).errorMessage;
             VSPFeedback.showError(
@@ -256,15 +314,23 @@ class OwnerBookingSheetCoordinator {
           }
         }
 
-        if (parentContext.mounted) {
-          await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+        if (parentContext.mounted &&
+            auth.currentUser?.id == initiatingUserId) {
+          await Provider.of<BookingProvider>(parentContext, listen: false)
+              .loadOwnerBookings(uid, forceRefresh: true);
+        }
+        if (!context.mounted ||
+            !parentContext.mounted ||
+            auth.currentUser?.id != initiatingUserId) {
+          return;
         }
       } catch (e) {
-        if (context.mounted) {
+        if (context.mounted &&
+            auth.currentUser?.id == initiatingUserId) {
           VSPFeedback.showError(context, e.toString().replaceAll('Exception:', '').trim());
         }
       } finally {
-        setDeleting(false);
+        if (context.mounted) setDeleting(false);
       }
       if (context.mounted) nav.pop();
     }

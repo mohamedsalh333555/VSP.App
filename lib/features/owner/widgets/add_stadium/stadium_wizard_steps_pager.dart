@@ -20,6 +20,7 @@ class StadiumWizardStepsPager extends StatelessWidget {
   final bool isSplitShiftValid;
   final bool isLocationLoading;
   final List<Map<String, dynamic>> images;
+  final Set<String> removedExistingImageUrls;
   final bool isUploading;
   final bool isSaving;
 
@@ -50,6 +51,7 @@ class StadiumWizardStepsPager extends StatelessWidget {
     required this.isSplitShiftValid,
     required this.isLocationLoading,
     required this.images,
+    required this.removedExistingImageUrls,
     required this.isUploading,
     required this.isSaving,
     required this.onSelectSport,
@@ -148,6 +150,14 @@ class StadiumWizardStepsPager extends StatelessWidget {
             onStateChanged: onStateChanged,
           ),
           onDeleteImage: (img) => StadiumWizardMediaCoordinator.deleteImage(
+            image: img,
+            images: images,
+            removedExistingImageUrls: removedExistingImageUrls,
+            stadiumId: stadiumId,
+            uid: uid,
+            onStateChanged: onStateChanged,
+          ),
+          onSetCover: (img) => StadiumWizardMediaCoordinator.setCoverImage(
             image: img,
             images: images,
             stadiumId: stadiumId,

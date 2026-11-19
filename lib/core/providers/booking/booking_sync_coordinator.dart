@@ -12,11 +12,14 @@ class BookingSyncCoordinator {
   /// Tracks the last trusted full server list for player bookings.
   /// Used to detect disappearances caused by partial Realtime events.
   List<Booking> _lastKnownUserBookings = [];
+  String? _activeUserId;
+  int _syncGeneration = 0;
 
   BookingSyncCoordinator(this._repository);
 
   /// Cancels active synchronization subscription.
   void cancelSubscription() {
+    _syncGeneration++;
     _subscription?.cancel();
     _subscription = null;
   }
@@ -61,35 +64,49 @@ class BookingSyncCoordinator {
   /// SSOT Rule: Realtime = transport, not source of truth.
   /// Incoming stream results are MERGED with last known state, never blindly replacing it.
   /// On error/timeout, existing bookings are preserved; the UI shows an error state.
-  void syncUserBookings({
+  Future<bool> syncUserBookings({
     required String userId,
     required void Function(List<Booking> userBookings, CategorizedUserBookings categorized) onData,
     required void Function(String error) onError,
-  }) {
-    // 1. Direct REST fetch (trusted) — populates UI immediately and sets baseline.
+  }) async {
+    // Stop any previous user's stream before waiting on the next authoritative snapshot.
+    final generation = ++_syncGeneration;
+    if (_activeUserId != userId) {
+      _activeUserId = userId;
+      _lastKnownUserBookings = [];
+    }
+    await _subscription?.cancel();
+    if (generation != _syncGeneration) return false;
+    _subscription = null;
+
+    // 1. Direct REST fetch (trusted) — await the first authoritative snapshot so
+    // callers that need booking state before continuing can do so safely.
+    var initialSnapshotLoaded = false;
     try {
-      _repository.getUserBookingsDirectly(userId).then((directList) {
-        if (directList.isNotEmpty) {
-          // Full server refresh → update last-known baseline.
-          _lastKnownUserBookings = directList;
-          final categorized = BookingCategorizationService.categorizeUserBookings(
-            bookings: directList,
-            now: DateTime.now(),
-          );
-          onData(directList, categorized);
-        }
-      }).catchError((e) {
-        // Direct fetch failed — do NOT clear existing state.
-        VSPLogger.w('Direct user bookings fetch failed (keeping existing state): $e');
-      });
-    } catch (e, stack) {
-      VSPLogger.e('Error loading direct user bookings in BookingSyncCoordinator', e, stack);
+      final directList = _repository is SupabaseBookingRepository
+          ? await _repository.getUserBookingsDirectlyStrict(userId)
+          : await _repository.getUserBookingsDirectly(userId);
+      if (generation != _syncGeneration) return false;
+      _lastKnownUserBookings = directList;
+      final categorized = BookingCategorizationService.categorizeUserBookings(
+        bookings: directList,
+        now: DateTime.now(),
+      );
+      // An empty authoritative list is still a completed load, not "still loading".
+      onData(directList, categorized);
+      initialSnapshotLoaded = true;
+    } catch (_) {
+      // Preserve the last trusted state, but never log provider messages,
+      // user identifiers or transport headers.
+      VSPLogger.e('Direct player booking sync failed (details redacted)');
+      if (generation == _syncGeneration) onError('Failed to load bookings');
     }
 
+    if (generation != _syncGeneration) return false;
     // 2. Realtime Stream — transport only, results merged with last-known state.
-    _subscription?.cancel();
     _subscription = _repository.getUserBookings(userId).listen(
       (incoming) {
+        if (generation != _syncGeneration) return;
         // Merge incoming with last known — never replace if incoming is partial.
         final merged = _mergeWithLastKnown(incoming: incoming, userId: userId);
         // Update baseline only when incoming actually contains this user's bookings
@@ -105,9 +122,10 @@ class BookingSyncCoordinator {
         );
         onData(merged, categorized);
       },
-      onError: (e) {
-        // Transport error — preserve existing state, report error to UI.
-        VSPLogger.w('Realtime stream error in syncUserBookings (keeping existing state): $e');
+      onError: (_) {
+        if (generation != _syncGeneration) return;
+        // Transport error: preserve trusted state without printing raw payloads.
+        VSPLogger.w('Player booking realtime sync failed (details redacted)');
         // Re-emit last known so UI doesn't go blank.
         if (_lastKnownUserBookings.isNotEmpty) {
           final categorized = BookingCategorizationService.categorizeUserBookings(
@@ -116,9 +134,10 @@ class BookingSyncCoordinator {
           );
           onData(_lastKnownUserBookings, categorized);
         }
-        onError('Failed to load bookings: $e');
+        onError('Failed to load bookings');
       },
     );
+    return initialSnapshotLoaded;
   }
 
   /// Syncs owner bookings via instant direct REST fetch and persistent Realtime Stream.
@@ -130,27 +149,38 @@ class BookingSyncCoordinator {
     required void Function(List<Booking> mergedBookings, CategorizedOwnerBookings categorized) onData,
     required void Function(String error) onError,
   }) async {
+    // Stop any previous user's/owner's stream before changing the booking scope.
+    final generation = ++_syncGeneration;
+    // Owner mode never reuses a previously cached player booking baseline.
+    _activeUserId = null;
+    _lastKnownUserBookings = [];
+    await _subscription?.cancel();
+    if (generation != _syncGeneration) return;
+    _subscription = null;
+
     // 1. Direct REST fetch for immediate UI population
     try {
       final repo = _repository;
       if (repo is SupabaseBookingRepository) {
-        final directBookings = await repo.fetchOwnerBookingsDirectly(ownerId);
-        if (directBookings.isNotEmpty) {
-          final categorized = BookingCategorizationService.categorizeOwnerBookings(
-            bookings: directBookings,
-            now: DateTime.now(),
-          );
-          onData(directBookings, categorized);
-        }
+        final directBookings = await repo.fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
+        if (generation != _syncGeneration) return;
+        final categorized = BookingCategorizationService.categorizeOwnerBookings(
+          bookings: directBookings,
+          now: DateTime.now(),
+        );
+        // An authoritative empty result is still a completed initial load.
+        onData(directBookings, categorized);
       }
-    } catch (e, stack) {
-      VSPLogger.e('Error loading direct owner bookings in BookingSyncCoordinator', e, stack);
+    } catch (_) {
+      VSPLogger.e('Direct owner booking sync failed (details redacted)');
+      if (generation == _syncGeneration) onError('Failed to load owner bookings');
     }
 
+    if (generation != _syncGeneration) return;
     // 2. Realtime Stream subscription
-    _subscription?.cancel();
     _subscription = _repository.getOwnerBookings(ownerId, stadiumIds: stadiumIds).listen(
       (bookings) {
+        if (generation != _syncGeneration) return;
         final merged = BookingCategorizationService.mergeLocalManualBookings(
           incomingBookings: bookings,
           currentBookings: getCurrentBookings(),
@@ -162,8 +192,9 @@ class BookingSyncCoordinator {
         );
         onData(merged, categorized);
       },
-      onError: (e) {
-        onError('Failed to load bookings: $e');
+      onError: (_) {
+        if (generation != _syncGeneration) return;
+        onError('Failed to load owner bookings');
       },
     );
   }

@@ -1,0 +1,32 @@
+# VSP role and permission exception register — 78.06
+
+**Date:** 2026-11-13. **Scope:** source-reviewed classification and documented authorization exceptions. This closes the *documentation* outcome for task 78.06 only. It is **not** a production authorization audit, a waiver, a test run, an approved security bypass or release clearance.
+
+## Exception inventory
+
+| ID | Exceptional path and observed evidence | Boundary that must hold | Remaining runtime verification |
+|---|---|---|---|
+| EX-01 | Legacy privileged role spellings `admin`, `co_founder`, `cofounder`, `super_admin` are recognized by `is_admin_or_cofounder(uuid)`. Individual policy allowlists are not uniform; the banner-image policy in the reviewed 2026-11-11 plan omits `cofounder`, while owner-document rules include it. | Never infer identical permissions solely from a role alias or from a matching UI label. Grant only where the actual resource policy and active-user check allow. | Compare exact grants/policies in each environment for each alias, with allowed/denied real authenticated actors. |
+| EX-02 | Privileged staff must be **active**, not just hold a privileged role. `is_admin_or_cofounder` checks `is_blocked=false`; the source hardening plan adds active-status checks to 37 selected production table/storage policies. | A blocked admin/founder should lose administrative branches without losing legitimate public/own-identity branches unless a separately approved account block requires it. | Compare effective OR-composed RLS rules and run blocked/unblocked role tests, especially on files, chat and tournaments. |
+| EX-03 | `require_active_admin_actor()` source permits an explicit `service_role` JWT and a narrowly defined direct database-maintenance session for no-JWT local operations. The code expressly excludes `SET ROLE anon/authenticated` probes from the maintenance exception. | These are **server/DB maintenance** exceptions, not a public-admin, player or owner privilege. Do not expose service credentials to app/web. | Inspect deployed function definition, service-key handling and isolated negative/positive tests. |
+| EX-04 | Public listing of verified venues and sanitized public subscription plans is allowed without login. Review evidence for the four originally flagged views says `courts` and `public_subscription_plans` are readable by anon in staging; `owner_subscription_status` has anon SELECT revoked. | Public visibility is **read-only/sanitized** and must not expose private owner subscription status or personal rows. | Use anon and separate owner accounts to verify view RLS, grants, private joins and results. |
+| EX-05 | Player/venue-owner own-resource access (profiles, bookings, venue management, team invitations) and conditional captain/participant access are legitimate exceptions to a blanket "only admin" rule; documented in the 78.03 matrix. | Each grant must be constrained to the current authenticated actor's resource relationship; an arbitrary supplied user/team/booking ID gives no privilege. | Execute allowed self-account and denied cross-account/RPC tests in staging, including booking ownership and team invitations. |
+| EX-06 | Private storage documents/receipts may be accessed by an owning/related actor and, in selected cases, a scoped active admin or server role; public banner/stadium images have distinct read/write rules. The 78.07 matrix documents target buckets and named policies, but not all effective policy combinations. | Signed URL, object key, path and download checks remain subject to the same ownership and exposure boundaries. An admin grant does not justify anonymous private-document access. | Full bucket-policy inventory; two-owner upload/download/delete, blocked-admin, signed-URL and server function tests. |
+| EX-07 | Privileged `SECURITY DEFINER` RPCs may intentionally execute under `postgres`; staging source triage recorded 200 authenticated-executable overloads (12 without a direct `auth.uid()/auth.jwt()` marker). | Function owner privilege is **not** a caller authorization grant. Inspect delegated guards and exact function effects before any allow/deny decision or revocation. | Per-RPC caller/role and ownership tests for payments, account, booking, and sports results, as tracked under #38 and 77.*. |
+| EX-08 | Payment settlement, signed webhook reconciliation and refund delivery belong to verified server workflows; a player/owner may initiate eligible checkout but cannot set payment status or settle money directly. | Service-level payment mutation is not a general admin or user exception. Server derives amounts and checks signatures and idempotency. | Provider sandbox failure/retry/refund, malicious caller and replay tests under the financial release gate. |
+
+## Evidence references (repository paths)
+
+- `supabase/migrations/20260926132000_central_admin_role_helper.sql` — aliases, blocked-account condition and explicit execute grants.
+- `supabase/migrations/20261111045628_require_active_admin_actor_for_sensitive_rpcs.sql` — direct maintenance/server exceptions, not a client permission.
+- `supabase/migrations/20261111055255_restrict_blocked_admin_table_and_storage_privileges.sql` — checked policy-specific source review plan, showing different alias subsets and self-owner branches.
+- `docs/security/VSP_ROLE_ACCESS_MATRIX_78_03.md`, `VSP_STORAGE_ACCESS_MATRIX_78_07.md`, `VSP_ROLE_DEFINITIONS_78_01.md` — intended matrix and explicit limitations.
+- `docs/security/VSP_VIEW_AND_BOOKING_WINDOW_ACCEPTANCE_2026-11-13.md` — *scoped staging view* configuration/anon counts, not cross-account proof.
+- `docs/security/VSP_STAGING_PRIVILEGED_RPC_TRIAGE_2026-11-13.md` — read-only staging function/owner classification, not confirmed vulnerabilities.
+- `docs/security/RELEASE_ACCEPTANCE_POLICY.md` — P0/P1 release holds and rules for any actual exception/waiver.
+
+## Acceptance and open security gates
+
+Task **78.06 = documentation exception inventory accepted**, limited to classifying **8** cross-role exceptions and stating their intended boundary, related source and unverified tests. No DB mutations, admin configuration, payments, signed-URL reads or impersonated sessions occurred.
+
+**Not accepted by this document:** 78.04, 78.05, 79.*, 76.04/76.05/76.07, 77.04–77.11, Issue #38, or any release-readiness gate. These require actual two-account and role-negative tests; absence of a direct auth marker does not prove a vulnerability. All changes remain in the development branch until integration testing supports release.

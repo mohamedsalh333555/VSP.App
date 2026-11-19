@@ -102,7 +102,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                     color: VSPColors.inputFill,
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: VSPColors.white08,
                       width: 1.0,
                     ),
                   ),

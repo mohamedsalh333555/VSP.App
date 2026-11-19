@@ -17,26 +17,38 @@ class PaymobFeePolicy {
   });
 
   factory PaymobFeePolicy.fromMap(Map<String, dynamic> map) => PaymobFeePolicy(
-    vspRate: (map['booking_vsp_rate'] as num?)?.toDouble() ?? 0,
-    gatewayRate: (map['booking_paymob_rate'] as num?)?.toDouble() ?? 0,
-    fixedGatewayFee: (map['booking_paymob_fixed_fee'] as num?)?.toDouble() ?? 0,
+    vspRate: (map['booking_vsp_rate'] as num?)?.toDouble() ?? double.nan,
+    gatewayRate: (map['booking_paymob_local_rate'] as num?)?.toDouble() ??
+        (map['booking_paymob_rate'] as num?)?.toDouble() ?? double.nan,
+    fixedGatewayFee: (map['booking_paymob_fixed_fee'] as num?)?.toDouble() ?? double.nan,
     vspAppliesToCash: map['vsp_applies_to_cash'] == true,
     paymobAppliesToElectronic: map['paymob_applies_to_electronic'] == true,
   );
 
+  // Mirrors the server's Math.round(value * 100) / 100 calculation for EGP.
+  double _roundToCents(double value) => (value * 100).roundToDouble() / 100;
+
   double platformFee(double baseAmount) =>
-      baseAmount <= 0 ? 0 : double.parse((baseAmount * vspRate).toStringAsFixed(2));
+      baseAmount <= 0 ? 0 : _roundToCents(baseAmount * vspRate);
 
   double gatewayFee(double baseAmount) =>
       baseAmount <= 0 || !paymobAppliesToElectronic
           ? 0
-          : double.parse((baseAmount * gatewayRate + fixedGatewayFee).toStringAsFixed(2));
+          : _roundToCents(baseAmount * gatewayRate + fixedGatewayFee);
 
   double serviceFee(double baseAmount) =>
-      double.parse((platformFee(baseAmount) + gatewayFee(baseAmount)).toStringAsFixed(2));
+      _roundToCents(platformFee(baseAmount) + gatewayFee(baseAmount));
 
   double total(double baseAmount) =>
-      double.parse((baseAmount + serviceFee(baseAmount)).toStringAsFixed(2));
+      _roundToCents(baseAmount + serviceFee(baseAmount));
+
+  bool get isValidForElectronicCheckout =>
+      paymobAppliesToElectronic &&
+      [vspRate, gatewayRate, fixedGatewayFee].every((value) => value.isFinite) &&
+      vspRate >= 0 &&
+      gatewayRate >= 0 &&
+      gatewayRate < 1 &&
+      fixedGatewayFee >= 0;
 }
 
 class PaymobService {
@@ -44,13 +56,13 @@ class PaymobService {
     try {
       final response = await Supabase.instance.client
           .from('platform_fee_config')
-          .select('booking_vsp_rate,booking_paymob_rate,booking_paymob_fixed_fee,vsp_applies_to_cash,paymob_applies_to_electronic')
+          .select('booking_vsp_rate,booking_paymob_rate,booking_paymob_local_rate,booking_paymob_fixed_fee,vsp_applies_to_cash,paymob_applies_to_electronic')
           .eq('id', 1)
           .maybeSingle();
       if (response == null) return null;
       return PaymobFeePolicy.fromMap(Map<String, dynamic>.from(response));
     } catch (e) {
-      debugPrint('[PaymobService] Fee policy unavailable: $e');
+      debugPrint('[PaymobService] Fee policy unavailable (details redacted)');
       return null;
     }
   }
@@ -86,7 +98,7 @@ class PaymobService {
       }
       return null;
     } catch (e) {
-      debugPrint('[PaymobService] Checkout error: $e');
+      debugPrint('[PaymobService] Checkout initialization failed (details redacted)');
       return null;
     }
   }

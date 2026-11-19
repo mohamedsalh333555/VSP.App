@@ -98,7 +98,10 @@ class RemoteConfigService extends ChangeNotifier {
     _stadiumPriceDefault = _parseDouble(data['stadium_price_default'] ?? data['stadiumPriceDefault'], _stadiumPriceDefault);
     _copilotEnabled = _parseBool(data['copilot_enabled'] ?? data['copilotEnabled'], _copilotEnabled);
 
-    // Dynamic features map support
+    // Each Supabase row is the complete feature-flag snapshot. Clear the
+    // previous snapshot first so removed keys cannot remain enabled/disabled
+    // indefinitely after a realtime config update.
+    _features.clear();
     final rawFeatures = data['features'];
     if (rawFeatures != null && rawFeatures is Map) {
       rawFeatures.forEach((key, val) {

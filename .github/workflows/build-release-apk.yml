@@ -3,12 +3,10 @@ name: Build Android Release APK
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-# Build installable APKs using the original VSP Android release signing identity.
+# Final-phase gate: run manually only after source work and consolidated validation are complete.
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 jobs:
   build-release-apk:
@@ -19,6 +17,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Manual test-release builds are blocked until all known critical
+      # security findings have a current, evidence-backed owner sign-off.
+      - name: Enforce signed release security acceptance
+        run: python3 scripts/check_release_security_gate.py --state docs/security/VSP_RELEASE_GATE_STATE.json --sha "${{ github.sha }}"
+
+      # Read-only, live project check. A missing token or any unresolved WARN/ERROR
+      # blocks the signed release; this does not change Supabase or bypass HOLD.
+      - name: Require current production Supabase security advisor
+        env:
+          SUPABASE_ADVISORS_READ_TOKEN: ${{ secrets.SUPABASE_ADVISORS_READ_TOKEN }}
+          VSP_SUPABASE_ADVISOR_PROJECT_REF: mktqkddbcddrxjxabdua
+        run: python3 scripts/check_supabase_security_advisor.py --strict-warnings
 
       - name: Free runner disk space
         shell: bash
@@ -77,6 +88,13 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
+      # Validate the exact checked-out commit before attempting a signed APK.
+      - name: Flutter static analysis
+        run: flutter analyze --no-pub --no-fatal-infos
+
+      - name: Flutter unit and widget tests
+        run: flutter test --no-pub
+
       - name: Configure original Android release signing
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -90,7 +108,9 @@ jobs:
             echo "::error::Original signing key secrets are missing. Add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD using the exact original VSP release keystore."
             exit 1
           fi
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/vsp-release-key.jks
+          # Android resolves storeFile relative to android/app/build.gradle.kts.
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/vsp-release-key.jks
+          test -s android/app/vsp-release-key.jks
           cat > android/key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
           keyPassword=$ANDROID_KEY_PASSWORD

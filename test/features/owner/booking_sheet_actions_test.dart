@@ -15,14 +15,18 @@ Widget _wrap(Widget child) => MaterialApp(
     );
 
 
-Booking _fakeBooking({bool isPaid = false, double depositPaid = 50}) => Booking(
+Booking _fakeBooking({
+  bool isPaid = false,
+  double depositPaid = 50,
+  BookingType type = BookingType.personal,
+}) => Booking(
       id: 'bk1',
       stadiumId: 'st1',
       stadiumName: 'Test Stadium',
       ownerId: 'o1',
       startTime: DateTime.now().add(const Duration(hours: 1)),
       endTime: DateTime.now().add(const Duration(hours: 2)),
-      bookingType: BookingType.personal,
+      bookingType: type,
       isPrivate: false,
       rentBall: false,
       totalPrice: 100,
@@ -200,9 +204,95 @@ void main() {
           onConfirmCashPayment: () {},
           onCancelBooking: () {},
           onConfirmBooking: () {},
+          onReportNoShow: () {},
         ),
       ));
       await tester.pump();
+      expect(find.byIcon(Iconsax.user_remove_copy), findsOneWidget);
+    });
+  });
+
+  testWidgets('opted-in completed owner-created challenge is not hidden by manual mode',
+      (tester) async {
+    var reports = 0;
+    await tester.pumpWidget(_wrap(
+      BookingSheetBottomActions(
+        booking: _fakeBooking(
+          type: BookingType.challenge, isPaid: true,
+        ),
+        isEdit: true, isPastCompleted: true,
+        isUpcomingPendingCash: false,
+        isUpcomingOnlinePaid: false,
+        isOwnerManual: true,
+        isSaving: false, isDeleting: false,
+        onConfirmCashPayment: () {},
+        onCancelBooking: () {},
+        onConfirmBooking: () {},
+        onReportChallengeNotPlayed: () => reports++,
+      ),
+    ));
+    await tester.pump();
+    expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.flag_outlined));
+    await tester.pump();
+    expect(reports, 1);
+  });
+
+  group('Challenge non-played owner action — opt-in only', () {
+    testWidgets('neutral report replaces punitive no-show for a challenge when enabled', (tester) async {
+      var neutralCalls = 0;
+      var noShowCalls = 0;
+      await tester.pumpWidget(_wrap(
+        BookingSheetBottomActions(
+          booking: _fakeBooking(type: BookingType.challenge, depositPaid: 50),
+          isEdit: false, isPastCompleted: true,
+          isUpcomingPendingCash: false, isUpcomingOnlinePaid: false,
+          isSaving: false, isDeleting: false,
+          onConfirmCashPayment: () {}, onCancelBooking: () {},
+          onConfirmBooking: () {}, onReportNoShow: () => noShowCalls++,
+          onReportChallengeNotPlayed: () => neutralCalls++,
+        ),
+      ));
+      await tester.pump();
+      expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
+      expect(find.byIcon(Iconsax.user_remove_copy), findsNothing);
+      expect(find.text('الإبلاغ أن المباراة لم تُلعب'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.flag_outlined));
+      await tester.pump();
+      expect(neutralCalls, 1);
+      expect(noShowCalls, 0);
+    });
+
+    testWidgets('neutral report remains available for a paid challenge', (tester) async {
+      await tester.pumpWidget(_wrap(
+        BookingSheetBottomActions(
+          booking: _fakeBooking(type: BookingType.challenge, isPaid: true),
+          isEdit: false, isPastCompleted: true,
+          isUpcomingPendingCash: false, isUpcomingOnlinePaid: false,
+          isSaving: false, isDeleting: false,
+          onConfirmCashPayment: () {}, onCancelBooking: () {},
+          onConfirmBooking: () {},
+          onReportChallengeNotPlayed: () {},
+        ),
+      ));
+      await tester.pump();
+      expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
+      expect(find.byIcon(Iconsax.user_remove_copy), findsNothing);
+    });
+
+    testWidgets('without new callback, existing legacy no-show stays available', (tester) async {
+      await tester.pumpWidget(_wrap(
+        BookingSheetBottomActions(
+          booking: _fakeBooking(type: BookingType.challenge, depositPaid: 50),
+          isEdit: false, isPastCompleted: true,
+          isUpcomingPendingCash: false, isUpcomingOnlinePaid: false,
+          isSaving: false, isDeleting: false,
+          onConfirmCashPayment: () {}, onCancelBooking: () {},
+          onConfirmBooking: () {}, onReportNoShow: () {},
+        ),
+      ));
+      await tester.pump();
+      expect(find.byIcon(Icons.flag_outlined), findsNothing);
       expect(find.byIcon(Iconsax.user_remove_copy), findsOneWidget);
     });
   });

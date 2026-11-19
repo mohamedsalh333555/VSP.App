@@ -29,7 +29,7 @@ class VSPMatchInviteFormatter {
  : '';
 
  int needed = 0;
- if (maxPlayers != null && currentPlayers != null && maxPlayers > currentPlayers) {
+ if (maxPlayers != null && currentPlayers != null && maxPlayers > 0 && currentPlayers >= 0 && maxPlayers > currentPlayers) {
  needed = maxPlayers - currentPlayers;
  }
 
@@ -38,9 +38,9 @@ class VSPMatchInviteFormatter {
  : '';
 
  final String costStr = (costPerPerson != null && costPerPerson > 0)
- ? (isArabic ? ' *حساب الفرد:* ${costPerPerson.toInt()} ج.م\n' : ' *Per Player:* ${costPerPerson.toInt()} EGP\n')
+ ? (isArabic ? ' *حساب الفرد:* ${costPerPerson.toStringAsFixed(2)} ج.م\n' : ' *Per Player:* ${costPerPerson.toStringAsFixed(2)} EGP\n')
  : (totalPrice != null && totalPrice > 0 
- ? (isArabic ? ' *إجمالي الحجز:* ${totalPrice.toInt()} ج.م\n' : ' *Total Price:* ${totalPrice.toInt()} EGP\n') 
+ ? (isArabic ? ' *إجمالي الحجز:* ${totalPrice.toStringAsFixed(2)} ج.م\n' : ' *Total Price:* ${totalPrice.toStringAsFixed(2)} EGP\n') 
  : '');
 
  final String hostStr = (hostName != null && hostName.isNotEmpty)

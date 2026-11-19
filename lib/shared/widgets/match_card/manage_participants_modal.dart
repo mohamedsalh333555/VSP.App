@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../core/repositories/user_repository.dart';
+import '../../../core/providers/booking_provider.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/services/notification_handler.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -25,7 +27,7 @@ class ManageParticipantsModal extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (context) => ManageParticipantsModal(booking: booking),
     );
   }
@@ -36,21 +38,52 @@ class ManageParticipantsModal extends StatefulWidget {
 
 class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
   bool _isLoading = true;
+  bool _hasLoadError = false;
   bool _isProcessing = false; // click lock state
   List<UserModel> _participants = [];
   List<UserModel> _pending = [];
+  late List<String> _joinedUserIds;
+  late List<String> _pendingUserIds;
 
   @override
   void initState() {
     super.initState();
+    _joinedUserIds = List<String>.from(widget.booking.joinedUserIds);
+    _pendingUserIds = List<String>.from(widget.booking.pendingUserIds);
     _fetchUsers();
+  }
+
+  Future<void> _refreshBookingAndUsers() async {
+    if (!mounted) return;
+    try {
+      final updatedBooking = await Provider.of<BookingProvider>(
+        context,
+        listen: false,
+      ).getBookingById(widget.booking.id);
+      if (!mounted) return;
+      if (updatedBooking != null) {
+        _joinedUserIds = List<String>.from(updatedBooking.joinedUserIds);
+        _pendingUserIds = List<String>.from(updatedBooking.pendingUserIds);
+      }
+    } catch (e, stack) {
+      VSPLogger.e('Could not refresh booking participants from server', e, stack);
+    }
+    if (!mounted) return;
+    await _fetchUsers();
   }
 
   Future<void> _fetchUsers() async {
     try {
-      final allUserIds = [...widget.booking.joinedUserIds, ...widget.booking.pendingUserIds];
+      final allUserIds = [..._joinedUserIds, ..._pendingUserIds];
       if (allUserIds.isEmpty) {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() {
+            _participants = [];
+            _pending = [];
+            _isLoading = false;
+            _hasLoadError = false;
+          });
+        }
         return;
       }
 
@@ -58,16 +91,19 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
 
       if (mounted) {
         setState(() {
-          _participants = users.where((u) => widget.booking.joinedUserIds.contains(u.uid)).toList();
-          _pending = users.where((u) => widget.booking.pendingUserIds.contains(u.uid)).toList();
+          _participants = users.where((u) => _joinedUserIds.contains(u.uid)).toList();
+          _pending = users.where((u) => _pendingUserIds.contains(u.uid)).toList();
           _isLoading = false;
+          _hasLoadError = false;
         });
       }
     } catch (e, stack) {
       VSPLogger.e('Error fetching participants in bulk', e, stack);
       if (mounted) {
-        setState(() => _isLoading = false);
-        VSPFeedback.showError(context, e.toString());
+        setState(() {
+          _isLoading = false;
+          _hasLoadError = true;
+        });
       }
     }
   }
@@ -76,20 +112,35 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
-      await MatchRepository().acceptJoinRequest(widget.booking.id, userId);
-      await NotificationHandler.notifyPlayerJoinedMatch(
-        hostId: userId,
-        playerName: '',
-        stadiumName: widget.booking.stadiumName,
-        bookingId: widget.booking.id,
-      );
-      _fetchUsers();
-    } catch (e) {
+      final accepted = await MatchRepository().acceptJoinRequest(widget.booking.id, userId);
+      if (!accepted) throw StateError('accept_join_request_failed');
+      try {
+        await NotificationHandler.notifyJoinRequestAccepted(
+          playerId: userId,
+          stadiumName: widget.booking.stadiumName,
+          bookingId: widget.booking.id,
+        );
+      } catch (notificationError, stackTrace) {
+        VSPLogger.e(
+          'Failed to notify player that their join request was accepted',
+          notificationError,
+          stackTrace,
+        );
+      }
+      _pendingUserIds.remove(userId);
+      if (!_joinedUserIds.contains(userId)) _joinedUserIds.add(userId);
+      await _refreshBookingAndUsers();
+    } catch (e, stackTrace) {
+      debugPrint('Participant acceptance failed: $e\n$stackTrace');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(e.toString().contains('match_is_full')
-            ? 'عذراً، اكتمل العدد ولا يمكن قبول المزيد'
-            : 'Error'),
+            ? (Localizations.localeOf(context).languageCode == 'ar'
+                ? 'عذراً، اكتمل العدد ولا يمكن قبول المزيد.'
+                : 'The match is full. No more players can be accepted.')
+            : (Localizations.localeOf(context).languageCode == 'ar'
+                ? 'تعذر قبول طلب الانضمام. حاول مرة أخرى.'
+                : 'Could not accept the join request. Please try again.')),
       ));
     } finally {
       if (mounted) {
@@ -102,15 +153,31 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
-      await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
-      await NotificationHandler.notifyJoinRequestRejected(
-        playerId: userId,
-        stadiumName: widget.booking.stadiumName,
-      );
-      _fetchUsers();
-    } catch (e) {
+      final rejected = await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
+      if (!rejected) throw StateError('reject_join_request_failed');
+      try {
+        await NotificationHandler.notifyJoinRequestRejected(
+          playerId: userId,
+          stadiumName: widget.booking.stadiumName,
+        );
+      } catch (notificationError, stackTrace) {
+        VSPLogger.e(
+          'Failed to notify player that their join request was rejected',
+          notificationError,
+          stackTrace,
+        );
+      }
+      _pendingUserIds.remove(userId);
+      await _refreshBookingAndUsers();
+    } catch (e, stackTrace) {
+      debugPrint('Participant request rejection failed: $e\n$stackTrace');
       if (!mounted) return;
-      VSPFeedback.showError(context, e.toString());
+      VSPFeedback.showError(
+        context,
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? 'تعذر رفض طلب الانضمام. حاول مرة أخرى.'
+            : 'Could not reject the join request. Please try again.',
+      );
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -122,11 +189,19 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
-      await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
-      _fetchUsers();
-    } catch (e) {
+      final removed = await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
+      if (!removed) throw StateError('remove_participant_failed');
+      _joinedUserIds.remove(userId);
+      await _refreshBookingAndUsers();
+    } catch (e, stackTrace) {
+      debugPrint('Participant removal failed: $e\n$stackTrace');
       if (!mounted) return;
-      VSPFeedback.showError(context, e.toString());
+      VSPFeedback.showError(
+        context,
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? 'تعذر إزالة اللاعب من المباراة. حاول مرة أخرى.'
+            : 'Could not remove the player from the match. Please try again.',
+      );
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -160,12 +235,14 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final bottomInset = MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 16;
+    final media = MediaQuery.of(context);
+    final bottomInset = media.padding.bottom + 16;
+    // The scroll-controlled SafeArea modal route already applies keyboard
+    // and system viewport constraints.
+    final availableHeight = media.size.height * 0.88;
 
     return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
-      ),
+      constraints: BoxConstraints(maxHeight: availableHeight),
       padding: EdgeInsets.only(bottom: bottomInset),
       decoration: const BoxDecoration(
         color: VSPColors.surfaceAlt,
@@ -188,8 +265,17 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(AppLocalizations.of(context)!.manageMatch, style: Theme.of(context).textTheme.displaySmall),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)!.manageMatch,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.displaySmall,
+                  ),
+                ),
                 IconButton(
+                  tooltip: isArabic ? 'إغلاق' : 'Close',
+                  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                   icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -200,14 +286,42 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
-                : SingleChildScrollView(
+                : _hasLoadError
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(VSPSpacing.lg),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                isArabic
+                                    ? 'تعذر تحميل قائمة اللاعبين.'
+                                    : 'Could not load the player list.',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: VSPColors.textSecondary),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _isLoading = true;
+                                    _hasLoadError = false;
+                                  });
+                                  _fetchUsers();
+                                },
+                                child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : SingleChildScrollView(
                     child: Column(
                       children: [
                         if (_pending.isNotEmpty) ...[
                           Padding(
                             padding: const EdgeInsets.all(20),
                             child: Align(
-                              alignment: Alignment.centerLeft,
+                              alignment: AlignmentDirectional.centerStart,
                               child: Text(
                                 isArabic ? 'طلبات الانضمام المعلقة:' : 'Pending Requests:',
                                 style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold),
@@ -236,7 +350,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                         children: [
                                           Text(
                                             u.name ?? (isArabic ? 'اسم غير متاح' : 'Name unavailable'),
-                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -251,7 +365,9 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                     ),
                                     if (u.phone != null && u.phone!.isNotEmpty)
                                       IconButton(
-                                        icon: const Icon(Iconsax.call_copy, color: Colors.blue, size: 16),
+                                        tooltip: isArabic ? 'اتصال' : 'Call',
+                                        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                                        icon: const Icon(Iconsax.call_copy, color: VSPColors.info, size: 16),
                                         onPressed: _isProcessing
                                             ? null
                                             : () async {
@@ -259,16 +375,25 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                                   await launchUrl(Uri.parse('tel:${u.phone}'));
                                                 } catch (_) {
                                                   if (context.mounted) {
-                                                    VSPFeedback.showError(context, 'Could not launch dialer');
+                                                    VSPFeedback.showError(
+                                                      context,
+                                                      isArabic
+                                                          ? 'تعذر فتح تطبيق الاتصال.'
+                                                          : 'Could not open the phone app.',
+                                                    );
                                                   }
                                                 }
                                               },
                                       ),
                                     IconButton(
+                                      tooltip: isArabic ? 'قبول الطلب' : 'Accept request',
+                                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                                       icon: const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 18),
                                       onPressed: _isProcessing ? null : () => _acceptUser(u.uid),
                                     ),
                                     IconButton(
+                                      tooltip: isArabic ? 'رفض الطلب' : 'Reject request',
+                                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                                       icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.error, size: 18),
                                       onPressed: _isProcessing ? null : () => _rejectUser(u.uid),
                                     ),
@@ -279,7 +404,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                         Padding(
                           padding: const EdgeInsets.all(20),
                           child: Align(
-                            alignment: Alignment.centerLeft,
+                            alignment: AlignmentDirectional.centerStart,
                             child: Text(
                               AppLocalizations.of(context)!.joinedFromApp,
                               style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
@@ -362,6 +487,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                   ),
                                   if (!isHost)
                                     IconButton(
+                                      tooltip: isArabic ? 'إزالة اللاعب' : 'Remove player',
+                                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                                       icon: const Icon(Iconsax.user_remove_copy, color: VSPColors.error, size: 16),
                                       onPressed: _isProcessing ? null : () => _removeUser(u.uid),
                                     ),

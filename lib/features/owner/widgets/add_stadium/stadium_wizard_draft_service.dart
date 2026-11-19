@@ -184,6 +184,7 @@ class StadiumWizardDraftService {
                 'url': item['url'],
                 'progress': 100,
                 'isUploading': false,
+                'isNewUpload': true,
               });
             }
           }

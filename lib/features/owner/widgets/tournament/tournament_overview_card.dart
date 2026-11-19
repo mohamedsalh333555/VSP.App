@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/components/vsp_card.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -141,9 +142,9 @@ class TournamentOverviewCard extends StatelessWidget {
                 context,
                 isArabic ? 'وعاء الجوائز الفعلي' : 'Actual Prize Pool',
                 championship.prizePool > 0
-                    ? '${championship.prizePool.toInt()} ${isArabic ? "ج.م" : "EGP"}'
+                    ? '${VSPMoneyFormatter.amount(championship.prizePool)} ${isArabic ? "ج.م" : "EGP"}'
                     : (championship.grandPrize > 0
-                        ? '${championship.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}'
+                        ? '${VSPMoneyFormatter.amount(championship.grandPrize)} ${isArabic ? "ج.م" : "EGP"}'
                         : (isArabic ? 'كأس وميداليات' : 'Cup & Medals')),
                 color: VSPColors.accent,
               ),

@@ -59,12 +59,16 @@ class CheckoutSquadRequirementCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      isArabic ? 'تشكيلة الفريق' : 'Team Roster',
-                      style: const TextStyle(
+                    Flexible(
+                      child: Text(
+                        isArabic ? 'تشكيلة الفريق' : 'Team Roster',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
+                      ),
                       ),
                     ),
                     const SizedBox(width: 8),

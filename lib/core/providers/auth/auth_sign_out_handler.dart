@@ -17,6 +17,17 @@ class AuthSignOutHandler {
     required VoidCallback onClearRealtime,
   }) async {
     if (user != null) {
+      // Revoke this device under the old JWT before signing out. An already
+      // signed-out account cannot delete its RLS-protected token record.
+      try {
+        await notificationService.unregisterCurrentDeviceForUser(user.id);
+      } catch (_) {
+        // Do not trap the user in a signed-in state when Firebase is offline.
+      }
+      // Native alerts must not leak old-account details after sign-out.
+      try {
+        await notificationService.cancelScheduledMatchRemindersForUser(user.id);
+      } catch (_) {}
       try {
         await Supabase.instance.client
             .from('users')

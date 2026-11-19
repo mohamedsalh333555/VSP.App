@@ -32,17 +32,22 @@ class CreateTeamMembersSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final draftCount = members.where((m) => m.uid.startsWith('guest_')).length;
+    final registeredCount = members.length - draftCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
           children: [
             Directionality(
               textDirection: TextDirection.ltr,
               child: Text(
-                l10n.teamMembersHeader(members.length + 1, 12),
+                isArabic
+                    ? '${members.length + 1}/12 | مسجل: $registeredCount | مسودة: $draftCount'
+                    : '${members.length + 1}/12 | Registered: $registeredCount | Draft: $draftCount',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: VSPColors.textSecondary,
                     ),
@@ -89,16 +94,26 @@ class CreateTeamMembersSection extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Icon(
-                  Iconsax.user_add_copy,
-                  color: VSPColors.textSecondary.withValues(alpha: 0.1),
-                  size: 40,
+                Container(
+                  width: 56,
+                  height: 56,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.divider),
+                  ),
+                  child: const Icon(
+                    Iconsax.user_add_copy,
+                    color: VSPColors.textSecondary,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   l10n.noMembersAddedYet,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: VSPColors.textSecondary.withValues(alpha: 0.3),
+                        color: VSPColors.textSecondary,
                       ),
                 ),
               ],
@@ -131,20 +146,43 @@ class CreateTeamMembersSection extends StatelessWidget {
                         borderRadius: VSPRadius.full,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        member.name ?? 'Player',
-                        style: Theme.of(context).textTheme.labelSmall,
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 144),
+                        child: Text(
+                          member.name?.trim().isNotEmpty == true
+                              ? member.name!.trim()
+                              : (isArabic ? 'لاعب' : 'Player'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () => onRemoveMember(member),
-                        child: const Padding(
-                          padding: EdgeInsets.all(4.0),
+                      if (member.uid.startsWith('guest_'))
+                        Tooltip(
+                          message: isArabic
+                              ? 'اسم مسودة وليس عضوًا أو حسابًا مدعوًا'
+                              : 'Draft name, not a member or invited account',
                           child: Icon(
-                            Iconsax.close_circle_copy,
-                            size: 14,
+                            Iconsax.info_circle_copy,
+                            size: 16,
                             color: VSPColors.textSecondary,
                           ),
+                        ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        tooltip: isArabic ? 'إزالة اللاعب' : 'Remove player',
+                        onPressed: () => onRemoveMember(member),
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
+                        padding: const EdgeInsets.all(8),
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(
+                          Iconsax.close_circle_copy,
+                          size: 16,
+                          color: VSPColors.textSecondary,
                         ),
                       ),
                     ],

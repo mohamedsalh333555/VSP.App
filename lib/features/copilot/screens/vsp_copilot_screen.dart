@@ -107,7 +107,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: VSPDSMotion.indicatorTransition,
           curve: Curves.easeOut,
         );
       }
@@ -201,12 +201,12 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
+              const Icon(Iconsax.tick_circle_copy, color: VSPColors.black, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   action.label.isNotEmpty ? action.label : 'تم تحديث بياناتك بنجاح!',
-                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.black, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -290,15 +290,17 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     if (auth?.isOwner != true) {
       return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: VSPStateView(
-          state: VSPUiState.disabled,
-          title: isArabic ? 'مساعد المالك غير متاح' : 'Owner Copilot unavailable',
-          message: isArabic
-              ? 'هذا المساعد مخصص حصرياً لصاحب الملعب.'
-              : 'This assistant is exclusively for stadium owners.',
-          action: OutlinedButton(
-            onPressed: () => context.go('/player'),
-            child: Text(isArabic ? 'العودة' : 'Go back'),
+        body: SafeArea(
+          child: VSPStateView(
+            state: VSPUiState.disabled,
+            title: isArabic ? 'مساعد المالك غير متاح' : 'Owner Copilot unavailable',
+            message: isArabic
+                ? 'هذا المساعد مخصص حصرياً لصاحب الملعب.'
+                : 'This assistant is exclusively for stadium owners.',
+            action: OutlinedButton(
+              onPressed: () => context.go('/player'),
+              child: Text(isArabic ? 'العودة' : 'Go back'),
+            ),
           ),
         ),
       );
@@ -415,7 +417,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
           Expanded(
             child: TextField(
               controller: _controller,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: const TextStyle(color: VSPColors.white, fontSize: 14),
               minLines: 1,
               maxLines: 4,
               decoration: InputDecoration(
@@ -445,7 +447,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
             onPressed: _isSending ? null : () => _handleSendMessage(),
             style: IconButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
             ),
             icon: const Icon(Iconsax.send_2_copy, size: 18),
           ),

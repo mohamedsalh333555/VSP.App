@@ -68,10 +68,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       final maxPriceFromDb = stadiumProvider.maxStadiumPrice;
       final double startPrice = (widget.initialFilters?['minPrice'] as num?)?.toDouble() ?? 0.0;
       final double endPrice = (widget.initialFilters?['maxPrice'] as num?)?.toDouble() ?? maxPriceFromDb;
-      _priceRange = RangeValues(
-        startPrice.clamp(0.0, maxPriceFromDb),
-        endPrice.clamp(0.0, maxPriceFromDb),
-      );
+      final clampedStart = startPrice.clamp(0.0, maxPriceFromDb).toDouble();
+      final clampedEnd = endPrice.clamp(0.0, maxPriceFromDb).toDouble();
+      // RangeValues requires an ordered interval; normalize stale or malformed
+      // saved filters before constructing the slider state.
+      _priceRange = clampedStart <= clampedEnd
+          ? RangeValues(clampedStart, clampedEnd)
+          : RangeValues(clampedEnd, clampedStart);
       _priceInitialized = true;
     }
 
@@ -124,13 +127,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     count += _amenitiesFilters.values.where((v) => v).length;
     if (_selectedGov != null) count++;
     if (_noDepositOnly) count++;
+    if (context.read<StadiumProvider>().activeQuickFilter != null) count++;
     final maxDb = context.read<StadiumProvider>().maxStadiumPrice;
     if (_priceRange.start > 0 || _priceRange.end < maxDb) count++;
     return count;
   }
 
   void _resetAll() {
-    final maxDb = context.read<StadiumProvider>().maxStadiumPrice;
+    final provider = context.read<StadiumProvider>();
+    final maxDb = provider.maxStadiumPrice;
     setState(() {
       _sportsFilters.updateAll((key, value) => false);
       _sizeFilters.updateAll((key, value) => false);
@@ -139,13 +144,24 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _noDepositOnly = false;
       _priceRange = RangeValues(0, maxDb);
     });
+    final activeQuickFilter = provider.activeQuickFilter;
+    if (activeQuickFilter != null) provider.toggleQuickFilter(activeQuickFilter);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final safeBottomInset = MediaQuery.paddingOf(context).bottom;
+    final bottomPadding = safeBottomInset > keyboardInset
+        ? safeBottomInset
+        : keyboardInset;
+    final availableHeight = (MediaQuery.sizeOf(context).height -
+            MediaQuery.paddingOf(context).top -
+            bottomPadding)
+        .clamp(0.0, MediaQuery.sizeOf(context).height)
+        .toDouble();
     final maxDbPrice = context.watch<StadiumProvider>().maxStadiumPrice;
     final activeCount = _activeFiltersCount;
 
@@ -167,7 +183,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.72,
+        maxHeight: availableHeight * 0.82,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
@@ -195,16 +211,21 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          isArabic ? 'تصفية الملاعب' : 'Filter Stadiums',
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        if (activeCount > 0) ...[
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              isArabic ? 'تصفية الملاعب' : 'Filter Stadiums',
+                              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (activeCount > 0) ...[
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -215,7 +236,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             child: Text(
                               '$activeCount',
                               style: const TextStyle(
-                                color: Colors.black,
+                                color: VSPColors.black,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -224,7 +245,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         ],
                       ],
                     ),
-                    IconButton(
+                  ),
+                  IconButton(
                       visualDensity: VisualDensity.compact,
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(
@@ -294,7 +316,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     height: 46,
                     onPressed: _resetAll,
                     color: VSPColors.surfaceAlt,
-                    textColor: Colors.white,
+                    textColor: VSPColors.white,
                   ),
                 ),
                 const SizedBox(width: 12),

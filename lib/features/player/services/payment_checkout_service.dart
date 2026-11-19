@@ -22,6 +22,11 @@ class PaymentCheckoutService {
     required double totalPrice,
     bool isFullPayment = false,
   }) {
+    if (!totalPrice.isFinite || totalPrice <= 0 ||
+        !depositPaid.isFinite || depositPaid < 0 ||
+        depositPaid > totalPrice) {
+      throw ArgumentError('Invalid checkout amount or deposit');
+    }
     if (!isFullPayment && needsDeposit && depositPaid > 0) {
       return depositPaid;
     }
@@ -30,10 +35,14 @@ class PaymentCheckoutService {
 
   /// Returns the corresponding Paymob integration ID based on selected payment method.
   static String getIntegrationId(String method) {
-    if (method == 'wallet') {
-      return AppConfig.paymobWalletIntegrationId;
+    switch (method.toLowerCase().trim()) {
+      case 'wallet':
+        return AppConfig.paymobWalletIntegrationId;
+      case 'card':
+        return AppConfig.paymobCardIntegrationId;
+      default:
+        throw ArgumentError.value(method, 'method', 'Unsupported checkout method');
     }
-    return AppConfig.paymobCardIntegrationId;
   }
 
   /// Generates a unique tracking payment reference ID for the Paymob transaction.
@@ -43,14 +52,21 @@ class PaymentCheckoutService {
     String? bookingId,
     required int timestampMs,
   }) {
+    final normalizedBookingId = bookingId?.trim();
     if (isTournamentPayment) {
-      if (bookingId != null && (bookingId.startsWith('LEAGUE_') || bookingId.startsWith('TOURN_'))) {
-        return bookingId;
+      if (normalizedBookingId != null &&
+          (normalizedBookingId.startsWith('LEAGUE_') ||
+              normalizedBookingId.startsWith('TOURN_'))) {
+        return normalizedBookingId;
       }
-      final teamId = (playerTeamId != null && playerTeamId.isNotEmpty) ? playerTeamId : 'TEAM';
+      final teamId = (playerTeamId != null && playerTeamId.trim().isNotEmpty)
+          ? playerTeamId.trim()
+          : 'TEAM';
       return 'TOURN_${teamId}_$timestampMs';
     }
-    return bookingId ?? 'BK_$timestampMs';
+    return normalizedBookingId != null && normalizedBookingId.isNotEmpty
+        ? normalizedBookingId
+        : 'BK_$timestampMs';
   }
 
   /// Determines if stale pending bookings should be cleaned up for the user.
@@ -65,9 +81,22 @@ class PaymentCheckoutService {
   static bool isPaymentConfirmed({
     String? status,
     String? paymentStatus,
+    String? paymentReconcileState,
   }) {
     final s = status?.toLowerCase().trim();
     final p = paymentStatus?.toLowerCase().trim();
+    final reconcile = paymentReconcileState?.toLowerCase().trim();
+    // A refund lifecycle state is never proof of a successful checkout,
+    // including when an older reconciliation value still says fully_paid.
+    if (p == 'refund_pending' || p == 'refunded' || p == 'refund_failed') {
+      return false;
+    }
+    // A server reconciliation conflict or refund must never be presented as
+    // checkout success, even when a legacy payment_status remains 'paid'.
+    if (reconcile != null && reconcile.isNotEmpty &&
+        reconcile != 'fully_paid' && reconcile != 'partially_paid') {
+      return false;
+    }
 
     // Booking is confirmed through electronic payment (either full payment 'paid'
     // or deposit payment 'partially_paid') only when server booking status is confirmed.
@@ -75,10 +104,8 @@ class PaymentCheckoutService {
     if (s == 'confirmed') {
       return p == 'paid' || p == 'partially_paid';
     }
-    // Backward-compatibility fallback when status is omitted: only accept strictly 'paid'
-    if (s == null && p == 'paid') {
-      return true;
-    }
+    // A paid flag without a confirmed server booking is not payment proof.
+    // Keep unknown/missing booking status in the uncertain state.
     return false;
   }
 

@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../../core/services/logger_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 
 class StadiumWizardTimeUtils {
   static TimeOfDay? parseTime(String? timeStr) {
     if (timeStr == null || timeStr.trim().isEmpty) return null;
-    try {
-      final totalMin = AppDateFormatter.parseTimeToMinutes(timeStr);
-      return TimeOfDay(hour: (totalMin ~/ 60) % 24, minute: totalMin % 60);
-    } catch (e, stack) {
-      VSPLogger.e('Error parsing time string in AddStadiumWizard', e, stack);
-      return null;
-    }
+    final minutes = AppDateFormatter.tryParseTimeToMinutes(timeStr);
+    if (minutes == null) return null;
+    return TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
   }
 
   static String formatTime(TimeOfDay? time, String defaultTime24) {
@@ -29,27 +24,44 @@ class StadiumWizardTimeUtils {
     required List<Map<String, TimeOfDay?>> breakTimes,
   }) {
     if (!isSplitShift) return true;
-    if (startTime == null || endTime == null) return true;
+    if (startTime == null || endTime == null) return false;
+
+    // The form keeps an empty row as a UI placeholder. Treat rows where both
+    // values are empty as absent; a half-filled interval remains invalid.
+    final configuredBreaks = breakTimes
+        .where((entry) => entry['start'] != null || entry['end'] != null)
+        .toList();
+    if (configuredBreaks.isEmpty) return true;
 
     int t(TimeOfDay time) => time.hour * 60 + time.minute;
     final start = t(startTime);
     final end = t(endTime);
-    int normEnd = (end <= start) ? end + (24 * 60) : end;
+    final overnight = end <= start;
+    final normalizedEnd = overnight ? end + 24 * 60 : end;
+    final intervals = <({int start, int end})>[];
 
-    for (var breakEntry in breakTimes) {
-      final bStart = breakEntry['start'];
-      final bEnd = breakEntry['end'];
-      if (bStart == null || bEnd == null) continue;
+    for (final breakEntry in configuredBreaks) {
+      final breakStart = breakEntry['start'];
+      final breakEnd = breakEntry['end'];
+      // An incomplete closure must not silently become a bookable interval.
+      if (breakStart == null || breakEnd == null) return false;
 
-      final btStart = t(bStart);
-      final btEnd = t(bEnd);
+      var normalizedStart = t(breakStart);
+      var normalizedBreakEnd = t(breakEnd);
+      if (overnight && normalizedStart < start) normalizedStart += 24 * 60;
+      if (overnight && normalizedBreakEnd < start) normalizedBreakEnd += 24 * 60;
 
-      int normBStart = (btStart < start && end <= start) ? btStart + (24 * 60) : btStart;
-      int normBEnd = (btEnd < start && end <= start) ? btEnd + (24 * 60) : btEnd;
-
-      if (!(normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd)) {
+      if (normalizedStart < start ||
+          normalizedBreakEnd > normalizedEnd ||
+          normalizedStart >= normalizedBreakEnd) {
         return false;
       }
+      intervals.add((start: normalizedStart, end: normalizedBreakEnd));
+    }
+
+    intervals.sort((a, b) => a.start.compareTo(b.start));
+    for (var i = 1; i < intervals.length; i++) {
+      if (intervals[i].start < intervals[i - 1].end) return false;
     }
     return true;
   }

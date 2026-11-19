@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/ui/vsp_ui.dart';
@@ -7,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/welcome/scale_animated_button.dart';
 import '../widgets/welcome/welcome_language_button.dart';
@@ -27,6 +29,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(AnalyticsService.logOnboardingStarted());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -51,7 +54,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       children: List.generate(3, (index) {
         final isActive = _currentPage == index;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+          duration: VSPDSMotion.standard,
           margin: const EdgeInsets.symmetric(horizontal: 4.0),
           height: 6,
           width: isActive ? 28.0 : 8.0,
@@ -69,7 +72,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       onPressed: () {
         if (_currentPage < 2) {
           _pageController.nextPage(
-            duration: const Duration(milliseconds: 300),
+            duration: VSPDSMotion.indicatorTransition,
             curve: Curves.easeInOut,
           );
         }
@@ -92,7 +95,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           Localizations.localeOf(context).languageCode == 'ar'
               ? Iconsax.arrow_left_2_copy
               : Iconsax.arrow_right_3_copy,
-          color: Colors.black,
+          color: VSPColors.black,
           size: 20,
         ),
       ),
@@ -106,11 +109,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+        statusBarColor: VSPColors.transparent,
         statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
-        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarDividerColor: VSPColors.transparent,
       ),
       child: VSPScaffold(
         backgroundColor: VSPColors.background,
@@ -148,7 +151,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           ? VSPBackButton(
                               onTap: () {
                                 _pageController.previousPage(
-                                  duration: const Duration(milliseconds: 300),
+                                  duration: VSPDSMotion.indicatorTransition,
                                   curve: Curves.easeInOut,
                                 );
                               },
@@ -164,14 +167,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     TextButton(
                       onPressed: () => _pageController.animateToPage(
                         2,
-                        duration: const Duration(milliseconds: 350),
+                        duration: VSPDSMotion.emphasis,
                         curve: Curves.easeInOut,
                       ),
                       style: TextButton.styleFrom(
                         foregroundColor: VSPColors.textSecondary.withValues(alpha: 0.7),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        minimumSize: const Size(48, 48),
+                        tapTargetSize: MaterialTapTargetSize.padded,
                       ),
                       child: Text(
                         l10n.skipButton,

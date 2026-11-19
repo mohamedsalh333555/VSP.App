@@ -22,20 +22,26 @@ class UserRepository {
 
   Future<UserModel?> getUserByPhone(String phone) async {
     try {
-      final cleanPhone = phone.trim();
-      if (cleanPhone.isEmpty) return null;
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('phone', cleanPhone)
-          .maybeSingle();
-
-      if (response == null) return null;
-      return UserModel.fromFirestore(response);
+      return await getUserByPhoneStrict(phone);
     } catch (e) {
-      VSPLogger.e('Error getting user by phone', e);
+      VSPLogger.e('User phone lookup failed (details redacted)');
       return null;
     }
+  }
+
+  /// Strict lookup for flows where "not registered" must be distinguished
+  /// from a failed phone search.
+  Future<UserModel?> getUserByPhoneStrict(String phone) async {
+    final cleanPhone = phone.trim();
+    if (cleanPhone.isEmpty) return null;
+    final response = await _supabase
+        .from('users')
+        .select()
+        .eq('phone', cleanPhone)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return UserModel.fromFirestore(response);
   }
 
   Future<Map<String, dynamic>?> getUserData(String uid) async {
@@ -47,26 +53,32 @@ class UserRepository {
           .maybeSingle();
       return response;
     } catch (e) {
-      VSPLogger.e('Error fetching user data for UID: $uid', e);
+      VSPLogger.e('User profile lookup failed (details redacted)');
       return null;
     }
   }
 
   Future<List<UserModel>> getUsersByIds(List<String> ids) async {
-    if (ids.isEmpty) return [];
     try {
-      final response = await _supabase
-          .from('user_public_profiles')
-          .select('id, name, profile_image_url, position')
-          .inFilter('id', ids);
-
-      return (response as List)
-          .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
-          .toList();
+      return await getUsersByIdsStrict(ids);
     } catch (e) {
-      VSPLogger.e('Error getting users by IDs', e);
+      VSPLogger.e('Bulk user profile lookup failed (details redacted)');
       return [];
     }
+  }
+
+  /// Strict profile lookup for UI that must distinguish an empty result from
+  /// a failed request.
+  Future<List<UserModel>> getUsersByIdsStrict(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final response = await _supabase
+        .from('user_public_profiles')
+        .select('id, name, profile_image_url, position')
+        .inFilter('id', ids);
+
+    return (response as List)
+        .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
+        .toList();
   }
 
   Map<String, dynamic> _convertToSnakeCase(Map<String, dynamic> map) {
@@ -154,7 +166,7 @@ class UserRepository {
           .maybeSingle();
       return response != null;
     } catch (e) {
-      VSPLogger.e('Error updating user profile $userId', e);
+      VSPLogger.e('User profile update failed (details redacted)');
       return false;
     }
   }
@@ -167,11 +179,11 @@ class UserRepository {
         params: {'p_role': role, 'p_user_id': userId},
       );
       VSPLogger.i(
-        ' setUserRole persisted successfully for $userId with role: $role',
+        'User role persisted (identity and role redacted)',
       );
       return true;
     } catch (e) {
-      VSPLogger.e('Error setting user role via RPC for $userId', e);
+      VSPLogger.e('User role assignment failed (details redacted)');
       return false;
     }
   }
@@ -206,11 +218,11 @@ class UserRepository {
         throw Exception(response['error']?.toString() ?? 'REGISTRATION_COMPLETION_FAILED');
       }
       VSPLogger.i(
-        ' complete_user_registration RPC persisted successfully for $userId',
+        'User registration completion persisted (identity redacted)',
       );
       return true;
     } catch (e) {
-      VSPLogger.e('complete_user_registration RPC failed for $userId', e);
+      VSPLogger.e('User registration completion failed (details redacted)');
       return false;
     }
 
@@ -240,11 +252,9 @@ class UserRepository {
           'created_at': DateTime.now().toUtc().toIso8601String(),
         });
       }
-    } catch (e, stack) {
+    } catch (_) {
       VSPLogger.e(
-        'Failed to update moderation status for user: $userId',
-        e,
-        stack,
+        'User moderation status update failed (details redacted)',
       );
       rethrow;
     }
@@ -306,8 +316,8 @@ class UserRepository {
       if (response is Map && response['success'] == false) {
         throw Exception(response['error']?.toString() ?? 'Failed to update verification document');
       }
-    } catch (e, stack) {
-      VSPLogger.e('Error updating owner verification document for $uid', e, stack);
+    } catch (_) {
+      VSPLogger.e('Owner verification document update failed (details redacted)');
       rethrow;
     }
   }
@@ -327,8 +337,8 @@ class UserRepository {
         },
       );
       return response is Map ? response['success'] != false : true;
-    } catch (e, stack) {
-      VSPLogger.e('Error updating user onboarding status', e, stack);
+    } catch (_) {
+      VSPLogger.e('User onboarding status update failed (details redacted)');
       return false;
     }
   }
@@ -345,8 +355,8 @@ class UserRepository {
         },
       );
       return response is Map ? response['success'] != false : true;
-    } catch (e, stack) {
-      VSPLogger.e('Error updating is_onboarding_confirmed', e, stack);
+    } catch (_) {
+      VSPLogger.e('User onboarding confirmation failed (details redacted)');
       return false;
     }
   }
@@ -374,8 +384,8 @@ class UserRepository {
       return (response as List)
           .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
           .toList();
-    } catch (e, stack) {
-      VSPLogger.e('Error searching users in UserRepository', e, stack);
+    } catch (_) {
+      VSPLogger.e('User search failed (details redacted)');
       return [];
     }
   }
@@ -391,8 +401,8 @@ class UserRepository {
           .select('id, name, profile_image_url, position')
           .inFilter('id', ids);
       return List<Map<String, dynamic>>.from(rows as List<dynamic>);
-    } catch (e, stack) {
-      VSPLogger.e('Error fetching user summaries by IDs', e, stack);
+    } catch (_) {
+      VSPLogger.e('User summary fetch failed (details redacted)');
       return [];
     }
   }

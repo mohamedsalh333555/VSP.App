@@ -9,13 +9,15 @@ import '../../screens/player_home_screen.dart';
 import '../match_result_modal.dart';
 
 /// يعرض نافذة منبثقة لإدخال نتيجة المباراة بعد انتهائها (للكابتن الأول)
-void showPostMatchAddResultDialog(BuildContext context, Booking booking, String userId) {
+void showPostMatchAddResultDialog(BuildContext context, Booking booking, {required String myTeamId}) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
   showDialog(
     context: context,
+      useSafeArea: true,
     barrierDismissible: true,
     builder: (ctx) {
       return AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
         title: Column(
@@ -24,7 +26,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
             const SizedBox(height: 8),
             Text(
               isArabic ? 'انتهت مباراتك' : 'Match Completed',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
               textAlign: TextAlign.center,
             ),
           ],
@@ -43,7 +45,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 minimumSize: const Size(double.infinity, 44),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
@@ -51,26 +53,38 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
                 Navigator.pop(ctx);
                 showDialog(
                   context: context,
+      useSafeArea: true,
+                  barrierDismissible: false,
                   builder: (_) => MatchResultModal(
                     booking: booking,
-                    submittingTeamId: booking.playerTeamId ?? userId,
+                    submittingTeamId: myTeamId,
                     onConfirm: (outcome, rating, review) async {
                       final provider = Provider.of<BookingProvider>(context, listen: false);
-                      await provider.submitMatchResult(
+                      final success = await provider.submitMatchResult(
                         bookingId: booking.id,
-                        teamId: booking.playerTeamId ?? userId,
+                        teamId: myTeamId,
                         outcome: outcome,
                         rating: rating,
                         review: review,
                       );
                       if (context.mounted) {
-                        VSPFeedback.showSuccess(
-                          context,
-                          isArabic
-                              ? 'تم تسجيل النتيجة بنجاح وفي انتظار تأكيد الخصم.'
-                              : 'Result submitted & waiting opponent confirmation.',
-                        );
+                        if (success) {
+                          VSPFeedback.showSuccess(
+                            context,
+                            isArabic
+                                ? 'تم تسجيل النتيجة بنجاح وفي انتظار تأكيد الخصم.'
+                                : 'Result submitted & waiting opponent confirmation.',
+                          );
+                        } else {
+                          VSPFeedback.showError(
+                            context,
+                            isArabic
+                                ? 'تعذر تسجيل النتيجة. حاول مرة أخرى.'
+                                : 'Could not submit the result. Please try again.',
+                          );
+                        }
                       }
+                      return success;
                     },
                   ),
                 );
@@ -95,145 +109,260 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
   );
 }
 
-/// يعرض نافذة منبثقة لتأكيد أو الاعتراض على نتيجة المباراة المسجلة (للكابتن الخصم)
-void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, String userId) {
+/// يعرض نافذة للكابتن الآخر لتأكيد النتيجة المسجلة أو إرسال نتيجة مختلفة.
+void showPostMatchConfirmResultDialog(
+  BuildContext context,
+  Booking booking, {
+  required String currentTeamId,
+}) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
   final pending = booking.pendingOutcome;
-  final currentTeamId = booking.opponentTeamId ?? userId;
+  if (pending == null) {
+    VSPFeedback.showError(
+      context,
+      isArabic
+          ? 'لا توجد نتيجة معلّقة لمراجعتها حالياً.'
+          : 'There is no pending result to review.',
+    );
+    return;
+  }
   final isHome = currentTeamId == booking.playerTeamId;
 
   String claimText;
   MatchOutcome agreeOutcome;
-  MatchOutcome disputeOutcome;
+  MatchOutcome differentOutcome;
 
   if (pending == MatchOutcome.draw) {
-    claimText = isArabic ? 'أدخل كابتن الخصم أن المباراة انتهت بالتعادل ' : 'Opponent reported a DRAW ';
+    claimText = isArabic
+        ? 'أدخل كابتن الفريق الآخر أن المباراة انتهت بالتعادل'
+        : 'The other captain reported a DRAW';
     agreeOutcome = MatchOutcome.draw;
-    disputeOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
-  } else if ((pending == MatchOutcome.homeWin && !isHome) || (pending == MatchOutcome.awayWin && isHome)) {
-    claimText = isArabic ? 'أدخل كابتن الخصم أن فريقه فاز بالمباراة ' : 'Opponent reported THEY WON ';
-    agreeOutcome = pending!;
-    disputeOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
+    differentOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
+  } else if ((pending == MatchOutcome.homeWin && !isHome) ||
+      (pending == MatchOutcome.awayWin && isHome)) {
+    claimText = isArabic
+        ? 'أدخل كابتن الفريق الآخر أن فريقه فاز بالمباراة'
+        : 'The other captain reported THEIR team won';
+    agreeOutcome = pending;
+    differentOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
   } else {
-    claimText = isArabic ? 'أدخل كابتن الخصم أن فريقك هو الفائز ' : 'Opponent reported YOU WON ';
-    agreeOutcome = pending!;
-    disputeOutcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
+    claimText = isArabic
+        ? 'أدخل كابتن الفريق الآخر أن فريقك هو الفائز'
+        : 'The other captain reported YOUR team won';
+    agreeOutcome = pending;
+    differentOutcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
   }
 
   showDialog(
     context: context,
-    barrierDismissible: true,
-    builder: (ctx) {
-      return AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-        title: Column(
-          children: [
-            const Icon(Iconsax.notification_copy, color: VSPColors.accent, size: 36),
-            const SizedBox(height: 8),
-            Text(
-              isArabic ? 'تأكيد نتيجة مباراة التحدي ' : 'Confirm Challenge Match Result ',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              claimText,
-              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              isArabic ? 'ملعب: ${booking.stadiumName}' : 'Pitch: ${booking.stadiumName}',
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: VSPColors.accent,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                    ),
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      final provider = Provider.of<BookingProvider>(context, listen: false);
-                      await provider.submitMatchResult(
-                        bookingId: booking.id,
-                        teamId: currentTeamId,
-                        outcome: agreeOutcome,
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: VSPColors.accent,
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 6),
-                            content: Text(
-                              isArabic ? 'تم تأكيد النتيجة وتحديث ترتيب الدوري!' : 'Result confirmed & rankings updated!',
-                              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                            ),
-                            action: SnackBarAction(
-                              label: isArabic ? '🏆 جدول الترتيب' : '🏆 Standings',
-                              textColor: Colors.black,
-                              onPressed: () => navigateToTeamsStandings(context),
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    child: Text(
-                      isArabic ? ' تأكيد النتيجة' : ' Confirm',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+      useSafeArea: true,
+    barrierDismissible: false,
+    builder: (dialogContext) {
+      bool? submittingDifferentResult;
+      return StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          Future<void> submitOutcome({
+            required MatchOutcome outcome,
+            required bool isDifferentResult,
+          }) async {
+            if (submittingDifferentResult != null) return;
+            setDialogState(() => submittingDifferentResult = isDifferentResult);
+            final provider =
+                Provider.of<BookingProvider>(context, listen: false);
+            final success = await provider.submitMatchResult(
+              bookingId: booking.id,
+              teamId: currentTeamId,
+              outcome: outcome,
+            );
+            if (!context.mounted || !dialogContext.mounted) return;
+
+            if (!success) {
+              setDialogState(() => submittingDifferentResult = null);
+              VSPFeedback.showError(
+                context,
+                isArabic
+                    ? (isDifferentResult
+                        ? 'تعذر إرسال النتيجة المختلفة. حاول مرة أخرى.'
+                        : 'تعذر تأكيد النتيجة. حاول مرة أخرى.')
+                    : (isDifferentResult
+                        ? 'Could not submit the different result. Please try again.'
+                        : 'Could not confirm the result. Please try again.'),
+              );
+              return;
+            }
+
+            Navigator.pop(dialogContext);
+            if (isDifferentResult) {
+              VSPFeedback.showWarning(
+                context,
+                isArabic
+                    ? 'تم إرسال نتيجة مختلفة للطرف الآخر للتأكيد.'
+                    : 'A different result was submitted for the other captain to review.',
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: VSPColors.accent,
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 6),
+                  content: Text(
+                    isArabic
+                        ? 'تم تأكيد النتيجة وتحديث ترتيب الدوري!'
+                        : 'Result confirmed & rankings updated!',
+                    style: const TextStyle(
+                      color: VSPColors.black,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                  action: SnackBarAction(
+                    label: isArabic ? '🏆 جدول الترتيب' : '🏆 Standings',
+                    textColor: VSPColors.black,
+                    onPressed: () => navigateToTeamsStandings(context),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: VSPColors.error,
-                      side: const BorderSide(color: VSPColors.error),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+              );
+            }
+          }
+
+          return AlertDialog(
+            scrollable: true,
+            backgroundColor: VSPColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(VSPRadius.xl),
+            ),
+            title: Column(
+              children: [
+                const Icon(
+                  Iconsax.notification_copy,
+                  color: VSPColors.accent,
+                  size: 36,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isArabic
+                      ? 'تأكيد نتيجة مباراة التحدي'
+                      : 'Confirm Challenge Match Result',
+                  style: const TextStyle(
+                    color: VSPColors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  claimText,
+                  style: const TextStyle(
+                    color: VSPColors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  isArabic
+                      ? 'ملعب: ${booking.stadiumName}'
+                      : 'Pitch: ${booking.stadiumName}',
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.accent,
+                          foregroundColor: VSPColors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(VSPRadius.md),
+                          ),
+                        ),
+                        onPressed: submittingDifferentResult != null
+                            ? null
+                            : () => submitOutcome(
+                                  outcome: agreeOutcome,
+                                  isDifferentResult: false,
+                                ),
+                        child: submittingDifferentResult == false
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: VSPColors.black,
+                                ),
+                              )
+                            : Text(
+                                isArabic ? 'تأكيد النتيجة' : 'Confirm',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                      ),
                     ),
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      final provider = Provider.of<BookingProvider>(context, listen: false);
-                      await provider.submitMatchResult(
-                        bookingId: booking.id,
-                        teamId: currentTeamId,
-                        outcome: disputeOutcome,
-                      );
-                      if (context.mounted) {
-                        VSPFeedback.showWarning(
-                          context,
-                          isArabic ? 'تم تسجيل النزاع للمراجعة الإدارية ' : 'Dispute recorded for review ',
-                        );
-                      }
-                    },
-                    child: Text(
-                      isArabic ? ' اعتراض' : ' Dispute',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: VSPColors.warning,
+                          side: const BorderSide(color: VSPColors.warning),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(VSPRadius.md),
+                          ),
+                        ),
+                        onPressed: submittingDifferentResult != null
+                            ? null
+                            : () => submitOutcome(
+                                  outcome: differentOutcome,
+                                  isDifferentResult: true,
+                                ),
+                        child: submittingDifferentResult == true
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: VSPColors.warning,
+                                ),
+                              )
+                            : Text(
+                                isArabic
+                                    ? 'إرسال نتيجة مختلفة'
+                                    : 'Submit Different Result',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                TextButton(
+                  onPressed: submittingDifferentResult != null
+                      ? null
+                      : () => Navigator.pop(dialogContext),
+                  child: Text(
+                    isArabic ? 'تأجيل' : 'Later',
+                    style: const TextStyle(color: VSPColors.textSecondary),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(isArabic ? 'تأجيل' : 'Later', style: const TextStyle(color: VSPColors.textSecondary)),
-            ),
-          ],
-        ),
+          );
+        },
       );
     },
   );
