@@ -12,7 +12,7 @@ class _FakeOtpAuth extends ChangeNotifier implements AuthProvider {
   int verifyCalls = 0;
   int resendCalls = 0;
   int signOutCalls = 0;
-  String? email;
+  String? submittedEmail;
   String? token;
   bool verifyResult = true;
   bool resendResult = true;
@@ -21,7 +21,7 @@ class _FakeOtpAuth extends ChangeNotifier implements AuthProvider {
   @override
   Future<bool> verifyOtp({required String email, required String token}) async {
     verifyCalls++;
-    this.email = email;
+    submittedEmail = email;
     this.token = token;
     if (throwVerify) throw StateError('PRIVATE_OTP_OR_EMAIL_DIAGNOSTIC');
     if (pendingVerify != null) return pendingVerify!.future;
@@ -77,7 +77,7 @@ void main() {
     await tester.pumpWidget(_host(auth));
     await _pasteOtp(tester, '123456');
     expect(auth.verifyCalls, 1);
-    expect(auth.email, 'captain@example.com');
+    expect(auth.submittedEmail, 'captain@example.com');
     expect(auth.token, '123456');
     expect(tester.widget<PrimaryButton>(find.byType(PrimaryButton)).onPressed, isNull);
     auth.pendingVerify!.complete(true);
