@@ -547,6 +547,35 @@ void main() {
     ), isNull);
   });
 
+  test('ambiguous registrations never claim a confirmed captain application', () {
+    final waitlisted = <String,dynamic>{
+      'id':'application-1','team_id':'team-1',
+      'captain_id':'captain-1','status':'waitlist',
+    };
+    Map<String,dynamic>? verified(List<Map<String,dynamic>> items) =>
+        TeamSkillsCupRepository.findCaptainRegistration(
+          items,teamId:'team-1',captainId:'captain-1');
+
+    expect(verified([waitlisted])?['id'], 'application-1');
+    expect(verified([waitlisted, {...waitlisted}]), isNull,
+        reason:'duplicated pages cannot claim persisted success');
+    expect(verified([
+      waitlisted,
+      {'id':'application-2','team_id':'team-1',
+       'captain_id':'captain-1','status':'approved'},
+    ]), isNull, reason:'two active statuses are ambiguous');
+    expect(verified([
+      waitlisted,
+      {'id':'application-2','team_id':'team-1',
+       'captain_id':'other','status':'approved'},
+    ])?['id'], 'application-1');
+    expect(verified([
+      waitlisted,
+      {'id':'application-2','team_id':'team-1',
+       'captain_id':'captain-1','status':'rejected'},
+    ])?['id'], 'application-1');
+  });
+
   test('captain registration retries query server before showing a failure', () {
     final tab = File('lib/features/player/widgets/champion/team_skills_cup_tab.dart')
         .readAsStringSync();

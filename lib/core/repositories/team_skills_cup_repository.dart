@@ -162,15 +162,15 @@ class TeamSkillsCupRepository {
     required String teamId,
     required String captainId,
   }) {
-    for (final row in registrations) {
-      if (row['team_id']?.toString() == teamId &&
-          row['captain_id']?.toString() == captainId &&
-          const {'pending', 'waitlist', 'approved'}
-              .contains(row['status']?.toString())) {
-        return row;
-      }
-    }
-    return null;
+    if (teamId.trim().isEmpty || captainId.trim().isEmpty) return null;
+    final matches = registrations.where((row) =>
+        row['team_id']?.toString() == teamId &&
+        row['captain_id']?.toString() == captainId &&
+        const {'pending', 'waitlist', 'approved'}
+            .contains(row['status']?.toString())).take(2).toList();
+    // A duplicated or contradictory live application must not promote the
+    // first matching page row to a confirmed captain registration.
+    return matches.length == 1 ? matches.single : null;
   }
   /// A successful HTTP response is not enough to confirm withdrawal.
   /// Read a terminal status for this exact captain and registration.
