@@ -20,6 +20,7 @@ import '../widgets/champion/team_skills_history_section.dart';
 import '../widgets/team_profile/team_profile_head_to_head_panel.dart';
 import '../widgets/team_profile/team_profile_action_bar.dart';
 import '../widgets/team_profile/team_matchup_invite_modal.dart';
+import '../services/team_matchup_invite_guard.dart';
 
 class TeamProfileScreen extends StatefulWidget {
   final Team? team;
@@ -50,6 +51,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   bool _isLoadingHeadToHead = true;
   bool _hasHeadToHeadLoadError = false;
   bool _isGeneratingCode = false;
+  int _inviteRequestVersion = 0;
+  String? _inviteAccountId;
   int _awardsRefreshRevision = 0;
   int _rosterRequestVersion = 0;
   int _headToHeadRequestVersion = 0;
@@ -57,6 +60,18 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   int _teamRequestVersion = 0;
 
   Team get team => widget.team ?? _fetchedTeam!;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // A previous captain's in-flight code must never survive account changes.
+    final activeId = Provider.of<app_auth.AuthProvider>(context).currentUser?.id;
+    if (activeId != _inviteAccountId) {
+      _inviteAccountId = activeId;
+      _inviteRequestVersion++;
+      _isGeneratingCode = false;
+    }
+  }
 
   @override
   void initState() {
@@ -79,6 +94,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     final previousId = oldWidget.team?.id ?? oldWidget.teamId;
     final currentId = widget.team?.id ?? widget.teamId;
     if (previousId == currentId && oldWidget.team == widget.team) return;
+    _inviteRequestVersion++;
+    _isGeneratingCode = false;
     _rosterRequestVersion++;
     _teamRequestVersion++;
     _headToHeadRequestVersion++;
@@ -284,13 +301,50 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     return ids.length;
   }
 
+  bool _canRevealGeneratedInvite({
+    required String requestedTeamId,
+    required String requestedAccountId,
+    required int requestVersion,
+  }) {
+    if (!mounted) return false;
+    try {
+      final displayed = widget.team ?? _fetchedTeam;
+      return TeamMatchupInviteGuard.canReveal(
+        requestedTeamId: requestedTeamId,
+        displayedTeamId: displayed?.id,
+        requestedAccountId: requestedAccountId,
+        activeAccountId: context.read<app_auth.AuthProvider>().currentUser?.id,
+        captainId: displayed?.captainId,
+        requestVersion: requestVersion,
+        currentVersion: _inviteRequestVersion,
+      );
+    } catch (_) {
+      // Disposed or transitioning auth state always means no code disclosure.
+      return false;
+    }
+  }
+
   Future<void> _generateMatchupInviteCode() async {
+    final displayed = widget.team ?? _fetchedTeam;
+    final requestedTeamId = displayed?.id;
+    final requestedAccountId =
+        context.read<app_auth.AuthProvider>().currentUser?.id;
+    if (_isGeneratingCode || requestedTeamId == null ||
+        requestedAccountId == null ||
+        displayed?.captainId != requestedAccountId) {
+      return;
+    }
+    final requestVersion = ++_inviteRequestVersion;
     setState(() => _isGeneratingCode = true);
     try {
-      final res = await MatchupRepository().generateTeamInviteCode(team.id);
-      final code = res['invite_code']?.toString() ?? '';
-
-      if (!mounted) return;
+      final res = await MatchupRepository()
+          .generateTeamInviteCode(requestedTeamId);
+      if (!_canRevealGeneratedInvite(
+        requestedTeamId: requestedTeamId,
+        requestedAccountId: requestedAccountId,
+        requestVersion: requestVersion,
+      )) return;
+      final code = res['invite_code']?.toString().trim() ?? '';
       if (res['success'] == false || code.isEmpty) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
@@ -301,11 +355,21 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
         );
         return;
       }
-
+      // A code is sensitive even if the repository succeeds. Never open the
+      // modal for a different team, account or no-longer-captain viewer.
+      if (!_canRevealGeneratedInvite(
+        requestedTeamId: requestedTeamId,
+        requestedAccountId: requestedAccountId,
+        requestVersion: requestVersion,
+      )) return;
       await showTeamMatchupInviteModal(context, code);
     } catch (_) {
       debugPrint('Error generating invite code (details redacted)');
-      if (mounted) {
+      if (_canRevealGeneratedInvite(
+        requestedTeamId: requestedTeamId,
+        requestedAccountId: requestedAccountId,
+        requestVersion: requestVersion,
+      )) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
@@ -315,7 +379,9 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isGeneratingCode = false);
+      if (mounted && requestVersion == _inviteRequestVersion) {
+        setState(() => _isGeneratingCode = false);
+      }
     }
   }
 
@@ -348,6 +414,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     _rosterRequestVersion++;
     _headToHeadRequestVersion++;
     _championRequestVersion++;
+    _inviteRequestVersion++;
     super.dispose();
   }
 
