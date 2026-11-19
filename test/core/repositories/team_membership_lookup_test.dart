@@ -118,4 +118,104 @@ void main() {
       supabase.dispose();
     }
   });
+  test('member scope uses the requested identity, never a previous account',
+      () async {
+    const userA = '10000000-0000-4000-8000-000000000001';
+    const userB = '10000000-0000-4000-8000-000000000002';
+    const teamA = '20000000-0000-4000-8000-000000000001';
+    const teamB = '20000000-0000-4000-8000-000000000002';
+    final requestedUsers = <String>[];
+    final mock = MockClient((request) async {
+      if (request.url.path.endsWith('/team_members') &&
+          request.url.queryParameters['select'] == 'team_id') {
+        final filter = request.url.queryParameters['user_id'];
+        requestedUsers.add(filter ?? '');
+        final teamId = filter == 'eq.$userA' ? teamA : teamB;
+        return http.Response(jsonEncode([{'team_id': teamId}]), 200,
+            headers: {'content-type': 'application/json'}, request: request);
+      }
+      if (request.url.path.endsWith('/teams_public')) {
+        final teamId = request.url.queryParameters['id']!.substring(3);
+        return http.Response(jsonEncode([{
+          'id': teamId, 'name': teamId == teamA ? 'First' : 'Second',
+          'governorate': 'Aswan',
+        }]), 200, headers: {'content-type': 'application/json'}, request: request);
+      }
+      if (request.url.path.endsWith('/team_members') &&
+          request.url.queryParameters['select'] == 'user_id') {
+        return http.Response('[]', 200,
+            headers: {'content-type': 'application/json'}, request: request);
+      }
+      throw StateError('Unexpected lookup');
+    });
+    final client = SupabaseClient('https://fixture.invalid',
+        'fixture_publishable_key_not_secret', httpClient: mock);
+    try {
+      final repo = TeamRepository(client: client);
+      expect((await repo.getUserTeamsStrict(userA)).single.id, teamA);
+      expect((await repo.getUserTeamsStrict(userB)).single.id, teamB);
+      expect(requestedUsers, ['eq.$userA', 'eq.$userB']);
+    } finally {
+      client.dispose();
+    }
+  });
+
+  test('membership request failure is not misreported as zero memberships',
+      () async {
+    const userId = '10000000-0000-4000-8000-000000000001';
+    final mock = MockClient((request) async {
+      expect(request.url.path, endsWith('/team_members'));
+      return http.Response('{"message":"lookup unavailable"}', 503,
+          headers: {'content-type': 'application/json'}, request: request);
+    });
+    final client = SupabaseClient('https://fixture.invalid',
+        'fixture_publishable_key_not_secret', httpClient: mock);
+    try {
+      await expectLater(
+        TeamRepository(client: client).getUserTeamsStrict(userId),
+        throwsA(isA<Exception>()),
+      );
+    } finally {
+      client.dispose();
+    }
+  });
+
+  test('duplicate membership rows cannot duplicate team cards', () async {
+    const userId = '10000000-0000-4000-8000-000000000001';
+    const teamId = '20000000-0000-4000-8000-000000000001';
+    var lookupCount = 0;
+    final mock = MockClient((request) async {
+      if (request.url.path.endsWith('/team_members') &&
+          request.url.queryParameters['select'] == 'team_id') {
+        return http.Response(jsonEncode([
+          {'team_id': teamId}, {'team_id': teamId},
+        ]), 200, headers: {'content-type': 'application/json'},
+            request: request);
+      }
+      if (request.url.path.endsWith('/teams_public')) {
+        lookupCount++;
+        return http.Response(jsonEncode([{
+          'id': teamId, 'name': 'One Membership', 'governorate': 'Aswan',
+        }]), 200, headers: {'content-type': 'application/json'},
+            request: request);
+      }
+      if (request.url.path.endsWith('/team_members') &&
+          request.url.queryParameters['select'] == 'user_id') {
+        return http.Response('[]', 200,
+            headers: {'content-type': 'application/json'}, request: request);
+      }
+      throw StateError('Unexpected lookup');
+    });
+    final client = SupabaseClient('https://fixture.invalid',
+        'fixture_publishable_key_not_secret', httpClient: mock);
+    try {
+      final teams = await TeamRepository(client: client)
+          .getUserTeamsStrict(userId);
+      expect(teams.map((team) => team.id), [teamId]);
+      expect(lookupCount, 1);
+    } finally {
+      client.dispose();
+    }
+  });
+
 }
