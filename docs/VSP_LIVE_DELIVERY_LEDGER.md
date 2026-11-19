@@ -1,3 +1,8 @@
+## 2026-11-19 — Challenge tie policy accepted (347/285 open, 8 retired)
+
+- **37.04 accepted (+1):** confirmed team challenge standings share rank when points tie (1/1/3), team ID stabilizes display order only, and ambiguous top-three medals are hidden. [Policy](VSP_CHALLENGE_TIE_POLICY_37_04_2026_11_19.md), [successful ranking CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44547284353) with two new tests and existing widget coverage. This is only a **documented points-tie policy and tested Flutter presentation**, not canonical result-source validation, League ranking, Team Skills Cup winner, prizes or staging authorization.
+- **632 active = 347 accepted + 285 open**, with 8 historical retired 1v1 tasks, 640 originally tracked. 37.02/03/05/06/07, 41, 84, RLS and staging tests remain open. No main merge, production change, APK or payment write.
+
 ## 2026-11-19 — Legacy standalone 1v1 task retirement (346/286 open; 8 retired)
 
 - The previously approved product decision replaces the standalone 1v1 competition with the Team Skills Cup. The eight **open, unaccepted** task IDs **43.01–43.08** are now explicitly archived as **CANCELLED / RETIRED**, not marked ACCEPTED. [Decision and exact scope](VSP_RETIRED_LEGACY_1V1_TASKS_43_2026_11_19.md).
