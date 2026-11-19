@@ -1,3 +1,10 @@
+## 2026-11-20 — Bounded Arabic grammar and long-copy acceptance (350/282)
+
+- **04.07 accepted (+1), strictly scoped:** Team Skills published team capacity now presents Arabic `فريق واحد/فريقان/3–10 فرق/11+ فريق` and English singular/plural; published phase summaries preserve feminine singular/dual/plural. [73 passing focused Team Skills tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639256095) including both Arabic grammar assertions.
+- Team invitation rows now keep names and actions on separate responsive lines. Both Arabic RTL and English LTR were exercised with a long team name at 320dp and 2x text scale, plus account-switch isolation and async-reply checks. [13 passing focused invitation+membership tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639977832). [Exact acceptance boundaries](VSP_ARABIC_LONG_TEXT_AND_GRAMMAR_ACCEPTANCE_04_07_2026-11-20.md).
+- Not a full 338-screen localization, TalkBack, device or accessibility sign-off. All other 04.*, 05.*, 09.* and 10.* tasks keep their own acceptance gates. **632 active: 350 accepted / 282 open; 8 historical retired**.
+- Other booking time-order UI hardening from this continuation is **CODE_DONE / broader QA pending**, not another task ID. No booking payment, DB, production, APK or main merge.
+
 ## 2026-11-20 — UXLP-44 evidence documentation accepted (349/283)
 
 - **01.05 accepted (+1):** published a reproducible **44/44 rule source-evidence register** showing two concrete representative role screens, a scoped observation from the canonical audit, unresolved source/runtime status, and links to the existing independent acceptance criteria. [Evidence register](VSP_UXLP_44_CONFORMANCE_EVIDENCE_01_05_2026-11-20.md). [Successful documentation integrity CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639503400).
