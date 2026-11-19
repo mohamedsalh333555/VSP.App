@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +16,9 @@ class FakeProfileAuth extends ChangeNotifier implements AuthProvider {
   final bool success;
   Completer<bool>? pendingSave;
   bool throwOnSave = false;
+  bool photoSaveSuccess = false;
+  bool throwOnPhotoSave = false;
+  int photoUpdates = 0;
   int updates = 0;
   Map<String, dynamic>? submitted;
   FakeProfileAuth({required this.profile, this.success = true});
@@ -36,6 +42,13 @@ class FakeProfileAuth extends ChangeNotifier implements AuthProvider {
   }
 
   @override
+  Future<bool> updateProfilePhoto(XFile file) async {
+    photoUpdates++;
+    if (throwOnPhotoSave) throw StateError('PRIVATE PHOTO FAILURE');
+    return photoSaveSuccess;
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -48,14 +61,20 @@ UserModel person({bool owner = false, String? position = 'GK'}) => UserModel(
   position: position,
 );
 
-Widget host(FakeProfileAuth auth, String language) =>
+Widget host(FakeProfileAuth auth, String language, {
+      Future<XFile?> Function(BuildContext)? pickProfileImage,
+      Future<XFile?> Function(XFile)? compressProfileImage,
+    }) =>
     ChangeNotifierProvider<AuthProvider>.value(
       value: auth,
       child: MaterialApp(
         locale: Locale(language),
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
-        home: const EditProfileScreen(),
+        home: EditProfileScreen(
+          pickProfileImage: pickProfileImage,
+          compressProfileImage: compressProfileImage,
+        ),
       ),
     );
 
@@ -70,7 +89,80 @@ Future<void> save(WidgetTester tester) async {
   await tester.pump();
 }
 
+Future<XFile> testProfilePhoto() async {
+  final path = '${Directory.systemTemp.path}/vsp_edit_avatar_${DateTime.now().microsecondsSinceEpoch}.png';
+  final png = base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/GloAAAAASUVORK5CYII=');
+  final file = await File(path).writeAsBytes(png);
+  addTearDown(() async { if (await file.exists()) await file.delete(); });
+  return XFile(path);
+}
+
 void main() {
+  for (final language in ['ar', 'en']) {
+    testWidgets('image picker exception shows safe feedback and keeps editable form in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person());
+      await tester.pumpWidget(host(auth, language,
+          pickProfileImage: (_) async => throw StateError('Private picker error')));
+      await tester.tap(find.byKey(const ValueKey('edit-profile-pick-image')));
+      await tester.pump();
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(find.textContaining('Private picker error'), findsNothing);
+      expect(auth.updates, 0);
+      expect(tester.takeException(), isNull);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('failed photo upload preserves selection for explicit retry in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person());
+      final image = await testProfilePhoto();
+      await tester.pumpWidget(host(auth, language,
+          pickProfileImage: (_) async => image,
+          compressProfileImage: (file) async => file));
+      await tester.tap(find.byKey(const ValueKey('edit-profile-pick-image')));
+      await tester.pump();
+      await save(tester);
+      expect(auth.updates, 1);
+      expect(auth.photoUpdates, 1);
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      auth.photoSaveSuccess = true;
+      await save(tester);
+      expect(auth.updates, 2);
+      expect(auth.photoUpdates, 2);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('compression exception reports partial save and retries image in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person())..photoSaveSuccess = true;
+      final image = await testProfilePhoto();
+      var failCompression = true;
+      await tester.pumpWidget(host(auth, language,
+          pickProfileImage: (_) async => image,
+          compressProfileImage: (file) async {
+            if (failCompression) throw StateError('Private image compression exception');
+            return file;
+          }));
+      await tester.tap(find.byKey(const ValueKey('edit-profile-pick-image')));
+      await tester.pump();
+      await save(tester);
+      expect(auth.updates, 1);
+      expect(auth.photoUpdates, 0);
+      expect(find.textContaining('Private image compression exception'), findsNothing);
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      failCompression = false;
+      await save(tester);
+      expect(auth.photoUpdates, 1);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   for (final language in ['ar', 'en']) {
     testWidgets('player can update a valid football position but not role in $language',
         (tester) async {
