@@ -7,15 +7,14 @@ void main() {
     final dashboard = File(
       'lib/features/player/screens/team_dashboard_screen.dart',
     ).readAsStringSync();
-    expect(
-      dashboard,
-      matches(
-        RegExp(
-          r'TeamInvitationsSheet\(\s*userId:\s*_activeUserTeamScope!',
-          multiLine: true,
-        ),
-      ),
-    );
+    final action = File(
+      'lib/features/player/widgets/team_invitations_action.dart',
+    ).readAsStringSync();
+    expect(dashboard, contains('TeamInvitationsAction('));
+    expect(dashboard, contains('userId: _activeUserTeamScope!'));
+    expect(action, contains('showModalBottomSheet<void>('));
+    expect(action, contains('TeamInvitationsSheet('));
+    expect(action, contains('userId: userId'));
   });
 
   test('inbox offers accept decline and retry without optimistic membership', () {
