@@ -74,6 +74,7 @@ Widget host(FakeProfileAuth auth, String language, {
         home: EditProfileScreen(
           pickProfileImage: pickProfileImage,
           compressProfileImage: compressProfileImage,
+          selectedImagePreview: (_) => const ColoredBox(color: Colors.white),
         ),
       ),
     );
