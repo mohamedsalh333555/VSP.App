@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/player/widgets/champion/team_skills_published_details.dart';
@@ -179,8 +181,7 @@ void main() {
       'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
     ).readAsStringSync();
     expect(source, contains('TeamSkillsCupTab.publishedStageWeightLabel('));
-    expect(source, contains('TeamSkillsCupTab.publishedStageWeight(phase['
-        "'weight'])"));
+    expect(source, contains("TeamSkillsCupTab.publishedStageWeight(phase['weight'])"));
   });
 
   test('published stage points cannot exceed the real configured stage weight', () {
