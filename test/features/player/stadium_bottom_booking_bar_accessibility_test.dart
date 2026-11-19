@@ -6,7 +6,8 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
 
 void main() {
-  Stadium sample({double deposit = 300, bool needsDeposit = true}) => Stadium(
+  Stadium sample({double deposit = 300, bool needsDeposit = true,
+      double hourlyPrice = 2500, double basePrice = 2500}) => Stadium(
         id: 'fixture-stadium',
         name: 'Sample pitch',
         location: 'Aswan',
@@ -17,15 +18,17 @@ void main() {
         cafeteria: 0,
         playersPerTeam: 5,
         totalFieldCapacity: 10,
-        pricePerHour: 2500,
-        basePrice: 2500,
+        pricePerHour: hourlyPrice,
+        basePrice: basePrice,
         area: 'Aswan',
         depositAmount: deposit,
         needsDeposit: needsDeposit,
       );
 
   Widget screen({required String locale, required double scale,
-      double deposit = 300, bool needsDeposit = true}) {
+      double deposit = 300, bool needsDeposit = true,
+      double hourlyPrice = 2500, double basePrice = 2500,
+      bool bookingEnabled = false}) {
     return MaterialApp(
       locale: Locale(locale),
       supportedLocales: AppLocalizations.supportedLocales,
@@ -38,8 +41,9 @@ void main() {
       ),
       home: Scaffold(
         bottomNavigationBar: StadiumBottomBookingBar(
-          stadium: sample(deposit: deposit, needsDeposit: needsDeposit),
-          bookingEnabled: false,
+          stadium: sample(deposit: deposit, needsDeposit: needsDeposit,
+              hourlyPrice: hourlyPrice, basePrice: basePrice),
+          bookingEnabled: bookingEnabled,
         ),
       ),
     );
@@ -100,6 +104,50 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('No deposit required'), findsOneWidget);
     expect(find.text('Deposit amount unavailable'), findsNothing);
+  });
+
+
+  testWidgets('invalid mandatory deposit disables Book Now even if caller enables it',
+      (tester) async {
+    for (final deposit in [0.0, -1.0, double.nan, double.infinity]) {
+      await tester.pumpWidget(screen(locale: 'en', scale: 1,
+          deposit: deposit, needsDeposit: true, bookingEnabled: true));
+      await tester.pumpAndSettle();
+      expect(find.text('Deposit amount unavailable'), findsOneWidget);
+      expect(tester.widget<PrimaryButton>(
+          find.byType(PrimaryButton)).onPressed, isNull);
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('invalid hourly or base price disables Book Now locally',
+      (tester) async {
+    for (final price in [0.0, -1.0, double.nan, double.infinity]) {
+      await tester.pumpWidget(screen(locale: 'en', scale: 1,
+          hourlyPrice: price, bookingEnabled: true));
+      await tester.pumpAndSettle();
+      expect(tester.widget<PrimaryButton>(
+          find.byType(PrimaryButton)).onPressed, isNull);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(screen(locale: 'en', scale: 1,
+          basePrice: price, bookingEnabled: true));
+      await tester.pumpAndSettle();
+      expect(tester.widget<PrimaryButton>(
+          find.byType(PrimaryButton)).onPressed, isNull);
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('valid deposit and price preserve enabled Book Now action',
+      (tester) async {
+    await tester.pumpWidget(screen(locale: 'ar', scale: 1,
+        deposit: 300, bookingEnabled: true));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('عربون:'), findsOneWidget);
+    expect(tester.widget<PrimaryButton>(
+        find.byType(PrimaryButton)).onPressed, isNotNull);
+    expect(tester.takeException(), isNull);
   });
 
 }
