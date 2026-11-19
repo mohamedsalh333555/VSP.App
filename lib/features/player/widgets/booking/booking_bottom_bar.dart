@@ -52,6 +52,13 @@ class BookingBottomBar extends StatelessWidget {
     // or a previous booking total when there is no active slot selection.
     final displayBallRented = isSlotSelected && isBallRented;
     final displayTotalPrice = isSlotSelected ? totalPrice : 0.0;
+    // A selected slot is insufficient to authorize an invalid or stale quote.
+    // The parent must still independently re-verify the live server price.
+    final validFinancials = totalPrice.isFinite && totalPrice > 0 &&
+        (!displayBallRented || (ballPrice.isFinite && ballPrice >= 0)) &&
+        (isOpenJoin || (depositAmount.isFinite && depositAmount >= 0 &&
+            (!needsDeposit || (depositAmount > 0 && depositAmount <= totalPrice))));
+    final canConfirm = isSlotSelected && !isLoading && validFinancials;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -354,8 +361,8 @@ class BookingBottomBar extends StatelessWidget {
                   height: 52,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isSlotSelected ? VSPColors.accent : VSPColors.surfaceAlt,
-                      foregroundColor: isSlotSelected ? VSPColors.black : VSPColors.textMuted,
+                      backgroundColor: canConfirm ? VSPColors.accent : VSPColors.surfaceAlt,
+                      foregroundColor: canConfirm ? VSPColors.black : VSPColors.textMuted,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(
@@ -363,7 +370,7 @@ class BookingBottomBar extends StatelessWidget {
                       ),
                       overlayColor: VSPStates.pressedOverlay(),
                     ),
-                    onPressed: (!isSlotSelected || isLoading) ? null : onConfirmPressed,
+                    onPressed: canConfirm ? onConfirmPressed : null,
                     child: isLoading
                         ? const SizedBox(
                             width: 20,
@@ -371,11 +378,13 @@ class BookingBottomBar extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                           )
                         : Text(
-                            isSlotSelected
-                                ? (isArabic ? 'تأكيد الحجز' : 'Booking Confirmation')
-                                : (isArabic ? 'اختر الوقت أولاً' : 'Select Time'),
+                            !isSlotSelected
+                                ? (isArabic ? 'اختر الوقت أولاً' : 'Select Time')
+                                : !validFinancials
+                                    ? (isArabic ? 'راجع سعر الحجز' : 'Review booking price')
+                                    : (isArabic ? 'تأكيد الحجز' : 'Booking Confirmation'),
                             style: TextStyle(
-                              color: isSlotSelected ? VSPColors.black : VSPColors.textMuted,
+                              color: canConfirm ? VSPColors.black : VSPColors.textMuted,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),
