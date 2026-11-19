@@ -289,6 +289,36 @@ void main() {
     expect(check([phases.first, {...phases[1], 'stage_no': 101}]), isFalse);
   });
 
+  test('completion badge requires verified points for every announced stage', () {
+    const phases = <Map<String, dynamic>>[
+      {'stage_no': 1, 'name_ar': 'التصويب', 'metric': 'count', 'weight': 10},
+      {'stage_no': 2, 'name_ar': 'المراوغة', 'metric': 'time_ms', 'weight': 15},
+    ];
+    const valid = <Map<String, dynamic>>[
+      {'stage_no': 1, 'computed_points': 0},
+      {'stage_no': 2, 'computed_points': 15},
+    ];
+    bool confirmed(List<Map<String, dynamic>> scores) =>
+        TeamSkillsCupTab.hasVerifiedStageBreakdown(
+          phases: phases, approvedScores: scores);
+    expect(confirmed(valid), isTrue,
+        reason: 'approved zero is a legitimate verified score');
+    expect(confirmed([valid.first]), isFalse);
+    expect(confirmed([]), isFalse);
+    expect(confirmed([valid.first, valid.first]), isFalse);
+    expect(confirmed([valid.first, {
+      'stage_no': 3, 'computed_points': 3,
+    }]), isFalse);
+    expect(confirmed([valid.first, {
+      'stage_no': 2, 'computed_points': 16,
+    }]), isFalse);
+    expect(confirmed([valid.first, {
+      'stage_no': 2, 'computed_points': null,
+    }]), isFalse);
+    expect(TeamSkillsCupTab.hasVerifiedStageBreakdown(
+      phases: const [], approvedScores: valid), isFalse);
+  });
+
   test('a live cup never shows unannounced winners, even if award rows exist', () {
     const winner = {
       'cup_id': 'cup-1', 'team_id': 'team-a', 'award_type': 'team_champion',

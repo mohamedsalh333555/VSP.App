@@ -207,6 +207,27 @@ class TeamSkillsCupTab extends StatefulWidget {
     return stageNos.length == announced.length;
   }
 
+  /// The completion badge is a stronger claim than a leaderboard total.
+  /// Require exactly one trustworthy approved point value for each of the
+  /// announced stages; missing, duplicate, extra or oversized scores cannot
+  /// be used to claim that all the breakdown is verified.
+  static bool hasVerifiedStageBreakdown({
+    required Iterable<Map<String, dynamic>> phases,
+    required Iterable<Map<String, dynamic>> approvedScores,
+  }) {
+    final announced = visiblePublishedPhases(phases);
+    final scores = approvedScores.toList(growable: false);
+    if (announced.isEmpty || scores.length != announced.length) return false;
+    for (final stage in announced) {
+      final stageNo = stage['stage_no'];
+      final matching = scores.where((score) => score['stage_no'] == stageNo);
+      if (verifiedWeightedStagePoints(matching, stage['weight']) == '—') {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// Display the official published Arabic drill label without inventing an
   /// English translation. English users still see the stage number clearly.
   /// Never present a null/blank or malformed title as a verified drill name.
@@ -1092,6 +1113,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                 serverApproved: entry.complete,
                 completedStages: entry.data['completed_stages'],
                 phases: _phases,
+              ) && TeamSkillsCupTab.hasVerifiedStageBreakdown(
+                phases: _phases,
+                approvedScores: approvedForTeam,
               );
               return ExpansionTile(
                 iconColor: VSPColors.accent,
