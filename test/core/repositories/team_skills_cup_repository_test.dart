@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vsp_application/core/repositories/team_skills_cup_repository.dart';
+import 'package:vsp_application/features/player/widgets/champion/team_skills_request_messages.dart';
 
 void main() {
   final client = SupabaseClient('https://localhost.invalid', 'test-public-key');
@@ -175,7 +176,14 @@ void main() {
     expect(tab, contains('await widget.repository.withdrawRegistration('));
     expect(repo, contains("row['status'] == 'withdrawn'"));
     expect(tab, contains('isCaptainWithdrawalConfirmed('));
-    expect(tab, contains('تحقق من حالة طلبك قبل المحاولة مجددًا'));
+    expect(tab, contains('_notice(TeamSkillsRequestNotice.withdrawalRetryUnconfirmed)'));
+    expect(
+      TeamSkillsRequestMessages.localize(
+        TeamSkillsRequestNotice.withdrawalRetryUnconfirmed,
+        isArabic: true,
+      ),
+      contains('تحقق من حالة طلبك قبل المحاولة مجددًا'),
+    );
   });
 
   test('session switch clears private cup membership and ignores stale responses', () {
@@ -352,7 +360,14 @@ void main() {
     expect(tab, contains("status == 'approved'"));
     expect(tab, contains("status == 'waitlist'"));
     expect(tab, contains("status == 'pending'"));
-    expect(tab, contains('تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك'));
+    expect(tab, contains('_notice(TeamSkillsRequestNotice.rosterSavedApproved)'));
+    expect(
+      TeamSkillsRequestMessages.localize(
+        TeamSkillsRequestNotice.rosterSavedApproved,
+        isArabic: true,
+      ),
+      contains('تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك'),
+    );
     expect(tab, isNot(contains('تم حفظ التشكيلة المحدثة، وما زال الطلب ينتظر مراجعة الإدارة')));
   });
 
@@ -376,7 +391,14 @@ void main() {
     expect(tab, contains("confirmed['status'] == 'waitlist'"));
     expect(tab, contains('confirmed == null'));
     expect(tab, contains('TeamSkillsCupRepository.findCaptainRegistration('));
-    expect(tab, contains('تم تسجيل فريقك في قائمة الانتظار'));
+    expect(tab, contains('_notice(TeamSkillsRequestNotice.waitlisted)'));
+    expect(
+      TeamSkillsRequestMessages.localize(
+        TeamSkillsRequestNotice.waitlisted,
+        isArabic: true,
+      ),
+      contains('تم تسجيل فريقك في قائمة الانتظار'),
+    );
     expect(tab, contains("case 'waitlist':"));
     expect(tab, contains('final receiptId = await widget.repository.registerTeam('));
     expect(tab, contains("candidate?['id']?.toString() == receiptId"));
@@ -427,9 +449,22 @@ void main() {
     ).readAsStringSync();
     expect(source,contains('confirmed == null'));
     expect(source,contains('isCaptainWithdrawalConfirmed('));
-    expect(source,contains('تم إرسال طلب السحب لكن تعذر تأكيد حالته'));
-    expect(source,contains('تم إرسال الطلب لكن تعذر تأكيد تسجيل الفريق'));
-    expect(source,contains('تم سحب طلب الفريق وتحرير مكانه'));
+    for (final (notice, expectedArabic) in [
+      (TeamSkillsRequestNotice.withdrawalUnconfirmed,
+          'تم إرسال طلب السحب لكن تعذر تأكيد حالته'),
+      (TeamSkillsRequestNotice.registrationUnconfirmed,
+          'تم إرسال الطلب لكن تعذر تأكيد تسجيل الفريق'),
+      (TeamSkillsRequestNotice.withdrawn,
+          'تم سحب طلب الفريق وتحرير مكانه'),
+    ]) {
+      // Ensure the screen references the notice AND the resolved text still
+      // communicates the correct outcome, even after centralization.
+      expect(source, contains('_notice(TeamSkillsRequestNotice.${notice.name})'));
+      expect(
+        TeamSkillsRequestMessages.localize(notice, isArabic: true),
+        contains(expectedArabic),
+      );
+    }
   });
 
   test('Team Skills notification deep-link validates source and cup UUID', () {
@@ -492,7 +527,14 @@ void main() {
     expect(tab, contains('await widget.repository.getRegistrations(cupId)'));
     expect(tab, contains('TeamSkillsCupRepository.findCaptainRegistration('));
     expect(tab, contains('viewerId != _viewerUserId'));
-    expect(tab, contains('طلب فريقك مسجل بالفعل على قائمة الانتظار'));
+    expect(tab, contains('_notice(TeamSkillsRequestNotice.alreadyWaitlisted)'));
+    expect(
+      TeamSkillsRequestMessages.localize(
+        TeamSkillsRequestNotice.alreadyWaitlisted,
+        isArabic: true,
+      ),
+      contains('طلب فريقك مسجل بالفعل على قائمة الانتظار'),
+    );
   });
 
   test('team registration and points use a single guarded Supabase backend', () {
