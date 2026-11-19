@@ -334,6 +334,38 @@ void main() {
     }
   });
 
+  test('governorate filter cannot mask a conflicting copy of the same cup', () {
+    const id = '82e73247-e111-4ab9-abd5-04cf6fe6779a';
+    const aswan = <String, dynamic>{
+      'id': id,
+      'name': 'Skills Cup',
+      'status': 'registration',
+      'governorate': 'Aswan',
+      'hospitality_fee': 50,
+      'max_teams': 8,
+    };
+    final alexandria = <String, dynamic>{
+      ...aswan,
+      'governorate': 'Alexandria',
+    };
+    // Both server pages describe the same ID with inconsistent location.
+    // Filtering first must not turn either copy into a public truth.
+    for (final rows in [
+      [aswan, alexandria],
+      [alexandria, aswan],
+    ]) {
+      expect(TeamSkillsCupTab.visiblePublishedCups(rows), isEmpty);
+      expect(TeamSkillsCupTab.visiblePublishedCups(
+          rows, selectedLocation: 'Aswan'), isEmpty);
+      expect(TeamSkillsCupTab.visiblePublishedCups(
+          rows, selectedLocation: 'Alexandria'), isEmpty);
+    }
+    expect(TeamSkillsCupTab.visiblePublishedCups(
+        [aswan, {...aswan}], selectedLocation: 'Aswan'), hasLength(1));
+    expect(TeamSkillsCupTab.visiblePublishedCups(
+        [aswan, {...aswan}], selectedLocation: 'Alexandria'), isEmpty);
+  });
+
   test('public cup card capacity agrees with published details validation', () {
     expect(TeamSkillsCupTab.publishedMetadata({
       'max_teams': 1001,
