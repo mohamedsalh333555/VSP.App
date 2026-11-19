@@ -602,6 +602,37 @@ void main() {
     expect(roster, contains('viewerId != _viewerUserId'));
   });
 
+  test('public team identity rejects conflicting or missing names', () {
+    final rows = <Map<String, dynamic>>[
+      {'id': 'team-a', 'name': '  Alexandria Stars  '},
+      {'id': 'team-b', 'name': 'Champions'},
+      {'id': 'team-a', 'name': 'Alexandria Stars'},
+      {'id': 'team-c', 'name': 'First name'},
+      {'id': 'team-c', 'name': 'Different name'},
+      {'id': 'team-d', 'name': null},
+      {'id': 'team-e', 'name': 'Valid'},
+      {'id': 'team-e', 'name': '  '},
+      {'id': ' ', 'name': 'No identity'},
+      {'id': null, 'name': 'No identity'},
+    ];
+    final names = TeamSkillsCupRepository.verifiedTeamNames(rows);
+    expect(names, {
+      'team-a': 'Alexandria Stars',
+      'team-b': 'Champions',
+    });
+    expect(TeamSkillsCupRepository.verifiedTeamNames(rows.reversed), names,
+        reason: 'server row order cannot choose a conflicting team name');
+  });
+
+  test('team rankings never leak raw unresolved team identifiers', () {
+    final tab = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    expect(tab, contains("_teamNames[entry.data['team_id'].toString()] ?? "
+        "(ar ? 'فريق غير متاح' : 'Team unavailable')"));
+    expect(tab, isNot(contains("?? entry.data['team_id']")));
+  });
+
   test('registration freezes player and role choices across cup status read', () {
     final source = File(
       'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
