@@ -1,3 +1,12 @@
+## 2026-11-19 — Four individually accepted audit/client-test subtasks (332/308)
+
+- **04.02: 328 → 329, 312 → 311.** Translation source audit: Arabic/English 756 keys each, zero absent/blank/placeholder-mismatched keys. [CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276515). Remaining literal UI-copy candidates and device coverage separate.
+- **08.01: 329 → 330, 311 → 310.** Read-only source review of role selection, player/owner registration and post-auth onboarding flows, findings and unresolved paths recorded in [acceptance report](VSP_ACCEPTANCE_BATCH_04_02_08_01_12_05_13_05_2026-11-19.md). No live signup tests or UI funnel completion claim.
+- **12.05: 330 → 331, 310 → 309.** Player/owner profile save success, failure, exceptions, pending double taps and account-switch behavior tested in both locales with fake provider. [Flutter focused CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276513). Real persistent save still unverified.
+- **13.05: 331 → 332, 309 → 308.** Allowed-position validation before player update and owner role isolation tested in Arabic and English. Same [focused CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276513). Actual server persistence and discovery untouched.
+- Two prior CI blockers were corrected in `acb5fea` (test-only path erroneously listed as test) and `867ef445` (obsolete regex not accepting the stronger venue booking predicate). [Focused booking workflow PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276490). [Broad Flutter CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276493) still required to confirm final result.
+- **Official count: 640 unique / 332 accepted / 308 open (51.88%).** No new task IDs and no production, Paymob, main merge or APK.
+
 ## 2026-11-18 — Discovery refresh, Home architecture guard and privacy-safe player logs (+0 accepted)
 
 - **Actual code on `uxlp-44-implementation`**: made the one-venue stadium discovery list always scrollable, and replaced programmatic refresh testing with a real drag while checking the server request remains pending until resolved. Existing offline/stale-data tests also pass. [Latest focused Flutter CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314625899) at source `163d564be33376bd51a105b4ca7aa332e54bd860`; [first green focused run](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314057657).
