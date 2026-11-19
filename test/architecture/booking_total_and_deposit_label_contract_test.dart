@@ -18,10 +18,16 @@ void main() {
       'lib/features/player/widgets/stadium_details/stadium_bottom_booking_bar.dart',
     ).readAsStringSync();
 
-    expect(
-      stadiumBar,
-      contains('final hasDeposit = stadium.needsDeposit && stadium.depositAmount > 0.0;'),
-    );
+    // Deposit is shown only for finite, positive amounts. An invalid
+    // mandatory deposit must not be relabeled as a cash/no-deposit offer.
+    expect(stadiumBar, contains('stadium.depositAmount.isFinite && stadium.depositAmount > 0.0'));
+    expect(stadiumBar, contains('final unverifiedDeposit = stadium.needsDeposit && !hasDeposit;'));
+    expect(stadiumBar, contains("'Deposit amount unavailable'"));
+    expect(stadiumBar, contains("'No deposit required'"));
+    // Defense in depth: this button must reject invalid money even if a
+    // parent widget incorrectly passes bookingEnabled: true.
+    expect(stadiumBar, contains('final financialInputsValid = stadium.basePrice.isFinite'));
+    expect(stadiumBar, contains('onPressed: bookingEnabled && financialInputsValid'));
     expect(bar, contains("isArabic ? 'إجمالي الحجز' : 'Booking total'"));
     expect(bar, isNot(contains("isArabic ? 'المبلغ المطلوب' : 'Amount due'")));
     // A stale price cannot be displayed when the selected time slots vanish.
