@@ -22,11 +22,13 @@ import '../../../auth/screens/welcome_screen.dart';
 class EditProfileScreen extends StatefulWidget {
  final Future<XFile?> Function(BuildContext)? pickProfileImage;
  final Future<XFile?> Function(XFile)? compressProfileImage;
+ final Widget Function(XFile)? selectedImagePreview;
 
  const EditProfileScreen({
    super.key,
    this.pickProfileImage,
    this.compressProfileImage,
+   this.selectedImagePreview,
  });
 
  @override
@@ -245,7 +247,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ),
  child: ClipOval(
  child: _newProfileImage != null
- ? Image.file(File(_newProfileImage!.path), fit: BoxFit.cover)
+ ? (widget.selectedImagePreview?.call(_newProfileImage!) ??
+     Image.file(File(_newProfileImage!.path), fit: BoxFit.cover))
  : (userProfileUrl != null && userProfileUrl.isNotEmpty)
  ? CachedNetworkImage(
  imageUrl: userProfileUrl,
