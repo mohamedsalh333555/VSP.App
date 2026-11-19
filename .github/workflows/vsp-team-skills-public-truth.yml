@@ -69,4 +69,5 @@ jobs:
           test/features/player/team_skills_request_messages_test.dart
           test/features/player/team_skills_published_details_test.dart
           test/features/player/team_skills_approved_rank_completion_test.dart
+          test/core/repositories/team_skills_cup_repository_test.dart
           test/unit/team_skills_ranking_service_test.dart
