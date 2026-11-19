@@ -575,6 +575,15 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         }
         _hasLiveRefreshError = currentCup == null;
       });
+      // A live poll invalidates older roster reads via _readGeneration.
+      // If one was still pending, replace it instead of leaving registration
+      // disabled until the captain manually changes their team.
+      final teamToRefresh = _selectedTeamId;
+      if (teamToRefresh != null && !_rosterVerified &&
+          _captainTeams.any((team) =>
+              team['id']?.toString() == teamToRefresh)) {
+        await _loadRoster(teamToRefresh);
+      }
     } catch (_) {
       if (mounted && generation == _readGeneration &&
           context.read<AuthProvider>().currentUser?.id == currentUserId) {
