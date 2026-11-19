@@ -285,6 +285,16 @@ class TeamSkillsCupTab extends StatefulWidget {
     );
   }
 
+  /// Correct Arabic count agreement for 1, 2, 3–10 and 11+ teams.
+  static String publishedTeamCapacity(int count, {required bool isArabic}) {
+    if (count < 1 || count > 1000) return '';
+    if (!isArabic) return '$count ${count == 1 ? 'team' : 'teams'}';
+    if (count == 1) return 'فريق واحد';
+    if (count == 2) return 'فريقان';
+    if (count >= 3 && count <= 10) return '$count فرق';
+    return '$count فريق';
+  }
+
   /// Use only fields from a published cup. Missing capacity or location
   /// must not become the literal string "null", or an invented seat count.
   static String publishedMetadata(
@@ -297,7 +307,7 @@ class TeamSkillsCupTab extends StatefulWidget {
     }
     final maxTeams = cup['max_teams'];
     if (maxTeams is int && maxTeams > 0 && maxTeams <= 1000) {
-      parts.add('$maxTeams ${isArabic ? 'فرق' : 'teams'}');
+      parts.add(publishedTeamCapacity(maxTeams, isArabic: isArabic));
     }
     return parts.join(' • ');
   }

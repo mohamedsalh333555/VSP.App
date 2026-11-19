@@ -29,6 +29,8 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
   late Future<List<Map<String, dynamic>>> _pending;
   String? _busyId;
   int _requestGeneration = 0;
+  bool _hasObservedAccount = false;
+  String? _observedAccountId;
 
   bool get _isCurrentAccount =>
       context.read<AuthProvider>().currentUser?.id == widget.userId;
@@ -36,7 +38,20 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
   @override
   void initState() {
     super.initState();
-    _refresh();
+    // Wait for the current provider identity before reading private invites.
+    _pending = Future.value(<Map<String, dynamic>>[]);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentAccountId = context.watch<AuthProvider>().currentUser?.id;
+    if (!_hasObservedAccount || _observedAccountId != currentAccountId) {
+      _hasObservedAccount = true;
+      _observedAccountId = currentAccountId;
+      _busyId = null;
+      _loadForCurrentAccount(currentAccountId);
+    }
   }
 
   @override
@@ -44,8 +59,18 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.userId != widget.userId) {
       _busyId = null;
-      _refresh();
+      _loadForCurrentAccount(context.read<AuthProvider>().currentUser?.id);
     }
+  }
+
+  void _loadForCurrentAccount(String? accountId) {
+    if (accountId == null || accountId != widget.userId) {
+      // Do not fetch an old account's invitations through a new session.
+      ++_requestGeneration;
+      _pending = Future.value(<Map<String, dynamic>>[]);
+      return;
+    }
+    _refresh();
   }
 
   void _refresh() {

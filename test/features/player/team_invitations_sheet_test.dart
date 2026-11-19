@@ -20,10 +20,15 @@ class _AuthService extends AuthService {
 class _AuthProvider extends AuthProvider {
   _AuthProvider(this.userId) : super(authService: _AuthService());
 
-  final String userId;
+  String? userId;
+
+  void switchAccount(String? nextUserId) {
+    userId = nextUserId;
+    notifyListeners();
+  }
 
   @override
-  User? get currentUser => User.fromJson({
+  User? get currentUser => userId == null ? null : User.fromJson({
         'id': userId,
         'aud': 'authenticated',
         'role': 'authenticated',
@@ -45,9 +50,10 @@ Widget _app({
   required Future<List<Map<String, dynamic>>> Function(String) load,
   required Future<void> Function(String, bool) respond,
   Future<void> Function()? onMembershipChanged,
+  _AuthProvider? auth,
 }) {
   return ChangeNotifierProvider<AuthProvider>.value(
-    value: _AuthProvider(activeUserId),
+    value: auth ?? _AuthProvider(activeUserId),
     child: MaterialApp(
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -163,6 +169,65 @@ void main() {
 
     pending.complete();
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('account switch hides stale invites and reloads on return',
+      (tester) async {
+    final auth = _AuthProvider('player-1');
+    var reads = 0;
+    final oldInvite = _invitation('old', 'Old team');
+    final freshInvite = _invitation('new', 'Current team');
+    await tester.pumpWidget(_app(
+      activeUserId: 'player-1',
+      auth: auth,
+      load: (accountId) async {
+        expect(accountId, 'player-1');
+        reads++;
+        return reads == 1 ? [oldInvite] : [freshInvite];
+      },
+      respond: (_, __) async {},
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Old team'), findsOneWidget);
+    expect(reads, 1);
+
+    auth.switchAccount('player-2');
+    await tester.pumpAndSettle();
+    expect(find.text('Old team'), findsNothing);
+    expect(find.textContaining('another account'), findsOneWidget);
+    expect(reads, 1, reason: 'new session cannot fetch old inbox');
+
+    auth.switchAccount('player-1');
+    await tester.pumpAndSettle();
+    expect(find.text('Old team'), findsNothing);
+    expect(find.text('Current team'), findsOneWidget);
+    expect(reads, 2);
+  });
+
+  testWidgets('pending invitation response cannot claim success after account switch',
+      (tester) async {
+    final auth = _AuthProvider('player-1');
+    final pendingReply = Completer<void>();
+    var replies = 0;
+    await tester.pumpWidget(_app(
+      activeUserId: 'player-1',
+      auth: auth,
+      load: (_) async => [_invitation('i1', 'Safe Team')],
+      respond: (_, __) {
+        replies++;
+        return pendingReply.future;
+      },
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Accept'));
+    await tester.pump();
+    expect(replies, 1);
+    auth.switchAccount('player-2');
+    await tester.pump();
+    pendingReply.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('Invitation accepted'), findsNothing);
+    expect(find.textContaining('another account'), findsOneWidget);
   });
 
   testWidgets('shows a retryable load failure and recovers', (tester) async {

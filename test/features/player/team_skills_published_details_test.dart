@@ -97,6 +97,27 @@ void main() {
     expect(find.textContaining('-50 EGP'), findsNothing);
   });
 
+  test('Team Skills team counts agree in Arabic and English', () {
+    for (final (count, arabic, english) in [
+      (1, 'فريق واحد', '1 team'),
+      (2, 'فريقان', '2 teams'),
+      (3, '3 فرق', '3 teams'),
+      (8, '8 فرق', '8 teams'),
+      (10, '10 فرق', '10 teams'),
+      (11, '11 فريق', '11 teams'),
+      (100, '100 فريق', '100 teams'),
+    ]) {
+      expect(TeamSkillsCupTab.publishedTeamCapacity(count, isArabic: true),
+          arabic);
+      expect(TeamSkillsCupTab.publishedTeamCapacity(count, isArabic: false),
+          english);
+      expect(TeamSkillsCupTab.publishedMetadata(
+          {'max_teams': count}, isArabic: true), arabic);
+    }
+    expect(TeamSkillsCupTab.publishedTeamCapacity(0, isArabic: true), '');
+    expect(TeamSkillsCupTab.publishedTeamCapacity(1001, isArabic: false), '');
+  });
+
   test('cup discovery never invents points, team capacity or a completed state', () {
     expect(TeamSkillsCupTab.publishedMetadata(<String, dynamic>{},
         isArabic: false), '');
