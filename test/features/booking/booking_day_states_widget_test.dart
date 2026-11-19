@@ -128,7 +128,7 @@ void main() {
     expect(find.byType(BookingSlotCard), findsOneWidget);
   });
 
-  testWidgets('unsorted slots still highlight the earliest bookable time',
+  testWidgets('unsorted slots display in chronological order',
       (tester) async {
     final date = DateTime.now().add(const Duration(days: 3));
     final earlier = TimeSlotItem(
@@ -150,6 +150,25 @@ void main() {
     expect(cards.first.isNextAvailable, isFalse,
         reason: 'next-slot decoration is intended only for today');
     expect(cards.last.slotItem.key, '4:00 PM');
+  });
+
+  testWidgets('duplicate clock instants with different keys cannot be booked',
+      (tester) async {
+    final date = DateTime.now().add(const Duration(days: 3));
+    final differentlyFormatted = TimeSlotItem(
+      startTime: '04:00 PM', endTime: '04:30 PM',
+      key: '04:00 PM', startMinutes: 960,
+    );
+    await tester.pumpWidget(_host(
+      _Availability(),
+      date: date,
+      stadium: _venue(),
+      slots: [_slot, differentlyFormatted],
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Conflicting venue schedule'), findsOneWidget);
+    expect(find.byType(BookingSlotCard), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('closure, full booking, past day and missing hours have distinct states',

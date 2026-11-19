@@ -199,6 +199,26 @@ class _BookingSlotStreamSectionState extends State<BookingSlotStreamSection> {
           // Both the display order and "next available" border must use
           // chronological time, never the network/provider's row order.
           ..sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
+        if (validTimeSlots.isNotEmpty) {
+          // Two differently formatted keys may refer to the same half-hour.
+          // Rendering both as bookable can trick the user into overlapping
+          // selections; reject an ambiguous schedule before showing any CTA.
+          final verifiedStartTimes = <DateTime>{};
+          final duplicateStart = validTimeSlots.any((slot) =>
+              !verifiedStartTimes.add(_getSlotDateTime(slot.key).toUtc()));
+          if (duplicateStart) {
+            return VSPStateView(
+              state: VSPUiState.error,
+              icon: Iconsax.clock_copy,
+              title: isArabic
+                  ? 'تعارض في جدول المواعيد'
+                  : 'Conflicting venue schedule',
+              message: isArabic
+                  ? 'وصل أكثر من موعد لنفس الوقت. لا يمكن عرض مواعيد قابلة للحجز قبل تصحيح الجدول.'
+                  : 'Multiple entries describe the same booking time. The venue schedule needs correction before a slot can be selected.',
+            );
+          }
+        }
         if (validTimeSlots.isEmpty) {
           return VSPStateView(
             state: VSPUiState.empty,
