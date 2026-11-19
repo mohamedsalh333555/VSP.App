@@ -1,3 +1,9 @@
+## 2026-11-19 — Mocked password recovery screen accepted (344/296)
+
+- **11.03 (343→344 accepted / 297→296 open):** tested valid/short/mismatched password change, successful sign-out of original recovering user, forbidden sign-out of a switched account both during update and after success delay, redacted provider exceptions, and request-link privacy. [Passing 44-test Recovery CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44486325222); [precise client-only acceptance](VSP_PASSWORD_RECOVERY_BOUNDED_ACCEPTANCE_11_03_2026_11_19.md).
+- Client-only bounded acceptance: no real email delivery, hosted session expiry, staging login, OAuth or server rate-limit validation. Separate OTP diagnostics redaction and historical 1v1 UI improvements remain CODE_DONE pending their scoped checks, not additional accepted IDs.
+- **640 active / 344 accepted / 296 open (53.75%).** No merge to main, production DB/RLS, Paymob, APK or deployment.
+
 ## 2026-11-19 — Home no-redesign protection accepted; captain invite async leakage fixed (343/297)
 
 - **86.01 (342→343 accepted / 298→297 open):** existing Home source-order and Arabic/English bottom-nav widget contracts prevent private trophies/ranking/rebook cards from changing the original discovery/banner/stadium/matches/competitions layout. [Passing Home CI at previous verified head](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456758008), [bounded acceptance](VSP_HOME_STRUCTURE_BOUNDED_ACCEPTANCE_86_01_2026-11-19.md). No screenshot/device or overall 44-rule runtime pass claimed.
