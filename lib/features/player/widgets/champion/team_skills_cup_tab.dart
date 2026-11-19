@@ -7,6 +7,7 @@ import '../../../../core/repositories/team_skills_cup_repository.dart';
 import 'team_skills_roster_correction_screen.dart';
 import 'team_skills_published_details.dart';
 import 'team_skills_history_section.dart';
+import 'team_skills_request_messages.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../services/team_skills_ranking_service.dart';
 
@@ -436,6 +437,10 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
 
   String get cupId => widget.cup['id'].toString();
 
+  String _notice(TeamSkillsRequestNotice notice) =>
+      TeamSkillsRequestMessages.localize(notice,
+          isArabic: Localizations.localeOf(context).languageCode == 'ar');
+
   @override
   void initState() {
     super.initState();
@@ -647,7 +652,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
           generation == _readGeneration && viewerId == _viewerUserId) {
         setState(() {
           _rosterOptions = [];
-          _feedback = 'تعذر التحقق من أعضاء الفريق. أعد المحاولة.';
+          _feedback = _notice(TeamSkillsRequestNotice.rosterUnavailable);
         });
       }
     }
@@ -675,7 +680,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         setState(() {
           _currentCup = freshCup;
           _cupStateCurrent = freshCup != null;
-          _feedback = 'التسجيل لم يعد مفتوحًا لهذه البطولة.';
+          _feedback = _notice(TeamSkillsRequestNotice.registrationClosed);
         });
         return;
       }
@@ -701,13 +706,12 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       setState(() {
         _registrations = latest;
         _feedback = confirmed == null
-            ? 'تم إرسال الطلب لكن تعذر تأكيد تسجيل الفريق. '
-                'راجع حالة طلبك قبل المحاولة مجددًا.'
+            ? _notice(TeamSkillsRequestNotice.registrationUnconfirmed)
             : confirmed['status'] == 'waitlist'
-                ? 'تم تسجيل فريقك في قائمة الانتظار. ستراجع الإدارة طلبك عند توفر مكان.'
+                ? _notice(TeamSkillsRequestNotice.waitlisted)
                 : confirmed['status'] == 'approved'
-                    ? 'تم اعتماد مشاركة فريقك بالفعل.'
-                    : 'تم إرسال طلب تسجيل الفريق. في انتظار موافقة إدارة البطولة.';
+                    ? _notice(TeamSkillsRequestNotice.approved)
+                    : _notice(TeamSkillsRequestNotice.pending);
       });
     } catch (_) {
       // The server may have committed a registration even when the network
@@ -724,10 +728,10 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
           setState(() {
             _registrations = latest;
             _feedback = registered['status'] == 'waitlist'
-                ? 'طلب فريقك مسجل بالفعل على قائمة الانتظار.'
+                ? _notice(TeamSkillsRequestNotice.alreadyWaitlisted)
                 : registered['status'] == 'approved'
-                    ? 'تم اعتماد مشاركة فريقك بالفعل.'
-                    : 'طلب فريقك مسجل بالفعل وينتظر مراجعة الإدارة.';
+                    ? _notice(TeamSkillsRequestNotice.approved)
+                    : _notice(TeamSkillsRequestNotice.alreadyPending);
           });
           return;
         }
@@ -736,7 +740,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       }
       if (mounted && viewerId == _viewerUserId) {
         setState(() => _feedback =
-            'تعذر التحقق من حالة التسجيل. راجع حالة الفريق قبل إعادة المحاولة.');
+            _notice(TeamSkillsRequestNotice.registrationCheckUnavailable));
       }
     } finally {
       if (mounted && viewerId == _viewerUserId) {
@@ -789,19 +793,19 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         setState(() {
           _registrations = latest;
           _feedback = status == 'approved'
-              ? 'تم حفظ التشكيلة، وقد اعتمدت الإدارة مشاركة فريقك.'
+              ? _notice(TeamSkillsRequestNotice.rosterSavedApproved)
               : status == 'waitlist'
-                  ? 'تم حفظ التشكيلة، والفريق ما زال في قائمة الانتظار.'
+                  ? _notice(TeamSkillsRequestNotice.rosterSavedWaitlist)
                   : status == 'pending'
-                      ? 'تم حفظ التشكيلة، والطلب ما زال ينتظر مراجعة الإدارة.'
-                      : 'تم حفظ التشكيلة، لكن تعذر تأكيد حالة المشاركة الحالية.';
+                      ? _notice(TeamSkillsRequestNotice.rosterSavedPending)
+                      : _notice(TeamSkillsRequestNotice.rosterSavedUnconfirmed);
           _loadFuture = _reload();
         });
       } catch (_) {
         if (mounted && viewerId == _viewerUserId) {
           setState(() {
             _feedback =
-                'تم حفظ التشكيلة، لكن تعذر تحديث حالة الطلب. أعد التحميل.';
+                _notice(TeamSkillsRequestNotice.rosterSavedRefreshFailed);
             _loadFuture = _reload();
           });
         }
@@ -823,22 +827,27 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     // confirmation windows or issue duplicate destructive requests.
     setState(() { _submitting = true; _feedback = null; });
     try {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('سحب طلب مشاركة الفريق'),
-          content: const Text(
-            'سيتم إلغاء طلب الفريق وتحرير مكانه واللاعبين الخمسة. '
-            'لن تستطيع إعادة تقديم نفس الفريق في هذه البطولة بعد السحب.',
-          ),
+          title: Text(isArabic
+              ? 'سحب طلب مشاركة الفريق'
+              : 'Withdraw team registration'),
+          content: Text(isArabic
+              ? 'سيتم إلغاء طلب الفريق وتحرير مكانه واللاعبين الخمسة. '
+                  'لن تستطيع إعادة تقديم نفس الفريق في هذه البطولة بعد السحب.'
+              : 'The application will be withdrawn, releasing its spot '
+                  'and the five selected players. This team cannot apply '
+                  'again to the same cup after withdrawal.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('العودة'),
+              child: Text(isArabic ? 'العودة' : 'Back'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('تأكيد السحب'),
+              child: Text(isArabic ? 'تأكيد السحب' : 'Confirm withdrawal'),
             ),
           ],
         ),
@@ -856,9 +865,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         setState(() {
           _registrations = latest;
           _feedback = withdrawn
-              ? 'تم سحب طلب الفريق وتحرير مكانه.'
-              : 'تم إرسال طلب السحب لكن تعذر تأكيد حالته. '
-                  'راجع طلبك قبل المحاولة مجددًا.';
+              ? _notice(TeamSkillsRequestNotice.withdrawn)
+              : _notice(TeamSkillsRequestNotice.withdrawalUnconfirmed);
         });
       } catch (_) {
         if (!mounted || actorId != _viewerUserId) return;
@@ -873,13 +881,13 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
           setState(() {
             _registrations = latest;
             _feedback = withdrawn
-                ? 'طلب الفريق مسحوب بالفعل، وتم تحرير مكانه.'
-                : 'تعذر تأكيد السحب. تحقق من حالة طلبك قبل المحاولة مجددًا.';
+                ? _notice(TeamSkillsRequestNotice.alreadyWithdrawn)
+                : _notice(TeamSkillsRequestNotice.withdrawalRetryUnconfirmed);
           });
         } catch (_) {
           if (mounted && actorId == _viewerUserId) {
             setState(() => _feedback =
-                'تعذر التحقق من طلب السحب. راجع حالة الفريق قبل المحاولة مجددًا.');
+                _notice(TeamSkillsRequestNotice.withdrawalCheckUnavailable));
           }
         }
       }
