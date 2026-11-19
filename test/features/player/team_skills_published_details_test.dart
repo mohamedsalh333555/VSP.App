@@ -343,4 +343,42 @@ void main() {
     }, isArabic: false), '8 teams');
   });
 
+  test('conflicting published prizes or image never choose stale first row', () {
+    const id = '82e73247-e111-4ab9-abd5-04cf6fe6779a';
+    final published = <String, dynamic>{
+      'id': id,
+      'name': 'Skills',
+      'status': 'registration',
+      'governorate': 'Aswan',
+      'image_url': 'https://example.invalid/cup-a.png',
+      'prizes': [
+        {'name': 'Voucher', 'value': 200, 'metadata': {'kind': 'voucher'}},
+      ],
+    };
+    final sameValueDifferentKeyOrder = <String, dynamic>{
+      ...published,
+      'prizes': [
+        {'metadata': {'kind': 'voucher'}, 'value': 200, 'name': 'Voucher'},
+      ],
+    };
+    expect(TeamSkillsCupTab.visiblePublishedCups(
+        [published, sameValueDifferentKeyOrder]), hasLength(1));
+    for (final altered in <Map<String, dynamic>>[
+      {'image_url': 'https://example.invalid/cup-b.png'},
+      {'prizes': [
+        {'name': 'Different prize', 'value': 200,
+         'metadata': {'kind': 'voucher'}},
+      ]},
+      {'prizes': [
+        {'name': 'Voucher', 'value': 200,
+         'metadata': {'kind': 'cash'}},
+      ]},
+      {'prizes': null},
+    ]) {
+      expect(TeamSkillsCupTab.visiblePublishedCups(
+        [published, {...published, ...altered}, published],
+      ), isEmpty);
+    }
+  });
+
 }

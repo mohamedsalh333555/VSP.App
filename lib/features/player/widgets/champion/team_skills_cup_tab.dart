@@ -17,6 +17,30 @@ class TeamSkillsCupTab extends StatefulWidget {
   final String selectedLocation;
   final TeamSkillsCupRepository? repository;
   const TeamSkillsCupTab({super.key, required this.selectedLocation, this.repository});
+  /// Compare structured public values, not map insertion order: Supabase
+  /// pages can return the same published prize object with reordered keys.
+  /// A conflicting nested value must never pick whichever page came first.
+  static bool _samePublicValue(Object? a, Object? b) {
+    if (identical(a, b)) return true;
+    if (a is List && b is List) {
+      if (a.length != b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        if (!_samePublicValue(a[i], b[i])) return false;
+      }
+      return true;
+    }
+    if (a is Map && b is Map) {
+      if (a.length != b.length) return false;
+      for (final key in a.keys) {
+        if (!b.containsKey(key) || !_samePublicValue(a[key], b[key])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return a == b;
+  }
+
   /// Only cups with a canonical ID, published status, and real name
   /// can be opened or advertised on the player competitions screen.
   static List<Map<String, dynamic>> visiblePublishedCups(
@@ -52,7 +76,9 @@ class TeamSkillsCupTab extends StatefulWidget {
           previous['max_teams'] != row['max_teams'] ||
           previous['starts_at'] != row['starts_at'] ||
           previous['ends_at'] != row['ends_at'] ||
-          previous['stadium_id'] != row['stadium_id']) {
+          previous['stadium_id'] != row['stadium_id'] ||
+          previous['image_url'] != row['image_url'] ||
+          !_samePublicValue(previous['prizes'], row['prizes'])) {
         byId.remove(id);
         conflicts.add(id);
       }

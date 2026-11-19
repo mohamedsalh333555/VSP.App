@@ -235,4 +235,47 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final locale in const [Locale('ar'), Locale('en')]) {
+    testWidgets('rebook button is disabled for a different account: ${locale.languageCode}',
+        (tester) async {
+      var calls = 0;
+      await tester.pumpWidget(_screen(RepeatBookingAction(
+        stadiumId: 'venue-1',
+        canContinue: () => false,
+        loadLatestStadium: (_) async {
+          calls++;
+          return _stadium();
+        },
+        detailsBuilder: (_) => const Scaffold(body: Text('WRONG_ACCOUNT')),
+      ), locale: locale));
+      final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
+      expect(button.onPressed, isNull);
+      await tester.tap(find.text(locale.languageCode == 'ar'
+          ? 'احجز تاني' : 'Book again'));
+      await tester.pump();
+      expect(calls, 0);
+      expect(find.text('WRONG_ACCOUNT'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('missing stadium identifier disables repeat-booking action',
+      (tester) async {
+    var calls = 0;
+    await tester.pumpWidget(_screen(RepeatBookingAction(
+      stadiumId: '  ',
+      canContinue: () => true,
+      loadLatestStadium: (_) async {
+        calls++;
+        return _stadium();
+      },
+    )));
+    expect(tester.widget<OutlinedButton>(find.byType(OutlinedButton))
+        .onPressed, isNull);
+    await tester.tap(find.text('Book again'));
+    await tester.pump();
+    expect(calls, 0);
+    expect(tester.takeException(), isNull);
+  });
+
 }

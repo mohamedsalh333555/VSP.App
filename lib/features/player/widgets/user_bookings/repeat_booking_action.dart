@@ -97,11 +97,17 @@ class _RepeatBookingActionState extends State<RepeatBookingAction> {
   @override
   Widget build(BuildContext context) {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
+    // Disable the action up front for a switched account or missing stadium,
+    // instead of presenting an apparently active button that silently does
+    // nothing. The same permission is still checked before and after await.
+    final canStart = !_loading &&
+        widget.stadiumId.trim().isNotEmpty &&
+        _currentViewerAllowed();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         OutlinedButton.icon(
-          onPressed: _loading ? null : _openCurrentVenue,
+          onPressed: canStart ? _openCurrentVenue : null,
           icon: _loading
               ? const SizedBox(width: 16, height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2))
@@ -113,7 +119,7 @@ class _RepeatBookingActionState extends State<RepeatBookingAction> {
             minimumSize: const Size(48, 48),
           ),
         ),
-        if (_hasError)
+        if (_hasError && canStart)
           Padding(
             padding: const EdgeInsets.only(top: VSPSpacing.xs),
             child: Text(
