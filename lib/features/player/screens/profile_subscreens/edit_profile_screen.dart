@@ -70,15 +70,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
            context, aspectRatio: CropAspectRatioPreset.square);
    if (!mounted ||
        (auth.userModel?.uid ?? auth.currentUser?.id) != requestingUserId) return;
-   if (image != null) setState(() => _newProfileImage = image);
- } catch (_) {
-   if (mounted &&
-       (auth.userModel?.uid ?? auth.currentUser?.id) == requestingUserId) {
-     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-     VSPFeedback.showError(context, isArabic
-         ? 'تعذر اختيار الصورة. حاول مرة أخرى.'
-         : 'Could not choose the image. Please try again.');
+   if (image != null) {
+     setState(() => _newProfileImage = image);
    }
+ } catch (_) {
+   if (!mounted) return;
+   if ((auth.userModel?.uid ?? auth.currentUser?.id) != requestingUserId) {
+     return;
+   }
+   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+   VSPFeedback.showError(context, isArabic
+       ? 'تعذر اختيار الصورة. حاول مرة أخرى.'
+       : 'Could not choose the image. Please try again.');
  }
  }
 
