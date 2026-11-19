@@ -248,7 +248,7 @@ void main() {
         },
         detailsBuilder: (_) => const Scaffold(body: Text('WRONG_ACCOUNT')),
       ), locale: locale));
-      final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
+      final button = tester.widget<OutlinedButton>(find.byWidgetPredicate((w) => w is OutlinedButton));
       expect(button.onPressed, isNull);
       await tester.tap(find.text(locale.languageCode == 'ar'
           ? 'احجز تاني' : 'Book again'));
@@ -270,7 +270,7 @@ void main() {
         return _stadium();
       },
     )));
-    expect(tester.widget<OutlinedButton>(find.byType(OutlinedButton))
+    expect(tester.widget<OutlinedButton>(find.byWidgetPredicate((w) => w is OutlinedButton))
         .onPressed, isNull);
     await tester.tap(find.text('Book again'));
     await tester.pump();
