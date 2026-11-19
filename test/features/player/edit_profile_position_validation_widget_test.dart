@@ -231,6 +231,38 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('player preference cannot change while profile save is pending in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person())
+        ..pendingSave = Completer<bool>();
+      await tester.pumpWidget(host(auth, language));
+      final position = find.byType(DropdownButton<String>);
+      expect(tester.widget<DropdownButton<String>>(position).value, 'GK');
+      await tester.tap(position);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text(language == 'ar' ? 'FW - مهاجم' : 'FW - Forward').last,
+      );
+      await tester.pumpAndSettle();
+      expect(tester.widget<DropdownButton<String>>(position).value, 'FW');
+
+      await tester.ensureVisible(find.byType(PrimaryButton));
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pump();
+      expect(auth.submitted?['position'], 'FW');
+      expect(auth.updates, 1);
+      expect(tester.widget<DropdownButton<String>>(position).onChanged, isNull);
+
+      auth.pendingSave!.complete(false);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump();
+      expect(tester.widget<DropdownButton<String>>(position).onChanged,
+          isNotNull);
+      expect(auth.submitted?['position'], 'FW');
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('unrecognized player position blocks profile writes in $language',
         (tester) async {
       final auth = FakeProfileAuth(profile: person(position: 'UNVERIFIED'));
