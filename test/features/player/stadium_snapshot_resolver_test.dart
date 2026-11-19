@@ -140,4 +140,58 @@ void main() {
     expect(ambiguous.stadium.name, first.stadium.name);
   });
 
+
+  test('snake_case base price from SQL cannot be replaced by hourly rent', () {
+    final route = venue('venue-a', 'Pitch A');
+    final sqlRow = <String, dynamic>{...route.toMap(), 'id': route.id}
+      ..remove('pricePerHour')
+      ..remove('basePrice')
+      ..remove('isVerified')
+      ..remove('needsDeposit')
+      ..remove('depositAmount');
+    sqlRow['base_price'] = 0;
+    final rejected = StadiumSnapshotResolver().resolve(
+      routeStadium: route, snapshot: live(sqlRow),
+    );
+    expect(rejected.stadium.basePrice, 0);
+    expect(rejected.canBook, isFalse);
+
+    sqlRow['base_price'] = 120;
+    final accepted = StadiumSnapshotResolver().resolve(
+      routeStadium: route, snapshot: live(sqlRow),
+    );
+    expect(accepted.stadium.basePrice, 120);
+    expect(accepted.stadium.pricePerHour, 100);
+    expect(accepted.canBook, isTrue);
+  });
+
+  test('mixed booking aliases never silently hide conflicting live values', () {
+    final route = venue('venue-a', 'Pitch A');
+    final original = <String, dynamic>{...route.toMap(), 'id': route.id};
+    final conflicting = <Map<String, dynamic>>[
+      {'price_per_hour': 0},
+      {'pricePerHour': 0},
+      {'base_price': 0},
+      {'basePrice': 0},
+      {'is_verified': false},
+      {'needs_deposit': true},
+      {'deposit_amount': 50},
+      {'is_blocked': true, 'isBlocked': false},
+    ];
+    for (final override in conflicting) {
+      final result = StadiumSnapshotResolver().resolve(
+        routeStadium: route, snapshot: live({...original, ...override}),
+      );
+      expect(result.parseFailed, isTrue, reason: 'Conflicting aliases: $override');
+      expect(result.canBook, isFalse, reason: 'Conflicting aliases: $override');
+    }
+    final equivalent = StadiumSnapshotResolver().resolve(
+      routeStadium: route,
+      snapshot: live({...original, 'price_per_hour': '100',
+        'base_price': '100', 'deposit_amount': '0'}),
+    );
+    expect(equivalent.parseFailed, isFalse);
+    expect(equivalent.canBook, isTrue);
+  });
+
 }
