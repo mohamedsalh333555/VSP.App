@@ -43,11 +43,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  bool _isLoading = false;
  bool _isDeletionDialogOpen = false;
  XFile? _newProfileImage;
+ String? _initialProfileUserId;
 
  @override
  void initState() {
  super.initState();
- final user = Provider.of<AuthProvider>(context, listen: false).userModel;
+ final auth = Provider.of<AuthProvider>(context, listen: false);
+ final user = auth.userModel;
+ _initialProfileUserId = auth.currentUser?.id == user?.uid ? user?.uid : null;
  _nameController = TextEditingController(text: user?.name ?? '');
  _phoneController = TextEditingController(text: user?.phone ?? '');
  _selectedSport = user?.favoriteSport ?? 'Football';
@@ -68,7 +71,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
    final profileId = auth.userModel?.uid;
    if (signedInId == null || signedInId.isEmpty ||
        profileId == null || profileId.isEmpty ||
-       signedInId != profileId) return null;
+       signedInId != profileId || signedInId != _initialProfileUserId) return null;
    return signedInId;
  }
 
@@ -216,7 +219,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
  @override
  Widget build(BuildContext context) {
- final userProfileUrl = Provider.of<AuthProvider>(context).userModel?.profileImageUrl;
+ final auth = context.watch<AuthProvider>();
+ // Never expose the old account's name, phone or avatar during a session
+ // change. The form is bound to its opening identity and must be reopened.
+ if (_verifiedActiveProfileId(auth) == null) {
+   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+   return VSPScaffold(
+     backgroundColor: VSPColors.background,
+     appBar: AppBar(
+       title: Text(AppLocalizations.of(context)!.editProfile),
+     ),
+     body: Center(
+       child: Padding(
+         padding: const EdgeInsets.all(VSPSpacing.lg),
+         child: Text(
+           isArabic
+             ? 'لا يمكن عرض بيانات هذا الحساب حاليًا. افتح الملف مرة أخرى بعد التأكد من تسجيل الدخول.'
+             : 'This account cannot be verified right now. Reopen the profile after signing in.',
+           textAlign: TextAlign.center,
+         ),
+       ),
+     ),
+   );
+ }
+ final userProfileUrl = auth.userModel?.profileImageUrl;
 
  return VSPScaffold(
  backgroundColor: VSPColors.background,
