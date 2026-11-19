@@ -648,7 +648,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
           _goalkeeperId = null;
           _representativeId = null;
         }
-        _hasLiveRefreshError = currentCup == null;
+        _hasLiveRefreshError = false;
       });
       // A live poll invalidates older roster reads via _readGeneration.
       // If one was still pending, replace it instead of leaving registration
