@@ -1,3 +1,9 @@
+## 2026-11-19 — Home no-redesign protection accepted; captain invite async leakage fixed (343/297)
+
+- **86.01 (342→343 accepted / 298→297 open):** existing Home source-order and Arabic/English bottom-nav widget contracts prevent private trophies/ranking/rebook cards from changing the original discovery/banner/stadium/matches/competitions layout. [Passing Home CI at previous verified head](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456758008), [bounded acceptance](VSP_HOME_STRUCTURE_BOUNDED_ACCEPTANCE_86_01_2026-11-19.md). No screenshot/device or overall 44-rule runtime pass claimed.
+- **82.* partial, NOT accepted:** commit [c22ac8d](https://github.com/mohamedsalh333555/VSP.App/commit/c22ac8d0894eaf1020557706589b5dc64fef7e9a) invalidates pending challenge code responses when captain identity or team changes; only the currently authenticated captain can reveal the current team's latest response. Added 4 local guard tests and wired targeted CI; staging 8-digit lifecycle, two-account role proof and server authorization remain open.
+- **640 tasks / 343 accepted / 297 open (53.59%).** No main merge, Production/Supabase/Paymob write, legacy 1v1 deletion, or APK.
+
 ## 2026-11-19 — Verified UXLP review, auth-scoped private fields and football position preference (+3; 342/298)
 
 - **01.02 (339→340 / 301→300):** reviewed 44 UXLP code-rule source-evidence rows and 88 real screen associations; 39 still need runtime, 5 need decisions. [Bounded evidence](VSP_ACCEPTANCE_BATCH_01_02_12_04_13_06_2026-11-19.md), [rule CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222174).

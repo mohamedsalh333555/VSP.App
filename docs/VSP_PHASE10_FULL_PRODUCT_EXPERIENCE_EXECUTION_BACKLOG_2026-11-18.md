@@ -30,11 +30,11 @@ Before each batch inspect latest GitHub head and the prior [behavioral audit](VS
 4. **Repeat booking, invitation and notifications:** 86.06 always refetch fresh slot, authoritative price, deposit and explicit confirmation; no duplicate booking/payment. 86.07 share/deep-link to consented accepted invite with privacy-safe attribution. Reuse 45–49 and 54 for event-triggered notification consent, dedupe, frequency and delivery, never open-app-only pressure.
 5. **Measurement and acceptance:** original 50–55, 57–60, 78–80 track meaningful first booking/join, repeat booking, active teams, accepted invites, qualified D1/D7/D30, verified result views, cup participation; role-separated, privacy/consent/deletion-aware, actual Firebase collection and dashboards, staged experiments. Verify Flutter analyze/unit/widget/integration, SQL authorization/two accounts, payment idempotency, Arabic/English RTL, weak network, device, Admin+Website. Do not claim retention improvement without cohort and controlled data.
 
-## Seven new unique tasks — each remains OPEN
+## Seven new unique tasks — one accepted with bounded evidence, six remain OPEN
 
 | ID | Priority | Actual engineering deliverable | Acceptance | Status |
 |---|---|---|---|---|
-| 86.01 | P1 | حماية الصفحة الرئيسية من أي كروت إنجازات أو ترتيب شخصي أو إعادة ترتيب وظائف الاكتشاف والحجز والبانر والتنقل، بعقد UI رجوعي بالعربية والإنجليزية | اختبار الشاشات الحالية عربي وإنجليزي، عدم إزاحة المحتوى أو إنشاء كارت شخصي | OPEN |
+| 86.01 | P1 | حماية الصفحة الرئيسية من أي كروت إنجازات أو ترتيب شخصي أو إعادة ترتيب وظائف الاكتشاف والحجز والبانر والتنقل، بعقد UI رجوعي بالعربية والإنجليزية | اختبار الشاشات الحالية عربي وإنجليزي، عدم إزاحة المحتوى أو إنشاء كارت شخصي | ACCEPTED — [source/layout/nav, not device](VSP_HOME_STRUCTURE_BOUNDED_ACCEPTANCE_86_01_2026-11-19.md) |
 | 86.02 | P1 | حلقة بعد المباراة: نتيجة تحدٍ معتمدة ثم أثرها الحقيقي في فريق المستخدم ثم فعل واحد لمباراة أو تحدٍ جديد، بلا مكافأة لنتيجة معلقة أو متنازع عليها | اختبار widget وربط نتيجة مؤكدة على Staging بحسابين، وحالات الرفض والنزاع والإلغاء | OPEN |
 | 86.03 | P1 | ملخص آخر خمس مواجهات معتمدة وتغير الترتيب وفق نفس المسابقة وقواعد النقاط في Team Profile من دون تكرار الكارت | اختبار مصدر الترتيب وتصحيح النتائج والبيانات الناقصة والتواريخ وRTL | OPEN |
 | 86.04 | P1 | إزالة عرض 1v1 كمسابقة حالية من أسطح اللاعب وربط بطولة Team Skills Cup بإذن النشر الرسمي مع حفظ السجلات التاريخية والمالية | اختبارات current/legacy وfeature flag مع جرد الاعتماديات بلا حذف بيانات | OPEN |
@@ -49,3 +49,4 @@ Relevant staged server tests precede accepting any RLS, challenge, award, paymen
 ## Deduplicated counter
 
 Original: **633 (328 accepted, 305 open)**. New: **7 unique OPEN 86.01–86.07**. Active: **640 total / 328 accepted / 312 remaining = 51.25%**. Addition is scope only, not product implementation. All other requested work retains its existing IDs.
+> 19 November bounded status: 86.01 accepted at source/Flutter widget scope. Six 86.* tasks remain OPEN. The intake-time 328/640 baseline above is historical; current accounting is 343/640. No player Home component/layout change was made.
