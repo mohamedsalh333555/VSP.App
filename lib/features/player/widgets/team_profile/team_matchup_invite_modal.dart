@@ -155,8 +155,30 @@ Future<void> showTeamMatchupInviteModal(
                           if (ctx.mounted) Navigator.of(ctx).pop();
                           return;
                         }
-                        await Clipboard.setData(ClipboardData(text: code));
+                        try {
+                          await Clipboard.setData(ClipboardData(text: code));
+                        } catch (_) {
+                          if (!ctx.mounted) return;
+                          if (!isStillAuthorized()) {
+                            Navigator.of(ctx).pop();
+                            return;
+                          }
+                          VSPFeedback.showError(
+                            ctx,
+                            isArabic
+                                ? 'تعذر نسخ الكود. حاول مرة أخرى.'
+                                : 'Could not copy the code. Please try again.',
+                          );
+                          return;
+                        }
                         if (!ctx.mounted) return;
+                        // An account/team change can happen while the
+                        // platform clipboard request is in flight. Never
+                        // announce success to the newly signed-in viewer.
+                        if (!isStillAuthorized()) {
+                          Navigator.of(ctx).pop();
+                          return;
+                        }
                         VSPFeedback.showSuccess(
                           ctx,
                           isArabic
