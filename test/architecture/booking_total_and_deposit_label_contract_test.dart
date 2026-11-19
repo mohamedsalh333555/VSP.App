@@ -28,6 +28,8 @@ void main() {
     // parent widget incorrectly passes bookingEnabled: true.
     expect(stadiumBar, contains('final financialInputsValid = stadium.basePrice.isFinite'));
     expect(stadiumBar, contains('onPressed: bookingEnabled && financialInputsValid'));
+    expect(stadiumBar, contains('stadium.isVerified && !stadium.isBlocked &&'));
+    expect(stadiumBar, contains('!stadium.isUnderMaintenance'));
     expect(bar, contains("isArabic ? 'إجمالي الحجز' : 'Booking total'"));
     expect(bar, isNot(contains("isArabic ? 'المبلغ المطلوب' : 'Amount due'")));
     // A stale price cannot be displayed when the selected time slots vanish.
