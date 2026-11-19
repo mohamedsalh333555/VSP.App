@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -18,6 +19,7 @@ class FakeRegisterAuth extends ChangeNotifier implements AuthProvider {
   Map<String, dynamic>? registrationMetadata;
   int registrationCalls = 0;
   bool throwOnSignup = false;
+  Completer<bool>? deferredSignup;
 
   @override
   String get governorate => selectedGovernorate ?? '';
@@ -51,6 +53,7 @@ class FakeRegisterAuth extends ChangeNotifier implements AuthProvider {
     if (throwOnSignup) {
       throw StateError('Database secret user exists / contact@example.com');
     }
+    if (deferredSignup != null) return deferredSignup!.future;
     return false;
   }
 
@@ -127,6 +130,44 @@ Future<void> submit(WidgetTester tester) async {
 void main() {
   for (final language in ['ar', 'en']) {
     for (final owner in [false, true]) {
+      testWidgets('${owner ? 'owner' : 'player'} registration keeps fields and allows retry after interrupted request in $language',
+          (tester) async {
+        final fake = FakeRegisterAuth()..deferredSignup = Completer<bool>();
+        await tester.pumpWidget(host(fake, language: language, owner: owner));
+        await tester.pump();
+        await fillRequiredDetails(tester, language, choosePosition: !owner);
+        await submit(tester);
+        expect(fake.registrationCalls, 1);
+        expect(tester.widget<PrimaryButton>(find.byType(PrimaryButton).last).isLoading, isTrue);
+        expect(tester.widget<PrimaryButton>(find.byType(PrimaryButton).last).onPressed, isNull);
+
+        fake.deferredSignup!.completeError(
+          StateError('PRIVATE_NETWORK_INTERRUPTED'));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 4));
+        await tester.pump();
+        expect(tester.widget<PrimaryButton>(find.byType(PrimaryButton).last).isLoading, isFalse);
+        expect(find.textContaining('PRIVATE_NETWORK_INTERRUPTED'), findsNothing);
+        final fields = find.byType(TextFormField);
+        expect(tester.widget<TextFormField>(fields.at(0)).controller!.text, 'Ahmed');
+        expect(tester.widget<TextFormField>(fields.at(1)).controller!.text, 'Salah');
+        expect(tester.widget<TextFormField>(fields.at(3)).controller!.text,
+            ' captain@example.com ');
+        expect(find.text('2008-01-01'), findsOneWidget);
+        if (!owner) {
+          expect(tester.widget<VSPPositionSelector>(
+              find.byType(VSPPositionSelector)).selectedPosition, 'FW');
+        }
+        fake.deferredSignup = null;
+        await submit(tester);
+        expect(fake.registrationCalls, 2);
+        expect(fake.registrationMetadata?['name'], 'Ahmed Salah');
+        expect(fake.registrationRole, owner ? 'owner' : 'player');
+        await tester.pump(const Duration(seconds: 4));
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+      });
+
       testWidgets('${owner ? 'owner' : 'player'} registration submits validated payload in $language',
           (tester) async {
         final fake = FakeRegisterAuth();
