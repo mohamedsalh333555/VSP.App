@@ -104,6 +104,9 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('12345678'), findsOneWidget);
     expect(find.text('تعذر نسخ الكود. حاول مرة أخرى.'), findsOneWidget);
+    // Drain the three-second auto-dismiss toast timer in widget fake time.
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('copy completion after captain revocation never announces success',
