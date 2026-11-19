@@ -362,15 +362,38 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('stale profile cannot edit a different authenticated account in $language',
+    testWidgets('stale profile cannot reveal fields or edit another account in $language',
         (tester) async {
       final auth = FakeProfileAuth(profile: person())
         ..sessionOverride = 'another-account';
       await tester.pumpWidget(host(auth, language));
-      await save(tester);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.byType(PrimaryButton), findsNothing);
+      expect(find.text('Old Name'), findsNothing);
       expect(auth.updates, 0);
       expect(auth.photoUpdates, 0);
       expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('stale edit form stays hidden after switching to a new valid user in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person());
+      await tester.pumpWidget(host(auth, language));
+      expect(find.byType(TextFormField), findsWidgets);
+      auth.sessionOverride = 'other-account';
+      auth.notifyListeners();
+      await tester.pump();
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.text('Old Name'), findsNothing);
+      // A freshly hydrated profile is not allowed to reuse controllers
+      // populated with private fields from the previous account.
+      auth.profile = person(owner: true, position: null);
+      auth.sessionOverride = 'owner-1';
+      auth.notifyListeners();
+      await tester.pump();
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.byType(PrimaryButton), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
