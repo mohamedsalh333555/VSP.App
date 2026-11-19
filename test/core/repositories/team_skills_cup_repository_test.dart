@@ -576,6 +576,32 @@ void main() {
     ])?['id'], 'application-1');
   });
 
+  test('periodic cup refresh recovers an invalidated pending roster read', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    final start = source.indexOf('Future<void> _refreshLatest() async');
+    final stop = source.indexOf('Future<void> _reload() async', start);
+    expect(start, greaterThanOrEqualTo(0));
+    expect(stop, greaterThan(start));
+    final refresh = source.substring(start, stop);
+    final invalidation = refresh.indexOf('++_readGeneration');
+    final refreshed = refresh.indexOf('final teamToRefresh = _selectedTeamId;');
+    final rosterRequest = refresh.indexOf('await _loadRoster(teamToRefresh);');
+    expect(invalidation, greaterThanOrEqualTo(0));
+    expect(refreshed, greaterThan(invalidation));
+    expect(rosterRequest, greaterThan(refreshed));
+    expect(refresh, contains('teamToRefresh != null && !_rosterVerified'));
+    expect(refresh, contains("team['id']?.toString() == teamToRefresh"));
+    // The roster handler independently verifies identity and generation
+    // before making the captain's selection available for submission.
+    final rosterStart = source.indexOf('Future<void> _loadRoster(String teamId)');
+    final submitStart = source.indexOf('Future<void> _submit() async', rosterStart);
+    final roster = source.substring(rosterStart, submitStart);
+    expect(roster, contains('generation != _readGeneration'));
+    expect(roster, contains('viewerId != _viewerUserId'));
+  });
+
   test('registration freezes player and role choices across cup status read', () {
     final source = File(
       'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
