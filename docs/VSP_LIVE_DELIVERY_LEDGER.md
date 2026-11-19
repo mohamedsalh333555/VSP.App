@@ -1,3 +1,10 @@
+## 2026-11-19 — Three additional scoped accepted tasks (335/305)
+
+- **01.03 (332→333 / 308→307):** classified 44 UXLP-44 gaps and 5 unresolved decisions; [CI PASSED](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426149). No complete runtime screen acceptance.
+- **12.02 (333→334 / 307→306):** Arabic/English editable player/owner profile fields and validations; [Flutter CI PASSED](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426000). Fake provider, not Supabase persistence.
+- **16.01 (334→335 / 306→305):** upcoming and historical bookings render in order and remain scrollable; [Flutter CI PASSED](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426063). Fake repository, not a live two-account flow.
+- [Evidence and exact per-task counting](VSP_ACCEPTANCE_BATCH_01_03_12_02_16_01_2026-11-19.md). **640 active / 335 accepted / 305 open (52.34%).** No production writes, Paymob, main merge or APK.
+
 ## 2026-11-19 — Four individually accepted audit/client-test subtasks (332/308)
 
 - **04.02: 328 → 329, 312 → 311.** Translation source audit: Arabic/English 756 keys each, zero absent/blank/placeholder-mismatched keys. [CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276515). Remaining literal UI-copy candidates and device coverage separate.
