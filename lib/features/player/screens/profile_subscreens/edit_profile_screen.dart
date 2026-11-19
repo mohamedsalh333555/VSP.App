@@ -61,10 +61,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  super.dispose();
  }
 
+ // Do not trust a cached profile as the acting identity: logout or an
+ // account switch may update the Supabase session before profile hydration.
+ String? _verifiedActiveProfileId(AuthProvider auth) {
+   final signedInId = auth.currentUser?.id;
+   final profileId = auth.userModel?.uid;
+   if (signedInId == null || signedInId.isEmpty ||
+       profileId == null || profileId.isEmpty ||
+       signedInId != profileId) return null;
+   return signedInId;
+ }
+
+ bool _stillEditingAccount(AuthProvider auth, String id) =>
+     _verifiedActiveProfileId(auth) == id;
+
  Future<void> _pickImage() async {
  if (_isLoading) return;
  final auth = context.read<AuthProvider>();
- final requestingUserId = auth.userModel?.uid ?? auth.currentUser?.id;
+ final requestingUserId = _verifiedActiveProfileId(auth);
+ if (requestingUserId == null) return;
  try {
    XFile? image;
    if (widget.pickProfileImage != null) {
@@ -74,7 +89,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
          context, aspectRatio: CropAspectRatioPreset.square);
    }
    if (!mounted ||
-       (auth.userModel?.uid ?? auth.currentUser?.id) != requestingUserId) {
+       !_stillEditingAccount(auth, requestingUserId)) {
      return;
    }
    if (image != null) {
@@ -82,7 +97,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
    }
  } catch (_) {
    if (!mounted) return;
-   if ((auth.userModel?.uid ?? auth.currentUser?.id) != requestingUserId) {
+   if (!_stillEditingAccount(auth, requestingUserId)) {
      return;
    }
    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -113,7 +128,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  }
 
  final auth = Provider.of<AuthProvider>(context, listen: false);
- final submittingUserId = auth.userModel?.uid ?? auth.currentUser?.id;
+ final submittingUserId = _verifiedActiveProfileId(auth);
  if (submittingUserId == null || submittingUserId.isEmpty) {
  VSPFeedback.showError(
  context,
@@ -149,7 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
  final success = await auth.updateProfile(updateData);
  if (!mounted ||
-     (auth.userModel?.uid ?? auth.currentUser?.id) != submittingUserId) {
+     !_stillEditingAccount(auth, submittingUserId)) {
  return;
  }
  if (!success) {
@@ -164,7 +179,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
        ? await widget.compressProfileImage!(_newProfileImage!)
        : await StorageService().compressImage(_newProfileImage!);
    if (!mounted ||
-       (auth.userModel?.uid ?? auth.currentUser?.id) != submittingUserId) {
+       !_stillEditingAccount(auth, submittingUserId)) {
      return;
    }
    photoSaved = await auth.updateProfilePhoto(
@@ -174,7 +189,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
    // and allow an explicit retry without claiming the full save failed.
  }
  if (!mounted ||
-     (auth.userModel?.uid ?? auth.currentUser?.id) != submittingUserId) {
+     !_stillEditingAccount(auth, submittingUserId)) {
  return;
  }
  if (!photoSaved) {
@@ -191,7 +206,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.profileUpdatedSuccess);
  Navigator.pop(context); // Go back to profile screen
  } catch (e) {
- if (mounted) {
+ if (mounted && _stillEditingAccount(auth, submittingUserId)) {
  VSPFeedback.showError(context, AppLocalizations.of(context)!.profileUpdateFailed);
  }
  } finally {
