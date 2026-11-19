@@ -1,3 +1,8 @@
+## 2026-11-19 — Challenge result submission-time definition accepted (348/284 open, 8 retired)
+
+- **36.01 accepted (+1):** documented server-end-time-only entry rule for team challenge results. A static CI source contract verifies that the checked-in Supabase function compares booking end_time against database time, refuses early submissions, cancelled matches, wrong type and already-finalized bookings before writes. [Precise policy and limits](VSP_CHALLENGE_RESULT_SUBMISSION_TIME_POLICY_36_01_2026_11_19.md); [passing source-contract CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44548366128). This **does not** prove a hosted deployment, independent captains, concurrent submissions or non-played appeals; those remain 36.02–36.07, 84 and staging tasks.
+- **632 active: 348 accepted / 284 open; eight retired 43.* kept outside active; 640 original historical.** No production SQL, payments, APK or main merge.
+
 ## 2026-11-19 — Challenge tie policy accepted (347/285 open, 8 retired)
 
 - **37.04 accepted (+1):** confirmed team challenge standings share rank when points tie (1/1/3), team ID stabilizes display order only, and ambiguous top-three medals are hidden. [Policy](VSP_CHALLENGE_TIE_POLICY_37_04_2026_11_19.md), [successful ranking CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44547284353) with two new tests and existing widget coverage. This is only a **documented points-tie policy and tested Flutter presentation**, not canonical result-source validation, League ranking, Team Skills Cup winner, prizes or staging authorization.
