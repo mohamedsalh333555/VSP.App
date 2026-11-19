@@ -7,6 +7,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../services/password_recovery_session_guard.dart';
 
 /// Screen shown when the user clicks a password-reset deep link.
 /// Supabase has already established the recovery session before this screen
@@ -28,6 +29,19 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  bool _showConfirm = false;
  String? _errorMessage;
  String? _successMessage;
+
+ void _onRecoverySessionChanged(bool isAr) {
+   if (!mounted) return;
+   _newPassController.clear();
+   _confirmPassController.clear();
+   setState(() {
+     _isLoading = false;
+     _successMessage = null;
+     _errorMessage = isAr
+         ? 'تغيّر الحساب أثناء الاستعادة. اطلب رابطًا جديدًا.'
+         : 'The account changed during recovery. Request a new link.';
+   });
+ }
 
  // ── Password Strength ──────────────────────────────────────────────────────
 
@@ -79,8 +93,12 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
         throw Exception(isAr ? 'فشل تحديث كلمة المرور' : 'Failed to update password');
       }
 
-      if (auth.currentUser?.id != recoveryUserId) {
-        throw StateError('Password recovery session changed');
+      if (!PasswordRecoverySessionGuard.isCurrent(
+        recoveryUserId: recoveryUserId,
+        currentUserId: () => auth.currentUser?.id,
+      )) {
+        _onRecoverySessionChanged(isAr);
+        return;
       }
 
       if (!mounted) return;
@@ -92,6 +110,15 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
       // Small delay then let GoRouter redirect (auth state refreshes)
       await Future.delayed(const Duration(milliseconds: 1200));
       if (!mounted) return;
+      // The original account may have changed during the success delay.
+      // Never log out a newer account.
+      if (!PasswordRecoverySessionGuard.isCurrent(
+        recoveryUserId: recoveryUserId,
+        currentUserId: () => mounted ? auth.currentUser?.id : null,
+      )) {
+        _onRecoverySessionChanged(isAr);
+        return;
+      }
       // Sign out and back in to refresh session cleanly
       try {
         await auth.signOut();
