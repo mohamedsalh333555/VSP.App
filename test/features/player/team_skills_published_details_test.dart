@@ -203,11 +203,32 @@ void main() {
     expect(TeamSkillsCupTab.publishedStageSummary(
       phases, isArabic: false), '2 announced stages');
     expect(TeamSkillsCupTab.publishedStageSummary(
-      phases, isArabic: true), '2 مرحلة معلنة');
+      phases, isArabic: true), 'مرحلتان معلنتان');
     expect(TeamSkillsCupTab.visiblePublishedPhases([
       {'stage_no': 8, 'name_ar': 'Same'},
       {'stage_no': 8, 'name_ar': 'Same'},
     ]), hasLength(1));
+  });
+
+  test('official phase counts use correct Arabic singular dual and plural', () {
+    List<Map<String, dynamic>> stages(int n) => [
+      for (var i = 1; i <= n; i++)
+        {'stage_no': i, 'name_ar': 'مرحلة', 'weight': 5}
+    ];
+    expect(TeamSkillsCupTab.publishedStageSummary(
+        stages(1), isArabic: true), 'مرحلة واحدة معلنة');
+    expect(TeamSkillsCupTab.publishedStageSummary(
+        stages(2), isArabic: true), 'مرحلتان معلنتان');
+    expect(TeamSkillsCupTab.publishedStageSummary(
+        stages(3), isArabic: true), '3 مراحل معلنة');
+    expect(TeamSkillsCupTab.publishedStageSummary(
+        stages(10), isArabic: true), '10 مراحل معلنة');
+    expect(TeamSkillsCupTab.publishedStageSummary(
+        stages(11), isArabic: true), '11 مرحلة معلنة');
+    expect(TeamSkillsCupTab.publishedStageSummary(
+        stages(1), isArabic: false), '1 announced stage');
+    expect(TeamSkillsCupTab.publishedStageSummary(
+        stages(2), isArabic: false), '2 announced stages');
   });
 
   test('completion requires a verified announced phase set matching the server', () {
