@@ -130,4 +130,60 @@ void main() {
     expect(find.text('4 wins'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  for (final locale in const [Locale('ar'), Locale('en')]) {
+    testWidgets('contradictory public opponent identity hides score: ${locale.languageCode}',
+        (tester) async {
+      final contradictory = <Map<String, dynamic>>[
+        ..._oldMatchups,
+        {
+          ..._oldMatchups.single,
+          'team_b': {'name': 'Different Wolves', 'logo_url': ''},
+        },
+        ..._oldMatchups,
+      ];
+      await tester.pumpWidget(_wrap(
+        locale: locale,
+        isLoading: false,
+        hasError: false,
+        records: contradictory,
+        onRetry: () {},
+      ));
+      expect(find.text('vs Wolves'), findsNothing);
+      expect(find.text('ضد Wolves'), findsNothing);
+      expect(find.text('4 wins'), findsNothing);
+      expect(find.text('المواجهات المسجلة: 4 فوز • 0 تعادل • 1 خسارة'),
+          findsNothing);
+      expect(find.text(locale.languageCode == 'ar'
+          ? 'بيانات المواجهات المتاحة غير صالحة للعرض'
+          : 'Available head-to-head records cannot be verified'),
+          findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('mirrored matching opponent rows count once, not twice',
+      (tester) async {
+    await tester.pumpWidget(_wrap(
+      locale: const Locale('en'),
+      isLoading: false,
+      hasError: false,
+      records: [
+        ..._oldMatchups,
+        {
+          'team_a_id': 'team-b',
+          'team_b_id': 'team-a',
+          'team_a': {'name': 'Wolves', 'logo_url': ''},
+          'team_b_wins': 4,
+          'team_a_wins': 1,
+          'draws': 0,
+        },
+      ],
+      onRetry: () {},
+    ));
+    expect(find.text('vs Wolves'), findsOneWidget);
+    expect(find.text('Recorded matchups: 4 W • 0 D • 1 L'), findsOneWidget);
+    expect(find.text('4 wins'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }

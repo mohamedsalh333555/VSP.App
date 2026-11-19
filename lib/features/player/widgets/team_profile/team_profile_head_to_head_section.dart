@@ -33,6 +33,23 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
     );
   }
 
+  /// A public opponent name or logo is identity metadata, not a score.
+  /// Two paginated/cached rows with equal counters but different identities
+  /// are still contradictory and must never pick the first team name.
+  static (String?, String?) _opponentIdentityForTeam(
+      String teamId, Map<String, dynamic> row) {
+    final opponent = row[row['team_a_id'] == teamId ? 'team_b' : 'team_a'];
+    final data = opponent is Map ? opponent : const {};
+    final rawName = data['name'];
+    final rawLogo = data['logo_url'];
+    return (
+      rawName is String && rawName.trim().isNotEmpty
+          ? rawName.trim() : null,
+      rawLogo is String && rawLogo.trim().isNotEmpty
+          ? rawLogo.trim() : null,
+    );
+  }
+
   /// A repeated row for the same opponent must not create duplicate cards.
   /// If two rows disagree, neither can be trusted: hide that opponent rather
   /// than silently selecting the first or showing contradictory results.
@@ -59,7 +76,9 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
       final previous = byOpponent[opponentId];
       if (previous == null) {
         byOpponent[opponentId] = row;
-      } else if (_countsForTeam(id, previous) != _countsForTeam(id, row)) {
+      } else if (_countsForTeam(id, previous) != _countsForTeam(id, row) ||
+          _opponentIdentityForTeam(id, previous) !=
+              _opponentIdentityForTeam(id, row)) {
         byOpponent.remove(opponentId);
         conflicts.add(opponentId);
       }
