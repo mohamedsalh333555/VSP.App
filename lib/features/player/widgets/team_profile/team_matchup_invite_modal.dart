@@ -6,17 +6,56 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../shared/widgets/primary_button.dart';
 
+/// Keeps displayed/copyable challenge codes scoped to the authorized viewer.
+/// [authorizationChanges] should notify when the active account or team changes.
+/// The caller remains responsible for rechecking server-side captain privileges.
 Future<void> showTeamMatchupInviteModal(
   BuildContext context,
-  String code,
-) async {
+  String code, {
+  bool Function()? canReveal,
+  Listenable? authorizationChanges,
+}) async {
+  bool isStillAuthorized() {
+    try {
+      return canReveal?.call() ?? true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   await showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
     backgroundColor: VSPColors.transparent,
     builder: (ctx) {
-      final isArabic = Localizations.localeOf(ctx).languageCode == 'ar';
-      return Container(
+      Widget buildScopedSheet(BuildContext ctx) {
+        final isArabic = Localizations.localeOf(ctx).languageCode == 'ar';
+        if (!isStillAuthorized()) {
+          return SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isArabic ? 'كود الدعوة لم يعد متاحًا' : 'Invite code unavailable',
+                    style: const TextStyle(
+                      color: VSPColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  PrimaryButton(
+                    text: isArabic ? 'إغلاق' : 'Close',
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return Container(
         padding: EdgeInsets.fromLTRB(
           VSPSpacing.xl,
           VSPSpacing.xl,
@@ -108,6 +147,12 @@ Future<void> showTeamMatchupInviteModal(
                         color: VSPColors.white,
                       ),
                       onPressed: () async {
+                        // Copy is a new privileged action: recheck authorization
+                        // even before a queued account-change repaint arrives.
+                        if (!isStillAuthorized()) {
+                          if (ctx.mounted) Navigator.of(ctx).pop();
+                          return;
+                        }
                         await Clipboard.setData(ClipboardData(text: code));
                         if (!ctx.mounted) return;
                         VSPFeedback.showSuccess(
@@ -130,6 +175,12 @@ Future<void> showTeamMatchupInviteModal(
             const SizedBox(height: VSPSpacing.md),
           ],
         ),
+      );
+      }
+      if (authorizationChanges == null) return buildScopedSheet(ctx);
+      return AnimatedBuilder(
+        animation: authorizationChanges,
+        builder: (context, _) => buildScopedSheet(context),
       );
     },
   );

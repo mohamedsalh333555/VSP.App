@@ -362,7 +362,16 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
         requestedAccountId: requestedAccountId,
         requestVersion: requestVersion,
       )) return;
-      await showTeamMatchupInviteModal(context, code);
+      await showTeamMatchupInviteModal(
+        context,
+        code,
+        canReveal: () => _canRevealGeneratedInvite(
+          requestedTeamId: requestedTeamId,
+          requestedAccountId: requestedAccountId,
+          requestVersion: requestVersion,
+        ),
+        authorizationChanges: context.read<app_auth.AuthProvider>(),
+      );
     } catch (_) {
       debugPrint('Error generating invite code (details redacted)');
       if (mounted && _canRevealGeneratedInvite(
