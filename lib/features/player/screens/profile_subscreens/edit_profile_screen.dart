@@ -64,12 +64,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  final auth = context.read<AuthProvider>();
  final requestingUserId = auth.userModel?.uid ?? auth.currentUser?.id;
  try {
-   final image = widget.pickProfileImage != null
-       ? await widget.pickProfileImage!(context)
-       : await ImagePickService.pick(
-           context, aspectRatio: CropAspectRatioPreset.square);
+   XFile? image;
+   if (widget.pickProfileImage != null) {
+     image = await widget.pickProfileImage!(context);
+   } else {
+     image = await ImagePickService.pick(
+         context, aspectRatio: CropAspectRatioPreset.square);
+   }
    if (!mounted ||
-       (auth.userModel?.uid ?? auth.currentUser?.id) != requestingUserId) return;
+       (auth.userModel?.uid ?? auth.currentUser?.id) != requestingUserId) {
+     return;
+   }
    if (image != null) {
      setState(() => _newProfileImage = image);
    }
