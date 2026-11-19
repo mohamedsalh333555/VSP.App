@@ -1074,7 +1074,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
               return ExpansionTile(
                 iconColor: VSPColors.accent,
                 collapsedIconColor: VSPColors.textSecondary,
-                title: Text('#${entry.rank} ${_teamNames[entry.data['team_id'].toString()] ?? entry.data['team_id']}',
+                title: Text('#${entry.rank} ${_teamNames[entry.data['team_id'].toString()] ?? (ar ? 'فريق غير متاح' : 'Team unavailable')}',
                     style: style),
                 subtitle: Text(
                     '${entry.data['points']} ${ar ? 'نقطة' : 'points'} • '
