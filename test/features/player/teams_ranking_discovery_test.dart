@@ -157,4 +157,65 @@ void main() {
     expect(tester.takeException(),isNull);
   });
 
+  for (final locale in const [Locale('ar'), Locale('en')]) {
+    testWidgets('retired 1v1 winner appears only as a historical title: ${locale.languageCode}',
+        (tester) async {
+      final team = _team('legacy-winner', 'Nile Stars', 'Aswan', 'Football');
+      var lookups = 0;
+      await tester.pumpWidget(ChangeNotifierProvider<AuthProvider>(
+        create: (_) => _AnonymousAuth(),
+        child: MaterialApp(
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: TeamsRankingTab(
+            teamsStream: Stream.value([team]),
+            selectedLocation: 'Aswan',
+            selectedSport: 'Football',
+            onRetry: () {},
+            historical1v1TitleLookup: (teamId) async {
+              expect(teamId, 'legacy-winner');
+              lookups++;
+              return true;
+            },
+          )),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      final isArabic = locale.languageCode == 'ar';
+      final label = isArabic ? 'لقب تاريخي' : 'Legacy title';
+      expect(find.text(label), findsOneWidget);
+      expect(find.text('بطل 1v1'), findsNothing);
+      final tooltip = tester.widget<Tooltip>(find.ancestor(
+          of: find.text(label), matching: find.byType(Tooltip)));
+      expect(tooltip.message, contains(isArabic ? 'المتوقفة' : 'retired'));
+      expect(lookups, greaterThan(0));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('teams without legacy titles have no former-trophy badge',
+      (tester) async {
+    await tester.pumpWidget(ChangeNotifierProvider<AuthProvider>(
+      create: (_) => _AnonymousAuth(),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: TeamsRankingTab(
+          teamsStream: Stream.value([
+            _team('new-team', 'Newcomers', 'Aswan', 'Football'),
+          ]),
+          selectedLocation: 'Aswan',
+          selectedSport: 'Football',
+          onRetry: () {},
+          historical1v1TitleLookup: (_) async => false,
+        )),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Legacy title'), findsNothing);
+    expect(find.text('بطل 1v1'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
 }

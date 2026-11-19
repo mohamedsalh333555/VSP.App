@@ -40,6 +40,8 @@ class TeamsRankingTab extends StatefulWidget {
   final String selectedSport;
   final VoidCallback onRetry;
   final TeamRepository? teamRepository;
+  /// Read-only lookup for retired 1v1 awards; these are NOT active events.
+  final Future<bool> Function(String teamId)? historical1v1TitleLookup;
   final Widget Function(Team team)? teamProfileBuilder;
 
   const TeamsRankingTab({
@@ -49,6 +51,7 @@ class TeamsRankingTab extends StatefulWidget {
     required this.selectedSport,
     required this.onRetry,
     this.teamRepository,
+    this.historical1v1TitleLookup,
     this.teamProfileBuilder,
   });
 
@@ -570,7 +573,8 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                         ),
                       ),
                     FutureBuilder<bool>(
-                      future: TeamRepository().has1v1Champion(team.id),
+                      future: widget.historical1v1TitleLookup?.call(team.id) ??
+                          TeamRepository().has1v1Champion(team.id),
                       builder: (context, champSnap) {
                         if (champSnap.data == true) {
                           return Container(
@@ -581,17 +585,26 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                               borderRadius: BorderRadius.circular(VSPRadius.full),
                               border: Border.all(color: VSPColors.warning, width: 0.8),
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Iconsax.crown_copy, size: 11, color: VSPColors.warning),
-                                SizedBox(width: 3),
-                                Text(
-                                  'بطل 1v1',
-                                  style: TextStyle(
-                                      color: VSPColors.warning, fontSize: 9, fontWeight: FontWeight.bold),
-                                ),
-                              ],
+                            child: Tooltip(
+                              message: isArabic
+                                  ? 'لقب تاريخي من بطولة 1 ضد 1 المتوقفة'
+                                  : 'Historical title from the retired 1v1 competition',
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Iconsax.crown_copy,
+                                      size: 11, color: VSPColors.warning),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    isArabic ? 'لقب تاريخي' : 'Legacy title',
+                                    style: const TextStyle(
+                                      color: VSPColors.warning,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         }
