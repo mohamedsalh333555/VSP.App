@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vsp_application/core/models/user_model.dart';
 import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/features/player/screens/profile_subscreens/edit_profile_screen.dart';
@@ -13,6 +14,7 @@ import 'package:vsp_application/shared/widgets/primary_button.dart';
 
 class FakeProfileAuth extends ChangeNotifier implements AuthProvider {
   UserModel profile;
+  String? sessionOverride;
   final bool success;
   Completer<bool>? pendingSave;
   bool throwOnSave = false;
@@ -25,6 +27,21 @@ class FakeProfileAuth extends ChangeNotifier implements AuthProvider {
 
   @override
   UserModel? get userModel => profile;
+
+  @override
+  User? get currentUser {
+    final id = sessionOverride ?? profile.uid;
+    if (id.isEmpty) return null;
+    return User.fromJson({
+      'id': id,
+      'aud': 'authenticated',
+      'role': 'authenticated',
+      'email': 'player@test.invalid',
+      'created_at': '2026-01-01T00:00:00.000Z',
+      'app_metadata': <String, dynamic>{},
+      'user_metadata': <String, dynamic>{},
+    });
+  }
 
   @override
   bool get isPlayer => profile.isPlayer;
@@ -342,6 +359,36 @@ void main() {
       expect(find.textContaining('Private database exception'), findsNothing);
       expect(find.text('Safe Edited Name'), findsOneWidget);
       expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('stale profile cannot edit a different authenticated account in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person())
+        ..sessionOverride = 'another-account';
+      await tester.pumpWidget(host(auth, language));
+      await save(tester);
+      expect(auth.updates, 0);
+      expect(auth.photoUpdates, 0);
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('session switches mid-save even when cached profile still belongs to prior account in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person())
+        ..pendingSave = Completer<bool>();
+      await tester.pumpWidget(host(auth, language));
+      await tester.ensureVisible(find.byType(PrimaryButton));
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pump();
+      expect(auth.updates, 1);
+      auth.sessionOverride = 'another-account';
+      auth.notifyListeners();
+      auth.pendingSave!.complete(true);
+      await tester.pump();
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(auth.photoUpdates, 0);
       expect(tester.takeException(), isNull);
     });
 
