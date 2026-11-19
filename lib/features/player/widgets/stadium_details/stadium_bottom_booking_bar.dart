@@ -122,7 +122,9 @@ class StadiumBottomBookingBar extends StatelessWidget {
 
     final bookingAction = PrimaryButton(
       text: isArabic ? 'احجز الآن' : 'Book Now',
-      onPressed: bookingEnabled && financialInputsValid
+      onPressed: bookingEnabled && financialInputsValid &&
+          stadium.isVerified && !stadium.isBlocked &&
+          !stadium.isUnderMaintenance
           ? () {
               unawaited(
                 AnalyticsService.logBookingStarted(venueId: stadium.id),
