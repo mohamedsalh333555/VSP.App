@@ -1,3 +1,9 @@
+## 2026-11-19 — Email OTP Flutter verification accepted with isolated provider (345/295)
+
+- **11.04 (344→345 accepted / 296→295 open):** real Flutter VerifyEmailScreen tests with fake AuthProvider: incomplete code refuses provider, six-digit paste submits expected email/token once, duplicate pending request blocked, Arabic/English invalid OTP errors, redacted thrown diagnostics and resend after 60-second UI cooldown. [Focused OTP CI **19 tests passed**](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44487774510) and [bounded acceptance](VSP_EMAIL_OTP_UI_BOUNDED_ACCEPTANCE_11_04_2026_11_19.md).
+- This checks only the app's current **email** verification UX; no live SMTP/OTP, hosted Supabase, timing attack, rate limiting, real two-account login or Android test. Those remain unaccepted elsewhere.
+- **640 active / 345 accepted / 295 open (53.91%).** No main merge, production/payment changes or APK.
+
 ## 2026-11-19 — Mocked password recovery screen accepted (344/296)
 
 - **11.03 (343→344 accepted / 297→296 open):** tested valid/short/mismatched password change, successful sign-out of original recovering user, forbidden sign-out of a switched account both during update and after success delay, redacted provider exceptions, and request-link privacy. [Passing 44-test Recovery CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44486325222); [precise client-only acceptance](VSP_PASSWORD_RECOVERY_BOUNDED_ACCEPTANCE_11_03_2026_11_19.md).
