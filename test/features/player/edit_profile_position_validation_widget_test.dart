@@ -90,12 +90,16 @@ Future<void> save(WidgetTester tester) async {
   await tester.pump();
 }
 
-Future<XFile> testProfilePhoto() async {
+XFile testProfilePhoto() {
+  // Flutter widget tests run under FakeAsync. Unpumped asynchronous File I/O
+  // can stall a test indefinitely; use synchronous fixture and cleanup.
   final path = '${Directory.systemTemp.path}/vsp_edit_avatar_${DateTime.now().microsecondsSinceEpoch}.png';
   final png = base64Decode(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/GloAAAAASUVORK5CYII=');
-  final file = await File(path).writeAsBytes(png);
-  addTearDown(() async { if (await file.exists()) await file.delete(); });
+  final file = File(path)..writeAsBytesSync(png);
+  addTearDown(() {
+    if (file.existsSync()) file.deleteSync();
+  });
   return XFile(path);
 }
 
@@ -104,7 +108,7 @@ void main() {
     testWidgets('discarding an unsaved avatar prevents photo upload in $language',
         (tester) async {
       final auth = FakeProfileAuth(profile: person());
-      final image = await testProfilePhoto();
+      final image = testProfilePhoto();
       await tester.pumpWidget(host(auth, language,
           pickProfileImage: (_) async => image,
           compressProfileImage: (file) async => file));
@@ -124,7 +128,7 @@ void main() {
     testWidgets('photo repository exception remains retryable in $language',
         (tester) async {
       final auth = FakeProfileAuth(profile: person())..throwOnPhotoSave = true;
-      final image = await testProfilePhoto();
+      final image = testProfilePhoto();
       await tester.pumpWidget(host(auth, language,
           pickProfileImage: (_) async => image,
           compressProfileImage: (file) async => file));
@@ -160,7 +164,7 @@ void main() {
     testWidgets('failed photo upload preserves selection for explicit retry in $language',
         (tester) async {
       final auth = FakeProfileAuth(profile: person());
-      final image = await testProfilePhoto();
+      final image = testProfilePhoto();
       await tester.pumpWidget(host(auth, language,
           pickProfileImage: (_) async => image,
           compressProfileImage: (file) async => file));
@@ -182,7 +186,7 @@ void main() {
     testWidgets('compression exception reports partial save and retries image in $language',
         (tester) async {
       final auth = FakeProfileAuth(profile: person())..photoSaveSuccess = true;
-      final image = await testProfilePhoto();
+      final image = testProfilePhoto();
       var failCompression = true;
       await tester.pumpWidget(host(auth, language,
           pickProfileImage: (_) async => image,
