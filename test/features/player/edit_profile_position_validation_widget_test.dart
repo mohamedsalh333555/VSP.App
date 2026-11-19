@@ -100,6 +100,48 @@ Future<XFile> testProfilePhoto() async {
 
 void main() {
   for (final language in ['ar', 'en']) {
+    testWidgets('discarding an unsaved avatar prevents photo upload in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person());
+      final image = await testProfilePhoto();
+      await tester.pumpWidget(host(auth, language,
+          pickProfileImage: (_) async => image,
+          compressProfileImage: (file) async => file));
+      await tester.tap(find.byKey(const ValueKey('edit-profile-pick-image')));
+      await tester.pump();
+      final discard = find.byKey(const ValueKey('edit-profile-discard-image'));
+      expect(discard, findsOneWidget);
+      await tester.tap(discard);
+      await tester.pump();
+      expect(find.byKey(const ValueKey('edit-profile-discard-image')), findsNothing);
+      await save(tester);
+      expect(auth.updates, 1);
+      expect(auth.photoUpdates, 0);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('photo repository exception remains retryable in $language',
+        (tester) async {
+      final auth = FakeProfileAuth(profile: person())..throwOnPhotoSave = true;
+      final image = await testProfilePhoto();
+      await tester.pumpWidget(host(auth, language,
+          pickProfileImage: (_) async => image,
+          compressProfileImage: (file) async => file));
+      await tester.tap(find.byKey(const ValueKey('edit-profile-pick-image')));
+      await tester.pump();
+      await save(tester);
+      expect(auth.updates, 1);
+      expect(auth.photoUpdates, 1);
+      expect(find.byType(EditProfileScreen), findsOneWidget);
+      expect(find.textContaining('PRIVATE PHOTO FAILURE'), findsNothing);
+      expect(tester.takeException(), isNull);
+      auth.throwOnPhotoSave = false;
+      auth.photoSaveSuccess = true;
+      await save(tester);
+      expect(auth.photoUpdates, 2);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('image picker exception shows safe feedback and keeps editable form in $language',
         (tester) async {
       final auth = FakeProfileAuth(profile: person());
