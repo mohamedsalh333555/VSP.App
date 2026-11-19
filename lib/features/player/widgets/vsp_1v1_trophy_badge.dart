@@ -23,7 +23,11 @@ class Vsp1v1TrophyBadge extends StatelessWidget {
     final description = isArabic
         ? 'ألقاب 1 ضد 1 التاريخية: $titles'
         : 'Historical 1v1 titles: $titles';
-    final label = titles == 1 ? '🏆 1' : '🏆 ×$titles';
+    final countLabel = titles == 1 ? '🏆 1' : '🏆 ×$titles';
+    // Tooltip-only disclosure makes old awards look like current titles.
+    final label = isArabic
+        ? '$countLabel · تاريخي'
+        : '$countLabel · Legacy';
 
     return Semantics(
       container: true,
@@ -43,6 +47,8 @@ class Vsp1v1TrophyBadge extends StatelessWidget {
             ),
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: VSPColors.medalGold,
                 fontSize: fontSize,
