@@ -1,3 +1,10 @@
+## 2026-11-20 — Team invitations inbox route accepted (351/281)
+
+- **33.08 accepted (+1), Flutter widget-level route only:** the actual Teams dashboard invitation icon now delegates to a reusable `TeamInvitationsAction`, preserving its Arabic/English tooltip, secure account-owned `TeamInvitationsSheet`, modal safe area and post-accept team refresh callback.
+- [17 passing tests in scoped membership/invitation CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44641310054) at `ff0dad19` include actual icon click, bottom-sheet navigation and accept action in **both locales**, alongside rejection/retry and prior account-switch privacy checks. [Acceptance evidence/limits](VSP_TEAM_INVITATION_INBOX_ROUTE_ACCEPTANCE_33_08_2026-11-20.md).
+- **Unproven:** real two-user authenticated staging delivery/accept/reject, expired invitations, Android invitation journey, independently verified RLS. Tasks 33.09–33.14, 17.07, 59, 79 stay OPEN. This is not approval to release.
+- **632 active = 351 accepted + 281 open, 8 archived historical IDs.** No production, main merge, Supabase/Paymob write or APK.
+
 ## 2026-11-20 — Bounded Arabic grammar and long-copy acceptance (350/282)
 
 - **04.07 accepted (+1), strictly scoped:** Team Skills published team capacity now presents Arabic `فريق واحد/فريقان/3–10 فرق/11+ فريق` and English singular/plural; published phase summaries preserve feminine singular/dual/plural. [73 passing focused Team Skills tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639256095) including both Arabic grammar assertions.
