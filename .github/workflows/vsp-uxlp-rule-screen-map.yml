@@ -8,6 +8,8 @@ on:
       - 'docs/UXLP_44_SCREEN_REGISTER.md'
       - 'docs/VSP_UXLP_44_RULE_SCREEN_MAP_01_01_2026-11-19.md'
       - 'scripts/test_uxlp_rule_screen_map.cjs'
+      - 'docs/VSP_UXLP_44_CONFORMANCE_EVIDENCE_01_05_2026-11-20.md'
+      - 'scripts/test_uxlp_conformance_evidence.cjs'
       - '.github/workflows/vsp-uxlp-rule-screen-map.yml'
   pull_request:
     branches: [main]
@@ -16,6 +18,8 @@ on:
       - 'docs/UXLP_44_SCREEN_REGISTER.md'
       - 'docs/VSP_UXLP_44_RULE_SCREEN_MAP_01_01_2026-11-19.md'
       - 'scripts/test_uxlp_rule_screen_map.cjs'
+      - 'docs/VSP_UXLP_44_CONFORMANCE_EVIDENCE_01_05_2026-11-20.md'
+      - 'scripts/test_uxlp_conformance_evidence.cjs'
       - '.github/workflows/vsp-uxlp-rule-screen-map.yml'
 permissions:
   contents: read
@@ -32,4 +36,4 @@ jobs:
         with:
           node-version: '22'
       - name: Verify forty-four rule to source screen mappings
-        run: node --test scripts/test_uxlp_rule_screen_map.cjs
+        run: node --test scripts/test_uxlp_rule_screen_map.cjs scripts/test_uxlp_conformance_evidence.cjs
