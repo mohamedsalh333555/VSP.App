@@ -1,3 +1,8 @@
+## 2026-11-19 — Verified avatar failure/discard/retry 12.06 (338/302)
+
+- **12.06 (337→338 accepted, 303→302 open):** fixed partial-save copy and failed photo selection/compression/update handling; added discard-before-save, kept image pending for explicit retry, and guarded against account switch. **10 new bilingual widget cases** passed in [Profile Edit CI #44443912415](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44443912415), 29 tests total, Flutter Analyze green. [Full bounded evidence](VSP_PROFILE_PHOTO_FAILURE_RETRY_ACCEPTANCE_12_06_2026-11-19.md).
+- **640 active / 338 accepted / 302 open (52.81%).** Actual avatar persistence (12.03), privacy and concurrent edits remain open; no production, Paymob, APK or main merge.
+
 ## 2026-11-19 — Bilingual signup network interruption and retry 08.05 (337/303)
 
 - **08.05 (336→337 accepted, 304→303 open):** four new Flutter widget tests keep the player/owner registration form stable when an in-flight request fails, block duplicate submission, preserve filled inputs and explicit retry. [CI PASS, 35 tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44442134318). [Scope and evidence](VSP_SIGNUP_INTERRUPTION_RECOVERY_ACCEPTANCE_08_05_2026-11-19.md).
