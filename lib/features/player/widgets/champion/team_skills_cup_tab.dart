@@ -483,6 +483,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   Map<String, dynamic>? _currentCup;
   String? _venueName;
   bool _cupStateCurrent = false;
+  bool _publishedCupUnavailable = false;
   int _readGeneration = 0;
   bool _hasBoundViewer = false;
   String? _viewerUserId;
@@ -533,6 +534,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       _currentCup = null;
       _venueName = null;
       _cupStateCurrent = false;
+      _publishedCupUnavailable = false;
       _rankedLeaderboard = [];
       _approvedScores = [];
       _phases = [];
@@ -563,7 +565,38 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     final generation = ++_readGeneration;
     final currentUserId = context.read<AuthProvider>().currentUser?.id;
     try {
-      final cupFuture = widget.repository.getCupById(cupId);
+      // Publication and access are checked before reading any standings
+      // or captain data. A revoked/draft cup must not reuse stale snapshots.
+      final currentCup = await widget.repository.getCupById(cupId);
+      if (!mounted || generation != _readGeneration ||
+          context.read<AuthProvider>().currentUser?.id != currentUserId) {
+        return;
+      }
+      if (currentCup == null) {
+        setState(() {
+          _currentCup = null;
+          _venueName = null;
+          _cupStateCurrent = false;
+          _publishedCupUnavailable = true;
+          _rankedLeaderboard = [];
+          _phases = [];
+          _approvedScores = [];
+          _awards = [];
+          _registrations = [];
+          _teamNames = {};
+          _memberTeamIds = <String>{};
+          _captainTeams = [];
+          _rosterOptions = [];
+          _rosterVerified = false;
+          _selectedTeamId = null;
+          _selectedPlayers.clear();
+          _goalkeeperId = null;
+          _representativeId = null;
+          _feedback = null;
+          _hasLiveRefreshError = false;
+        });
+        return;
+      }
       final memberFuture = currentUserId == null
           ? Future.value(<String>{})
           : widget.repository.getMemberTeamIds(currentUserId);
@@ -580,10 +613,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         widget.repository.getPhases(cupId),
       ]);
       final memberIds = await memberFuture;
-      final currentCup = await cupFuture;
-      final venueName = currentCup == null ? null
-          : await widget.repository.getVenueName(
-              currentCup['stadium_id']?.toString() ?? '');
+      final venueName = await widget.repository.getVenueName(
+          currentCup['stadium_id']?.toString() ?? '');
       final ranking = TeamSkillsRankingService.rank(values[0]);
       final names = await widget.repository.getTeamNames([
         ...values[0].map((row) => row['team_id'].toString()),
@@ -596,7 +627,8 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       setState(() {
         _currentCup = currentCup;
         _venueName = venueName;
-        _cupStateCurrent = currentCup != null;
+        _cupStateCurrent = true;
+        _publishedCupUnavailable = false;
         _rankedLeaderboard = ranking;
         _registrations = values[1];
         _awards = values[2];
@@ -682,6 +714,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       _currentCup = latestCup;
       _venueName = venueName;
       _cupStateCurrent = true;
+      _publishedCupUnavailable = false;
       _hasLiveRefreshError = false;
       _rankedLeaderboard = rankedLeaderboard;
       _approvedScores = approvedScores;
@@ -1061,6 +1094,23 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
             return Center(child: TextButton(
               onPressed: () => setState(() => _loadFuture = _reload()),
               child: Text(ar ? 'تعذر التحميل — إعادة المحاولة' : 'Retry loading cup'),
+            ));
+          }
+          if (_publishedCupUnavailable) {
+            return Center(child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(
+                  ar ? 'هذه البطولة لم تعد متاحة للعرض حاليًا'
+                      : 'This competition is no longer publicly available',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: VSPColors.textPrimary),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _loadFuture = _reload()),
+                  child: Text(ar ? 'إعادة التحقق' : 'Check again'),
+                ),
+              ]),
             ));
           }
           final visiblePhases = TeamSkillsCupTab.visiblePublishedPhases(_phases);

@@ -576,6 +576,38 @@ void main() {
     ])?['id'], 'application-1');
   });
 
+  test('revoking cup publication clears stale public and private detail snapshots', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    final start = source.indexOf('Future<void> _refreshLatest() async');
+    final end = source.indexOf('Future<void> _reload() async', start);
+    final refresh = source.substring(start, end);
+    expect(refresh.indexOf('getCupById(cupId)'),
+        lessThan(refresh.indexOf('widget.repository.getLeaderboard(cupId)')));
+    final revoked = refresh.substring(
+      refresh.indexOf('if (currentCup == null)'),
+      refresh.indexOf('final memberFuture ='),
+    );
+    for (final cleared in [
+      '_publishedCupUnavailable = true;',
+      '_rankedLeaderboard = [];',
+      '_phases = [];',
+      '_approvedScores = [];',
+      '_awards = [];',
+      '_registrations = [];',
+      '_captainTeams = [];',
+      '_memberTeamIds = <String>{};',
+      '_selectedPlayers.clear();',
+      '_rosterVerified = false;',
+    ]) {
+      expect(revoked, contains(cleared));
+    }
+    expect(source, contains('if (_publishedCupUnavailable) {'));
+    expect(source, contains('This competition is no longer publicly available'));
+    expect(refresh, contains('_publishedCupUnavailable = false;'));
+  });
+
   test('periodic leaderboard poll refreshes the authoritative published phase set', () {
     final source = File(
       'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
