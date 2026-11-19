@@ -10,6 +10,7 @@ on:
       - "lib/features/auth/screens/verify_email_screen.dart"
       - "test/features/auth/verify_email_accessibility_widget_test.dart"
       - "test/features/auth/verify_email_privacy_source_test.dart"
+      - "test/features/auth/verify_email_full_flow_widget_test.dart"
   pull_request:
     branches: [main]
     paths:
@@ -18,6 +19,7 @@ on:
       - "lib/features/auth/screens/verify_email_screen.dart"
       - "test/features/auth/verify_email_accessibility_widget_test.dart"
       - "test/features/auth/verify_email_privacy_source_test.dart"
+      - "test/features/auth/verify_email_full_flow_widget_test.dart"
 permissions:
   contents: read
 concurrency:
@@ -43,9 +45,11 @@ jobs:
           lib/features/auth/screens/verify_email_screen.dart
           test/features/auth/verify_email_accessibility_widget_test.dart
           test/features/auth/verify_email_privacy_source_test.dart
+          test/features/auth/verify_email_full_flow_widget_test.dart
       - name: Verify English and Arabic screen-reader input labels
         run: >-
           flutter test --concurrency=1
           test/features/auth/verify_email_accessibility_widget_test.dart
           test/features/auth/verify_email_privacy_source_test.dart
+          test/features/auth/verify_email_full_flow_widget_test.dart
           test/features/auth/verify_email_components_test.dart
