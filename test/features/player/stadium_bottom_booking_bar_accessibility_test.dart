@@ -7,7 +7,9 @@ import 'package:vsp_application/shared/widgets/primary_button.dart';
 
 void main() {
   Stadium sample({double deposit = 300, bool needsDeposit = true,
-      double hourlyPrice = 2500, double basePrice = 2500}) => Stadium(
+      double hourlyPrice = 2500, double basePrice = 2500,
+      bool verified = true, bool blocked = false,
+      DateTime? maintenanceUntil}) => Stadium(
         id: 'fixture-stadium',
         name: 'Sample pitch',
         location: 'Aswan',
@@ -23,12 +25,16 @@ void main() {
         area: 'Aswan',
         depositAmount: deposit,
         needsDeposit: needsDeposit,
+        isVerified: verified,
+        isBlocked: blocked,
+        maintenanceUntil: maintenanceUntil,
       );
 
   Widget screen({required String locale, required double scale,
       double deposit = 300, bool needsDeposit = true,
       double hourlyPrice = 2500, double basePrice = 2500,
-      bool bookingEnabled = false}) {
+      bool bookingEnabled = false, bool verified = true,
+      bool blocked = false, DateTime? maintenanceUntil}) {
     return MaterialApp(
       locale: Locale(locale),
       supportedLocales: AppLocalizations.supportedLocales,
@@ -42,7 +48,9 @@ void main() {
       home: Scaffold(
         bottomNavigationBar: StadiumBottomBookingBar(
           stadium: sample(deposit: deposit, needsDeposit: needsDeposit,
-              hourlyPrice: hourlyPrice, basePrice: basePrice),
+              hourlyPrice: hourlyPrice, basePrice: basePrice,
+              verified: verified, blocked: blocked,
+              maintenanceUntil: maintenanceUntil),
           bookingEnabled: bookingEnabled,
         ),
       ),
@@ -148,6 +156,30 @@ void main() {
     expect(tester.widget<PrimaryButton>(
         find.byType(PrimaryButton)).onPressed, isNotNull);
     expect(tester.takeException(), isNull);
+  });
+
+
+  testWidgets('venue is not directly bookable when unverified, blocked or in maintenance',
+      (tester) async {
+    final maintenance = DateTime.now().add(const Duration(days: 2));
+    final cases = <Map<String, dynamic>>[
+      {'verified': false},
+      {'blocked': true},
+      {'maintenanceUntil': maintenance},
+    ];
+    for (final state in cases) {
+      await tester.pumpWidget(screen(
+        locale: 'en', scale: 1, bookingEnabled: true,
+        verified: state['verified'] as bool? ?? true,
+        blocked: state['blocked'] as bool? ?? false,
+        maintenanceUntil: state['maintenanceUntil'] as DateTime?,
+      ));
+      await tester.pumpAndSettle();
+      expect(tester.widget<PrimaryButton>(
+          find.byType(PrimaryButton)).onPressed, isNull,
+          reason: 'Booking must fail closed for $state');
+      expect(tester.takeException(), isNull);
+    }
   });
 
 }
