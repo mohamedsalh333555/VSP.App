@@ -33,6 +33,12 @@ class StadiumBottomBookingBar extends StatelessWidget {
     final hasDeposit = stadium.needsDeposit &&
         stadium.depositAmount.isFinite && stadium.depositAmount > 0.0;
     final unverifiedDeposit = stadium.needsDeposit && !hasDeposit;
+    // The caller controls live-availability, but the button also guards its
+    // own financial inputs against stale or malformed venue snapshots.
+    final financialInputsValid = stadium.basePrice.isFinite &&
+        stadium.basePrice > 0 && stadium.pricePerHour.isFinite &&
+        stadium.pricePerHour > 0 && stadium.depositAmount.isFinite &&
+        stadium.depositAmount >= 0 && !unverifiedDeposit;
 
     final priceDetails = Column(
       mainAxisSize: MainAxisSize.min,
@@ -116,7 +122,7 @@ class StadiumBottomBookingBar extends StatelessWidget {
 
     final bookingAction = PrimaryButton(
       text: isArabic ? 'احجز الآن' : 'Book Now',
-      onPressed: bookingEnabled
+      onPressed: bookingEnabled && financialInputsValid
           ? () {
               unawaited(
                 AnalyticsService.logBookingStarted(venueId: stadium.id),
