@@ -1,3 +1,9 @@
+## 2026-11-19 — Team membership account-scope read accepted (346/294)
+
+- **18.01 (345→346 accepted / 295→294 open):** the real TeamRepository.getUserTeamsStrict retrieves all current team_members IDs for the supplied user, resolves matching teams in teams_public with deterministic ordering, and does not use a saved preference to assert membership. [Scoped team membership CI **5 tests passed**](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44488718345); [bounded acceptance](VSP_ACCOUNT_SCOPED_TEAM_MEMBERSHIP_BOUNDED_ACCEPTANCE_18_01_2026_11_19.md).
+- The tests use synthetic PostgREST MockClient responses. No JWT/RLS hosted enforcement, real account cross-access, stale membership removal or live multi-device journey is asserted. Separate 17.07, 59, 79 and SEC-02 checks remain open.
+- **640 active / 346 accepted / 294 open (54.06%).** No main merge, production/Paymob updates, Android release or data writes.
+
 ## 2026-11-19 — Email OTP Flutter verification accepted with isolated provider (345/295)
 
 - **11.04 (344→345 accepted / 296→295 open):** real Flutter VerifyEmailScreen tests with fake AuthProvider: incomplete code refuses provider, six-digit paste submits expected email/token once, duplicate pending request blocked, Arabic/English invalid OTP errors, redacted thrown diagnostics and resend after 60-second UI cooldown. [Focused OTP CI **19 tests passed**](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44487774510) and [bounded acceptance](VSP_EMAIL_OTP_UI_BOUNDED_ACCEPTANCE_11_04_2026_11_19.md).
