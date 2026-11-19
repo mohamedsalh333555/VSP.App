@@ -128,6 +128,23 @@ class TeamSkillsCupTab extends StatefulWidget {
     return stageNos.length == announced.length;
   }
 
+  /// Display the official published Arabic drill label without inventing an
+  /// English translation. English users still see the stage number clearly.
+  /// Never present a null/blank or malformed title as a verified drill name.
+  static String publishedStageLabel(
+    Map<String, dynamic> phase, {required bool isArabic}
+  ) {
+    final number = phase['stage_no'];
+    final index = number is int && number > 0 && number <= 100
+        ? number.toString() : '—';
+    final name = phase['name_ar'];
+    final officialName = name is String ? name.trim() : '';
+    if (officialName.isEmpty) {
+      return isArabic ? 'مرحلة $index' : 'Stage $index';
+    }
+    return isArabic ? officialName : 'Stage $index · $officialName';
+  }
+
   /// Never invent a fixed 12-stage format for an unpublished plan.
   static String publishedStageSummary(
     Iterable<Map<String, dynamic>> phases, {required bool isArabic}
@@ -910,7 +927,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                 style: const TextStyle(color: VSPColors.white,fontSize:18,fontWeight:FontWeight.bold)),
             ...visiblePhases.map((phase)=>ListTile(
               dense:true,
-              title:Text(phase['name_ar']?.toString() ?? '',style:style),
+              title:Text(TeamSkillsCupTab.publishedStageLabel(phase, isArabic: ar),style:style),
               trailing:Text(phase['weight'] is num && (phase['weight'] as num) > 0
                   ? '${phase['weight']} ${ar ? 'نقطة' : 'points'}'
                   : '—',
@@ -950,7 +967,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                       rows, phase['weight']);
                     return ListTile(
                       dense: true,
-                      title: Text(phase['name_ar']?.toString() ?? '',
+                      title: Text(TeamSkillsCupTab.publishedStageLabel(phase, isArabic: ar),
                           style: const TextStyle(color: VSPColors.textPrimary)),
                       trailing: Text('$verified / ${phase['weight'] is num && (phase['weight'] as num).isFinite && (phase['weight'] as num) > 0 && (phase['weight'] as num) <= 25 ? phase['weight'] : '—'}',
                           style: const TextStyle(color: VSPColors.textSecondary)),
