@@ -1,3 +1,9 @@
+## 2026-11-19 — Legacy standalone 1v1 task retirement (346/286 open; 8 retired)
+
+- The previously approved product decision replaces the standalone 1v1 competition with the Team Skills Cup. The eight **open, unaccepted** task IDs **43.01–43.08** are now explicitly archived as **CANCELLED / RETIRED**, not marked ACCEPTED. [Decision and exact scope](VSP_RETIRED_LEGACY_1V1_TASKS_43_2026_11_19.md).
+- **640 historical unique IDs = 632 active + 8 retired; active = 346 accepted + 286 open; 54.75% accepted of active.** The prior 346/294 history below remains preserved as an earlier scope snapshot and is not rewritten.
+- Last pre-retirement Flutter CI on head cf36594: [42/42 GitHub Actions passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44543616228). The revised accounting CI is a separate verification gate. Historical 1v1 data, financial entitlements, Team Skills Cup and its within-event 1v1 finale remain untouched. No main merge or production operation.
+
 ## 2026-11-19 — Team membership account-scope read accepted (346/294)
 
 - **18.01 (345→346 accepted / 295→294 open):** the real TeamRepository.getUserTeamsStrict retrieves all current team_members IDs for the supplied user, resolves matching teams in teams_public with deterministic ordering, and does not use a saved preference to assert membership. [Scoped team membership CI **5 tests passed**](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44488718345); [bounded acceptance](VSP_ACCOUNT_SCOPED_TEAM_MEMBERSHIP_BOUNDED_ACCEPTANCE_18_01_2026_11_19.md).

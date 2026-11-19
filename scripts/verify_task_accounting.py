@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Read-only consistency check for VSP's active 640-subtask execution scope.
+"""Read-only consistency check for VSP's 632 active + 8 retired subtasks.
 
-This checks inventory/accounting only. It never promotes code or tests to VERIFIED.
+Historic inventory is 640 unique IDs: 633 legacy + 7 Phase 10.
+This checks inventory/accounting only. Retired is never accepted.
 """
 import json
 import re
@@ -17,17 +18,24 @@ def main():
     ids = [task_id for _, task_id in rows]
     plan_ids = re.findall(r"^- (\d{2}\.\d{2}) —", plan, re.M)
     errors = []
-    if len(ids) != 640 or len(set(ids)) != 640:
-        errors.append("The active scope must contain exactly 640 unique subtask IDs.")
+    expected_retired = [f"43.{i:02d}" for i in range(1, 9)]
+    archived_source = re.findall(r"^- ~~(43\.\d{2}) —", source, re.M)
+    archived_plan = re.findall(r"^- ~~(43\.\d{2}) —", plan, re.M)
+    if sorted(archived_source) != expected_retired or sorted(archived_plan) != expected_retired:
+        errors.append("Retired historical IDs 43.01-43.08 must appear once in both inventories.")
+    if set(archived_source) & set(ids):
+        errors.append("Retired IDs must not be counted as active.")
+    if len(ids) != 632 or len(set(ids)) != 632:
+        errors.append("The active scope must contain exactly 632 unique subtask IDs.")
     original = [task_id for task_id in ids if not task_id.startswith("86.")]
-    if len(original) != 633 or len(set(original)) != 633:
-        errors.append("Original 633 unique IDs must remain intact.")
+    if len(original) != 625 or len(set(original)) != 625:
+        errors.append("Original active IDs must be 633 - 8 retired = 625.")
     if sorted(task_id for task_id in ids if task_id.startswith("86.")) != [f"86.{i:02d}" for i in range(1, 8)]:
         errors.append("The seven new Phase 10 task IDs must be exactly 86.01-86.07.")
     if len(plan_ids) != len(ids) or set(plan_ids) != set(ids):
         errors.append("The execution plan loses, duplicates, or adds core subtask IDs.")
-    if len({task_id.split('.')[0] for task_id in ids}) != 85:
-        errors.append("Expected 85 active parent items.")
+    if len({task_id.split('.')[0] for task_id in ids}) != 84:
+        errors.append("Expected 84 active parent items.")
     if any(task_id.startswith("56.") for task_id in ids + plan_ids):
         errors.append("Cancelled group 56 must not reappear in the active scope.")
     if not all(f"83.{index:02d}" in ids for index in range(1, 8)):
@@ -43,6 +51,8 @@ def main():
     result = {
         "scope": "core_subtasks_only",
         "total": len(ids),
+        "historic_total": len(ids) + len(archived_source),
+        "retired": len(archived_source),
         "unique_ids": len(set(ids)),
         "parent_items": len({task_id.split('.')[0] for task_id in ids}),
         "accepted_checklist_entries": accepted,

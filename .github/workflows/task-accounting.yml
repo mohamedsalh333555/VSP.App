@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Verify 640 active IDs and preserve original 633
+      - name: Verify 632 active IDs plus 8 retired (640 historical)
         run: python3 scripts/verify_task_accounting.py | tee task-accounting.json
       - name: Display accepted vs open progress
         run: |
@@ -44,7 +44,7 @@ jobs:
           total = result["total"]
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
               f.write(f"## VSP core task counter\n\n")
-              f.write(f"**{completed} accepted / {remaining} open / {total} total**\n\n")
+              f.write(f"**{completed} accepted / {remaining} open / {total} active; {result['retired']} retired**\n\n")
               f.write(f"**{completed / total * 100:.2f}% complete**\n\n")
               f.write("Only accepted checklist entries count; commits and passing tests are not task IDs.\n")
           PY
