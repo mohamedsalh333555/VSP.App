@@ -72,7 +72,6 @@ jobs:
           lib/features/player/widgets/team_profile/team_profile_stats_grid.dart
           lib/features/player/widgets/team_profile/team_profile_roster_section.dart
           test/features/player/team_roster_name_localization_test.dart
-          test/features/player/team_matchup_invite_guard_test.dart
           lib/features/player/widgets/my_team/team_stats_header.dart
           lib/features/player/screens/team_profile_screen.dart
           lib/features/player/services/team_matchup_invite_guard.dart
@@ -89,3 +88,4 @@ jobs:
           test/features/player/team_profile_member_count_authority_test.dart
           test/features/player/my_team_stats_historical_awards_trust_test.dart
           test/features/player/team_roster_name_localization_test.dart
+          test/features/player/team_matchup_invite_guard_test.dart

@@ -21,7 +21,7 @@ void main() {
         currentVersion: currentVersion,
       );
 
-  test('captain may reveal only the current team's current request', () {
+  test("captain may reveal only the current team's current request", () {
     expect(mayReveal(), isTrue);
     expect(mayReveal(requestVersion: 1), isFalse);
     expect(mayReveal(currentVersion: 3), isFalse);

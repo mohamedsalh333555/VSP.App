@@ -339,7 +339,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     try {
       final res = await MatchupRepository()
           .generateTeamInviteCode(requestedTeamId);
-      if (!_canRevealGeneratedInvite(
+      if (!mounted || !_canRevealGeneratedInvite(
         requestedTeamId: requestedTeamId,
         requestedAccountId: requestedAccountId,
         requestVersion: requestVersion,
@@ -357,7 +357,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       }
       // A code is sensitive even if the repository succeeds. Never open the
       // modal for a different team, account or no-longer-captain viewer.
-      if (!_canRevealGeneratedInvite(
+      if (!mounted || !_canRevealGeneratedInvite(
         requestedTeamId: requestedTeamId,
         requestedAccountId: requestedAccountId,
         requestVersion: requestVersion,
@@ -365,7 +365,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       await showTeamMatchupInviteModal(context, code);
     } catch (_) {
       debugPrint('Error generating invite code (details redacted)');
-      if (_canRevealGeneratedInvite(
+      if (mounted && _canRevealGeneratedInvite(
         requestedTeamId: requestedTeamId,
         requestedAccountId: requestedAccountId,
         requestVersion: requestVersion,
