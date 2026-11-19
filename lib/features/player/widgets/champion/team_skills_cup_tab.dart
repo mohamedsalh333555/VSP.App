@@ -18,6 +18,30 @@ class TeamSkillsCupTab extends StatefulWidget {
   final String selectedLocation;
   final TeamSkillsCupRepository? repository;
   const TeamSkillsCupTab({super.key, required this.selectedLocation, this.repository});
+  /// The entry form may only submit five members from its most recently
+  /// verified roster, even when a previous fetch or account was successful.
+  static bool canSubmitVerifiedRoster({
+    required bool rosterVerified,
+    required Iterable<Map<String, dynamic>> rosterOptions,
+    required Set<String> selectedPlayers,
+    required String? goalkeeperId,
+    required String? representativeId,
+  }) {
+    if (!rosterVerified || selectedPlayers.length != 5 ||
+        goalkeeperId == null || representativeId == null ||
+        !selectedPlayers.contains(goalkeeperId) ||
+        !selectedPlayers.contains(representativeId)) {
+      return false;
+    }
+    final allowedIds = <String>{
+      for (final player in rosterOptions)
+        if (player['uid'] is String &&
+            (player['uid'] as String).trim().isNotEmpty)
+          player['uid'] as String,
+    };
+    return selectedPlayers.every(allowedIds.contains);
+  }
+
   /// Compare structured public values, not map insertion order: Supabase
   /// pages can return the same published prize object with reordered keys.
   /// A conflicting nested value must never pick whichever page came first.
@@ -427,6 +451,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   List<Map<String, dynamic>> _captainTeams = [];
   Set<String> _memberTeamIds = <String>{};
   List<Map<String, dynamic>> _rosterOptions = [];
+  bool _rosterVerified = false;
   Map<String, String> _teamNames = {};
   String? _selectedTeamId;
   String? _goalkeeperId;
@@ -473,6 +498,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       _memberTeamIds = <String>{};
       _captainTeams = [];
       _rosterOptions = [];
+      _rosterVerified = false;
       _selectedTeamId = null;
       _selectedPlayers.clear();
       _goalkeeperId = null;
@@ -538,6 +564,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
               ? null
               : _captainTeams.first['id'].toString();
           _rosterOptions = [];
+          _rosterVerified = false;
           _selectedPlayers.clear();
           _goalkeeperId = null;
           _representativeId = null;
@@ -611,12 +638,14 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       if (teams.isEmpty) {
         _selectedTeamId = null;
         _rosterOptions = [];
+        _rosterVerified = false;
         _selectedPlayers.clear();
         _goalkeeperId = null;
         _representativeId = null;
       } else if (!teams.any((t) => t['id'].toString() == _selectedTeamId)) {
         _selectedTeamId = teams.first['id'].toString();
         _rosterOptions = [];
+        _rosterVerified = false;
         _selectedPlayers.clear();
         _goalkeeperId = null;
         _representativeId = null;
@@ -630,6 +659,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
   Future<void> _loadRoster(String teamId) async {
     final viewerId = _viewerUserId;
     final generation = _readGeneration;
+    if (!mounted) return;
+    // Deny new submissions immediately while re-verifying this roster.
+    setState(() => _rosterVerified = false);
     try {
       final roster = await widget.repository.getRosterOptions(teamId);
       if (!mounted || teamId != _selectedTeamId ||
@@ -638,6 +670,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       }
       setState(() {
         _rosterOptions = roster;
+        _rosterVerified = true;
         final allowedIds = roster.map((r)=>r['uid'].toString()).toSet();
         _selectedPlayers.removeWhere((id)=>!allowedIds.contains(id));
         if (!_selectedPlayers.contains(_goalkeeperId)) {
@@ -652,6 +685,10 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
           generation == _readGeneration && viewerId == _viewerUserId) {
         setState(() {
           _rosterOptions = [];
+          _rosterVerified = false;
+          _selectedPlayers.clear();
+          _goalkeeperId = null;
+          _representativeId = null;
           _feedback = _notice(TeamSkillsRequestNotice.rosterUnavailable);
         });
       }
@@ -662,9 +699,13 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
     if (!TeamSkillsCupRepository.registrationOpen(
         _cupStateCurrent ? _currentCup : null)) return;
     if (_submitting || _selectedTeamId == null ||
-        _selectedPlayers.length != 5 ||
-        !_selectedPlayers.contains(_goalkeeperId) ||
-        !_selectedPlayers.contains(_representativeId)) {
+        !TeamSkillsCupTab.canSubmitVerifiedRoster(
+          rosterVerified: _rosterVerified,
+          rosterOptions: _rosterOptions,
+          selectedPlayers: _selectedPlayers,
+          goalkeeperId: _goalkeeperId,
+          representativeId: _representativeId,
+        )) {
       return;
     }
     final viewerId = _viewerUserId;
@@ -1109,7 +1150,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                 onChanged: _submitting ? null : (teamId) {
                   if (teamId == null) return;
                   setState(() {
-                    _selectedTeamId=teamId;_rosterOptions=[];_selectedPlayers.clear();
+                    _selectedTeamId=teamId;_rosterOptions=[];_rosterVerified=false;_selectedPlayers.clear();
                     _goalkeeperId=null;_representativeId=null;
                   });
                   _loadRoster(teamId);
@@ -1128,7 +1169,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                     title:Text(player['name']?.toString()??'Player',style:style),
                     value:selected,
                     activeColor:VSPColors.accent,
-                    onChanged:_submitting?null:(checked){
+                    onChanged:_submitting || !_rosterVerified ? null : (checked){
                       if(checked == true && _selectedPlayers.length>=5) return;
                       setState(() {
                         if(checked==true) { _selectedPlayers.add(uid); }
@@ -1146,7 +1187,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                   items:_rosterOptions.where((p)=>_selectedPlayers.contains(p['uid'].toString()))
                     .map((p)=>DropdownMenuItem(value:p['uid'].toString(),
                       child:Text(p['name']?.toString()??'Player'))).toList(),
-                  onChanged:_submitting?null:(v)=>setState(()=>_goalkeeperId=v),
+                  onChanged:_submitting || !_rosterVerified ? null : (v)=>setState(()=>_goalkeeperId=v),
                 ),
                 DropdownButton<String>(
                   hint:Text(ar?'ممثل الفريق في ختام 1 ضد 1':'1v1 representative',style:style),
@@ -1154,13 +1195,17 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                   items:_rosterOptions.where((p)=>_selectedPlayers.contains(p['uid'].toString()))
                     .map((p)=>DropdownMenuItem(value:p['uid'].toString(),
                       child:Text(p['name']?.toString()??'Player'))).toList(),
-                  onChanged:_submitting?null:(v)=>setState(()=>_representativeId=v),
+                  onChanged:_submitting || !_rosterVerified ? null : (v)=>setState(()=>_representativeId=v),
                 ),
                 FilledButton(
-                  onPressed:_submitting || _selectedPlayers.length!=5 ||
-                      !_selectedPlayers.contains(_goalkeeperId) ||
-                      !_selectedPlayers.contains(_representativeId)
-                          ? null:_submit,
+                  onPressed: _submitting ||
+                      !TeamSkillsCupTab.canSubmitVerifiedRoster(
+                        rosterVerified: _rosterVerified,
+                        rosterOptions: _rosterOptions,
+                        selectedPlayers: _selectedPlayers,
+                        goalkeeperId: _goalkeeperId,
+                        representativeId: _representativeId,
+                      ) ? null : _submit,
                   child:Text(ar ? 'إرسال طلب تسجيل الفريق' : 'Submit team registration'),
                 ),
               ],
