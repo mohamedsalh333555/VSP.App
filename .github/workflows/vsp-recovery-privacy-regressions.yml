@@ -14,6 +14,7 @@ on:
       - "lib/features/auth/screens/set_new_password_screen.dart"
       - "lib/features/auth/services/password_recovery_session_guard.dart"
       - "test/features/auth/password_recovery_session_guard_test.dart"
+      - "test/features/auth/set_new_password_screen_widget_test.dart"
       - "test/features/auth/password_reset_privacy_widget_test.dart"
       - "test/shared/account_deletion_dialog_test.dart"
       - "lib/shared/widgets/vsp_auth_header.dart"
@@ -32,6 +33,7 @@ on:
       - "lib/features/auth/screens/set_new_password_screen.dart"
       - "lib/features/auth/services/password_recovery_session_guard.dart"
       - "test/features/auth/password_recovery_session_guard_test.dart"
+      - "test/features/auth/set_new_password_screen_widget_test.dart"
       - "test/features/auth/password_reset_privacy_widget_test.dart"
       - "test/shared/account_deletion_dialog_test.dart"
       - "lib/shared/widgets/vsp_auth_header.dart"
@@ -67,10 +69,11 @@ jobs:
           lib/features/auth/screens/set_new_password_screen.dart
           lib/features/auth/services/password_recovery_session_guard.dart
           test/features/auth/password_recovery_session_guard_test.dart
+          test/features/auth/set_new_password_screen_widget_test.dart
           lib/shared/widgets/vsp_auth_header.dart
           lib/shared/widgets/vsp_back_button.dart
           test/shared/widgets/vsp_auth_header_back_navigation_test.dart
           test/features/auth/password_reset_privacy_widget_test.dart
           test/shared/account_deletion_dialog_test.dart
       - name: Test neutral recovery copy against success failure and exceptions
-        run: flutter test --concurrency=1 test/core/utils/email_address_validator_test.dart test/shared/widgets/custom_text_field_email_validation_test.dart test/features/auth/password_reset_privacy_widget_test.dart test/features/auth/password_recovery_session_guard_test.dart test/shared/widgets/vsp_auth_header_back_navigation_test.dart test/shared/account_deletion_dialog_test.dart
+        run: flutter test --concurrency=1 test/core/utils/email_address_validator_test.dart test/shared/widgets/custom_text_field_email_validation_test.dart test/features/auth/password_reset_privacy_widget_test.dart test/features/auth/password_recovery_session_guard_test.dart test/features/auth/set_new_password_screen_widget_test.dart test/shared/widgets/vsp_auth_header_back_navigation_test.dart test/shared/account_deletion_dialog_test.dart
