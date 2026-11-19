@@ -45,7 +45,14 @@ class TeamSkillsCupTab extends StatefulWidget {
         byId[id] = row;
       } else if (previous['name'] != name ||
           previous['status'] != status ||
-          previous['governorate'] != governorate) {
+          previous['governorate'] != governorate ||
+          // Repeated pages must not silently choose an outdated public fee,
+          // capacity, date or venue from two conflicting versions.
+          previous['hospitality_fee'] != row['hospitality_fee'] ||
+          previous['max_teams'] != row['max_teams'] ||
+          previous['starts_at'] != row['starts_at'] ||
+          previous['ends_at'] != row['ends_at'] ||
+          previous['stadium_id'] != row['stadium_id']) {
         byId.remove(id);
         conflicts.add(id);
       }
@@ -196,7 +203,7 @@ class TeamSkillsCupTab extends StatefulWidget {
       parts.add(governorate.trim());
     }
     final maxTeams = cup['max_teams'];
-    if (maxTeams is int && maxTeams > 0) {
+    if (maxTeams is int && maxTeams > 0 && maxTeams <= 1000) {
       parts.add('$maxTeams ${isArabic ? 'فرق' : 'teams'}');
     }
     return parts.join(' • ');

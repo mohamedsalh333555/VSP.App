@@ -306,4 +306,41 @@ void main() {
     expect(TeamSkillsCupTab.visiblePublishedCups(rows), isEmpty);
   });
 
+  test('duplicate published cup rows with conflicting prices, times or capacity fail closed', () {
+    const id = '82e73247-e111-4ab9-abd5-04cf6fe6779a';
+    const original = <String, dynamic>{
+      'id': id,
+      'name': 'Aswan Skills',
+      'status': 'registration',
+      'governorate': 'Aswan',
+      'hospitality_fee': 50,
+      'max_teams': 8,
+      'starts_at': '2026-12-01T10:00:00Z',
+      'ends_at': '2026-12-01T13:00:00Z',
+      'stadium_id': 'venue-1',
+    };
+    expect(TeamSkillsCupTab.visiblePublishedCups([original, {...original}]),
+        hasLength(1));
+    for (final changed in <Map<String, dynamic>>[
+      {'hospitality_fee': 100},
+      {'max_teams': 12},
+      {'starts_at': '2026-12-02T10:00:00Z'},
+      {'ends_at': '2026-12-01T14:00:00Z'},
+      {'stadium_id': 'venue-2'},
+    ]) {
+      expect(TeamSkillsCupTab.visiblePublishedCups([
+        original, {...original, ...changed}, original,
+      ]), isEmpty);
+    }
+  });
+
+  test('public cup card capacity agrees with published details validation', () {
+    expect(TeamSkillsCupTab.publishedMetadata({
+      'max_teams': 1001,
+    }, isArabic: false), isEmpty);
+    expect(TeamSkillsCupTab.publishedMetadata({
+      'max_teams': 8,
+    }, isArabic: false), '8 teams');
+  });
+
 }
