@@ -16,6 +16,11 @@ class TeamProfileStatsGrid extends StatelessWidget {
   static String memberCountText(int? count) =>
       count == null || count < 0 ? '—' : count.toString();
 
+  /// Negative counters are unknown/corrupt source data, not real losses,
+  /// wins or draws. Do not display them as negative match results.
+  static String recordCountText(int count) =>
+      count < 0 ? '—' : count.toString();
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -33,14 +38,26 @@ class TeamProfileStatsGrid extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            SizedBox(width: itemWidth, child: _buildStatCard(context, team.wins.toString(), l10n.wins)),
-            SizedBox(width: itemWidth, child: _buildStatCard(context, team.draws.toString(), isArabic ? 'تعادل' : 'Draws')),
-            SizedBox(width: itemWidth, child: _buildStatCard(context, team.losses.toString(), isArabic ? 'خسارة' : 'Losses')),
+            SizedBox(width: itemWidth, child: _buildStatCard(
+              context, recordCountText(team.wins), l10n.wins,
+              spokenValue: team.wins < 0
+                  ? (isArabic ? 'غير متاح' : 'Unavailable') : null,
+            )),
+            SizedBox(width: itemWidth, child: _buildStatCard(
+              context, recordCountText(team.draws), isArabic ? 'تعادل' : 'Draws',
+              spokenValue: team.draws < 0
+                  ? (isArabic ? 'غير متاح' : 'Unavailable') : null,
+            )),
+            SizedBox(width: itemWidth, child: _buildStatCard(
+              context, recordCountText(team.losses), isArabic ? 'خسارة' : 'Losses',
+              spokenValue: team.losses < 0
+                  ? (isArabic ? 'غير متاح' : 'Unavailable') : null,
+            )),
             SizedBox(width: itemWidth, child: _buildStatCard(
               context,
               memberCountText(totalMembersCount),
               l10n.members,
-              spokenValue: totalMembersCount == null
+              spokenValue: totalMembersCount == null || totalMembersCount! < 0
                   ? (isArabic ? 'غير متاح' : 'Unavailable')
                   : null,
             )),
