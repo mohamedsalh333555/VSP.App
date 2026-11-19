@@ -21,11 +21,11 @@ void main() {
     expect(bar, contains('final bool bookingEnabled;'));
     // Formatter may wrap the conditional callback across several lines.
     // Verify that the disabled branch remains null, not the exact spacing.
-    expect(
-      RegExp(r'onPressed:\s*bookingEnabled\s*\?\s*\(\)\s*\{')
-          .hasMatch(bar),
-      isTrue,
-    );
+    expect(bar, contains('onPressed: bookingEnabled && financialInputsValid &&'));
+    expect(bar, contains('stadium.isVerified && !stadium.isBlocked &&'));
+    expect(bar, contains('!stadium.isUnderMaintenance'));
+    expect(RegExp(r'!stadium\.isUnderMaintenance\s*\?\s*\(\)\s*\{')
+        .hasMatch(bar), isTrue);
     expect(bar, contains(': null,'));
     expect(bar, contains('BookingTypeModal.show(context, stadium);'));
   });
