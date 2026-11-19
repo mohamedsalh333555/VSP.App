@@ -155,7 +155,13 @@ class TeamSkillsCupTab extends StatefulWidget {
           ? 'مراحل البطولة لم تُعلن بعد'
           : 'Competition stages have not been announced yet';
     }
-    return isArabic ? '${count} مرحلة معلنة' : '${count} announced stages';
+    if (!isArabic) {
+      return '$count announced ${count == 1 ? 'stage' : 'stages'}';
+    }
+    if (count == 1) return 'مرحلة واحدة معلنة';
+    if (count == 2) return 'مرحلتان معلنتان';
+    if (count <= 10) return '$count مراحل معلنة';
+    return '$count مرحلة معلنة';
   }
 
   /// The existence of a row in the awards table is not publication.
