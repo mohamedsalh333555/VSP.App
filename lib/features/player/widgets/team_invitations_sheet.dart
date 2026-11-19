@@ -234,44 +234,59 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
                         final teamName =
                             invitation['team_name']?.toString().trim();
                         final isBusy = _busyId == id;
-                        return ListTile(
-                          title: Text(
-                            isArabic
-                                ? 'دعوة للانضمام إلى فريق'
-                                : 'Invitation to join a team',
-                          ),
-                          subtitle: Text(
-                            teamName?.isNotEmpty == true
-                                ? teamName!
-                                : (isArabic
-                                    ? 'فريق غير متاح'
-                                    : 'Team unavailable'),
-                          ),
-                          trailing: Wrap(
-                            spacing: 4,
+                        // A trailing pair of buttons in ListTile clips
+                        // Arabic and 2x text on narrow phones. Place actions
+                        // on their own wrapping row, without hiding any CTA.
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              TextButton(
-                                onPressed:
-                                    _busyId == null && hasValidId
-                                        ? () => _respond(id, false)
-                                        : null,
-                                child: Text(
-                                  isBusy
-                                      ? '…'
-                                      : (isArabic ? 'رفض' : 'Decline'),
+                              Text(
+                                isArabic
+                                    ? 'دعوة للانضمام إلى فريق'
+                                    : 'Invitation to join a team',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                teamName?.isNotEmpty == true
+                                    ? teamName!
+                                    : (isArabic
+                                        ? 'فريق غير متاح'
+                                        : 'Team unavailable'),
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: AlignmentDirectional.centerEnd,
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  children: [
+                                    TextButton(
+                                      onPressed: _busyId == null && hasValidId
+                                          ? () => _respond(id, false)
+                                          : null,
+                                      child: Text(
+                                        isBusy
+                                            ? '…'
+                                            : (isArabic ? 'رفض' : 'Decline'),
+                                      ),
+                                    ),
+                                    FilledButton(
+                                      onPressed: _busyId == null && hasValidId
+                                          ? () => _respond(id, true)
+                                          : null,
+                                      child: Text(
+                                        isBusy
+                                            ? '…'
+                                            : (isArabic ? 'قبول' : 'Accept'),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              FilledButton(
-                                onPressed:
-                                    _busyId == null && hasValidId
-                                        ? () => _respond(id, true)
-                                        : null,
-                                child: Text(
-                                  isBusy
-                                      ? '…'
-                                      : (isArabic ? 'قبول' : 'Accept'),
-                                ),
-                              ),
+                              const Divider(),
                             ],
                           ),
                         );

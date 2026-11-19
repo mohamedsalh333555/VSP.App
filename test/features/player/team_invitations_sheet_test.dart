@@ -51,11 +51,19 @@ Widget _app({
   required Future<void> Function(String, bool) respond,
   Future<void> Function()? onMembershipChanged,
   _AuthProvider? auth,
+  String language = 'en',
+  double textScale = 1,
 }) {
   return ChangeNotifierProvider<AuthProvider>.value(
     value: auth ?? _AuthProvider(activeUserId),
     child: MaterialApp(
-      locale: const Locale('en'),
+      locale: Locale(language),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: TextScaler.linear(textScale),
+        ),
+        child: child!,
+      ),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
@@ -229,6 +237,32 @@ void main() {
     expect(find.text('Invitation accepted'), findsNothing);
     expect(find.textContaining('another account'), findsOneWidget);
   });
+
+  for (final locale in ['ar', 'en']) {
+    testWidgets('invitation labels and actions fit narrow 320dp at 2x ($locale)',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final title = locale == 'ar' ? 'قبول' : 'Accept';
+      final teamName = locale == 'ar'
+          ? 'فريق أبطال الإسكندرية الرياضي للشباب والناشئين'
+          : 'Very Long Alexandria Youth Football Champions Team';
+      await tester.pumpWidget(_app(
+        activeUserId: 'player-1',
+        language: locale,
+        textScale: 2,
+        load: (_) async => [_invitation('invite-1', teamName)],
+        respond: (_, __) async {},
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text(teamName), findsOneWidget);
+      expect(find.text(title), findsOneWidget);
+      await tester.ensureVisible(find.text(title));
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('shows a retryable load failure and recovers', (tester) async {
     var loadCount = 0;
