@@ -130,6 +130,35 @@ void main() {
     ]),isTrue);
   });
 
+  test('37.04: ties keep a shared rank while list order stays deterministic', () {
+    final teams = [
+      _team('z','Team Z','Aswan','Football',points:12),
+      _team('b','Team B','Aswan','Football',points:11),
+      _team('a','Team A','Aswan','Football',points:12),
+      _team('d','Team D','Aswan','Football',points:10),
+      _team('c','Team C','Aswan','Football',points:11),
+    ];
+    TeamsRankingTab.sortForDisplay(teams);
+    expect([for (final team in teams) team.id], ['a','z','b','c','d']);
+    expect([for (var i = 0; i < teams.length; i++)
+      TeamsRankingTab.rankAt(teams, i)], [1,1,3,3,5]);
+    expect(TeamsRankingTab.podiumIsAmbiguous(teams), isTrue);
+  });
+
+  test('37.04: changing ID cannot break a valid points tie', () {
+    final teams = [
+      _team('z-last','Higher alphabet','Aswan','Football',points:6),
+      _team('a-first','Lower alphabet','Aswan','Football',points:6),
+      _team('third','Third','Aswan','Football',points:3),
+    ];
+    TeamsRankingTab.sortForDisplay(teams);
+    expect(teams.first.id, 'a-first');
+    expect(TeamsRankingTab.rankAt(teams,0),1);
+    expect(TeamsRankingTab.rankAt(teams,1),1);
+    // Even two top-ranked teams cannot receive fabricated gold/silver.
+    expect(TeamsRankingTab.podiumIsAmbiguous(teams),isTrue);
+  });
+
   testWidgets('tie in top three stays a list instead of arbitrary medals',
       (tester) async {
     await tester.pumpWidget(ChangeNotifierProvider<AuthProvider>(

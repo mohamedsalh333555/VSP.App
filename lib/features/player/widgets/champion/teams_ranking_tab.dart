@@ -16,6 +16,17 @@ import 'champion_podium_components.dart';
 import 'champion_empty_state.dart';
 
 class TeamsRankingTab extends StatefulWidget {
+  /// Only VERIFIED points decide competition rank. IDs are a presentation
+  /// stabilizer when points tie, never a source of sporting advantage.
+  static void sortForDisplay(List<Team> teams) {
+    teams.sort((a, b) {
+      final pointsDifference = b.points.compareTo(a.points);
+      return pointsDifference != 0
+          ? pointsDifference
+          : a.id.compareTo(b.id);
+    });
+  }
+
   /// Shared rank for tied points; a visual sort is not a tie-break rule.
   static int rankAt(List<Team> teams, int index) {
     if (index < 0 || index >= teams.length) return 0;
@@ -172,10 +183,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
         }
 
         // Equal points have deterministic list order, not different ranks.
-        teams.sort((a, b) {
-          final difference = b.points.compareTo(a.points);
-          return difference != 0 ? difference : a.id.compareTo(b.id);
-        });
+        TeamsRankingTab.sortForDisplay(teams);
 
         final totalTeams = teams.length;
         final top3 = teams.take(3).toList();
