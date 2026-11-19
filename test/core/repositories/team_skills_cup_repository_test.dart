@@ -576,6 +576,26 @@ void main() {
     ])?['id'], 'application-1');
   });
 
+  test('periodic leaderboard poll refreshes the authoritative published phase set', () {
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    final start = source.indexOf('Future<void> _refreshLatest() async');
+    final stop = source.indexOf('Future<void> _reload() async', start);
+    final refresh = source.substring(start, stop);
+    expect(refresh, contains('widget.repository.getPhases(cupId)'));
+    expect(refresh.indexOf('widget.repository.getPhases(cupId)'),
+        lessThan(refresh.indexOf('final memberIds = await memberFuture;')));
+    expect(refresh, contains('_phases = values[5];'));
+    expect(refresh.indexOf('generation != _readGeneration'),
+        lessThan(refresh.indexOf('_phases = values[5];')));
+    final accountSwitch = source.substring(
+      source.indexOf('void didChangeDependencies()'),
+      source.indexOf('void dispose()'),
+    );
+    expect(accountSwitch, contains('_phases = [];'));
+  });
+
   test('periodic cup refresh recovers an invalidated pending roster read', () {
     final source = File(
       'lib/features/player/widgets/champion/team_skills_cup_tab.dart',

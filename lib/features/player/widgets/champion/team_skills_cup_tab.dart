@@ -115,6 +115,22 @@ class TeamSkillsCupTab extends StatefulWidget {
         cup['governorate'] == selectedLocation).toList(growable: false);
   }
 
+  /// Only a positive, finite weight within the server's per-stage cap
+  /// may be advertised as an announced point value.
+  static String publishedStageWeight(Object? weight) {
+    if (weight is! num || !weight.isFinite || weight <= 0 || weight > 25) {
+      return '—';
+    }
+    return weight.toString();
+  }
+
+  static String publishedStageWeightLabel(Object? weight,
+      {required bool isArabic}) {
+    final points = publishedStageWeight(weight);
+    return points == '—'
+        ? points : '$points ${isArabic ? 'نقطة' : 'points'}';
+  }
+
   /// One verified numeric stage record: zero is real; missing or disputed
   /// values are unknown and must never display as an invented zero.
   static String verifiedStagePoints(Iterable<Map<String, dynamic>> rows) =>
@@ -497,6 +513,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
       _cupStateCurrent = false;
       _rankedLeaderboard = [];
       _approvedScores = [];
+      _phases = [];
       _awards = [];
       _teamNames = {};
       _memberTeamIds = <String>{};
@@ -536,6 +553,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         currentUserId == null
             ? Future.value(<Map<String, dynamic>>[])
             : widget.repository.getCaptainTeams(currentUserId),
+        // Leaderboard completion must be checked against freshly published
+        // phases, not a phase list cached when this page first opened.
+        widget.repository.getPhases(cupId),
       ]);
       final memberIds = await memberFuture;
       final currentCup = await cupFuture;
@@ -560,6 +580,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
         _awards = values[2];
         _approvedScores = values[3];
         _captainTeams = values[4];
+        _phases = values[5];
         _memberTeamIds = memberIds;
         _teamNames = names;
         if (!_captainTeams.any(
@@ -1053,9 +1074,9 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
             ...visiblePhases.map((phase)=>ListTile(
               dense:true,
               title:Text(TeamSkillsCupTab.publishedStageLabel(phase, isArabic: ar),style:style),
-              trailing:Text(phase['weight'] is num && (phase['weight'] as num) > 0
-                  ? '${phase['weight']} ${ar ? 'نقطة' : 'points'}'
-                  : '—',
+              trailing:Text(
+                  TeamSkillsCupTab.publishedStageWeightLabel(
+                      phase['weight'], isArabic: ar),
                   style:const TextStyle(color:VSPColors.accent)),
             )),
             const SizedBox(height: 18),
@@ -1094,7 +1115,7 @@ class _TeamSkillsCupDetailsScreenState extends State<TeamSkillsCupDetailsScreen>
                       dense: true,
                       title: Text(TeamSkillsCupTab.publishedStageLabel(phase, isArabic: ar),
                           style: const TextStyle(color: VSPColors.textPrimary)),
-                      trailing: Text('$verified / ${phase['weight'] is num && (phase['weight'] as num).isFinite && (phase['weight'] as num) > 0 && (phase['weight'] as num) <= 25 ? phase['weight'] : '—'}',
+                      trailing: Text('$verified / ${TeamSkillsCupTab.publishedStageWeight(phase['weight'])}',
                           style: const TextStyle(color: VSPColors.textSecondary)),
                     );
                   }),

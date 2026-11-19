@@ -159,6 +159,30 @@ void main() {
         const {'stage_no': 2, 'name_ar': 123}, isArabic: true), 'مرحلة 2');
   });
 
+  test('published stage labels never announce invalid or nonfinite points', () {
+    for (final invalid in <Object?>[
+      null, '10', 0, -1, 26, double.nan, double.infinity,
+    ]) {
+      expect(TeamSkillsCupTab.publishedStageWeight(invalid), '—');
+      expect(TeamSkillsCupTab.publishedStageWeightLabel(
+        invalid, isArabic: true), '—');
+      expect(TeamSkillsCupTab.publishedStageWeightLabel(
+        invalid, isArabic: false), '—');
+    }
+    expect(TeamSkillsCupTab.publishedStageWeight(0.5), '0.5');
+    expect(TeamSkillsCupTab.publishedStageWeightLabel(
+      10, isArabic: true), '10 نقطة');
+    expect(TeamSkillsCupTab.publishedStageWeightLabel(
+      10, isArabic: false), '10 points');
+    expect(TeamSkillsCupTab.publishedStageWeight(25), '25');
+    final source = File(
+      'lib/features/player/widgets/champion/team_skills_cup_tab.dart',
+    ).readAsStringSync();
+    expect(source, contains('TeamSkillsCupTab.publishedStageWeightLabel('));
+    expect(source, contains('TeamSkillsCupTab.publishedStageWeight(phase['
+        "'weight'])"));
+  });
+
   test('published stage points cannot exceed the real configured stage weight', () {
     expect(TeamSkillsCupTab.verifiedWeightedStagePoints(
       const [{'computed_points': 0}], 10), '0');
