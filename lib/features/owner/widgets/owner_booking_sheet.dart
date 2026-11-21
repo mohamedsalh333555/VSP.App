@@ -5,12 +5,17 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/owner_repository.dart';
+import '../../../core/repositories/booking/challenge_non_played_report_repository.dart';
+import '../../../core/config/challenge_result_rollout_flags.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../data/models.dart';
 import '../../../l10n/app_localizations.dart';
 import 'booking_sheet/booking_sheet_actions.dart';
+import 'booking_sheet/challenge_non_played_report_dialog.dart';
 import 'booking_sheet/booking_sheet_details_form.dart';
 import 'booking_sheet/booking_sheet_duration_selector.dart';
 import 'booking_sheet/booking_sheet_form_fields.dart';
@@ -68,7 +73,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       initialAmount = booking.depositPaid > 0 ? booking.depositPaid : (booking.isPaid ? booking.totalPrice : 0.0);
     }
     _collectedAmountController = TextEditingController(
-      text: initialAmount == 0.0 ? '' : initialAmount.toStringAsFixed(0),
+      text: initialAmount == 0.0
+          ? ''
+          : VSPMoneyFormatter.amount(initialAmount),
     );
 
     if (widget.isEdit && booking != null) {
@@ -120,17 +127,21 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       );
 
   Future<void> _handleConfirmBooking(AppLocalizations l10n, bool isArabic) async {
+    if (!mounted || !widget.parentContext.mounted) return;
     final String customerName = _nameController.text.trim().isNotEmpty
         ? _nameController.text.trim()
         : (isArabic ? 'حجز يدوي' : 'Manual Booking');
 
     setState(() => _isSaving = true);
+    AuthProvider? authProvider;
+    String? initiatingUserId;
 
     try {
       final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
-      final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
+      authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
 
       final uid = authProvider.currentUser?.id;
+      initiatingUserId = uid;
       if (uid == null) {
         throw Exception(isArabic ? 'انتهت الجلسة، يرجى إعادة تسجيل الدخول' : 'Session expired');
       }
@@ -158,12 +169,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         final endTime = startTime.add(Duration(minutes: _selectedMinutes));
 
         final bookings = bookingProvider.userBookings.where((b) {
-          final bStartLocal = b.startTime.toLocal();
           return b.stadiumId.toLowerCase().trim() == stadium.id.toLowerCase().trim() &&
               b.status != BookingStatus.cancelled &&
-              bStartLocal.year == selectedDate.year &&
-              bStartLocal.month == selectedDate.month &&
-              bStartLocal.day == selectedDate.day;
+              b.status != BookingStatus.expired;
         }).toList();
 
         if (OwnerBookingSheetService.checkBreakOverlap(
@@ -208,7 +216,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         if (res is Map && res['success'] == false) {
           throw Exception(res['error']?.toString() ?? res['message']?.toString() ?? 'Failed to save booking');
         }
+        if (!mounted || authProvider.currentUser?.id != uid) return;
         await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+        if (!mounted || authProvider.currentUser?.id != uid) return;
       } else {
         final booking = widget.slot['booking'] as Booking?;
         if (booking != null) {
@@ -216,13 +226,10 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           final endTime = startTime.add(Duration(minutes: _selectedMinutes));
 
           final bookings = bookingProvider.userBookings.where((b) {
-            final bStartLocal = b.startTime.toLocal();
             return b.id != booking.id &&
                 b.stadiumId.toLowerCase().trim() == stadium.id.toLowerCase().trim() &&
                 b.status != BookingStatus.cancelled &&
-                bStartLocal.year == startTime.year &&
-                bStartLocal.month == startTime.month &&
-                bStartLocal.day == startTime.day;
+                b.status != BookingStatus.expired;
           }).toList();
 
           if (OwnerBookingSheetService.checkBookingsOverlap(
@@ -256,7 +263,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           );
 
           await OwnerRepository().updateBookingDetails(booking.id, updateMap);
+          if (!mounted || authProvider.currentUser?.id != uid) return;
           await bookingProvider.loadOwnerBookings(uid);
+          if (!mounted || authProvider.currentUser?.id != uid) return;
         }
       }
 
@@ -274,7 +283,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         }
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted &&
+          (authProvider == null ||
+              authProvider.currentUser?.id == initiatingUserId)) {
         final cleanErr = OwnerBookingSheetService.formatBookingErrorMessage(e, isArabic: isArabic);
         VSPFeedback.showError(context, cleanErr);
       }
@@ -295,13 +306,110 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         setDeleting: (v) => setState(() => _isDeleting = v),
       );
 
+
+  /// This neutral match-validity report does not change payment/no-show
+  /// state. It is inaccessible unless the staged server rollout is enabled.
+  Future<void> _handleChallengeNotPlayed(
+      Booking booking, bool isArabic) async {
+    final parentContext = widget.parentContext;
+    if (!ChallengeResultRolloutFlags.nonPlayedReportsEnabled ||
+        !mounted || _isSaving || !parentContext.mounted ||
+        booking.bookingType != BookingType.challenge ||
+        booking.endTime.isAfter(DateTime.now())) {
+      return;
+    }
+    final authProvider =
+        Provider.of<AuthProvider>(parentContext, listen: false);
+    final bookingProvider =
+        Provider.of<BookingProvider>(parentContext, listen: false);
+    final uid = authProvider.currentUser?.id;
+    if (uid == null || uid != booking.ownerId) {
+      VSPFeedback.showError(context, isArabic
+          ? 'غير مسموح لك بالإبلاغ عن هذه المباراة.'
+          : 'You cannot report this match.');
+      return;
+    }
+    final repository = ChallengeNonPlayedReportRepository();
+    // A failed status lookup is UNKNOWN, never proof no report exists.
+    final state = await repository.fetchMyReportStatus(booking.id);
+    if (!mounted || authProvider.currentUser?.id != uid) return;
+    if (state == null) {
+      VSPFeedback.showError(context, isArabic
+          ? 'حالة البلاغ غير متاحة. حاول مرة أخرى.'
+          : 'Match report status unavailable. Please retry.');
+      return;
+    }
+    if (state['reported'] == true) {
+      VSPFeedback.showInfo(context, isArabic
+          ? 'تم تسجيل بلاغ لهذه المباراة بالفعل.'
+          : 'This match has already been reported.');
+      return;
+    }
+    final reason = await ChallengeNonPlayedReportDialog.show(
+      context, isArabic: isArabic,
+    );
+    if (reason == null || !mounted ||
+        authProvider.currentUser?.id != uid) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final receipt = await repository.ownerReportNotPlayed(
+        bookingId: booking.id, reason: reason,
+      );
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      // A network timeout may have occurred AFTER the server committed:
+      // read back the scoped report status before presenting an error.
+      var confirmed = receipt.accepted && receipt.state == 'excluded';
+      if (!confirmed) {
+        final fresh = await repository.fetchMyReportStatus(booking.id);
+        confirmed = fresh?['state'] == 'excluded';
+      }
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      if (!confirmed) {
+        VSPFeedback.showError(context, isArabic
+            ? 'تعذر تأكيد البلاغ. تحقق من الحالة قبل إعادة المحاولة.'
+            : 'Could not verify the report. Check status before retrying.');
+        return;
+      }
+      if (!parentContext.mounted) return;
+      await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      Navigator.pop(context);
+      if (parentContext.mounted) {
+        VSPFeedback.showSuccess(parentContext, isArabic
+            ? 'تم تسجيل بلاغ المباراة دون تغيير المدفوعات.'
+            : 'Match report recorded without changing payments.');
+      }
+    } catch (_) {
+      // Do not log a private report reason or identity.
+      if (mounted && authProvider.currentUser?.id == uid) {
+        VSPFeedback.showError(context, isArabic
+            ? 'تعذر التحقق من البلاغ. حاول مرة أخرى بعد مراجعة الحالة.'
+            : 'Could not verify report. Review status before retrying.');
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   Future<void> _handleReportNoShow(Booking booking, bool isArabic) async {
     final parentContext = widget.parentContext;
+    if (!mounted || !parentContext.mounted) return;
     final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
     final bookingProvider = Provider.of<BookingProvider>(parentContext, listen: false);
+    final uid = authProvider.currentUser?.id;
+    if (uid == null) {
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى.' : 'Your session expired. Please sign in again.',
+      );
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
         title: Text(isArabic ? 'تسجيل عدم حضور اللاعب' : 'Report Player No-Show'),
@@ -315,20 +423,23 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'إلغاء' : 'Cancel')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.warning, foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.warning, foregroundColor: VSPColors.black),
             child: Text(isArabic ? 'تأكيد عدم الحضور' : 'Confirm No-Show'),
           ),
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true ||
+        !mounted ||
+        authProvider.currentUser?.id != uid) {
+      return;
+    }
     setState(() => _isSaving = true);
     try {
       await OwnerRepository().recordPlayerNoShow(bookingId: booking.id);
-      final uid = authProvider.currentUser?.id;
-      if (uid != null) {
-        await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
-      }
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+      if (!mounted || authProvider.currentUser?.id != uid) return;
       if (mounted) {
         Navigator.pop(context);
         if (widget.parentContext.mounted) {
@@ -336,8 +447,14 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         }
       }
     } catch (e) {
-      if (mounted) {
-        VSPFeedback.showError(context, isArabic ? 'تعذر تسجيل عدم الحضور: $e' : 'Could not record no-show: $e');
+      VSPLogger.w('Owner no-show report failed: $e');
+      if (mounted && authProvider.currentUser?.id == uid) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر تسجيل عدم الحضور. تحقق من الاتصال وحاول مرة أخرى.'
+              : 'Could not record the no-show. Check your connection and try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -345,6 +462,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
   }
 
   Future<void> _lockSlotForMaintenance(AppLocalizations l10n, bool isArabic) async {
+    if (!mounted || !widget.parentContext.mounted) return;
     final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
     final ownerId = authProvider.currentUser?.id;
     if (ownerId == null) {
@@ -383,9 +501,10 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         throw Exception(result['error']?.toString() ?? 'Failed to lock slot');
       }
 
+      if (!mounted || authProvider.currentUser?.id != ownerId) return;
       await bookingProvider.loadOwnerBookings(ownerId, forceRefresh: true);
 
-      if (!mounted) return;
+      if (!mounted || authProvider.currentUser?.id != ownerId) return;
       navigator.pop();
       if (parentContext.mounted) {
         VSPFeedback.showSuccess(
@@ -394,7 +513,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && authProvider.currentUser?.id == ownerId) {
         VSPFeedback.showError(
           context,
           isArabic ? 'تعذر قفل الفترة للصيانة.' : 'Could not lock this slot for maintenance.',
@@ -424,8 +543,11 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       manualBookingTitle: l10n.manualBookingTitle,
     );
 
-    final double systemBottomPadding = MediaQuery.of(context).padding.bottom;
-    final double keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
+    final media = MediaQuery.of(context);
+    final double systemBottomPadding = media.padding.bottom;
+    // The scroll-controlled modal route already constrains this sheet around
+    // the keyboard and system bars; keep only a preferred content-height cap.
+    final double availableSheetHeight = media.size.height * 0.92;
     final int maxMins = _getMaxAvailableMinutes();
 
     final formattedSlotTime = OwnerBookingSheetService.formatSlotTime(
@@ -438,13 +560,13 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
+        maxHeight: availableSheetHeight,
       ),
       padding: EdgeInsets.fromLTRB(
         VSPSpacing.md,
         VSPSpacing.md,
         VSPSpacing.md,
-        systemBottomPadding + keyboardPadding + 16,
+        systemBottomPadding + 16,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
@@ -582,7 +704,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                               ),
                               Text(
-                                '${booking.depositPaid.toInt()} ج.م',
+                                '${VSPMoneyFormatter.amount(booking.depositPaid)} ج.م',
                                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
                               ),
                             ],
@@ -600,7 +722,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                               Text(
                                 (booking.isPaid || booking.paymentStatus == 'paid')
                                     ? (isArabic ? '0 ج.م (تم التحصيل)' : '0 EGP (Collected)')
-                                    : '${(booking.totalPrice - booking.depositPaid).toInt()} ج.م',
+                                    : '${VSPMoneyFormatter.amount(booking.totalPrice - booking.depositPaid)} ج.م',
                                 style: TextStyle(
                                   color: (booking.isPaid || booking.paymentStatus == 'paid')
                                       ? VSPColors.success
@@ -636,6 +758,15 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
               if (booking != null) _handleCancelBooking(booking, l10n, isArabic);
             },
             onReportNoShow: booking == null ? null : () => _handleReportNoShow(booking, isArabic),
+            onReportChallengeNotPlayed:
+                ChallengeResultRolloutFlags.nonPlayedReportsEnabled &&
+                        booking != null &&
+                        booking.bookingType == BookingType.challenge &&
+                        !booking.endTime.isAfter(DateTime.now()) &&
+                        booking.status != BookingStatus.cancelled &&
+                        booking.status != BookingStatus.expired
+                    ? () => _handleChallengeNotPlayed(booking, isArabic)
+                    : null,
             onConfirmBooking: () => _handleConfirmBooking(l10n, isArabic),
             isOwnerManual: flags.isOwnerManual,
           ),

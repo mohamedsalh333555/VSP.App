@@ -20,7 +20,7 @@ Future<DateTime?> showVSPDatePicker(
  return showDialog<DateTime>(
  context: context,
  barrierDismissible: true,
- barrierColor: Colors.black.withValues(alpha: 0.8),
+ barrierColor: VSPColors.black.withValues(alpha: 0.8),
  builder: (ctx) => VSPDatePickerDialog(
  initialDate: initialDate,
  minYear: minYear,
@@ -56,10 +56,13 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  @override
  void initState() {
  super.initState();
- if (widget.initialDate != null) {
- _selectedYear = widget.initialDate!.year;
- _selectedMonth = widget.initialDate!.month;
- _selectedDay = widget.initialDate!.day;
+ final initialDate = widget.initialDate;
+ if (initialDate != null &&
+     initialDate.year >= widget.minYear &&
+     initialDate.year <= widget.maxYear) {
+ _selectedYear = initialDate.year;
+ _selectedMonth = initialDate.month;
+ _selectedDay = initialDate.day;
  }
  }
 
@@ -84,7 +87,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  return BackdropFilter(
  filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
  child: Dialog(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
  child: Container(
  width: double.infinity,
@@ -113,7 +116,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  children: [
  // 1. Header with Neon Accent Avatar & Title
  Padding(
- padding: const EdgeInsets.fromLTRB(20, 18, 16, 14),
+ padding: const EdgeInsetsDirectional.fromSTEB(20, 18, 16, 14),
  child: Row(
  children: [
  Container(
@@ -137,7 +140,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  child: Text(
  isAr ? 'اختر تاريخ الميلاد' : 'Select Date of Birth',
  style: const TextStyle(
- color: Colors.white,
+ color: VSPColors.white,
  fontWeight: FontWeight.w900,
  fontSize: 18,
  letterSpacing: 0.2,
@@ -280,7 +283,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  child: PrimaryButton(
  text: isAr ? 'تأكيد التاريخ' : 'Confirm Date',
  color: VSPColors.accent,
- textColor: Colors.black,
+ textColor: VSPColors.black,
  onPressed: (_selectedYear != null && _selectedMonth != null && _selectedDay != null)
  ? _finishSelection
  : null,
@@ -306,6 +309,9 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
         onYearSelected: (year) {
           setState(() {
             _selectedYear = year;
+            // A day selected under the previous year may be invalid now
+            // (for example, 29 February in a non-leap year).
+            _selectedDay = null;
             _currentStep = 1;
           });
         },
@@ -317,6 +323,9 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
         onMonthSelected: (month) {
           setState(() {
             _selectedMonth = month;
+            // Never carry a day into a different month: it may not exist
+            // (for example, day 31 when switching to February).
+            _selectedDay = null;
             _currentStep = 2;
           });
         },

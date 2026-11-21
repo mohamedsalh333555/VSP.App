@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 /// Owner home finance panel.
 ///
@@ -17,6 +18,11 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   final double onlinePending;
   final double onlineHeld;
   final double availableBalance;
+  final bool balanceVerified;
+  /// Revenue totals must only be displayed when the server analytics request
+  /// for the current owner, venue and date range has completed successfully.
+  final bool revenueVerified;
+  final bool revenueLoading;
   final double upcomingValue;
   final bool isProOwner;
   final VoidCallback onOpenLedger;
@@ -33,6 +39,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     this.onlinePending = 0.0,
     this.onlineHeld = 0.0,
     required this.availableBalance,
+    this.balanceVerified = true,
+    this.revenueVerified = true,
+    this.revenueLoading = false,
     this.upcomingValue = 0.0,
     required this.isProOwner,
     required this.onOpenLedger,
@@ -46,7 +55,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currency = isArabic ? 'ج.م' : 'EGP';
     final collectedTotal = collectedCash + collectedOnline;
-    final hasBalance = availableBalance > 0.009;
+    final hasBalance = balanceVerified && availableBalance > 0.009;
     final dueTotal = cashDue + onlinePending;
     final hasDueMoney = dueTotal > 0.009;
 
@@ -107,7 +116,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                collectedTotal.toStringAsFixed(0),
+                revenueVerified ? VSPMoneyFormatter.amount(collectedTotal) : '—',
                 style: const TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -117,7 +126,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Text(
+              if (revenueVerified)
+                Text(
                 currency,
                 style: const TextStyle(
                   fontSize: 13,
@@ -136,6 +146,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                   label: isArabic ? 'كاش متحصل' : 'Cash collected',
                   value: collectedCash,
                   currency: currency,
+                  verified: revenueVerified,
                 ),
               ),
               const SizedBox(width: 10),
@@ -145,12 +156,29 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                   label: isArabic ? 'أونلاين متحصل' : 'Online collected',
                   value: collectedOnline,
                   currency: currency,
+                  verified: revenueVerified,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          if (isProOwner)
+          if (!revenueVerified)
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                revenueLoading
+                    ? (isArabic
+                        ? 'جارٍ التحقق من مبالغ التحصيل الحالية.'
+                        : 'Verifying current collection amounts.')
+                    : (isArabic
+                        ? 'تعذر التحقق من التحصيل الحالي. لا نعرض مبالغ قديمة أو صفراً افتراضياً.'
+                        : 'Collection totals could not be verified. Old amounts and assumed zeros are hidden.'),
+                style: const TextStyle(
+                  color: VSPColors.textSecondary, fontSize: 12,
+                ),
+              ),
+            )
+          else if (isProOwner)
             _buildProCollectionIntelligence(
               currency: currency,
               cashDue: cashDue,
@@ -184,7 +212,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isArabic ? 'جاهز للسحب الآن' : 'Available for withdrawal',
+                        balanceVerified
+                            ? (isArabic ? 'جاهز للسحب الآن' : 'Available for withdrawal')
+                            : (isArabic ? 'رصيد السحب غير متاح حالياً' : 'Withdrawal balance unavailable'),
                         style: const TextStyle(
                           color: VSPColors.textSecondary,
                           fontSize: 11,
@@ -193,7 +223,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${availableBalance.toStringAsFixed(0)} $currency',
+                        balanceVerified
+                            ? '${VSPMoneyFormatter.amount(availableBalance)} $currency'
+                            : (isArabic ? 'غير متاح' : 'Unavailable'),
                         style: const TextStyle(
                           color: VSPColors.textPrimary,
                           fontSize: 17,
@@ -211,9 +243,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                     } else {
                       VSPFeedback.showWarning(
                         context,
-                        isArabic
-                            ? 'لا يوجد رصيد متاح للسحب حالياً'
-                            : 'No balance is currently available for withdrawal',
+                        !balanceVerified
+                            ? (isArabic ? 'تعذر التحقق من رصيد السحب. حاول مرة أخرى.' : 'Could not verify the withdrawal balance. Please retry.')
+                            : (isArabic ? 'لا يوجد رصيد متاح للسحب حالياً' : 'No balance is currently available for withdrawal'),
                       );
                     }
                   },
@@ -223,13 +255,13 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: hasBalance
                           ? VSPColors.accent
-                          : Colors.white.withValues(alpha: 0.05),
+                          : VSPColors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(VSPRadius.sm),
                     ),
                     child: Text(
                       isArabic ? 'سحب' : 'Withdraw',
                       style: TextStyle(
-                        color: hasBalance ? Colors.black : VSPColors.textSecondary,
+                        color: hasBalance ? VSPColors.black : VSPColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                       ),
@@ -257,12 +289,12 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
               ),
             ),
           ],
-          if (upcomingValue > 0.009) ...[
+          if (revenueVerified && upcomingValue > 0.009) ...[
             const SizedBox(height: 10),
             Text(
               isArabic
-                  ? 'الحجوزات القادمة المؤكدة: ${upcomingValue.toStringAsFixed(0)} $currency'
-                  : 'Upcoming confirmed bookings: ${upcomingValue.toStringAsFixed(0)} $currency',
+                  ? 'الحجوزات القادمة المؤكدة: ${VSPMoneyFormatter.amount(upcomingValue)} $currency'
+                  : 'Upcoming confirmed bookings: ${VSPMoneyFormatter.amount(upcomingValue)} $currency',
               style: const TextStyle(
                 color: VSPColors.textSecondary,
                 fontSize: 10.5,
@@ -315,7 +347,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${dueTotal.toStringAsFixed(0)} $currency',
+                '${VSPMoneyFormatter.amount(dueTotal)} $currency',
                 style: TextStyle(
                   color: hasDueMoney ? VSPColors.warning : VSPColors.textSecondary,
                   fontSize: 13,
@@ -352,8 +384,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             const SizedBox(height: 9),
             Text(
               isArabic
-                  ? 'أونلاين متحصل لكن غير متاح للسحب بعد: ${onlineHeld.toStringAsFixed(0)} $currency'
-                  : 'Online collected but not withdrawable yet: ${onlineHeld.toStringAsFixed(0)} $currency',
+                  ? 'أونلاين متحصل لكن غير متاح للسحب بعد: ${VSPMoneyFormatter.amount(onlineHeld)} $currency'
+                  : 'Online collected but not withdrawable yet: ${VSPMoneyFormatter.amount(onlineHeld)} $currency',
               style: const TextStyle(
                 color: VSPColors.textSecondary,
                 fontSize: 10.5,
@@ -523,6 +555,7 @@ class _MoneySplit extends StatelessWidget {
   final double value;
   final String currency;
   final bool highlight;
+  final bool verified;
 
   const _MoneySplit({
     required this.icon,
@@ -530,6 +563,7 @@ class _MoneySplit extends StatelessWidget {
     required this.value,
     required this.currency,
     this.highlight = false,
+    this.verified = true,
   });
 
   @override
@@ -574,7 +608,7 @@ class _MoneySplit extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${value.toStringAsFixed(0)} $currency',
+            verified ? '${VSPMoneyFormatter.amount(value)} $currency' : '—',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(

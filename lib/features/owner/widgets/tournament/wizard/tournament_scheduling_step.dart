@@ -35,7 +35,7 @@ class TournamentSchedulingStep extends StatelessWidget {
 
   Widget _buildLabel(BuildContext context, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: VSPSpacing.xs, left: 4),
+      padding: const EdgeInsetsDirectional.only(bottom: VSPSpacing.xs, start: 4),
       child: Text(text, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500)),
     );
   }
@@ -60,7 +60,7 @@ class TournamentSchedulingStep extends StatelessWidget {
             isSelected ? '${date.day}/${date.month}/${date.year}' : placeholder,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: enabled
-                      ? (isSelected ? Colors.white : VSPColors.textSecondary)
+                      ? (isSelected ? VSPColors.white : VSPColors.textSecondary)
                       : VSPColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
@@ -68,7 +68,7 @@ class TournamentSchedulingStep extends StatelessWidget {
           Icon(
             enabled ? Iconsax.calendar_1_copy : Iconsax.lock_copy,
             color: enabled
-                ? (isSelected ? Colors.white : VSPColors.textSecondary)
+                ? (isSelected ? VSPColors.white : VSPColors.textSecondary)
                 : VSPColors.textSecondary,
             size: 18,
           ),
@@ -99,7 +99,7 @@ class TournamentSchedulingStep extends StatelessWidget {
         inputFormatters: inputFormatters,
         cursorColor: VSPColors.accent,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: enabled ? Colors.white : VSPColors.textSecondary,
+              color: enabled ? VSPColors.white : VSPColors.textSecondary,
               fontWeight: FontWeight.bold,
             ),
         decoration: InputDecoration(
@@ -146,13 +146,13 @@ class TournamentSchedulingStep extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.1),
+              color: VSPColors.warningSoft,
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+              border: Border.all(color: VSPColors.warningBorder),
             ),
             child: Row(
               children: [
-                const Icon(Iconsax.lock_1_copy, color: Colors.amber, size: 20),
+                const Icon(Iconsax.lock_1_copy, color: VSPColors.warning, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -160,7 +160,7 @@ class TournamentSchedulingStep extends StatelessWidget {
                         ? 'الحقول المقفولة (التواريخ أو الجوائز) لا يمكن تعديلها بعد اعتماد اللائحة وبدء التسجيل حفاظاً على التزامات البطولة.'
                         : 'Locked fields (dates or prizes) cannot be changed after registration begins to protect tournament commitments.',
                     style: const TextStyle(
-                      color: Colors.amber,
+                      color: VSPColors.warning,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),

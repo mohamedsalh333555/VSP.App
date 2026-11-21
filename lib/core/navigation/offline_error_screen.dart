@@ -6,7 +6,9 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../ui/tokens/vsp_tokens.dart';
+import '../ui/tokens/vsp_design_tokens.dart';
 import '../ui/components/vsp_card.dart';
+import '../ui/components/vsp_button.dart';
 
 class OfflineErrorScreen extends StatefulWidget {
  const OfflineErrorScreen({super.key});
@@ -25,11 +27,23 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  _pulseController = AnimationController(
  vsync: this,
  duration: const Duration(seconds: 2),
- )..repeat(reverse: true);
+ );
  
  _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
  CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
  );
+ }
+
+ @override
+ void didChangeDependencies() {
+ super.didChangeDependencies();
+ // Respect the operating system's reduced-motion accessibility setting.
+ if (MediaQuery.disableAnimationsOf(context)) {
+ _pulseController.stop();
+ _pulseController.value = 0.0;
+ } else if (!_pulseController.isAnimating) {
+ _pulseController.repeat(reverse: true);
+ }
  }
 
  @override
@@ -60,7 +74,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  ),
  child: BackdropFilter(
  filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
- child: Container(color: Colors.transparent),
+ child: Container(color: VSPColors.transparent),
  ),
  ),
  ),
@@ -76,20 +90,24 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  ),
  child: BackdropFilter(
  filter: ImageFilter.blur(sigmaX: 120, sigmaY: 120),
- child: Container(color: Colors.transparent),
+ child: Container(color: VSPColors.transparent),
  ),
  ),
  ),
 
  // ── Content ──
- Center(
+ SafeArea(
+ child: Center(
  child: SingleChildScrollView(
  padding: const EdgeInsets.symmetric(horizontal: 24),
  child: ScaleTransition(
- scale: CurvedAnimation(
- parent: ModalRoute.of(context)?.animation ?? const AlwaysStoppedAnimation(1.0),
- curve: Curves.easeOutBack,
- ),
+ scale: MediaQuery.disableAnimationsOf(context)
+     ? const AlwaysStoppedAnimation<double>(1.0)
+     : CurvedAnimation(
+         parent: ModalRoute.of(context)?.animation ??
+             const AlwaysStoppedAnimation<double>(1.0),
+         curve: Curves.easeOutBack,
+       ),
  child: VSPCard(
  isGlass: true,
  padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
@@ -119,10 +137,14 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  )
  ],
  ),
+ child: Semantics(
+ label: isAr ? 'لا يوجد اتصال بالشبكة' : 'Network disconnected',
+ image: true,
  child: const Icon(
  Iconsax.wifi_square_copy,
  color: VSPColors.accent,
  size: 48,
+ ),
  ),
  ),
  );
@@ -134,7 +156,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  Text(
  isAr ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection',
  style: const TextStyle(
- color: Colors.white,
+ color: VSPColors.white,
  fontSize: 22,
  fontWeight: FontWeight.bold,
  letterSpacing: -0.5,
@@ -161,43 +183,57 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  const SizedBox(height: 32),
 
  // ── Primary Retry Button ──
- SizedBox(
- width: double.infinity,
- height: 52,
- child: ElevatedButton(
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- foregroundColor: VSPColors.background,
- shadowColor: VSPColors.accent.withValues(alpha: 0.3),
- elevation: 8,
- shape: RoundedRectangleBorder(
- borderRadius: BorderRadius.circular(VSPRadius.md),
- ),
- ),
- onPressed: auth.isLoading ? null : () {
- HapticFeedback.lightImpact();
- auth.retryDataFetch();
- },
- child: auth.isLoading
- ? const SizedBox(
- width: 24,
- height: 24,
- child: CircularProgressIndicator(
- strokeWidth: 2.5,
- valueColor: AlwaysStoppedAnimation<Color>(VSPColors.background),
- ),
- )
- : Text(
- isAr ? 'إعادة المحاولة ' : 'Retry Connection ',
- style: const TextStyle(
- fontWeight: FontWeight.bold,
- fontSize: 15,
- letterSpacing: 0.5,
- ),
- ),
- ),
+ VSPPrimaryButton(
+ text: isAr ? 'إعادة المحاولة' : 'Retry Connection',
+ height: VSPDSizes.buttonHeight,
+ isLoading: auth.isLoading,
+ onPressed: auth.isLoading
+     ? null
+     : () async {
+         HapticFeedback.lightImpact();
+         if (auth.currentUser == null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+               content: Text(
+                 isAr
+                     ? 'انتهت جلسة الحساب. سجّل الدخول ثم حاول مجددًا.'
+                     : 'Your session has ended. Sign in and try again.',
+               ),
+             ),
+           );
+           return;
+         }
+         try {
+           await auth.retryDataFetch();
+           if (!context.mounted) return;
+           if (auth.hasDataFetchError) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               SnackBar(
+                 content: Text(
+                   isAr
+                       ? 'الاتصال لم يكتمل. تحقق من الشبكة وحاول مجددًا.'
+                       : 'Connection not restored. Check your network and retry.',
+                 ),
+               ),
+             );
+           }
+         } catch (e) {
+           debugPrint('Offline retry failed; user can retry safely.');
+           if (!context.mounted) return;
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+               content: Text(
+                 isAr
+                     ? 'تعذرت إعادة الاتصال. حاول مرة أخرى.'
+                     : 'Could not reconnect. Please try again.',
+               ),
+             ),
+           );
+         }
+       },
  ),
  ],
+ ),
  ),
  ),
  ),

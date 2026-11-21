@@ -39,7 +39,7 @@ class TournamentWizardBottomBar extends StatelessWidget {
               child: SizedBox(
                 height: 56,
                 child: OutlinedButton(
-                  onPressed: onPrev,
+                  onPressed: isLoading ? null : onPrev,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: VSPColors.textSecondary,
                     side: const BorderSide(color: VSPColors.divider),
@@ -64,7 +64,7 @@ class TournamentWizardBottomBar extends StatelessWidget {
                         : l10n.createTournamentTitle)
                     : l10n.nextButton,
                 isLoading: isLoading,
-                onPressed: isLoading ? () {} : onNext,
+                onPressed: isLoading ? null : onNext,
               ),
             ),
           ),

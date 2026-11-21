@@ -1,0 +1,47 @@
+name: VSP Player Home Structure and Navigation Contract
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'lib/features/player/screens/player_home_screen.dart'
+      - 'lib/features/player/widgets/home/home_feed_content.dart'
+      - 'lib/features/player/widgets/home/home_top_bar.dart'
+      - 'lib/shared/widgets/vsp_bottom_nav_bar.dart'
+      - 'test/architecture/player_home_information_architecture_contract_test.dart'
+      - 'test/features/player/home_layout_navigation_widget_test.dart'
+      - '.github/workflows/vsp-player-home-no-redesign.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/features/player/screens/player_home_screen.dart'
+      - 'lib/features/player/widgets/home/home_feed_content.dart'
+      - 'lib/features/player/widgets/home/home_top_bar.dart'
+      - 'lib/shared/widgets/vsp_bottom_nav_bar.dart'
+      - 'test/architecture/player_home_information_architecture_contract_test.dart'
+      - 'test/features/player/home_layout_navigation_widget_test.dart'
+      - '.github/workflows/vsp-player-home-no-redesign.yml'
+permissions:
+  contents: read
+jobs:
+  home-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze player home regression tests
+        run: >-
+          flutter analyze --no-fatal-infos
+          test/architecture/player_home_information_architecture_contract_test.dart
+          test/features/player/home_layout_navigation_widget_test.dart
+      - name: Test home layout contract and Arabic/English navigation
+        run: >-
+          flutter test --concurrency=1
+          test/architecture/player_home_information_architecture_contract_test.dart
+          test/features/player/home_layout_navigation_widget_test.dart

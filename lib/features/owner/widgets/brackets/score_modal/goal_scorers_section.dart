@@ -67,7 +67,7 @@ class GoalScorersList extends StatelessWidget {
                       Text(
                         g.playerName,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: VSPColors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
@@ -75,7 +75,7 @@ class GoalScorersList extends StatelessWidget {
                       const SizedBox(width: 4),
                       GestureDetector(
                         onTap: () => onRemoveGoal(g),
-                        child: const Icon(Iconsax.close_circle_copy, color: Colors.white54, size: 10),
+                        child: const Icon(Iconsax.close_circle_copy, color: VSPColors.white54, size: 10),
                       ),
                     ],
                   ),
@@ -106,7 +106,7 @@ void openAddGoalModal(
         builder: (context, setDlgState) {
           return AlertDialog(
             backgroundColor: VSPColors.surface,
-            surfaceTintColor: Colors.transparent,
+            surfaceTintColor: VSPColors.transparent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
             title: Row(
               children: [
@@ -115,7 +115,7 @@ void openAddGoalModal(
                 Expanded(
                   child: Text(
                     isArabic ? 'تسجيل هدف لـ $teamName ' : 'Record Goal for $teamName ',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),
               ],
@@ -144,11 +144,11 @@ void openAddGoalModal(
                         isExpanded: true,
                         hint: Text(
                           isArabic ? 'اختر لاعباً...' : 'Select a player...',
-                          style: const TextStyle(color: Colors.white54, fontSize: 12),
+                          style: const TextStyle(color: VSPColors.white54, fontSize: 12),
                         ),
                         dropdownColor: VSPColors.surface,
                         underline: const SizedBox(),
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style: const TextStyle(color: VSPColors.white, fontSize: 12),
                         items: roster.map((name) {
                           return DropdownMenuItem<String>(
                             value: name,
@@ -183,7 +183,7 @@ void openAddGoalModal(
                   const SizedBox(height: 6),
                   TextField(
                     controller: customNameController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: const TextStyle(color: VSPColors.white, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: isArabic ? 'مثال: أحمد حسام / لاعب 1' : 'e.g. Ahmed / Player 1',
                       hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
@@ -212,7 +212,7 @@ void openAddGoalModal(
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.accent,
-                  foregroundColor: Colors.black,
+                  foregroundColor: VSPColors.black,
                 ),
                 onPressed: () {
                   final finalName = customNameController.text.trim().isNotEmpty

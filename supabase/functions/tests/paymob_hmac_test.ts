@@ -1,0 +1,331 @@
+import {
+  computePaymobHMAC,
+  verifyPaymobHmacSignature,
+} from "../_shared/paymob_hmac.ts";
+import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
+import { isPersistedPaymobOrder, matchesBoundPaymobOrder } from "../_shared/paymob_order_binding.ts";
+import { isAuthorizedPaymobIntegration } from "../_shared/paymob_integration_guard.ts";
+import { sanitizePaymobAuditPayload } from "../_shared/paymob_audit_payload.ts";
+
+function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) throw new Error(message);
+}
+
+const obj = {
+  amount_cents: 2500,
+  created_at: "2026-11-17T10:00:00Z",
+  currency: "EGP",
+  error_occured: false,
+  has_parent_transaction: false,
+  id: 891,
+  integration_id: 1234,
+  is_3d_secure: true,
+  is_auth: false,
+  is_capture: false,
+  is_refunded: false,
+  is_standalone_payment: true,
+  is_voided: false,
+  order: { id: 447, merchant_order_id: "TEST_BOOKING" },
+  owner: 19,
+  pending: false,
+  source_data: { pan: "4242", sub_type: "Visa", type: "card" },
+  success: true,
+};
+const secret = "synthetic-ci-hmac-secret-not-a-real-credential";
+
+async function independentHmac(message: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-512" },
+    false,
+    ["sign"],
+  );
+  return Array.from(new Uint8Array(await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(message),
+  )), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+Deno.test("Paymob transaction HMAC matches independent SHA-512 20-field vector", async () => {
+  // Independent explicit field vector; catches accidental reordering.
+  const expectedMessage = [
+    2500, "2026-11-17T10:00:00Z", "EGP", false, false, 891, 1234,
+    true, false, false, false, true, false, 447, 19, false,
+    "4242", "Visa", "card", true,
+  ].join("");
+  const actual = await computePaymobHMAC(obj, secret);
+  assert(actual === await independentHmac(expectedMessage), "20-field HMAC order mismatch");
+  assert(actual.length === 128, "SHA-512 hex digest must be exactly 128 characters");
+  assert(verifyPaymobHmacSignature(actual, actual), "valid synthetic signature rejected");
+  assert(verifyPaymobHmacSignature(actual.toUpperCase(), actual), "uppercase hex signature rejected");
+});
+
+Deno.test("Reject invalid, missing, malformed, and altered signatures", async () => {
+  const expected = await computePaymobHMAC(obj, secret);
+  const changedAmount = await computePaymobHMAC({ ...obj, amount_cents: 2501 }, secret);
+  const changedOrder = await computePaymobHMAC({ ...obj, order: { id: 448 } }, secret);
+  for (const signature of [
+    "", "wrong", expected.slice(1), expected + "0",
+    "z".repeat(128), "0".repeat(128), changedAmount, changedOrder,
+  ]) {
+    assert(!verifyPaymobHmacSignature(signature, expected), "invalid HMAC was accepted");
+  }
+});
+
+Deno.test("No unauthenticated raw URL, HMAC proof or payload persisted by webhook", async () => {
+  const source = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const boundary = source.indexOf("const amountCents = Number(obj?.amount_cents)");
+  assert(boundary > 0, "unable to identify the signed-payload boundary");
+  const unauthenticated = source.slice(0, boundary);
+  assert(unauthenticated.includes("verifyPaymobHmacSignature(receivedHmac, calculatedHmac)"),
+    "the callback must verify the HMAC before processing payment state");
+  assert(!/rawUrl|calculatedHmacPrefix|queryParams:|payload: payload,/.test(unauthenticated),
+    "the rejection audit persists untrusted raw data");
+  assert(!/^\s*receivedHmac,/m.test(unauthenticated),
+    "the rejection audit persists the untrusted HMAC string");
+  assert((unauthenticated.match(/rejected_before_authentication: true/g) || []).length >= 5,
+    "one or more rejection paths lacks minimal audit metadata");
+  assert(source.includes('const isSuccess = paymentOutcome === "paid"'),
+    "server must derive charge success from signed transaction outcome");
+});
+
+Deno.test("Paymob intention provider errors log status only, never response body", async () => {
+  const source = await Deno.readTextFile(
+    new URL("../create_paymob_intention/index.ts", import.meta.url),
+  );
+  assert(!/console\.(?:error|warn|log)\([\s\S]{0,180}\bintentionData\b/.test(source),
+    "provider error response body might expose billing data or API tokens");
+  assert(source.includes("httpStatus: intentionRes.status"),
+    "provider error log must retain a non-sensitive HTTP status");
+});
+
+
+Deno.test("Refund and checkout error paths never echo provider or internal diagnostics", async () => {
+  const webhook = await Deno.readTextFile(
+    new URL("../paymob_webhook/index.ts", import.meta.url),
+  );
+  const checkout = await Deno.readTextFile(
+    new URL("../create_paymob_intention/index.ts", import.meta.url),
+  );
+  assert(!/Paymob Refund API Response:\s*["'][^"']*["']\s*,\s*JSON\.stringify\(refundData\)/.test(webhook),
+    "raw refund provider response must not be logged");
+  assert(!/authErrText\s*=\s*await authRes\.text\(\)/.test(webhook),
+    "provider authentication response body must not be copied into exceptions");
+  assert(!/refundErrorMsg\s*=\s*refundData\.(?:message|detail)/.test(webhook),
+    "refund ledger diagnostics must not persist raw third-party responses");
+  assert(!/refundErrorMsg\s*=\s*refundEx(?:\?\.)?\.message/.test(webhook),
+    "refund ledger diagnostics must not persist exception text");
+  assert(!/JSON\.stringify\(\{\s*error:\s*err\?\.message\s*\|\|\s*String\(err\)/.test(checkout),
+    "checkout must never return raw internal errors to Flutter");
+  assert(checkout.includes('error: "Unable to create a payment session"'),
+    "checkout failure must return a stable, sanitized message");
+});
+
+
+Deno.test("Pending, voided, refunded or authorization-only Paymob events cannot finalize a charge", () => {
+  const base = { success: true, pending: false, currency: "EGP", is_refunded: false, is_voided: false };
+  assert(classifyPaymobWebhookOutcome(base) === "paid", "valid settled charge not classified as paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, pending: true }) === "pending", "signed pending payment marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, success: false, pending: true }) === "pending", "pending failure cancelled too soon");
+  assert(classifyPaymobWebhookOutcome({ ...base, is_refunded: true }) === "reversed", "refunded charge marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, is_voided: true }) === "reversed", "voided charge marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, is_refund: true }) === "reversed", "refund operation marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, refunded_amount_cents: 100 }) === "reversed", "partially refunded transaction marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, is_auth: true }) === "unresolved", "authorization only marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, error_occured: true }) === "unresolved", "conflicting gateway flags marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, pending: "false" }) === "unresolved", "string status marked paid");
+  assert(classifyPaymobWebhookOutcome({ ...base, success: false }) === "failed", "terminal failure not classified");
+  assert(classifyPaymobWebhookOutcome({ ...base, success: false, pending: undefined }) === "unresolved", "unknown pending status cancelled");
+  assert(classifyPaymobWebhookOutcome({ ...base, success: false, is_refunded: true }) === "reversed", "refund callback treated as failure");
+});
+
+Deno.test("HMAC boundary, currency gate, pending cancellation and refund replay stay wired to handler", async () => {
+  const src = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const signature = src.indexOf("verifyPaymobHmacSignature(receivedHmac, calculatedHmac)");
+  const currency = src.indexOf('if (obj?.currency !== "EGP")');
+  const classify = src.indexOf("classifyPaymobWebhookOutcome(obj)");
+  assert(signature >= 0 && currency > signature && classify > currency, "signed outcome must be classified after HMAC and currency validation");
+  assert(src.includes('const isSuccess = paymentOutcome === "paid"'), "refund or void flags must not confirm charges");
+  assert(src.includes('} else if (paymentOutcome === "failed") {'), "pending webhook can still cancel booking");
+  assert(src.includes('if (obj.is_refunded === true && paymentOutcome === "reversed") {'), "refund recording must be an explicit reversed outcome");
+  assert(src.includes('if (refundResult?.already_recorded === true) {'), "duplicate refund would send repeated notifications");
+  assert(src.includes('paymentOutcome === "pending" ? "pending"'), "pending callback needs nonfinal response status");
+});
+
+Deno.test("Checkout must not return a Paymob client secret for zero-row or mismatched order binding", () => {
+  assert(isPersistedPaymobOrder({ data: { id: "uuid", paymob_order_id: "12345" }, error: null }, "12345"),
+    "matching persisted order should be accepted");
+  for (const failed of [
+    null,
+    { data: null, error: null },
+    { data: { id: null, paymob_order_id: "12345" }, error: null },
+    { data: { id: "uuid", paymob_order_id: "12346" }, error: null },
+    { data: { id: "uuid", paymob_order_id: "12345" }, error: { code: "DB_FAILURE" } },
+    { data: [{ id: "uuid", paymob_order_id: "12345" }], error: null },
+  ]) {
+    assert(!isPersistedPaymobOrder(failed, "12345"), "failed or unmatched write claimed binding success");
+  }
+  assert(!isPersistedPaymobOrder({ data: { id: "uuid", paymob_order_id: "12345" }, error: null }, ""),
+    "empty Paymob order ID must be denied");
+});
+
+Deno.test("Every payment intention type requires a matching persisted row before checkout URL", async () => {
+  const src = await Deno.readTextFile(new URL("../create_paymob_intention/index.ts", import.meta.url));
+  const start = src.indexOf("const persistPaymobOrder = async () =>");
+  const end = src.indexOf("await persistPaymobOrder();", start);
+  assert(start >= 0 && end > start, "payment intention binding gate missing");
+  const block = src.slice(start, end);
+  assert((block.match(/\.select\("id, paymob_order_id"\)\.maybeSingle\(\)/g) || []).length === 5,
+    "one of five payment order types fails to verify its updated database row");
+  assert((block.match(/requireBinding\(binding\);/g) || []).length === 5,
+    "one of five payment order types can bypass confirmed binding");
+  assert(block.includes('if (!bindingCompleted) throw new Error("Unsupported payment order correlation")'),
+    "unrecognized payment order type can return an unbound checkout URL");
+});
+
+Deno.test("Over-capacity tournament refunds always use the signed gross amount", async () => {
+  const src = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const start = src.indexOf("const amountCents = Number(obj?.amount_cents)");
+  const hmacGate = src.indexOf("verifyPaymobHmacSignature(receivedHmac, calculatedHmac)");
+  const amountGuard = src.indexOf("!Number.isInteger(amountCents)");
+  const oneVsOneStart = src.indexOf('if (specialReference.startsWith("TOURN_1V1_"))');
+  const teamStart = src.indexOf('if (specialReference.startsWith("TOURN_"))', oneVsOneStart);
+  const bookingsStart = src.indexOf("if (!bookingId)", teamStart);
+  assert(hmacGate >= 0 && start > hmacGate && amountGuard > start, "refund amount must be signed and positive");
+  assert(oneVsOneStart > amountGuard && teamStart > oneVsOneStart && bookingsStart > teamStart,
+    "cannot isolate the actual over-capacity refund routes");
+  const oneVsOne = src.slice(oneVsOneStart, teamStart);
+  const team = src.slice(teamStart, bookingsStart);
+  // Historical 1v1 still uses a direct refund path; the team tournament
+  // confirmation RPC itself creates a refund queue item. A second direct
+  // refund from the webhook would race that worker.
+  assert(oneVsOne.includes("amount_cents: amountCents"), "1v1 refund must use verified cents");
+  assert(oneVsOne.includes("p_refund_amount: amountCents / 100"), "1v1 accounting must use verified cents");
+  assert(!oneVsOne.includes("let amountCents ="), "1v1 refund shadows signed amount");
+  assert(!team.includes("https://accept.paymob.com/api/acceptance/void_refund/refund"),
+    "team tournament webhook must NOT call Paymob refund outside its SQL refund queue");
+  assert(team.includes('status: "refund_queued"') && team.includes('refund_pending: true'),
+    "over-capacity team tournament must acknowledge queued refund, not settled refund");
+  assert(team.includes('tournResult?.success !== true'),
+    "replayed or rejected team confirmation must not appear successful");
+});
+
+Deno.test("Paymob transaction callback integration must be server-authorized", () => {
+  assert(isAuthorizedPaymobIntegration(1234, "1234", "5678"), "card integration should be accepted");
+  assert(isAuthorizedPaymobIntegration("5678", "1234", 5678), "wallet integration should be accepted");
+  assert(isAuthorizedPaymobIntegration(9999, "1234", "5678", "9999, 1010"), "explicit historic integration should be accepted");
+  for (const value of [null, undefined, 0, -1, "0", "1234foo", "1.2", "9999", 1e20]) {
+    assert(!isAuthorizedPaymobIntegration(value, "1234", "5678"), "unrecognized or malformed integration accepted");
+  }
+  assert(!isAuthorizedPaymobIntegration(1234, undefined, "5678"), "missing current card configuration accepted");
+  assert(!isAuthorizedPaymobIntegration(5678, "1234", ""), "missing wallet configuration accepted");
+  assert(!isAuthorizedPaymobIntegration("9999", "1234", "5678", "9999bad"), "malformed historic integration accepted");
+});
+
+Deno.test("Verified Paymob integration gate precedes all financial processing", async () => {
+  const src = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const hmac = src.indexOf("verifyPaymobHmacSignature(receivedHmac, calculatedHmac)");
+  const currency = src.indexOf('if (obj?.currency !== "EGP")');
+  const amount = src.indexOf("!Number.isInteger(amountCents)");
+  const integration = src.indexOf("if (!isAuthorizedPaymobIntegration(");
+  const verifiedLog = src.indexOf('event_type: "transaction_response"');
+  const payment = src.indexOf('if (specialReference.startsWith("OWNER_SUB_"))');
+  assert(hmac >= 0 && currency > hmac && amount > currency && integration > amount, "integration must be checked after signed financial fields");
+  assert(verifiedLog > integration && payment > verifiedLog, "unauthorized integration can reach verified payment processing");
+  assert(src.includes('Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")'), "server-side card configuration missing");
+  assert(src.includes('Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")'), "server-side wallet configuration missing");
+});
+
+Deno.test("Signed Paymob callbacks require an existing exact order ID bound by the server", () => {
+  assert(matchesBoundPaymobOrder("123", "123"), "matching stored and signed IDs rejected");
+  assert(matchesBoundPaymobOrder("123", 123), "normal numeric callback order rejected");
+  for (const existing of [null, undefined, "", 0, "0", "00123", "123foo", "124"]) {
+    assert(!matchesBoundPaymobOrder(existing, "123"), "missing/mismatched stored ID was accepted");
+  }
+  for (const signed of [null, undefined, "", 0, "0", "0123", 124, "123.0", "123foo"]) {
+    assert(!matchesBoundPaymobOrder("123", signed), "invalid callback order was accepted");
+  }
+});
+
+Deno.test("Every signed booking, league and tournament callback refuses unbound orders", async () => {
+  const s = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  for (const expression of [
+    "if (!matchesBoundPaymobOrder(order.paymob_order_id, orderId))",
+    "if (!matchesBoundPaymobOrder(leaguePayment.paymob_order_id, orderId))",
+    "if (!matchesBoundPaymobOrder(existingBooking.paymob_order_id, orderId))",
+  ]) assert(s.includes(expression), "Paymob order missing strict correlation: " + expression);
+  assert(!/if \((?:order|leaguePayment|existingBooking)\.paymob_order_id &&/.test(s),
+    "legacy nullable-order bypass reintroduced");
+});
+
+Deno.test("A late failed callback cannot cancel a newer pending checkout order", async () => {
+  const source = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const failureStart = source.indexOf('} else if (paymentOutcome === "failed") {');
+  const failureEnd = source.indexOf("const responseStatus = paymentOutcome", failureStart);
+  assert(failureStart > 0 && failureEnd > failureStart, "unable to locate terminal-failure state update");
+  const failurePath = source.slice(failureStart, failureEnd);
+  assert(failurePath.includes('.eq("status", "pending")') && failurePath.includes('.eq("paymob_order_id", orderId)'),
+    "late callback can cancel pending booking with a newer Paymob order");
+});
+
+Deno.test("Legacy 1v1 direct refund requires ledger confirmation; team refunds use queue", async () => {
+  const src = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  // Team tournaments no longer call the direct refund endpoint or its ledger
+  // RPC: confirm_tournament_order_atomic atomically inserts the refund queue.
+  for (const fn of ["record_1v1_refund_status_atomic"]) {
+    const call = src.indexOf('await supabase.rpc("' + fn + '"');
+    const guard = src.indexOf("refundRecordingError || refundRecorded?.success !== true", call);
+    const manual = src.indexOf('status: "requires_reconciliation"', guard);
+    const result = src.indexOf('status: refundSuccess ? "refund_recorded" : "refund_manual_review"', manual);
+    assert(call > 0 && guard > call && manual > guard && result > manual,
+      "missing checked refund ledger and manual reconciliation response: " + fn);
+    const slice = src.slice(call, result);
+    assert(slice.includes('status: 200'), "unsafe retry of an already attempted external refund");
+  }
+});
+
+Deno.test("Signed Paymob audit stores reconciliation fields without card or billing PII", () => {
+  const callback = {
+    id: 91, amount_cents: 2250, currency: "EGP", integration_id: 12, success: true,
+    order: { id: 77, merchant_order_id: "test-reference", email: "secret@example.com" },
+    source_data: { type: "card", sub_type: "Visa", pan: "4111111111111111", token: "s3cr3t" },
+    billing_data: { email: "secret@example.com", phone_number: "01010101010" },
+    client_secret: "do-not-log", api_key: "do-not-log",
+  };
+  const safe = sanitizePaymobAuditPayload(callback);
+  assert(safe.id === 91 && safe.amount_cents === 2250, "reconciliation fields removed");
+  assert((safe.order as {id:number}).id === 77, "order reference removed");
+  assert((safe.source_data as {type:string}).type === "card", "payment method removed");
+  const serialized = JSON.stringify(safe);
+  for (const secret of ["4111111111111111", "secret@example.com", "01010101010", "client_secret", "api_key", "merchant_order_id", "s3cr3t"]) {
+    assert(!serialized.includes(secret), "sensitive provider field leaked");
+  }
+  assert(callback.source_data.pan === "4111111111111111", "mutated signed callback");
+});
+
+Deno.test("Webhook redacts all signed callback logs", async () => {
+  const s = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  assert((s.match(/payload: sanitizePaymobAuditPayload\(obj\)/g) || []).length === 2, "unfiltered verified payload remains");
+  assert(s.includes("originalTxn: sanitizePaymobAuditPayload(obj)"), "unfiltered original transaction remains");
+  assert(!s.includes("error_message: JSON.stringify(paymentError || paymentResult)"), "raw RPC error persisted");
+});
+
+Deno.test("Team tournament overcapacity refunds have exactly one external owner: queue worker", async () => {
+  const webhook = await Deno.readTextFile(new URL("../paymob_webhook/index.ts", import.meta.url));
+  const worker = await Deno.readTextFile(new URL("../process_tournament_refund/index.ts", import.meta.url));
+  const branch = webhook.slice(
+    webhook.indexOf('if (specialReference.startsWith("TOURN_"))'),
+    webhook.indexOf("if (!bookingId)", webhook.indexOf('if (specialReference.startsWith("TOURN_"))')),
+  );
+  assert(branch.includes('"confirm_tournament_order_atomic"'), "team payment must first execute queue-owning RPC");
+  assert(branch.includes("tournResult?.needs_refund === true"), "queued status must be gated by database result");
+  assert(!branch.includes("record_tournament_refund_status_atomic"),
+    "direct webhook cannot settle a refund also owned by worker");
+  assert(!branch.includes("void_refund/refund"),
+    "direct webhook would risk duplicate refund");
+  assert(worker.includes('markTournamentRefundDispatched(adminClient, "cancellation_refund_queue", item)'),
+    "the refund worker must own the durable queue claim");
+});

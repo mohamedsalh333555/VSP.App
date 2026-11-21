@@ -9,10 +9,13 @@ void showOwnerCupFormatModal(BuildContext context) {
   showModalBottomSheet(
     context: context,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     isScrollControlled: true,
     builder: (ctx) {
       return Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(ctx).height * 0.88,
+        ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.sheet)),
@@ -24,10 +27,11 @@ void showOwnerCupFormatModal(BuildContext context) {
           20,
           MediaQuery.of(ctx).padding.bottom + 24,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Center(
               child: Container(
                 width: 40,
@@ -42,7 +46,7 @@ void showOwnerCupFormatModal(BuildContext context) {
             Text(
               isArabic ? 'اختر نظام البطولة' : 'Choose Tournament Format',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: 18,
               ),
@@ -98,7 +102,8 @@ void showOwnerCupFormatModal(BuildContext context) {
                 CreateTournamentWizard.open(context, preselectedType: 'League');
               },
             ),
-          ],
+            ],
+          ),
         ),
       );
     },
@@ -134,7 +139,7 @@ Widget _buildTypeOption(
               shape: BoxShape.circle,
               border: Border.all(color: VSPColors.borderLight, width: 0.5),
             ),
-            child: Icon(icon, color: Colors.white, size: 20),
+            child: Icon(icon, color: VSPColors.white, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -143,22 +148,27 @@ Widget _buildTypeOption(
               children: [
                 Row(
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: VSPColors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                     if (badgeText != null) ...[
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: VSPColors.white08,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 0.5),
+                          border: Border.all(color: VSPColors.white10, width: 0.5),
                         ),
                         child: Text(
                           badgeText,
@@ -166,6 +176,7 @@ Widget _buildTypeOption(
                             color: VSPColors.textSecondary,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
+                          ),
                           ),
                         ),
                       ),
@@ -175,6 +186,8 @@ Widget _buildTypeOption(
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: VSPColors.textSecondary,
                     fontSize: 11.5,

@@ -20,7 +20,7 @@ class SecureStorageService {
     try {
       await _storage.write(key: _authTokenKey, value: token);
     } catch (e) {
-      VSPLogger.w('Failed to write secure token: $e');
+      VSPLogger.w('Failed to write secure token (details redacted)');
     }
   }
 
@@ -28,7 +28,7 @@ class SecureStorageService {
     try {
       return await _storage.read(key: _authTokenKey);
     } catch (e) {
-      VSPLogger.w('Failed to read secure token: $e');
+      VSPLogger.w('Failed to read secure token (details redacted)');
       return null;
     }
   }
@@ -37,7 +37,7 @@ class SecureStorageService {
     try {
       await _storage.write(key: _refreshTokenKey, value: token);
     } catch (e) {
-      VSPLogger.w('Failed to write refresh token: $e');
+      VSPLogger.w('Failed to write refresh token (details redacted)');
     }
   }
 
@@ -45,7 +45,7 @@ class SecureStorageService {
     try {
       await _storage.write(key: key, value: value);
     } catch (e) {
-      VSPLogger.w('Failed to write secure key $key: $e');
+      VSPLogger.w('Failed to write secure value (details redacted)');
     }
   }
 
@@ -53,7 +53,7 @@ class SecureStorageService {
     try {
       return await _storage.read(key: key);
     } catch (e) {
-      VSPLogger.w('Failed to read secure key $key: $e');
+      VSPLogger.w('Failed to read secure value (details redacted)');
       return null;
     }
   }
@@ -62,7 +62,7 @@ class SecureStorageService {
     try {
       await _storage.delete(key: key);
     } catch (e) {
-      VSPLogger.w('Failed to delete secure key $key: $e');
+      VSPLogger.w('Failed to delete secure value (details redacted)');
     }
   }
 
@@ -70,7 +70,7 @@ class SecureStorageService {
     try {
       await _storage.deleteAll();
     } catch (e) {
-      VSPLogger.w('Failed to clear secure storage: $e');
+      VSPLogger.w('Failed to clear secure storage (details redacted)');
     }
   }
 }

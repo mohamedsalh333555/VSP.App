@@ -79,9 +79,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         body: Stack(
           children: [
             // Subtle Background Glow
-            Positioned(
+            PositionedDirectional(
               top: -100,
-              right: -100,
+              end: -100,
               child: Container(
                 width: 300,
                 height: 300,
@@ -203,8 +203,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     // Already have an account? Sign in
                     VSPFadeInItem(
                       index: 6,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
                           Text(
                             AppLocalizations.of(context)!.alreadyHaveAccount,
@@ -213,18 +216,28 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                   fontSize: 14,
                                 ),
                           ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () {
-                              context.push('/login');
-                            },
-                            child: Text(
-                              AppLocalizations.of(context)!.login,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: VSPColors.accent,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
+                          Semantics(
+                            button: true,
+                            label: AppLocalizations.of(context)!.login,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(VSPRadius.sm),
+                              onTap: () => context.push('/login'),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(minHeight: 48),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Center(
+                                    child: Text(
+                                      AppLocalizations.of(context)!.login,
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: VSPColors.accent,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                    ),
                                   ),
+                                ),
+                              ),
                             ),
                           ),
                         ],

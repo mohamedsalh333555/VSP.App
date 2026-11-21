@@ -200,7 +200,7 @@ class AddStadiumStep1HoursSection extends StatelessWidget {
           }),
           const SizedBox(height: 12),
           Align(
-            alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: TextButton.icon(
               onPressed: onAddBreak,
               icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.accent, size: 18),

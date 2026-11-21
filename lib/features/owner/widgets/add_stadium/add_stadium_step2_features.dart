@@ -78,7 +78,7 @@ class AddStadiumStep2Features extends StatelessWidget {
           color: selected ? VSPColors.accent : VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.xl),
         ),
-        child: Text(text, style: TextStyle(color: selected ? Colors.black : VSPColors.textPrimary)),
+        child: Text(text, style: TextStyle(color: selected ? VSPColors.black : VSPColors.textPrimary)),
       ),
     );
   }
@@ -88,7 +88,7 @@ class AddStadiumStep2Features extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white)),
+        Text(label, style: const TextStyle(color: VSPColors.white)),
         Row(
           children: [
             _optionBtn(isArabic ? 'نعم' : 'Yes', value == true, () => onChanged(true)),
@@ -136,7 +136,7 @@ class AddStadiumStep2Features extends StatelessWidget {
           const SizedBox(height: 20),
 
           Align(
-            alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: Text(AppLocalizations.of(context)!.amenities, style: Theme.of(context).textTheme.titleMedium),
           ),
           const SizedBox(height: 16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 /// Renders the 5-minute atomic hold countdown banner and the large checkout amount header card.
 class PaymentCountdownHeader extends StatelessWidget {
@@ -31,10 +32,9 @@ class PaymentCountdownHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasVerifiedTotal = totalAmountWithFees != null;
     final double displayAmount = totalAmountWithFees ?? amountToPay;
-    final String formattedAmount = (displayAmount % 1 == 0)
-        ? displayAmount.toInt().toString()
-        : displayAmount.toStringAsFixed(1);
+    final String formattedAmount = VSPMoneyFormatter.amount(displayAmount);
 
     return Column(
       children: [
@@ -56,7 +56,7 @@ class PaymentCountdownHeader extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       isArabic ? 'تم تثبيت الوقت لك مؤقتاً لمدة:' : 'Slot temporarily held for:',
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: VSPColors.white, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -72,16 +72,16 @@ class PaymentCountdownHeader extends StatelessWidget {
                       Text(
                         formatCountdown(remainingSeconds),
                         style: VSPTypography.numericStyle.copyWith(
-                          color: Colors.black,
+                          color: VSPColors.black,
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Text(
-                        'دقيقة',
-                        style: TextStyle(
-                          color: Colors.black,
+                      Text(
+                        isArabic ? 'دقيقة' : 'min',
+                        style: const TextStyle(
+                          color: VSPColors.black,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -107,9 +107,13 @@ class PaymentCountdownHeader extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                isChampionship
-                    ? (isArabic ? 'إجمالي الاشتراك المطلوب الآن' : 'Total Entry Fee Due Now')
-                    : (isArabic ? 'المبلغ المطلوب دفعه الآن' : 'Total Amount Due Now'),
+                hasVerifiedTotal
+                    ? (isChampionship
+                        ? (isArabic ? 'إجمالي الاشتراك المطلوب الآن' : 'Total Entry Fee Due Now')
+                        : (isArabic ? 'المبلغ المطلوب دفعه الآن' : 'Total Amount Due Now'))
+                    : (isChampionship
+                        ? (isArabic ? 'رسوم الاشتراك الأساسية قبل الرسوم' : 'Base entry fee before fees')
+                        : (isArabic ? 'السعر الأساسي قبل الرسوم' : 'Base amount before fees')),
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: VSPSpacing.xs),
@@ -122,6 +126,16 @@ class PaymentCountdownHeader extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
+              if (!hasVerifiedTotal) ...[
+                const SizedBox(height: VSPSpacing.xs),
+                Text(
+                  isArabic
+                      ? 'الإجمالي النهائي غير متاح حتى يتم التحقق من الرسوم.'
+                      : 'Final total is unavailable until fees are verified.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: VSPColors.warning, fontSize: 11),
+                ),
+              ],
             ],
           ),
         ),

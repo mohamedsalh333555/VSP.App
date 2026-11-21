@@ -1,0 +1,31 @@
+name: VSP UXLP 44 Gap Inventory
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'docs/UXLP_44_RULE_AUDIT.md'
+      - 'scripts/test_uxlp_gap_matrix.cjs'
+      - '.github/workflows/vsp-uxlp-gap-audit.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/UXLP_44_RULE_AUDIT.md'
+      - 'scripts/test_uxlp_gap_matrix.cjs'
+      - '.github/workflows/vsp-uxlp-gap-audit.yml'
+permissions:
+  contents: read
+concurrency:
+  group: uxlp-gap-audit-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bounded-source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test scripts/test_uxlp_gap_matrix.cjs

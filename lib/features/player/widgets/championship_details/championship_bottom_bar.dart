@@ -46,7 +46,7 @@ class ChampionshipBottomBar extends StatelessWidget {
             return PrimaryButton(
               text: isArabic ? 'إدارة تشكيلة الفريق' : 'Manage team roster',
               color: VSPColors.accent,
-              textColor: Colors.black,
+              textColor: VSPColors.black,
               onPressed: onManageRoster,
             );
           }

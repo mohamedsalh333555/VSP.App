@@ -11,8 +11,6 @@ class TeamPayloadBuilder {
       'logo_url': data['logoUrl'] ?? data['logo_url'] ?? '',
       'primary_color': data['primaryColor'] ?? data['primary_color'] ?? '#FFFFFF',
       'secondary_color': data['secondaryColor'] ?? data['secondary_color'] ?? '#000000',
-      'preferred_formation': data['preferredFormation'] ?? data['preferred_formation'] ?? '2-2-1',
-      'elo_rating': 1200,
       'points': 0,
       'wins': 0,
       'draws': 0,
@@ -20,9 +18,7 @@ class TeamPayloadBuilder {
       'matches_played': 0,
       'current_winning_streak': 0,
       'championships_won': 0,
-      'is_active': true,
-      'is_blocked': false,
-      'is_verified': false,
+      'is_official': false,
     };
   }
 
@@ -39,10 +35,6 @@ class TeamPayloadBuilder {
     if (data.containsKey('secondary_color')) pgData['secondary_color'] = data['secondary_color'];
     if (data.containsKey('customLogoBase64')) pgData['custom_logo_base64'] = data['customLogoBase64'];
     if (data.containsKey('custom_logo_base64')) pgData['custom_logo_base64'] = data['custom_logo_base64'];
-    if (data.containsKey('preferredFormation')) pgData['preferred_formation'] = data['preferredFormation'];
-    if (data.containsKey('preferred_formation')) pgData['preferred_formation'] = data['preferred_formation'];
-    if (data.containsKey('isActive')) pgData['is_active'] = data['isActive'];
-    if (data.containsKey('is_active')) pgData['is_active'] = data['is_active'];
     return pgData;
   }
 
@@ -56,22 +48,66 @@ class TeamPayloadBuilder {
     int draws = 0;
     int team2Wins = 0;
 
-    for (var row in rows) {
+    for (final row in rows) {
       if (row is! Map) continue;
+      // When authoritative result metadata is present, reject every
+      // unconfirmed/unprocessed/non-challenge row instead of trusting a
+      // stale denormalized winner or displaying a synthetic draw.
+      if ((row.containsKey('booking_type') &&
+              row['booking_type'] != 'challenge') ||
+          (row.containsKey('match_result_status') &&
+              row['match_result_status'] != 'confirmed') ||
+          (row.containsKey('elo_processed') &&
+              row['elo_processed'] != true)) {
+        continue;
+      }
+      final pairedHome = row['player_team_id']?.toString() ?? '';
+      final pairedAway = row['opponent_team_id']?.toString() ?? '';
+      if (pairedAway.isNotEmpty &&
+          !((pairedHome == team1Id && pairedAway == team2Id) ||
+              (pairedHome == team2Id && pairedAway == team1Id))) {
+        continue;
+      }
+      // A reviewed non-played challenge must not count, even when its
+      // historical finalized result remains in the source booking record.
+      // The server-side query still needs to attach this authoritative flag.
+      if (row['is_result_excluded'] == true ||
+          row['non_played_status'] == 'excluded' ||
+          row['match_result_status'] == 'disputed' ||
+          row['match_result_status'] == 'waitingOpponent') {
+        continue;
+      }
+
       final winnerId = row['winner_team_id']?.toString() ?? '';
       final outcome = row['final_outcome']?.toString() ?? '';
-      final pTeam = row['player_team_id']?.toString() ?? '';
+      final homeId = row['player_team_id']?.toString() ?? '';
 
-      if (winnerId == team1Id ||
-          (outcome == 'team_a_win' && pTeam == team1Id) ||
-          (outcome == 'team_b_win' && pTeam == team2Id)) {
-        team1Wins++;
-      } else if (winnerId == team2Id ||
-          (outcome == 'team_b_win' && pTeam == team1Id) ||
-          (outcome == 'team_a_win' && pTeam == team2Id)) {
-        team2Wins++;
-      } else if (outcome == 'draw' || outcome == 'tie') {
+      // The normalized, finalized match outcome takes precedence over
+      // possibly stale denormalized winner_team_id fields. VSP challenges
+      // use homeWin/awayWin, older matchup records use team_a_win/team_b_win.
+      if (outcome == 'draw' || outcome == 'tie') {
         draws++;
+        continue;
+      }
+      final homeWon = outcome == 'homeWin' || outcome == 'team_a_win';
+      final awayWon = outcome == 'awayWin' || outcome == 'team_b_win';
+      if ((homeWon || awayWon) &&
+          (homeId == team1Id || homeId == team2Id)) {
+        if ((homeWon && homeId == team1Id) ||
+            (awayWon && homeId == team2Id)) {
+          team1Wins++;
+        } else {
+          team2Wins++;
+        }
+        continue;
+      }
+
+      // Legacy records may expose the winner ID without a normalized
+      // final outcome. Keep that compatibility, but never count one twice.
+      if (winnerId == team1Id) {
+        team1Wins++;
+      } else if (winnerId == team2Id) {
+        team2Wins++;
       }
     }
 

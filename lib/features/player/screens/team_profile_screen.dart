@@ -16,9 +16,11 @@ import '../widgets/team_profile/team_profile_stats_grid.dart';
 import '../widgets/team_profile/team_profile_captain_card.dart';
 import '../widgets/team_profile/team_profile_roster_section.dart';
 import '../widgets/team_profile/team_profile_achievements_section.dart';
-import '../widgets/team_profile/team_profile_head_to_head_section.dart';
+import '../widgets/champion/team_skills_history_section.dart';
+import '../widgets/team_profile/team_profile_head_to_head_panel.dart';
 import '../widgets/team_profile/team_profile_action_bar.dart';
 import '../widgets/team_profile/team_matchup_invite_modal.dart';
+import '../services/team_matchup_invite_guard.dart';
 
 class TeamProfileScreen extends StatefulWidget {
   final Team? team;
@@ -28,7 +30,7 @@ class TeamProfileScreen extends StatefulWidget {
     super.key,
     this.team,
     this.teamId,
-  });
+  }) : assert(team != null || (teamId != null && teamId != ''));
 
   @override
   State<TeamProfileScreen> createState() => _TeamProfileScreenState();
@@ -36,14 +38,43 @@ class TeamProfileScreen extends StatefulWidget {
 
 class _TeamProfileScreenState extends State<TeamProfileScreen> {
   final List<UserModel> _teamMembers = [];
+  Set<String>? _verifiedMemberIds;
   bool _isLoadingMembers = true;
+  bool _hasMemberLoadError = false;
   Team? _fetchedTeam;
   bool _isLoadingTeam = false;
+  bool _hasTeamLoadError = false;
   bool _has1v1Champion = false;
+  bool _championVerificationFailed = false;
+  bool _isCheckingChampion = true;
   List<Map<String, dynamic>> _headToHeadRecords = [];
+  bool _isLoadingHeadToHead = true;
+  bool _hasHeadToHeadLoadError = false;
   bool _isGeneratingCode = false;
+  int _inviteRequestVersion = 0;
+  String? _inviteAccountId;
+  // Repaint an already-open invite sheet when the displayed team changes.
+  final ValueNotifier<int> _inviteDisplayScope = ValueNotifier<int>(0);
+  int _awardsRefreshRevision = 0;
+  int _rosterRequestVersion = 0;
+  int _headToHeadRequestVersion = 0;
+  int _championRequestVersion = 0;
+  int _teamRequestVersion = 0;
 
   Team get team => widget.team ?? _fetchedTeam!;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // A previous captain's in-flight code must never survive account changes.
+    final activeId = Provider.of<app_auth.AuthProvider>(context).currentUser?.id;
+    if (activeId != _inviteAccountId) {
+      _inviteAccountId = activeId;
+      _inviteRequestVersion++;
+      _inviteDisplayScope.value++;
+      _isGeneratingCode = false;
+    }
+  }
 
   @override
   void initState() {
@@ -60,94 +91,313 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     }
   }
 
+  @override
+  void didUpdateWidget(covariant TeamProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final previousId = oldWidget.team?.id ?? oldWidget.teamId;
+    final currentId = widget.team?.id ?? widget.teamId;
+    if (previousId == currentId && oldWidget.team == widget.team) return;
+    _inviteRequestVersion++;
+    _inviteDisplayScope.value++;
+    _isGeneratingCode = false;
+    _rosterRequestVersion++;
+    _teamRequestVersion++;
+    _headToHeadRequestVersion++;
+    _championRequestVersion++;
+    _teamMembers.clear();
+    _verifiedMemberIds = null;
+    _isLoadingMembers = true;
+    _hasMemberLoadError = false;
+    _fetchedTeam = null;
+    _isLoadingTeam = widget.team == null && widget.teamId != null;
+    _hasTeamLoadError = false;
+    _headToHeadRecords = [];
+    _isLoadingHeadToHead = true;
+    _hasHeadToHeadLoadError = false;
+    _has1v1Champion = false;
+    _championVerificationFailed = false;
+    _isCheckingChampion = true;
+    if (currentId != null) {
+      _check1v1Champion(currentId);
+      _loadHeadToHead(currentId);
+    }
+    if (widget.team != null) {
+      _loadMemberDetails();
+    } else if (widget.teamId != null) {
+      _loadTeamAndMembers();
+    }
+  }
+
+  Future<void> _refreshTeamProfile() async {
+    final teamId = widget.team?.id ?? widget.teamId;
+    if (teamId == null) return;
+    // Team Skills history owns its own future: refresh it alongside the team.
+    if (mounted) setState(() => _awardsRefreshRevision++);
+    if (widget.team == null) {
+      await _loadTeamAndMembers();
+      if (!mounted || (widget.team?.id ?? widget.teamId) != teamId ||
+          _fetchedTeam == null) return;
+      await Future.wait<void>([
+        _loadHeadToHead(teamId),
+        _check1v1Champion(teamId),
+      ]);
+      return;
+    }
+    if (!mounted || (widget.team?.id ?? widget.teamId) != teamId ||
+        (widget.team == null && _fetchedTeam == null)) return;
+    await Future.wait<void>([
+      _loadMemberDetails(),
+      _loadHeadToHead(teamId),
+      _check1v1Champion(teamId),
+    ]);
+  }
+
   Future<void> _loadHeadToHead(String teamId) async {
+    final requestVersion = ++_headToHeadRequestVersion;
+    if (mounted) {
+      setState(() {
+        _isLoadingHeadToHead = true;
+        _hasHeadToHeadLoadError = false;
+        _headToHeadRecords = []; // Previous verified data is not this read.
+      });
+    }
     try {
-      final records = await MatchupRepository().getAllHeadToHeadForTeam(teamId);
-      if (mounted) {
+      final records = await MatchupRepository().getAllHeadToHeadForTeamStrict(teamId);
+      if (mounted &&
+          requestVersion == _headToHeadRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _headToHeadRecords = records;
+          _isLoadingHeadToHead = false;
+          _hasHeadToHeadLoadError = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading head to head: $e');
+    } catch (_) {
+      debugPrint('Error loading head to head (details redacted)');
+      if (mounted &&
+          requestVersion == _headToHeadRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
+        setState(() {
+          _isLoadingHeadToHead = false;
+          _hasHeadToHeadLoadError = true;
+        });
+      }
     }
   }
 
   Future<void> _check1v1Champion(String teamId) async {
+    final requestVersion = ++_championRequestVersion;
+    if (mounted) setState(() => _isCheckingChampion = true);
     try {
-      final hasChamp = await TeamRepository().has1v1Champion(teamId);
-      if (mounted) {
+      final hasChamp = await TeamRepository().has1v1ChampionStrict(teamId);
+      if (mounted && requestVersion == _championRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _has1v1Champion = hasChamp;
+          _championVerificationFailed = false;
+          _isCheckingChampion = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error checking 1v1 champion in team profile: $e');
+    } catch (_) {
+      debugPrint('Error checking 1v1 champion in team profile (details redacted)');
+      if (mounted && requestVersion == _championRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
+        setState(() {
+          _championVerificationFailed = true;
+          _isCheckingChampion = false;
+        });
+      }
     }
   }
 
   Future<void> _loadTeamAndMembers() async {
+    final requestedTeamId = widget.teamId!;
+    final requestVersion = ++_teamRequestVersion;
+    if (!mounted) return;
     setState(() {
       _isLoadingTeam = true;
+      _hasTeamLoadError = false;
     });
     try {
-      final t = await TeamRepository().getTeam(widget.teamId!);
-      if (mounted) {
+      final t = await TeamRepository().getTeamStrict(requestedTeamId)
+          .timeout(const Duration(seconds: 20));
+      if (mounted && requestVersion == _teamRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == requestedTeamId) {
         setState(() {
           _fetchedTeam = t;
           _isLoadingTeam = false;
+          _hasTeamLoadError = t == null;
         });
         if (t != null) {
           _loadMemberDetails();
         }
       }
-    } catch (e) {
-      debugPrint('Error loading team: $e');
-      if (mounted) {
+    } catch (_) {
+      debugPrint('Error loading team (details redacted)');
+      if (mounted && requestVersion == _teamRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == requestedTeamId) {
         setState(() {
           _isLoadingTeam = false;
+          _hasTeamLoadError = true;
         });
       }
     }
   }
 
   Future<void> _loadMemberDetails() async {
-    if (team.memberUids.length > 1) {
-      final memberIds = team.memberUids.sublist(1);
-      try {
-        final members = await UserRepository().getUsersByIds(memberIds);
-        if (mounted) {
-          setState(() {
-            _teamMembers.clear();
-            _teamMembers.addAll(members);
-            _isLoadingMembers = false;
-          });
-        }
-      } catch (e) {
-        debugPrint('Error loading team members: $e');
-        if (mounted) setState(() => _isLoadingMembers = false);
+    final teamId = team.id;
+    final requestVersion = ++_rosterRequestVersion;
+    if (mounted) {
+      setState(() {
+        _isLoadingMembers = true;
+        _hasMemberLoadError = false;
+      });
+    }
+    try {
+      // Fetch the current roster from the membership source of truth, not
+      // the potentially stale memberUids embedded in the public team card.
+      final roster = await TeamRepository().getTeamMemberProfilesStrict(teamId)
+          .timeout(const Duration(seconds: 20));
+      final currentIds = roster
+          .map((row) => row['uid'] ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+      final captainId = team.captainId;
+      final memberIds = currentIds
+          .where((id) => id.isNotEmpty && id != captainId)
+          .toSet()
+          .toList();
+      final members = memberIds.isEmpty
+          ? <UserModel>[]
+          : await UserRepository().getUsersByIdsStrict(memberIds)
+               .timeout(const Duration(seconds: 20));
+      if (!mounted || requestVersion != _rosterRequestVersion ||
+          (widget.team?.id ?? widget.teamId) != teamId) return;
+      setState(() {
+        _verifiedMemberIds = currentIds.where((id) => id.isNotEmpty).toSet();
+        _teamMembers
+          ..clear()
+          ..addAll(members);
+        _isLoadingMembers = false;
+        final returnedIds = members.map((member) => member.uid).toSet();
+        _hasMemberLoadError = !returnedIds.containsAll(memberIds);
+      });
+    } catch (_) {
+      debugPrint('Error loading team members (details redacted)');
+      if (mounted && requestVersion == _rosterRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
+        setState(() {
+          _isLoadingMembers = false;
+          _hasMemberLoadError = true;
+        });
       }
-    } else {
-      if (mounted) setState(() => _isLoadingMembers = false);
+    }
+  }
+
+  int? get _teamMemberCount {
+    // A cached public team card may have stale memberUids. Until the
+    // membership source succeeds, an unavailable count is safer than
+    // presenting cached or guessed roster size as verified.
+    if (_verifiedMemberIds == null) return null;
+    final ids = {..._verifiedMemberIds!};
+    if (team.captainId.isNotEmpty) ids.add(team.captainId);
+    return ids.length;
+  }
+
+  bool _canRevealGeneratedInvite({
+    required String requestedTeamId,
+    required String requestedAccountId,
+    required int requestVersion,
+  }) {
+    if (!mounted) return false;
+    try {
+      final displayed = widget.team ?? _fetchedTeam;
+      return TeamMatchupInviteGuard.canReveal(
+        requestedTeamId: requestedTeamId,
+        displayedTeamId: displayed?.id,
+        requestedAccountId: requestedAccountId,
+        activeAccountId: context.read<app_auth.AuthProvider>().currentUser?.id,
+        captainId: displayed?.captainId,
+        requestVersion: requestVersion,
+        currentVersion: _inviteRequestVersion,
+      );
+    } catch (_) {
+      // Disposed or transitioning auth state always means no code disclosure.
+      return false;
     }
   }
 
   Future<void> _generateMatchupInviteCode() async {
+    final displayed = widget.team ?? _fetchedTeam;
+    final requestedTeamId = displayed?.id;
+    final requestedAccountId =
+        context.read<app_auth.AuthProvider>().currentUser?.id;
+    if (_isGeneratingCode || requestedTeamId == null ||
+        requestedAccountId == null ||
+        displayed?.captainId != requestedAccountId) {
+      return;
+    }
+    final requestVersion = ++_inviteRequestVersion;
     setState(() => _isGeneratingCode = true);
     try {
-      final res = await MatchupRepository().generateTeamInviteCode(team.id);
-      final code = res['invite_code']?.toString() ?? '';
-
-      if (!mounted) return;
-
-      await showTeamMatchupInviteModal(context, code);
-    } catch (e) {
-      debugPrint('Error generating invite code: $e');
-      if (mounted) {
-        VSPFeedback.showError(context, 'تعذر توليد كود الدعوة: $e');
+      final res = await MatchupRepository()
+          .generateTeamInviteCode(requestedTeamId);
+      if (!mounted || !_canRevealGeneratedInvite(
+        requestedTeamId: requestedTeamId,
+        requestedAccountId: requestedAccountId,
+        requestVersion: requestVersion,
+      )) return;
+      final code = res['invite_code']?.toString().trim() ?? '';
+      if (res['success'] == false || code.isEmpty) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إنشاء كود الدعوة. حاول مرة أخرى.'
+              : 'Could not generate the invite code. Please try again.',
+        );
+        return;
+      }
+      // A code is sensitive even if the repository succeeds. Never open the
+      // modal for a different team, account or no-longer-captain viewer.
+      if (!mounted || !_canRevealGeneratedInvite(
+        requestedTeamId: requestedTeamId,
+        requestedAccountId: requestedAccountId,
+        requestVersion: requestVersion,
+      )) return;
+      await showTeamMatchupInviteModal(
+        context,
+        code,
+        canReveal: () => _canRevealGeneratedInvite(
+          requestedTeamId: requestedTeamId,
+          requestedAccountId: requestedAccountId,
+          requestVersion: requestVersion,
+        ),
+        authorizationChanges: Listenable.merge([
+          context.read<app_auth.AuthProvider>(),
+          _inviteDisplayScope,
+        ]),
+      );
+    } catch (_) {
+      debugPrint('Error generating invite code (details redacted)');
+      if (mounted && _canRevealGeneratedInvite(
+        requestedTeamId: requestedTeamId,
+        requestedAccountId: requestedAccountId,
+        requestVersion: requestVersion,
+      )) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إنشاء كود الدعوة. حاول مرة أخرى.'
+              : 'Could not generate the invite code. Please try again.',
+        );
       }
     } finally {
-      if (mounted) setState(() => _isGeneratingCode = false);
+      if (mounted && requestVersion == _inviteRequestVersion) {
+        setState(() => _isGeneratingCode = false);
+      }
     }
   }
 
@@ -175,42 +425,91 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   }
 
   @override
+  void dispose() {
+    _teamRequestVersion++;
+    _rosterRequestVersion++;
+    _headToHeadRequestVersion++;
+    _championRequestVersion++;
+    _inviteRequestVersion++;
+    _inviteDisplayScope.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_isLoadingTeam) {
-      return const VSPScaffold(
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(
-          child: CircularProgressIndicator(color: VSPColors.accent),
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: VSPStateView(
+            state: VSPUiState.loading,
+            title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل الفريق' : 'Loading team',
+            message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث بيانات الفريق وأعضائه.' : 'Fetching team details and members.',
+          ),
         ),
       );
     }
 
     if (widget.team == null && _fetchedTeam == null) {
-      return const VSPScaffold(
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(
-          child: Text('Team not found ', style: TextStyle(color: Colors.white)),
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _hasTeamLoadError
+                        ? (isArabic ? 'تعذر تحميل بيانات الفريق' : 'Could not load team')
+                        : (isArabic ? 'الفريق غير متاح' : 'Team not found'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textPrimary),
+                  ),
+                  if (_hasTeamLoadError && widget.teamId != null) ...[
+                    const SizedBox(height: VSPSpacing.md),
+                    TextButton(
+                      onPressed: _loadTeamAndMembers,
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ),
       );
     }
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    final currentUid = auth.currentUser?.uid;
+    // Rebuild captain-only actions when the authenticated account changes.
+    final auth = Provider.of<app_auth.AuthProvider>(context, listen: true);
+    final currentUid = auth.currentUser?.id;
+    // Membership query order is not guaranteed; captain-only UI must use
+    // the authoritative captain_id field, never the first roster row.
     final isCaptain = currentUid != null &&
-        (currentUid == team.captainId || (team.memberUids.isNotEmpty && team.memberUids.first == currentUid));
+        team.captainId.isNotEmpty &&
+        currentUid == team.captainId;
 
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         title: Text(isArabic ? 'ملف الفريق' : 'Team Profile', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+      body: SafeArea(top: false, bottom: true, child: RefreshIndicator(
+        onRefresh: _refreshTeamProfile,
+        child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +517,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             // 1. Team Hero Header
             TeamProfileHeroHeader(
               team: team,
-              has1v1Champion: _has1v1Champion,
+              has1v1Champion: !_isCheckingChampion && !_championVerificationFailed && _has1v1Champion,
             ),
 
             if (team.bio.trim().isNotEmpty) ...[
@@ -249,7 +548,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             // 2. Stats Grid
             TeamProfileStatsGrid(
               team: team,
-              totalMembersCount: 1 + _teamMembers.length,
+              totalMembersCount: _teamMemberCount,
             ),
 
             const SizedBox(height: 32),
@@ -266,21 +565,67 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             TeamProfileRosterSection(
               members: _teamMembers,
               isLoading: _isLoadingMembers,
+              hasError: _hasMemberLoadError,
+              onRetry: _loadMemberDetails,
             ),
 
             const SizedBox(height: 32),
 
             // 5. Achievements
             TeamProfileAchievementsSection(team: team),
-
-            // 6. Head to Head History
-            if (_headToHeadRecords.isNotEmpty) ...[
-              const SizedBox(height: 32),
-              TeamProfileHeadToHeadSection(
-                team: team,
-                headToHeadRecords: _headToHeadRecords,
+            const SizedBox(height: VSPSpacing.md),
+            TeamSkillsHistorySection(
+              participantId: team.id,
+              isTeam: true,
+              refreshRevision: _awardsRefreshRevision,
+            ),
+            if (_championVerificationFailed) ...[
+              const SizedBox(height: VSPSpacing.sm),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.card),
+                  border: Border.all(color: VSPColors.divider),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: VSPColors.textSecondary,
+                    ),
+                    const SizedBox(width: VSPSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        isArabic
+                            ? 'تعذر التحقق من شارة بطل 1 ضد 1؛ لم يتم افتراض عدم وجود إنجاز.'
+                            : 'The 1v1 champion badge could not be verified; no absence was assumed.',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _check1v1Champion(team.id),
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ),
               ),
             ],
+
+            // 6. Head-to-head history: the read state always takes priority
+            // over any previously loaded rows. A successful empty read is
+            // explicitly visible instead of making the section disappear.
+            const SizedBox(height: 32),
+            TeamProfileHeadToHeadPanel(
+              team: team,
+              headToHeadRecords: _headToHeadRecords,
+              isLoading: _isLoadingHeadToHead,
+              hasError: _hasHeadToHeadLoadError,
+              onRetry: () => _loadHeadToHead(team.id),
+            ),
 
             const SizedBox(height: 32),
 
@@ -295,7 +640,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             const SizedBox(height: 24),
           ],
         ),
-      ),
+      ))),
     );
   }
 }

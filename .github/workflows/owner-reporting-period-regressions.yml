@@ -1,0 +1,67 @@
+name: VSP Owner Reporting and Booking Filters
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/owner-reporting-period-regressions.yml"
+      - "lib/models/dashboard_filter.dart"
+      - "lib/core/utils/owner_financial_calculator.dart"
+      - "lib/features/owner/screens/owner_dashboard_screen.dart"
+      - "lib/features/owner/widgets/dashboard/owner_operational_finance_card.dart"
+      - "test/features/owner/owner_finance_unverified_state_test.dart"
+      - "test/features/owner/owner_reporting_period_boundaries_test.dart"
+      - "lib/features/owner/widgets/bookings/owner_booking_schedule_filter.dart"
+      - "lib/features/owner/screens/owner_bookings_screen.dart"
+      - "test/features/owner/owner_booking_schedule_filter_test.dart"
+      - "test/core/utils/owner_financial_calculator_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/owner-reporting-period-regressions.yml"
+      - "lib/models/dashboard_filter.dart"
+      - "lib/core/utils/owner_financial_calculator.dart"
+      - "lib/features/owner/screens/owner_dashboard_screen.dart"
+      - "lib/features/owner/widgets/dashboard/owner_operational_finance_card.dart"
+      - "test/features/owner/owner_finance_unverified_state_test.dart"
+      - "test/features/owner/owner_reporting_period_boundaries_test.dart"
+      - "lib/features/owner/widgets/bookings/owner_booking_schedule_filter.dart"
+      - "lib/features/owner/screens/owner_bookings_screen.dart"
+      - "test/features/owner/owner_booking_schedule_filter_test.dart"
+permissions:
+  contents: read
+concurrency:
+  group: vsp-owner-period-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze reporting source and tests
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/models/dashboard_filter.dart
+          lib/core/utils/owner_financial_calculator.dart
+          lib/features/owner/screens/owner_dashboard_screen.dart
+          lib/features/owner/widgets/dashboard/owner_operational_finance_card.dart
+          test/features/owner/owner_finance_unverified_state_test.dart
+          test/features/owner/owner_reporting_period_boundaries_test.dart
+          lib/features/owner/widgets/bookings/owner_booking_schedule_filter.dart
+          lib/features/owner/screens/owner_bookings_screen.dart
+          test/features/owner/owner_booking_schedule_filter_test.dart
+          test/features/owner/owner_finance_unverified_state_test.dart
+      - name: Test reporting period and revenue source contracts
+        run: >-
+          flutter test --concurrency=1
+          test/features/owner/owner_reporting_period_boundaries_test.dart
+          test/core/utils/owner_financial_calculator_test.dart
+          test/features/owner/owner_booking_schedule_filter_test.dart

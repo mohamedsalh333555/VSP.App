@@ -19,6 +19,20 @@ export 'package:image_cropper/image_cropper.dart' show CropAspectRatioPreset;
 class ImagePickService {
   static final _picker = ImagePicker();
 
+  /// Select only the requested file without asking for the user's full photo metadata.
+  static Future<XFile?> pickRaw({
+    ImageSource source = ImageSource.gallery,
+    int imageQuality = 90,
+    ImagePicker? picker,
+  }) => (picker ?? _picker).pickImage(
+    source: source,
+    imageQuality: imageQuality,
+    requestFullMetadata: false,
+  );
+
+  static Future<List<XFile>> pickMultiple({ImagePicker? picker}) =>
+      (picker ?? _picker).pickMultiImage(requestFullMetadata: false);
+
   /// Opens the gallery or camera, then shows the cropper UI.
   /// Returns an [XFile] containing the cropped image, or null if cancelled.
   static Future<XFile?> pick(
@@ -27,7 +41,7 @@ class ImagePickService {
     ImageSource source = ImageSource.gallery,
   }) async {
     // 1. Pick raw image
-    final picked = await _picker.pickImage(
+    final picked = await pickRaw(
       source: source,
       imageQuality: 90,
     );

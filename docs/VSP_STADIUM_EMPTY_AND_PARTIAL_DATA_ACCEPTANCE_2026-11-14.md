@@ -1,0 +1,5 @@
+# Stadium list empty and partial-data behavior — 14.05, 14.07
+
+The `AllStadiumsScreen` widget is exercised with an injected delayed `StadiumProvider` repository and localized Flutter host. The test drives a Cairo query to an empty server page, checks the visible English no-results state and its Reset Filters action, and verifies a fresh nationwide request follows reset. Another case sends an invalid page shape, checks a safe Arabic failure without echoing the synthetic private payload, taps Retry, and verifies recovery to the Arabic empty state. A third case supplies a `Stadium` parsed from a row missing optional venue fields and verifies its card renders without an exception.
+
+Source commit `af39c4b2`; [Flutter CI run 43622235834](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43622235834) covers this test with the full suite. **Acceptance scope:** 14.05 is the list's empty/reset journey; 14.07 is a representative incomplete model row plus malformed page/retry. No real stadium is edited. Navigation to venue details (14.06), every malformed network payload, live Aswan data, booking validation and physical-device evidence remain open.

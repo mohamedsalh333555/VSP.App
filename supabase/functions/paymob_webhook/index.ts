@@ -1,54 +1,17 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { verifyOwnerSubscriptionPayment } from "../_shared/owner_subscription_payment.ts";
+import { computePaymobHMAC, verifyPaymobHmacSignature } from "../_shared/paymob_hmac.ts";
+import { classifyPaymobWebhookOutcome } from "../_shared/paymob_webhook_outcome.ts";
+import { isAuthorizedPaymobIntegration } from "../_shared/paymob_integration_guard.ts";
+import { matchesBoundPaymobOrder } from "../_shared/paymob_order_binding.ts";
+import { sanitizePaymobAuditPayload } from "../_shared/paymob_audit_payload.ts";
+import { claimDirectPaymobRefund, recordDirectPaymobRefundOutcome } from "../_shared/paymob_direct_refund_claim.ts";
 
 declare const Deno: any;
 
 console.log("⚡ Paymob Webhook Edge Function Initialized (Hardened & Unified)!");
-
-/**
- * Calculates Paymob SHA-512 HMAC signature
- */
-async function computePaymobHMAC(obj: any, hmacSecret: string): Promise<string> {
-  const concatenatedValues = [
-    obj.amount_cents,
-    obj.created_at,
-    obj.currency,
-    obj.error_occured,
-    obj.has_parent_transaction,
-    obj.id,
-    obj.integration_id,
-    obj.is_3d_secure,
-    obj.is_auth,
-    obj.is_capture,
-    obj.is_refunded,
-    obj.is_standalone_payment,
-    obj.is_voided,
-    obj.order?.id ?? obj.order,
-    obj.owner,
-    obj.pending,
-    obj.source_data?.pan ?? "",
-    obj.source_data?.sub_type ?? "",
-    obj.source_data?.type ?? "",
-    obj.success,
-  ].join("");
-
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(hmacSecret);
-  const messageData = encoder.encode(concatenatedValues);
-
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "HMAC", hash: "SHA-512" },
-    false,
-    ["sign"]
-  );
-
-  const signatureBuffer = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
-  const hashArray = Array.from(new Uint8Array(signatureBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 serve(async (req: Request) => {
   // Paymob webhook is server-to-server. It does not expose browser CORS.
@@ -72,8 +35,7 @@ serve(async (req: Request) => {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const rawUrl = req.url;
-    const url = new URL(rawUrl);
+    const url = new URL(req.url);
     const receivedHmac = url.searchParams.get("hmac");
 
     let payload: any = {};
@@ -84,10 +46,10 @@ serve(async (req: Request) => {
         await supabase.from("webhook_logs").insert({
           provider: "paymob",
           event_type: "invalid_json",
-          payload: { error: "Failed to parse JSON body", rawUrl },
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "rejected",
-          error_message: `JSON parse error: ${parseErr?.message}`,
+          error_message: "Invalid JSON body",
         });
       } catch (_) {}
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
@@ -121,7 +83,7 @@ serve(async (req: Request) => {
           txn_id: transactionId || null,
           order_id: orderId || null,
           booking_id: bookingId,
-          payload: payload,
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "rejected",
           error_message: "Missing obj or obj.id in payload",
@@ -144,7 +106,7 @@ serve(async (req: Request) => {
           txn_id: transactionId || null,
           order_id: orderId || null,
           booking_id: bookingId,
-          payload: payload,
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "server_error",
           error_message: "PAYMOB_HMAC_SECRET environment variable is missing on server",
@@ -166,7 +128,7 @@ serve(async (req: Request) => {
           txn_id: transactionId || null,
           order_id: orderId || null,
           booking_id: bookingId,
-          payload: { ...payload, queryParams: Object.fromEntries(url.searchParams.entries()) },
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "rejected",
           error_message: "Missing HMAC signature in query parameters (?hmac=...)",
@@ -180,14 +142,7 @@ serve(async (req: Request) => {
 
     // 🔒 5. Compute & verify HMAC signature
     const calculatedHmac = await computePaymobHMAC(obj, hmacSecret);
-    const received = receivedHmac.toLowerCase();
-    const calculated = calculatedHmac.toLowerCase();
-    let diff = received.length ^ calculated.length;
-    const maxLen = Math.max(received.length, calculated.length);
-    for (let i = 0; i < maxLen; i++) {
-      diff |= (received.charCodeAt(i) || 0) ^ (calculated.charCodeAt(i) || 0);
-    }
-    const isHmacValid = diff === 0;
+    const isHmacValid = verifyPaymobHmacSignature(receivedHmac, calculatedHmac);
 
     if (!isHmacValid) {
       console.error("❌ Paymob Webhook HMAC Verification Failed! Signatures do not match.");
@@ -198,16 +153,7 @@ serve(async (req: Request) => {
           txn_id: transactionId || null,
           order_id: orderId || null,
           booking_id: bookingId,
-          payload: {
-            receivedHmac,
-            calculatedHmacPrefix: calculatedHmac.substring(0, 8) + "...",
-            objSummary: {
-              id: obj.id,
-              order: obj.order?.id ?? obj.order,
-              amount_cents: obj.amount_cents,
-              success: obj.success,
-            },
-          },
+          payload: { rejected_before_authentication: true },
           signature_verified: false,
           status: "rejected",
           error_message: "HMAC signatures do not match",
@@ -220,6 +166,14 @@ serve(async (req: Request) => {
     }
 
     const amountCents = Number(obj?.amount_cents);
+    // All VSP checkout intentions are EGP. A signed callback in another
+    // currency cannot be reconciled against the EGP booking/plan ledger.
+    if (obj?.currency !== "EGP") {
+      return new Response(JSON.stringify({ error: "Unexpected payment currency" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", "X-Content-Type-Options": "nosniff" },
+      });
+    }
     if (
       !/^[0-9]+$/.test(transactionId) ||
       !/^[0-9]+$/.test(orderId) ||
@@ -233,9 +187,27 @@ serve(async (req: Request) => {
       });
     }
 
+    // A valid HMAC proves authenticity but not membership in a VSP
+    // integration. Reject unexpected integrations before financial writes.
+    if (!isAuthorizedPaymobIntegration(
+      obj.integration_id,
+      Deno.env.get("PAYMOB_INTEGRATION_ID_CARD"),
+      Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET"),
+      Deno.env.get("PAYMOB_WEBHOOK_ALLOWED_INTEGRATION_IDS") ?? "",
+    )) {
+      console.error("Rejected Paymob callback: unauthorized integration");
+      return new Response(JSON.stringify({ error: "Payment integration is not authorized" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", "X-Content-Type-Options": "nosniff" },
+      });
+    }
+
     console.log("✅ HMAC Signature Verified Successfully!");
 
-    const isSuccess = Boolean(obj.success) && !Boolean(obj.pending);
+    // A signed pending/void/refund/authorization-only callback is not a
+    // settled charge. Never turn those events into paid bookings or prizes.
+    const paymentOutcome = classifyPaymobWebhookOutcome(obj);
+    const isSuccess = paymentOutcome === "paid";
 
     console.log(`🔔 Webhook received for Booking: ${bookingId} | Success: ${isSuccess} | Tx: ${transactionId}`);
 
@@ -247,9 +219,9 @@ serve(async (req: Request) => {
         txn_id: transactionId,
         order_id: String(obj.order?.id ?? obj.order ?? ""),
         booking_id: bookingId,
-        payload: obj,
+        payload: sanitizePaymobAuditPayload(obj),
         signature_verified: true,
-        status: isSuccess ? "success" : "failed",
+        status: isSuccess ? "success" : paymentOutcome,
       });
     } catch (logErr) {
       console.warn("⚠️ Non-blocking warning: failed to write to webhook_logs", logErr);
@@ -270,7 +242,7 @@ serve(async (req: Request) => {
       if (orderError || !order) {
         return { ok: false, reason: "payment_order_not_found" };
       }
-      if (order.paymob_order_id && String(order.paymob_order_id) !== String(orderId)) {
+      if (!matchesBoundPaymobOrder(order.paymob_order_id, orderId)) {
         return { ok: false, reason: "paymob_order_correlation_mismatch" };
       }
       if (order.payment_status === "paid") {
@@ -332,18 +304,17 @@ serve(async (req: Request) => {
       if (subscriptionOrderError || !subscriptionOrder) {
         return new Response(JSON.stringify({ error: "Subscription payment order not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
       }
-      if (subscriptionOrder.paymob_order_id && String(subscriptionOrder.paymob_order_id) !== String(orderId)) {
+      if (!subscriptionOrder.paymob_order_id || String(subscriptionOrder.paymob_order_id) !== String(orderId)) {
         return new Response(JSON.stringify({ error: "Invalid subscription payment order correlation" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
-      const actualGross = Math.round(Number(obj.amount_cents || 0)) / 100;
-      const expectedGross = Number(subscriptionOrder.gross_amount ?? subscriptionOrder.amount ?? 0);
-      if (Math.abs(actualGross - expectedGross) > 0.01) {
-        return new Response(JSON.stringify({ error: "Invalid subscription payment amount" }), { status: 400, headers: { "Content-Type": "application/json" } });
+      const verified = verifyOwnerSubscriptionPayment(obj, subscriptionOrder);
+      if (!verified) {
+        return new Response(JSON.stringify({ error: "Invalid subscription payment transaction" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
       const { data: confirmResult, error: confirmError } = await supabase.rpc("confirm_owner_subscription_payment", {
         p_order_id: subscriptionOrder.id,
-        p_paymob_transaction_id: transactionId,
-        p_gross_amount: actualGross,
+        p_paymob_transaction_id: verified.transactionId,
+        p_gross_amount: verified.amount,
       });
       if (confirmError || confirmResult?.success !== true) {
         return new Response(JSON.stringify({ error: "Owner subscription payment confirmation failed" }), { status: 500, headers: { "Content-Type": "application/json" } });
@@ -363,7 +334,7 @@ serve(async (req: Request) => {
         if (leaguePaymentError || !leaguePayment) {
           return new Response(JSON.stringify({ error: "Team league payment order not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
         }
-        if (leaguePayment.paymob_order_id && String(leaguePayment.paymob_order_id) !== String(orderId)) {
+        if (!matchesBoundPaymobOrder(leaguePayment.paymob_order_id, orderId)) {
           console.error("Rejected league webhook Paymob order correlation mismatch:", specialReference);
           return new Response(JSON.stringify({ error: "Invalid payment order correlation" }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
@@ -430,23 +401,10 @@ serve(async (req: Request) => {
           let refundSuccess = false;
           let refundId = null;
           let refundErrorMsg = null;
-          // Use the exact gross amount charged by Paymob when available.
-          // If the webhook omits it, rebuild the same server-side gross used by checkout.
-          let amountCents = Math.round(Number(obj.amount_cents || 0));
-          if (amountCents <= 0) {
-            const { data: feeConfig } = await supabase
-              .from("platform_fee_config")
-              .select("booking_vsp_rate, booking_paymob_local_rate, booking_paymob_fixed_fee")
-              .eq("id", 1)
-              .maybeSingle();
-            const principal = Number(tournResult?.amount || 0);
-            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
-            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
-            const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
-            const vspFee = Math.round(principal * vspRate * 100) / 100;
-            const gatewayFee = Math.round((principal * gatewayRate + gatewayFixed) * 100) / 100;
-            amountCents = Math.round((principal + vspFee + gatewayFee) * 100);
-          }
+          let directRefundClaimed = false;
+          // The signed callback's amountCents was HMAC-verified and validated
+          // before this branch. Never reconstruct historical charges from a
+          // mutable, current fee policy when refunding an over-capacity order.
 
           try {
             const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
@@ -462,12 +420,32 @@ serve(async (req: Request) => {
             });
 
             if (!authRes.ok) {
-              const authErrText = await authRes.text();
-              throw new Error(`Paymob auth token request failed: ${authErrText}`);
+              // Do not include Paymob's response body: it may contain sensitive data.
+              throw new Error("Paymob refund authentication request failed");
             }
 
             const authData = await authRes.json();
             const authToken = authData.token;
+            if (!authToken) throw new Error("Paymob refund authentication token missing");
+
+            // HMAC authentication alone is NOT refund dispatch idempotency.
+            // The service-role-only unique claim persists across webhook replay
+            // and worker crashes; never call Paymob unless INSERT won.
+            const directClaim = await claimDirectPaymobRefund(supabase, {
+              transactionId,
+              orderReference: specialReference,
+              context: "legacy_1v1",
+              amountCents,
+            });
+            if (!directClaim) {
+              return new Response(JSON.stringify({
+                status: "requires_reconciliation",
+                type: "1v1_tournament",
+                success: false,
+                refund_pending: true,
+              }), { status: 200, headers: { "Content-Type": "application/json" } });
+            }
+            directRefundClaimed = true;
 
             // Step B: Call Paymob Void/Refund API with exact transaction and amount in cents
             // Refund the exact gross amount Paymob actually charged, including VSP/gateway fees.
@@ -483,27 +461,60 @@ serve(async (req: Request) => {
             });
 
             const refundData = await refundRes.json();
-            console.log("Paymob Refund API Response:", JSON.stringify(refundData));
+            // Never log raw gateway responses, even when a refund is rejected.
+            console.log("Paymob refund API response", { httpStatus: refundRes.status, accepted: refundRes.ok });
 
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "REFUND_SUCCESS");
             } else {
-              refundErrorMsg = refundData.message || refundData.detail || JSON.stringify(refundData);
+              refundErrorMsg = `Paymob refund rejected (HTTP ${refundRes.status})`;
             }
           } catch (refundEx: any) {
-            console.error("❌ Exception during Paymob Refund API call:", refundEx);
-            refundErrorMsg = refundEx.message || String(refundEx);
+            console.error("Paymob refund request failed (1v1)");
+            refundErrorMsg = "Paymob refund request failed";
+          }
+
+          if (directRefundClaimed) {
+            await recordDirectPaymobRefundOutcome(supabase, transactionId, refundSuccess);
           }
 
           // Step C: Atomically record real refund status or flag for manual review
-          await supabase.rpc("record_1v1_refund_status_atomic", {
+          const { data: refundRecorded, error: refundRecordingError } = await supabase.rpc("record_1v1_refund_status_atomic", {
             p_order_reference: specialReference,
             p_refund_success: refundSuccess,
             p_paymob_refund_id: refundId,
             p_error_message: refundErrorMsg,
             p_refund_amount: amountCents / 100,
           });
+          if (refundRecordingError || refundRecorded?.success !== true) {
+            // Gateway action may already have happened. Do not return a
+            // retry-triggering 5xx that could cause another external refund.
+            // Preserve an operator-visible audit and require reconciliation.
+            console.error("Paymob tournament refund ledger requires manual reconciliation (1v1_tournament)");
+            await supabase.from("webhook_logs").insert({
+              provider: "paymob",
+              event_type: "refund_ledger_reconciliation_required",
+              txn_id: transactionId,
+              order_id: orderId,
+              payload: {
+                order_reference: specialReference,
+                refund_request_accepted: refundSuccess,
+                refund_id: refundId,
+              },
+              signature_verified: true,
+              status: "requires_reconciliation",
+              error_message: "Paymob refund ledger write not confirmed",
+            });
+            return new Response(JSON.stringify({
+              status: "requires_reconciliation", type: "1v1_tournament", success: false,
+            }), { status: 200, headers: { "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({
+            status: refundSuccess ? "refund_recorded" : "refund_manual_review",
+            type: "1v1_tournament",
+            success: false,
+          }), { status: 200, headers: { "Content-Type": "application/json" } });
 
         } else {
           console.log("🎉 1v1 Tournament order confirmed successfully:", tournResult);
@@ -547,83 +558,31 @@ serve(async (req: Request) => {
             status: 500,
             headers: { "Content-Type": "application/json" },
           });
-        } else if (tournResult?.needs_refund === true || tournResult?.requires_refund === true) {
-          // OVER-CAPACITY DETECTED: refund the exact gross amount charged to the payer.
-          console.warn(`Capacity exceeded for tournament order ${specialReference}. Initiating REAL Paymob Refund API call...`);
-          
-          let refundSuccess = false;
-          let refundId = null;
-          let refundErrorMsg = null;
-
-          try {
-            const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
-            if (!paymobApiKey) {
-              throw new Error("Missing PAYMOB_API_KEY / PAYMOB_SECRET_KEY on server environment");
-            }
-
-            // Step A: Authenticate with Paymob to obtain auth token
-            const authRes = await fetch("https://accept.paymob.com/api/auth/tokens", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ api_key: paymobApiKey }),
-            });
-
-            if (!authRes.ok) {
-              const authErrText = await authRes.text();
-              throw new Error(`Paymob auth token request failed: ${authErrText}`);
-            }
-
-            const authData = await authRes.json();
-            const authToken = authData.token;
-
-            // Step B: Rebuild the same gross amount charged by the intention service:
-            // principal + VSP fee + Paymob local fee + fixed fee.
-            const { data: feeConfig } = await supabase
-              .from("platform_fee_config")
-              .select("booking_vsp_rate, booking_paymob_local_rate, booking_paymob_fixed_fee")
-              .eq("id", 1)
-              .maybeSingle();
-            const principal = Number(tournResult.amount || 0);
-            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
-            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
-            const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
-            const vspFee = Math.round(principal * vspRate * 100) / 100;
-            const gatewayFee = Math.round((principal * gatewayRate + gatewayFixed) * 100) / 100;
-            const grossAmount = Math.round((principal + vspFee + gatewayFee) * 100) / 100;
-            const amountCents = Math.round(grossAmount * 100);
-            const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                auth_token: authToken,
-                transaction_id: Number(transactionId),
-                amount_cents: amountCents,
-              }),
-            });
-
-            const refundData = await refundRes.json();
-            console.log("Paymob Refund API Response:", JSON.stringify(refundData));
-
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
-              refundSuccess = true;
-              refundId = String(refundData.id || refundData.transaction_id || "REFUND_SUCCESS");
-            } else {
-              refundErrorMsg = refundData.message || refundData.detail || JSON.stringify(refundData);
-            }
-          } catch (refundEx: any) {
-            console.error("Exception during Paymob Refund API call:", refundEx);
-            refundErrorMsg = refundEx.message || String(refundEx);
-          }
-
-          // Step C: Atomically record real refund status or flag for manual review
-          await supabase.rpc("record_tournament_refund_status_atomic", {
-            p_order_reference: specialReference,
-            p_refund_success: refundSuccess,
-            p_paymob_refund_id: refundId,
-            p_error_message: refundErrorMsg,
-            p_refund_amount: amountCents / 100,
+        } else if (tournResult?.needs_refund === true) {
+          // confirm_tournament_order_atomic already created an idempotent
+          // cancellation_refund_queue item, keyed by order_id, in the SAME
+          // transaction that rejected the over-capacity/cancelled registration.
+          //
+          // NEVER call Paymob's external refund endpoint here. Doing so would
+          // race the queue worker and could refund the same payment twice.
+          // Its worker owns the durable claim, dispatch marker and ledger.
+          return new Response(JSON.stringify({
+            status: "refund_queued",
+            type: "tournament",
+            success: false,
+            refund_pending: true,
+          }), { status: 200, headers: { "Content-Type": "application/json" } });
+        } else if (tournResult?.success !== true) {
+          // An RPC-rejected confirmation (including a replay of an already
+          // failed order) must NOT be presented as a successful payment.
+          console.error("Tournament confirmation rejected; manual reconciliation required", {
+            reason: String(tournResult?.error || "confirmation_unverified"),
           });
-
+          return new Response(JSON.stringify({
+            status: "requires_reconciliation",
+            type: "tournament",
+            success: false,
+          }), { status: 200, headers: { "Content-Type": "application/json" } });
         } else {
           console.log("Tournament order confirmed successfully:", tournResult);
         }
@@ -656,7 +615,7 @@ serve(async (req: Request) => {
       });
     }
 
-    if (existingBooking.paymob_order_id && String(existingBooking.paymob_order_id) !== String(orderId)) {
+    if (!matchesBoundPaymobOrder(existingBooking.paymob_order_id, orderId)) {
       console.error("Rejected booking webhook Paymob order correlation mismatch:", bookingId);
       return new Response(JSON.stringify({ error: "Invalid payment order correlation" }), {
         status: 400,
@@ -665,7 +624,7 @@ serve(async (req: Request) => {
     }
 
     // 3.5 Handle Paymob Refund Callback if is_refunded is true
-    if (obj.is_refunded === true) {
+    if (obj.is_refunded === true && paymentOutcome === "reversed") {
       const refundAmount = (obj.amount_cents || 0) / 100;
       const refundTxnId = String(obj.id || transactionId);
       const refundMethod = (() => {
@@ -699,6 +658,15 @@ serve(async (req: Request) => {
         });
       }
 
+      // The ledger RPC returns already_recorded for a repeated, signed
+      // refund transaction. Replaying a webhook must not notify twice.
+      if (refundResult?.already_recorded === true) {
+        return new Response(JSON.stringify({ status: "already_processed", type: "booking_refund" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
       // Notify player about successful refund
       const playerUserId = existingBooking.created_by_user_id || existingBooking.user_id;
       if (playerUserId) {
@@ -728,6 +696,7 @@ serve(async (req: Request) => {
         let refundSuccess = false;
         let refundId = null;
         let refundErrorMsg = null;
+        let directRefundClaimed = false;
 
         try {
           const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
@@ -741,6 +710,25 @@ serve(async (req: Request) => {
           if (!authRes.ok) throw new Error("Paymob auth token request failed");
 
           const authData = await authRes.json();
+          if (!authData?.token) throw new Error("Paymob refund authentication token missing");
+
+          // Prevent the same signed transaction from triggering a second
+          // outbound refund for an already cancelled booking.
+          const directClaim = await claimDirectPaymobRefund(supabase, {
+            transactionId,
+            orderReference: bookingId,
+            context: "cancelled_booking",
+            amountCents,
+          });
+          if (!directClaim) {
+            return new Response(JSON.stringify({
+              status: "requires_reconciliation",
+              type: "cancelled_booking",
+              success: false,
+              refund_pending: true,
+            }), { status: 200, headers: { "Content-Type": "application/json" } });
+          }
+          directRefundClaimed = true;
           const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -752,35 +740,48 @@ serve(async (req: Request) => {
           });
           const refundData = await refundRes.json();
 
-          if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+          if (refundRes.ok && (refundData.success === true || refundData.is_refund === true)) {
             refundSuccess = true;
             refundId = String(refundData.id || refundData.transaction_id || transactionId);
           } else {
-            refundErrorMsg = refundData.message || refundData.detail || JSON.stringify(refundData);
+            refundErrorMsg = `Paymob refund rejected (HTTP ${refundRes.status})`;
           }
         } catch (refundEx: any) {
-          refundErrorMsg = refundEx?.message || String(refundEx);
+          refundErrorMsg = "Paymob refund request failed";
+        }
+
+        if (directRefundClaimed) {
+          await recordDirectPaymobRefundOutcome(supabase, transactionId, refundSuccess);
         }
 
         if (refundSuccess) {
-          await supabase.rpc("record_booking_gateway_refund_atomic", {
-            p_booking_id: bookingId,
-            p_refund_amount: chargedAmountEgp,
-            p_refund_txn_id: refundId,
-            p_refund_payment_method: "card",
-            p_refund_gross_amount: chargedAmountEgp,
-          });
-        } else {
+          const { data: refundAccounting, error: refundAccountingError } =
+            await supabase.rpc("record_booking_gateway_refund_atomic", {
+              p_booking_id: bookingId,
+              p_refund_amount: chargedAmountEgp,
+              p_refund_txn_id: refundId,
+              p_refund_payment_method: "card",
+              p_refund_gross_amount: chargedAmountEgp,
+            });
+          // The gateway response alone does not prove that this refund was
+          // recorded in the server's financial ledger. Never tell the user
+          // the money was refunded if authoritative accounting rejects it.
+          if (refundAccountingError || refundAccounting?.success !== true) {
+            refundSuccess = false;
+            refundErrorMsg = "Gateway refund acknowledged; server refund accounting remains unverified";
+          }
+        }
+        if (!refundSuccess) {
           await supabase
             .from("bookings")
             .update({
               payment_status: "refund_pending",
               refund_amount: chargedAmountEgp,
-              cancellation_reason: "انتهت مهلة الدفع ولم يكتمل الحجز، والاسترداد يحتاج معالجة.",
+              cancellation_reason: "الاسترداد يحتاج مراجعة التسوية مع مزود الدفع.",
               updated_at: new Date().toISOString(),
             })
             .eq("id", bookingId)
-        .eq("status", "pending");
+            .eq("status", "cancelled");
         }
 
         await supabase.from("webhook_logs").insert({
@@ -788,7 +789,7 @@ serve(async (req: Request) => {
           event_type: "auto_refund_expired_booking",
           txn_id: transactionId,
           booking_id: bookingId,
-          payload: { refundSuccess, refundId, refundErrorMsg, originalTxn: obj },
+          payload: { refundSuccess, refundId, refundErrorMsg, originalTxn: sanitizePaymobAuditPayload(obj) },
           signature_verified: true,
           status: refundSuccess ? "refunded" : "refund_pending",
           error_message: refundErrorMsg,
@@ -910,17 +911,17 @@ serve(async (req: Request) => {
       );
 
       if (paymentError || paymentResult?.success !== true) {
-        console.error("Payment ledger RPC rejected verified webhook:", paymentError || paymentResult);
+        console.error("Payment ledger RPC rejected verified webhook");
         await supabase.from("webhook_logs").insert({
           provider: "paymob",
           event_type: "payment_accounting_rejected",
           txn_id: transactionId,
           order_id: orderId,
           booking_id: bookingId,
-          payload: obj,
+          payload: sanitizePaymobAuditPayload(obj),
           signature_verified: true,
           status: "rejected",
-          error_message: JSON.stringify(paymentError || paymentResult),
+          error_message: "Verified payment accounting rejected",
         });
         return new Response(JSON.stringify({ error: "Payment accounting rejected" }), {
           status: 400,
@@ -928,35 +929,22 @@ serve(async (req: Request) => {
         });
       }
 
+      // The verified financial RPC writes the booking and transaction
+      // atomically. Its database trigger creates one in-app receipt only
+      // when the signed successful Paymob log, gross amount and ledger match.
+      // Never re-create payment notifications from a webhook replay.
+      if (paymentResult.idempotent === true) {
+        return new Response(JSON.stringify({
+          status: "already_processed",
+          type: "booking_payment",
+          success: true,
+          booking_id: bookingId,
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+
       const finalPayment = paymentResult.is_final_payment === true;
       const remainingAmount = Number(paymentResult.remaining_amount || 0);
       const principalPaid = Number(paymentResult.principal_amount || principalAmount);
-
-      const playerUserId = existingBooking.created_by_user_id || existingBooking.user_id;
-      const amountText = principalPaid.toFixed(2);
-
-      await supabase.from("notifications").insert([
-        {
-          user_id: existingBooking.owner_id,
-          title: isDepositOnly ? "تم استلام عربون حجز" : "تم استلام دفعة حجز مؤكدة",
-          body: isDepositOnly
-            ? `تم دفع عربون بقيمة ${amountText} ج.م لحجز ${existingBooking.stadium_name || "الملعب"}. المتبقي: ${remainingAmount.toFixed(2)} ج.م`
-            : `تم تأكيد سداد مبلغ ${amountText} ج.م لحجز ${existingBooking.stadium_name || "الملعب"}.`,
-          type: isDepositOnly ? "deposit_received" : "payment_received",
-          booking_id: bookingId,
-          is_read: false,
-        },
-        {
-          user_id: playerUserId,
-          title: finalPayment ? "تأكيد الحجز والدفع" : "تأكيد سداد العربون",
-          body: finalPayment
-            ? `تم سداد حجزك بالكامل بنجاح في ${existingBooking.stadium_name || "الملعب"}.`
-            : `تم سداد العربون بقيمة ${amountText} ج.م بنجاح. المتبقي: ${remainingAmount.toFixed(2)} ج.م.`,
-          type: finalPayment ? "booking_confirmed" : "deposit_received",
-          booking_id: bookingId,
-          is_read: false,
-        },
-      ]);
 
       return new Response(JSON.stringify({
         status: "processed",
@@ -967,7 +955,9 @@ serve(async (req: Request) => {
         principal_amount: principalPaid,
         remaining_amount: remainingAmount,
       }), { status: 200, headers: { "Content-Type": "application/json" } });
-    } else {
+    } else if (paymentOutcome === "failed") {
+      // Only a terminal failure may cancel a pending booking; a pending
+      // Paymob event must not destroy a still-valid payment attempt.
       await supabase
         .from("bookings")
         .update({
@@ -976,10 +966,16 @@ serve(async (req: Request) => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", bookingId)
-        .eq("status", "pending");
+        .eq("status", "pending")
+        // A newer checkout may have replaced this order ID since our read.
+        // A late failure for the old order must not cancel the new attempt.
+        .eq("paymob_order_id", orderId);
     }
 
-    return new Response(JSON.stringify({ status: "processed", success: isSuccess }), {
+    const responseStatus = paymentOutcome === "pending" ? "pending" :
+      paymentOutcome === "reversed" || paymentOutcome === "unresolved"
+      ? "requires_reconciliation" : "processed";
+    return new Response(JSON.stringify({ status: responseStatus, success: isSuccess }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

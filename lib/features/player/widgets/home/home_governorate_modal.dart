@@ -20,7 +20,14 @@ void showLocationPickerHelper(BuildContext context, AuthProvider auth) {
     ),
     builder: (context) {
       const governorates = EgyptGovernorates.allGovernorates;
+      final media = MediaQuery.of(context);
+      final availableHeight = (media.size.height -
+              media.padding.top -
+              media.padding.bottom)
+          .clamp(240.0, media.size.height)
+          .toDouble();
       return Container(
+        constraints: BoxConstraints(maxHeight: availableHeight * 0.85),
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -44,15 +51,26 @@ void showLocationPickerHelper(BuildContext context, AuthProvider auth) {
                     title: Text(
                       gov,
                       style: TextStyle(
-                        color: isSelected ? VSPColors.accent : Colors.white,
+                        color: isSelected ? VSPColors.accent : VSPColors.white,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                     trailing: isSelected ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null,
-                    onTap: () {
-                      auth.updateProfile({'governorate': gov});
-                      context.read<StadiumProvider>().applyGovernorateFilter(gov);
-                      Navigator.pop(context);
+                    onTap: () async {
+                      try {
+                        await auth.updateProfile({'governorate': gov});
+                        if (!context.mounted) return;
+                        context.read<StadiumProvider>().applyGovernorateFilter(gov);
+                        Navigator.pop(context);
+                      } catch (_) {
+                        if (!context.mounted) return;
+                        VSPFeedback.showError(
+                          context,
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'تعذر حفظ المحافظة. حاول مرة أخرى.'
+                              : 'Could not save your location. Please try again.',
+                        );
+                      }
                     },
                   );
                 },
@@ -85,8 +103,9 @@ void showGovernorateChangeAlert(
       final noBtn = isArabic ? 'لا، شكراً' : 'No, thanks';
 
       return AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
@@ -94,7 +113,7 @@ void showGovernorateChangeAlert(
             const SizedBox(width: 8),
             Text(
               title,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
@@ -124,7 +143,7 @@ void showGovernorateChangeAlert(
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
             ),
             child: Text(yesBtn, style: const TextStyle(fontWeight: FontWeight.bold)),

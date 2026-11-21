@@ -12,6 +12,7 @@ enum DocSourceSelection {
 Future<DocSourceSelection?> showDocSourceActionSheet(BuildContext context) async {
   return showModalBottomSheet<DocSourceSelection>(
     context: context,
+    useSafeArea: true,
     backgroundColor: VSPColors.background,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),

@@ -1,0 +1,45 @@
+name: VSP Stadium Discovery Network Resilience
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-stadium-discovery-network-resilience.yml"
+      - "lib/features/player/screens/all_stadiums_screen.dart"
+      - "lib/core/providers/stadium_provider.dart"
+      - "lib/core/services/connectivity_service.dart"
+      - "test/features/player/all_stadiums_empty_error_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-stadium-discovery-network-resilience.yml"
+      - "lib/features/player/screens/all_stadiums_screen.dart"
+      - "lib/core/providers/stadium_provider.dart"
+      - "lib/core/services/connectivity_service.dart"
+      - "test/features/player/all_stadiums_empty_error_test.dart"
+
+permissions:
+  contents: read
+concurrency:
+  group: stadium-discovery-resilience-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  widget-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze stadium discovery resilience
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/features/player/screens/all_stadiums_screen.dart
+          test/features/player/all_stadiums_empty_error_test.dart
+      - name: Test stadium listing offline/reconnect/stale-response/empty/error contract
+        run: flutter test --concurrency=1 test/features/player/all_stadiums_empty_error_test.dart

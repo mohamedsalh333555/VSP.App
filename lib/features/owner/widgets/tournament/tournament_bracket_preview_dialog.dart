@@ -31,26 +31,25 @@ void showTournamentBracketPreviewDialog(
 
   showDialog(
     context: context,
-    builder: (ctx) {
+    useSafeArea: true,
+      builder: (ctx) {
       final l10n = AppLocalizations.of(context)!;
       return AlertDialog(
+      scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         insetPadding: const EdgeInsets.all(16),
         title: Text(
           l10n.tournamentBrackets,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
         ),
         content: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.height * 0.65,
+          width: MediaQuery.sizeOf(ctx).width * 0.9,
+          height: (MediaQuery.sizeOf(ctx).height * 0.55).clamp(180.0, 480.0),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(VSPRadius.md),
             child: InteractiveViewer(
-              transformationController: TransformationController(
-                Matrix4.identity()..translate(0.0, 0.0),
-              ),
               constrained: false,
               scaleEnabled: true,
               minScale: 0.5,
@@ -70,7 +69,7 @@ void showTournamentBracketPreviewDialog(
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx),
@@ -121,10 +120,12 @@ Future<void> showInteractiveDrawRoomDialog(
 
   await showDialog(
     context: context,
-    barrierDismissible: false,
+    useSafeArea: true,
+      barrierDismissible: false,
     builder: (dialogCtx) => StatefulBuilder(
       builder: (ctx, setModalState) {
         return AlertDialog(
+      scrollable: true,
           backgroundColor: VSPColors.surface,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
@@ -132,16 +133,20 @@ Future<void> showInteractiveDrawRoomDialog(
             children: [
               const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
               const SizedBox(width: 10),
-              Text(
-                isAr ? 'غرفة سحب القرعة المباشر' : 'Live Draw Room',
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              Expanded(
+                child: Text(
+                  isAr ? 'غرفة سحب القرعة المباشر' : 'Live Draw Room',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
             ],
           ),
           content: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.85,
-            height: 340,
+            width: MediaQuery.sizeOf(ctx).width * 0.85,
+            height: (MediaQuery.sizeOf(ctx).height * 0.42).clamp(180.0, 320.0),
             child: Column(
               children: [
                 Text(
@@ -174,9 +179,11 @@ Future<void> showInteractiveDrawRoomDialog(
                   setModalState(() => isRevealing = true);
                   for (int i = 0; i < matchups.length; i++) {
                     await Future.delayed(const Duration(milliseconds: 450));
+                    if (!dialogCtx.mounted) return;
                     HapticFeedback.mediumImpact();
                     setModalState(() => revealedCount = i + 1);
                   }
+                  if (!dialogCtx.mounted) return;
                   setModalState(() => isRevealing = false);
                 },
               )

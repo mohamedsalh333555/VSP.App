@@ -1,0 +1,70 @@
+name: VSP Offline Activation Analytics Contracts
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/activation-analytics-contracts.yml"
+      - "scripts/vsp_activation_dashboard.html"
+      - "scripts/test_vsp_activation_dashboard.cjs"
+      - "lib/core/services/analytics_service.dart"
+      - "test/core/services/analytics_service_test.dart"
+      - "lib/core/services/activation_funnel_contract.dart"
+      - "lib/core/services/retention_cohort_contract.dart"
+      - "test/core/services/activation_funnel_contract_test.dart"
+      - "test/core/services/retention_cohort_contract_test.dart"
+      - "test/architecture/no_fabricated_scarcity_copy_contract_test.dart"
+      - "test/core/services/booking_completion_network_analytics_test.dart"
+      - "test/features/booking/booking_confirmation_status_contract_test.dart"
+      - "lib/features/player/screens/booking_success_screen.dart"
+      - "lib/features/player/widgets/booking/booking_status_presentation.dart"
+
+permissions:
+  contents: read
+
+jobs:
+  offline-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate private offline reporting viewer
+        run: node --test scripts/test_vsp_activation_dashboard.cjs
+
+  flutter-analytics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - name: Resolve Flutter packages
+        run: flutter pub get
+      - name: Validate analytics source and privacy contracts
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/core/services/analytics_service.dart
+          lib/core/services/activation_funnel_contract.dart
+          lib/core/services/retention_cohort_contract.dart
+          test/core/services/analytics_service_test.dart
+          test/core/services/activation_funnel_contract_test.dart
+          test/core/services/retention_cohort_contract_test.dart
+          test/core/services/booking_completion_network_analytics_test.dart
+          test/features/booking/booking_confirmation_status_contract_test.dart
+          test/architecture/no_fabricated_scarcity_copy_contract_test.dart
+      - name: Run isolated analytics and cohort tests
+        run: >-
+          flutter test --concurrency=1
+          test/core/services/analytics_service_test.dart
+          test/core/services/activation_funnel_contract_test.dart
+          test/core/services/retention_cohort_contract_test.dart
+          test/core/services/booking_completion_network_analytics_test.dart
+          test/features/booking/booking_confirmation_status_contract_test.dart
+          test/architecture/no_fabricated_scarcity_copy_contract_test.dart

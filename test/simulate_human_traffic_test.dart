@@ -4,6 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+const _runLiveTests = bool.fromEnvironment('VSP_RUN_LIVE_TESTS', defaultValue: false);
+const _canRunLiveTests = _runLiveTests && _supabaseUrl != '' && _supabaseAnonKey != '';
+
 void main() {
  TestWidgetsFlutterBinding.ensureInitialized();
  SharedPreferences.setMockInitialValues({});
@@ -11,8 +16,8 @@ void main() {
  test('Simulate 70 Concurrent Human Users (10 Owners & 60 Players Load Test)', () async {
  print(' بدء محاكاة 70 مستخدماً بشرياً على سيرفر VSP...');
 
-  const supabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://placeholder.supabase.co');
-  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'placeholder_key');
+  const supabaseUrl = _supabaseUrl;
+  const supabaseAnonKey = _supabaseAnonKey;
 
  try {
  await Supabase.initialize(
@@ -43,7 +48,7 @@ void main() {
  await Future.wait(botFutures);
  print(' اكتملت جلسة محاكاة ضغط الـ 70 مستخدماً بنجاح دون انهيار!');
  expect(botFutures.length, equals(70));
- });
+ }, skip: !_canRunLiveTests ? 'Requires explicit VSP_RUN_LIVE_TESTS=true and Supabase credentials; avoids unintended live traffic from CI.' : false);
 }
 
 // محاكاة سلوك المالك البشري

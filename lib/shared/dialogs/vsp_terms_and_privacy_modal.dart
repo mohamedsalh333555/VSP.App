@@ -10,20 +10,26 @@ class VSPTermsAndPrivacyModal {
   static void show(BuildContext context, {bool isOwner = false}) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.75),
+      barrierColor: VSPColors.black.withValues(alpha: 0.75),
       builder: (dialogContext) {
         final isAr = Localizations.localeOf(dialogContext).languageCode == 'ar';
         final titleText = isAr ? 'الشروط وأحكام الخصوصية' : 'Terms & Privacy Policy';
         final buttonText = isAr ? 'موافق' : 'I Understand';
+        final media = MediaQuery.of(dialogContext);
+        // Dialog applies keyboard viewInsets through its own route padding.
+        // Keep a content cap without subtracting the keyboard height twice.
+        final availableDialogHeight = (media.size.height - 48)
+            .clamp(0.0, media.size.height)
+            .toDouble();
 
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
           child: Dialog(
-            backgroundColor: Colors.transparent,
+            backgroundColor: VSPColors.transparent,
             insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Container(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(dialogContext).size.height * 0.85,
+                maxHeight: availableDialogHeight,
               ),
               decoration: BoxDecoration(
                 color: VSPColors.surface,
@@ -36,7 +42,7 @@ class VSPTermsAndPrivacyModal {
                 children: [
                   // Header
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 16, 14),
+                    padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 16, 14),
                     child: Row(
                       children: [
                         const VSPIconBadge(
@@ -59,9 +65,12 @@ class VSPTermsAndPrivacyModal {
                         IconButton(
                           onPressed: () => Navigator.pop(dialogContext),
                           icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 20),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          splashRadius: 20,
+                          padding: const EdgeInsets.all(8),
+                          constraints: const BoxConstraints(
+                            minWidth: 48,
+                            minHeight: 48,
+                          ),
+                          splashRadius: 24,
                         ),
                       ],
                     ),
@@ -184,8 +193,8 @@ class VSPTermsAndPrivacyModal {
                               icon: Iconsax.wallet_1_copy,
                               title: isAr ? '٢. سياسة الإلغاء والاسترداد المالي (Paymob)' : '2. Cancellation & Paymob Refund Policy',
                               content: isAr
-                                  ? '• الإلغاء المبكر (أكثر من 6 ساعات قبل المباراة): استرداد مالي كامل (100%) يتم استرجاعه تلقائياً لنفس وسيلة الدفع الأصلية عبر بوابة Paymob مباشرة.\n• البطولات الرياضية: يُسمح بالإلغاء واسترداد رسوم الاشتراك بالكامل قبل انطلاق البطولة بيومين (48 ساعة) وقبل إجراء القرعة الرسمية.\n• مهلة الـ 20 دقيقة الأولى: عند إلغاء الحجز خلال أول 20 دقيقة من إتمامه وسداده، يُسترد المبلغ مخصوماً منه المصاريف الإدارية والتشغيلية غير المستردة (رسوم بوابة الدفع الإلكتروني).\n• مدة الاسترداد ونافذة الـ 90 يوماً: يستغرق ظهور المبلغ في الحساب من 3 إلى 7 أيام عمل وفقاً لدورة المقاصة بالبنك المصدر (شريطة تقديم طلب الاسترداد خلال 90 يوماً كحد أقصى من تاريخ العملية وفقاً لسياسة Paymob).\n• الإلغاء المتأخر (أقل من 6 ساعات) أو عدم الحضور (No-Show) لا يمنح الحق في استرداد المبالغ المدفوعة.'
-                                  : '• Early Cancellation (over 6 hours prior to match): Full 100% refund processed automatically back to the original payment method via Paymob.\n• Tournaments: Full refund when withdrawing at least 48 hours prior to kickoff and before the official bracket draw.\n• 20-Minute Grace Window: Cancellations within the first 20 minutes of booking are refunded minus non-refundable gateway processing fees.\n• Bank Settlement & 90-Day Window: Refunds reflect within 3-7 business days per issuer clearing cycles (provided refund requests are initiated within a 90-day maximum window per Paymob policy).\n• Late cancellations or no-shows forfeit refunds.',
+                                  ? '• يمكن إلغاء حجز الملعب قبل موعد المباراة بأكثر من 6 ساعات، أو خلال أول 20 دقيقة من إنشاء الحجز. يخضع أي استرداد لحالة الحجز والمدفوعات المسجلة، ولا يشمل الرسوم غير القابلة للاسترداد إن وجدت.\n• البطولات الرياضية: تخضع طلبات الإلغاء والاسترداد للشروط المعروضة قبل الدفع وحالة البطولة؛ ولا يُعد تقديم الطلب ضماناً لقبوله أو لاسترداد كامل الرسوم.\n• تُعاد المبالغ المستحقة إلى وسيلة الدفع الأصلية متى أمكن، وتختلف مدة ظهورها حسب إجراءات البنك ومزود خدمة الدفع.\n• بعد مرور أول 20 دقيقة، لا يُقبل إلغاء الحجز إذا تبقت 6 ساعات أو أقل على المباراة. عدم الحضور (No-Show) لا يمنح الحق في استرداد المبالغ المدفوعة.'
+                                  : '• Pitch bookings may be cancelled more than 6 hours before a match, or within the first 20 minutes after booking. Any refund depends on the booking state and recorded payments and excludes non-refundable fees where applicable.\n• Tournaments: cancellation and refund requests are governed by the terms shown before payment and the tournament state; submitting a request does not guarantee approval or a full refund.\n• Eligible refunds are returned to the original payment method where possible. The time for funds to appear depends on the bank and payment provider.\n• After the first 20 minutes, a booking cannot be cancelled when 6 hours or less remain before the match. A No-Show is not eligible for a refund.',
                             ),
                             const SizedBox(height: 12),
                             _buildSectionCard(

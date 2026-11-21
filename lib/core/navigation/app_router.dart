@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../ui/vsp_ui.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/welcome_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -14,19 +15,22 @@ import '../../features/auth/screens/select_role_screen.dart';
 import '../../features/owner/screens/facility_onboarding_screen.dart';
 import '../../features/owner/screens/owner_documentation_wizard.dart';
 import '../../features/owner/screens/owner_main_screen.dart';
+import '../../features/owner/screens/subscription_plans_screen.dart';
+import '../../features/owner/screens/owner_ledger_screen.dart';
 
 import '../../features/player/screens/player_home_screen.dart';
 import '../../features/player/screens/match_details_screen.dart';
 import '../../features/player/widgets/collective_match_invite_route.dart';
 import '../../features/player/screens/team_profile_screen.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
+import '../../features/player/screens/profile_subscreens/edit_profile_screen.dart';
 import 'offline_error_screen.dart';
 import 'suspended_account_screen.dart';
 import 'root_screen.dart';
+import 'app_route_role_guard.dart';
 import '../../features/player/screens/championship_details_screen.dart';
 import '../../core/repositories/tournament_repository.dart';
 import '../../data/models.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../features/copilot/screens/vsp_copilot_screen.dart';
 import '../../features/copilot/screens/copilot_test_playground.dart';
 
@@ -109,6 +113,15 @@ class AppRouter {
  path: '/player',
  builder: (context, state) => const PlayerHomeScreen(),
  ),
+ GoRoute(
+ path: '/subscription-plans',
+ builder: (context, state) => const SubscriptionPlansScreen(),
+ ),
+ GoRoute(
+ path: '/owner-ledger',
+ builder: (context, state) => const OwnerLedgerScreen(),
+ ),
+
       GoRoute(
         path: '/copilot',
         redirect: (context, state) {
@@ -163,28 +176,57 @@ class AppRouter {
  return FutureBuilder<Championship?>(
  future: TournamentRepository().getChampionshipById(id),
  builder: (context, snapshot) {
- if (snapshot.hasData && snapshot.data != null) {
- return ChampionshipDetailsScreen(championship: snapshot.data!);
- }
- return const Scaffold(
- backgroundColor: VSPColors.background,
- body: Center(
-   child: Column(
-     mainAxisSize: MainAxisSize.min,
-     children: [
-       CircularProgressIndicator(color: VSPColors.accent),
-       SizedBox(height: 16),
-       Text(
-         'جاري تحميل تفاصيل البطولة...',
-         style: TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+   if (snapshot.connectionState != ConnectionState.done) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     return VSPScaffold(
+       body: SafeArea(
+         child: VSPStateView(
+           state: VSPUiState.loading,
+           title: isArabic
+               ? 'جاري تحميل تفاصيل البطولة...'
+               : 'Loading championship details...',
+         ),
        ),
-     ],
-   ),
+     );
+   }
+
+   final championship = snapshot.data;
+   if (snapshot.hasError || championship == null) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     final hasError = snapshot.hasError;
+     return VSPScaffold(
+       body: SafeArea(
+         child: VSPStateView(
+           state: hasError ? VSPUiState.error : VSPUiState.empty,
+           title: hasError
+               ? (isArabic
+                   ? 'تعذر تحميل تفاصيل البطولة'
+                   : 'Could not load championship details')
+               : (isArabic ? 'البطولة غير متاحة' : 'Championship unavailable'),
+           message: hasError
+               ? (isArabic
+                   ? 'يمكنك العودة للرئيسية والمحاولة لاحقاً.'
+                   : 'Return home and try again later.')
+               : (isArabic
+                   ? 'قد تكون البطولة حُذفت أو لم تعد متاحة.'
+                   : 'This championship may have been removed or is no longer available.'),
+           action: OutlinedButton(
+             onPressed: () => context.go('/'),
+             child: Text(isArabic ? 'العودة للرئيسية' : 'Back to home'),
+           ),
+         ),
+       ),
+     );
+   }
+
+   return ChampionshipDetailsScreen(championship: championship);
+ },
+ );
+ },
  ),
- );
- },
- );
- },
+ GoRoute(
+ path: '/edit-profile',
+ builder: (context, state) => const EditProfileScreen(),
  ),
  GoRoute(
  path: '/notifications',
@@ -281,6 +323,16 @@ class AppRouter {
     }
     return null;
   }
+
+  // Restrict direct links after the authenticated profile is hydrated.
+  // Keep this separate from menu gating: notifications, stored links and
+  // Android intents can navigate without visiting a tab.
+  final roleRedirect = AppRouteRoleGuard.redirectForRole(
+    path: path,
+    isOwner: isOwner,
+    isAdmin: authProvider.isAdmin,
+  );
+  if (roleRedirect != null) return roleRedirect;
 
   // 7. Registration detail check (missing phone)
   final rawPhone = userModel.phone?.trim() ?? '';

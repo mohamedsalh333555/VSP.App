@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/utils/geo_helper.dart';
+import '../../core/services/stadium/stadium_filter_service.dart';
 import '../../data/models.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
@@ -28,20 +29,23 @@ class StadiumCard extends StatelessWidget {
 
  @override
  Widget build(BuildContext context) {
+ final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  return RepaintBoundary(
  child: GestureDetector(
- onTap: () {
- HapticFeedback.lightImpact();
- onTap?.call();
- },
+ onTap: onTap == null
+     ? null
+     : () {
+         HapticFeedback.lightImpact();
+         onTap!.call();
+       },
  child: Container(
  height: isOwnerView ? 260 : 210,
  decoration: BoxDecoration(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 0.8),
+ border: Border.all(color: VSPColors.white.withValues(alpha: 0.08), width: 0.8),
  boxShadow: [
  BoxShadow(
- color: Colors.black.withValues(alpha: 0.35),
+ color: VSPColors.black.withValues(alpha: 0.35),
  blurRadius: 16,
  offset: const Offset(0, 6),
  ),
@@ -74,8 +78,8 @@ class StadiumCard extends StatelessWidget {
  begin: Alignment.topCenter,
  end: Alignment.center,
  colors: [
- Colors.black54,
- Colors.transparent,
+ VSPColors.black54,
+ VSPColors.transparent,
  ],
  ),
  ),
@@ -91,7 +95,7 @@ class StadiumCard extends StatelessWidget {
  end: Alignment.bottomCenter,
  stops: isOwnerView ? const [0.35, 1.0] : const [0.6, 1.0],
  colors: [
- Colors.transparent,
+ VSPColors.transparent,
  VSPColors.background.withValues(alpha: 0.95),
  ],
  ),
@@ -110,11 +114,13 @@ class StadiumCard extends StatelessWidget {
  // LOCATION BADGE (Clickable)
  Flexible(
  child: GestureDetector(
- onTap: () {
- if (stadium.lat != null && stadium.lng != null) {
- GeoHelper.openInMaps(stadium.lat!, stadium.lng!, stadium.name);
- }
- },
+ onTap: stadium.lat != null && stadium.lng != null
+     ? () => GeoHelper.openInMaps(
+           stadium.lat!,
+           stadium.lng!,
+           stadium.name,
+         )
+     : null,
  child: Container(
  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
  decoration: BoxDecoration(
@@ -173,7 +179,9 @@ class StadiumCard extends StatelessWidget {
  const SizedBox(width: 6),
  ],
  if (isOwnerView)
- GestureDetector(
+ Tooltip(
+ message: isArabic ? 'تعديل بيانات الملعب' : 'Edit stadium',
+ child: GestureDetector(
  onTap: onEditTap,
  child: Container(
  width: 44,
@@ -189,13 +197,18 @@ class StadiumCard extends StatelessWidget {
  size: 20,
  ),
  ),
+ ),
  )
  else ...[
  // FAVORITE BUTTON
  Consumer<AuthProvider>(
  builder: (context, auth, _) {
  final isFav = auth.userModel?.favoriteStadiums.contains(stadium.id) == true;
- return GestureDetector(
+ return Tooltip(
+ message: isFav
+     ? (isArabic ? 'إزالة الملعب من المفضلة' : 'Remove stadium from favorites')
+     : (isArabic ? 'إضافة الملعب إلى المفضلة' : 'Add stadium to favorites'),
+ child: GestureDetector(
  behavior: HitTestBehavior.opaque,
  onTap: () {
  HapticFeedback.mediumImpact();
@@ -213,6 +226,7 @@ class StadiumCard extends StatelessWidget {
  isFav ? Iconsax.heart : Iconsax.heart_copy,
  color: VSPColors.accent,
  size: 22,
+ ),
  ),
  ),
  );
@@ -259,37 +273,33 @@ class StadiumCard extends StatelessWidget {
  // Amenities (Baths, Cafeteria, Garage, etc.)
  Builder(builder: (context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final List<String> featuresList = stadium.features is List 
- ? List<String>.from(stadium.features)
- : Stadium.parseFeatures(stadium.features);
- 
- final hasBaths = featuresList.any((f) => f.toLowerCase().contains('bath'));
- final hasCafe = featuresList.any((f) => f.toLowerCase().contains('cafe'));
- final hasGarage = featuresList.any((f) => f.toLowerCase().contains('garage'));
- 
+ final hasBaths = StadiumFilterService.checkAmenity(stadium, 'showers & baths');
+ final hasCafe = StadiumFilterService.checkAmenity(stadium, 'cafeteria & drinks');
+ final hasGarage = StadiumFilterService.checkAmenity(stadium, 'garage & parking');
+
+ Widget amenity(IconData icon, String label) => Row(
+   mainAxisSize: MainAxisSize.min,
+   children: [
+     Icon(icon, color: VSPColors.accent, size: 14),
+     const SizedBox(width: 4),
+     Text(label, style: const TextStyle(color: VSPColors.white70, fontSize: 11)),
+   ],
+ );
+
  return Wrap(
- spacing: 10,
- runSpacing: 4,
- crossAxisAlignment: WrapCrossAlignment.center,
- children: [
- if (hasBaths) ...[
- const Icon(Iconsax.drop, color: VSPColors.accent, size: 14),
- const SizedBox(width: 4),
- Text(isArabic ? 'حمامات ' : 'Baths ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
- ],
- if (hasCafe) ...[
- const Icon(Iconsax.coffee_copy, color: VSPColors.accent, size: 14),
- const SizedBox(width: 4),
- Text(isArabic ? 'كافتيريا ' : 'Cafeteria ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
- ],
- if (hasGarage) ...[
- const Icon(Iconsax.car_copy, color: VSPColors.accent, size: 14),
- const SizedBox(width: 4),
- Text(isArabic ? 'جراج ' : 'Garage ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
- ],
- if (!hasBaths && !hasCafe && !hasGarage)
- Text(isArabic ? 'لا توجد خدمات مضافة ' : 'No amenities listed ', style: const TextStyle(color: Colors.white38, fontSize: 11)),
- ],
+   spacing: 10,
+   runSpacing: 4,
+   crossAxisAlignment: WrapCrossAlignment.center,
+   children: [
+     if (hasBaths) amenity(Iconsax.drop, isArabic ? 'حمامات' : 'Baths'),
+     if (hasCafe) amenity(Iconsax.coffee_copy, isArabic ? 'كافتيريا' : 'Cafeteria'),
+     if (hasGarage) amenity(Iconsax.car_copy, isArabic ? 'جراج' : 'Parking'),
+     if (!hasBaths && !hasCafe && !hasGarage)
+       Text(
+         isArabic ? 'لا توجد خدمات مضافة' : 'No amenities listed',
+         style: const TextStyle(color: VSPColors.white38, fontSize: 11),
+       ),
+   ],
  );
  }),
  const SizedBox(height: 8),
@@ -299,8 +309,8 @@ class StadiumCard extends StatelessWidget {
  Expanded(
  child: Text(
  Localizations.localeOf(context).languageCode == 'ar'
- ? 'السعر ${stadium.pricePerHour.toInt()} ج.م'
- : 'Price ${stadium.pricePerHour.toInt()} EGP',
+ ? 'السعر ${_formatAmount(stadium.pricePerHour)} ج.م'
+ : 'Price ${_formatAmount(stadium.pricePerHour)} EGP',
  style: Theme.of(context).textTheme.titleMedium?.copyWith(
  color: VSPColors.accent,
  fontWeight: FontWeight.w900,
@@ -344,13 +354,13 @@ class StadiumCard extends StatelessWidget {
  Container(
  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
  decoration: BoxDecoration(
- color: Colors.white10,
+ color: VSPColors.white10,
  borderRadius: BorderRadius.circular(4),
  ),
  child: Text(
  _localizeSizeAndType(stadium.size, stadium.type, context),
  style: Theme.of(context).textTheme.labelSmall?.copyWith(
- color: Colors.white70,
+ color: VSPColors.white70,
  fontWeight: FontWeight.w600,
  ),
  ),
@@ -360,7 +370,7 @@ class StadiumCard extends StatelessWidget {
  crossAxisAlignment: CrossAxisAlignment.end,
  children: [
  Text(
- '${stadium.pricePerHour.toInt()} ${AppLocalizations.of(context)!.egCurrency}',
+ '${_formatAmount(stadium.pricePerHour)} ${AppLocalizations.of(context)!.egCurrency}',
  style: Theme.of(context).textTheme.titleMedium?.copyWith(
  color: VSPColors.accent,
  fontWeight: FontWeight.w900,
@@ -389,6 +399,13 @@ class StadiumCard extends StatelessWidget {
   ),
   );
 }
+
+ String _formatAmount(double value) {
+ if (!value.isFinite || value < 0) return '—';
+ return value == value.roundToDouble()
+     ? value.toStringAsFixed(0)
+     : value.toStringAsFixed(2);
+ }
 
  String _localizeSizeAndType(String size, String type, BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';

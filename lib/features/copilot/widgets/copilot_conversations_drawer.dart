@@ -30,9 +30,9 @@ class CopilotConversationsDrawer extends StatelessWidget {
         child: Column(
           children: [
             _buildDrawerHeader(context),
-            const Divider(color: Colors.white12, height: 1),
+            const Divider(color: VSPColors.white12, height: 1),
             _buildNewChatButton(context),
-            const Divider(color: Colors.white12, height: 1),
+            const Divider(color: VSPColors.white12, height: 1),
             Expanded(child: _buildConversationsList(context)),
           ],
         ),
@@ -126,7 +126,7 @@ class CopilotConversationsDrawer extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Iconsax.message_text_copy, size: 36, color: Colors.white.withValues(alpha: 0.2)),
+            Icon(Iconsax.message_text_copy, size: 36, color: VSPColors.white20),
             const SizedBox(height: 10),
             const Text(
               'لا توجد محادثات سابقة بعد',
@@ -157,21 +157,21 @@ class CopilotConversationsDrawer extends StatelessWidget {
                 side: BorderSide(
                   color: isActive
                       ? VSPColors.accent.withValues(alpha: 0.4)
-                      : Colors.white.withValues(alpha: 0.04),
+                      : VSPColors.white04,
                 ),
               ),
               dense: true,
               leading: Icon(
                 Iconsax.message_copy,
                 size: 16,
-                color: isActive ? VSPColors.accent : Colors.white54,
+                color: isActive ? VSPColors.accent : VSPColors.white54,
               ),
               title: Text(
                 conv.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isActive ? Colors.white : VSPColors.textPrimary,
+                  color: isActive ? VSPColors.white : VSPColors.textPrimary,
                   fontSize: 13,
                   fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 ),

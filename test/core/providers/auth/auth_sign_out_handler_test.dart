@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vsp_application/core/providers/auth/auth_sign_out_handler.dart';
 import 'package:vsp_application/core/services/auth_service.dart';
@@ -18,6 +19,21 @@ class FakeAuthService implements AuthService {
 
 class FakeNotificationService implements NotificationService {
   bool stoppedListening = false;
+  String? unlinkedUserId;
+  String? cancelledRemindersUserId;
+  final List<String> operations = [];
+
+  @override
+  Future<void> unregisterCurrentDeviceForUser(String userId) async {
+    unlinkedUserId = userId;
+    operations.add('unlink');
+  }
+
+  @override
+  Future<void> cancelScheduledMatchRemindersForUser(String userId) async {
+    cancelledRemindersUserId = userId;
+    operations.add('cancel_reminders');
+  }
 
   @override
   void stopRealtimeNotificationsListener() {
@@ -36,6 +52,31 @@ void main() {
       'temp_stadium_draft': 'draft_data',
       'vsp_draft_stadium_user_123_abc': 'draft_data_2',
     });
+  });
+
+  test('AuthSignOutHandler unlinks current device before auth invalidation', () async {
+    final fakeAuth = FakeAuthService();
+    final fakeNotif = FakeNotificationService();
+    final user = User.fromJson({
+      'id': '00000000-0000-0000-0000-000000000001',
+      'aud': 'authenticated',
+      'role': 'authenticated',
+      'created_at': '2026-01-01T00:00:00.000Z',
+      'app_metadata': <String, dynamic>{},
+      'user_metadata': <String, dynamic>{},
+    })!;
+    await AuthSignOutHandler.performSignOut(
+      user: user,
+      userModelUid: user.id,
+      authService: fakeAuth,
+      notificationService: fakeNotif,
+      onClearRealtime: () { fakeNotif.operations.add('realtime'); },
+    );
+    expect(fakeNotif.unlinkedUserId, user.id);
+    expect(fakeNotif.operations.first, 'unlink');
+    expect(fakeNotif.cancelledRemindersUserId, user.id);
+    expect(fakeNotif.operations.take(2).toList(), ['unlink', 'cancel_reminders']);
+    expect(fakeAuth.signOutCalled, isTrue);
   });
 
   test('AuthSignOutHandler.performSignOut triggers cleanup callbacks and teardown', () async {

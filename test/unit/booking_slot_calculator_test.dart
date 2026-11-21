@@ -76,6 +76,109 @@ void main() {
       }
     });
 
+    test('getSlotDateTime rejects a slot inside a configured break', () {
+      final stadium = Stadium(
+        id: 'break_guard',
+        name: 'Break Guard',
+        location: 'Cairo',
+        ownerId: 'owner',
+        imageUrl: '',
+        type: 'Football',
+        size: '5 VS 5',
+        baths: 1,
+        cafeteria: 1,
+        playersPerTeam: 5,
+        totalFieldCapacity: 10,
+        pricePerHour: 300,
+        basePrice: 300,
+        area: '600',
+        features: {
+          'workingHours': {'start': '16:00', 'end': '20:00'},
+          'breakTime': {'start': '18:00', 'end': '19:00'},
+        },
+      );
+      expect(
+        () => BookingSlotCalculator.getSlotDateTime(
+          slotKey: '18:00:00',
+          stadium: stadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ),
+        throwsFormatException,
+      );
+      expect(
+        BookingSlotCalculator.getSlotDateTime(
+          slotKey: '19:00:00',
+          stadium: stadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ).hour,
+        19,
+      );
+    });
+
+    test('getSlotDateTime rejects forged off-grid times', () {
+      expect(
+        () => BookingSlotCalculator.getSlotDateTime(
+          slotKey: '16:05:00',
+          stadium: testStadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ),
+        throwsFormatException,
+      );
+    });
+
+    test('getSlotDateTime rejects schedules with invalid closure data', () {
+      final stadium = Stadium(
+        id: 'invalid_break',
+        name: 'Invalid Break',
+        location: 'Cairo',
+        ownerId: 'owner',
+        imageUrl: '',
+        type: 'Football',
+        size: '5 VS 5',
+        baths: 1,
+        cafeteria: 1,
+        playersPerTeam: 5,
+        totalFieldCapacity: 10,
+        pricePerHour: 300,
+        basePrice: 300,
+        area: '600',
+        features: {
+          'workingHours': {'start': '16:00', 'end': '20:00'},
+          'breakTimes': [
+            {'start': '17:00', 'end': '18:00'},
+            {'start': '17:30', 'end': '18:30'},
+          ],
+        },
+      );
+      expect(
+        () => BookingSlotCalculator.getSlotDateTime(
+          slotKey: '19:00:00',
+          stadium: stadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ),
+        throwsFormatException,
+      );
+    });
+
+    test('booking slot keys reject nonzero seconds without rounding', () {
+      expect(
+        () => BookingSlotCalculator.getSlotDateTime(
+          slotKey: '16:00:30',
+          stadium: testStadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ),
+        throwsFormatException,
+      );
+      expect(
+        BookingSlotCalculator.getSlotDateTime(
+          slotKey: '16:00:00',
+          stadium: testStadium,
+          selectedDate: DateTime(2030, 1, 1),
+        ).hour,
+        16,
+      );
+    });
+
     test('getSlotDateTime resolves correct hour and minute', () {
       final date = DateTime(2026, 9, 15);
       final dt = BookingSlotCalculator.getSlotDateTime(
@@ -91,8 +194,55 @@ void main() {
       expect(dt.minute, 30);
     });
 
+    test('schedule refresh drops unavailable selected slots', () {
+      final slots = <TimeSlotItem>[
+        TimeSlotItem(
+          startTime: '04:00 PM',
+          endTime: '04:30 PM',
+          key: '16:00:00',
+          startMinutes: 960,
+        ),
+      ];
+      final selection = BookingSlotCalculator.calculateNewSelectedSlots(
+        slotKey: '17:00:00',
+        currentSelectedSlots: ['16:00:00', '16:30:00'],
+        timeSlots: slots,
+        stadium: testStadium,
+        selectedDate: DateTime(2030, 1, 1),
+        existingBookings: [],
+      );
+      expect(selection, ['16:00:00']);
+    });
+
+    test('stale selected slots are revalidated before an unavailable tap', () {
+      final slots = <TimeSlotItem>[
+        TimeSlotItem(
+          startTime: '04:00 PM',
+          endTime: '04:30 PM',
+          key: '16:00:00',
+          startMinutes: 960,
+        ),
+        TimeSlotItem(
+          startTime: '04:05 PM',
+          endTime: '04:35 PM',
+          key: '16:05:00',
+          startMinutes: 965,
+        ),
+      ];
+      final selection = BookingSlotCalculator.calculateNewSelectedSlots(
+        slotKey: '17:00:00',
+        currentSelectedSlots: ['16:05:00', '16:00:00'],
+        timeSlots: slots,
+        stadium: testStadium,
+        selectedDate: DateTime(2030, 1, 1),
+        existingBookings: [],
+      );
+      expect(selection, ['16:00:00']);
+    });
+
     test('calculateNewSelectedSlots handles single selection and toggle-off', () {
-      final date = DateTime(2026, 9, 15);
+      // Selection rejects past slots; use a future date for this toggle test.
+      final date = DateTime(2030, 9, 15);
       final slots = <TimeSlotItem>[
         TimeSlotItem(startTime: '04:00 PM', endTime: '04:30 PM', key: '16:00:00', startMinutes: 960),
         TimeSlotItem(startTime: '04:30 PM', endTime: '05:00 PM', key: '16:30:00', startMinutes: 990),

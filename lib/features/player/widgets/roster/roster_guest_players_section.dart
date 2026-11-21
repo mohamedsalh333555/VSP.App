@@ -37,14 +37,14 @@ class RosterGuestPlayersSection extends StatelessWidget {
               isArabic ? 'لاعبون ضيوف (بدون حساب)' : 'Guest Players (No App Account)',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: VSPColors.white,
                   ),
             ),
             TextButton.icon(
               onPressed: onPasteFromWhatsApp,
               icon: const Icon(Iconsax.copy_copy, size: 16, color: VSPColors.accent),
               label: Text(
-                isArabic ? 'لصق من واتساب ' : 'Paste from WhatsApp ',
+                isArabic ? 'لصق' : 'Paste',
                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
@@ -67,7 +67,7 @@ class RosterGuestPlayersSection extends StatelessWidget {
                 onPressed: onAddGuest,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.accent,
-                  foregroundColor: Colors.black,
+                  foregroundColor: VSPColors.black,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(VSPRadius.input),
@@ -121,7 +121,7 @@ class RosterGuestPlayersSection extends StatelessWidget {
                         Text(
                           name,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: VSPColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),

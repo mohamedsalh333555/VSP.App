@@ -1,0 +1,69 @@
+name: VSP Signup Input and Error Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - ".github/workflows/vsp-signup-error-validation.yml"
+      - "lib/core/utils/email_address_validator.dart"
+      - "lib/shared/widgets/custom_text_field.dart"
+      - "test/shared/widgets/custom_text_field_email_validation_test.dart"
+      - "lib/features/auth/services/signup_validation_service.dart"
+      - "lib/features/auth/screens/signup_screen.dart"
+      - "test/unit/signup_invalid_email_contract_test.dart"
+      - "test/core/utils/email_address_validator_test.dart"
+      - "test/unit/signup_validation_service_test.dart"
+      - "test/features/auth/signup_components_test.dart"
+      - "test/features/auth/signup_full_form_widget_test.dart"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/vsp-signup-error-validation.yml"
+      - "lib/core/utils/email_address_validator.dart"
+      - "lib/shared/widgets/custom_text_field.dart"
+      - "test/shared/widgets/custom_text_field_email_validation_test.dart"
+      - "lib/features/auth/services/signup_validation_service.dart"
+      - "lib/features/auth/screens/signup_screen.dart"
+      - "test/unit/signup_invalid_email_contract_test.dart"
+      - "test/core/utils/email_address_validator_test.dart"
+      - "test/unit/signup_validation_service_test.dart"
+permissions:
+  contents: read
+concurrency:
+  group: vsp-signup-form-errors-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  signup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze signup validation and bilingual error tests
+        run: >-
+          flutter analyze --no-fatal-infos
+          lib/core/utils/email_address_validator.dart
+          lib/shared/widgets/custom_text_field.dart
+          test/shared/widgets/custom_text_field_email_validation_test.dart
+          test/core/utils/email_address_validator_test.dart
+          lib/features/auth/services/signup_validation_service.dart
+          lib/features/auth/screens/signup_screen.dart
+          test/core/utils/email_address_validator_test.dart
+          test/shared/widgets/custom_text_field_email_validation_test.dart
+          test/unit/signup_invalid_email_contract_test.dart
+          test/unit/signup_validation_service_test.dart
+          test/features/auth/signup_components_test.dart
+          test/features/auth/signup_full_form_widget_test.dart
+      - name: Test registration form failures and localized feedback
+        run: >-
+          flutter test --concurrency=1
+          test/unit/signup_invalid_email_contract_test.dart
+          test/unit/signup_validation_service_test.dart
+          test/features/auth/signup_components_test.dart
+          test/features/auth/signup_full_form_widget_test.dart

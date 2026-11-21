@@ -10,8 +10,42 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 enum StadiumImagePickType { multiple, single16x9 }
 
 class StadiumWizardImageService {
-  static final ImagePicker _imagePicker = ImagePicker();
   static final StorageService _storageService = StorageService();
+
+  static Future<bool> isSupportedImage(XFile xFile) async {
+    const maxImageBytes = 10 * 1024 * 1024;
+    const mimeByExtension = <String, String>{
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'webp': 'image/webp',
+    };
+    try {
+      final fileName = xFile.name.toLowerCase().trim();
+      final extension = fileName.contains('.') ? fileName.split('.').last : '';
+      final expectedMime = mimeByExtension[extension];
+      if (expectedMime == null) return false;
+      final mime = xFile.mimeType?.toLowerCase().trim();
+      if (mime != null && mime.isNotEmpty && mime != expectedMime) return false;
+      final length = await xFile.length();
+      if (length < 12 || length > maxImageBytes) return false;
+      final header = await xFile.openRead(0, 12).expand((bytes) => bytes).toList();
+      if (header.length < 12) return false;
+      if (expectedMime == 'image/jpeg') {
+        return header[0] == 0xff && header[1] == 0xd8 && header[2] == 0xff;
+      }
+      if (expectedMime == 'image/png') {
+        const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+        return List.generate(png.length, (i) => header[i] == png[i]).every((match) => match);
+      }
+      return header[0] == 0x52 && header[1] == 0x49 &&
+          header[2] == 0x46 && header[3] == 0x46 &&
+          header[8] == 0x57 && header[9] == 0x45 &&
+          header[10] == 0x42 && header[11] == 0x50;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static Future<StadiumImagePickType?> showImageSourceModal(BuildContext context) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -74,7 +108,7 @@ class StadiumWizardImageService {
 
   static Future<List<XFile>> pickMultipleImages() async {
     try {
-      return await _imagePicker.pickMultiImage();
+      return await ImagePickService.pickMultiple();
     } catch (e) {
       debugPrint('Error picking multiple images: $e');
       return [];
@@ -86,11 +120,24 @@ class StadiumWizardImageService {
     required void Function(int progress) onProgress,
     required String ownerId,
   }) async {
-    final imageFile = File(xFile.path);
     Timer? progressTimer;
 
     try {
-      int currentProgress = 10;
+      final fileName = xFile.name.toLowerCase().trim();
+      final extension =
+          fileName.contains('.') ? fileName.split('.').last : '';
+      if (!await isSupportedImage(xFile)) {
+        debugPrint('Rejected unsupported stadium image before upload');
+        return null;
+      }
+
+      final storageExtension = switch (extension) {
+        'png' => 'png',
+        'webp' => 'webp',
+        _ => 'jpg',
+      };
+      final imageFile = File(xFile.path);
+      var currentProgress = 10;
       progressTimer = Timer.periodic(const Duration(milliseconds: 150), (t) {
         if (currentProgress < 90) {
           currentProgress += 10;
@@ -103,7 +150,8 @@ class StadiumWizardImageService {
       final url = await _storageService.uploadFile(
         file: xFile,
         bucket: 'stadium-images',
-        path: '$ownerId/stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.jpg',
+        path:
+            '$ownerId/stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.$storageExtension',
       );
       progressTimer.cancel();
 
@@ -111,12 +159,13 @@ class StadiumWizardImageService {
         return null;
       }
 
-      // Cleanup cached file from local temp folder after upload
       try {
         if (await imageFile.exists()) {
           await imageFile.delete();
         }
-      } catch (_) {}
+      } catch (_) {
+        // Cache cleanup failure does not invalidate a confirmed upload.
+      }
 
       return url;
     } catch (e) {
@@ -126,11 +175,13 @@ class StadiumWizardImageService {
     }
   }
 
-  static Future<void> deleteUploadedImage(String url) async {
+  static Future<bool> deleteUploadedImage(String url) async {
     try {
       await _storageService.deleteFile(url);
+      return true;
     } catch (e) {
       debugPrint('Error deleting uploaded image: $e');
+      return false;
     }
   }
 }

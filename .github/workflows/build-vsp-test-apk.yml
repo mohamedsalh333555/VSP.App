@@ -1,0 +1,73 @@
+name: Build VSP Test APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths: [.github/workflows/build-vsp-test-apk.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+          cache: true
+      - name: Isolate the staging build
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace(path, old, new):
+              file = Path(path)
+              source = file.read_text()
+              assert source.count(old) == 1, (path, old)
+              file.write_text(source.replace(old, new))
+
+          gradle = 'android/app/build.gradle.kts'
+          replace(gradle, 'applicationId = "app.vsp.sports"', 'applicationId = "app.vsp.sports.test"')
+          replace(gradle, '    id("com.google.gms.google-services")\n', '')
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          source = manifest.read_text().replace('android:label="VSP"', 'android:label="VSP Test"')
+          source, count = re.subn(r'<intent-filter\b[^>]*>(?:(?!</intent-filter>).)*android.intent.action.VIEW(?:(?!</intent-filter>).)*</intent-filter>', '', source, flags=re.S)
+          assert count == 3
+          manifest.write_text(source)
+          main = Path('lib/main.dart')
+          source = main.read_text()
+          start = source.index('  // Firebase is auxiliary only')
+          end = source.index('  // Initialize Remote Config', start)
+          main.write_text(source[:start] + source[end:])
+          PY
+      - name: Build staging APK with the runner test key
+        env:
+          VSP_TEST_RELEASE_APK: 'true'
+        run: |
+          flutter pub get
+          flutter gen-l10n
+          flutter build apk --release --target-platform android-arm64 \
+            --dart-define=SUPABASE_URL=https://vtwgqyxglevcsxwdmhop.supabase.co \
+            --dart-define=SUPABASE_ANON_KEY=sb_publishable_PZazWl2p0qR5lsqh6jr83A_cq-ov516 \
+            --dart-define=PAYMOB_PUBLIC_KEY=disabled-for-staging-build
+          cp build/app/outputs/flutter-apk/app-release.apk VSP-Test.apk
+      - name: Verify package identity and signature
+        run: |
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt" dump badging VSP-Test.apk | grep -F "package: name='app.vsp.sports.test'"
+          "$tools/apksigner" verify --print-certs VSP-Test.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VSP-Test-APK
+          path: VSP-Test.apk
+          if-no-files-found: error
+          retention-days: 14

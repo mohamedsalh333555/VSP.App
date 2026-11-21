@@ -180,8 +180,10 @@ class _CopilotTestPlaygroundState extends State<CopilotTestPlayground> {
           ),
         ],
       ),
-      body: Column(
-        children: [
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
           // Summary Header Banner
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -218,12 +220,12 @@ class _CopilotTestPlaygroundState extends State<CopilotTestPlayground> {
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                         )
-                      : const Icon(Iconsax.play_copy, color: Colors.black, size: 20),
+                      : const Icon(Iconsax.play_copy, color: VSPColors.black, size: 20),
                   label: Text(
                     _isRunningAll ? 'جاري الفحص...' : 'تشغيل الكل',
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: VSPColors.black, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
@@ -256,7 +258,8 @@ class _CopilotTestPlaygroundState extends State<CopilotTestPlayground> {
               },
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -287,7 +290,7 @@ class TestScenarioCard extends StatelessWidget {
           color: statusBadge != null
               ? (statusBadge!.contains('SUCCESS') || statusBadge!.contains('EXPECTED')
                   ? VSPColors.accent.withValues(alpha: 0.5)
-                  : Colors.redAccent.withValues(alpha: 0.5))
+                  : VSPColors.error.withValues(alpha: 0.5))
               : VSPColors.borderLight,
           width: 1,
         ),
@@ -311,7 +314,7 @@ class TestScenarioCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: statusBadge!.contains('SUCCESS') || statusBadge!.contains('EXPECTED')
                       ? VSPColors.accent.withValues(alpha: 0.15)
-                      : Colors.redAccent.withValues(alpha: 0.15),
+                      : VSPColors.error.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(VSPRadius.chip),
                 ),
                 child: Text(
@@ -319,7 +322,7 @@ class TestScenarioCard extends StatelessWidget {
                   style: TextStyle(
                     color: statusBadge!.contains('SUCCESS') || statusBadge!.contains('EXPECTED')
                         ? VSPColors.accent
-                        : Colors.redAccent,
+                        : VSPColors.error,
                     fontSize: 10.5,
                     fontWeight: FontWeight.bold,
                   ),
@@ -481,7 +484,7 @@ class TestResultDialog extends StatelessWidget {
             backgroundColor: VSPColors.accent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.button)),
           ),
-          child: const Text('إغلاق', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          child: const Text('إغلاق', style: TextStyle(color: VSPColors.black, fontWeight: FontWeight.bold)),
         ),
       ],
     );

@@ -17,39 +17,41 @@ class MatchupResultsTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (results.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(VSPSpacing.lg),
         alignment: Alignment.center,
-        child: const Text(
-          'لم تُسجل أي مباريات في هذه المواجهة بعد',
-          style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+        child: Text(
+          isArabic ? 'لم تُسجل أي مباريات في هذه المواجهة بعد' : 'No matches have been recorded in this matchup yet',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
         ),
       );
     }
 
+    final reversedResults = results.reversed.toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'سجل مباريات الجلسة (${results.length})',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          isArabic ? 'سجل مباريات الجلسة (${results.length})' : 'Session match history (${results.length})',
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 8),
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: results.reversed.length,
+          itemCount: reversedResults.length,
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
-            final result = results.reversed.toList()[index];
+            final result = reversedResults[index];
             final tA = teams.firstWhere(
               (t) => t.teamId == result.teamAId,
               orElse: () => MatchupTeam(
                 id: '',
                 bookingId: '',
                 teamId: result.teamAId,
-                teamName: 'فريق أ',
+                teamName: isArabic ? 'فريق أ' : 'Team A',
                 addedByUserId: '',
                 joinedAt: DateTime.now(),
               ),
@@ -60,7 +62,7 @@ class MatchupResultsTimeline extends StatelessWidget {
                 id: '',
                 bookingId: '',
                 teamId: result.teamBId,
-                teamName: 'فريق ب',
+                teamName: isArabic ? 'فريق ب' : 'Team B',
                 addedByUserId: '',
                 joinedAt: DateTime.now(),
               ),
@@ -70,6 +72,7 @@ class MatchupResultsTimeline extends StatelessWidget {
               outcome: result.outcome,
               teamAName: tA.teamName,
               teamBName: tB.teamName,
+              isArabic: isArabic,
             );
 
             return Container(
@@ -85,8 +88,10 @@ class MatchupResultsTimeline extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${tA.teamName} ضد ${tB.teamName}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      '${tA.teamName} ${isArabic ? 'ضد' : 'vs'} ${tB.teamName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                   Container(
@@ -97,6 +102,8 @@ class MatchupResultsTimeline extends StatelessWidget {
                     ),
                     child: Text(
                       presentation.text,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: presentation.color,
                         fontSize: 12,

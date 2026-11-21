@@ -8,11 +8,27 @@ class OwnerRepository {
 
   OwnerRepository({SupabaseClient? client}) : _client = client;
 
+  String? _authenticatedOwnerId([String? requestedOwnerId]) {
+    final currentUserId = _supabase.auth.currentUser?.id;
+    if (currentUserId == null || currentUserId.isEmpty) return null;
+    final requested = requestedOwnerId?.trim();
+    if (requested != null &&
+        requested.isNotEmpty &&
+        requested != currentUserId) {
+      return null;
+    }
+    return currentUserId;
+  }
+
  Stream<List<Booking>> getOwnerBookings(String ownerId) {
+ final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+ if (authenticatedOwnerId == null) {
+ return Stream.error(StateError('owner_identity_mismatch'));
+ }
  return _supabase
  .from('bookings')
  .stream(primaryKey: ['id'])
- .eq('owner_id', ownerId)
+ .eq('owner_id', authenticatedOwnerId)
  .timeout(
  const Duration(seconds: 10),
  onTimeout: (sink) => sink.add([]),
@@ -30,10 +46,14 @@ class OwnerRepository {
  }
 
  Stream<List<Stadium>> getOwnerStadiums(String ownerId) {
+ final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+ if (authenticatedOwnerId == null) {
+ return Stream.error(StateError('owner_identity_mismatch'));
+ }
  return _supabase
  .from('stadiums')
  .stream(primaryKey: ['id'])
- .eq('owner_id', ownerId)
+ .eq('owner_id', authenticatedOwnerId)
  .timeout(
  const Duration(seconds: 10),
  onTimeout: (sink) => sink.add([]),
@@ -49,8 +69,12 @@ class OwnerRepository {
   /// جلب الملخص المالي المحاسبي الشامل للمالك من الخادم (Zero-Trust Accounting)
   Future<Map<String, dynamic>> getOwnerFinancialSummary(String ownerId) async {
     try {
+      final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+      if (authenticatedOwnerId == null) {
+        return {'success': false, 'error': 'owner_identity_mismatch'};
+      }
       final res = await _supabase.rpc('get_owner_financial_summary', params: {
-        'p_owner_id': ownerId,
+        'p_owner_id': authenticatedOwnerId,
       });
       if (res is Map) {
         return Map<String, dynamic>.from(res);
@@ -84,10 +108,12 @@ class OwnerRepository {
 
  Future<double> calculateBookedHours(String ownerId) async {
  try {
+ final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+ if (authenticatedOwnerId == null) return 0.0;
  final response = await _supabase
  .from('bookings')
  .select('start_time, end_time, status')
- .eq('owner_id', ownerId)
+ .eq('owner_id', authenticatedOwnerId)
  .neq('status', 'cancelled');
 
  double totalHours = 0.0;
@@ -109,6 +135,7 @@ class OwnerRepository {
  return _supabase
  .from('transactions')
  .stream(primaryKey: ['id'])
+ .eq('user_id', uid)
  .timeout(
  const Duration(seconds: 10),
  onTimeout: (sink) => sink.add([]),
@@ -116,8 +143,10 @@ class OwnerRepository {
  .map((list) {
  final sorted = List<Map<String, dynamic>>.from(list);
  sorted.sort((a, b) {
- final dateA = DateTime.parse(a['created_at'].toString());
- final dateB = DateTime.parse(b['created_at'].toString());
+ final dateA = DateTime.tryParse(a['created_at']?.toString() ?? '') ??
+     DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+ final dateB = DateTime.tryParse(b['created_at']?.toString() ?? '') ??
+     DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
  return dateB.compareTo(dateA);
  });
  return sorted;
@@ -241,11 +270,22 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     required double totalPrice,
     double? collectedAmount,
   }) async {
+    final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+    final collected = collectedAmount ?? totalPrice;
+    if (authenticatedOwnerId == null ||
+        bookingId.trim().isEmpty ||
+        !totalPrice.isFinite ||
+        totalPrice <= 0 ||
+        !collected.isFinite ||
+        collected <= 0 ||
+        collected > totalPrice) {
+      throw ArgumentError('invalid_cash_booking_confirmation');
+    }
     return _supabase.rpc('confirm_cash_booking_atomic', params: {
-      'p_booking_id': bookingId,
-      'p_owner_id': ownerId,
+      'p_booking_id': bookingId.trim(),
+      'p_owner_id': authenticatedOwnerId,
       'p_total_price': totalPrice,
-      'p_collected_amount': collectedAmount ?? totalPrice,
+      'p_collected_amount': collected,
     });
   }
 
@@ -280,9 +320,15 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     required DateTime endTime,
     String reason = 'صيانة دورية',
   }) async {
+    final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+    if (authenticatedOwnerId == null ||
+        stadiumId.trim().isEmpty ||
+        !endTime.isAfter(startTime)) {
+      throw ArgumentError('invalid_maintenance_slot');
+    }
     return _supabase.rpc('owner_lock_slot_atomic', params: {
-      'p_owner_id': ownerId,
-      'p_stadium_id': stadiumId,
+      'p_owner_id': authenticatedOwnerId,
+      'p_stadium_id': stadiumId.trim(),
       'p_start_time': startTime.toUtc().toIso8601String(),
       'p_end_time': endTime.toUtc().toIso8601String(),
       'p_reason': reason,
@@ -302,9 +348,22 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     required double collectedAmount,
     required int playerCount,
   }) async {
+    final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+    if (authenticatedOwnerId == null ||
+        stadiumId.trim().isEmpty ||
+        customerName.trim().isEmpty ||
+        !endTime.isAfter(startTime) ||
+        !totalPrice.isFinite ||
+        totalPrice < 0 ||
+        !collectedAmount.isFinite ||
+        collectedAmount < 0 ||
+        collectedAmount > totalPrice ||
+        playerCount <= 0) {
+      throw ArgumentError('invalid_manual_booking');
+    }
     return _supabase.rpc('owner_create_manual_booking_atomic', params: {
-      'p_owner_id': ownerId,
-      'p_stadium_id': stadiumId,
+      'p_owner_id': authenticatedOwnerId,
+      'p_stadium_id': stadiumId.trim(),
       'p_start_time': startTime.toUtc().toIso8601String(),
       'p_end_time': endTime.toUtc().toIso8601String(),
       'p_customer_name': customerName,
@@ -355,9 +414,13 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     required String ownerId,
     required bool refundDeposit,
   }) async {
+    final authenticatedOwnerId = _authenticatedOwnerId(ownerId);
+    if (authenticatedOwnerId == null || bookingId.trim().isEmpty) {
+      throw ArgumentError('invalid_manual_booking_cancellation');
+    }
     return _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
-      'p_booking_id': bookingId,
-      'p_owner_id': ownerId,
+      'p_booking_id': bookingId.trim(),
+      'p_owner_id': authenticatedOwnerId,
       'p_refund_deposit': refundDeposit,
     });
   }

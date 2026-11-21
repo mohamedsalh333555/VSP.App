@@ -3,37 +3,81 @@
 class StadiumPayloadBuilder {
   const StadiumPayloadBuilder._();
 
+  // Venue prices in the current Egyptian product are EGP-only. Never quietly
+  // drop a caller-supplied foreign currency and label its price as EGP.
+  static void _requireEgp(Map<String, dynamic> input) {
+    for (final field in const <String>['currency', 'currency_code']) {
+      final currency = input[field];
+      if (currency != null &&
+          currency.toString().trim().toUpperCase() != 'EGP') {
+        throw const FormatException(
+          'Unsupported stadium currency: only EGP is allowed',
+        );
+      }
+    }
+  }
+
+  static num _checkedMoney(Object? raw, String name) {
+    final num? amount = raw == null
+        ? 0.0
+        : raw is num
+            ? raw
+            : raw is String
+                ? num.tryParse(raw.trim())
+                : null;
+    if (amount == null || !amount.isFinite || amount < 0) {
+      throw FormatException('Invalid nonnegative stadium amount: $name');
+    }
+    return amount;
+  }
+
   /// Formats time strings into standard HH:mm:ss format for Postgres TIME column.
   static String? formatTimeToHms(dynamic timeVal) {
     if (timeVal == null) return null;
-    final str = timeVal.toString().trim();
-    if (str.isEmpty) return null;
-    final parts = str.split(':');
-    if (parts.length == 1) {
-      final h = int.tryParse(parts[0]) ?? 0;
-      return '${h.toString().padLeft(2, '0')}:00:00';
-    } else if (parts.length == 2) {
-      final h = int.tryParse(parts[0]) ?? 0;
-      final m = int.tryParse(parts[1]) ?? 0;
-      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:00';
-    } else if (parts.length >= 3) {
-      final h = int.tryParse(parts[0]) ?? 0;
-      final m = int.tryParse(parts[1]) ?? 0;
-      final s = int.tryParse(parts[2]) ?? 0;
-      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    final raw = timeVal.toString().trim();
+    if (raw.isEmpty) return null;
+    // Never silently turn malformed closure times into midnight.
+    final match = RegExp(r'^(\d{1,2})(?::(\d{1,2}))?(?::(\d{1,2}))?$')
+        .firstMatch(raw);
+    if (match == null) {
+      throw const FormatException('Invalid 24-hour venue time');
     }
-    return str;
+    final hour = int.parse(match.group(1)!);
+    final minute = int.parse(match.group(2) ?? '0');
+    final second = int.parse(match.group(3) ?? '0');
+    if (hour > 23 || minute > 59 || second > 59) {
+      throw const FormatException('Venue time outside 24-hour range');
+    }
+    String twoDigits(int value) => value.toString().padLeft(2, '0');
+    return '${twoDigits(hour)}:${twoDigits(minute)}:${twoDigits(second)}';
   }
 
   /// Builds a sanitized map payload for inserting a new stadium into Postgres.
   static Map<String, dynamic> buildInsertPayload(Map<String, dynamic> rawData) {
+    _requireEgp(rawData);
     final sanitizedData = Map<String, dynamic>.from(rawData);
     sanitizedData.remove('isVerified');
     sanitizedData.remove('is_verified');
     sanitizedData.remove('createdAt');
     sanitizedData.remove('created_at');
 
-    final price = sanitizedData['pricePerHour'] ?? sanitizedData['price_per_hour'] ?? 0.0;
+    final price = _checkedMoney(
+      sanitizedData['pricePerHour'] ?? sanitizedData['price_per_hour'],
+      'price_per_hour',
+    );
+    final basePrice = _checkedMoney(
+      sanitizedData['basePrice'] ?? sanitizedData['base_price'] ?? price,
+      'base_price',
+    );
+    final deposit = _checkedMoney(
+      sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'],
+      'deposit_amount',
+    );
+    final needsDeposit =
+        sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false;
+    if (needsDeposit == true && (deposit <= 0 || deposit > price)) {
+      throw const FormatException('Required stadium deposit must be positive and within the hourly price');
+    }
     final features = sanitizedData['features'] ?? {};
     final String sport = features['sportType'] ?? sanitizedData['sportType'] ?? sanitizedData['type'] ?? 'Football';
     final String originalDesc = sanitizedData['description'] ?? sanitizedData['notes'] ?? '';
@@ -77,7 +121,7 @@ class StadiumPayloadBuilder {
       'city': sanitizedData['area'] ?? sanitizedData['location'] ?? 'Cairo',
       'location': sanitizedData['address'] ?? sanitizedData['location'] ?? '',
       'price_per_hour': price,
-      'base_price': sanitizedData['basePrice'] ?? sanitizedData['base_price'] ?? price,
+      'base_price': basePrice,
       'images': imagesList,
       'image_url': sanitizedData['imageUrl'] ?? sanitizedData['image_url'] ?? firstImage,
       'is_verified': false,
@@ -85,8 +129,8 @@ class StadiumPayloadBuilder {
       'is_deleted_by_owner': false,
       'rating': 0.0,
       'reviews_count': 0,
-      'deposit_amount': sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'] ?? 0.0,
-      'needs_deposit': sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false,
+      'deposit_amount': deposit,
+      'needs_deposit': needsDeposit,
       'lat': sanitizedData['lat'],
       'lng': sanitizedData['lng'],
     };
@@ -94,6 +138,7 @@ class StadiumPayloadBuilder {
 
   /// Builds a sanitized map payload for updating an existing stadium in Postgres.
   static Map<String, dynamic> buildUpdatePayload(Map<String, dynamic> data) {
+    _requireEgp(data);
     final securedData = Map<String, dynamic>.from(data);
     securedData.remove('ownerId');
     securedData.remove('owner_id');
@@ -152,14 +197,12 @@ class StadiumPayloadBuilder {
     if (securedData.containsKey('images')) pgData['images'] = securedData['images'];
     if (securedData.containsKey('imageUrl')) pgData['image_url'] = securedData['imageUrl'];
     if (securedData.containsKey('image_url')) pgData['image_url'] = securedData['image_url'];
-    if (securedData.containsKey('isBlocked')) pgData['is_blocked'] = securedData['isBlocked'];
-    if (securedData.containsKey('is_blocked')) pgData['is_blocked'] = securedData['is_blocked'];
-    if (securedData.containsKey('is_verified')) pgData['is_verified'] = securedData['is_verified'];
-    if (securedData.containsKey('isVerified')) pgData['is_verified'] = securedData['isVerified'];
+    // Administrative moderation, verification and user-review aggregation are
+    // server-owned. Never forward client-supplied is_verified/is_blocked/rating
+    // or reviews_count fields. StadiumRepository.updateStadium() deliberately
+    // reopens review by setting is_verified=false on legitimate owner edits.
+    // Direct PostgREST writes still require a database-side guard (Issue #43).
     if (securedData.containsKey('is_deleted_by_owner')) pgData['is_deleted_by_owner'] = securedData['is_deleted_by_owner'];
-    if (securedData.containsKey('rating')) pgData['rating'] = securedData['rating'];
-    if (securedData.containsKey('reviewsCount')) pgData['reviews_count'] = securedData['reviewsCount'];
-    if (securedData.containsKey('reviews_count')) pgData['reviews_count'] = securedData['reviews_count'];
     if (securedData.containsKey('deposit_amount')) pgData['deposit_amount'] = securedData['deposit_amount'];
     if (securedData.containsKey('depositAmount')) pgData['deposit_amount'] = securedData['depositAmount'];
     if (securedData.containsKey('needs_deposit')) pgData['needs_deposit'] = securedData['needs_deposit'];
@@ -172,6 +215,22 @@ class StadiumPayloadBuilder {
     // Keep base_price in sync with price_per_hour if modified
     if (pgData.containsKey('price_per_hour') && !pgData.containsKey('base_price')) {
       pgData['base_price'] = pgData['price_per_hour'];
+    }
+
+    for (final field in const <String>['price_per_hour', 'base_price', 'deposit_amount']) {
+      if (pgData.containsKey(field)) {
+        pgData[field] = _checkedMoney(pgData[field], field);
+      }
+    }
+    if (pgData['needs_deposit'] == true &&
+        pgData.containsKey('deposit_amount') &&
+        (pgData['deposit_amount'] as num) <= 0) {
+      throw const FormatException('Required stadium deposit cannot be zero');
+    }
+    if (pgData.containsKey('deposit_amount') &&
+        pgData.containsKey('price_per_hour') &&
+        (pgData['deposit_amount'] as num) > (pgData['price_per_hour'] as num)) {
+      throw const FormatException('Stadium deposit exceeds the hourly price');
     }
 
     return pgData;

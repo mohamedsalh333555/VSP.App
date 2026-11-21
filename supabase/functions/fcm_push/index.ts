@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { SignJWT, importPKCS8 } from "https://deno.land/x/jose@v4.14.4/index.ts";
+import { selectOwnedFcmTokens } from "../_shared/fcm_recipient_tokens.ts";
 declare const Deno: any;
 
 serve(async (req: Request) => {
@@ -43,15 +44,19 @@ serve(async (req: Request) => {
     const body = record.body || record.message || "";
     const type = record.type || "info";
 
-    const [{ data: deviceRows }, { data: userData }] = await Promise.all([
-      supabase.from("user_device_tokens").select("token").eq("user_id", userId),
-      supabase.from("users").select("fcm_token").eq("id", userId).maybeSingle(),
-    ]);
-
-    const fcmTokens = Array.from(new Set([
-      ...(deviceRows || []).map((row: any) => String(row.token || "").trim()),
-      String(userData?.fcm_token || "").trim(),
-    ].filter(Boolean)));
+    // Only a token explicitly owned by the intended recipient can be used.
+    // Legacy users.fcm_token may be stale after a shared device changes
+    // accounts; never combine it with the owner-scoped device-token table.
+    const { data: deviceRows, error: tokenReadError } = await supabase
+      .from("user_device_tokens")
+      .select("token,user_id")
+      .eq("user_id", userId);
+    if (tokenReadError) {
+      return new Response(JSON.stringify({ error: "Device token lookup unavailable" }), {
+        status: 503,
+      });
+    }
+    const fcmTokens = selectOwnedFcmTokens(deviceRows, String(userId));
 
     if (fcmTokens.length === 0) {
       return new Response(JSON.stringify({ status: "skipped", reason: "no_fcm_token" }), { status: 200 });
@@ -103,7 +108,10 @@ serve(async (req: Request) => {
           data: {
             click_action: "FLUTTER_NOTIFICATION_CLICK",
             type: String(type),
-            notification_id: String(record.id || ""),
+            notification_id: String(record.id || record.notification_id || ""),
+            // Foreground UI refuses payloads for another signed-in account.
+            // FCM token ownership must still be enforced server-side.
+            recipientUserId: String(userId),
             bookingId,
             tournamentId,
             championship_id: tournamentId,
@@ -145,15 +153,22 @@ serve(async (req: Request) => {
     }
 
     if (invalidTokens.length) {
-      await supabase.from("user_device_tokens").delete().in("token", invalidTokens);
+      await supabase.from("user_device_tokens")
+        .delete().eq("user_id", userId).in("token", invalidTokens);
     }
 
-    return new Response(JSON.stringify({
+    const dispatchResult = {
       success: sentCount > 0,
       sent_count: sentCount,
       failed_count: failedCount,
       invalid_tokens_removed: invalidTokens.length,
-    }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    return new Response(JSON.stringify(dispatchResult), {
+      // A queue worker must not archive a notification when every device send
+      // failed. A non-2xx response keeps the message eligible for PGMQ retry.
+      status: sentCount === 0 && failedCount > 0 ? 502 : 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error: any) {
     console.error("FCM internal error", error);
     return new Response(JSON.stringify({ error: "Internal notification service error" }), {

@@ -35,7 +35,7 @@ class PenaltyShootoutSection extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: VSPDSMotion.selection,
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         alignment: Alignment.center,
         decoration: BoxDecoration(
@@ -46,7 +46,7 @@ class PenaltyShootoutSection extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.white,
+            color: isSelected ? VSPColors.black : VSPColors.white,
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),
@@ -87,7 +87,7 @@ class PenaltyShootoutSection extends StatelessWidget {
             children: [
               Expanded(
                 child: ScoreCounterColumn(
-                  teamName: '${match.homeTeamName ?? "Home"} (ركلات)',
+                  teamName: '${match.homeTeamName ?? (isArabic ? "الفريق الأول" : "Home team")} ${isArabic ? "(ركلات)" : "(pens)"}',
                   score: homePenalties,
                   onIncrement: onIncrementHome,
                   onDecrement: onDecrementHome,
@@ -96,7 +96,7 @@ class PenaltyShootoutSection extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: ScoreCounterColumn(
-                  teamName: '${match.awayTeamName ?? "Away"} (ركلات)',
+                  teamName: '${match.awayTeamName ?? (isArabic ? "الفريق الثاني" : "Away team")} ${isArabic ? "(ركلات)" : "(pens)"}',
                   score: awayPenalties,
                   onIncrement: onIncrementAway,
                   onDecrement: onDecrementAway,

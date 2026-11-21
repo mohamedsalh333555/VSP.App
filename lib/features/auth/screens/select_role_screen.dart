@@ -1,115 +1,153 @@
 import 'package:flutter/material.dart';
-import '../../../core/ui/vsp_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/tokens/vsp_design_tokens.dart';
+import '../../../core/ui/vsp_ui.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
-class SelectRoleScreen extends StatelessWidget {
+class SelectRoleScreen extends StatefulWidget {
   const SelectRoleScreen({super.key});
 
+  @override
+  State<SelectRoleScreen> createState() => _SelectRoleScreenState();
+}
+
+class _SelectRoleScreenState extends State<SelectRoleScreen> {
+  bool _signOutPending = false;
+
   void _selectRole(BuildContext context, String role) {
-    final authProvider = context.read<AuthProvider>();
-    authProvider.setUserType(role);
-    // الـ Router هيشوف userType اتحدد ويكمل تلقائياً
+    if (_signOutPending) return;
+    context.read<AuthProvider>().setUserType(role);
+  }
+
+  Future<void> _switchAccount() async {
+    if (_signOutPending) return;
+    final auth = context.read<AuthProvider>();
+    // Hold the router independently of this widget. Auth redirects may remove
+    // the role screen before signOut() completes; navigation still must finish.
+    final router = GoRouter.of(context);
+    setState(() => _signOutPending = true);
+    try {
+      // Never navigate to login with the old session still active.
+      await auth.signOut();
+      router.go('/login');
+    } catch (_) {
+      if (!mounted) return;
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر تسجيل الخروج الآن. حاول مرة أخرى.'
+            : 'Could not sign out right now. Please try again.',
+      );
+    } finally {
+      if (mounted) setState(() => _signOutPending = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return VSPScaffold(
-      backgroundColor: VSPColors.background,
+      backgroundColor: VSPDSSemanticColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: VSPDSSpacing.lg,
+            vertical: VSPDSSpacing.lg,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 48),
-
-              // أيقونة VSP
+              const SizedBox(height: VSPDSSpacing.xl),
               Container(
-                width: 48,
-                height: 48,
+                width: VSPDSizes.stateIconBox,
+                height: VSPDSizes.stateIconBox,
                 decoration: BoxDecoration(
-                  color: VSPColors.accentSoft,
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.borderAccent, width: 1),
+                  color: VSPDSSemanticColors.iconBadge,
+                  borderRadius: BorderRadius.circular(VSPDSRadius.md),
+                  border: const Border.fromBorderSide(VSPDSBorders.subtle),
                 ),
                 child: const Icon(
                   Iconsax.cup_copy,
-                  color: VSPColors.accent,
-                  size: 24,
+                  color: VSPDSSemanticColors.accent,
+                  size: VSPDSizes.iconXl,
                 ),
               ),
-              const SizedBox(height: 32),
-
-              // العنوان
+              const SizedBox(height: VSPDSSpacing.xl),
               Text(
-                'أنت هنا عشان إيه؟',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: VSPColors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 28,
-                    ),
+                isArabic ? 'أنت هنا عشان إيه؟' : 'What brings you to VSP?',
+                style: VSPDSTypography.displayMedium,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: VSPDSSpacing.xs),
               Text(
-                'اختار نوع حسابك عشان نكمّل معاك',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: VSPColors.textSecondary,
-                      fontSize: 15,
-                    ),
+                isArabic
+                    ? 'اختار نوع حسابك عشان نكمّل معاك'
+                    : 'Choose the account type that fits how you use VSP.',
+                style: VSPDSTypography.bodyLarge,
               ),
-              const SizedBox(height: 48),
-
-              // بطاقة لاعب
+              const SizedBox(height: VSPDSSpacing.xl),
               _RoleCard(
                 icon: Iconsax.cup_copy,
-                title: 'لاعب',
-                subtitle: 'احجز ملاعب، انضم لمباريات، وتابع إحصائياتك',
+                title: isArabic ? 'لاعب' : 'Player',
+                subtitle: isArabic
+                    ? 'احجز ملاعب، انضم لمباريات، وتابع إحصائياتك'
+                    : 'Book pitches, join matches, and follow your stats.',
+                isArabic: isArabic,
                 onTap: () => _selectRole(context, 'player'),
               ),
-              const SizedBox(height: 16),
-
-              // بطاقة صاحب ملعب
+              const SizedBox(height: VSPDSSpacing.md),
               _RoleCard(
                 icon: Iconsax.building_3_copy,
-                title: 'صاحب ملعب',
-                subtitle: 'سجّل ملعبك وابدأ استقبال الحجوزات',
+                title: isArabic ? 'صاحب ملعب' : 'Stadium owner',
+                subtitle: isArabic
+                    ? 'سجّل ملعبك وابدأ استقبال الحجوزات'
+                    : 'List your venue and start receiving bookings.',
+                isArabic: isArabic,
                 onTap: () => _selectRole(context, 'owner'),
               ),
-
-              const Spacer(),
-
-              // رابط تسجيل دخول لو عنده حساب تاني
+              const SizedBox(height: VSPDSSpacing.xl),
               Center(
-                child: GestureDetector(
-                  onTap: () {
-                    context.read<AuthProvider>().signOut();
-                    context.go('/login');
-                  },
-                  child: RichText(
-                    text: TextSpan(
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: VSPColors.textSecondary,
-                            fontSize: 14,
-                          ),
-                      children: const [
-                        TextSpan(text: 'عندك حساب تاني؟ '),
-                        TextSpan(
-                          text: 'سجّل دخولك',
-                          style: TextStyle(
-                            color: VSPColors.accent,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                child: Semantics(
+                  button: true,
+                  label: isArabic ? 'تسجيل الدخول بحساب آخر' : 'Log in with another account',
+                  excludeSemantics: true,
+                  enabled: !_signOutPending,
+                  onTap: _signOutPending ? null : _switchAccount,
+                  child: InkWell(
+                    excludeFromSemantics: true,
+                    borderRadius: BorderRadius.circular(VSPDSRadius.sm),
+                    onTap: _signOutPending ? null : _switchAccount,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: VSPDSAccessibility.minimumTapTarget,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(VSPDSSpacing.xs),
+                        child: Center(child: RichText(
+                        textAlign: TextAlign.center,
+                        textDirection: Directionality.of(context),
+                        text: TextSpan(
+                          style: VSPDSTypography.bodyMedium,
+                          children: [
+                            TextSpan(
+                              text: isArabic ? 'عندك حساب تاني؟ ' : 'Already have an account? ',
+                            ),
+                            TextSpan(
+                              text: isArabic ? 'سجّل دخولك' : 'Log in',
+                              style: VSPDSTypography.actionLabel,
+                            ),
+                          ],
+                        )),
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              ),
             ],
           ),
         ),
@@ -122,74 +160,77 @@ class _RoleCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final bool isArabic;
   final VoidCallback onTap;
 
   const _RoleCard({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.isArabic,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '$title. $subtitle',
+      excludeSemantics: true,
       onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        decoration: BoxDecoration(
-          color: VSPColors.surfaceAlt,
-          borderRadius: BorderRadius.circular(VSPRadius.card),
-          border: Border.all(color: VSPColors.borderLight, width: 1),
-        ),
-        child: Row(
-          children: [
-            // أيقونة
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: VSPColors.accentSoft,
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: VSPColors.borderAccent, width: 1),
-              ),
-              child: Icon(icon, color: VSPColors.accent, size: 22),
+      child: Material(
+        color: VSPDSSemanticColors.surface,
+        borderRadius: BorderRadius.circular(VSPDSRadius.card),
+        child: InkWell(
+          excludeFromSemantics: true,
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(VSPDSRadius.card),
+          child: Container(
+            constraints: const BoxConstraints(
+              minHeight: VSPDSAccessibility.minimumTapTarget,
             ),
-            const SizedBox(width: 16),
-
-            // نص
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: VSPColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+            width: double.infinity,
+            padding: const EdgeInsets.all(VSPDSSpacing.md),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(VSPDSRadius.card),
+              border: const Border.fromBorderSide(VSPDSBorders.subtle),
+            ),
+            child: Row(
+              textDirection: Directionality.of(context),
+              children: [
+                Container(
+                  width: VSPDSizes.avatarMd,
+                  height: VSPDSizes.avatarMd,
+                  decoration: BoxDecoration(
+                    color: VSPDSSemanticColors.iconBadge,
+                    borderRadius: BorderRadius.circular(VSPDSRadius.md),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: VSPColors.textSecondary,
-                          fontSize: 13,
-                        ),
+                  child: Icon(
+                    icon,
+                    color: VSPDSSemanticColors.accent,
+                    size: VSPDSizes.iconLg,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: VSPDSSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: VSPDSTypography.titleMedium),
+                      const SizedBox(height: VSPDSSpacing.xxs),
+                      Text(subtitle, style: VSPDSTypography.bodyMedium),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: VSPDSSpacing.xs),
+                Icon(
+                  isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
+                  color: VSPDSSemanticColors.textSecondary,
+                  size: VSPDSizes.iconSm,
+                ),
+              ],
             ),
-
-            // سهم
-            const Icon(
-              Iconsax.arrow_right_3_copy,
-              color: VSPColors.textMuted,
-              size: 16,
-            ),
-          ],
+          ),
         ),
       ),
     );

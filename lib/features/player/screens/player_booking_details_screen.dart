@@ -27,13 +27,82 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
     }
   }
 
+  String _statusLabel(BuildContext context) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    switch (booking.status) {
+      case BookingStatus.pending:
+        return ar ? 'قيد الانتظار' : 'Pending';
+      case BookingStatus.confirmed:
+      case BookingStatus.upcoming:
+        return ar ? 'مؤكد' : 'Confirmed';
+      case BookingStatus.completed:
+        return ar ? 'مكتمل' : 'Completed';
+      case BookingStatus.noShow:
+        return ar ? 'عدم حضور' : 'No-show';
+      case BookingStatus.cancelled:
+        return ar ? 'ملغي' : 'Cancelled';
+      case BookingStatus.expired:
+        return ar ? 'انتهت مهلة الدفع' : 'Payment expired';
+    }
+  }
+
+  String _paymentMethodLabel(BuildContext context) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    switch (booking.paymentMethod.trim().toLowerCase()) {
+      case 'cash':
+        return ar ? 'نقدًا في الملعب' : 'Cash at the stadium';
+      case 'card':
+      case 'paymob':
+      case 'online':
+        return ar ? 'دفع إلكتروني' : 'Online payment';
+      case 'wallet':
+      case 'mobile_wallet':
+        return ar ? 'محفظة إلكترونية' : 'Mobile wallet';
+      default:
+        return ar ? 'غير محددة' : 'Not specified';
+    }
+  }
+
+  String _paymentStatusLabel(BuildContext context) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    switch (booking.paymentStatus.trim().toLowerCase()) {
+      case 'paid':
+        return ar ? 'مدفوع بالكامل' : 'Paid in full';
+      case 'partially_paid':
+      case 'deposit_paid':
+        return ar ? 'تم دفع العربون' : 'Deposit paid';
+      case 'refund_pending':
+        return ar ? 'الاسترداد قيد المراجعة' : 'Refund pending';
+      case 'refunded':
+        return ar ? 'تم الاسترداد' : 'Refunded';
+      case 'failed':
+        return ar ? 'فشل الدفع' : 'Payment failed';
+      case 'pending':
+      case 'unpaid':
+      case '':
+        if (booking.isPaid) {
+          return ar ? 'مدفوع' : 'Paid';
+        }
+        return booking.isCash
+            ? (ar ? 'الدفع في الملعب' : 'Pay at the stadium')
+            : (ar ? 'غير مدفوع' : 'Unpaid');
+      default:
+        return ar ? 'بانتظار التحقق' : 'Awaiting verification';
+    }
+  }
+
+  String _money(double value) =>
+      '${value.toStringAsFixed(2)} ${booking.currency}';
+
   Future<void> _reportOwnerIssue(BuildContext context) async {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final reasonController = TextEditingController();
     final detailsController = TextEditingController();
     final submitted = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         title: Text(ar ? 'إبلاغ عن مشكلة بالملعب/المالك' : 'Report Stadium/Owner Issue'),
         content: Column(
@@ -44,16 +113,29 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
             ),
             const SizedBox(height: VSPSpacing.md),
-            TextField(controller: reasonController, decoration: InputDecoration(hintText: ar ? 'سبب البلاغ' : 'Reason')),
+            TextField(
+              controller: reasonController,
+              maxLength: 200,
+              decoration: InputDecoration(hintText: ar ? 'سبب البلاغ' : 'Reason'),
+            ),
             const SizedBox(height: VSPSpacing.sm),
-            TextField(controller: detailsController, maxLines: 3, decoration: InputDecoration(hintText: ar ? 'تفاصيل إضافية (اختياري)' : 'Additional details (optional)')),
+            TextField(
+              controller: detailsController,
+              maxLines: 3,
+              maxLength: 2000,
+              decoration: InputDecoration(
+                hintText: ar
+                    ? 'تفاصيل إضافية (اختياري)'
+                    : 'Additional details (optional)',
+              ),
+            ),
           ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ar ? 'إلغاء' : 'Cancel')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, reasonController.text.trim().isNotEmpty),
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: VSPColors.white),
             child: Text(ar ? 'إرسال البلاغ' : 'Submit Report'),
           ),
         ],
@@ -77,13 +159,19 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
       contextId: booking.id,
       bookingId: booking.id,
     );
-    if (context.mounted) {
-      VSPFeedback.showSuccess(
-        context,
-        ok
-            ? (ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.')
-            : (ar ? 'تعذر إرسال البلاغ.' : 'Could not submit report.'),
-      );
+    if (context.mounted &&
+        context.read<AuthProvider>().currentUser?.id == uid) {
+      if (ok) {
+        VSPFeedback.showSuccess(
+          context,
+          ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.',
+        );
+      } else {
+        VSPFeedback.showError(
+          context,
+          ar ? 'تعذر إرسال البلاغ. حاول مرة أخرى.' : 'Could not submit the report. Please try again.',
+        );
+      }
     }
   }
 
@@ -108,12 +196,17 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
         contextId: booking.id,
       );
       final chatId = chat['id']?.toString();
-      if (chatId == null || !context.mounted) return;
+      if (!context.mounted ||
+          auth.currentUser?.id != me ||
+          chatId == null ||
+          chatId.isEmpty) {
+        return;
+      }
       Navigator.push(context, MaterialPageRoute(
         builder: (_) => ChatScreen(booking: booking, conversationId: chatId, otherUserId: other),
       ));
     } catch (_) {
-      if (context.mounted) {
+      if (context.mounted && auth.currentUser?.id == me) {
         VSPFeedback.showError(context, Localizations.localeOf(context).languageCode == 'ar'
             ? 'تعذر فتح المحادثة.'
             : 'Could not open the chat.');
@@ -132,7 +225,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
         centerTitle: true,
         title: Text(ar ? 'تفاصيل الحجز' : 'Booking Details'),
       ),
-      body: ListView(
+      body: SafeArea(top: false, bottom: true, child: ListView(
         padding: const EdgeInsets.all(VSPSpacing.md),
         children: [
           Container(
@@ -147,18 +240,73 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
               const SizedBox(height: VSPSpacing.xs),
               Text(_type(context), style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
               const SizedBox(height: VSPSpacing.md),
-              _row(Iconsax.calendar_1_copy, ar ? 'التاريخ' : 'Date', booking.formattedDate),
-              _row(Iconsax.clock_copy, ar ? 'الوقت' : 'Time', booking.formattedTimeRange),
-              _row(Iconsax.wallet_1_copy, ar ? 'الإجمالي' : 'Total', '${booking.totalPrice.toInt()} ${booking.currency}'),
-              _row(Iconsax.info_circle_copy, ar ? 'الحالة' : 'Status', booking.status.name),
+              _row(
+                Iconsax.hashtag_copy,
+                ar ? 'مرجع الحجز' : 'Booking reference',
+                booking.id,
+              ),
+              _row(
+                Iconsax.calendar_1_copy,
+                ar ? 'التاريخ' : 'Date',
+                booking.formattedDate,
+              ),
+              _row(
+                Iconsax.clock_copy,
+                ar ? 'الوقت' : 'Time',
+                booking.formattedTimeRange,
+              ),
+              _row(
+                Iconsax.wallet_1_copy,
+                ar ? 'الإجمالي' : 'Total',
+                _money(booking.totalPrice),
+              ),
+              _row(
+                Iconsax.card_copy,
+                ar ? 'طريقة الدفع' : 'Payment method',
+                _paymentMethodLabel(context),
+              ),
+              _row(
+                Iconsax.tick_circle_copy,
+                ar ? 'حالة الدفع' : 'Payment status',
+                _paymentStatusLabel(context),
+              ),
+              if (booking.depositPaid > 0)
+                _row(
+                  Iconsax.money_copy,
+                  ar ? 'المبلغ المسدد' : 'Amount paid',
+                  _money(
+                    booking.depositPaid > booking.totalPrice
+                        ? booking.totalPrice
+                        : booking.depositPaid,
+                  ),
+                ),
+              if (!booking.isPaid &&
+                  booking.totalPrice > booking.depositPaid)
+                _row(
+                  Iconsax.money_copy,
+                  ar ? 'المتبقي' : 'Remaining',
+                  _money(booking.totalPrice - booking.depositPaid),
+                ),
+              _row(
+                Iconsax.info_circle_copy,
+                ar ? 'حالة الحجز' : 'Booking status',
+                _statusLabel(context),
+              ),
+              if (booking.status == BookingStatus.cancelled &&
+                  booking.cancellationReason?.trim().isNotEmpty == true)
+                _row(
+                  Iconsax.close_circle_copy,
+                  ar ? 'سبب الإلغاء' : 'Cancellation reason',
+                  booking.cancellationReason!.trim(),
+                ),
             ]),
           ),
           const SizedBox(height: VSPSpacing.md),
           ElevatedButton.icon(
             onPressed: () => _openChat(context),
-            icon: const Icon(Iconsax.message_copy, color: Colors.black),
+            icon: const Icon(Iconsax.message_copy, color: VSPColors.black),
             label: Text(ar ? 'المحادثة المرتبطة بالحجز' : 'Chat with the related participant'),
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: VSPColors.black),
           ),
           const SizedBox(height: VSPSpacing.sm),
           OutlinedButton.icon(
@@ -171,7 +319,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 

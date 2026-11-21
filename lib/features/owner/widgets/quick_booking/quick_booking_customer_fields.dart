@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 
 class QuickBookingCustomerFields extends StatelessWidget {
@@ -22,7 +23,7 @@ class QuickBookingCustomerFields extends StatelessWidget {
         // Customer Name
         Text(
           isAr ? 'اسم العميل / الكابتن *' : 'Captain Name *',
-          style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: VSPColors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 6),
         CustomTextField(
@@ -35,7 +36,7 @@ class QuickBookingCustomerFields extends StatelessWidget {
         // Customer WhatsApp Phone (Optional)
         Text(
           isAr ? 'رقم الواتساب (لإرسال إيصال الحجز)' : 'WhatsApp Phone (for receipt)',
-          style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: VSPColors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 6),
         CustomTextField(

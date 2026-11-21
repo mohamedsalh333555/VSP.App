@@ -18,9 +18,11 @@ class TournamentDashboardDialogs {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(l10n.warning, style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold)),
         content: Text(
@@ -34,7 +36,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx, false),
@@ -46,9 +48,9 @@ class TournamentDashboardDialogs {
                   text: entryFee > 0
                       ? (isAr ? 'فهمت ذلك' : 'Understood')
                       : l10n.proceedAnyway,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.warning,
-                  textColor: Colors.black,
+                  textColor: VSPColors.black,
                   onPressed: () => Navigator.pop(ctx, entryFee <= 0),
                 ),
               ),
@@ -69,9 +71,11 @@ class TournamentDashboardDialogs {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(l10n.forceStartTournament, style: Theme.of(ctx).textTheme.titleLarge),
         content: Text(
@@ -85,7 +89,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx, false),
@@ -95,9 +99,9 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.forceStart,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.warning,
-                  textColor: Colors.black,
+                  textColor: VSPColors.black,
                   onPressed: () => Navigator.pop(ctx, true),
                 ),
               ),
@@ -121,9 +125,11 @@ class TournamentDashboardDialogs {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
@@ -184,7 +190,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx, false),
@@ -194,9 +200,9 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: isAr ? 'تأكيد الإلغاء' : 'Confirm Cancel',
-                  height: 44,
+                  height: 48,
                   color: VSPColors.warning,
-                  textColor: Colors.black,
+                  textColor: VSPColors.black,
                   onPressed: () => Navigator.pop(ctx, true),
                 ),
               ),
@@ -217,9 +223,11 @@ class TournamentDashboardDialogs {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
@@ -257,7 +265,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx, false),
@@ -267,9 +275,9 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: isAr ? 'حذف نهائي' : 'Delete',
-                  height: 44,
+                  height: 48,
                   color: VSPColors.error,
-                  textColor: Colors.white,
+                  textColor: VSPColors.white,
                   onPressed: () => Navigator.pop(ctx, true),
                 ),
               ),

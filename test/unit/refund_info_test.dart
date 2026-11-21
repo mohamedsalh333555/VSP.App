@@ -9,6 +9,7 @@ void main() {
         'refund_channel': 'wallet',
         'refund_eta': 'minutes',
         'refund_amount': 250.0,
+        'payment_status': 'refunded',
         'refunded_at': '2026-09-12T20:00:00Z',
       };
 
@@ -29,6 +30,7 @@ void main() {
         'refund_channel': 'card',
         'refund_eta': '3-5_business_days',
         'refund_amount': 500.0,
+        'payment_status': 'refunded',
         'refunded_at': '2026-09-12T20:00:00Z',
       };
 
@@ -46,6 +48,7 @@ void main() {
     test('Falls back smartly to cash when channel is undefined', () {
       final row = {
         'refund_amount': 100.0,
+        'payment_status': 'refunded',
         'payment_method': 'cash',
       };
 

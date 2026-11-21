@@ -130,6 +130,46 @@ void main() {
       expect(find.textContaining('3'), findsWidgets);
     });
 
+    testWidgets('draft names are distinguished from registered invite candidates', (tester) async {
+      final members = [_fakeUser('u1', 'Ali'), _fakeUser('guest_123', 'Draft Player')];
+      await tester.pumpWidget(_wrap(
+        CreateTeamMembersSection(
+          members: members,
+          onAddMember: () {},
+          onPasteWhatsApp: () {},
+          onRemoveMember: (_) {},
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.textContaining('3/12'), findsOneWidget);
+      expect(find.textContaining('مسجل: 1'), findsOneWidget);
+      expect(find.textContaining('مسودة: 1'), findsOneWidget);
+      expect(find.byIcon(Iconsax.info_circle_copy), findsOneWidget);
+    });
+
+    testWidgets('roster actions and counts fit narrow phone width', (tester) async {
+      tester.view.physicalSize = const Size(320, 720);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(_wrap(
+        CreateTeamMembersSection(
+          members: [_fakeUser('u1', 'Ali'), _fakeUser('guest_123', 'Draft')],
+          onAddMember: () {},
+          onPasteWhatsApp: () {},
+          onRemoveMember: (_) {},
+        ),
+      ));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.byIcon(Iconsax.add_circle_copy), findsOneWidget);
+      expect(find.byIcon(Iconsax.copy_copy), findsOneWidget);
+    });
+
     testWidgets('does not show empty-state when members is non-empty', (tester) async {
       final members = [_fakeUser('u1', 'Ali')];
 

@@ -52,16 +52,19 @@ class TeamActionButtons extends StatelessWidget {
             height: 48,
             child: ElevatedButton.icon(
               onPressed: () async {
-                final message = 'انضم لتشكيلة فريقي (${team!.name}) على تطبيق VSP عشان نلعب دوريات ومباريات مع بعض! حمل التطبيق من هنا: https://vsp.app';
+                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                final message = isArabic
+                    ? 'انضم لتشكيلة فريقي (${team!.name}) على تطبيق VSP عشان نلعب دوريات ومباريات مع بعض! حمل التطبيق من هنا: https://vsp.app'
+                    : 'Join my team (${team!.name}) on VSP so we can play leagues and matches together! Get the app: https://vsp.app';
                 await VSPLauncherUtils.openWhatsApp(context, phone: '', message: message);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.whatsApp,
-                foregroundColor: Colors.white,
+                foregroundColor: VSPColors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 elevation: 0,
               ),
-              icon: const Icon(Iconsax.messages_3_copy, color: Colors.white, size: 20),
+              icon: const Icon(Iconsax.messages_3_copy, color: VSPColors.white, size: 20),
               label: Text(
                 Localizations.localeOf(context).languageCode == 'ar'
                     ? 'دعوة لاعبين للفريق عبر واتساب'
@@ -97,7 +100,13 @@ class TeamActionButtons extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: PrimaryButton(
-              text: isCaptain ? "مغادرة الفريق (تسليم الكابتنة)" : "مغادرة الفريق",
+              text: isCaptain
+                  ? (Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'مغادرة الفريق (تسليم الكابتنة)'
+                      : 'Leave team (transfer captaincy)')
+                  : (Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'مغادرة الفريق'
+                      : 'Leave team'),
               color: VSPColors.error.withValues(alpha: 0.15),
               textColor: VSPColors.error,
               onPressed: onLeaveTeam,

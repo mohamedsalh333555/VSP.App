@@ -335,6 +335,17 @@ Never close this task while:
 production schema != main migration history.
 
 ## Current verified remediation
+### Operating-window migration provenance clarification — 2026-10-31
+
+The live `supabase_migrations.schema_migrations` history confirms these exact applied versions:
+- `20261006005321` — `20261006010000_enforce_booking_operating_hours_and_breaks` (the migration's display/name label differs from its version timestamp)
+- `20261006005714` — `enforce_booking_operating_window_all_mutations`
+- `20261006005740` — `harden_operating_window_function_and_remove_duplicate_audit_indexes`
+
+The matching SQL files exist under `supabase/migrations/` on this branch. Read-only inspection of `public.bookings` triggers confirms `trg_bookings_operating_window` fires BEFORE INSERT and BEFORE UPDATE OF `start_time,end_time`; it calls `vsp_enforce_booking_operating_window`, which calls the shared Cairo-local validator. This covers RPCs/direct mutations that actually insert a booking or change its time fields, including manual booking and reschedule updates, without relying on each client path to repeat the rule. Maintenance rows are intentionally excluded because they represent closures rather than customer bookings.
+
+This is source/schema evidence, not a replacement for the final mutation matrix/runtime pass. No SQL was applied during this review.
+
 
 Production migration applied:
 20261006010000_enforce_booking_operating_hours_and_breaks
@@ -369,3 +380,37 @@ This task is NOT complete until:
 15. Visual runtime regression matrix passes.
 
 Do not declare "done" based on CI alone.
+## Latest source remediation — 2026-10-31
+
+Source work continued on `uxlp-44-implementation`:
+
+- Repaired the malformed booking-query coordinator tail and restored missing booking slot, location-picker, league, payment, and result-action code paths implicated by the previous analyzer log.
+- Reworked stadium discovery so query failures are not converted into empty results; added localized error/retry behavior and preserved loaded results during refresh.
+- Moved sports, pitch-size, amenities, quick filters, floor type, search, sorting, price and governorate filters ahead of database pagination, using the live `public.stadiums` schema.
+- Removed first-page-dependent sport filter choices and included active quick filters in the filter count/reset behavior.
+- Made owner withdrawal balance display fail closed when the server summary is missing or invalid.
+- Consolidated bottom-navigation geometry naming and deprecated parallel finance widgets.
+- Removed the 50-booking truncation from the owner metrics cache key and improved team hero text/layout resilience.
+
+### Remaining gates (not yet complete)
+
+1. Finish source review and explicit rule-to-screen mapping for every registered player/owner screen, embedded widget, popup, and state variant.
+2. Complete Arabic/English copy and RTL/LTR review across all registered surfaces.
+3. Review all remaining data queries against the live Supabase schema and verify that failures cannot masquerade as empty/zero states.
+4. Resolve product/domain decisions documented in the audit before changing their behavior (including team authorization edge cases, multi-team selection semantics, notification retention, and refund notification reconciliation/outbox).
+5. Complete safe-area, keyboard, compact-screen, large-text, modal, and real-device visual review.
+6. Only after all source work and the above gates are closed, perform one consolidated test pass; then build and verify one test APK.
+
+No final test pass or APK build was intentionally started as part of this source-remediation batch.
+
+
+## Phase 10 — Behavioral UX, conversion and retention
+
+Phase 10 is active and additive. Its task register, analytics contract, experiment gates and delivery status are maintained in:
+
+- [PHASE10_BEHAVIORAL_UX.md](PHASE10_BEHAVIORAL_UX.md)
+- [CONVERSION_ANALYTICS.md](CONVERSION_ANALYTICS.md)
+- [PHASE10_EXPERIMENTS.md](PHASE10_EXPERIMENTS.md)
+- [PHASE10_FINAL_REPORT.md](PHASE10_FINAL_REPORT.md)
+
+No behavioral change may invent social proof, scarcity, pricing, discounts, verification, prizes or financial outcomes. Conversion events must represent authoritative stages and must not weaken the 24 journeys, Phase 8 security controls or Phase 9 reliability work.

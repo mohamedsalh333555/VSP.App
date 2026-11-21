@@ -7,6 +7,7 @@ import 'booking_slot_models.dart';
 class BookingSlotCard extends StatelessWidget {
   final TimeSlotItem slotItem;
   final bool isBooked;
+  final bool isClosed;
   final bool isPast;
   final bool isSelected;
   final bool isCurrentOngoing;
@@ -19,6 +20,7 @@ class BookingSlotCard extends StatelessWidget {
     super.key,
     required this.slotItem,
     required this.isBooked,
+    this.isClosed = false,
     required this.isPast,
     required this.isSelected,
     required this.isCurrentOngoing,
@@ -32,25 +34,28 @@ class BookingSlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    final slotWidget = GestureDetector(
-      onTap: (isBooked || isPast) ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+    final slotWidget = Material(
+      color: VSPColors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        onTap: ((isBooked || isClosed) || isPast) ? null : onTap,
+        child: AnimatedContainer(
+        duration: VSPDSMotion.selection,
         alignment: Alignment.center,
         margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
         padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
         decoration: BoxDecoration(
-          color: isBooked
+          color: (isBooked || isClosed)
               ? VSPColors.error.withValues(alpha: 0.08)
               : (isPast
                   ? VSPColors.surface.withValues(alpha: 0.3)
-                  : (isSelected ? VSPColors.accent.withValues(alpha: 0.18) : Colors.transparent)),
+                  : (isSelected ? VSPColors.accent.withValues(alpha: 0.18) : VSPColors.transparent)),
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: isBooked
+            color: (isBooked || isClosed)
                 ? VSPColors.error.withValues(alpha: 0.3)
                 : (isPast
-                    ? Colors.transparent
+                    ? VSPColors.transparent
                     : (isSelected
                         ? VSPColors.accent
                         : (isNextAvailable ? VSPColors.accent.withValues(alpha: 0.5) : VSPColors.divider))),
@@ -70,14 +75,14 @@ class BookingSlotCard extends StatelessWidget {
                 Text(
                   slotItem.startTime,
                   style: TextStyle(
-                    color: isBooked
+                    color: (isBooked || isClosed)
                         ? VSPColors.error.withValues(alpha: 0.7)
                         : (isPast
                             ? VSPColors.textSecondary.withValues(alpha: 0.4)
                             : (isSelected ? VSPColors.textPrimary : VSPColors.textPrimary)),
                     fontSize: 15,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
+                    decoration: ((isBooked || isClosed) || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
                   ),
                 ),
                 Padding(
@@ -85,7 +90,7 @@ class BookingSlotCard extends StatelessWidget {
                   child: Text(
                     '–',
                     style: TextStyle(
-                      color: isBooked
+                      color: (isBooked || isClosed)
                           ? VSPColors.error.withValues(alpha: 0.7)
                           : (isSelected ? VSPColors.accent : VSPColors.textSecondary),
                       fontSize: 15,
@@ -96,19 +101,19 @@ class BookingSlotCard extends StatelessWidget {
                 Text(
                   slotItem.endTime,
                   style: TextStyle(
-                    color: isBooked
+                    color: (isBooked || isClosed)
                         ? VSPColors.error.withValues(alpha: 0.7)
                         : (isPast
                             ? VSPColors.textSecondary.withValues(alpha: 0.4)
                             : (isSelected ? VSPColors.textPrimary : VSPColors.textPrimary)),
                     fontSize: 15,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
+                    decoration: ((isBooked || isClosed) || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
                   ),
                 ),
               ],
             ),
-            if (isBooked) ...[
+            if ((isBooked || isClosed)) ...[
               const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -123,7 +128,9 @@ class BookingSlotCard extends StatelessWidget {
                     const Icon(Iconsax.lock_copy, size: 12, color: VSPColors.error),
                     const SizedBox(width: 4),
                     Text(
-                      isArabic ? ' محجوز' : ' Booked',
+                      isClosed
+                          ? (isArabic ? ' مغلق' : ' Closed')
+                          : (isArabic ? ' محجوز' : ' Booked'),
                       style: const TextStyle(color: VSPColors.error, fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -169,6 +176,7 @@ class BookingSlotCard extends StatelessWidget {
               ),
             ],
           ],
+        ),
         ),
       ),
     );

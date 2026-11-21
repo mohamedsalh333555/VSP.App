@@ -117,30 +117,47 @@ void main() {
       expect(val, isTrue);
     });
 
-    testWidgets('7. VSPTermsAndPrivacyModal renders modal and dismisses on close', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (ctx) => ElevatedButton(
-                onPressed: () => VSPTermsAndPrivacyModal.show(ctx, isOwner: false),
-                child: const Text('Open Terms'),
+    for (final locale in [const Locale('ar'), const Locale('en')]) {
+      testWidgets('7. Player terms show the current cancellation policy and dismiss in ${locale.languageCode}', (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Builder(
+                builder: (ctx) => ElevatedButton(
+                  onPressed: () => VSPTermsAndPrivacyModal.show(ctx, isOwner: false),
+                  child: const Text('Open Terms'),
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.text('Open Terms'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Open Terms'));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(Dialog), findsOneWidget);
-      expect(find.text('I Understand'), findsOneWidget);
+        expect(find.byType(Dialog), findsOneWidget);
+        final isArabic = locale.languageCode == 'ar';
+        final cutoff = isArabic ? '6 ساعات أو أقل' : '6 hours or less';
+        final grace = isArabic ? 'أول 20 دقيقة' : 'first 20 minutes';
+        final policy = find.textContaining(cutoff);
+        expect(policy, findsOneWidget);
+        final policyText = tester.widget<Text>(policy).data!;
+        expect(policyText, contains(grace));
+        expect(policyText, isNot(contains('100%')));
+        expect(policyText, contains(isArabic
+            ? 'حالة الحجز والمدفوعات المسجلة'
+            : 'booking state and recorded payments'));
+        expect(Directionality.of(tester.element(policy)),
+            isArabic ? TextDirection.rtl : TextDirection.ltr);
 
-      await tester.tap(find.text('I Understand'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(Dialog), findsNothing);
-    });
+        await tester.tap(find.text(isArabic ? 'موافق' : 'I Understand'));
+        await tester.pumpAndSettle();
+        expect(find.byType(Dialog), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+    }
   });
 }

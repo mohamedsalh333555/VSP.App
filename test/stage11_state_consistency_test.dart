@@ -87,14 +87,16 @@ void main() {
       }
     });
 
-    test('Safely handles unknown status by falling back to BookingStatus.pending', () {
+    test('Rejects unknown status rather than presenting it as an unpaid draft', () {
       final data = {
         'status': 'corrupted_state_xyz',
         'start_time': '2026-09-14T20:00:00.000Z',
         'end_time': '2026-09-14T21:00:00.000Z',
       };
-      final booking = BookingMapper.fromFirestore(data, 'bk_unknown');
-      expect(booking.status, BookingStatus.pending);
+      expect(
+        () => BookingMapper.fromFirestore(data, 'bk_unknown'),
+        throwsFormatException,
+      );
     });
   });
 

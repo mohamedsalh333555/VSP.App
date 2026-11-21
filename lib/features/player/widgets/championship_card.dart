@@ -4,6 +4,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/utils/vsp_money_formatter.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_countdown_timer.dart';
 import '../screens/championship_details_screen.dart';
@@ -35,12 +36,12 @@ class ChampionshipCard extends StatelessWidget {
           color: VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.xl),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: VSPColors.white.withValues(alpha: 0.08),
             width: 0.8,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
+              color: VSPColors.black.withValues(alpha: 0.25),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),
@@ -86,8 +87,11 @@ class ChampionshipCard extends StatelessWidget {
                   ],
                 ),
                 Builder(builder: (context) {
+                  final status = championship.status.trim().toLowerCase();
                   final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
-                  final isCompleted = championship.status == 'completed';
+                  final isCompleted = status == 'completed';
+                  final isOngoing = status == 'ongoing';
+                  final isCancelled = status == 'cancelled';
                   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
                   String badgeText;
@@ -96,12 +100,21 @@ class ChampionshipCard extends StatelessWidget {
                   if (isCompleted) {
                     badgeText = isArabic ? 'مكتملة' : 'COMPLETED';
                     badgeColor = VSPColors.accent;
+                  } else if (isOngoing) {
+                    badgeText = isArabic ? 'جارية' : 'ONGOING';
+                    badgeColor = VSPColors.info;
+                  } else if (isCancelled) {
+                    badgeText = isArabic ? 'ملغاة' : 'CANCELLED';
+                    badgeColor = VSPColors.error;
                   } else if (isFull) {
                     badgeText = AppLocalizations.of(context)!.full.toUpperCase();
                     badgeColor = VSPColors.warning;
-                  } else {
+                  } else if (status == 'open') {
                     badgeText = AppLocalizations.of(context)!.open.toUpperCase();
                     badgeColor = VSPColors.accent;
+                  } else {
+                    badgeText = isArabic ? 'التسجيل مغلق' : 'CLOSED';
+                    badgeColor = VSPColors.textSecondary;
                   }
 
                   return _buildStatusBadge(badgeText, badgeColor);
@@ -130,7 +143,7 @@ class ChampionshipCard extends StatelessWidget {
                     children: [
                       Text(championship.name,
                           style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5),
+                              color: VSPColors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
                       Text(championship.type,
@@ -140,7 +153,6 @@ class ChampionshipCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  visualDensity: VisualDensity.compact,
                   icon: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 18),
                   onPressed: () =>
                       SharingService.shareChampionshipObject(context: context, championship: championship),
@@ -151,7 +163,7 @@ class ChampionshipCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
+                  color: VSPColors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -168,14 +180,14 @@ class ChampionshipCard extends StatelessWidget {
                         Iconsax.cup_copy,
                         isArabic ? 'الجائزة' : 'PRIZE',
                         championship.grandPrize > 0
-                            ? "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"
+                            ? "${VSPMoneyFormatter.amount(championship.grandPrize)} ${AppLocalizations.of(context)!.egCurrency}"
                             : (isArabic ? "كأس وميداليات" : "Cup & Medals"));
                   }),
                   _buildDivider(),
                   Builder(builder: (context) {
                     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                     return _buildCompactInfo(Iconsax.card_copy, isArabic ? 'الاشتراك' : 'FEE',
-                        "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}");
+                        "${VSPMoneyFormatter.amount(championship.entryFee)} ${AppLocalizations.of(context)!.egCurrency}");
                   }),
                 ],
               ),
@@ -187,7 +199,10 @@ class ChampionshipCard extends StatelessWidget {
                 Expanded(
                   child: Builder(builder: (context) {
                     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                    final isCompleted = championship.status == 'completed';
+                    final status = championship.status.trim().toLowerCase();
+                    final isCompleted = status == 'completed';
+                    final isOngoing = status == 'ongoing';
+                    final isCancelled = status == 'cancelled';
                     final isFull =
                         championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
 
@@ -213,10 +228,57 @@ class ChampionshipCard extends StatelessWidget {
                           ),
                         ],
                       );
+                    } else if (isOngoing) {
+                      return Row(
+                        children: [
+                          const Icon(Icons.play_circle_outline, color: VSPColors.info, size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              isArabic ? 'البطولة جارية الآن' : 'Tournament in progress',
+                              style: const TextStyle(
+                                color: VSPColors.info,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      );
+                    } else if (isCancelled) {
+                      return Row(
+                        children: [
+                          const Icon(Iconsax.close_circle_copy, color: VSPColors.error, size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              isArabic ? 'البطولة ملغاة' : 'Championship cancelled',
+                              style: const TextStyle(
+                                color: VSPColors.error,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      );
                     } else if (isFull) {
                       return Text(
                         isArabic ? 'البطولة مكتملة العدد ' : 'Tournament Full ',
-                        style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 12),
+                        style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 12),
+                      );
+                    } else if (status != 'open') {
+                      return Text(
+                        isArabic ? 'التسجيل مغلق' : 'Registration closed',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       );
                     } else {
                       return Column(
@@ -259,10 +321,10 @@ class ChampionshipCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Builder(builder: (context) {
+                  final status = championship.status.trim().toLowerCase();
                   final isFull =
                       championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
-                  final isCompleted = championship.status == 'completed';
-                  final isClosed = isFull || isCompleted;
+                  final isClosed = status != 'open' || isFull;
                   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
                   return Container(
@@ -282,7 +344,7 @@ class ChampionshipCard extends StatelessWidget {
                                 ? (isArabic ? 'عرض البطولة' : 'View Tournament')
                                 : AppLocalizations.of(context)!.join,
                             style: TextStyle(
-                              color: isClosed ? VSPColors.accent : Colors.black,
+                              color: isClosed ? VSPColors.accent : VSPColors.black,
                               fontWeight: FontWeight.w900,
                               fontSize: 13,
                               letterSpacing: 0.5,
@@ -292,7 +354,7 @@ class ChampionshipCard extends StatelessWidget {
                           Icon(
                             isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                             size: 16,
-                            color: isClosed ? VSPColors.accent : Colors.black,
+                            color: isClosed ? VSPColors.accent : VSPColors.black,
                           ),
                         ],
                       ),
@@ -308,7 +370,7 @@ class ChampionshipCard extends StatelessWidget {
   }
 
   Widget _buildTypeBadge(String text) =>
-      Text(text, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold));
+      Text(text, style: const TextStyle(color: VSPColors.white, fontSize: 13, fontWeight: FontWeight.bold));
 
   Widget _buildStatusBadge(String text, Color color) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -330,7 +392,7 @@ class ChampionshipCard extends StatelessWidget {
         Text(
           headerTitle,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
+            color: VSPColors.white.withValues(alpha: 0.5),
             fontSize: 9.5,
             fontWeight: FontWeight.w600,
           ),
@@ -343,12 +405,12 @@ class ChampionshipCard extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: VSPColors.white, fontSize: 11, fontWeight: FontWeight.bold),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDivider() => Container(width: 1, height: 22, color: Colors.white10);
+  Widget _buildDivider() => Container(width: 1, height: 22, color: VSPColors.white10);
 }

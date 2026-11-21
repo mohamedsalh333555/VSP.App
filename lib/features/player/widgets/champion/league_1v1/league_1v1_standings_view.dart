@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../../core/ui/vsp_ui.dart';
 import '../../../../../data/models.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../shared/widgets/vsp_error_state.dart';
@@ -24,6 +25,39 @@ class League1v1StandingsView extends StatefulWidget {
 }
 
 class _League1v1StandingsViewState extends State<League1v1StandingsView> {
+  Widget _buildStaleDataWarning(bool isArabic) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'نعرض آخر ترتيب متاح؛ تعذر التحديث اللحظي.'
+                  : 'Showing the latest standings; live updates are unavailable.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: widget.onRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -32,41 +66,22 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
       stream: widget.standingsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
-        }
-        if (snapshot.hasError) {
-          return VSPErrorState(
-            customMessage: snapshot.error?.toString(),
-            onRetry: () => setState(() {}),
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل الترتيب' : 'Loading standings',
+            message: isArabic ? 'نحدّث ترتيب اللاعبين ونقاطهم.' : 'Fetching player standings and points.',
           );
+        }
+        if (snapshot.hasError &&
+            (!snapshot.hasData || snapshot.data!.isEmpty)) {
+          return VSPErrorState(onRetry: widget.onRetry);
         }
         final players = snapshot.data ?? [];
         if (players.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      color: VSPColors.surface,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
-                    ),
-                    child: const Icon(Iconsax.cup_copy, size: 38, color: VSPColors.textSecondary),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    AppLocalizations.of(context)!.noOneVsOneRanked,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
+          return VSPStateView(
+            state: VSPUiState.empty,
+            title: AppLocalizations.of(context)!.noOneVsOneRanked,
+            icon: Iconsax.cup_copy,
           );
         }
 
@@ -84,6 +99,8 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
+              if (snapshot.hasError)
+                _buildStaleDataWarning(isArabic),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.all(14),

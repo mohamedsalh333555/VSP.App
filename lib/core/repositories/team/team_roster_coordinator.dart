@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../repositories/notification_repository.dart';
-import '../../services/logger_service.dart';
 
 /// Coordinator handling team member roster queries, additions, removals, and notifications.
 class TeamRosterCoordinator {
@@ -29,42 +28,63 @@ class TeamRosterCoordinator {
     if (memberUids.isEmpty) return [];
     final response = await _supabase
         .from('user_public_profiles')
-        .select('profile_image_url')
-        .inFilter('id', memberUids);
-    return (response as List)
-        .map((row) => row['profile_image_url']?.toString() ?? '')
-        .toList();
+        .select('id, profile_image_url')
+        // Repeated roster IDs do not need repeated filter parameters.
+        .inFilter('id', memberUids.toSet().toList());
+    // PostgREST does not guarantee the order of rows returned by IN.
+    // Keep images aligned with the team's member IDs, including missing
+    // profiles, so avatars cannot be displayed for the wrong player.
+    final imageByUserId = <String, String>{
+      for (final row in response as List)
+        if (row['id'] != null)
+          row['id'].toString(): row['profile_image_url']?.toString() ?? '',
+    };
+    return [for (final uid in memberUids) imageByUserId[uid] ?? ''];
   }
 
   /// Fetch list of player profiles (id, name, phone, position) for members of a team
   Future<List<Map<String, String>>> getTeamMemberProfiles(String teamId) async {
     try {
-      final memberUids = await getTeamMemberUids(teamId);
-      if (memberUids.isEmpty) return [];
-
-      final response = await _supabase.rpc(
-        'get_team_member_profiles',
-        params: {'p_team_id': teamId},
-      );
-
-      return (response as List).map((row) => {
-        'uid': row['uid']?.toString() ?? '',
-        'name': row['name']?.toString() ?? 'Player',
-        'phone': row['phone']?.toString() ?? '',
-        'position': row['p_position']?.toString() ?? 'Player',
-      }).toList();
+      return await getTeamMemberProfilesStrict(teamId);
     } catch (e) {
       debugPrint('Error getting team member profiles: $e');
       return [];
     }
   }
 
+  /// Use this variant when the UI must distinguish an empty roster from a
+  /// failed network request. The server RPC enforces roster access.
+  Future<List<Map<String, String>>> getTeamMemberProfilesStrict(String teamId) async {
+    // No redundant team_members lookup: the RPC resolves the roster.
+    final response = await _supabase.rpc(
+      'get_team_member_profiles',
+      params: {'p_team_id': teamId},
+    );
+
+    return (response as List).map((row) => {
+      'uid': row['uid']?.toString() ?? '',
+      'name': row['name']?.toString() ?? 'Player',
+      'phone': row['phone']?.toString() ?? '',
+      'position': row['p_position']?.toString() ?? 'Player',
+    }).toList();
+  }
+
+  /// Legacy roster entry point: invite the player rather than enrolling them
+  /// without consent. Membership is created only after recipient acceptance.
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) async {
-    final response = await _supabase.rpc('add_team_member_atomic', params: {'p_team_id': teamId, 'p_user_id': userId});
+    final response = await _supabase.rpc(
+      'invite_team_member',
+      params: {'p_team_id': teamId, 'p_user_id': userId},
+    );
     if (response is! Map || response['success'] != true) {
-      throw Exception(response is Map ? response['error'] ?? 'فشل إضافة اللاعب' : 'فشل إضافة اللاعب');
+      throw StateError(response is Map
+          ? (response['error']?.toString() ?? 'تعذر إرسال دعوة الفريق')
+          : 'تعذر إرسال دعوة الفريق');
     }
-    await sendJoinNotification(userId);
+    final invitationId = response['invitation_id']?.toString();
+    if (invitationId == null || invitationId.trim().isEmpty || invitationId == 'null') {
+      throw StateError('Invitation succeeded without an invitation ID');
+    }
   }
 
   Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) async {
@@ -107,12 +127,8 @@ class TeamRosterCoordinator {
         .from('team_members')
         .stream(primaryKey: ['team_id', 'user_id'])
         .eq('user_id', userId)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
-        .handleError((err) {
-          VSPLogger.w('Membership realtime stream notice: $err');
-        });
+        // A timeout or subscription error must reach the UI. Emitting an
+        // empty list here falsely tells users they left every team.
+        .timeout(const Duration(seconds: 10));
   }
 }

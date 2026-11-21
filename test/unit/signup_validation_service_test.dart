@@ -145,9 +145,45 @@ void main() {
       expect(res.normalizedPhone, equals('01099887766'));
     });
 
+
+    test('football position must be explicitly selected and recognized for players', () {
+      SignupValidationResult validate(String? position, {bool require = true}) =>
+          SignupValidationService.validateForm(
+            agreedToTerms: true,
+            firstName: 'Ahmed',
+            lastName: 'Salah',
+            rawPhone: '01012345678',
+            email: 'captain@example.com',
+            password: 'StrongPassword123!',
+            confirmPassword: 'StrongPassword123!',
+            dateOfBirth: DateTime(2000, 1, 1),
+            selectedPosition: position,
+            requirePlayerPosition: require,
+          );
+      expect(validate(null).error, SignupValidationError.invalidPosition);
+      expect(validate('ST').error, SignupValidationError.invalidPosition);
+      expect(validate('Basketball').error, SignupValidationError.invalidPosition);
+      for (final position in ['GK', 'DF', 'MF', 'FW']) {
+        expect(validate(position).isValid, isTrue, reason: position);
+      }
+      expect(validate(null, require: false).isValid, isTrue);
+    });
+
+    test('player payload never assumes a goalkeeper position when unselected', () {
+      final noChoice = SignupValidationService.buildUserDataPayload(
+        fullName: 'Player', normalizedPhone: '01012345678',
+        isOwner: false,
+      );
+      expect(noChoice['position'], isNull);
+    });
+
     test('calculatePasswordStrength evaluates score, label, and colors', () {
+      final empty = SignupValidationService.calculatePasswordStrength('');
+      expect(empty.score, equals(0.0));
+      expect(empty.label, equals('Weak'));
+
       final weak = SignupValidationService.calculatePasswordStrength('abc');
-      expect(weak.score, equals(0.0));
+      expect(weak.score, equals(0.2));
       expect(weak.label, equals('Weak'));
 
       final medium = SignupValidationService.calculatePasswordStrength('abcdef12');
@@ -178,6 +214,37 @@ void main() {
         dateOfBirth: DateTime.utc(1985, 3, 10),
       );
       expect(ownerPayload['position'], isNull);
+    });
+
+
+    test('formatSignupError never leaks an unknown provider response', () {
+      for (final isArabic in [true, false]) {
+        for (final message in [
+          'PostgrestException: users.phone 01012345678',
+          'User already registered: player@private.example',
+          'database url secret=example',
+          'Could not insert auth.users row',
+        ]) {
+          final result = SignupValidationService.formatSignupError(
+            message, isArabic: isArabic,
+          );
+          expect(result, isArabic ? 'فشل إنشاء الحساب' : 'Account creation failed');
+          expect(result, isNot(contains('01012345678')));
+          expect(result, isNot(contains('private.example')));
+          expect(result, isNot(contains('auth.users')));
+        }
+      }
+    });
+
+    test('registration only returns allowlisted localized provider messages', () {
+      final age = SignupValidationService.formatSignupError(
+        'REGISTRATION_REQUIRES_18_PLUS', isArabic: true,
+      );
+      expect(age, contains('18'));
+      final mailing = SignupValidationService.formatSignupError(
+        'unexpected_failure', isArabic: false,
+      );
+      expect(mailing, contains('confirmation email'));
     });
 
     test('formatSignupError localizes confirmation email failures correctly', () {

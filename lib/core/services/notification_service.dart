@@ -2,9 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'notification/match_reminder_schedule_contract.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
 import '../../features/player/screens/chat_screen.dart';
 import '../services/logger_service.dart';
@@ -73,6 +77,28 @@ class NotificationService {
    }, onConflict: 'token');
  }
 
+ /// Unlink the current physical device before auth.signOut revokes the JWT.
+ /// RLS requires the old user's session to delete their token association.
+ /// Token invalidation is attempted even if database cleanup fails.
+ Future<void> unregisterCurrentDeviceForUser(String userId) async {
+   if (kIsWeb || userId.trim().isEmpty ||
+       Supabase.instance.client.auth.currentUser?.id != userId) return;
+   final token = _latestFcmToken?.trim();
+   if (token == null || token.isEmpty) return;
+   try {
+     await Supabase.instance.client.from('user_device_tokens')
+         .delete().eq('user_id', userId).eq('token', token);
+   } catch (_) {
+     VSPLogger.w('Could not unlink current FCM device token from previous account.');
+   }
+   try {
+     await _firebaseMessaging.deleteToken();
+     _latestFcmToken = null;
+   } catch (_) {
+     VSPLogger.w('Could not invalidate current FCM device token after sign-out.');
+   }
+ }
+
  Future<void> _registerTokenForUser(String userId, String token) async {
    await _storeDeviceToken(userId, token);
    await Supabase.instance.client.from('users').update({'fcm_token': token.trim()}).eq('id', userId);
@@ -114,13 +140,30 @@ class NotificationService {
    });
 
    _foregroundMessageSubscription ??= FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+     final context = _navigatorKey?.currentContext;
+     if (context == null || !context.mounted) return;
+     final auth = Provider.of<AuthProvider>(context, listen: false);
+     final userId = auth.currentUser?.id;
+     if (!NotificationFilterService.isRecipientCurrentUser(message.data, userId)) return;
      final bookingId = message.data['bookingId']?.toString();
      final type = message.data['type']?.toString();
      if (type == 'chat' && ChatScreen.activeBookingId == bookingId) return;
-     if (!await _shouldShowNotification(type)) return;
+     if (!await _shouldShowNotification(type, userId: userId!, isOwner: auth.isOwner)) return;
+     // A queued foreground push must not surface under a different signed-in
+     // account after an async preferences lookup.
+     if (!context.mounted ||
+         Supabase.instance.client.auth.currentUser?.id != userId ||
+         Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) {
+       return;
+     }
      if (message.notification != null) {
        await _showLocalNotification(message);
-       NotificationUiHelper.showInAppAlert(context: _navigatorKey?.currentContext, message: message);
+       if (!context.mounted ||
+           Supabase.instance.client.auth.currentUser?.id != userId ||
+           Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) {
+         return;
+       }
+       await NotificationUiHelper.showInAppAlert(context: context, message: message);
      }
    });
 
@@ -181,52 +224,133 @@ class NotificationService {
    }
  }
 
- Future<void> scheduleMatchReminder({required String bookingId, required String stadiumName, required DateTime matchTime}) async {
-   if (kIsWeb) return;
-   final prefs = await SharedPreferences.getInstance();
-   if (!(prefs.getBool('notif_general') ?? true) || !(prefs.getBool('notif_match_reminders') ?? true)) return;
-   final reminderTime = matchTime.subtract(const Duration(hours: 2));
-   if (reminderTime.isBefore(DateTime.now())) return;
-   const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-     'match_reminders', 'Match Reminders',
-     channelDescription: 'Reminders sent 2 hours before a match starts',
-     importance: Importance.high, priority: Priority.high,
-   );
-   await _localNotifications.show(
-     bookingId.hashCode, 'Match Reminder',
-     'Your match at $stadiumName starts in 2 hours! Don\'t forget your gear.',
-     const NotificationDetails(android: androidDetails),
-     payload: jsonEncode({'type': 'booking', 'id': bookingId}),
-   );
-   VSPLogger.i('Scheduled reminder for $bookingId at $reminderTime');
- }
+ Future<void> scheduleMatchReminder({
+    required String bookingId, required String stadiumName, required DateTime matchTime,
+  }) async {
+    if (kIsWeb) return;
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty || bookingId.trim().isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    // Check again after every native/persistence await: a user can opt out
+    // while the OS is scheduling, after the settings screen cancelled the
+    // previously recorded reminders.
+    bool reminderConsentValid() =>
+        Supabase.instance.client.auth.currentUser?.id == userId &&
+        (prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_general')) ?? true) &&
+        (prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_match_reminders')) ?? true);
+    if (!reminderConsentValid()) return;
+    final when = VSPMatchReminderSchedule.reminderUtc(
+      matchTime: matchTime, now: DateTime.now(),
+    );
+    final id = VSPMatchReminderSchedule.reminderId(userId, bookingId);
+    final key = VSPMatchReminderSchedule.preferenceKey(userId);
 
- void _handleNotificationClick(Map<String, dynamic> data) async {
+    Future<void> cancelObsoleteReminder() async {
+      await _localNotifications.cancel(id);
+      final existing = prefs.getStringList(key) ?? const <String>[];
+      await prefs.setStringList(
+        key, VSPMatchReminderSchedule.withoutScheduled(
+          records: existing, notificationId: id,
+        ),
+      );
+    }
+
+    // A moved/expired match must invalidate the previously scheduled alert,
+    // otherwise the user could receive an obsolete booking reminder.
+    if (when == null) {
+      await cancelObsoleteReminder();
+      return;
+    }
+    if (!VSPMatchReminderSchedule.allowsScheduling(
+      records: prefs.getStringList(key) ?? const <String>[],
+      notificationId: id, reminderUtc: when,
+    )) {
+      await cancelObsoleteReminder();
+      return;
+    }
+    // UTC absolute instant avoids Cairo DST wall-clock ambiguity.
+    final scheduledAt = tz.TZDateTime.utc(when.year, when.month, when.day,
+        when.hour, when.minute, when.second, when.millisecond, when.microsecond);
+    await _localNotifications.zonedSchedule(
+      id, 'Match Reminder',
+      'Your match at $stadiumName starts in 2 hours! Don\'t forget your gear.',
+      scheduledAt,
+      const NotificationDetails(
+        android: AndroidNotificationDetails('match_reminders', 'Match Reminders',
+            channelDescription: 'Two-hour match reminders', importance: Importance.high,
+            priority: Priority.high),
+        iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: jsonEncode({'type': 'booking_confirmed', 'bookingId': bookingId,
+          'recipientUserId': userId}),
+    );
+    if (!reminderConsentValid()) {
+      await cancelObsoleteReminder();
+      return;
+    }
+    final existing = prefs.getStringList(key) ?? const <String>[];
+    if (!VSPMatchReminderSchedule.allowsScheduling(
+      records: existing, notificationId: id, reminderUtc: when,
+    )) {
+      await _localNotifications.cancel(id);
+      return;
+    }
+    final saved = await prefs.setStringList(
+      key, VSPMatchReminderSchedule.withScheduled(
+        records: existing, notificationId: id, reminderUtc: when,
+      ),
+    );
+    // An opt-out or logout may finish while the async registry write runs.
+    // Never leave a scheduled alert when we cannot safely retain its record.
+    if (!saved || !reminderConsentValid()) {
+      await cancelObsoleteReminder();
+    }
+  }
+
+  Future<void> cancelScheduledMatchRemindersForUser(String userId) async {
+    if (kIsWeb || userId.trim().isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final key = VSPMatchReminderSchedule.preferenceKey(userId);
+    for (final raw in prefs.getStringList(key) ?? const <String>[]) {
+      final id = VSPMatchReminderSchedule.notificationIdFromRecord(raw);
+      if (id != null) await _localNotifications.cancel(id);
+    }
+    await prefs.remove(key);
+  }
+
+  void _handleNotificationClick(Map<String, dynamic> data) async {
    final context = _navigatorKey?.currentContext;
-   if (context == null) return;
+   if (context == null || !context.mounted) return;
+   // Reject callbacks for other accounts and legacy recipient-free pushes.
+   final userId = Supabase.instance.client.auth.currentUser?.id;
+   if (!NotificationFilterService.isRecipientCurrentUser(data, userId)) return;
    final type = data['type']?.toString();
    final bookingId = (data['bookingId'] ?? data['booking_id'])?.toString();
    final teamId = (data['teamId'] ?? data['team_id'])?.toString();
-   final tournamentId = (data['tournamentId'] ?? data['tournament_id'] ?? data['championship_id'] ?? data['championshipId'])?.toString();
-   VSPLogger.i('Handling notification click: type=$type, bookingId=$bookingId, teamId=$teamId, tournamentId=$tournamentId');
-   if (bookingId != null && bookingId.isNotEmpty) {
+   final tournamentId = (data['tournamentId'] ?? data['tournament_id'] ??
+       data['championship_id'] ?? data['championshipId'])?.toString();
+   // Validate all route IDs: a push payload must not inject a route.
+   final safeRoute = NotificationFilterService.resolveDeepLinkRoute(data);
+   if (bookingId != null && bookingId.isNotEmpty &&
+       safeRoute.startsWith('/match/')) {
      if (type == 'chat') {
        NotificationUiHelper.navigateToChat(context, bookingId);
        return;
      }
-     try {
-       GoRouter.of(context).push('/match/$bookingId');
-       return;
-     } catch (_) {
-       NotificationUiHelper.navigateToBooking(context, bookingId);
-       return;
-     }
+     try { GoRouter.of(context).push(safeRoute); return; }
+     catch (_) { NotificationUiHelper.navigateToBooking(context, bookingId); return; }
    }
-   if (teamId != null && teamId.isNotEmpty) {
-     try { GoRouter.of(context).push('/team/$teamId'); return; } catch (_) {}
+   if (teamId != null && teamId.isNotEmpty &&
+       safeRoute.startsWith('/team/')) {
+     try { GoRouter.of(context).push(safeRoute); return; } catch (_) {}
    }
-   if (tournamentId != null && tournamentId.isNotEmpty) {
-     try { GoRouter.of(context).push('/championship/$tournamentId'); return; } catch (_) {}
+   if (tournamentId != null && tournamentId.isNotEmpty &&
+       tournamentId.length <= 128 &&
+       !RegExp(r'[^a-zA-Z0-9_-]').hasMatch(tournamentId)) {
+     try { GoRouter.of(context).push('/championship/' + tournamentId); return; }
+     catch (_) {}
    }
    if (type == 'subscription') {
      try { GoRouter.of(context).push('/subscription-plans'); return; } catch (_) {}
@@ -234,13 +358,13 @@ class NotificationService {
    if (type == 'payout' || type == 'ledger') {
      try { GoRouter.of(context).push('/owner-ledger'); return; } catch (_) {}
    }
-   try {
-     GoRouter.of(context).push('/notifications');
-   } catch (_) {
-     Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()));
+   try { GoRouter.of(context).push('/notifications'); }
+   catch (_) {
+     Navigator.push(context, MaterialPageRoute(
+       builder: (_) => const NotificationsCenterScreen(),
+     ));
    }
  }
-
  Future<void> _showLocalNotification(RemoteMessage message) async {
    const androidDetails = AndroidNotificationDetails(
      'vsp_default_channel',
@@ -264,8 +388,12 @@ class NotificationService {
 
  static Future<void> showBookingConfirmation({required String stadiumName, required DateTime bookingDate, required String timeSlot}) async {
    if (kIsWeb) return;
+   final userId = Supabase.instance.client.auth.currentUser?.id;
+   if (userId == null || userId.isEmpty) return;
    final prefs = await SharedPreferences.getInstance();
-   if (!(prefs.getBool('notif_general') ?? true) || !(prefs.getBool('notif_cash_bookings') ?? true)) return;
+   if (Supabase.instance.client.auth.currentUser?.id != userId ||
+       !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_general')) ?? true) ||
+       !(prefs.getBool(NotificationFilterService.scopedPrefKey(userId, 'notif_cash_bookings')) ?? true)) return;
    const androidDetails = AndroidNotificationDetails(
      'booking_channel', 'Booking Notifications',
      importance: Importance.max, priority: Priority.high, icon: 'ic_notification',
@@ -275,18 +403,23 @@ class NotificationService {
    const title = 'Booking Confirmed!';
    final bodyStr = 'You booked $stadiumName on ${bookingDate.month}/${bookingDate.day} at $timeSlot.';
    await NotificationService()._localNotifications.show(stadiumName.hashCode, title, bodyStr, details);
-   final uid = Supabase.instance.client.auth.currentUser?.id;
-   if (uid != null) {
+   // Do not write this booking confirmation into a different account's
+   // inbox if the user signs out or switches accounts during the native show.
+   if (Supabase.instance.client.auth.currentUser?.id == userId) {
      final appNotif = AppNotification(id: '', title: title, body: bodyStr, type: 'info', createdAt: DateTime.now(), isRead: false);
-     try { await NotificationRepository().sendNotification(uid, appNotif); }
+     try { await NotificationRepository().sendNotification(userId, appNotif); }
      catch (e) { VSPLogger.e('Error saving booking confirmation to Supabase', e); }
    }
  }
 
- Future<bool> _shouldShowNotification(String? type) async {
-   final prefs = await SharedPreferences.getInstance();
-   final hasOwnerToggles = prefs.containsKey('notif_owner_new_bookings') || prefs.containsKey('notif_owner_payouts');
-   return NotificationFilterService.shouldShowNotification(type, isOwner: hasOwnerToggles, prefs: prefs);
+ Future<bool> _shouldShowNotification(
+   String? type, {required String userId, required bool isOwner}
+ ) async {
+   if (userId.isEmpty ||
+       Supabase.instance.client.auth.currentUser?.id != userId) return false;
+   return NotificationFilterService.shouldShowNotificationForUser(
+     type, userId: userId, isOwner: isOwner,
+   );
  }
 
  RealtimeChannel? _realtimeNotifChannel;
@@ -303,7 +436,20 @@ class NotificationService {
          filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'user_id', value: userId),
          callback: (payload) async {
            final record = payload.newRecord;
-           if (record.isEmpty || !await _shouldShowNotification(record['type']?.toString())) return;
+           if (record.isEmpty || record['user_id']?.toString() != userId ||
+               Supabase.instance.client.auth.currentUser?.id != userId) return;
+           final context = _navigatorKey?.currentContext;
+           if (context == null || !context.mounted) return;
+           final auth = Provider.of<AuthProvider>(context, listen: false);
+           if (auth.currentUser?.id != userId ||
+               !await _shouldShowNotification(
+                 record['type']?.toString(), userId: userId, isOwner: auth.isOwner,
+               )) return;
+           if (!context.mounted ||
+               Supabase.instance.client.auth.currentUser?.id != userId ||
+               Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) {
+             return;
+           }
            const androidDetails = AndroidNotificationDetails(
              'vsp_default_channel', 'VSP General Notifications',
              importance: Importance.max, priority: Priority.high, icon: 'ic_notification',
@@ -320,6 +466,7 @@ class NotificationService {
              details,
              payload: jsonEncode({
                'type': record['type']?.toString() ?? 'info',
+               'recipientUserId': userId,
                if (record['booking_id'] != null) 'bookingId': record['booking_id'].toString(),
                if (record['team_id'] != null) 'teamId': record['team_id'].toString(),
                if (record['tournament_id'] != null) 'tournamentId': record['tournament_id'].toString(),

@@ -9,6 +9,7 @@ import '../../../core/repositories/chat_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../player/screens/chat_screen.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/services/support_service.dart';
 import '../widgets/inbox/owner_chat_item_card.dart';
@@ -22,6 +23,39 @@ class OwnerInboxScreen extends StatefulWidget {
 
 class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  final ChatRepository _chatRepository = ChatRepository();
+ String? _streamOwnerId;
+ int _scopeGeneration = 0;
+ Stream<List<Map<String, dynamic>>> _conversationsStream = const Stream.empty();
+ final Set<String> _attemptedProfileIds = {};
+
+ @override
+ void didChangeDependencies() {
+   super.didChangeDependencies();
+   final ownerId = context.watch<AuthProvider>().currentUser?.id ?? '';
+   if (ownerId == _streamOwnerId) return;
+   _streamOwnerId = ownerId;
+   _scopeGeneration++;
+   _userCache.clear();
+   _attemptedProfileIds.clear();
+   _isFetchingUsers = false;
+   _conversationsStream = ownerId.isEmpty
+       ? Stream.value(<Map<String, dynamic>>[])
+       : _chatRepository.streamUserConversations(ownerId);
+ }
+
+ void _retryConversations() {
+   if (!mounted) return;
+   setState(() {
+     _scopeGeneration++;
+     _isFetchingUsers = false;
+     _attemptedProfileIds.clear();
+     final ownerId = _streamOwnerId ?? '';
+     _conversationsStream = ownerId.isEmpty
+         ? Stream.value(<Map<String, dynamic>>[])
+         : _chatRepository.streamUserConversations(ownerId);
+   });
+ }
+
 
  /// N+1 FIX: Local in-memory cache of user profiles keyed by user-id.
  /// Populated via a single batch Supabase query whenever the conversation
@@ -31,11 +65,14 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
  /// Batch-fetch profiles for all [userIds] that are not already cached.
  Future<void> _prefetchUsers(List<String> userIds) async {
- final missing = userIds.where((id) => id.isNotEmpty && !_userCache.containsKey(id)).toList();
+ final missing = userIds.where((id) => id.isNotEmpty && !_userCache.containsKey(id) && !_attemptedProfileIds.contains(id)).toSet().toList();
  if (missing.isEmpty || _isFetchingUsers) return;
  _isFetchingUsers = true;
+ final generation = _scopeGeneration;
+ _attemptedProfileIds.addAll(missing);
  try {
  final rows = await UserRepository().getUserSummariesByIds(missing);
+ if (!mounted || generation != _scopeGeneration) return;
  for (final map in rows) {
  _userCache[map['id'].toString()] = map;
  }
@@ -43,7 +80,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  } catch (e) {
  debugPrint(' Owner inbox prefetch users notice: $e');
  } finally {
- _isFetchingUsers = false;
+ if (generation == _scopeGeneration) _isFetchingUsers = false;
  }
  }
 
@@ -53,8 +90,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
  @override
  Widget build(BuildContext context) {
- final auth = Provider.of<AuthProvider>(context, listen: false);
- final ownerId = auth.currentUser?.id ?? '';
+ final ownerId = _streamOwnerId ?? '';
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
  return VSPScaffold(
@@ -70,6 +106,11 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  ),
  actions: [
  IconButton(
+   tooltip: isArabic ? 'تحديث المحادثات' : 'Refresh conversations',
+   icon: const Icon(Iconsax.refresh_copy, color: VSPColors.textSecondary),
+   onPressed: _retryConversations,
+ ),
+ IconButton(
  icon: const Icon(Iconsax.headphone_copy, color: VSPColors.accent),
  onPressed: () => _openSupportChat(context),
  tooltip: isArabic ? 'الاتصال بالدعم' : 'Contact Support',
@@ -78,13 +119,30 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  ],
  ),
  body: StreamBuilder<List<Map<String, dynamic>>>(
- stream: _chatRepository.streamUserConversations(ownerId),
+ key: ValueKey(ownerId),
+ stream: _conversationsStream,
  builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
- return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+ return VSPStateView(
+   state: VSPUiState.loading,
+   title: isArabic ? 'جارٍ تحميل المحادثات' : 'Loading conversations',
+   message: isArabic ? 'نحدّث قائمة محادثاتك.' : 'Fetching your conversations.',
+ );
  }
 
  final conversations = snapshot.data ?? [];
+ 
+ // A failed initial read must not masquerade as a genuinely empty inbox.
+ if (snapshot.hasError && conversations.isEmpty) {
+   return VSPErrorState(
+     customMessage: isArabic
+         ? 'تعذر تحميل المحادثات. تحقق من الاتصال ثم أعد المحاولة.'
+         : 'Could not load conversations. Check your connection and try again.',
+     retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
+     onRetry: _retryConversations,
+   );
+ }
+
 
  // N+1 FIX: Collect all other-user IDs and batch-fetch missing profiles once.
  final otherUserIds = conversations
@@ -110,9 +168,41 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
  return ListView.builder(
  padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true),
- itemCount: conversations.length,
+ itemCount: conversations.length + (snapshot.hasError ? 1 : 0),
  itemBuilder: (context, index) {
- final conv = conversations[index];
+ if (snapshot.hasError && index == 0) {
+   return Padding(
+     padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+     child: Container(
+       padding: const EdgeInsets.all(VSPSpacing.md),
+       decoration: BoxDecoration(
+         color: VSPColors.warning.withValues(alpha: 0.10),
+         borderRadius: BorderRadius.circular(VSPRadius.md),
+         border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+       ),
+       child: Row(
+         children: [
+           const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+           const SizedBox(width: VSPSpacing.sm),
+           Expanded(
+             child: Text(
+               isArabic
+                   ? 'تعذر تحديث المحادثات. المعروض هو آخر بيانات تم تحميلها.'
+                   : 'Conversations could not be refreshed. Showing the last loaded data.',
+               style: const TextStyle(color: VSPColors.textSecondary),
+             ),
+           ),
+           TextButton(
+             onPressed: _retryConversations,
+             child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+           ),
+         ],
+       ),
+     ),
+   );
+ }
+ final conversationIndex = index - (snapshot.hasError ? 1 : 0);
+ final conv = conversations[conversationIndex];
  final convId = conv['id'].toString();
  final type = conv['type']?.toString() ?? 'direct';
  final participants = (conv['participant_ids'] as List?)?.map((e) => e.toString()).toList() ?? [];

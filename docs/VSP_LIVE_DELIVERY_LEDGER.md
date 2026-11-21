@@ -1,0 +1,1475 @@
+## 2026-11-20 — Team invitations inbox route accepted (351/281)
+
+- **33.08 accepted (+1), Flutter widget-level route only:** the actual Teams dashboard invitation icon now delegates to a reusable `TeamInvitationsAction`, preserving its Arabic/English tooltip, secure account-owned `TeamInvitationsSheet`, modal safe area and post-accept team refresh callback.
+- [17 passing tests in scoped membership/invitation CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44641310054) at `ff0dad19` include actual icon click, bottom-sheet navigation and accept action in **both locales**, alongside rejection/retry and prior account-switch privacy checks. [Acceptance evidence/limits](VSP_TEAM_INVITATION_INBOX_ROUTE_ACCEPTANCE_33_08_2026-11-20.md).
+- **Unproven:** real two-user authenticated staging delivery/accept/reject, expired invitations, Android invitation journey, independently verified RLS. Tasks 33.09–33.14, 17.07, 59, 79 stay OPEN. This is not approval to release.
+- **632 active = 351 accepted + 281 open, 8 archived historical IDs.** No production, main merge, Supabase/Paymob write or APK.
+
+## 2026-11-20 — Bounded Arabic grammar and long-copy acceptance (350/282)
+
+- **04.07 accepted (+1), strictly scoped:** Team Skills published team capacity now presents Arabic `فريق واحد/فريقان/3–10 فرق/11+ فريق` and English singular/plural; published phase summaries preserve feminine singular/dual/plural. [73 passing focused Team Skills tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639256095) including both Arabic grammar assertions.
+- Team invitation rows now keep names and actions on separate responsive lines. Both Arabic RTL and English LTR were exercised with a long team name at 320dp and 2x text scale, plus account-switch isolation and async-reply checks. [13 passing focused invitation+membership tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639977832). [Exact acceptance boundaries](VSP_ARABIC_LONG_TEXT_AND_GRAMMAR_ACCEPTANCE_04_07_2026-11-20.md).
+- Not a full 338-screen localization, TalkBack, device or accessibility sign-off. All other 04.*, 05.*, 09.* and 10.* tasks keep their own acceptance gates. **632 active: 350 accepted / 282 open; 8 historical retired**.
+- Other booking time-order UI hardening from this continuation is **CODE_DONE / broader QA pending**, not another task ID. No booking payment, DB, production, APK or main merge.
+
+## 2026-11-20 — UXLP-44 evidence documentation accepted (349/283)
+
+- **01.05 accepted (+1):** published a reproducible **44/44 rule source-evidence register** showing two concrete representative role screens, a scoped observation from the canonical audit, unresolved source/runtime status, and links to the existing independent acceptance criteria. [Evidence register](VSP_UXLP_44_CONFORMANCE_EVIDENCE_01_05_2026-11-20.md). [Successful documentation integrity CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44639503400).
+- **Boundary:** a documentation deliverable, **not** 44 UX rule passes or exhaustive 338-screen/device coverage; 39 runtime pending, five product/server decisions (25/31/38/39/41) still open. Leave 01.04 and 01.06 unresolved.
+- Separate client hardening in this batch: team invitation inbox now refreshes safely on identity switches with widget tests; Team Skills capacity labels use correct Arabic singular/dual/plural. These are **CODE_DONE / QA pending**, and do not close 33.*, 04.07, or 79.*.
+- **632 active = 349 accepted / 283 open; eight historical retired 1v1 tasks preserved outside active scope.** No main merge, production, Paymob or staging writes.
+
+## 2026-11-19 — Team Skills Cup discovery, roster-refresh and public identity hardening (CODE_DONE; acceptance pending)
+
+- **Published discovery:** [code `02f22e0`](https://github.com/mohamedsalh333555/VSP.App/commit/02f22e029401ddf59d0c1da9b7ca10c8cb416ef9) now evaluates contradictory copies of a cup before location filtering, preventing stale same-ID details from masquerading as a valid local tournament. [Regression `904ff3e`](https://github.com/mohamedsalh333555/VSP.App/commit/904ff3e92ed1250c4ec8327689fac447eab3698b) covers both row orders, all/each governorate, valid identical duplicates.
+- **Captain registration reliability:** [code `cf8d1d4`](https://github.com/mohamedsalh333555/VSP.App/commit/cf8d1d4e02f16cdc75137d01adf7d568eb448912) re-requests a verified roster after a periodic poll has invalidated an in-flight roster read; reuse account/team/generation checks. [Source regression `8ade5c3`](https://github.com/mohamedsalh333555/VSP.App/commit/8ade5c3e79df6db06c6b360b890a3eaceef6292a).
+- **Public team identity:** [repository `0d6a617`](https://github.com/mohamedsalh333555/VSP.App/commit/0d6a617a82b446fe4d09147b91323d2172cf5b36) rejects contradictory or blank public team names instead of arbitrary last-row wins; [UI `31ae111`](https://github.com/mohamedsalh333555/VSP.App/commit/31ae111f48ff1e5ae0f3743962875e01814b4f69) shows localized unavailable-team text rather than raw identifiers; [regressions `dfb641a`](https://github.com/mohamedsalh333555/VSP.App/commit/dfb641ae694fbef672a3485a446613c19ff44aa0) cover conflict, reversal and fallback.
+- All edits are limited to Flutter source/tests on `uxlp-44-implementation`. No backend, Paymob, production, APK or main merge. **No additional acceptance ID is claimed:** the [canonical tracker](VSP_CURRENT_TASK_COUNTER.md) remains **632 active = 348 accepted + 284 open; 8 retired from the historical 640**. Latest-head GitHub Actions, authenticated staging permissions and Android/device behavior must be evaluated separately before accepting broader tasks.
+
+## 2026-11-19 — Challenge result submission-time definition accepted (348/284 open, 8 retired)
+
+- **36.01 accepted (+1):** documented server-end-time-only entry rule for team challenge results. A static CI source contract verifies that the checked-in Supabase function compares booking end_time against database time, refuses early submissions, cancelled matches, wrong type and already-finalized bookings before writes. [Precise policy and limits](VSP_CHALLENGE_RESULT_SUBMISSION_TIME_POLICY_36_01_2026_11_19.md); [passing source-contract CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44548366128). This **does not** prove a hosted deployment, independent captains, concurrent submissions or non-played appeals; those remain 36.02–36.07, 84 and staging tasks.
+- **632 active: 348 accepted / 284 open; eight retired 43.* kept outside active; 640 original historical.** No production SQL, payments, APK or main merge.
+
+## 2026-11-19 — Challenge tie policy accepted (347/285 open, 8 retired)
+
+- **37.04 accepted (+1):** confirmed team challenge standings share rank when points tie (1/1/3), team ID stabilizes display order only, and ambiguous top-three medals are hidden. [Policy](VSP_CHALLENGE_TIE_POLICY_37_04_2026_11_19.md), [successful ranking CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44547284353) with two new tests and existing widget coverage. This is only a **documented points-tie policy and tested Flutter presentation**, not canonical result-source validation, League ranking, Team Skills Cup winner, prizes or staging authorization.
+- **632 active = 347 accepted + 285 open**, with 8 historical retired 1v1 tasks, 640 originally tracked. 37.02/03/05/06/07, 41, 84, RLS and staging tests remain open. No main merge, production change, APK or payment write.
+
+## 2026-11-19 — Legacy standalone 1v1 task retirement (346/286 open; 8 retired)
+
+- The previously approved product decision replaces the standalone 1v1 competition with the Team Skills Cup. The eight **open, unaccepted** task IDs **43.01–43.08** are now explicitly archived as **CANCELLED / RETIRED**, not marked ACCEPTED. [Decision and exact scope](VSP_RETIRED_LEGACY_1V1_TASKS_43_2026_11_19.md).
+- **640 historical unique IDs = 632 active + 8 retired; active = 346 accepted + 286 open; 54.75% accepted of active.** The prior 346/294 history below remains preserved as an earlier scope snapshot and is not rewritten.
+- Last pre-retirement Flutter CI on head cf36594: [42/42 GitHub Actions passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44543616228). The revised accounting CI is a separate verification gate. Historical 1v1 data, financial entitlements, Team Skills Cup and its within-event 1v1 finale remain untouched. No main merge or production operation.
+
+## 2026-11-19 — Team membership account-scope read accepted (346/294)
+
+- **18.01 (345→346 accepted / 295→294 open):** the real TeamRepository.getUserTeamsStrict retrieves all current team_members IDs for the supplied user, resolves matching teams in teams_public with deterministic ordering, and does not use a saved preference to assert membership. [Scoped team membership CI **5 tests passed**](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44488718345); [bounded acceptance](VSP_ACCOUNT_SCOPED_TEAM_MEMBERSHIP_BOUNDED_ACCEPTANCE_18_01_2026_11_19.md).
+- The tests use synthetic PostgREST MockClient responses. No JWT/RLS hosted enforcement, real account cross-access, stale membership removal or live multi-device journey is asserted. Separate 17.07, 59, 79 and SEC-02 checks remain open.
+- **640 active / 346 accepted / 294 open (54.06%).** No main merge, production/Paymob updates, Android release or data writes.
+
+## 2026-11-19 — Email OTP Flutter verification accepted with isolated provider (345/295)
+
+- **11.04 (344→345 accepted / 296→295 open):** real Flutter VerifyEmailScreen tests with fake AuthProvider: incomplete code refuses provider, six-digit paste submits expected email/token once, duplicate pending request blocked, Arabic/English invalid OTP errors, redacted thrown diagnostics and resend after 60-second UI cooldown. [Focused OTP CI **19 tests passed**](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44487774510) and [bounded acceptance](VSP_EMAIL_OTP_UI_BOUNDED_ACCEPTANCE_11_04_2026_11_19.md).
+- This checks only the app's current **email** verification UX; no live SMTP/OTP, hosted Supabase, timing attack, rate limiting, real two-account login or Android test. Those remain unaccepted elsewhere.
+- **640 active / 345 accepted / 295 open (53.91%).** No main merge, production/payment changes or APK.
+
+## 2026-11-19 — Mocked password recovery screen accepted (344/296)
+
+- **11.03 (343→344 accepted / 297→296 open):** tested valid/short/mismatched password change, successful sign-out of original recovering user, forbidden sign-out of a switched account both during update and after success delay, redacted provider exceptions, and request-link privacy. [Passing 44-test Recovery CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44486325222); [precise client-only acceptance](VSP_PASSWORD_RECOVERY_BOUNDED_ACCEPTANCE_11_03_2026_11_19.md).
+- Client-only bounded acceptance: no real email delivery, hosted session expiry, staging login, OAuth or server rate-limit validation. Separate OTP diagnostics redaction and historical 1v1 UI improvements remain CODE_DONE pending their scoped checks, not additional accepted IDs.
+- **640 active / 344 accepted / 296 open (53.75%).** No merge to main, production DB/RLS, Paymob, APK or deployment.
+
+## 2026-11-19 — Home no-redesign protection accepted; captain invite async leakage fixed (343/297)
+
+- **86.01 (342→343 accepted / 298→297 open):** existing Home source-order and Arabic/English bottom-nav widget contracts prevent private trophies/ranking/rebook cards from changing the original discovery/banner/stadium/matches/competitions layout. [Passing Home CI at previous verified head](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456758008), [bounded acceptance](VSP_HOME_STRUCTURE_BOUNDED_ACCEPTANCE_86_01_2026-11-19.md). No screenshot/device or overall 44-rule runtime pass claimed.
+- **82.* partial, NOT accepted:** commit [c22ac8d](https://github.com/mohamedsalh333555/VSP.App/commit/c22ac8d0894eaf1020557706589b5dc64fef7e9a) invalidates pending challenge code responses when captain identity or team changes; only the currently authenticated captain can reveal the current team's latest response. Added 4 local guard tests and wired targeted CI; staging 8-digit lifecycle, two-account role proof and server authorization remain open.
+- **640 tasks / 343 accepted / 297 open (53.59%).** No main merge, Production/Supabase/Paymob write, legacy 1v1 deletion, or APK.
+
+## 2026-11-19 — Verified UXLP review, auth-scoped private fields and football position preference (+3; 342/298)
+
+- **01.02 (339→340 / 301→300):** reviewed 44 UXLP code-rule source-evidence rows and 88 real screen associations; 39 still need runtime, 5 need decisions. [Bounded evidence](VSP_ACCEPTANCE_BATCH_01_02_12_04_13_06_2026-11-19.md), [rule CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222174).
+- **12.04 (340→341 / 300→299):** invalid/mismatched session hides stale profile name, phone, avatar and form; blocks cross-identity writes and late results. [Profile CI: 37 tests passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222222). Client-only; staging actor/RLS and public captain privacy remain open.
+- **13.06 (341→342 / 299→298):** change selected football position with role-isolated payload; lock dropdown while saving. Arabic/English widget regression. Same [37 passing profile tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222222). Not secondary-position or hosted persistence acceptance.
+- [Sequential batch acceptance](VSP_ACCEPTANCE_BATCH_01_02_12_04_13_06_2026-11-19.md). **640 tasks / 342 accepted / 298 open (53.44%).** [Team Skills stage-label and grammar CI passed](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44456222218) as a separate partial 04.06/04.07 fix, not counted.
+- No main merge, Production/Paymob changes, release or APK.
+
+## 2026-11-19 — UXLP rule-to-screen mapping 01.01 (339/301)
+
+- **01.01 (338→339 / 302→301):** inventoried all 44 named UXLP rules, linked each to one real player/auth and one real owner/auth source surface (**88 traceable assignments spanning 30 distinct paths**), preserving 39 runtime-pending and 5 unresolved decision statuses. [Full traceable rule map](VSP_UXLP_44_RULE_SCREEN_MAP_01_01_2026-11-19.md) and [dedicated Node CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44455066948). Source-only inventory: 338 screens × state/locale/device audit and 01.02/01.04–01.06 remain open.
+- **640 active / 339 accepted / 301 open (52.97%).** No main merge, production data or payment changes, APK or claimed release readiness.
+
+## 2026-11-19 — Verified avatar failure/discard/retry 12.06 (338/302)
+
+- **12.06 (337→338 accepted, 303→302 open):** fixed partial-save copy and failed photo selection/compression/update handling; added discard-before-save, kept image pending for explicit retry, and guarded against account switch. **10 new bilingual widget cases** passed in [Profile Edit CI #44443912415](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44443912415), 29 tests total, Flutter Analyze green. [Full bounded evidence](VSP_PROFILE_PHOTO_FAILURE_RETRY_ACCEPTANCE_12_06_2026-11-19.md).
+- **640 active / 338 accepted / 302 open (52.81%).** Actual avatar persistence (12.03), privacy and concurrent edits remain open; no production, Paymob, APK or main merge.
+
+## 2026-11-19 — Bilingual signup network interruption and retry 08.05 (337/303)
+
+- **08.05 (336→337 accepted, 304→303 open):** four new Flutter widget tests keep the player/owner registration form stable when an in-flight request fails, block duplicate submission, preserve filled inputs and explicit retry. [CI PASS, 35 tests](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44442134318). [Scope and evidence](VSP_SIGNUP_INTERRUPTION_RECOVERY_ACCEPTANCE_08_05_2026-11-19.md).
+- Client/mock-only acceptance; no app-kill draft restoration, live Supabase actor, OTP, staging two-account or physical network proof. Other release gates stay open. **640 total / 337 accepted / 303 open (52.66%)**. No production, Paymob, APK or `main` merge.
+
+## 2026-11-19 — Player personal profile source audit 12.01 (336/304)
+
+- **12.01 (335→336 accepted / 305→304 open):** inspected ProfileScreen, EditProfileScreen and team-profile rendering, current-account scoped team reads, name/avatar/position fallbacks, stale/error states, and identified legacy 1v1 badge plus captain-contact/privacy risks as still open. [Audited findings](VSP_PLAYER_PROFILE_DISPLAY_SOURCE_AUDIT_12_01_2026-11-19.md). **Source review only**, not runtime or server security acceptance.
+- Updated scope: **640 total / 336 accepted / 304 open (52.50%)**. No production, payments, APK or main merge.
+
+## 2026-11-19 — Three additional scoped accepted tasks (335/305)
+
+- **01.03 (332→333 / 308→307):** classified 44 UXLP-44 gaps and 5 unresolved decisions; [CI PASSED](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426149). No complete runtime screen acceptance.
+- **12.02 (333→334 / 307→306):** Arabic/English editable player/owner profile fields and validations; [Flutter CI PASSED](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426000). Fake provider, not Supabase persistence.
+- **16.01 (334→335 / 306→305):** upcoming and historical bookings render in order and remain scrollable; [Flutter CI PASSED](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44436426063). Fake repository, not a live two-account flow.
+- [Evidence and exact per-task counting](VSP_ACCEPTANCE_BATCH_01_03_12_02_16_01_2026-11-19.md). **640 active / 335 accepted / 305 open (52.34%).** No production writes, Paymob, main merge or APK.
+
+## 2026-11-19 — Four individually accepted audit/client-test subtasks (332/308)
+
+- **04.02: 328 → 329, 312 → 311.** Translation source audit: Arabic/English 756 keys each, zero absent/blank/placeholder-mismatched keys. [CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276515). Remaining literal UI-copy candidates and device coverage separate.
+- **08.01: 329 → 330, 311 → 310.** Read-only source review of role selection, player/owner registration and post-auth onboarding flows, findings and unresolved paths recorded in [acceptance report](VSP_ACCEPTANCE_BATCH_04_02_08_01_12_05_13_05_2026-11-19.md). No live signup tests or UI funnel completion claim.
+- **12.05: 330 → 331, 310 → 309.** Player/owner profile save success, failure, exceptions, pending double taps and account-switch behavior tested in both locales with fake provider. [Flutter focused CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276513). Real persistent save still unverified.
+- **13.05: 331 → 332, 309 → 308.** Allowed-position validation before player update and owner role isolation tested in Arabic and English. Same [focused CI PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276513). Actual server persistence and discovery untouched.
+- Two prior CI blockers were corrected in `acb5fea` (test-only path erroneously listed as test) and `867ef445` (obsolete regex not accepting the stronger venue booking predicate). [Focused booking workflow PASS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276490). [Broad Flutter CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44435276493) still required to confirm final result.
+- **Official count: 640 unique / 332 accepted / 308 open (51.88%).** No new task IDs and no production, Paymob, main merge or APK.
+
+## 2026-11-18 — Discovery refresh, Home architecture guard and privacy-safe player logs (+0 accepted)
+
+- **Actual code on `uxlp-44-implementation`**: made the one-venue stadium discovery list always scrollable, and replaced programmatic refresh testing with a real drag while checking the server request remains pending until resolved. Existing offline/stale-data tests also pass. [Latest focused Flutter CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314625899) at source `163d564be33376bd51a105b4ca7aa332e54bd860`; [first green focused run](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314057657).
+- **86.01 partial guard only, task remains OPEN**: added `test/architecture/player_home_information_architecture_contract_test.dart` to lock existing Home banner/discovery/matches/competitions ordering, five outline/filled navigation icon pairs and no achievement/ranking/rebooking card on Home. No visual Home redesign. Automated static checks are not bilingual widget/physical-device acceptance.
+- **Privacy hardening**: home match/championship stream and team-dashboard lookup failures now log redacted descriptions instead of raw backend errors; source regression tests cover the redaction. No user-facing flow change.
+- [Task accounting CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314626144). Full [Flutter CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44314625693) was still running when this evidence was recorded; no unverified all-suite claim. No staging/production Supabase or Paymob changes, no APK/release and no `main` merge.
+- **Conservative count unchanged: 640 unique / 328 accepted / 312 open (51.25%).** Improvements do not close 86.01 or the server/device-gated retention journeys.
+
+## 2026-11-18 — Full Product Experience scoped intake: 7 new open tasks (328/312)
+
+- **633 original unique IDs preserved**; group **86.01–86.07** contains **7 NEW OPEN tasks**, so **640 active / 328 accepted / 312 open (51.25%)**.
+- The other nine behavioral principles and five implementation batches are linked to existing IDs without double-counting; [scope and matrix](VSP_PHASE10_FULL_PRODUCT_EXPERIENCE_EXECUTION_BACKLOG_2026-11-18.md).
+- Documentation and accounting only: no feature claimed complete, no production/Paymob/main/APK changes.
+
+## 2026-11-18 — Neutral password recovery and safe dialog close (+1; 306/327)
+
+- **11.08:** bilingual public recovery acknowledgement now stays identical for successful requests, unrecognized accounts, false outcomes or thrown provider exceptions. No message includes account-existence or raw backend information. Fixed a Flutter use-after-dispose crash by moving `TextEditingController` ownership into a stateful dialog until the close transition fully unmounts.
+- [Password Recovery Privacy CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44206384812) on [SHA d6579b1](https://github.com/mohamedsalh333555/VSP.App/commit/d6579b12a0b93d7ac834048a80c15f5b9261e689): Flutter Analyze and **6 successful focused widget/unit assertions** for registered/unknown/failure/Arabic/invalid-input outcomes. [Evidence and backend exclusions](VSP_PASSWORD_RECOVERY_PRIVACY_ACCEPTANCE_11_08_2026-11-18.md).
+- **633 unique / 306 accepted / 327 open (48.34%)**. One pre-existing ID, zero new. Backend email enumeration via timing/response/rate-limit still requires staging tests; no production, RLS, payments or main merge.
+
+## 2026-11-18 — Localized registration form error validation (+1; 305/328)
+
+- **08.04:** added a proper invalid-email client error before the signup form's phone lookup and account-creation requests, mapped to existing Arabic and English messages. New unit tests verify valid/malformed email samples and UI validation order; existing Flutter signup component tests and unit tests cover consent, 18+ DOB, Egyptian phone and password mismatches.
+- [Signup Input and Error Validation CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44204735513) at [SHA 70964e7](https://github.com/mohamedsalh333555/VSP.App/commit/70964e7ee9e431f13011ee3d43c71dd2678ad525). [Evidence and limits](VSP_SIGNUP_FORM_ERRORS_ACCEPTANCE_08_04_2026-11-18.md).
+- **633 total / 305 accepted / 328 open (48.18%)**, one previously open ID, zero new tasks. Client form only: not live SMTP/registration, all owner onboarding forms or Android keyboard tests. No production writes or main merge.
+
+## 2026-11-18 — Deferred links bound to active account and cleared on logout (+1; 304/329)
+
+- **07.05:** prevented pending deep links opened during auth recovery from crossing a logout/account switch: account ID and hydrated profile recheck before/after asynchronous SharedPreferences reads, persisted original-account binding, logout cleanup, and exclusive lease against duplicate pushes from `main.dart` and `RootScreen`. Logout routes still redirect private URLs to `/welcome`.
+- [Flutter Analyze and navigation/account-switch tests — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44203770410) at SHA [a9d1bdc](https://github.com/mohamedsalh333555/VSP.App/commit/a9d1bdc88cceb45d383b9aefe9745684253590d2). [Evidence and limitations](VSP_DEFERRED_DEEP_LINK_ACCOUNT_SWITCH_ACCEPTANCE_07_05_2026-11-18.md).
+- **633 total / 304 accepted / 329 open (48.03%)**, one existing task ID accepted, no new IDs. **11.05 JWT real session-expiry tests remain open**; no production changes or main merge.
+
+## 2026-11-18 — Restricted direct/notification routes and verified deep-link origins (+3; 303/330)
+
+- **07.04:** global GoRouter now denies owner-only screens to verified players and player-only deep links to owners, without allowing query strings or menu bypasses to skip role checks. Auth/hydrated/suspended checks occur first; Supabase RLS remains authoritative.
+- **07.07:** registered previously missing owner billing and subscription URLs referenced by FCM; guarded in-app notification `Navigator.push` by active account and owner role. Real delivered FCM and multi-account server checks are not accepted.
+- **07.03:** hardened trusted OAuth callback origins and deep-link web/custom schemes; bounded route IDs, rejected duplicate IDs, URL userinfo, insecure websites, additional segments and fragments. The app no longer derives registration role from untrusted callback query or stores unknown pending URLs. OAuth initiator already stored local role prior to SDK redirect.
+- [Navigation, notification and deep-link Flutter CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44202088013) on SHA [1a935a1](https://github.com/mohamedsalh333555/VSP.App/commit/1a935a1c03e5a62f2bc9a099e4c4c6a12e8a215a). [Evidence and exclusions](VSP_ROLE_DEEPLINK_NOTIFICATION_SECURITY_ACCEPTANCE_07_03_07_04_07_07_2026-11-18.md).
+- **633 unique / 303 accepted / 330 open (47.87%)**; +3 previously open IDs, zero new. No live OAuth redirect/FCM proof, cross-owner RLS claim, production changes, payment or main merge.
+
+## 2026-11-18 — Verified semantic contrast correction and Arabic/English audit (+2; 300/333)
+
+- **05.01:** measured 12 WCAG-style VSP semantic color pairs and corrected `VSPDSSemanticColors.textMuted` on charcoal surfaces. Previous color was 3.66:1 on `surface`; the source change to existing neutral `zinc400` yields **6.91:1 on `surface` and 5.81:1 on `surfaceRaised`**, with 12/12 sampled pairs passing chosen thresholds. Full real-widget/device audit remains open.
+- **04.01:** audited 756 Arabic and 756 English ARB keys: zero missing keys, zero blanks, zero heuristic placeholder mismatches. Whole-lib scan found **33 same-line raw Text candidates**, including 9 containing Latin characters and 24 containing Arabic characters; manual language verification remains open.
+- [Semantic Color Contrast CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44198636272) and [Arabic English Copy Audit CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44198628560) at SHA [6efcd632](https://github.com/mohamedsalh333555/VSP.App/commit/6efcd6322ea0e3dbe6d3162751959ab17f0795f0). [Evidence and limits](VSP_CONTRAST_LOCALIZATION_ACCEPTANCE_04_01_05_01_2026-11-18.md).
+- **633 total / 300 accepted / 333 open (47.39%)**, +2 pre-existing audit IDs, zero new. No global WCAG/i18n production completion or changes to finance, staging, production or main merge.
+
+## 2026-11-18 — Loading and navigation source inventories (+2; 298/335)
+
+- **03.01:** read-only scan of all 556 non-generated Flutter files: 132 progress/loading signatures (95 files), 12 builder entry points, 43 error states, 31 empty states and 66 retry/forced-refresh references. Inventory-only, not offline success or every screen's correctness.
+- **07.01:** enumerated 27 declared GoRouter literal paths, grouped by auth/owner/player/system, plus 108 push/navigation call sites, 292 return/back references and 192 redirect/auth guard references. Counts are syntactic occurrences, not verified authorization or completed journeys.
+- [Navigation and Loading Source Inventory CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44197447172) at [SHA a1f024df](https://github.com/mohamedsalh333555/VSP.App/commit/a1f024df504b13f0c7e55ed14d73f8df9cc4cc3b); the GitHub Actions run has Markdown and JSON report artifacts. [Evidence and exclusions](VSP_NAVIGATION_LOADING_SOURCE_INVENTORY_03_01_07_01_2026-11-18.md).
+- **633 total / 298 accepted / 335 open (47.08%)**, +2 existing IDs, 0 new. Role-based routing, live loading, back/deep-link device tests and RLS stay open. No production writes or main merge.
+
+## 2026-11-18 — Source inventories of design tokens and motion (+2; 296/337)
+
+- **02.01:** generated a read-only, reproducible inventory over **556 non-generated Dart files**: 5,557 color-token uses, 60 `Colors.*` references, 60 literal colors, 957 spacing-token uses, 890 radius-token uses, 1,283 numeric font sizes, 7 explicit font-family literals, 1,177 EdgeInsets calls and 2,046 SizedBox calls. Counts are candidates for follow-up, not styling defects.
+- **06.01:** the same whole-lib scan inventories 61 `VSPDSMotion` tokens, 84 animation widgets/controllers, 108 navigation transition constructors, 140 explicit durations and 11 reduced-motion/navigation checks. Not a device setting test or proof of accessibility.
+- [Node inventory/test CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44196802382) on SHA [834641bc](https://github.com/mohamedsalh333555/VSP.App/commit/834641bc2ff3ba817960c9576eca6571cd8682cb); two generated Markdown/JSON inventories attached as GitHub Actions artifact. [Measured inventory and exclusions](VSP_DESIGN_MOTION_SOURCE_INVENTORY_02_01_06_01_2026-11-18.md).
+- **633 unique / 296 accepted / 337 open (46.76%)**. +2 inventory-only IDs and zero new IDs. No source design changes, financial transactions, production deployments or main merge.
+
+## 2026-11-18 — Booking availability and trustworthy owner-finance states (+2; 294/339)
+
+- **53.01:** tested synthetic client availability under overlapping/pending/expired/cancelled bookings, venue mismatch and old selection invalidation; normalized booking/stadium IDs before conflict checks, and verified separate loading/error, full, closed and DST cases. No hosted booking concurrency or RLS claims.
+- **03.05:** prevented owner finance card from showing fake zero or stale cash/online revenue while Supabase analytics for current venue/period is loading or failing; Pro Insights also blocks the previous query while it is unverified. Independent withdrawal balance verification preserved. Other booking status, false scarcity and plan-price protections remain tested.
+- [Booking Availability Accuracy CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44195557335) and [Owner Reporting and Booking Filters CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44195557149) at [SHA 2a8811b](https://github.com/mohamedsalh333555/VSP.App/commit/2a8811b5112e1da03d1d72d593b4efc8b8a0f1b6). [Evidence / limits](VSP_BOOKING_AVAILABILITY_OWNER_FINANCE_TRUST_03_05_53_01_2026-11-18.md).
+- **633 unique / 294 accepted / 339 open (46.45%)**; +2 prior IDs, 0 new. Real server availability, Supabase figures, Paymob Sandbox and RLS cross-user checks remain open. No production writes, deploy or main merge.
+
+## 2026-11-18 — Owner booking filters, subscription display and date reports (+3; 292/341)
+
+- **23.05:** owner schedule now uses a pure, testable filter by stadium and operational shift day, excludes cancelled rows, and fails closed for empty venue/invalid opening hours. Synthetic day/overnight/cross-venue/cancelled tests pass; cross-owner RLS/staging are not proven.
+- **24.04:** owner dashboard badge distinguishes paid Pro, active Pro trial, Free, expired trial and paid term, and unknown/non-owner state in Arabic/English. Removed misleading fixed 1000 EGP upsell; the existing pricing screen retrieves live public plan rows. Does not grant privileges.
+- **24.06:** owner financial local summaries use the exact selected `DashboardFilter` boundaries (including custom), year/week/month aliases; all-venues selection explicitly clears old court ID; civil calendar dates avoid DST drift; metric cache keys cover booking time/venue/payment changes. Server analytics source parity remains unproven.
+- [Owner Reporting and Booking Filters CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44194293882) and [Owner Plans and Funnel Contracts CI — SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44194294060) on [4f4a271](https://github.com/mohamedsalh333555/VSP.App/commit/4f4a271591c81f1dea7eff33dd1a22c2b70b222a). [Full evidence and acceptance limits](VSP_OWNER_SCHEDULE_REPORTS_SUBSCRIPTION_ACCEPTANCE_23_05_24_04_24_06_2026-11-18.md).
+- **633 unique / 292 accepted / 341 open (46.13%)**, +3 pre-existing task IDs, 0 new. No database, payments, production, APK publication or main merge.
+
+## 2026-11-18 — Retention small-group complementary privacy hardening (+0 accepted)
+
+- **Fixed source disclosure:** a published cohort of 10 with 6 eligible users leaked four through subtraction. Eligibility day counts now use complementary suppression against total and preceding visible D1/D7 counts; all later stages remain masked after suppression.
+- Directly constructed undersized, invalid or unrecognized cohort segments fail safe on export. The offline HTML importer independently rejects unsafe combinations. [Flutter + Node focused analytics CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44188773549) on source SHA [cc2e4f0](https://github.com/mohamedsalh333555/VSP.App/commit/cc2e4f0b00ecef590f9e60c743e2fab9ec440231). [Privacy fix report](VSP_RETENTION_COMPLEMENTARY_PRIVACY_HARDENING_2026-11-18.md).
+- **No task count movement:** 633 unique / 289 accepted / 344 open (45.66%). This is follow-up protection on existing 54.02/55.04 and does not prove live Firebase reporting, privacy counsel signoff, or previously open dashboard/retention milestones. No database, payments, production, APK or main merge.
+
+## 2026-11-18 — Four scoped owner subscription/funnel contracts accepted (+4; 289/344)
+
+- **52.01:** dashboard `owner_dashboard_viewed` event only for the signed-in owner on visible home; same-account session deduplication, switch-account isolation and failed-send retry verified in Dart. Firebase live totals not verified.
+- **52.03:** Free/Pro comparison lists only server-row-enabled Pro-only differences and verified capacity uplift. Free-plan zero-price consistency and conditional Copilot badge keep copy truthful.
+- **52.04:** owner upgrade URL is restricted to the official HTTPS `accept.paymob.com/unifiedcheckout/` format with required query tokens. Invalid, phishing and non-HTTPS links rejected; no activated event from the checkout-start screen. No Paymob Sandbox transaction or hosted subscription activation verified.
+- **52.06:** paid/trial expiry banners tested in Arabic/English at exact and Cairo-offset boundaries with no notice for active or inapplicable accounts. No real-device/push delivery.
+- [Focused Flutter Analyze + owner tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44187634461) at [1b68fbe](https://github.com/mohamedsalh333555/VSP.App/commit/1b68fbe0d5d223e2c308554abbe7d63b5e1c34c4). [Evidence and exclusions](VSP_OWNER_PLANS_FUNNEL_ACCEPTANCE_52_01_52_03_52_04_52_06_2026-11-18.md).
+- **633 unique / 289 accepted / 344 open (45.66%)**, 4 pre-existing tasks newly accepted, 0 added IDs. Subscription activation analytics, hosted Paymob and release checks remain open; no production write, APK or main merge.
+
+## 2026-11-17 — Exact-cent booking quote and fee disclosure accepted (+2; 285/348)
+
+- **53.02:** booking widget tests verify precise selected total 107.75 EGP, optional ball, upfront deposit, and no stale price on slot deselection; quote source rechecks against fresh venue data. Source/UI scope only, not real live venues.
+- **53.07:** corrected checkout fee row, grand total and Arabic/English payment CTA from one-decimal rounding to `VSPMoneyFormatter.amount`. Runtime PaymobFeePolicy supplies fee totals and unavailable fee policy disables the final payment CTA. Focused widget and fee calculations prove exact 100 + 7.75 = 107.75 (not 107.8) before Paymob.
+- [Financial Flutter analyze, widget/source and payment-negative CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44185016978) at [c41b1d1](https://github.com/mohamedsalh333555/VSP.App/commit/c41b1d1f2661de862d6dc1b4b977bc69d0b96822); [acceptance evidence and limits](VSP_PRICE_DISCLOSURE_CENTS_53_02_53_07_ACCEPTANCE_2026-11-17.md). No live gateway amount comparison, schema change or actual charge.
+- **633 unique / 285 accepted / 348 open (45.02%)**, +2 pre-existing IDs, +0 new IDs. No production, Paymob Sandbox transaction, APK or main merge.
+
+## 2026-11-17 — Booking trust and offline analytics interruptions accepted narrowly (+3; 283/350)
+
+- **51.07** — simulated loss/recovery of analytics transport; a confirmed booking's `booking_completed` is eligible only after authoritative confirmation, with retry after offline failure and one accepted event per in-process session. No actual Firebase, Android airplane mode or cross-device test.
+- **53.04** — Arabic/English state headings distinguish confirmed, pending, cancelled and expired booking. Pending/cancelled receipt labels now use warning color instead of the confirmation accent. No provider-paid webhook or device screenshot claim.
+- **53.05** — a Dart/ARB/web-source regression test prohibits hard-coded numbered scarcity/last-chance claims while server-based slot checks control real availability. Does not inspect external marketing or runtime-provided copy.
+- [Exact-code focused Flutter analyze + Dart and offline dashboard tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44183845285) on [295b109](https://github.com/mohamedsalh333555/VSP.App/commit/295b1095626e11fc5cbaa49e5be29c214c8e58b8). [Precise acceptance limits](VSP_BOOKING_TRUST_ANALYTICS_ACCEPTANCE_51_07_53_04_53_05_2026-11-17.md).
+- **633 unique / 283 accepted / 350 open (44.71%)**. +3 previously open IDs, no unique scope change. 50.04/50.05, 54.06, 55.06 and retention cleanup 49.02–49.07 still await their own live-data/rollout criteria. No production writes, Paymob actions, APK or main merge.
+
+## 2026-11-17 — 54.07 local opt-out tests narrowly accepted (+1; 280/353)
+
+- Existing **54.07** accepted only for local/foreground opt-out: reminder scheduling rechecks saved account consent after native scheduling and async quota persistence and cancels upon revocation; booking-confirmation inbox writes do not follow a switched current account.
+- Focused [Flutter analyze/tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44178671321) at [80fefcc](https://github.com/mohamedsalh333555/VSP.App/commit/80fefccbea1a79770eb12872e76519b00b3d18ea); includes opt-out persistence with isolated accounts and source-order regression checks. [Exact evidence and exclusions](VSP_NOTIFICATION_OPTOUT_54_07_ACCEPTANCE_2026-11-17.md).
+- Read-only [Supabase advisor revisit](security/VSP_SUPABASE_ADVISOR_READONLY_2026-11-17_LATE.md): staging 229 WARN, production 198 WARN, zero ERROR; privileged RPCs are advisory findings, not confirmed exploits.
+- **633 unique / 280 accepted / 353 open (44.23%).** Tasks **54.04/54.08** remain open for server FCM consent and true cross-device re-engagement exclusion. No production change, no main merge, no live push or user-data mutation.
+
+## 2026-11-17 — 54.05 local match reminder cap accepted narrowly (+1; 279/354)
+
+- **54.05** implements a best-effort per-account cap of 3 native match reminders per UTC day, with booking ID reuse, moved-booking day replacement, old reminder invalidation and legacy ID cancellation.
+- [Specialized Flutter analyze and tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44163293430) on [55e294f](https://github.com/mohamedsalh333555/VSP.App/commit/55e294f567abd6c98e1d9e39e2af7f74a3e2bedc). Not a persistent cross-device global FCM quota or physical OS delivery check.
+- **633 unique / 279 accepted / 354 open (44.08%)**, +1 existing ID, no schema, remote push or production payments change, no main merge.
+
+## 2026-11-17 — 54.03 match-reminder timing accepted, narrow local scope (+1; 278/355)
+
+- Replaced incorrect immediate `show` with kickoff-minus-2-hour `zonedSchedule` at UTC instant; per-account/booking stable IDs and account-scoped preferences; cancel on normal sign-out and saved general/reminder opt-out. [Sources and limits](VSP_MATCH_REMINDER_SCHEDULE_54_03_2026-11-17.md).
+- [Specialized Flutter Analyze and tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44161802294) on [8e431bf](https://github.com/mohamedsalh333555/VSP.App/commit/8e431bfe5cbe6c9ad6e14e5a6edbae15b9fbe2f0). Not a real-device delivery/Android idle timing test or global FCM consent compliance.
+- **633 unique / 278 accepted / 355 open (43.92%)**. One pre-existing ID, no new tasks, database writes, production notifications, APK or main merge.
+
+## 2026-11-17 — 48.04 / 49.01 / 54.02 narrowly accepted (+3; 277/356)
+
+- **48.04:** [FCM queue pacing CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44160181074) for 5 worker calls per invocation, 2 per recipient per batch, overflow remains queued. This is NOT a durable cross-instance provider quota. [Implementation](security/VSP_FCM_WORKER_PACING_48_04_2026-11-17.md).
+- **49.01:** [Offline Deno retention tests SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44159951170) for whitelist-only read/unread 90/180 day candidate classification; **NO deletion job**, no approved legal retention duration or live data mutation. [Scope](security/VSP_NOTIFICATION_INBOX_RETENTION_POLICY_49_01_2026-11-17.md).
+- **54.02:** [Flutter targeted CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44159405807) for player/owner retention segmentation with consent, UTC, D1/D7/D30, aggregate privacy suppression; NOT a live measured VSP cohort. [Scope](VSP_RETENTION_SEGMENTATION_54_02_2026-11-17.md).
+- Accepted 3 **preexisting** task IDs, 633 total / 277 accepted / 356 open (43.76%). No Staging/Production write, live notification deletion, push send, APK or main merge.
+
+## 2026-11-17 — ACCEPTED 49.04 scoped notification settings and 54.01 active-return metric definition (+2)
+
+[Exact-commit Flutter CI SUCCESS, 30 tests plus Analyze](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44144855159) at `bc293e3`. Local preferences saving and per-account UI recovery now verified at source/unit level (**49.04 narrowly accepted**, not real FCM unsubscribe). Meaningful D1/D7/D30 role, consent, identity and UTC event rules verified (**54.01 narrowly accepted**, not live cohort analytics). [Storage audit 742 files SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44143356917), no hosted version or independent-account security proof; 85.01–85.03 remain open. [Issue 38 evidence](https://github.com/mohamedsalh333555/VSP.App/issues/38).
+
+**633 unique / 274 accepted / 359 open (43.29%).** +2 existing IDs, no new task IDs, no main merge, hosted database/payment write or APK.
+
+## 2026-11-17 — FCM retry and provider-outage contracts accepted 48.03/48.05/48.07 (+3; 272/361)
+
+- Source [27814f](https://github.com/mohamedsalh333555/VSP.App/commit/27814f65bd097259ecb5ebaacea1f8e81543518a) refactors FCM queue dispatch classification, preserving pgmq retry for non-2xx and ambiguous 2xx; removes raw provider/error logging from worker. [Isolated Deno CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44133120292).
+- **Three narrow acceptances:** **48.03** failed full-message send stays unarchived for a next visibility-timeout attempt; **48.05** simulated provider 502/false-200 negative test; **48.07** same queued message succeeds on recovery and archives exactly once in the mocked run. No real Firebase credentials, hosted DB, external token, or production deployment.
+- Mixed per-device partial failures are **not** re-delivered, to avoid duplicating success on other tokens; those require per-device durable tracking. Archive failures may still result in at-least-once duplicates. 48.02 durable attempt history and 48.04 rate limiting remain OPEN. [Boundary report](security/VSP_FCM_QUEUE_DELIVERY_CONTRACT_2026-11-17.md).
+- **633 unique / 272 accepted / 361 open (42.97%)**. +3 accepted existing IDs, +0 new IDs. No main merge, APK or hosted production write.
+
+## 2026-11-17 — Live Supabase Security Advisor read-only checker ACCEPTED 80.04 (+1; 269/364)
+
+- **80.04 accepted narrowly:** actual read-only Supabase Security Advisor snapshots obtained for hosted staging (229 WARN, 0 ERROR) and production (198 WARN, 0 ERROR); a fail-closed, read-only Management API checker and manual-on-demand GitHub workflow were implemented in [5c6aabc](https://github.com/mohamedsalh333555/VSP.App/commit/5c6aabc30ee24de7bab13418a7bb17f95ad01388). [Offline workflow SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44126115477) and [release gate SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44126114428) on exact commit.
+- **No overclaim:** the manual **live GitHub Advisor job was SKIPPED** (no token-backed run); 80.05 CI authenticated enforcement, 80.06 remediation, 77.04/06/07 and 85.01–03 remain OPEN. A management API GET check and its mocked CI tests do not prove 197/224 high-privilege RPCs are exploitable. [Source, observed counts and explicit limits](security/VSP_SUPABASE_ADVISOR_LIVE_GATE_2026-11-17.md).
+- **Current inventory:** **633 unique / 269 accepted / 364 open (42.50%)**. +1 accepted existing ID / +0 new unique IDs. No DB write, Staging/production migration, Paymob action, APK or main merge.
+
+## 2026-11-17 — Captain transfer two-session invariant ACCEPTED 32.09 (+1; 268/365)
+
+- **Task 32.09 accepted narrowly:** [same-source staging+production captain transfer snapshot](security/VSP_TEAM_CAPTAIN_TRANSFER_32_09_ACCEPTANCE_2026-11-17.md) with matching SHA and [disposable PostgreSQL 17 CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44122001956). Tests noncaptain, blocked/nonmember/different region, active game/league, successful handoff and two competing old-captain transfers with **one successful successor**. No hosted JWT or production write, no `main` merge.
+- **Code-only financial batch, zero additional task acceptances:** [strict Paymob transaction ID/amount](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44119879534), [post-gateway ledger verification](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44120494385), [conflicting-refund-flags](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44121083855) all **financial Deno+Flutter SUCCESS**. [Exact report](security/VSP_PAYMOB_REFUND_QUEUE_VALIDATION_LEDGER_BATCH_2026-11-17.md). Still requires provider Sandbox and atomic DB settlement testing.
+- **Current authoritative count:** **633 unique / 268 accepted / 365 open; +1 accepted, +0 unique IDs (42.34%).** No production release.
+
+## 2026-11-17 — Direct Paymob refund dispatch-claim uniqueness and release dependency (267/366)
+
+- **Direct refund double-dispatch guards:** [aba61c3](https://github.com/mohamedsalh333555/VSP.App/commit/aba61c3fc8ec62b96ae75fd1e167c3e2b8b2698c) reserves a service-only, unique provider transaction before legacy 1v1 or cancelled-booking auto-refund. Duplicate callback, missing table or failed claim returns manual reconciliation, **without sending Paymob**.
+- **Tests:** [financial Deno/Flutter SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142495); [disposable SQL RLS/unique claim SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116142761). [Actual anon/authenticated SQL role-negative CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44116637117).
+- **Release HOLD explicitly lists new financial migrations** [802d60df](https://github.com/mohamedsalh333555/VSP.App/commit/802d60dffe06d35a532782fd5fb0d4199e582bac); neither migration deployed to Staging/production; no live refund. [Full evidence](security/VSP_PAYMOB_DIRECT_REFUND_DISPATCH_CLAIMS_2026-11-17.md).
+- **Counter unchanged this batch:** **633** unique / **267** accepted / **366** open, +0 accepted/+0 unique IDs. No production actions and no merge to `main`.
+
+## 2026-11-17 — Paymob single team refund ownership, League CHECK migration, direct withdrawal CAS (267/366)
+
+- **Confirmed double-refund source route removed:** `confirm_tournament_order_atomic` already inserts `cancellation_refund_queue` for failed-capacity team orders; Webhook formerly called Paymob refund **again**. Now queue-only. [Source commit](https://github.com/mohamedsalh333555/VSP.App/commit/2a32fdf67ec3f0cd170127bc98a392096bf2e7a0); [Deno/Flutter CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44113325380).
+- **Schema drift:** `team_league_payments_status_ck` rejects deployed RPC status outputs. Transactional candidate migration source-committed; [isolated PostgreSQL contract SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44114070373). **Not applied to hosted databases**.
+- **Direct withdrawal refund:** pre-Paymob CAS `paid`→`refund_pending`; no malformed transaction normalization; no raw provider errors. [Deno/Flutter CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44114439885); [two simultaneous PostgreSQL sessions: one CAS winner SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44114766244).
+- **Release gate:** migrated statuses must be deployed to Staging before enabling new withdrawal handler; real Paymob Sandbox/RLS and legacy 1v1/cancelled booking audit still open. [Full bounded evidence](security/VSP_PAYMOB_SINGLE_REFUND_OWNER_LEAGUE_STATUS_CONTRACT_2026-11-17.md).
+- **No false count:** 633 unique / **267 accepted** / **366 open**, 0 newly accepted / 0 new IDs in this batch; no prod writes/real refunds/`main` merge.
+
+## 2026-11-17 — Release critical-risk fail-closed acceptance: 80.08 (+1; 267/366)
+
+- **Accepted 80.08 narrowly:** [signed APK release security gate](security/VSP_RELEASE_SECURITY_GATE_80_08_ACCEPTANCE_2026-11-17.md) is checked before signing/build; current status HOLD, and synthetic critical finding/unknown reviewer/evidence/SHA mismatches are denied. [CI 9/9 SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44111816114). First CI run failed for Python module import and was corrected; no issue hidden.
+- **Open:** 80.04 actual Supabase Advisor check, 80.05 real CI advisor integration, 80.06 critical remediation, independent cross-role checks, Paymob Sandbox and release authorization. No live deploy, no APK signing, no main merge.
+- **Count:** 633 unique tasks, 267 accepted, 366 remaining. 1 newly accepted in this batch, 0 new unique tasks. Earlier 266/367 ledger sections are historical.
+
+## 2026-11-17 — Refund dispatch crash/replay protection (0 newly accepted; 266/367)
+
+- **Confirmed source risk:** 5-minute booking and 15-minute tournament queue leases can expire after refund dispatch and permit re-dispatch on worker crash. [Booking CAS marker a9ea11cd](https://github.com/mohamedsalh333555/VSP.App/commit/a9ea11cd2e34ea482765f83f6a50bce4c7900746) and [three queue CAS guards 68e76686](https://github.com/mohamedsalh333555/VSP.App/commit/68e76686a5eea1a10f62edc2e35380389b7f8bf0) persist pre-dispatch holds. [Refund response hardening 44b07d18](https://github.com/mohamedsalh333555/VSP.App/commit/44b07d186b977534b54d2d2f2ffcec5fe87354fe) preserves manual reconciliation on ambiguity.
+- **CI:** [queue guards, Deno and focused Flutter SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110931520); [booking guard financial test](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110166202). **No actual provider refund or two-session Staging crash test.** [Evidence and open gates](security/VSP_PAYMOB_REFUND_DISPATCH_CRASH_SAFETY_2026-11-17.md).
+- **No duplicate accounting:** 633 unique / 266 accepted / 367 open, 0 added, 0 newly accepted. Source fixes are not production approval. No `main` merge or production change.
+
+## 2026-11-17 — Paymob booking refund proof and signed audit minimization (0 new accepted)
+
+- **Code fixes:** [e25c26ed](https://github.com/mohamedsalh333555/VSP.App/commit/e25c26ede601aa3600bbcf66fc286ad4e2429794) requires explicit refund acceptance and omits provider error bodies in booking refund diagnostics; [9129d652](https://github.com/mohamedsalh333555/VSP.App/commit/9129d652d30a868c82c1519a2f5d5db349b6086a) redacts signed webhook payload records and accounting error text.
+- **CI:** [booking refund proof](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44109650071) and [sanitized audit](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110257615) **SUCCESS**, Deno + focused Flutter. [Task accounting](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44110274887) SUCCESS. The tested Staging payment receipt procedure still receives all its required signed reconciliation fields.
+- Existing separate commit `a9ea11cd` prevents repeated booking refund dispatch and `44b07d18` covers tournament refund ambiguity; **do not duplicate their task counts**. No new production secrets/data access or live refund; existing SEC-03/06/10/30/31/63 and 85.* still open. [Exact evidence](security/VSP_PAYMOB_REFUND_PROOF_AUDIT_MINIMIZATION_2026-11-17.md).
+- **Counter remains 633 unique / 266 accepted / 367 open**, 0 newly accepted/0 newly created.
+
+## 2026-11-17 — Paymob source-only integration/order/refund hardening (0 accepted) (266/367)
+
+- **Five source issues corrected:** refund from signed historical gross, integration allow-list, mandatory existing order correlation, late-failure update guarded by `paymob_order_id`, and checked/reflected over-capacity refund ledger RPC outcomes. [Commits and exact safeguards](security/VSP_PAYMOB_INTEGRATION_ORDER_REFUND_RECONCILIATION_2026-11-17.md).
+- **Financial CI:** [signed-gross](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44105832697), [integration](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44106409594), [order](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44106689595), [stale-failure](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107059958) **all SUCCESS**. [Latest refund-ledger test](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44107568234) Deno success; full workflow must be checked separately.
+- Storage policy **count divergence** prod 20/staging 6 (read-only metadata), not proof of leak or identical staging QA. Legacy Paymob signed callbacks without persisted order IDs now fail closed, pending orders require operational plan.
+- **Account:** 633 unique / 266 accepted / 367 open; 0 newly accepted, 0 added. Existing 30.* / 31.* / 63.* / SEC-06/10 and 85.* audits stay open. No live transaction, staging/prod update, secrets, or main merge.
+
+## 2026-11-17 — Paymob pending/reversal/replay + five checkout order-binding guards (0 accepted; 266/367)
+
+- **Real source code corrections:** verified signed `pending` events no longer cancel pending bookings; void/refund/ambiguous successes never credit paid; non-EGP callbacks rejected; repeated booking refund events stop before duplicate notices; all five Paymob Intention order types refuse checkout on zero-row/mismatched correlation.
+- **Commits:** [c48e2ec5](https://github.com/mohamedsalh333555/VSP.App/commit/c48e2ec53c438720b57016c6cdcc25b3aae5142c), [33a778db](https://github.com/mohamedsalh333555/VSP.App/commit/33a778dbffd11b9a95a442a3187284ff45f10f45), [b2c42d4e](https://github.com/mohamedsalh333555/VSP.App/commit/b2c42d4e96c0bebda2770cbb0c2519860f14e636). Test/CI compatibility adjustment [2cdf9585](https://github.com/mohamedsalh333555/VSP.App/commit/2cdf958589781f3eb1a4a82de4c19790facbb660).
+- **Verification:** [Paymob/Flutter financial CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103800758); [isolated SQL security CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103816555); [owner checkout CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103816707); [task accounting CI SUCCESS](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44103816614). All at `b2c42d4e`. Earlier stale source-assertion failure corrected and retested, not hidden.
+- **Not approved/complete:** no deployed Paymob webhook, no live signed Sandbox callback, no external refund, no hosted two-account access test, no production/secret change. Existing `30.*`, `63.*`, Phase 8 and advisory `85.*` remain OPEN. [Exact bounded evidence](security/VSP_PAYMOB_PENDING_REVERSAL_ORDER_BINDING_BATCH_2026-11-17.md).
+- **Counter:** 633 unique / 266 accepted / 367 open. This batch contributes **0 new unique IDs and 0 accepted IDs** (actual source improvements are not production acceptance).
+
+## 2026-11-17 — Paymob error redaction + current-SHA CI (source-only; 0 new accepted) (266/367)
+
+- **Confirmed unsafe source patterns:** two refund paths logged full provider responses, some refund flows persisted raw provider/exception error strings, and intention creation returned raw internal error descriptions to the Flutter client. These were remediated as sanitized diagnostics without changing refund/payment state calculations. No actual breach or specific customer data exposure was demonstrated.
+- **3 new commits, no new task IDs:** [a161137a](https://github.com/mohamedsalh333555/VSP.App/commit/a161137a059b3320d033e7db609ddabec73247c1), [5bc61a8b](https://github.com/mohamedsalh333555/VSP.App/commit/5bc61a8b1600bcbbb4f08382de5d551d22636398), [23fe3066](https://github.com/mohamedsalh333555/VSP.App/commit/23fe3066a10063eb1b55ee4428a14ca9378fce35).
+- **CI at 23fe3066:** [Paymob HMAC/source redaction Deno + Flutter payment](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100276777) SUCCESS; [isolated PostgreSQL security](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100288875) SUCCESS; [owner checkout security](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100288877) SUCCESS; [task accounting](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44100324732) SUCCESS.
+- **Not accepted/deployed:** production `paymob_webhook` still v45, staging has no deployed webhook, no live Paymob sandbox or external account negative tests, Storage runtime/issuer hook proof still open. Existing Phase 8 SEC-06/10; 85.01–85.03 remain OPEN. [Full updated security evidence](security/VSP_SUPABASE_STORAGE_PAYMOB_SECURITY_INTAKE_2026-11-17.md).
+- **Numbers:** 633 unique, 266 accepted, 367 remaining. This source verification does not promote any pre-existing task to accepted. No production SQL or secrets change, no main merge.
+
+## 2026-11-17 — Phase 8 published Storage advisories + Paymob security intake (0 new accepted) (266/367)
+
+- **العداد:** 630 أصلية / 266 مقبولة / 364 مفتوحة ← **633 فريدة / 266 مقبولة / 367 مفتوحة**. أضيفت 85.01–85.03 كمهام فحص انطباق ثغرات Storage فقط. SEC-NEW-04 وSEC-NEW-05 محمولتان بالفعل على مهام 30/63/76–80 وPhase 8، دون ازدواج.
+- **فحص فعلي:** Cloud Staging/Production ACTIVE_HEALTHY؛ قُرئت سياسات buckets وstorage.objects عبر metadata دون ملفات أو بيانات مستخدمين؛ إصدار Postgres غير إصدار Storage، وتأكيد إصلاح Hosted/Hook configuration ما زال مطلوبًا. لا دليل اختراق ولا إثبات انطباق الثغرات الخارجية.
+- **تصحيح كود Paymob:** HMAC verifier منفصل، مقارنة ثابتة 128 خانة، إزالة raw URL والتوقيع والـpayload غير الموثوق من سجلات الرفض، نجاح الدفع Boolean صريح؛ **لم يُنشر الإنتاج، ولم يُعتمد إغلاق 30.02/30.08**. إضافات اختبار Deno وCI على الفرع. مسارات الدفع الموثّق وRPC لم تُبدّل.
+- **دليل الفحص وملفات/حدود التحقق:** [تقرير Phase 8 الأمني](security/VSP_SUPABASE_STORAGE_PAYMOB_SECURITY_INTAKE_2026-11-17.md). لا دفع فعلي، اختبار هجومي على ملفات حقيقية، أسرار أو migration إنتاجية، ولا دمج main.
+
+## 2026-11-17 — إشعارات دعوات الفرق والتحدي الإلكتروني المؤكد (+4) (266/364)
+
+- **العداد المعتمد:** 262 → **266** مكتملة، 368 → **364** متبقية؛ إجمالي 630 فريدة.
+- **46.01/46.02:** دعوة اللاعب من كابتن فريق مخوّل ثم إشعار الكابتن بقبول/رفض حقيقي؛ منع دعوات منتهية وتكرار وإرسال قبول بلا عضوية موجودة.
+- **46.03:** التحدي النقدي المؤكد بالإشعار القديم المؤمّن، والتحدي الإلكتروني المؤكد فقط عند مطابقة Paymob HMAC ومعاملة مكتملة وحجز ومبلغ صحيح، للمسؤولين الحقيقيين عن الفريقين.
+- **47.07:** SQL سلبي لحجز تحدي ملغي أو بلا إثبات دفع؛ لا إعلان لمباراة مؤكدة كذبًا. نطاق بطولة/جدول المسابقات الأخرى لا يزال مفتوحًا.
+- **حماية إضافية:** RLS restrictive تمنع تزوير إشعارات دعوات الفريق من العميل؛ 3 migrations Staging فقط `20261117133431`، `20261117133810`، `20261117134128`، وفحص تفعيل trigger ودوال محمية.
+- **Flutter:** فتح الدعوات من الإشعار بحماية الحساب مُنفذ واختبار architecture نجح؛ 46.06 لم يُضف إلى العداد حتى إتمام اختبار Flutter الكامل.
+- **الدليل:** [تفاصيل الاختبارات والنطاق](VSP_TEAM_INVITES_AND_VERIFIED_CHALLENGE_NOTICES_2026-11-17.md) و[SQL CI نجاح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44095026083).
+
+## 2026-11-17 — Paymob والوسائل العربية وRLS والإيراد (+8) (262/368)
+
+- **العداد:** 254 مقبولة / 376 مفتوحة ← **262 مقبولة / 368 مفتوحة** من أصل 630 مهمة أصلية، دون إدراج المجموعة 56 أو احتساب مكرر.
+- **45.04/45.07:** إشعار in-app بعد Paymob HMAC موثّق + معاملة مكتملة مربوطة بحجز/طلب/مبلغ متطابق، ومنع تزويره قبل التأكيد أو برسالة عميل مستقلة.
+- **62.07/64.02/64.04:** تصنيف وسائل الدفع العربية/الإنجليزية وحظر تأكيد محفظة غير مدفوعة من قاعدة البيانات حتى لو اختلفت بيانات المصدر القديمة؛ اختبار نقل النقد إلى المحفظة والحالات المقبولة/المرفوضة.
+- **63.05/63.07:** اختبار دالة دفتر Paymob الحقيقية المعزولة؛ نفس المعاملة نفس الحجز idempotent، ورقم معاملة لحجز آخر مرفوض، وفهرس فريد بالقاعدة.
+- **64.07:** اختبار Flutter مستقل يجمع الكاش والإلكتروني والتحويلات ويفصل «فودافون كاش» عن كاش الملعب، وبيانات legacy المتعارضة لا تضخم الإيراد.
+- **تأمين إضافي:** RLS مقيِّدة لإنشاء إشعارات الدفع/النتائج الرسمية، وtrigger يسمح للمستخدم فقط بإشارة القراءة، ولا يسمح بتعديل بيانات الإشعار.
+- **Staging فقط:** migrations `20261117041136`, `20261117042825`, `20261117043325`, `20261117043328`. لم تتغير أعداد سجلات Staging: 24 حجزًا و6 إشعارات. لا تغيير إنتاج أو عمولات.
+- **الأدلة:** [تقرير القبول](VSP_VERIFIED_PAYMOB_AND_ARABIC_PAYMENT_RLS_ACCEPTANCE_2026-11-17.md)، [SQL CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44018523821) نجاح، [Flutter المالي](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44018518263) نجاح.
+- **المتبقي:** Paymob الحي، FCM والأجهزة، تكوين الدفع التجاري، استرداد حقيقي، تطبيق موقّع، ومراجعة إنتاج.
+
+## 2026-11-17 — إشعارات الحجوزات والنتائج والتأهل المعتمدة (+9) (254/376)
+
+- **العداد:** 245 مقبولة / 385 مفتوحة ← **254 مقبولة / 376 مفتوحة**، دون زيادة إجمالي 630 أو احتساب المكرر.
+- **45.01/45.02/45.05/45.06:** مصدر الحجز النقدي المؤكد من INSERT أو انتقال الحالة، مالك ملعب موثوق وكابتن تحدي نقدي، ومحتوى وmetadata لإشعار in-app مع عزل المستلمين.
+- **45.03:** إلغاء حجز مؤكد من حالة الخادم وإبلاغ مالك الملعب وصاحب الحجز فقط، بلا ادعاء دفع أو رد مبالغ.
+- **46.05:** منع تكرار إشعار تحدي نقدي مؤكد مع UPDATE المتكرر وسجل إشعار legacy موجود.
+- **47.04/47.05:** اعتماد نتيجة مرحلة مهارات ثم تأهل رسمي بعد نتيجة مباراة 1 ضد 1 وتعيين الفريق بالدور التالي. رفض المعلقة والمسودات والبطولات الملغاة.
+- **48.06:** وصول منطقي واحد إلى جدول الإشعارات لكل حدث/مستلم؛ لا يثبت exactly-once push/provider.
+- **4 migrations منشورة على Staging فقط**: `20261117035425`, `20261117035855`, `20261117035859`, `20261117035901`. جميع دوالها محمية من EXECUTE المجهول والمستخدم العادي، والمشغلات مفعلة؛ لا تعديلات إنتاجية.
+- [دليل القبول](VSP_NOTIFICATION_ACCEPTANCE_CASH_BOOKING_RESULTS_ADVANCEMENT_2026-11-17.md) و[نجاح SQL CI على آخر اختبار](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44014089643).
+- **45.04/45.07 وبقية الإشعارات FCM والإنتاج وJWT والأجهزة وAPK ما زالت مفتوحة.**
+
+## 2026-11-17 — نشر تفاصيل البطولات وخصوصية إشعار الجائزة وشارات RTL (+3) (245/385)
+
+- **العداد:** 242 مقبولة / 388 مفتوحة ← **245 مقبولة / 385 مفتوحة** من أصل 630، ثلاث مهام أصلية مختلفة.
+- **38.05** عرض تفاصيل بطولة مهارات الفرق من مصدر منشور: ملعب، محافظة، مواعيد، عدد فرق، رسوم، أسماء الجوائز؛ معاينة المسودة في Admin بدون ادعاء النشر، وانتهاء التسجيل يحجب أفعال التسجيل في Flutter. [Flutter ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44010432025)، [Admin ناجح](https://github.com/mohamedsalh333555/vsp-admin-panel/actions/runs/44010028754)، SQL RLS أصلي.
+- **46.07** إصلاح P1: منع إشعار جائزة فريق مهارات عن لاعبين سابقين/inactive وعن فرق أو بطولات أخرى؛ اختبار SQL ضد الدالة الفعلية، ونشر الدالة على **Staging فقط** بالهجرة `20261117032927` وفحص تأمين المستلمين ورفض الاستدعاء المباشر. باقي إشعارات دعوات الفرق ليست مغلقة.
+- **81.10** اختبار عنصر شارات إنجاز الفريق على شاشة عربية 280px مع RTL وتكبير 180% وتسميات قارئ الشاشة واختبار شارة الإنجليزية 320px في Flutter CI؛ رحلة إمكانية الوصول عبر جهاز حقيقي مفتوحة.
+- **CI على كود الدفعة:** [SQL](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44010432162) و[Flutter](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44010432025) و[Android smoke](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44010432073) و[iOS unsigned](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44010432165) نجحوا، وكذا Owner وCore Accounting.
+- [دليل القبول والحدود](VSP_TEAM_SKILLS_PUBLISH_BADGES_AWARD_RECIPIENT_ACCEPTANCE_38_05_46_07_81_10_2026-11-17.md). لا `main` merge ولا إنتاج ولا APK إصدار موقع ولا FCM/حسابات JWT مستقلة.
+
+## 2026-11-17 — نزاعات جوائز بطولة المهارات وإشعارات التسجيل (+3) (242/388)
+
+- **العداد:** 239 مقبولة / 391 مفتوحة ← **242 مقبولة / 388 مفتوحة** من أصل 630.
+- **44.07** رفض مطالبة فريق خاسر وحارس غير مستحق بلقب بعد حسم التعادل، ومنع لقب عند التعادل أو عدم اعتماد جميع المراحل؛ اختبارات PostgreSQL لدوال الـtrigger الفعلية ولا جائزة تُحفظ بعد الرفض. نزاعات الأموال/التسليم خارج القبول.
+- **47.01** إشعارات تقديم طلب بطولة المهارات إلى الكابتن الصحيح في `notifications` (pending/waitlist)؛ SQL معزول على بطولتين مع فحص metadata وعدم كشف مستلم آخر.
+- **47.06** الإشعار الأول على INSERT والتحديث فقط بعد تغيير status، دون إعادة إرسال عند تكرار نفس الحالة؛ هو اختبار توقيت **داخل قاعدة البيانات** لا Push/FCM الفعلي.
+- [دليل القبول المحدود](VSP_TEAM_SKILLS_NOTIFICATION_DISPUTE_ACCEPTANCE_44_07_47_01_47_06_2026-11-17.md) — [نجاح SQL CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44009406841). فحص Staging بالقراءة تأكد من تفعيل المشغلات؛ لا تغييرات إنتاجية.
+- **38.05 و81.10 لم تُغلق**: Flutter CI في التحقق؛ لا قبول مسبق. JWT/حسابات متعددة وAndroid حقيقي وAPKs والنشر منفصلة.
+
+## 2026-11-17 — إنشاء البطولة والصلاحيات وتوثيق الجوائز (+6) (239/391)
+
+- **العداد:** 233 مقبولة / 397 مفتوحة ← **239 مقبولة / 391 مفتوحة** من أصل 630، ست مهام فريدة فقط.
+- **38.02** اختبار SQL لإنشاء بطولة مهارات فعلية بمعرّف وثلاثة عشر سجلًا (بطولة + 12 مرحلة) وتدقيق واحد، مع رفض لاعب وأدمن محظور وملعب بمحافظة خاطئة؛ نُشر فحص المحافظة على Staging فقط بالنسخة `20261117025416`.
+- **38.04 و38.08** قواعد لاعب/كابتن/حكم/منظم/أدمن واختبارات SQL واقعية للدوال تمنع النشر أو كتابة نتائج بطولة أخرى بدون صلاحية. لا ادعاء بجلسات JWT متعددة.
+- **44.01–44.03** توثيق فقط: ضيافة الفريق الافتراضية 50 ج قابلة للضبط لكل بطولة، ثلاثة أنواع ألقاب، وقواعد أهلية الاستحقاق؛ لا مدفوعات/تسليم جوائز فعلية.
+- [دليل إنشاء البطولة والأدوار](VSP_TEAM_SKILLS_ADMIN_CREATION_ROLES_2026-11-17.md) — [دليل الرسوم والجوائز](VSP_TEAM_SKILLS_FEES_AND_AWARDS_SOURCE_RULES_2026-11-17.md) — [SQL CI ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44006227132).
+- لم تُغلق 38.05 أو 42.08 أو 59.* و79.* أو معايير APK/Store. لا تغييرات بالإنتاج أو `main`.
+
+## 2026-11-17 — قبول أهلية المحافظة في بطولة مهارات الفرق 39.02 (233/397)
+
+- **العداد:** 232 مقبولة / 398 مفتوحة ← **233 مقبولة / 397 مفتوحة** من أصل 630؛ المهمة الجديدة الوحيدة هي 39.02.
+- نفذ الخادم تحقق محافظة الفريق قبل إدخاله قائمة التسجيل أو الانتظار، مع الحفاظ على منع الكابتن واللاعب المحظور والحارس وخمسة أعضاء ومنع التكرار والسعة.
+- اختبار PostgreSQL فعلي معزول نجح لقبول فريق أسوان ورفض فريق الجيزة دون أي صفوف أو سجلات جانبية. [SQL CI الناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44003953709).
+- طُبقت الدالة على **Staging فقط** كمهمة migration رقم `20261117023518`؛ فحص القراءة أكد وجود الحارس وصلاحية المستخدم المسجل وحده للتنفيذ. [تقرير القبول الدقيق](VSP_TEAM_SKILLS_GOVERNORATE_ELIGIBILITY_ACCEPTANCE_39_02_2026-11-17.md).
+- **حدود القبول:** ليس اختبار JWT حقيقيًا أو موبايل E2E؛ لم يتم تعديل الإنتاج أو `main` أو المال أو إصدار APK.
+
+## 2026-11-17 — قبول إغلاق التسجيل وتسجيل فريق فعلي 38.06/39.01 (232/398)
+
+- **العداد:** قبل 230 مقبولة / 400 مفتوحة → بعد **232 مقبولة / 398 مفتوحة** من أصل 630؛ معرّفان أصليان جديدان فقط.
+- **38.06:** دالة `team_skills_set_status` الأصلية تنقل من التسجيل إلى بدء البطولة بصلاحية Admin فقط؛ رفض استقبال فريق جديد بعد بدء البطولة، ومنع إعادة فتح التسجيل أو تخطي حالة المسودة، مع الحفاظ على المشاركين السابقين وتسجيل تغيير الحالة.
+- **39.01:** دالة `team_skills_register` الفعلية تسجّل فريقًا يملكه كابتن بقائمة 5 لاعبين قائمين (بينهم حارس وممثل)، وتكتب سجل مشاركة واحدًا و5 صفوف roster وسجل audit واحدًا.
+- [دليل القبول المحدود](VSP_TEAM_SKILLS_REGISTRATION_LIFECYCLE_ACCEPTANCE_2026-11-17.md)؛ [اختبارات SQL ناجحة](https://github.com/mohamedsalh333555/VSP.App/actions/runs/44000082213).
+- الاختبار على PostgreSQL معزول ومحاكاة دور المستخدم؛ **لا JWT حقيقي متعدد الحسابات، لا E2E موبايل، لا تعديل إنتاج أو دمج `main`**. باقي نطاق البطولات والمناطق والإشعارات مفتوح.
+
+## 2026-11-17 — قبول حسم التعادل وإعادة توليد جدول خروج المغلوب 40.05/40.06 (230/400)
+
+- **العداد:** 228 مقبولة / 402 مفتوحة → **230 مقبولة / 400 مفتوحة** من إجمالي 630؛ معرفان أصليان فقط أُغلقا.
+- **40.05:** عند التعادل تُسجل ركلات ترجيح فاصلة في الخادم، مع حفظ الأهداف والترجيح وتحديد الفائز والتأهل وتوثيق واحد، ورفض القيم غير الصالحة والمكررة؛ دالة مخصصة بلا تغيير مسار النتائج العادية.
+- **40.06:** إعادة توليد فعلية وآمنة لجدول لم تُلعب مبارياته، بتثبيت معرّفات المباريات والإعفاءات لكل عدد 4–8 فرق؛ رفض إعادة التوليد إذا وُجدت نتيجة فعلية أو لقب معلن أو بطولة مكتملة/ملغاة.
+- [الدليل](VSP_TEAM_SKILLS_PENALTIES_REGENERATION_ACCEPTANCE_2026-11-17.md)؛ [اختبارات SQL ناجحة](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43996014424)؛ [اختبارات لوحة الإدارة 131/131 والبناء ناجح](https://github.com/mohamedsalh333555/vsp-admin-panel/actions/runs/43995936875).
+- ترحيلات Staging فقط: `20261117013105` و`20261117013112`، مع فحص صلاحيات الخادم بعد تطبيقهما. لا إنتاج أو دمج `main`. اختبار متصفح/جهاز بحسابات JWT متعددة حقيقية لا يزال مفتوحًا.
+
+## 2026-11-17 — قبول طابور مراجعة المهارات ورفض النتيجة الموثق 42.01/42.04 (228/402)
+
+- **قبل: 226 مقبولة / 404 مفتوحة. بعد: 228 مقبولة / 402 مفتوحة من إجمالي 630.** أُغلق معرفان جديدان فقط: **42.01** و**42.04**، ولم تُضَف مهام أو يُعاد احتساب مهام سبق قبولها.
+- **42.01:** لوحة إدارة بطولة المهارات تعرض النتائج المعلقة وحدها مبدئيًا مع عداد وزر لكشف السجل بالكامل؛ التبديل لا يغيّر بيانات الخادم، وأزرار الاعتماد والرفض مقفولة حتى قراءة تفاصيل البطولة الحالية؛ اختبارات الواجهة الجديدة مع 127/127 وبناء Vite نجحت على فرع الإدارة `f25682f50d`.
+- **42.04:** مسار `reject_score` للمسؤول: سبب موثق ورفض النتيجة المعلقة مرة واحدة ثم تصحيحها وإعادتها للاعتماد عبر RPC الموجود. اختبارات SQL عزلت رفض غير المصرح/المكرر/المعتمد/البطولة الملغاة/ما بعد إنشاء النهائيات، وتوثيق الأسباب والقياس السابق. طبّقت الدالة وحدها على **Staging فقط** باسم `team_skills_reject_score_audited_20261117` (version `20261117011700`) وتحققنا قراءةً من صلاحيات `anon`/المستخدم المسجل ومراجعة المسؤول.
+- [دليل القبول وحدوده](VSP_TEAM_SKILLS_PENDING_REJECTION_ACCEPTANCE_2026-11-17.md)؛ [CI SQL ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43994454128)؛ [Admin CI ناجح: 127/127 وبناء](https://github.com/mohamedsalh333555/vsp-admin-panel/actions/runs/43994557087).
+- الترحيل الجديد وثّقنا نسخته الفعلية في manifest دون استخدام `db push` الشامل، ولا أي تعديل في Supabase الإنتاج. **اختبار JWT بحسابات منفصلة وتكامل المتصفح/الجهاز وفك التعادل وإعادة توليد الجدول ما زالت مفتوحة**. لا `main` merge ولا نشر Admin إنتاج.
+
+## 2026-11-17 — قبول انتقال المتأهلين وتحديث الترتيب 40.04 و42.05 (226/404)
+
+- **العداد:** قبل الدفعة 224 مقبولة / 406 مفتوحة؛ بعدها **226 مقبولة / 404 مفتوحة** من أصل 630 مهمة، بقبول معرفين جديدين فقط.
+- **40.04:** اختبار دالة SQL الفعلية لإنشاء الجدول واعتماد نتائج نصف النهائي ونقل الفائزين للنهائي ثم حسم النهائي؛ منع رفض/تكرار/تعادل/اعتماد بطولة ملغاة أو مستخدم غير مخول؛ 3 عمليات تدقيق فقط للمباريات الثلاث.
+- **42.05:** استدعاء دالة اعتماد نتيجة المهارات مع عرض `team_skills_leaderboard` الحقيقي `security_invoker`؛ النقاط المعلقة لا تُحتسب، المعتمدة تضاف مرة واحدة للفريق المقصود، ونتيجة فريق آخر لا تتغير.
+- [أدلة القبول وحدوده](VSP_TEAM_SKILLS_ADVANCEMENT_RANKING_ACCEPTANCE_2026-11-17.md)؛ [CI SQL نجح على SHA `82e6988`](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43991954868).
+- **لا إثبات JWT متعدد الحسابات أو Android E2E مخصص**؛ لم يُغلق فك التعادل (40.05) ولا إعادة توليد الجدول (40.06) ولا إشعارات/متاجر/إنتاج؛ لا دمج `main`.
+
+## 2026-11-17 — قبول 11 مهمة لاختبارات التسجيل والختام واعتماد النتائج (224/406)
+
+- **الدفعة السابقة:** 213 مقبولة / 417 مفتوحة؛ **الدفعة الحالية: 224 مقبولة / 406 مفتوحة** من إجمالي **630 مهمة**. المضاف للقبول **11 معرفًا موجودًا أصلًا** دون زيادة في إجمالي النطاق.
+- **التسجيل 39.04–39.07 (4):** منع التسجيل المكرر، إغلاق التسجيل عند البداية/المسودة، قبول ورفض الإدارة مع سبب وتدقيق، واختبار اتصالَي كابتن مستقلين يتنافسان على آخر مقعد.
+- **الختام 40.03 و40.07 و40.08 (3):** توليد خروج المغلوب بأعداد 4–8، إعفاءات صحيحة لكل عدد، ورفض إعادة توليد الجدول مع بقاء المباريات دون تكرار. **40.06** (إعادة توليد آمنة بوظيفة مستقلة) **ما زالت مفتوحة**.
+- **النتائج 42.02 و42.03 و42.06 و42.07 (4):** اختبار منع اعتماد غير المسؤول، اعتماد نتيجة صحيحة محددة، كتابة سجل تدقيق واحد، ورفض الاعتماد الثاني أو المعرّف غير الموجود.
+- [الدليل التفصيلي لكل معرف وحدود قبوله](VSP_TEAM_SKILLS_BOUND_ACCEPTANCE_BATCH_2026-11-17.md)؛ [تشغيل SQL المعزول الناجح على SHA `8280fbd5`](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43990874817). استخدمت اختبارات دوال SQL الحقيقية وقواعد محلية قابلة للإتلاف، وفحصًا قرائيًا لـstaging؛ **لا يعد ذلك JWT E2E متعدد الحسابات ولا إثبات تسليم Push ولا أهلية نشر الإنتاج**.
+- تم تحديث القائمة التفصيلية والخطة والعداد المباشر. يظل فحص حسابات الدخول الحقيقية/المستعرض والأجهزة وأدوار ملاك الملاعب والتحديات 84.* وبوابات الإصدار مفتوحًا؛ لا merge إلى main ولا SQL إنتاجي.
+
+## 2026-11-17 — قبول تحقق عدد الفرق والسعة في بطولة المهارات (213/417)
+
+- **قبل الدفعة: 211 مقبولة / 419 مفتوحة. بعد الدفعة: 213 مقبولة / 417 مفتوحة. إجمالي 630 دون تغيير.**
+- **38.03 — ضبط عدد المشاركين:** قبول مُحدّد ببطولة مهارات الفرق؛ حدّ 4–8 فرق مفروض في نموذج الإدارة وفي CHECK constraint الفعلي على `vsp-staging`. اختبار نموذج إنشاء البطولة والبناء نجحا في لوحة الإدارة.
+- **39.03 — التحقق من السعة:** قبول مُحدّد بمسار تسجيل ومراجعة فرق بطولة المهارات؛ `team_skills_register` و`team_skills_review_registration` في staging يتحققان من السعة ويستخدمان `FOR UPDATE`. اجتاز اختبار SQL المعزول لحظر ترقية قائمة الانتظار عند الامتلاء ونجح اختبار اتصالين مستقلين يتنافسان على آخر مقعد.
+- [الدليل المحدد وحدود القبول](VSP_TEAM_SKILLS_CAPACITY_ACCEPTANCE_38_03_39_03_2026-11-17.md)؛ [CI SQL معزول ناجح](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43979196055)؛ [لوحة الإدارة: 122 اختبارًا والبناء](https://github.com/mohamedsalh333555/vsp-admin-panel/actions/runs/43986557256).
+- **لم يُغلق** اختبار الكابتن/الحكم/الأدمن بحسابات منفصلة، أو التحقق الشامل لأنواع البطولات الأخرى، أو 39.06/39.07 وبوابات الإصدار. هذا قبول وظيفي محدود، وليس اجتياز E2E أو موافقة دمج `main` أو نشر إنتاج.
+- تم تحديث معرّفي المهمتين الأصليين في القائمة التفصيلية والخطة؛ لا تُحسب commits أو اختبارات متعددة كمهام إضافية، ويجب أن يطابقهما `scripts/verify_task_accounting.py`.
+
+## 2026-11-16 — قبول ربط تقرير الأمن رقم 77.10 (211/419)
+
+- **قبول 77.10 توثيقيًا فقط:** ربط تقرير أمن محدد الأدلة للعروض الأربع ذات `security_invoker=true` وRPC SECURITY DEFINER المعرّضة للمستخدم المسجّل (200 توقيع / 0 صلاحية anon / 12 توقيع بلا `auth.uid/auth.jwt` مباشر) مع سجل الاستثناءات 77.09 وIssue #38 / Issue #37 وPR #35. [التقرير الموحد وحدوده](security/VSP_SECURITY_FINDINGS_INTEGRATION_77_10_2026-11-16.md). لا تفويض جديد ولا إصلاح لخطر غير مثبت.
+- **630 إجمالي / 211 مقبولة / 419 متبقية.** مهام JWT الأصلية، P0 الدفع/الخصوصية، مراجعة الـRPC، إعادة اختبار Advisor و84.* لا تزال مفتوحة. المصدر Staging SELECT-only؛ لم تتغير أي وظائف أو صلاحيات أو بيانات مستخدمين على الخادم.
+- المصدر البرمجي السابق المقبول لا يتأثر بإغلاق التوثيق: [Flutter 43777510189](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43777510189)، [SQL 43777510195](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43777510195). مسارات إصلاح لاحقة على branch قد تحتاج إعادة CI، ولا يعني هذا التقرير توقيع إصدار أو دمج main.
+
+## 2026-11-16 — قبول توثيق استثناءات RPC رقم 77.09 (210/420)
+
+- **قبول مهمة واحدة فقط: 77.09** بوصفها جردًا موثقًا لاستثناءات SECURITY DEFINER/التفويض المفوض وليس إصلاح صلاحيات. أُعيد التحقق بالقراءة فقط على Staging من **200** routine بصلاحية authenticated، **0** منها بصلاحية anon، و**12** دون marker لهوية المستدعي في نص تعريفها. [السجل ودليل المصدر والاستثناءات المفتوحة](security/VSP_PRIVILEGED_RPC_EXCEPTIONS_77_09_2026-11-16.md).
+- **630 إجمالي / 210 مقبولة / 420 مفتوحة.** لا تتضمن المهمة اختبارات JWT متعددة الحسابات أو تغيير GRANT/RLS أو تزكية أمنية أو نشرًا على الإنتاج. تستمر 77.04/77.06–77.08/77.10/77.11 و79.* في العداد؛ وليس أي ناتج توثيقي دليلًا على إصلاح الثغرات.
+- آخر CI كودي قبل التعديل التوثيقي [Flutter 43777510189](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43777510189)، [SQL 43777510195](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43777510195)، [Owner Checkout 43777510205](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43777510205)، Android 43777510197 وiOS 43777510199 كلها ناجحة. لا main merge ولا تغييرات على Supabase أو بيانات المال.
+
+## 2026-11-15 — RESULT task intake only; no implementation (209/421)
+
+- **Before: 618 total / 209 accepted / 409 open. After: 630 total / 209 accepted / 421 open.** Added **12 open tasks 84.01–84.12** to the existing tracker under B09.05; no original IDs or acceptance states changed; no new task accepted. Active parent items: 83 (group 56 remains cancelled).
+- [RESULT-01–RESULT-18 mapping, scope and acceptance criteria](VSP_CHALLENGE_RESULTS_TASK_PACKAGE_2026-11-15.md): **0 pre-existing RESULT aliases** in tracker files at review; **6 requirements reuse 14 unique existing open tasks** without duplicate entries. The other 12 requirements add distinct gaps, including only the new financial/integration portion of RESULT-18; existing points/recalculation tests remain in their original tasks.
+- Read-only source review of `main` at `9e4f0e6a` and implementation branch at `89cbe941`; PR #35 remains Draft/open, PR #19 merged historical result flow, issue #37 data audit and #44 challenge consent reviewed. No deployment status inferred from source files.
+- This is task tracking only: application code, SQL/migrations, Supabase data/configuration, money, pricing and subscriptions are untouched. No Flutter/SQL functional test or CI workflow dispatched; prior green runs are not evidence for the new feature. The tracker verifier's expected scope is updated to 630/83 and inventory consistency is checked locally. No main merge.
+
+## 2026-11-15 — Cancellation disclosure and takeover regression receipt (209/409)
+
+- Accepted **53.03** for the bounded client disclosure: Arabic/English pre-checkout summary, expandable details, matching signup/player terms, six-hour-inclusive locked/error copy, and no refund timeline for unknown/zero/unpaid amounts. A 320×568, 1.8× text fixture verifies wrapping and RTL/LTR. The old refund FAQ catalog entry no longer promises an in-app wallet credit; that entry is not currently exposed by the help screen. [Evidence and limits](VSP_CANCELLATION_DISCLOSURE_ACCEPTANCE_2026-11-15.md).
+- Resolved the takeover baseline's failing Arabic test by configuring the real locale delegates and supported languages. On code **`2d7debf3`**, [Flutter CI 43725230987](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43725230987) passed analysis, privacy, architecture, Cairo date gates and **1438 tests / 11 skipped**. Android `43725231024`, iOS `43725231107`, Account SQL `43725230990`, Owner checkout `43725230972` all succeeded on that code snapshot.
+- **618 total / 209 accepted / 409 open; this batch accepts one task only.** No cancellation/refund server logic, payment execution, prices, subscriptions or production state changed. Server cutoff, real refund delivery, two-account/device and release tasks remain open. The receipt commit is documentation-only; it is not a new app test run or a main merge.
+
+## 2026-11-15 — Cairo skipped booking hour (208/410 unchanged)
+
+- **CODE_DONE; 22.05 remains open.** The client rejects nonexistent local slot clock times instead of normalizing them onto another booking hour; the availability grid filters those slots and explains a date with no valid local times. Cairo DST unit and widget tests run in the dedicated `TZ=Africa/Cairo` CI gate. [Evidence and limits](VSP_CAIRO_DST_SKIPPED_SLOT_GUARD_2026-11-15.md); [Flutter CI 43721346829](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43721346829).
+- **618 total / 208 accepted / 410 open.** Device timezones outside Cairo, repeated autumn hours and real server checkout still need verification.
+
+## 2026-11-15 — Short stadium detail layout (208/410)
+
+- Accepted **83.06** for the bounded layout: status and maintenance notices plus the gallery scroll above a fixed booking bar, while tabs remain available. A 320×568 Arabic widget fixture with enlarged text checks the safe area, actual header motion, fixed bar bounds and charcoal accent. [Evidence and limits](VSP_STADIUM_SHORT_SCREEN_LAYOUT_ACCEPTANCE_2026-11-15.md); [Flutter CI 43717640626](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43717640626).
+- **618 total / 208 accepted / 410 open.** Actual device screenshots and real venue data were not checked.
+
+## 2026-11-15 — Booking day states and calendar (207/411)
+
+- Accepted **83.04** for bounded client states: loading, fetch error and retry, bookable, venue closure, all booked, past day and missing schedule, plus Arabic RTL date labels and disabled past dates in calendar tests. [Evidence and limits](VSP_BOOKING_DAY_STATES_ACCEPTANCE_2026-11-15.md); [Flutter CI 43696480753](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43696480753).
+- **618 total / 207 accepted / 411 open.** Real venue availability, the November 11 device symptom and on-device rendering remain separate.
+
+## 2026-11-15 — Booking financial summary (206/412)
+
+- Accepted **83.03** for the bounded financial summary: before slot selection the balance is deferred and the zero-total deposit badge is hidden; selecting an hour, ball rental, and a longer duration updates total and remaining values. The staging RPC price-mismatch rejection is covered separately. [Evidence and limits](VSP_BOOKING_FINANCIAL_SUMMARY_ACCEPTANCE_2026-11-15.md); [Flutter CI 43692957599](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43692957599).
+- **618 total / 206 accepted / 412 open.** No live Paymob settlement or two-account checkout was tested.
+
+## 2026-11-15 — Stadium stream idle recovery (205/413)
+
+- Accepted **83.02** for the verified code cause and bounded recovery behavior: the 10-second timeout now applies only until the first venue snapshot, so healthy idle Realtime streams no longer emit a false refresh error. Existing resolver tests keep the last valid row visible but disable booking during errors, retry and malformed data. [Evidence and limits](VSP_STADIUM_STREAM_IDLE_RECOVERY_2026-11-15.md); [Flutter CI 43690215018](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43690215018).
+- **618 total / 205 accepted / 413 open.** The original November 11 device incident cannot be attributed without its logs.
+
+## 2026-11-15 — Server rejects stale booking quote (204/414)
+
+- Accepted **21.07** for the bounded mismatched-price path. The staging `create_booking_atomic` now rejects a synthetic stale quote before insertion and returns its current calculated price. The client explains the retry for cash and online checkout. [Staging evidence and limits](VSP_BOOKING_PRICE_MISMATCH_STAGING_2026-11-15.md); [Flutter CI 43675097299](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43675097299).
+- **618 total / 204 accepted / 414 open.** No production migration, real Paymob charge or two-account end-to-end checkout was claimed.
+
+## 2026-11-15 — Booking price preflight (203/415 unchanged)
+
+- **CODE_DONE, 21.07 remains open:** confirmation now fetches a fresh bookable stadium and rejects a changed hourly quote, ball fee or deposit before cash/online payment selection. A failed lookup also stops this confirmation path. [Evidence and limits](VSP_BOOKING_PRICE_PREFLIGHT_2026-11-15.md); [Flutter CI 43670740754](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43670740754).
+- **618 total / 203 accepted / 415 open.** A two-account price-edit race and final RPC/payment agreement have not been verified.
+
+## 2026-11-15 — Owner stadium price update result (203/415)
+
+- Accepted **21.06** at the owner edit boundary: a widget test sends price 320 and checks both repository results. A failed update now keeps the editor open, reports an error and leaves pending photo deletion untouched; success closes the editor. [Evidence and limits](VSP_STADIUM_PRICE_UPDATE_RESULT_ACCEPTANCE_2026-11-15.md); [Flutter CI 43669407411](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43669407411).
+- **618 total / 203 accepted / 415 open.** Live database reflection, player price display after editing and booked-period authoritative price remain unverified.
+
+## 2026-11-15 — Player venue details from owner values (202/416)
+
+- Accepted **21.05** for the player venue information UI: a widget fixture uses the owner wizard's feature payload and verifies the player tab and price bar show the chosen location, amenities, add-on, hourly price and deposit, while hiding a disabled amenity. [Evidence and limits](VSP_PLAYER_STADIUM_DETAILS_VISIBILITY_2026-11-15.md); [Flutter CI 43668494949](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43668494949).
+- **618 total / 202 accepted / 416 open.** The fixture does not prove a live owner-to-player database journey.
+
+## 2026-11-15 — Stadium location and image input checks (201/417)
+
+- Accepted **21.01** at the owner wizard boundary: a synthetic map selection now awaits latitude, longitude, address and governorate draft writes; a widget test restores those values, checks the stadium payload and rejects a nonfinite manual result without damaging the prior selection. [Evidence and limits](VSP_STADIUM_LOCATION_IMAGE_VALIDATION_2026-11-15.md).
+- Improved **20.07** without closing it: JPEG/PNG/WebP extension, MIME, size and header checks reject obvious spoofing before Storage. Full file decoding, malicious-content handling and live bucket rules remain unverified. [Flutter CI 43668494949](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43668494949) runs the location and image tests.
+- **618 total / 201 accepted / 417 open.** No live map or stadium write was performed.
+
+## 2026-11-15 — Owner gallery and service choices (200/418)
+
+- Accepted **20.02** for the owner photo upload/delete UI, with a synthetic successful Storage response: completed gallery entry and draft, deletion of that new image and draft cleanup, and deferred deletion of a persisted image during edit. Draft writes in upload/delete are now awaited. [Evidence and boundaries](VSP_STADIUM_MEDIA_AND_SERVICES_ACCEPTANCE_2026-11-15.md).
+- Accepted **21.03** for the owner service selectors: a widget test taps Cafeteria and Garage, then verifies draft restore and the outgoing feature payload. [Flutter CI 43646816118](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43646816118) runs the two tests on the same head.
+- **618 total / 200 accepted / 418 open.** Live Storage permissions, server-side content safety and player-side data reflection still need independent verification.
+
+## 2026-11-14 — Owner stadium media recovery and cover selection (198/420)
+
+- Accepted **20.05** for the owner wizard's storage failure UI. The coordinator removes the transient uploading row and shows a retryable error on either a null storage response or a thrown upload error. A direct widget test covers both cases and checks the state callback. [Evidence and limits](VSP_STADIUM_IMAGE_UPLOAD_FAILURE_ACCEPTANCE_2026-11-14.md).
+- Accepted **20.03** for explicit gallery cover selection. The new control moves the chosen photo first; the widget test verifies the saved draft order and the primary `imageUrl` in the update payload. [Evidence and limits](VSP_STADIUM_COVER_SELECTION_ACCEPTANCE_2026-11-14.md). [Flutter CI 43644752625](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43644752625) covers both image tests on this head.
+- **618 total / 198 accepted / 420 open.** This does not claim a live Storage outage, content inspection or player-side rendering.
+
+## 2026-11-14 — Team discovery, search and profile route (196/422)
+
+- Accepted **15.01, 15.02, 15.03** within the loaded rankings UI. A widget test supplies two synthetic teams, verifies the Aswan/football selection excludes a Cairo/basketball team, checks a no-result search and a matching search, changes the location/sport filter, and taps the card to pass the selected team ID to its details route. The normal route still constructs `TeamProfileScreen`; [evidence and scope](VSP_TEAM_DISCOVERY_ACCEPTANCE_2026-11-14.md), [Flutter CI 43642905483](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43642905483).
+- **618 total / 196 accepted / 422 open.** The widget fixture does not establish complete public-team pagination, live account eligibility or a real device journey.
+
+## 2026-11-14 — Stadium details route and private team roster (193/425)
+
+- Accepted **14.06** for a `StadiumCard` tap in the actual `AllStadiumsScreen`, verifying the selected venue ID reaches the detail route. The route's test builder avoids external network access; normal app navigation still constructs `StadiumDetailsScreen`. [Evidence and limits](VSP_STADIUM_NAVIGATION_AND_TEAM_ROSTER_ACCEPTANCE_2026-11-14.md); [Flutter CI 43642905483](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43642905483).
+- Accepted **15.04** at the private roster RPC boundary. The deployed staging function used nonexistent `team_members.id`, causing member calls to fail. A new migration orders by `joined_at,user_id`; isolated PostgreSQL tests pass member/admin positive and outsider/anon negative cases. Applied on staging as recorded version `20261114212217`; read-only role checks there returned **10** member-visible rows, **0** to a nonmember and no anonymous EXECUTE grant. [Account SQL CI 43642533456](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43642533456). No personal fields were returned to the investigation.
+- **618 total / 193 accepted / 425 open.** No production schema/data or pricing changes. Actual device navigation, all team-profile data surfaces and broader cross-account tests remain open.
+
+## 2026-11-14 — Stadium list empty and partial-data behavior (191/427)
+
+- Accepted **14.05 and 14.07** with the actual `AllStadiumsScreen` widget and an injected delayed repository: a zero-result Cairo search shows an actionable empty state and resetting filters makes a new nationwide request; a malformed response shows a safe Arabic error without exposing the payload, then retry replaces it with an empty state; a stadium missing optional fields still renders a list card. [Test scope and boundaries](VSP_STADIUM_EMPTY_AND_PARTIAL_DATA_ACCEPTANCE_2026-11-14.md), source commit `af39c4b2`, [Flutter CI](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43622235834).
+- **618 total / 191 accepted / 427 open.** No external venue data or user account was changed. Navigation to details, full booking eligibility and all malformed API variants remain open.
+
+## 2026-11-14 — Governorate discovery and public visibility (189/429)
+
+- Accepted **14.03 and 14.08** after fixing the repository's unrecognized explicit-governorate fallback. It now returns an empty page without querying the nationwide list. A mocked HTTP request asserts the Aswan governorate and verified/not-blocked/not-deleted predicates are sent to the server. A read-only `anon` staging count found 2 visible Cairo stadiums and 0 unverified, blocked or owner-deleted rows. [Scope and evidence](VSP_STADIUM_GOVERNORATE_VISIBILITY_ACCEPTANCE_2026-11-14.md); code commit `1943b8ae`; [Flutter CI run 43619831953](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43619831953).
+- **618 total / 189 accepted / 429 open.** No real Aswan venue was visible in this staging snapshot; availability, booking eligibility and production publication workflows remain separate tasks. No hosted data/schema mutation.
+
+## 2026-11-14 — Anonymous privileged RPC checks (187/431)
+
+- Accepted **77.05** for a staging `anon` EXECUTE permission check across all 308 `public` SECURITY DEFINER functions: 0 callable as `anon` (200 callable as `authenticated`). A transaction-scoped `anon` attempt to call `add_team_to_matchup_by_code(uuid,text)` was denied before the function could run. [Evidence and limits](security/VSP_STAGING_ANON_PRIVILEGED_RPC_ACCEPTANCE_2026-11-14.md). No data writes or schema changes.
+- **618 total / 187 accepted / 431 open.** Authenticated caller ownership, spoofed parameter and real-JWT checks remain 77.06–77.11 and 79.xx; this one test does not establish their safety.
+
+## 2026-11-14 — Staging view role checks (186/432)
+
+- Accepted **76.04, 76.05 and 76.07** at a bounded staging SQL role-check scope for the four formerly privileged views. A transaction-scoped `anon` role saw 2 public courts, 2 active plans, 0 clean-sheet rows, and had no SELECT grant on `owner_subscription_status`. A player saw 0 owner rows; two separate owners each saw exactly their own row (1/1, 0 foreign); an admin saw 12 owner rows as authorized; authenticated with no identity saw 0 owner rows. Public courts exposed 0 blocked/deleted rows in the anonymous sample. [Evidence and limits](security/VSP_STAGING_VIEW_ROLE_MATRIX_ACCEPTANCE_2026-11-14.md).
+- **618 total / 186 accepted / 432 open.** All statements were `BEGIN READ ONLY` and `ROLLBACK`; no real JWT sign-in or nonempty tournament fixture was tested. Broader cross-account privacy journeys, 198 privileged RPCs, production deployment and release checks remain open.
+
+## 2026-11-14 — Matchup fee rebuild and rollback test (183/435)
+
+- Accepted **72.04 and 72.07** with a bounded disposable PostgreSQL contract: install the legacy paid-sixth-team function, install the five-team replacement under a savepoint, roll back to the previous definition, then install and replay the five-team definition. The test adds a fifth team and rejects a sixth even with a paid legacy-fee row, preserving its invite code. It checks `anon`/`authenticated` EXECUTE grants and refuses remote database targets. [Evidence and boundaries](security/VSP_MATCHUP_FEE_REBUILD_ROLLBACK_ACCEPTANCE_2026-11-14.md); code commit `fad6bfaa`; [Account SQL CI 43618848409](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43618848409).
+- **618 total / 183 accepted / 435 open.** Task 72.05 still needs deployment-history and data reconciliation; 71.07 still requires full clean migration rebuild; 57.07 cannot be verified from this integration's 403 branch-protection read. This is not a staging or production migration, deployed rollback, or permission to merge `main`.
+
+## 2026-11-14 — Stadium detail refresh and booking gate (181/437)
+
+- Commits `e669ac1c` and `cd744482` preserve the last successfully parsed venue details through a malformed row, stream error or retry, while blocking booking until an active, valid row for the same venue is received. Switching venues clears the cached details and keys the stream by venue ID. A refresh has its own progress message rather than claiming a failure while it is still loading.
+- Direct `stadium_snapshot_resolver_test.dart` covers a valid row, error, retry with stale data, malformed row, empty row, another venue ID and switching venues. [Flutter CI 43616662427](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43616662427), [Android smoke 43616662465](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43616662465), iOS compliance, Account SQL and Owner checkout security all succeeded on the same code head.
+- This fixes a source-confirmed stale-data display/booking risk under **83.02** but does not establish why the owner's screenshot showed a refresh warning. Device reproduction, actual venue payload/source diagnosis and retry acceptance remain open. **83.02 is CODE_DONE/IN_PROGRESS, not VERIFIED.** Neither this change nor five green workflows is counted as five completed tasks.
+- **618 total / 181 accepted / 437 open.** No staging/production data or schema mutation, payment/pricing change, `main` merge or APK release.
+
+## 2026-11-14 — Booking order and history browsing accepted (181/437)
+
+- Accepted **16.06** for deterministic player booking order and browsing the history section. The direct `bookings_screen_test.dart` exercises two future bookings in reversed input order, checks their visible order, scrolls to a completed historical booking and verifies its card. The categorization tests cover stable ties, newest history first and owner order without mutating the source list. [Evidence and boundaries](VSP_BOOKING_ORDER_BROWSING_ACCEPTANCE_16_06_2026-11-14.md).
+- The latest branch commit `f3136c49` passed [Flutter CI 43598491150](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43598491150), [Android smoke 43598491260](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43598491260), iOS compliance, Account SQL and Owner checkout checks. Android smoke covers onboarding/login rather than the history screen itself.
+- The same branch fixes the profile card and championship details/join path to resolve the account's saved active team from verified memberships and clears stale team presentation on account switch. These are **CODE_DONE**, covered by the direct repository active-selection test and Flutter CI, but do not close **18.01**, live tournament registration, or cross-account staging journeys.
+- The execution-plan inventory and read-only counter check now agree on the active 618 IDs after the owner's group-56 cancellation and group-83 addition. `python3 scripts/verify_task_accounting.py` returns 181 accepted, 437 open, no errors.
+- **618 total / 181 accepted / 437 open.** No staging/production database mutation, prices, payment backend, `main` merge or APK release.
+
+Warning: truncated output (original token count: 33469)
+Total output lines: 993
+
+## 2026-11-14 — Team invitations and active challenge-team checkout accepted (180/438)
+
+- Accepted **17.01–17.06 and 17.08** for the pending invitation UI, accept/decline behavior, membership refresh, duplicate response prevention, captain/recipient/expiry/governorate guards, and rejection of expired or wrong-recipient invitations.
+- Accepted **18.04** after team/challenge checkout stopped using an arbitrary first membership and now resolves the account-scoped active team from the strict verified membership list.
+- Evidence: [acceptance scope and boundaries](VSP_TEAM_INVITATION_ACTIVE_CHALLENGE_ACCEPTANCE_2026-11-14.md). Flutter CI [43589094180](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43589094180) passed analyzer and **1,394 tests with 11 skipped**. Account SQL run [43589094157](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43589094157) passed the guarded disposable PostgreSQL invitation contract. iOS compliance and owner checkout security were also green on the same head.
+- **17.07 remains open** because isolated identities and widget interactions are not a real two-account/two-session Supabase journey. **18.01 remains open** pending live membership-query evidence. No hosted DB, Auth, payment, price or permission mutation; no APK or `main` merge.
+- **618 total / 180 accepted / 438 open.**
+
+## 2026-11-14 — Booking-history isolation and active-team selection accepted (172/446)
+
+- Accepted **16.07** for client/provider booking-history isolation across account and role switches. Delayed reads, cancellation results, detail loads, mutation results and shared-ID action locks are bound to the initiating account and covered by direct race/contract tests.
+- Accepted **18.02, 18.03, 18.05 and 18.06** for selecting only a verified membership, persisting the choice per account, clearing/falling back from a deleted or left team, and switching teams without leaking the choice to another account on the same device.
+- Evidence: [acceptance boundaries and tests](VSP_BOOKING_HISTORY_ACTIVE_TEAM_ACCEPTANCE_2026-11-14.md). Flutter CI [43586678490](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43586678490) passed analyzer, privacy/deletion, architecture, Cairo booking-date checks and the full suite (**1389 passed, 11 skipped**). Android, iOS, account SQL and owner checkout jobs also passed on the same head.
+- This is not server-RLS or real multi-device staging acceptance. **618 total / 172 accepted / 446 open.** No production/staging mutation, payment/pricing/permission change or `main` merge.
+
+## 2026-11-13 — Payment timeout client simulation accepted (167/451)
+
+- **29.06** accepted specifically for **client-side webhook timeout, cancellation and recovery timer tests**, using the direct `PaymentCheckoutCoordinator` unit test and source inspection of `PaymentGatewayScreen`. See [detailed acceptance and limits](VSP_PAYMENT_TIMEOUT_CLIENT_ACCEPTANCE_29_06_2026-11-13.md) and [Flutter CI 43501718030](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43501718030) (1288 passed, 11 skipped). This simulated callback/cancel behavior; **not** live Paymob sandbox, a financial success claim, a 5-minute device test, or proof of no double charging. Tasks 29.03–29.05, 29.07–29.08 and 30.02–30.08 remain open.
+- The newest booking disclosure and payment logging code in `db9dec05` was awaiting fresh CI at this documentation checkpoint. The validated timer source and its tests are unchanged by those additions.
+- **Total 618 / scoped accepted 167 / open 451.** No `main` merge, staging/production payment mutations or schema deployment.
+
+## 2026-11-13 — Booking price disclosures and sensitive payment logging (new CI pending, 166/452)
+
+- The [booking disclosure update](https://github.com/mohamedsalh333555/VSP.App/commit/ea913b36c60012dd799d73228e21f9a151e32561) made collective full-online payment explicit, stopped promising unconditional cash payment before location checks, and stopped a negative deposit remainder being disguised as 0 EGP. [Flutter CI 43504622650](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43504622650) identified **two older source-contract assertions** still requiring the previously unsafe `(totalPrice - deposit).clamp(0,...)` expression. Those tests have been revised to assert the new safer disclosure and remain runnable. This is an intentional change of contract, not an attempt to mask a runtime failure.
+- Payment gateway UI, payment status coordinator and Paymob service now log **redacted fixed diagnostic messages** instead of interpolating provider exceptions and potentially leaking booking references, payment metadata or raw gateway content. A new source-contract test verifies the targeted logging boundaries. It does not prove all logging across the application is sanitized: SEC-03/76.05 remains open pending wider audit.
+- [Issue #44](https://github.com/mohamedsalh333555/VSP.App/issues/44) remains open for challenge-code lifecycle/captain consent and 8-digit format. No trial, subscription, financial or real team data changed.
+- **618 total / 166 scoped accepted / 452 open**, no production/staging mutation or merge to `main`. New Flutter tests and Android/iOS checks must pass before these follow-up changes are counted as verified.
+
+## 2026-11-13 — Client booking disclosure and stale deep-link defenses (status: implementation awaiting CI, 166/452)
+
+- [Payment disclosure and deposit preview fix](https://github.com/mohamedsalh333555/VSP.App/commit/ea913b36c60012dd799d73228e21f9a151e32561): regular booking summary no longer promises unrestricted cash before location/eligibility verification; collective bookings show full-online requirement; cash-restricted notice no longer promises automatic rating restoration; invalid deposit greater than selected total shows an explicit review message rather than a falsely clamped zero remainder. **Does not guarantee server-authoritative payment quote; 83.03 stays open**.
+- Initial booking route now rejects slot-only deep links with no date, instead of assigning their previously selected time to an unrelated calendar day. Along with earlier expired/non-contiguous/out-of-range date filters, this reduces stale total-price and booking-attempt risk; server revalidates actual availability. **83.01/83.04 stay open pending full booking states and device verification**.
+- Read-only staging function inspection found challenge lifecycle misaligned with consent/8-digit/post-match rotation specification; tracked as [Issue #44](https://github.com/mohamedsalh333555/VSP.App/issues/44). Existing codes were not queried, regenerated or rotated. No code delivery/acceptance is asserted for tasks 82.02–82.09.
+- **No staging/production changes**, no booking/payment mutations or `main` merge. Existing accepted total stays **166 of 618** until new CI and real E2E acceptance.
+
+## 2026-11-13 — CI-verified client gates accepted (166/452)
+
+- **New narrowly accepted tasks:** **21.04** client EGP/pricing/deposit validation; **25.04** Arabic/English expired trial and expired paid plan presentation; **25.06** fail-closed **client** owner-stadium capacity gate and mock-HTTP tests; **29.02** safe classified Arabic/English payment failure messages. See [acceptance boundaries](VSP_OWNER_BOOKING_CLIENT_GUARDS_ACCEPTANCE_2026-11-13.md) with detailed scope, code and test evidence. These were covered by [Flutter CI 43501718030](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43501718030): **1288 passing / 11 skipped**, analyzer, privacy and architecture checks green, alongside account SQL/owner checkout and iOS compliance. **No server-security or real-payment end-to-end acceptance is implied.**
+- **New unaccepted follow-up (pending separate CI):** strict 24h parsing of venue break/closure times prevents malformed values silently converting to midnight; both `currency` and `currency_code` now validated when supplied; added payment error UI source-contract checks. The new commit's CI must pass before these additional changes are considered verified.
+- **P0/P1 and release blockers still open:** #41 owner capacity write-time server guard; #42 historic one-year trial default; #43 owner moderation/review field grants; payment webhook, booking race, physical-device and staging role tests. Security SQL candidates are source-only, **not deployed**, and `main` remains unchanged.
+- **Total 618 / Accepted 166 (including scoped documentation/client tasks) / Open 452.**
+
+## 2026-11-13 — Automated staging-test environment separation documented (162/456)
+
+- **59.08** accepted **as an evidence-bound documentation deliverable for currently audited automated CI tests only**: [target and synthetic-data boundary](VSP_STAGING_TEST_ISOLATION_59_08_2026-11-13.md) references independent staging and production project identifiers, the exact-project fail-closed live-test guard, anonymous read-only staging contract, and isolated local SQL fixtures. [Staging Live Contract CI 43488898684](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43488898684) passed: four source safety guard tests and ten anonymous Dart assertions. [Account SQL CI 43488908311](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43488908311) passed synthetic local SQL contracts. No credentialed customer, server/merchant payment or actual money used in these audited test paths.
+- **Limitations:** does NOT establish that the existing staging database contains no actual customer identities; does NOT prove payment sandbox, Firebase/FCM/analytics isolation, real multi-role staging, fixture-account cleanup, or production-replica safety. Tasks **59.01–59.06** and staging real-user tests remain open; user/production records were not inspected or mutated. [Issue #42](https://github.com/mohamedsalh333555/VSP.App/issues/42) confirms both staging and production have a historic 365-day trial default while a 7-day trial is displayed; a source-guarded SQL candidate is tested locally but **not deployed**.
+- Owner subscription expiry UI task **25.04** remains open awaiting Flutter test-suite acceptance on latest source. **618 tasks / 162 narrowly accepted / 456 remaining.** No `main` merge, production change or release approval.
+
+## 2026-11-13 — UXLP-44 independent rule acceptance matrix created (161/457)
+
+- **01.07** accepted for the independently testable **44-rule acceptance matrix only**: [UXLP-44 criteria](UXLP_44_INDEPENDENT_ACCEPTANCE_CRITERIA_2026-11-13.md) maps every canonical UXLP rule to a distinct observable pass condition, with locale/state/role/viewport evidence template. **No source-screen, RTL, accessibility, performance or on-device UX rule is declared passed by authoring its acceptance criterion.** Related tasks 01.01–01.06 remain open.
+- Fixed the mandatory `email` fixture argument omitted in the owner expiry presentation widget/domain test after [Flutter CI analyzer failure 43486621098](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43486621098). The owner expiry UI task **25.04 remains open until the latest test job is green**.
+- Owner-stadium limit client guard and candidate DB trigger remain branch-only; test environments are disposable PostgreSQL and mock HTTP. The server trigger candidate was **not applied** to staging or production, and [Issue #41](https://github.com/mohamedsalh333555/VSP.App/issues/41) remains open. [Issue #42](https://github.com/mohamedsalh333555/VSP.App/issues/42) documents a separate default trial duration mismatch. No subscription payment/price changed; no `main` merge.
+- **618 total / 161 accepted scoped deliverables / 457 open.**
+
+## 2026-11-13 — Owner Free/Pro plan data inventory accepted (160/458)
+
+- **25.01 and 25.02** accepted **as documentation tasks only**. [Staging public-plan comparison](VSP_OWNER_FREE_PRO_ENTITLEMENT_SOURCE_25_01_25_02_2026-11-13.md) records actual `basic` and `pro` table values, feature flags, max stadium counts, trial days, and source files. Observed staging snapshot: Free = 0 EGP/1 stadium, Pro = 1,000 EGP monthly/3 stadiums, annual = 11,000 EGP, Pro trial = 7 days. **No prices or rules changed**, and current staging display does not imply approved production billing. This does not establish player-paid features or functionality of every Pro flag.
+- **Critical follow-up remains OPEN:** read-only RLS/catalog audit shows the current `stadiums_insert_own` policy is owner-only without plan cap, authenticated INSERT grant exists, and the stadiums table has no user triggers. A server-side over-limit bypass is plausible but not exploited/tested; tracked in [Issue #41](https://github.com/mohamedsalh333555/VSP.App/issues/41). Do not mark 25.03/25.06 done or change production schema/payment flows without isolated role/concurrency tests.
+- Booking test fixes on code commit `604302bd` passed both [Flutter CI 43479534476](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43479534476) and [Flutter CI 43479523917](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43479523917); this covers automated suite, not physical/staging end-to-end booking. **618 total / 160 accepted scoped tasks / 458 open**. PR #35 remains draft; no `main` merge, production or staging mutation.
+
+## 2026-11-13 — Release readiness HOLD decision report issued (158/460)
+
+- **60.08** accepted as a report-delivery task **only**: [release readiness and blocker matrix](VSP_RELEASE_READINESS_REPORT_60_08_2026-11-13.md) records the explicit **NOT RELEASE-READY / HOLD** decision, checkpoint evidence, unverified tests, outstanding P0/P1 security/payment gates, performance and signed-APK unknowns. A report being written is not an APK build, E2E acceptance, store submission or production release.
+- The prior 157 accepted tasks are unchanged. **618 total / 158 verified scoped deliverables / 460 open.** New booking Flutter code remains under CI and staging/device validation; no automatic acceptance of 83.01/83.04/83.06, no `main` merge.
+
+## 2026-11-13 — Isolated final-seat pickup join race accepted (157/461)
+
+- **35.08** accepted as a **two-session native PostgreSQL concurrency contract**, not staging/production E2E. [CI 43473270739](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43473270739) passed, including independent SQL clients attempting the one remaining booking slot; one accepted, one refused with `BOOKING_FULL`, final row/roster counts consistent. [Evidence and open integration conditions](VSP_PICKUP_LAST_SLOT_CONCURRENCY_ACCEPTANCE_35_08.md).
+- This proves only the branch-only `accept_join_request` candidate under controlled isolation; related live entry-point mapping, applied migration, cross-account authorization, and physical device tests remain OPEN. No payment, customer, staging or production data was used/changed; no main merge.
+- **618 total / 157 VERIFIED / 461 open**.
+
+## 2026-11-13 — Android release signing configuration audit accepted (156/462)
+
+- **60.07** accepted for a **source/config-only audit**: original-release-signing fail-closed guard, explicit debug-signed QA override, separate Shorebird signing secrets, ignored keystore files and manual build workflow. [Audit and unresolved certificate/Play checks](security/VSP_ANDROID_RELEASE_SIGNING_SOURCE_AUDIT_60_07_2026-11-13.md). No keystore, signature fingerprint, real APK, signing secret, production account or store delivery was accessed; clean release tasks remain OPEN.
+- **618 total / 156 VERIFIED / 462 open.** This does **not** certify a store-ready signed artifact.
+
+## 2026-11-13 — Role/permission exception register accepted (155/463)
+
+- **78.06** accepted as a narrowly scoped **documentation** outcome: eight source-grounded role/permission exception classes, their necessary boundaries, evidence references and outstanding role tests. [Register](security/VSP_ROLE_PERMISSION_EXCEPTION_REGISTER_78_06_2026-11-13.md). This is neither a new permission grant nor production access validation. No database, account, payment, configuration or production mutation occurred.
+- **618 total / 155 VERIFIED / 463 open.** Actual real-account auth/RLS/RPC/storage tests and PR #35 release/merge gates remain open.
+
+## 2026-11-13 — Migration replay preflight accepted (154/464)
+
+- **71.06** accepted as a **narrow legacy-runner safety guard**: reject non-staging/unapproved targets, duplicate migration prefixes and rollback files, and fail closed if Supabase's official read-only migration-history API reports an already-applied version or cannot return trustworthy history. [Evidence and limits](security/VSP_STAGING_MIGRATION_REPLAY_GUARD_ACCEPTANCE_2026-11-13.md).
+- [Account SQL security CI 43469070268](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43469070268) passed on code/test commit `c4a5b072`, covering isolated synthetic/mocked replay checks. **No staging/production migration or data write occurred**. The GET preflight is non-atomic and does not replace a tracked migration pipeline; full clean rebuild/replay **71.07 remains OPEN**.
+- **618 total / 154 VERIFIED / 464 open**. This is not release readiness; direct main merge remains gated on integration tests, security blockers and branch conflict resolution.
+
+## 2026-11-13 — Verified badge source tracing accepted (153/465)
+
+- **81.02 and 81.05** accepted as **source-inventory-only**, not deployed or displayed achievements. [Official winner and current roster sources](security/VSP_VERIFIED_TEAM_BADGE_SOURCE_AUDIT_2026-11-13.md) were mapped from deployed RPC and schema with read-only aggregate SQL: 0 venue-owner-completed approved team titles, 0 completed 1v1 champions and 12 teams in Staging.
+- **UI gap remains:** `MyTeamScreen` does not pass `verifiedSummary`, and legacy `check_team_has_1v1_champion` may return stale/unverified flags. Tasks 81.07/81.09/81.10 remain open; no UI, DB or production change made.
+- **618 total / 153 VERIFIED / 465 open**.
+
+## 2026-11-13 — Scoped Flutter UI and policy inventory acceptance (151/467)
+
+- **Five accepted scoped tasks:** `67.04` legacy notification template tests, `67.07` synthetic in-app legacy render tests, `83.05` stadium owner prose/stock label translation, `83.07` ball option/no-slot and UI total tests, `75.03` staging RLS overlap audit. These are test/UI/source-inventory deliverables, **not** production notification delivery, cross-account RLS proof or Paymob settlement.
+- Flutter CI, Android smoke, iOS build, account SQL and owner checkout security were **all green** for earlier source commit `3333f252` (e.g., [Flutter CI run 43448408773](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43448408773)). Newer branch-only maintenance/date/RPC changes remain in verification. [Policy evidence](security/VSP_STAGING_POLICY_OVERLAP_AUDIT_2026-11-13.md) records 50 Advisor warnings versus 0 exact definition duplicates and 27 action-expansion overlaps; no policy DDL was applied.
+- **618 total / 151 accepted / 467 open**, pending additional Cairo DST CI and security integration tests.
+
+
+## 2026-11-13 — Notification body/message consumer trace (146/472)
+
+- `67.02` accepted as a scoped consumer/source trace only. Staging `notifications`: 6 body-populated, 3 message-populated, 1 mismatch; source path prioritizes body while reading message for legacy compatibility. [Details](security/VSP_STAGING_NOTIFICATION_LEGACY_SOURCES_2026-11-13.md). No customer content read or edited.
+- Total **618 / 146 accepted / 472 open**. Runtime render, endpoint and payment tasks remain pending.
+
+## 2026-11-13 — Correct 1vs1 legacy table mapping / migration runner safety
+
+- **Correction to the same 69.04–69.06 audit, no new task count:** Actual standalone legacy table `vsp_1vs1_players` has 0 Staging rows and no user/tournament key, distinct from `vsp_1v1_registrations` (also 0) and active `vsp_1v1_tournament_players` (16). Updated [source-of-truth decision](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md) and SQL audit. Never migrate standalone stats by a nonexistent user ID.
+- Hardened the legacy `scripts/apply_migration_runner.py` to be **staging-only**, require explicit identity/review flags, refuse rollback/unversioned files and duplicate source-version migrations; added isolated unit tests to Account SQL CI. 71.06 stays OPEN pending a passing CI test on the new commit. No migrations ran.
+
+## 2026-11-13 — Staging legacy 1v1 and challenge result preservation decisions (145/473)
+
+- Read-only Staging aggregate and unique-index review: legacy standalone \`vsp_1vs1_players=0\`, old registration \`vsp_1v1_registrations=0\`, current tournament players=16 across two tournaments, no repeated current \`(tournament_id,user_id)\` keys, legacy \`challenge_results=0\`, and 20 confirmed booking-side challenge result statuses. Counts do not establish production historical integrity.
+- Six **data review and source-retention decision** tasks accepted in a narrow scope: \`69.04\`, \`69.05\`, \`69.06\`, \`70.02\`, \`70.05\`, \`70.06\`. [Evidence and safe-migration plans](security/VSP_STAGING_LEGACY_1V1_CHALLENGE_DECISIONS_2026-11-13.md). No actual merge, payment reconciliation, RLS change or migration; \`69.07\`, \`70.04\`, \`70.07\` remain open.
+- **618 total / 145 VERIFIED / 473 open**. Other recently proposed Flutter and refund dispatcher changes require final CI and staging integration gates before operational acceptance.
+
+
+## 2026-11-13 — Source-of-truth and retention decisions accepted (139/479)
+
+- **11 narrowly scoped decision/plan subtasks accepted:** \`61.06\`, \`62.04\`, \`62.06\`, \`63.06\`, \`64.03\`, \`64.06\`, \`65.04\`, \`65.05\`, \`65.07\`, \`68.04\`, \`68.06\`. [Evidence and decisions](VSP_FINANCIAL_LEGACY_SOURCE_DECISIONS_2026-11-13.md) distinguish final source choices from production data migration. These are **documentation/compatibility decisions, not 11 deployed bug fixes**.
+- New branch code for refund dispatcher, overnight booking and server-hours precedence, legacy notification rendering and stadium description localization is **not accepted** until relevant CI and isolated integration tests pass. Refund scheduler #39 P1 remains HOLD pending project-local identity and worker credential review; do not activate.
+- Canonical scope: **618 total / 139 VERIFIED / 479 open**. No changes to \`main\`, staging/production schemas or financial records.
+
+
+## 2026-11-13 — Isolated SQL regression and staging view access accepted (128/490)
+
+- **22.06 and 22.07 accepted as isolated validator FUNCTION TESTS only**. [Account SQL security contracts run 43440144002](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43440144002) on code commit `45a45e7` completed successfully, including a negative control requiring the legacy validator to fail and a positive control requiring the patched validator to pass its SQL cases for split-shift and overnight booking windows. The migration **is not applied** to staging/production; real booking inserts, owner/RLS checks, conflict with `court_operating_hours` and end-to-end acceptance are still open.
+- **76.03 and 76.06 accepted for staging view protection CONFIGURATION AND DOCUMENTATION only**. Live staging catalog proves four historically flagged views have `security_invoker=true`; `owner_subscription_status` revokes anon SELECT. Read-only role-scoped `SELECT count(*)` returned anon `courts=2`, `public_subscription_plans=2`, `tournament_clean_sheets=0`, and an authenticated session without JWT claims saw `owner_subscription_status=0`. No row identities retrieved. Cross-account owner/admin positive/negative tests, production view hardening and full Issue #38 closure remain **open**.
+- Evidence and acceptance boundaries: [booking SQL and four view acceptance](security/VSP_VIEW_AND_BOOKING_WINDOW_ACCEPTANCE_2026-11-13.md). **618 total / 128 accepted / 490 open**. No production/staging row or schema modifications, no `main` merge.
+
+## 2026-11-13 — Reproduced split-break midnight bypass; branch-only repair
+
+- Tested the deployed staging `vsp_validate_stadium_booking_window` using synthetic Cairo-local 22:00–02:00 operating times with 23:30–00:30 booking. With a 00:00–01:00 overnight break, the function incorrectly returned **true**, while 23:45–00:15 and 00:15–01:15 breaks also returned **true** for the same overlap; a slot ending after 02:00 correctly returned false. Source: [night-break reproduction](security/VSP_STAGING_OVERNIGHT_SPLIT_BREAK_REPRO_2026-11-13.md).
+- Updated **unapplied** `20261113143000_fix_expired_stadium_maintenance_booking_guard.sql` to anchor breaks to shift opening date, plus SQL negative/positive cases and architecture contracts. No staging/prod function changed. **22.06, 22.07, 66.07 remain OPEN** pending a passing isolated DB run and role-level booking tests. Accepted counter remains **124/618, 494 open**.
+
+## 2026-11-13 — Financial/refund read-only source and staging acceptance (124/494)
+
+- **8 scoped audit tasks accepted:** `61.02`, `61.03`, `62.03`, `63.02`, `63.03`, `63.04`, `68.02`, `68.03`. Evidence: [read-only financial, webhook, canonical winner and debt field audit](security/VSP_STAGING_FINANCIAL_AND_REFUND_AUDIT_2026-11-13.md). Source/metadata/staging-aggregate acceptance only, NOT production cleanup, endpoint safety, actual refund delivery or confirmed booking outcome.
+- The canonical **team championship** winner fields for new writes/readers are currently `champion_team_id/name` (crown RPC, get_team_active_league and Flutter model). `winner_team_id/name` remain guarded legacy fields; no migration or deletion. On 2 staging championships, neither ID field is populated; production conflict risk remains unknown.
+- Read-only staging checks: 24 bookings, 0 mismatched populated booking Paymob aliases, 0 duplicate populated identifiers, 0 obvious `is_paid`/status conflicts; 117 users, 0 positive `accumulated_cash_debt`, 0 `cash_booking_banned`, 0 `is_debt_blocked`, 117 nonzero `debt_limit`. These numbers cannot establish production integrity.
+- **P1 blocker discovered (65.02 remains OPEN):** source and staging catalog show three active refund queue consumers, but staging `reconcile_cancellation_refund_queue()` checks only the regular and 1v1 queues, its active ten-minute cron job has no `refund_worker` secret record, and its hardcoded endpoint points to the production project. No refund worker was invoked, secret read or financial state changed. Do not enable or deploy until reviewed environment isolation and worker tests pass.
+- Separate code changes in this branch (maintenance guard SQL proposal, missing-hours handling, blocked/maintenance venue CTA and new tests) remain **UNACCEPTED** pending relevant CI and isolated database/device tests. `main`, production and staging data remain unchanged.
+- Recount: **618 total / 124 VERIFIED / 494 open**. Group 56 retired; no release readiness implied.
+
+## 2026-11-13 — Operating-hours precedence and maintenance defect reproduction (116/502)
+
+- **66.02–66.06** accepted as **read-only source-precedence analysis, edge-case inventory, deterministic validator test and documented backend-authority decision only**. Evidence: [staging validator reproduction](security/VSP_STAGING_OPERATING_HOURS_GUARD_REPRO_2026-11-13.md) and [GitHub Issue #37](https://github.com/mohamedsalh333555/VSP.App/issues/37#issuecomment-6840270011).
+- The active `vsp_validate_stadium_booking_window` in staging returns `true` for a normal in-hours booking, **false** for the same booking with an expired non-null `maintenance_until` marker, and **true** for a booking ending before a future `maintenance_until` marker. This is a **reproduced logic defect for conditional inputs**, *not* proven live impact; 0 of 17 staging stadiums currently have a non-null maintenance marker. No booking/user/payment rows changed or read.
+- The server `trg_bookings_operating_window` is the authoritative booking guard; Flutter `features.workingHours` and `court_operating_hours` are not equivalent sources. **The defective maintenance predicate has not been repaired**; staging migration/rollback, live closure tests and task 66.07 remain open. Do not mark release ready from the new tally.
+- Recount: **618 total / 116 VERIFIED / 502 open**. Scope group 56 still cancelled. No `main` merge and no production/staging mutation.
+
+## 2026-11-13 — Privileged RPC review triage accepted: 111 / 507
+
+- **77.02**: Classified 200 staging authenticated-executable SECURITY DEFINER overloads into financial/payment (21), admin/identity (36), booking/sports write (66) and other/utility (77) for **manual review prioritization**, not exploitability ranking. Source: [risk triage and execution-owner inventory](security/VSP_STAGING_PRIVILEGED_RPC_TRIAGE_2026-11-13.md).
+- **77.03**: Verified the *staging* execution owner of all selected functions is the `postgres` role; callers are distinct from this effective execution role. 12 routines have no direct `auth.uid()/auth.jwt()` textual marker. This is **not** evidence of a vulnerable RPC: the actual authorization may be delegated.
+- Total accepted: **111 / 618**. Remaining: **507**. Only catalog/definition-marker reads; no caller-side RPC invocation, real payment, account mutation, production change or main merge.
+- Authorization, RLS, deployment, consumer and cross-user tests in 77.04–77.11 remain **open**, as do other staging validation tasks.
+
+## 2026-11-13 — Staging dependency and migration audits: 109 / 509
+
+- Audited staging SQL metadata and actual Supabase migration history (379 distinct entries), plus deployed `add_team_to_matchup_by_code(uuid,text)` function markers. No server mutation.
+- **8 inventory/diagnostic tasks accepted:** `69.02`, `69.03`, `70.03`, `71.03`, `71.04`, `71.05`, `72.03`, `73.02`. Evidence: [staging relations/migration/credential requirements audit](security/VSP_STAGING_LEGACY_MIGRATION_AND_AUTH_DEPENDENCIES_2026-11-13.md).
+- Key limits: legacy 1v1 table had 0 rows, newer 1v1 player table 16; challenge results had 0 rows. This is a schema/dependency review, **not** migration, duplicate-resolution or data-transfer acceptance. The current matchup RPC exposes the five-team limit marker with no legacy extra-fee marker; this is staging, not a verified production payment decision.
+- Current canonical scoped count: **618 total / 109 VERIFIED / 509 open**. Previously 101/517. Group 56 stays cancelled. Do not infer that real-account, staging device, production security or payment tasks are complete.
+- No `main` merge, production data reads or writes, or Auth settings changes.
+
+## 2026-11-13 — Staging metadata audit acceptance batch: 101 / 517
+
+- Canonical checklist recount: **618 tasks / 101 VERIFIED / 517 open**; group 56 remains retired. Previous verified count 89, this audit accepted **12 inventory/classification-only items**: `65.01`, `65.03`, `66.01`, `68.01`, `70.01`, `73.01`, `74.01`, `74.02`, `75.01`, `75.02`, `76.02`, `77.01`.
+- Sources: [staging schema/queues/Auth/view grants](security/VSP_STAGING_SCHEMA_RISK_INVENTORY_2026-11-13.md), [full 200 RPC inventory](security/VSP_STAGING_PRIVILEGED_RPC_INVENTORY_2026-11-13.md), [44 initplan and 50 multiple-permissive advisor findings](security/VSP_STAGING_RLS_ADVISOR_INVENTORY_2026-11-13.md).
+- Scope is *read-only metadata review on vsp-staging* `vtwgqyxglevcsxwdmhop`. No production access or database/auth mutation. **200 privileged callable RPC warnings are not 200 confirmed exploitable vulnerabilities.** Current historical-definer views are all `security_invoker=true`, but role and RLS negative tests remain open.
+- Refund queues, `court_operating_hours` and `challenge_results` had 0 rows in staging. No data-driven refund, scheduling, challenge-result, authorization or production safety conclusions were accepted. Remaining related implementation/tests stay open.
+- Current checkout, owner-analytics and anti-fabricated-scarcity code changes are not counted as accepted tasks pending an uncancelled passing CI run and scoped criteria evidence.
+
+## 2026-11-13 — Analytics deduplication accepted (89/529)
+
+- Verified uncancelled successful [Flutter CI run 43326492976](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43326492976) at `b19f7d9e`, covering `AnalyticsSessionDedupe` tests and repository architecture guards. iOS build and Android public smoke also green on that commit.
+- **50.07** accepted: in-process venue-visit deduplication, test for repeat visit vs separate venues.
+- **55.05** accepted: event-type-isolated deduplication tests and new-session behavior. Evidence: [acceptance report](VSP_ANALYTICS_DEDUPE_ACCEPTANCE_50_07_55_05.md).
+- Scope stays limited to client-session logic, **not** cross-device counting, Firebase ingestion dashboards, offline recovery, or real-account staging acceptance.
+- Recounted active detailed checklist: **618 total / 89 VERIFIED / 529 open**. Group 56 remains cancelled. No production or `main` changes.
+
+## 2026-11-13 — Accepted 51.05 availability messages: 87 / 531
+
+- Canonical inventory checked: **618 tasks / 87 VERIFIED / 531 open** (group 56 remains cancelled).
+- **51.05** accepted for the *automated availability message contracts*: distinct no-schedule, all-past, all-booked, mixed booked/past, network/verification error and retry branches. Evidence: [acceptance scope](VSP_BOOKING_AVAILABILITY_COPY_ACCEPTANCE_51_05.md) and [Flutter CI run 43320006151](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43320006151).
+- This acceptance does **not** close 83.01 actual stadium-operating-hours diagnosis, 83.04 calendar RTL/device tests, or server booking/concurrency test tasks.
+- Separate analytics deduplication code and unit tests at commits `26e405e5` and `6e6210bf` are *not accepted* until an uncancelled passing CI run confirms them; 50.07 and 55.05 remain open.
+- No changes to production or main.
+
+## 2026-11-13 — Acceptance progress audited: 86 accepted / 532 open
+
+- Canonical checklist recounted: **618 scoped tasks / 86 VERIFIED / 532 open**; group 56 (24 journeys) remains excluded.
+- **59.07** accepted for a documented list of staging multi-role blockers and limits, not their resolution. Evidence: [staging blockers and performance budget](VSP_PERFORMANCE_BUDGET_AND_STAGING_BLOCKERS_2026-11-13.md).
+- **60.01** accepted for defining explicit, measurable startup/navigation/availability/frame/memory/APK performance targets and measurement conditions; these targets remain **NOT MEASURED**. Tasks 60.02–60.09 are not accepted by implication.
+- Independent prior acceptance: **58.06** Android log collection; acceptance count moved 83 → 84 before this 84 → 86 step.
+- CI success for application commit `6ea1dc38`: [Flutter](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43320006151), [Android smoke](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43320006172), [iOS build](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43320006056), Account SQL security and Owner checkout security both successful. This does **not** close outstanding device, real-account or server-side payment test tasks.
+- The accepted work in this batch is documentation/criteria, **not two completed feature implementations**. No `main` merge or production mutations.
+
+## 2026-11-12 — Accepted Android smoke log collection (58.06)
+
+- Verified [Android E2E Smoke run 43302703167](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43302703167) and [job 131480962116](https://github.com/mohamedsalh333555/VSP.App/actions/runs/43302703167/job/131480962116), on application commit `366e75d8`: success. Decoded job logs confirm APK build and `+2: All tests passed!`; no fatal job-log error markers found.
+- Evidence appended to [Android smoke verification](VSP_ANDROID_E2E_SMOKE_VERIFICATION_58.md); **58.06 is now VERIFIED** for scoped log collection. It does not imply credentialed login, booking, team invite or physical-device testing.
+- Active task inventory recounted from canonical checklist: **618 total / 84 VERIFIED / 534 remaining**. Previously 83/535.
+- No production modification or main branch merge.
+
+## 2026-11-11 — Post-scope-removal execution: live venue verification safety
+
+- Group 56 remains removed from the active task inventory: **618 total / 83 accepted / 535 open**.
+- Found a booking-safety gap in stadium details: the unavailable-state check used `widget.stadium.isVerified` from route arguments, even after parsing a newer live `stadium` snapshot. A venue revoked in live data could continue to appear bookable.
+- `7b61f6af` switches the availability gate to `stadium.isVerified`, retaining fail-closed booking behavior for loading/error/parse-failure. `1e19164c` adds an architecture regression assertion. **83.02 remains open** pending CI and server-side authorization/device validation.
+- No changes to main, production Supabase, or payment logic.
+
+## 2026-11-11 — Owner-requested scope removal: 24 E2E journeys (group 56)
+
+- Removed the **entire nine-task group 56** from the active detailed task checklist at `cd9b2681`: 3 previously accepted documentation tasks (56.01, 56.02, 56.09) and 6 open tasks (56.03–56.08). This is **scope cancellation**, not completion.
+- **Canonical new inventory: 618 total / 83 accepted / 535 open**, arithmetically verified against the checklist. 82 active groups remain (group number 56 intentionally retired; group identifiers are not renumbered).
+- The historical 24-journey matrix is retained only as archived evidence; it is no longer an active delivery requirement. Other independently scoped Android smoke, UI/device, security, and booking tests remain active unless explicitly removed later.
+- No application code, payment, production, or main-branch changes.
+
+## 2026-11-11 — Flutter CI regression recovered, all core checks green
+
+- Commit `c39e6110` completed **Flutter CI successfully twice** (runs `43076166273`, `43076157214`), **Android E2E Smoke success** (`43076166167`), **Account SQL security contracts success** (`43076166456`), and **Owner checkout security success** (`43076166066`). iOS compliance build was still running when checked.
+- This confirms the architecture regression failure on `7edbd256` was resolved by `df47d64a`'s updated stale test assertion. It does **not** establish real-device acceptance for screenshot tasks 83.01–83.07 or a backend fix for the live stadium refresh cause.
+- **Counter remains 86 accepted / 541 open / 627 total** until each task's complete acceptance criteria are met. No invented completion counts.
+
+## 2026-11-11 — CI regression repair after stadium booking CTA guard
+
+- Flutter CI on `7edbd256` failed at the **Architecture regression gate** (runs `43074919354` and `43074904681`); Account SQL security contracts and Owner checkout security passed. CI job metadata does not expose the failing assertion text.
+- Source inspection identified a definite stale assertion in `test/architecture/stadium_details_safe_area_contract_test.dart`: it expected the former one-line `StadiumBottomBookingBar(stadium: stadium)` call, which the guarded booking-CTA implementation replaced with a multiline call and `bookingEnabled` predicate.
+- `df47d64a` updates that assertion to the current guarded API. This is a **candidate cause** of the CI failure, not a claim that no other failures exist. Await rerun before accepting or closing any task.
+- Counter remains **86 accepted / 541 open / 627 total**. No main, production, or payment changes.
+
+## 2026-11-11 — 83.02 live stadium refresh booking safety
+
+- **86 accepted / 541 open / 627 total** at this checkpoint. `01e94307` makes the stadium booking CTA explicitly disable-able; `a3bb534a` disables it while live stadium details are still loading, fail to refresh, or cannot be parsed. This prevents entering the booking flow from a stale route argument after a live refresh error, while preserving retry and stale-data information display.
+- `930c2dee` adds architecture contract tests for stream-error/parse-failure guards and the disabled booking callback. **83.02 remains open**: actual stream failure cause, server-side booking authorization, recovery behavior and UI/E2E verification still need evidence. Do not claim backend booking protection from this UI guard.
+- All changes are on `uxlp-44-implementation`, no payments/Supabase/main changes. CI on these commits not yet verified.
+
+## 2026-11-11 — 83.04 calendar minimum date aligns with booking operational day
+
+- **86 accepted / 541 open / 627 total: unchanged.** `e0524d85` anchors the monthly calendar's first bookable date and month navigation to the same `operationalBaseDate` used by the 14-day selector, rather than directly reading the device's `DateTime.now()`. `820ddd3c` wires the date from the selector into the modal.
+- `8257ee34` adds an architecture regression contract for the date-boundary wiring. **83.04 remains open** pending actual date-availability markers, timezone rollover, and device calendar tests; this fix does not claim that a date with zero slots is bookable.
+- No Supabase, payments, or main merge changes. CI on this new code is not yet verified.
+
+# VSP — Live delivery ledger
+
+Updated 2026-11-11. This ledger is the source of truth for **execution progress**, distinct from final release verification.
+
+## 2026-11-11 — 83.04 calendar selected-date correctness (pending acceptance)
+
+- **86 accepted / 541 open / 627 total: unchanged.** Commit `8d5e230` fixes 14-day strip selection to compare **year, month, and day**, not just month/day; removes the hard-coded comma in localized month/year header.
+- Commit `37c45c6` adds architecture regression contract. **83.04 remains open**: calendar availability/closed-day indicators, accessibility, real Android RTL and CI on these commits still need acceptance.
+- On previous head `fbac4a8d`, Account SQL security contracts and Owner checkout security completed successfully; Flutter CI, Android E2E, and iOS compliance were still in progress when checked. These are not new-commit test results.
+
+## 2026-11-11 — 83.04 calendar availability copy (pending acceptance)
+
+- **86 accepted / 541 open / 627 total: unchanged.** `f8478113` clarifies in the date selector that a selectable date is **not** confirmation of bookable slots; the actual slots appear after selection. The selector does not invent or color-code availability from missing data.
+- `4efd268e` adds a static contract verifying the availability disclaimer and the calendar's existing past-date restriction.
+- **83.04 remains open** pending Flutter CI, on-device calendar/RTL testing and an actual per-day availability data contract. The pre-edit branch `08620ed9` had passing Owner checkout and Account SQL security checks while Flutter, Android and iOS were still in progress.
+- No DB, payment, or main changes.
+
+## 2026-11-11 — 83.06 top SafeArea adjustment (pending CI and device layout acceptance)
+
+- **86 accepted / 541 open / 627 total: unchanged.** `2eecf784` wraps the stadium-details main body in `SafeArea(bottom: false)` so the stream-error warning and carousel respect the system status-bar inset. The fixed booking bottom bar remains outside this wrapper.
+- `53c9350c`: architecture contract for SafeArea, error warning, carousel and bottom booking bar. **83.06 remains open** pending Flutter CI and real-device short-height, large-text, tab scrolling and bottom-bar overlap tests. No design-token palette changes were made.
+- At the pre-edit check, on commit `fbac4a8d`, Account SQL contracts and Owner checkout security had passed; Flutter, iOS and Android were still in progress. No claim that the latest edit has passed CI.
+
+## 2026-11-11 — 83.07 ball rental without slot (pending CI and UI acceptance)
+
+- **86 accepted / 541 open / 627 total: unchanged.** `8f817baa`: ball-rental toggle now requires a selected slot and not loading, with Arabic/English instruction to choose a slot first.
+- `422eb7e3`: booking total excludes ball add-on when no slots are selected, including when a user clears previously selected slots; callback also rejects toggles without a slot or during loading.
+- `10dc7a34`: architecture regression contracts for disabled toggle, zero-slot total and callback guard. **83.07 remains open** pending CI and real widget/date-switch/selection tests; no payment backend or Supabase changes.
+- Previous branch commit `e7373587` passed Flutter CI (43070238156), Android E2E (43070248475), iOS build (43070248379), account SQL (43070248341), and checkout security (43070248344); the additional concurrent Flutter run was still in progress at the time checked. These results predate the new ball-rental code.
+
+## 2026-11-11 — 83.05 mixed-language stadium labels (pending UI/CI verification)
+
+- **86 accepted / 541 open / 627 total: unchanged.** Source commits `02d0848`, `e2af197`: stadium information tab translates only standalone known English rule labels (`Cleanliness`, `No Smoking`, `Punctuality`) when Arabic locale is active. Arbitrary owner prose and stored descriptions are not rewritten.
+- `15434b3`: adds unit tests for Arabic known labels, unchanged free-form text, and unchanged English locale.
+- **83.05 remains open** until Flutter CI and device RTL/long-description checks confirm actual rendering and clipping behavior. No Supabase, payment, or main merge changes.
+
+## 2026-11-11 — CI green and 83.01 empty-state copy fix (pending device checks)
+
+- **86 accepted / 541 open / 627 total: unchanged.** On commit `ecdfc0dd`, Flutter CI (runs 43062854125, 43062841461), Android E2E Smoke (43062854000), iOS compliance build (43062854302), Account SQL contracts (43062854398), and Owner checkout security (43062854012) all completed **successfully**. These are workflow results, not proof of real two-account booking authorization or payment amount scenarios.
+- `70faedbd`: booking slot empty-state no longer states that the stadium does not open on that day; it states that no slots are configured and suggests another date/contact. The existing separate stream-error branch remains.
+- `b3c9148c`: architecture contract covering neutral no-slots copy and separate error state. **83.01 remains open** pending real operating-hours/timezone/fully-booked vs error reproduction and CI on this new commit. **83.03 remains open** pending financial widget/server amount tests.
+- No Supabase migrations, payment changes, customer data changes, or main merge.
+
+## 2026-11-11 — 83.03 preselection financial summary UI fix (pending verification)
+
+- **86 accepted / 541 open / 627 total: unchanged.** `83.03` remains open pending widget/Flutter CI and server-authoritative amount tests.
+- Commits `7422496`, `a30526d`: before a time slot is selected, the deposit summary now says **“يُحسب بعد اختيار الموعد”** instead of falsely showing **0 EGP** as the remaining balance. The existing calculation after slot selection is unchanged.
+- Commit `9bddcd3`: architecture regression contract for the placeholder and selected-slot wiring. No booking price formula, deposit rule, Supabase, payment backend, or main branch changed.
+- Follow-up: verify UI rendering in Arabic/English and 1/2 slots plus ball add-on; confirm server-side final charges. Do not mark 83.03 accepted on a static contract alone.
+
+## 2026-11-11 — Screenshot triage scope added; 86/627
+
+- **86 accepted / 541 not yet accepted / 627 total**, previously 86/534/620. Added seven **open** screenshot-specific tasks **83.01–83.07**, no tasks accepted.
+- [Evidence and source inspection](ux/VSP_STADIUM_BOOKING_SCREENSHOT_TRIAGE_2026-11-11.md), commit `fc64bd0`; [checklist update](VSP_80_DETAILED_SUBTASK_BREAKDOWN.md). Confirmed misleading no-slot copy, preselection financial display ambiguity, stale-data warning path and mixed-language screenshot; other visual observations require reproduction. No backend/payment root cause is claimed.
+- **No runtime fix or staged/production validation** performed for these seven. No Supabase, payments, customer data, or main merge changed. Existing booking/RTL/design tasks remain distinct; acceptance needs screenshots + reproducible tests.
+
+## 2026-11-11 — Owner booking direct-read server query narrowing (pending CI)
+
+- **86 accepted / 534 not yet accepted / 620: unchanged.** This is a **CODE_DONE / pending automated and two-account staging verification** batch, not a completed 23.07/79.05 authorization test.
+- `8389a655`: `fetchOwnerBookingsDirectlyStrict` now always scopes the REST query by `owner_id` **before** applying optional stadium IDs; a blank owner ID returns an empty list without querying. This removes the prior stadium-only query path. Post-query owner/stadium validation remains.
+- `1f940083`: adds an architecture regression contract verifying owner scoping, stadium narrowing order and blank-owner handling.
+- Follow-up required: Flutter CI, two-account authenticated Supabase/RLS checks and negative cross-owner reads. **No production database, payment, or main-branch changes.**
+
+## 2026-11-11 — Task 78.07 storage role-matrix coverage; 86/620
+
+- **86 accepted / 534 not yet accepted / 620**, previously 85/535. Exactly one new task closed: **78.07**, covering storage and file authorization in the role matrix.
+- [Storage matrix and evidence limitations](security/VSP_STORAGE_ACCESS_MATRIX_78_07.md), source commit `8127c3b`: mapped sensitive private buckets, nine reviewed storage policy names, owner/admin boundaries, and explicit staging/production differences from batch-10 readbacks. This is **documentation/matrix coverage**, not proof of real file upload, download or cross-account E2E.
+- **78.04–78.06, 79.01–79.08 remain open.** No Supabase migrations, storage object changes, production data/payment changes, or main merge in this batch.
+
+## 2026-11-11 — Tasks 78.02 and 78.03 definition acceptance; 85/620
+
+- **85 accepted / 535 not yet accepted / 620**, previously 83/537. Exactly two source-level documentation tasks closed, **78.02** (resource/operation inventory) and **78.03** (intended allow/deny role matrix).
+- Evidence: [78.02 inventory](security/VSP_RESOURCE_OPERATION_INVENTORY_78_02.md), source commit `7d6f335`; [78.03 role matrix](security/VSP_ROLE_ACCESS_MATRIX_78_03.md), source commit `dd69596`. The matrix is a target contract **not** proof of deployed RLS/RPC/storage policy correctness.
+- **78.04–78.07 and 79.01–79.08 remain open**, including real role tests, anonymous access, exception documentation, bucket-level checks and two-account tests. No code, production Supabase, payment or main merge changed in this batch.
+
+## 2026-11-11 — Task 78.01 accepted; accounting 83/620
+
+- **83 accepted / 537 not yet accepted / 620** (previously 82/538). Exactly one new checklist task closed: **78.01 — define player, stadium owner, and administrator roles**.
+- [Role definitions and direct source references](security/VSP_ROLE_DEFINITIONS_78_01.md) document public `player`/`owner` registration, privileged admin/founder variants, and technical Supabase principals. Definition-only acceptance; this is **not** an RLS/RPC/staging authorization or E2E pass. Source document commit `9e1caf3`; checklist updated separately.
+- The latest booking owner identity-scoping changes are **CODE_DONE pending CI** and do not close 23.07, 23.08, 79.05 or any other cross-account test. No production database, payments, pricing or main-branch change.
+
+## 2026-11-11 — Batch11 legacy reporting/deletion rollout verified
+
+- **82 accepted /538 pending /620**, no automatic additional closures. [Verified batch11](security/STORE_COMPLIANCE_BATCH_11_2026-11-11.md):7 legacy RPC corrections protect cross-account deletion and owner/admin financial/operational reports while preserving own privacy/deletion.8 known source variants; no business calculation/model/price changes.
+- Native PG17.6 CI43020116975 SUCCESS:8 suites,17 weakened guards rejected,24 Python tests, source/inverse/helper-drift and staging-variant checks. Staging9 denial+9 allowed synthetic report calls pass and roll back;7/7 hosted definitions match. Production routine OIDs/owners/ACL/config preserved; invoker helper private. Advisor counts unchanged; no hosted customer-row deletion or financial mutation.
+- Runtime code0ef4af8: Flutter43020117004, Android43020117129, iOS43020117237 and checkout43020117096 all SUCCESS. Not real OAuth/provider/signed-store approval. Remaining legacy booking/cash/cancellation/payout candidates are the next implementation batch, not accepted by this receipt.
+
+## 2026-11-11 — Batch10 verified rollout and documentation acceptance80.07
+
+- **82 accepted /538 not fully accepted /620**. Only newly closed task:80.07, [documented release acceptance policy](security/RELEASE_ACCEPTANCE_POLICY.md); runtime/store gates remain open. Corrected stale commission/deletion wording in LAUNCH_CHECKLIST without changing business code/prices.
+- [Batch10 receipt](security/STORE_COMPLIANCE_BATCH_10_2026-11-11.md): blocked-admin self-unblock fixed and37 production RLS/storage policies guarded. Stage28 changed,1 pre-existing secure variant preserved,8 absent. Source fingerprints/metadata drift protection and inverse round trips verified.
+- Native PG17.6 CI43012907874 SUCCESS:7 suites,11 weakened guards rejected,24 Python tests,37 policy definitions/metadata, guarded variant/helper-drift tests, replay/inverse/clean-fixture gates. Staging self-unblock/private storage denial plus own-profile/file and authorized-founder compatibility pass;0 remaining fixture accounts.
+- Production37/37 definitions and trigger hash match; original policy OIDs/roles/commands/permissiveness/table ACLs and trigger OID/owner/ACL/config preserved. Three sensitive bucket flags read-only verified private. Advisor counts unchanged; no customer-row production tests.
+- Tested runtime source f26bd2923d08e702fe72c02805ba63f54dca322e: Flutter43012907821 SUCCESS(1142/10skip,54 focused); Android43012907900 SUCCESS; iOS43012907858 SUCCESS(actual43.9MB unsigned app,SDK26.2,38 manifests,8 gate tests); checkout43012907769 SUCCESS. Web deletion page and updated JavaScript verified live after private site PR4/Vercel success. Exact-account/store/device/provider gaps remain.
+
+## 2026-11-11 — Batches08/09 delivered; blocked-admin policy remediation underway
+
+- **81 accepted /539 pending /620**. [Website delivery](security/STORE_COMPLIANCE_BATCH_08_2026-11-11.md): private PR4 merged after CI42968160243 passed28 tests, lint, types, build and audit0 (was11). Vercel SUCCESS. Real deletion fulfillment remains open.
+- [Actual iOS build](security/STORE_COMPLIANCE_BATCH_09_2026-11-11.md): source65fead5, CI42967553018 SUCCESS on Xcode26.3/iOS SDK26.2. Runner43.9MB, correct app.vsp.sports identifier, iOS13 minimum,38 bundled privacy manifests,8 negative gate tests. Unsigned compilation is not signed/device/store verification.
+- [New P0 findings and scoped fix](security/STORE_COMPLIANCE_BATCH_10_2026-11-11.md): staging synthetic blocked-admin self-unblock reproduced and rolled back;37 of42 admin-role policies require active-actor checks. Local7 SQL suites/11 weakened guards pass; native CI/hosted deployment pending at this entry. No production test rows.
+
+## 2026-11-11 — Batches 06/07: dashboard delivery and active-admin RPC enforcement
+
+- **81 accepted / 539 not fully accepted /620**; no duplicate closures for scoped fixes.
+- [Batch 07 evidence and limits](security/STORE_COMPLIANCE_BATCH_07_2026-11-11.md): 40 admin routines reviewed, 32 source-checked guards deployed to staging and production. 192 staged unauthorized calls rejected; three real RPC positive fixtures roll back cleanly. Production 32/32 fingerprints and original OIDs/ACLs/owners/config verified read-only.
+- Native PG17.6 run 42965386816 SUCCESS: six SQL suites, seven weakened guards rejected, 18 Python tests, idempotent replay/source-drift and fresh-database gates. Existing security-advisor counts unchanged. No customer-row production test or pricing/model change.
+- Private dashboard PR #9 merged at 91964ad after CI 42963826004 (53 tests/audit zero/build) passed. Vercel status SUCCESS and Google-only sign-in rendered live; real OAuth/post-login journey remains open.
+- App source 379adb4; App main remains unchanged. These are partial implementation/verification contributions to existing Phase 8/9 tasks, not release acceptance. Follow-up source-checked inverse round trip is recorded by its CI.
+
+## 2026-11-11 — Batch 05: client-role guard, native SQL tests and production deployment
+
+- **81 accepted /539 not fully accepted /620**. Accepted additions: 80.01 defined change-triggered security contracts; 80.02 added profile RLS tests; 80.03 added lifecycle/conversation RPC tests. These are test-foundation tasks, not a claim that all database policies/RPCs or the entire release are verified.
+- [Implementation, policy links, exact limits and deployment evidence](security/STORE_COMPLIANCE_BATCH_05_2026-11-11.md). Source `3e371a5`: one additive invoker guard blocks privileged client-role INSERT and direct role UPDATE, including admin-to-founder escalation, while preserving existing authorized role RPCs and legacy ordinary profile creation. Staging and production deployed after owner's blanket execution approval; no customer rows targeted.
+- Native PostgreSQL [42958578778](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42958578778) SUCCESS: 5 transactional suites, 5 intentionally broken guards rejected, restored baseline, 9 Python target-safety tests and refusal to reinstall an existing DB. No hosted credentials/customer data in CI.
+- Flutter push 42958578707 SUCCESS: 1142 passed, 10 skipped; Android PR 42958584079 SUCCESS with actual APK permission inspection and six gate tests; checkout 42958584012 SUCCESS. These are automated contracts, not real OAuth/payment-provider/24-journey proof.
+- Production readback: role-guard body matches source, invoker mode, trigger enabled, client execute revoked; advisors unchanged (197 definer-callable warnings + deferred password warning). Other grant revocations and account/cancellation RPCs from prior batches remain staging-only; no blanket production migration replay or main merge.
+
+## 2026-11-11 — Final verification receipt and accepted migration comparison
+
+- **Current accepted: 78 / 620; not fully accepted: 542**. Newly accepted this series: 76.01 view inventory and 71.02 full textual collision comparison. These two audit/comparison results are not two shipped features.
+- Application source `906846f` final push checks: Flutter CI [42954730210](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42954730210) SUCCESS — analyze, 54 focused privacy/account cases, 59 architecture checks, then **1142 passed / 10 skipped** in the full suite. Focused and architecture cases are included in full, not extra unique tests.
+- Android [42954730199](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42954730199) SUCCESS — build, two public/auth smoke checks, six Python permission-gate tests and actual compiled APK policy gate. Checkout [42954735544](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42954735544) SUCCESS — 39 hermetic cases. PR duplicate checks also passed; not extra coverage.
+- All three changed staging RPC bodies read back and matched repository function bodies exactly. All three transactional staging SQL suites passed after final deployment; no actual two-device/JWT concurrency claim.
+- [71.02 comparison](security/MIGRATION_CONTENT_COMPARISON_2026-11-11.md): 314 forward SQL files, 19 collision groups / 79 files / 296 pairs, zero byte-identical pairs; eight rollback files excluded. All pair byte results independently cross-checked. Does not establish safe replay or execution order.
+- Eight app improvements plus two staging trigger repairs in batches 03/04; no additional feature count for tests/tooling. Production not changed. Privileged profile insertion proved only on synthetic staging fixtures; production table grants remain pending approved remediation and client coordination.
+- Release remains NOT READY: extern…3469 tokens truncated… typed failure categories, classification by provider text/HTTP status, and explicit reconciliation-required flags. Tests added but not run. This classifier is not wired into payment flows yet and must never itself authorize a charge. Commit `b91cfbc`, test `7625cef`, counter update `62d3950`.
+
+## Batch — user-facing payment feedback and booking draft validation
+
+- `16fffdad`: Arabic/English safe messages for all `PaymentFailureKind` categories. **29.02 IN_PROGRESS**: presentation helper exists but payment screens are not yet wired.
+- `68a4dea`: tests for bilingual feedback (not run).
+- `2f5a957`: `BookingDraft.validate()` for required IDs, time order, non-negative finite money, deposit bounds and player capacity. **26/28 IN_PROGRESS**: validation not yet wired to submit path; server is source of truth.
+- `b89efbc`: draft validation tests (not run).
+
+**Accounting:** four source/test commits, zero full task closures; baseline remains **27 completed, 593 remaining, 620 total**. No new scope added. Do not count unconnected helper functions as complete UX or server safeguards.
+
+## Batch — 2026-11-08 booking draft safety
+
+- `88b973b`: introduced opt-in `BookingDraft.toValidatedMap()` to reject invalid drafts before serialization. Submission call sites are **not yet migrated**; no claim of enforcement.
+- `ee3b602`: added tests for checked serialization; not run.
+- `599a29b`: fixed `BookingDraft.fromMap` to parse historical numeric/string player counts and capacities safely rather than assuming `int` values.
+
+**Task accounting:** 3 commits, **0 newly closed subtasks**, **27/620 completed; 593 remaining**. These changes advance booking input robustness but not full 26/28 lifecycle acceptance. No production schema, permissions or payment writes modified.
+
+## Batch — restored booking draft integrity (2026-11-08)
+
+- `19d767b`: `BookingDraft.fromMap` now rejects missing, malformed, or inverted start/end times instead of inventing `DateTime.now()` and a one-hour slot; rejects invalid/non-finite/negative persisted amounts.
+- `8c287df`: regression tests for missing/corrupt dates, amounts and legacy player-count strings (written, not executed).
+- `95d0884`: restored booking types support snake_case, hyphenated and enum-qualified historical values.
+- `9d70a98`: tests for legacy booking type restoration (written, not executed).
+
+**Scope note:** this batch improves restored draft integrity, not server-side booking enforcement, payment reconciliation, or release verification. **0 full tasks closed; 27/620 complete, 593 remain.** Flutter test/analyze deferred per project instruction.
+
+## Batch — actual booking RPC validation and cancellation guard
+
+- `a3e92e3`: `BookingCreationCoordinator.createBooking` calls `draft.validate()` before either `create_booking_atomic` or `create_challenge_booking_atomic` RPC; rejects blank user IDs. Server validation remains mandatory.
+- `5fc8a14`: cancellation coordinator handles non-map error results from manual and standard cancellation RPCs without throwing an unrelated map access error.
+- `870a599`: cancellation paths, client-visible cutoff and 20-minute grace, and server boundary acceptance criteria documented; **28.02 closed**.
+- `09ac5b9`: tracker checkbox updated.
+
+**Accounting:** 1 documentation task closed, **28/620 complete, 592 remaining**. RPC-path code changes are not counted as complete cancellation or payment tasks. No schema or payment transaction implementation changed. Verification deferred.
+
+## Batch — booking idempotency and overlap source evidence
+
+- `f177323`: pass `draft.idempotencyKey` (UUID fallback) to the standard `create_booking_atomic` RPC as already done for challenge creation. Stable replay requires the caller to reuse the same draft key; server enforcement must be verified.
+- `cdfa77a`: complete [26.07 overlap evidence](VSP_BOOKING_OVERLAP_EVIDENCE_26_07.md), including latest SQL lock and half-open overlap predicate, source-only marker warning, idempotency and concurrency acceptance matrix. **26.07 closed** (documentation only).
+- `ddd1791`: add source-contract tests for both RPC idempotency keys, preflight validation and SQL lock/overlap order (written, not run).
+- `6da8303`: validate checkout draft before cleaning up any stale pending bookings, avoiding destructive cleanup for invalid new input.
+- `34b1aec`: regression test asserting checkout preflight runs before cleanup and creation (written, not run).
+- `e86323a`: checklist updated.
+
+**Accounting: 1 scoped documentation subtask closed; 29/620 completed, 591 remaining.** Other booking concurrency, retry, cancellation and payment subtasks stay open. No production DB schema, payment transaction implementation or permissions changed. Flutter analyze/tests and live concurrency validation deferred.
+
+## Batch — RPC response integrity, safe checkout resume, payment authority
+
+- `16e7d2b`: booking creation reads both `code` and legacy `error` from RPC failures, and rejects malformed or explicitly unsuccessful responses before using `booking_id`.
+- `f088b34`: checkout fails closed when an explicit existing booking ID cannot be resumed, instead of silently creating a replacement.
+- `b8c00f5`: architecture tests for RPC failure and resume guards (written, not executed).
+- `41a4552`: [30.01 server payment authority](VSP_PAYMENT_SERVER_SOURCE_OF_TRUTH_30_01.md) documented; browser redirects are not financial proof; webhook, order, and booking reconciliation follow server state. **30.01 closed**.
+- `07032bb`: task checklist updated.
+
+**Accounting:** 1 scoped documentation task closed, **30/620 completed, 590 remaining**. Payment webhook runtime and retry behavior, integration tests and server deployments are unverified. No database schema, permissions, payment transaction logic or main branch changed.
+
+## Batch — checkout failure UX, challenge states, refund rules
+
+- Payment gateway screen now uses `PaymentFailureKind` bilingual, reconciliation-safe messages for unknown WebView outcomes and gateway unavailability, and classifies Paymob launch exceptions (`46ac5d4` plus preceding screen commit). **29.02 in progress** until all payment failure surfaces and user journeys are checked.
+- `89f1a8c`: source-contract test for payment failure messages (written, not executed).
+- `9e4f0e6`: [34.01 challenge status inventory](VSP_CHALLENGE_STATUS_INVENTORY_34_01.md) from checked-in SQL constraint, distinguishing challenge, booking, invitation and result states. **34.01 closed**.
+- `27dc7b9`: [31.01 refund rules](VSP_REFUND_RULES_31_01.md) from the server Edge Function: 6-hour cutoff, 20-minute grace, ownership, atomic refund claim, pending/manual-review/duplicate handling. **31.01 closed**.
+- `1e6f25e`, `e17c701`: task checklist updates.
+
+**Accounting:** 2 scoped documentation tasks closed, **32/620 completed, 588 remaining**. Client code not live-verified; no schema, payment gateway transaction logic, permissions or main branch changed.
+
+## Batch — Paymob checkout recovery and server reconciliation
+
+- `db4f23c`: recover the payment gateway UI when `requestPaymobCheckoutUrl` throws: cancel webhook timeout, clear loading/awaiting flags and display classified, bilingual feedback. No new charge or payment status write.
+- `19f2521`: add architecture regression test for URL request failure recovery (written, not run).
+- `9c044cc`: keep server booking-status fallback polling after uncertain WebView closure and launch exceptions, so a successful charge is not missed merely because browser navigation failed.
+- `d5b2532`: extend checkout feedback contract test to assert reconciliation polling (written, not run).
+
+**Task accounting:** no complete 29.02/29.05/29.08 task closure yet; **32/620 completed, 588 remaining**. These are real checkout-path fixes but full payment failure journeys, safe retry and server-side reconciliation still need verification. No production schema, gateway transaction logic, permissions or main merge.
+
+## Batch — uncertain Paymob outcome recharge guard
+
+- `baa6d1f`: payment screen refuses a second Paymob checkout while the first gateway outcome is uncertain. The guard is set on WebView dismissal, reconciliation-required launch errors and webhook wait timeout; no server transaction or payment state is altered.
+- `f855297`: architecture regression test asserts the uncertainty guard precedes checkout URL creation (written, not run).
+- **Accounting:** no full 29.03/29.04 task closure; 32/620 complete, 588 remain. This is a client-side defense in depth only, not a substitute for backend idempotency or live double-charge verification. No schema, payments backend or permissions modified.
+
+## Batch — draft round-trip correctness and payment cleanup safety
+
+- `23989eb`, `af65837`: preserve `isPaid` and `needsDeposit` through `BookingDraft.toMap/fromMap` and extend round-trip unit test. Draft fields are client serialization only, not server payment authority.
+- `74cbcb6`, `62c7309`: reject unknown restored booking types rather than silently converting a challenge/team reservation into a personal booking; add regression test.
+- `c46848b`, `5bcf78d`: prevent user-triggered cancellation/lock release while an electronic payment is awaiting or has an uncertain result, with source-contract test.
+- `fe1c075`, `84b0cad`: prevent client checkout-expiry cleanup while Paymob processing/reconciliation is unresolved, with source-contract test.
+
+**Accounting:** 0 newly accepted full subtasks; **32/620 complete, 588 remaining**. Eight commits of functional changes and test assertions; Flutter tests and end-to-end payment checks were not executed. Client safety improvements do not prove double-charge prevention on the backend. No production schema, payment transaction processing, role permissions or main branch modified.
+
+## Batch — four legacy financial-field inventory closures
+
+- `e2cddaf`: [source-grounded inventory](VSP_LEGACY_FINANCIAL_FIELD_INVENTORY_61_64.md) of championship winner aliases, booking payment-state fields, Paymob transaction/order aliases, and payment method/source mapping, with source references and explicit risks.
+- `b815cd3`: close inventory-only subtasks **61.01, 62.01, 63.01, 64.01** in the canonical breakdown.
+- **Accounting: 4 scoped documentation tasks closed, 36/620 completed, 584 remaining.** No DB queries, data migration, payment or permissions modifications. The rest of 61–64 remain open.
+
+## Batch — challenge points formula
+
+- `c5c0438`: [37.01 challenge points formula](VSP_CHALLENGE_POINTS_FORMULA_37_01.md) documented from the actual trigger: win=3, draw=1, loss=0, confirmed challenge result only, with `elo_processed` one-time guard and limitations.
+- `30029aa`: close 37.01 in the task breakdown.
+- **Accounting: 1 additional source documentation subtask closed; 37/620 complete, 583 remaining.** No runtime match result recalculation or database deployment.
+
+## Batch — booking mapper guard and payment-state semantics
+
+- `30c20ae`: reject unknown server booking types instead of silently rendering them as personal reservations.
+- `30a2415`: restore legacy enum-qualified booking types before validation.
+- `1876ee6`: add two unit tests for unknown and enum-qualified booking types (written, not executed).
+- `24476dc`: [62.02 payment-state semantics](VSP_PAYMENT_STATE_SEMANTICS_62_02.md) documents existing server trigger precedence, refund preservation, client fallback and booking/payment matrix.
+- `61f76f1`: close **62.02** in canonical breakdown.
+- **Accounting: 1 documentation subtask closed; 38/620 complete, 582 remain.** Client mapper changed, not server finance logic. Tests not run; no production schema, permission or main changes.
+
+## Batch — notification compatibility and migration collision audit
+
+- `7c06e0a`: notification model reads legacy `message` when canonical `body` is absent/blank; new writes remain `body`.
+- `5be5b84`: three tests for canonical precedence and historical message fallback (written, not run).
+- `d96c4f4`: [migration collision and notification inventory](VSP_MIGRATION_COLLISIONS_AND_NOTIFICATION_INVENTORY.md) identifies 7 timestamp-collision groups, including conflicting sixth-team fee/no-fee RPC definitions; closes 67.01, 71.01, 72.01.
+- `7bab47a`: [canonical notification field and compatibility plan](VSP_NOTIFICATION_FIELD_CANONICAL_AND_COMPATIBILITY_67.md) closes 67.03 and 67.05.
+- `00720f3`, `b3f99f5`: update canonical checklist.
+- **Accounting:** 5 source-inventory/decision tasks closed, **43/620 complete, 577 remaining**. The two incompatible matchup fee migrations are **not** applied; live schema, migration runner order and tests remain unverified. No schema, fee, permissions or main branch changes.
+
+## Batch — notification repository legacy read fix, 1v1/result inventory
+
+- `ceee2c9`: fix `NotificationRepository._mapToCamelCase` to forward legacy `message` to `AppNotification.fromFirestore`. Without this, previous model-only fallback could not work for actual Supabase stream rows.
+- `a35b541`: architecture regression contract test for repository → model legacy mapping (written, not run).
+- `bc6350b`: trace notification read/write consumers and record canonical `body` decision; close **67.06** only. 67.02 remains open pending exhaustive producer/template trace.
+- `6f7bcce`: source inventory of `vsp_1v1_tournament_players` and locked legacy `challenge_results`; close **69.01** only. 70.01 remains open because legacy primary key and references were not confirmed.
+- `6be9e46`: update canonical checklist.
+- **Accounting:** 2 source-scoped documentation tasks closed, **45/620 completed, 575 remaining**. Tests not executed; no database migration, RLS change, fee change or main merge.
+
+## Batch — notification legacy stability, lifecycle, recipient guards and delivery key
+
+- `b839022`: `AppNotification.fromFirestore` accepts direct snake-case legacy records, parses read flags safely and uses stable epoch fallback for malformed or missing dates rather than crashing a notification list.
+- `5a37993`: three additional unit cases for snake-case, malformed and missing timestamps (not run).
+- `82c9542`: prevent `setState` after disposal while loading notification preferences.
+- `146c02c`: source-level lifecycle regression test (not run).
+- `92761e9`: reject blank user ID and notification ID before send, restore, mark-read, mark-all or delete Supabase writes.
+- `a6db524`: source-level identity guard regression test (not run).
+- `17eebe2`: [48.01 notification dedup key](VSP_NOTIFICATION_DELIVERY_DEDUP_KEY_48_01.md) specifies logical notification ID and per-channel/device delivery identity; does not claim server dedup implemented.
+- `6da6c42`: close **48.01** in task breakdown.
+- **Accounting: 1 scoped specification task closed; 46/620 complete, 574 remaining.** Three functional client fixes and three test updates, tests not run; no production schema, RLS, FCM queue or main merge.
+
+## Batch — notification account isolation, safe streams and matchup dependencies
+
+- `c203dfb`: return empty notifications/zero unread count without opening Supabase stream for missing user IDs; clamp inbox stream page size to 1–200.
+- `e6a5917`: actual async unit tests for blank identity streams and mutation guards, designed to run without initializing Supabase.
+- `39246af`, `ee90bcb`: tolerate non-string legacy notification metadata keys without breaking the inbox.
+- `1a12d64`: model unit tests for malformed metadata and mixed-type legacy fields.
+- `34f06ff`, `5d40ed4`: scope notification preference keys to authenticated user; reset on logout; prevent stale async reads/writes and avoid synchronous setState during dependency change. **Intentional behavior change:** old global preferences are not imported across accounts, preventing cross-account leakage on shared devices.
+- `5c99b4d`, `d29ec5e`, `5a73d1c`: lifecycle and account-isolation source regression tests.
+- `2218756`, `62ef516`: keep mark-all request feedback scoped to initiating account, with source regression test.
+- `bf0a7b8`: [matchup fee RPC dependencies and no-fee product decision](VSP_MATCHUP_TEAM_CAP_DEPENDENCIES_AND_DECISION_72.md); closes **72.02 and 72.06**. No deployed RPC or financial changes.
+- `5d51a08`: update canonical task breakdown.
+- **Accounting: 2 source-scoped tasks closed; 48/620 completed, 572 remaining.** Multiple real client fixes and regression tests committed. Tests not executed (Flutter/Dart unavailable in this execution environment); no staging/production DB changes or main merge.
+
+## Batch — notification account-safe routing and storage resilience; position registry inventory
+
+- `2826a1d`: block stale-account navigation and feedback after notification read updates; challenge details action also verifies current user before routing.
+- `f6ab703`: source regression tests for account-safe notification taps.
+- `299e01b`: recover notification settings screen from unavailable SharedPreferences and surface save failures rather than spinning indefinitely or silently claiming persistence.
+- `dc8435e`, `22ce5ce`: lifecycle contract adjustment and storage failure regression tests.
+- `f8b31ac`: [13.01 sport position registry inventory](VSP_PLAYER_POSITIONS_INVENTORY_13_01.md), documenting supported codes/defaults and canonical selector.
+- `b1ae5eb`: close **13.01** in canonical checklist.
+- `c5cd2e2`: unit tests for position registry/defaults, written but not executed.
+- **Accounting: 1 source-inventory task closed; 49/620 completed, 571 remaining.** Real notification fixes and tests committed; tests not executed. No live Supabase schema, RLS, payments or main branch changes.
+
+## Batch — responsive position selector and legacy notification read flags
+
+- `6c481be`: `VSPPositionSelector` now wraps options in a two-column adaptive layout rather than forcing all positions into a single row; honors `MediaQuery.disableAnimationsOf(context)` by disabling selection animation.
+- `a106546`: widget tests for 220px width selection and reduced motion (written, not executed).
+- `054aac8`: notification model now accepts trimmed legacy `is_read='1'` string as read, while `'0'` and unknown values remain unread.
+- `4eb26f2`: tests for legacy string read flags (written, not executed).
+- **Accounting:** no full subtasks accepted in this batch: **49/620 completed, 571 remaining**. These are partial implementation of responsive/accessibility and legacy data quality scopes. No production schema, payments, permissions or main changes.
+
+## Batch — extra-narrow position selection and accessibility
+
+- `5a9506a`: position selector now uses a single column below 240 logical pixels and two columns at wider finite widths, instead of forcing cramped 2-column cells on very narrow devices.
+- `72bbaad`: widget regression case for a 140px position selector (written, not run).
+- `7a26e96`: suppress selector haptic feedback when the platform requests reduced motion, in addition to the prior zero-duration animations.
+- **Accounting:** no full subtask closed in this batch: **49/620 completed, 571 remaining**. Source code and tests committed; runtime layout/accessibility tests remain unexecuted. No live database, payment, permissions or main changes.
+
+## CI validation and repair — 2026-11-08
+
+- First full Flutter CI run: **1003 passed, 2 failed, 10 skipped**. Analyzer was initially blocked by duplicated trailing code in `app_date_formatter.dart`, a nullable Paymob WebView URL, missing required fields in a booking draft test, and an unused import; repaired in `0d59dab`, `4cab911`, `47f8641`, `434c4e3`.
+- After these fixes, **Flutter analyze** and **architecture regression gate** passed. Full suite exposed two failing tests: Arabic team achievement badge fixture and past-date slot selection fixture.
+- `4be4e6e`: slot toggle test now uses future date, retaining the production guard against booking in the past.
+- `a6c492a`: declares Arabic as supported in achievement widget test; still insufficient because the Flutter localization delegates were absent.
+- `fc345aa`: adds Material, Cupertino, and Widgets localization delegates to the Arabic badge test fixture.
+- Android E2E Smoke **passed** on `4be4e6e` (run `42485905095`). This is automated smoke coverage, not proof of live end-to-end payments or device acceptance.
+- The newest Flutter CI for `fc345aa` (run `42486761911`) was pending when this record was written. Do **not** mark full test suite passed until its result is confirmed.
+- **Accounting unchanged: 49/620 completed, 571 remaining.** Fixes are committed; final verification pending. No main merge, production database, RLS, or payment changes.
+
+## Verified CI closure — 2026-11-08
+
+- GitHub Flutter CI [run 42486800643](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42486800643) succeeded: analyzer, architecture regression (53 tests passed), and full Flutter suite (**1005 passed, 10 skipped**). Android E2E Smoke [run 42486800662](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42486800662) also succeeded on the same commit.
+- `docs/VSP_FLUTTER_CI_VERIFICATION_57.md` (`ea07921`) captures the run IDs, job evidence, failure/fix commits and verification limits.
+- `67a98fb` closes **57.01–57.06**, six subtasks with direct passing CI evidence. **57.07 remains open** pending verification of enforced branch protection.
+- `45be581` briefly changed notification mark-all return semantics; `3889a5e` restored correct idempotent behavior for an empty inbox before the final verified closure. This was not counted as a completed subtask.
+- **Progress: 55/620 completed, 565 remaining.** The successful run predates the subsequent notification and documentation commits; new code still requires a fresh green run. No production schema, RLS, payments, or main merge.
+
+## Verified Android smoke closure — 2026-11-08
+
+- Latest validated branch commit `df76e5e`: [Flutter CI 42489433328](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42489433328) **success** and [Android E2E Smoke 42489433379](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42489433379) **success**.
+- `docs/VSP_ANDROID_E2E_SMOKE_VERIFICATION_58.md` (`5cdf59a`) inventories actual assertions, repeatable Android emulator setup and run/job evidence. `5eecc96` closes **58.01, 58.02, 58.07**.
+- Important limitation: Android smoke covers **welcome, language toggle, onboarding Skip and login form navigation**, **not** successful login, booking, payments, team challenges, or invitation acceptance. 58.03–58.06 and 58.08 remain open.
+- Attempted read of GitHub main branch protection returned **403 Resource not accessible by integration**. Thus 57.07 remains open; do not assume CI is required for merging.
+- **Progress: 58/620 completed, 562 remaining.** New commits after `df76e5e` need fresh green CI before release readiness. No main merge or production database/payment change.
+
+## Notification deep-link hardening batch — 2026-11-08
+
+- `02bb992`: `NotificationFilterService.resolveDeepLinkRoute` now accepts legacy snake-case booking/team identifiers and rejects malformed IDs, route traversal, encoded slashes, queries/fragments, control characters, overlong IDs and non-string values; invalid payloads fall back to the notification inbox or a valid team route.
+- `021e348`: unit tests for legacy IDs and hostile payloads. `157aa69`: clarify route-validation documentation.
+- Prior branch commit `2c310b3` passed [Flutter CI 42512915158](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42512915158) and [Android E2E Smoke 42512915102](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42512915102).
+- Fresh [Flutter CI 42514888405](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42514888405) and [Android smoke 42514888523](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42514888523) were **pending** at record time. Do not claim tests passed on new code until completed.
+- No checklist closure in this batch yet: 07.07 requires end-to-end auth/role navigation verification, not merely ID sanitization. **58/620 completed, 562 remaining**. No main merge or production schema/payment changes.
+
+## Booking-state and notification payload safety — 2026-11-08
+
+- `8684b9d`: booking mapper now rejects unknown server booking statuses with `FormatException`, rather than treating them as `pending` and potentially displaying unsafe payment/retry actions. Existing `upcoming` alias remains mapped to confirmed.
+- `742201d`: regression tests cover unknown status, `upcoming` compatibility and invalid time ranges.
+- `415ce10`: notification deep-link resolver validates camelCase and snake_case IDs separately; malformed modern value can no longer mask a valid legacy value.
+- `0be9b2b`: tests for malformed-modern/valid-legacy fallback.
+- Previous [Android smoke 42514922345](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42514922345) **succeeded** on `b4f7f03`; Flutter CI for that earlier commit was still in progress at inspection. New [Flutter CI 42515885719](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515885719) was pending at inspection.
+- This is a code-hardening batch, not closure of the complete 27.x or 07.x user-journey tasks. **Count remains 58/620 completed, 562 remaining** until full acceptance criteria are met. No main merge or production DB/payment modifications.
+
+## Restored booking draft financial validation — 2026-11-08
+
+- `be7c9ea`: `BookingDraft.fromMap` rejects restored deposits greater than the total price, matching `BookingDraft.validate` and preventing an inconsistent draft from reaching checkout.
+- `6e8f129`: regression test verifies an overlarge restored deposit throws `FormatException` and a valid saved draft round-trips.
+- The prior `679c7cf` Flutter CI [42515913921](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515913921) and Android smoke [42515913915](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515913915) were still in progress at inspection. The new Flutter CI [42516555825](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42516555825) was pending. Do not mark tests green without completion.
+- **Progress unchanged: 58/620 completed, 562 remaining.** This is a targeted safety fix within broader booking/payment acceptance tasks, not a closed full journey. No main merge or production schema/payment changes.
+
+## Stage 11 booking-status regression repair — 2026-11-08
+
+- Inspected failed Flutter CI [42515913921](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42515913921): **1010 passed, 1 failed, 10 skipped**. Analyzer and architecture gate passed; the only failed test was `test/stage11_state_consistency_test.dart` expecting unknown server status to silently become `pending`.
+- `56b984e` updates that legacy test to require `FormatException`, consistent with the safer `BookingMapper` behavior introduced by `8684b9d`. It does **not** revert unknown statuses to pending.
+- The restored-draft deposit overflow fix `be7c9ea` and regression `6e8f129` remain committed.
+- Full suite on latest commit requires fresh CI. **Count stays 58/620 complete, 562 pending**, pending end-to-end task acceptance; no production schema/payment or main merge.
+
+## Restored booking capacity validation — 2026-11-08
+
+- `4dc2207`: `BookingDraft.fromMap` rejects invalid player/team capacity (nonpositive players per team, nonpositive field capacity, negative current players, or current players exceeding field capacity). The checks mirror existing draft validation before restored data can proceed toward checkout.
+- `d4d25e4`: unit regression tests cover four invalid count/capacity cases and valid restoration.
+- Latest [Flutter CI 42516946511](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42516946511) was pending at inspection. No claim of passing tests on these commits yet.
+- **58/620 completed, 562 remaining**. Booking lifecycle end-to-end tasks remain open. No main merge or production database/payment changes.
+
+## Strict restored booking count parsing — 2026-11-08
+
+- Atomic code/test/ledger batch: `BookingDraft.fromMap` rejects fractional, non-finite and malformed player counts instead of silently truncating or defaulting; null/missing values retain the historical fallback. Added regression fixtures for fractional current players, malformed string, NaN and Infinity alongside existing negative/overflow cases.
+- Previous branch baseline **58/620 complete, 562 remaining**. This hardening does not close full booking journey acceptance; CI must pass on the atomic commit before counting any additional task.
+- No main merge or production schema/payment change.
+
+## Restored booking identity validation — 2026-11-08
+
+- Following verified green [Flutter CI 42517061137](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42517061137) and [Android smoke 42517061154](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42517061154) on `285d8bf`, hardened `BookingDraft.fromMap` to reject missing/blank/non-string venue and owner identifiers. Supports legacy `stadium_id`/`owner_id`, trims valid IDs and runs the shared draft validation on the restored object.
+- Regression tests cover six invalid identities and valid snake-case restoration. These tests need fresh CI on the new commit.
+- No complete booking E2E task is closed by these guards: **58/620 completed, 562 remaining**. No production DB/payment or main changes.
+
+## Payment HTTP ambiguity and notification type compatibility — 2026-11-09
+
+- Prior Flutter CI [42520206334](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42520206334) and Android smoke [42520206344](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42520206344) both succeeded on `72b8996`.
+- Classify HTTP 408/504 as uncertain payment timeouts, 409 as potential duplicate/idempotency conflict, and transport status 0 as network uncertainty. These classifications require server reconciliation before any charge retry; regression tests added.
+- Normalize notification type case and surrounding whitespace for preference filtering (player and owner) and cover this with regression tests. Unknown types still retain existing behavior.
+- **58/620 completed, 562 remaining** until broader journeys are verified. No production schema, payment service, or main merge. Fresh CI needed.
+
+## Payment timeout precedence and booking-status casing — 2026-11-09
+
+- Verified Flutter CI [42669581542](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42669581542) and Android smoke [42669581673](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42669581673) succeeded on `95ce6b5`.
+- Explicit ambiguous HTTP transport statuses 504/408/409/0 now override contradictory gateway message text (e.g., "cancelled"), preventing false safe-retry decisions; tests cover precedence.
+- `BookingMapper` normalizes enum status comparisons across casing/underscores and tests uppercase confirmed and no-show, while continuing to reject unknown statuses.
+- These are incremental regression fixes, not full payment reconciliation or booking state E2E completion: **58/620 complete, 562 remaining** until broader acceptance. CI pending for new commit; no main merge or production changes.
+
+## Booking financial map integrity and notification route regression — 2026-11-09
+
+- Server booking mapping now rejects malformed, negative, non-finite total price/deposit and deposit larger than total rather than silently substituting zero; valid numeric strings and null legacy amounts remain supported. Regression fixtures cover seven corrupt variants and a valid decimal deposit.
+- Added regression checks that malicious legacy notification route IDs cannot override safe modern IDs, plus explicit documentation of destination authorization responsibility.
+- Previous commit `4bd521a` has workflow-level failures with **zero jobs returned** for [Flutter CI 42673052963](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42673052963) and [Android 42673045331](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42673045331), while other attempts were still running when checked. Do not misstate this as a test assertion failure or as passing.
+- **58/620 complete, 562 remaining**. These are partial booking and notification hardening, not full E2E task closure; no production schema/payment or main merge.
+
+## Legacy booking draft field compatibility — 2026-11-09
+
+- Restored draft parser now accepts legacy snake-case time, total price, player count, paid flag, payment method/transaction, team/opponent IDs and idempotency key, while retaining strict validation. This prevents an older saved draft from losing payment correlation or replay identity.
+- Added round-trip test for ten legacy field aliases and negative tests for invalid legacy time/price.
+- The previous branch commit `6675e75` had pending CI at inspection. This change needs its own full CI before any task closure.
+- **58/620 completed, 562 remaining**; no main merge, production database or payment-provider changes.
+
+## Server error payment precedence and draft replay-key validation — 2026-11-09
+
+- Explicit HTTP 500/502/503/429 gateway failures override misleading "cancelled" message text, requiring authoritative server reconciliation before retry; regression coverage added.
+- Restored booking drafts now preserve only trimmed, nonempty safe replay/idempotency keys (up to 128 characters), rejecting malformed and non-string keys; regression tests cover valid and invalid keys.
+- Prior Flutter/Android runs on `f427bbe` still pending at inspection. **58/620 complete, 562 remaining**, no full payment/booking E2E task closed. No production DB/payment changes or main merge.
+
+## Critical build repair — 2026-11-09
+
+- Detected a malformed, duplicated tail in `lib/data/models/booking_draft.dart` introduced during replay-key validation: truncated regular expression and duplicate closing blocks. Rebuilt the factory tail as a single valid Dart expression, preserving safe replay-key checks and shared validation.
+- This is a build-blocking source fix; **do not count new tasks closed** before fresh CI is green. Existing queue backlog remains **58/620 complete, 562 remaining**.
+- No production database or payment changes; no merge to main.
+
+## Foreground notification preference enforcement — 2026-11-09
+
+- `NotificationUiHelper.showInAppAlert` now checks the shared master/category notification preferences for the signed-in user's owner/player role before haptics and foreground banners. An opted-out owner will not receive a foreground booking alert merely because a push arrived.
+- On preference-storage failure the pure filter now fails closed (returns false), instead of bypassing opt-outs; tests cover distinct owner/player booking settings.
+- This is a client-side foreground UX safeguard; it does not implement push delivery opt-out or server consent logs. No task is closed until end-to-end acceptance. **58/620 complete, 562 remaining**.
+- Prior GitHub Actions for `fa86b7c` show failed Android runs with zero jobs exposed and pending Flutter runs; investigate runner/workflow status separately. No production DB/payment changes or main merge.
+
+## Notification legacy categories and active-chat foreground routing — 2026-11-09
+
+- Added normalized legacy notification type aliases for booking reminders, match-start reminders and challenge results. Owner and player category opt-outs apply consistently regardless of casing, dashes or spaces.
+- Fixed foreground suppression so opening one chat no longer hides all incoming chat alerts: only an alert for the active booking chat is suppressed; other chats still obey preferences.
+- Added regression coverage for type aliases. **58/620 verified, 562 remaining**. Pending CI, not an end-to-end notification delivery completion.
+- No production database/payment changes or main merge.
+
+## Notification foreground widget regression repair — 2026-11-09
+
+- GitHub Flutter CI run `42674989384` analyzed and passed architecture gate but failed 1 of 1027 executed tests (1026 passed, 10 skipped). The failing `notification_ui_helper_test.dart` widget lacked the `AuthProvider` dependency now required by foreground preference checks.
+- Updated widget fixture to supply `AuthProvider`, preserving production role-aware filtering instead of weakening it. Android E2E Smoke on commit `256f0e4` succeeded (runs `42674989320`, `42674997334`).
+- Await fresh CI on this commit before declaring regression resolved. **58/620 verified, 562 remaining**. No main merge or production database changes.
+
+## Notification private-booking access guard — 2026-11-09
+
+- Both notification chat and booking navigation now require the signed-in account to be the booking owner, creator, or joined player before opening booking-related screens. The chat flow also rechecks account identity after async chat creation to prevent cross-account navigation after sign-out/switch.
+- Added participant/stranger/null-user regression test for the pure access helper. This is a client guard only; RLS remains the authoritative security boundary.
+- Prior CI on `256f0e4` isolated one foreground notification widget fixture failure (1026 passed/1 failed/10 skipped), with Android smoke success. Follow-up `d647703` CI still running at inspection.
+- **58/620 verified, 562 remaining**; no main merge or production DB/payment changes.
+
+
+## Phase 10 conversion analytics verification — 2026-11-09
+
+- Current source commit `4a2893e9` passed Flutter CI [run 42685956248](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42685956248): analyzer, 56 architecture tests, and the full suite (**1033 passed, 10 skipped**). Duplicate current-head Flutter run `42685967807` also completed successfully.
+- Android public/auth smoke [run 42685967573](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42685967573) passed on the same commit. It validates startup/onboarding/login navigation only, not booking/payment completion.
+- Repaired the foreground notification widget fixture with `ChangeNotifierProvider<AuthProvider>`; production preference enforcement was not weakened.
+- Added the canonical 13-event `VSPAnalyticsEvents` dictionary, privacy filtering, session dedupe, successful player/owner signup, confirmed booking completion and the existing venue/match/team/subscription funnel hooks.
+- Automated contracts verify exact event names, Firebase-safe schema, property privacy, journey-boundary placement, absence of booking completion from pre-success confirmation, and absence of paid subscription activation from checkout initiation.
+- Updated `CONVERSION_ANALYTICS.md`, Phase 10 status/report and experiment baseline. No conversion uplift, D7/D30 retention or revenue change is claimed without real consented data.
+- Closed **50.01, 50.02, 50.03, 50.06, 51.01, 51.02, 51.03, 52.02, 52.07, 55.01, 55.02, 55.03, 55.04 and 55.07**.
+- **Progress: 72/620 verified, 548 remaining.** No production database, RLS, payment backend, pricing, `main` merge or APK build.
+
+
+
+## Deferred-verification implementation batch — 2026-11-09
+
+Owner instruction: continue implementation and defer consolidated tests. The following changes are **CODE_DONE / Pending Verification** and do not increase the verified counter.
+
+- `86f1f52`: booking categorization now preserves both `confirmed` and `upcoming` lifecycle states, includes expired/no-show history, orders future bookings chronologically and history newest-first without mutating input.
+- `09a8e6a`: player bookings now labels the pending section explicitly instead of mixing pending cards between upcoming and history.
+- `daefffa`, `398e0d6`: booking details now shows the reference, total, payment method, honest payment state, amount paid, remaining balance and cancellation reason from the existing booking record. It does not infer a successful payment from checkout initiation.
+- `4bf31c2`, `1131de9`: invalid operating-hours data no longer appears as a legitimate empty schedule; the owner sees a retryable bilingual configuration error while genuine no-hours days keep the empty state.
+- `a9aa62a`: team match-history load failures no longer masquerade as “no previous matches”; loading and retry states are explicit.
+- `42f0e89`, `1824f19`: the existing one-hour matchup code is now described honestly as temporary in Arabic and English; the modal supports selection, semantics and copy confirmation only after clipboard success. This does **not** claim the persistent rotating consent-code contract in task 82.
+- `369f23a`: a failed 1v1 champion verification now surfaces a retry state rather than silently implying the team has no champion.
+- Candidate mapping: **03.02–03.05, 04.01–04.02, 16.02–16.04, 16.06, 22.01, 22.04, 22.07 and 81.07–81.09 remain IN_PROGRESS/CODE_DONE** until their complete acceptance scope and deferred regression/device checks are performed. Task 82.02–82.08 remains blocked on a server-authoritative consent-code lifecycle; the client does not mislabel the legacy expiring invite as that feature.
+- **Verified progress remains 72/620; 548 remaining.** No production Supabase/schema/RLS, payment backend, pricing, permissions, `main` merge or APK action.
+
+
+
+## Team invitations and active-team implementation — 2026-11-09
+
+Owner authorized continuous execution; consolidated tests remain deferred. These changes are **CODE_DONE / Pending Verification** and do not change the verified counter.
+
+- `3a75cd7`: invitation responses are scoped to the active account across async gaps; stale-account success/error feedback is suppressed and expired/already-handled failures are explained honestly.
+- `88c3aed`, `12f8ea6`: a successful invitation acceptance refreshes the parent membership/team state without misreporting a subsequent view-refresh failure as an acceptance failure.
+- `886d3eb`: repository exposes every verified team membership in deterministic order rather than relying on unordered “first row” selection.
+- `d37350c`, `84877ad`, `c8bca9f`: centralized account-scoped active-team preference and added a Flutter-3.32-compatible selector when a player belongs to multiple teams.
+- `2b10dfc`: team management honors the selected active team.
+- `bc6391b`: challenge creation and its final verification resolve the same selected active team from current verified memberships.
+- `4d70f91`: localized the invitation action tooltip and suppresses tab haptics when reduced motion is requested.
+- Candidate mapping: **17.01–17.05, 17.08 and 18.01–18.06 are CODE_DONE/IN_PROGRESS** pending the deferred regression, two-account staging and device checks. Server RLS/RPCs remain authoritative.
+- **Verified progress remains 72/620; 548 remaining.** No production schema/RLS/payment/pricing change, no `main` merge and no APK action.
+
+
+
+## Venue schedule and media hardening — 2026-11-09
+
+These changes are **CODE_DONE / Pending Verification** under the deferred-test instruction.
+
+- `601ee50`: enabling split-shift hours now requires complete, non-overlapping closure intervals inside the operating window; half-configured breaks can no longer silently become bookable.
+- `727c2ca`, `bb74a33`: stadium media uploads reject empty, oversized (>10 MiB) and non-JPEG/PNG/WebP files before storage upload, preserve a matching safe extension and contain validation/read failures.
+- Candidate mapping: **20.02, 20.05, 20.07, 22.01, 22.02, 22.04 and 22.06 are CODE_DONE/IN_PROGRESS** pending deferred storage, widget, regression and real-device verification.
+- **Verified progress remains 72/620; 548 remaining.** This is client defense in depth; Storage policies remain authoritative and were not changed.
+
+
+## Next execution queue
+
+1. 22 — operating hours/closures: finish one end-to-end owner-to-player scheduling flow.
+2. 26 — booking overlap prevention: inspect server guarantees; do not change production schema without approval.
+3. 03 — error/empty/retry states, then 16 — booking history.
+4. 81–82 — team achievement badges and challenge consent code.
+5. 56–60 — consolidated tests, security, release verification **at the end**.
+
+Do not use the old `80-item` release tracker as the denominator for the 82-item/620-subtask inventory.
+
+
+## Owner onboarding and stadium submission hardening — 2026-11-09
+
+These changes are **CODE_DONE / Pending Verification** under the owner's deferred-test instruction.
+
+- `314b04b`, `5e84166`: stadium create/update now rejects stale-account submissions, malformed/non-finite commercial values, invalid coordinate pairs, excessive deposits, invalid ball pricing, missing create images and duplicate/blank media URLs instead of silently substituting zero/default values.
+- `4386fbc`: owner onboarding normalizes and validates Egyptian mobile numbers, prevents duplicate submission and rejects navigation if the signed-in account changes during the async completion.
+- `ad73563`: facility onboarding completion/document actions are single-flight and retryable; failures no longer navigate as success. Copy now says documents are sent for review and does not promise a verified badge before an authoritative approval.
+- `3bb68b7`, `490d40e`, `da74333`: legacy stadium records are parsed defensively, corrupt closure/image fields are ignored, edit ownership is retained and checked before data is exposed in the edit form, and duplicate saves are blocked. Repository/RLS checks remain authoritative.
+- Candidate mapping: **19.01–19.05, 20.01–20.07 and 21.01–21.08 are CODE_DONE/IN_PROGRESS** pending deferred regression, two-account authorization, storage and device verification. This does not close subscription purchase or admin approval journeys.
+- **Verified progress remains 72/620; 548 remaining.** No production Supabase/schema/RLS, payment backend, price, plan, `main` merge or APK action.
+
+
+## Owner schedule defensive rendering batch — 2026-11-10
+
+- `0656e1e`: match owner calendar bookings by actual local date-time overlap, preventing same-clock-time bookings on unrelated days from occupying slots.
+- `a5e5db3`, `4741df9`: reject malformed, incomplete, out-of-hours and overlapping closure intervals; use the existing retryable configuration-error sentinel rather than displaying those intervals as free.
+- `6910bee`: do not mark cancelled/expired bookings as occupying owner-calendar slots.
+- `5bfcc9c`, `4595ece`: detect overlapping distinct active booking IDs in a displayed half-hour slot and fail closed; tolerate duplicate rows for the same booking ID.
+- These are client-side schedule presentation safeguards only, not authoritative double-booking prevention. Server exclusion constraints, transactional booking paths, timezone handling, staging/device acceptance and CI still require verification.
+- All six commits are **CODE_DONE / Pending Verification**. **Verified progress remains 72/620; 548 remaining**. No production schema/RLS/payment/pricing changes, main merge or APK.
+
+
+## Booking list categorization and manual synchronization — 2026-11-10
+
+- `41b4be6`: player pending-checkout categorization suppresses pending bookings whose **full time interval** overlaps another confirmed/upcoming booking for the same stadium; previously only identical start times were compared.
+- `fe9851f`: manual-booking merge preserves distinct booking IDs even when start times coincide, avoiding silent data loss in owner display; backend overlap resolution remains separate.
+- `94e442e`: local expired manual bookings are not resurrected after synchronization.
+- Mapping: booking history/pending states and owner manual-booking integrity (Tasks 16 / 26 / 27); these are **partial fixes / IN_PROGRESS**, not newly closed baseline subtasks.
+- Verification pending: Flutter analyze/tests, duplicate/replay scenarios, checkout grace periods, cancellation/refund cases, owner and player acceptance, server-side concurrency. No claim of authoritative double-booking prevention.
+- Accounting: **72 VERIFIED / 620 total / 548 not accepted**. Nine source fixes since handoff, with seven additional commits including this ledger update. No release verification was performed.
+
+
+## Booking history visibility fixes — 2026-11-10
+
+- `4ceb2c3`: unpaid online pending checkouts beyond the 10-minute grace period are retained in booking history instead of vanishing from active and historical lists.
+- `d512830`: pending checkouts displaced by a distinct confirmed overlapping booking are shown in history, not lost from both pending and history.
+- Mapped to **16.02 booking status buckets** and **16.05 cancelled/abandoned booking behavior**, both **IN_PROGRESS** until all acceptance criteria, source synchronization and user journeys are verified.
+- Code changed, tests and runtime verification deferred. **Verified 72/620; remaining 548**. No server-side availability guarantee claimed.
+
+
+## Truthful owner subscription presentation and checkout guards — 2026-11-10
+
+These changes are **CODE_DONE / Pending Verification** under the deferred-test instruction.
+
+- `7d827dc`, `1cbbe8f`: removed a hard-coded 1000 EGP price, the unmeasured “double your profits” promise, and hard-coded Pro stadium/benefit claims from teaser and upgrade surfaces. Owners are sent to the live plan view for current prices, limits, features and renewal choices.
+- `8569557`, `5b37ba7`: live plan records are rejected when prices, trial duration, stadium limits or feature data are malformed; decimal monetary values are preserved instead of silently rounded.
+- `71b1d25`: subscription order billing periods are restricted to monthly/annual and checkout URLs must be valid HTTPS before external launch.
+- `d54b6c8`: trial activation and checkout creation are single-flight and bound to the active authenticated owner across async boundaries.
+- `d9a3b1b`: clarified the verified subscription model (no per-booking commission) and replaced internal “atomic” terminology with understandable conflict-safe booking copy.
+- Candidate mapping: **25.01–25.08, 52.03–52.06 and Phase 10 UX-06/UX-07 are CODE_DONE/IN_PROGRESS** pending deferred widget, two-account, sandbox checkout and renewal/cancellation-source verification. No conversion or revenue uplift is claimed.
+- **Verified progress remains 72/620; 548 remaining.** No production pricing, payment backend, Supabase schema/RLS, `main` merge or APK action.
+
+
+## Public venue trust, review identity and owner data isolation — 2026-11-10
+
+These changes are **CODE_DONE / Pending Verification**. Consolidated tests remain deferred.
+
+- `78195f4`, `803cb8d`, `c75d466`: all public stadium list, nearby and detail-stream paths now exclude deleted, blocked and unverified stadiums; a removed/unpublished record can no longer remain visible through stale detail fallback.
+- `2864f72`: facility onboarding renders stadiums in owner mode so review state and edit controls are not confused with player favorites.
+- `19e4a41`, `ff8cb75`, `c4ce3e9`: reviews are limited to authenticated 1–5 star submissions with bounded comments, duplicate actions are suppressed, account-switch success feedback is contained, and malformed stored ratings/timestamps are not presented as social proof.
+- `94693ac`: prepared migration `20261110010000_bind_stadium_reviews_to_auth_user.sql` to bind the privileged review RPC to `auth.uid()`, require a completed booking, revoke default/public execution and grant only authenticated execution. **Migration is committed but not applied to production and not database-verified.**
+- `c4adee3`, `1aa537b`: venue, hourly and deposit amounts preserve decimal values; absence of a deposit no longer falsely claims that cash payment is available.
+- `1f118fd`, `e79f45e`, `00a74a7`: owner venue, booking, financial and transaction reads are scoped to the active account; transaction realtime now includes an explicit `user_id` filter; cash/manual booking and maintenance mutations reject cross-account owner IDs and malformed values before RPC invocation. RLS/RPC authorization remains authoritative.
+- Candidate mapping: **14.08, 20.04, 20.06, 21.04–21.05, 53.02, 77.03–77.04, 77.07, 77.11 and 79.02–79.05 are CODE_DONE/IN_PROGRESS** pending deferred Flutter, two-account, staging database, advisor and migration verification.
+- **Verified progress remains 72/620; 548 not accepted.** No production migration was applied, no payment/pricing policy changed, no `main` merge and no APK action.
+
+
+## Exact financial presentation and truthful rescheduling — 2026-11-10
+
+These changes are **CODE_DONE / Pending Verification**. They correct client presentation and do not alter prices, calculations, gateway behavior, refunds, subscription rules or the database.
+
+- Added the shared `VSPMoneyFormatter` contract and replaced integer truncation across player booking/payment summaries, owner booking cards, quick/manual booking forms, cash collection, owner ledger/payouts, operational dashboards, transactional notifications, WhatsApp receipts, cancellations and tournament/league entry and prize surfaces. Finite values retain up to two decimal places with trailing zeros removed; invalid non-finite values render as unavailable rather than a misleading amount.
+- Added focused formatter tests, but they remain unexecuted under the owner's consolidated-test deferral.
+- `97106fe`: corrected reschedule copy to match the authoritative RPC state machine. Declining a proposed time keeps the original booking; it does **not** cancel the booking or promise a full refund. Slot-conflict copy now states that the original booking remains unchanged, and async feedback is bound to the initiating account.
+- `764b1b5`, `3125164`, `646cb75`, `790031c`: unknown booking-save and cancellation failures no longer expose PostgREST/SQL relation, constraint or infrastructure details; known policy failures and short safe server messages remain actionable. Regression contracts were added but not run.
+- `6957d55`, `9a34dc6`, `6a24d8f`: owner reschedule requests and player responses are single-flight per booking, contain thrown repository failures, and present retryable feedback without stale success claims.
+- Candidate mapping: booking price clarity, owner financial visibility, cancellation/refund transparency, tournament pricing, Phase 10 truthful scarcity/trust and rescheduling lifecycle tasks are **CODE_DONE/IN_PROGRESS** pending consolidated Flutter, widget, two-account, sandbox-payment and end-to-end verification.
+- **Verified progress remains 72/620; 548 not accepted.** No production Supabase/schema/RLS/payment mutation, `main` merge, final test run or APK action.
+
+
+## Availability, account-scope and reporting safeguards — 2026-11-10
+
+This batch is **CODE_DONE / Pending Verification** under the consolidated-test deferral.
+
+- `13318e4`, `6dd0ee7`: stadium-slot RPC failures are no longer converted into an empty schedule. Initial failures reach the retryable error UI; later polling failures retain the last verified snapshot. The pre-submit availability check therefore fails closed instead of treating a network error as proof that a slot is free.
+- `214cc38`, `237ea19`, `291a7e1`: booking chat, match chat, public-match join/leave and booking/match report results are bound to the account that initiated the async action. Switching accounts while a request is in flight suppresses stale navigation and feedback.
+- `b494407`, `87dece8`, `0e6e910`, `2c1dd81`: report submissions require the active authenticated reporter, supported target types and bounded reason/details, redact backend errors, and suppress duplicate in-flight submissions. The server `create_report_atomic` participant checks remain authoritative.
+- `70095b6` through `fbe29c6`: remaining high-impact player price surfaces for ball rental, championship cards/details, Book Tonight, team-league payment choices, checkout totals and stadium add-ons now use the shared exact-money formatter instead of integer truncation.
+- Added architecture contracts for availability fail-closed behavior and report client guards. They were updated but not executed.
+- Candidate mapping: **03 error/retry states, 06/13 booking lifecycle, 16 history/visibility, 20 communication/content safety, 26 double-booking defense, 30–31 payment/refund clarity, 53 privacy and Phase 10 truthful price/trust tasks are CODE_DONE/IN_PROGRESS** pending consolidated tests and end-to-end acceptance.
+- **Verified progress remains 72/620; 548 not accepted.** No production database, RLS, payment, pricing or permission change; no `main` merge, final test execution or APK build.
+
+
+## Overnight scheduling and public-match action integrity — 2026-11-10
+
+This batch is **CODE_DONE / Pending Verification**.
+
+- `eafe8ea`, `bc35553`, `457aed6`, `ab9bd11`: owner manual-booking checks now compare real local intervals across midnight, detect overnight closures after midnight, include next-day bookings in duration/overlap checks, ignore expired holds and scope conflicts to the selected stadium.
+- `9408408`, `aea5486`: added regression scenarios for overnight closing times, after-midnight bookings, overnight breaks, unrelated stadium bookings and expired holds. Tests remain deferred and unexecuted.
+- `340ce10`, `48e4fca`, `487b893`, `be94aca`: public-match join/leave errors are reduced to stable safe codes, raw backend errors are not exposed, duplicate in-flight join/leave actions are suppressed, and public leave uses the guarded provider with actionable host/ended-state copy.
+- `a67f423`, `1f30925`: successful atomic join, leave and participant-removal mutations are no longer reported as failures merely because optional public-feed enrichment or notification delivery failed afterward. Secondary notification work is best effort and cannot reverse the authoritative action result.
+- `9007dce`, `619f403`, `d23586c`: architecture contracts guard single-flight actions, sanitized failures and mutation-before-enrichment ordering. They were written/updated but not run.
+- Candidate mapping: **07 group booking, 13 booking management, 19 pickup matches, 20 notifications, 22 operating hours and 26 overlap prevention are CODE_DONE/IN_PROGRESS** pending consolidated Flutter, integration, two-account, staging and device verification.
+- **Verified progress remains 72/620; 548 not accepted.** No production Supabase/schema/RLS/payment/pricing change, `main` merge, final tests or APK.
+
+
+## Current-head CI remediation and verification — 2026-11-10
+
+- Fixed unsupported chained filters on Supabase stream builders and restored the required stadium-owner test scope so the branch analyzes on Flutter 3.32.8.
+- Booking categorization now keeps paid, deposit-paid and refund-in-progress pending records visible beyond the unpaid checkout grace period for both players and owners. Old unpaid online checkouts age into history; ended records remain historical.
+- Empty stadium-break placeholder rows remain optional, while half-configured, out-of-hours, inverted or overlapping intervals fail validation.
+- Replaced a formatting-sensitive team-invitation source assertion with a whitespace-tolerant contract without weakening the behavioral checks.
+- Bounded Flutter test concurrency to two workers after a hosted runner exhausted its thread quota, and enabled cancellation of superseded branch validations.
+- Flutter CI [run 42827626171](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42827626171) passed analyzer, architecture regression gate and the full suite: **1059 passed, 10 explicitly skipped**.
+- Android public/auth staging smoke [run 42827626122](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42827626122) passed onboarding/login on the same head.
+- The green regression run verifies the committed automated contracts but does not replace two-account staging, real-device, Paymob sandbox, email inbox, FCM delivery or production-policy checks. **Verified progress remains 72/620; 548 not accepted** until each subtask's complete acceptance scope is evidenced.
+- No production database/RLS/payment/pricing change, `main` merge or APK build.

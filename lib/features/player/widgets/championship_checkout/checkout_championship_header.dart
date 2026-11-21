@@ -40,6 +40,8 @@ class CheckoutChampionshipHeader extends StatelessWidget {
               children: [
                 Text(
                   championship.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
@@ -47,16 +49,24 @@ class CheckoutChampionshipHeader extends StatelessWidget {
                   children: [
                     const Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 14),
                     const SizedBox(width: 4),
-                    Text(
-                      championship.governorate,
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                    Flexible(
+                      child: Text(
+                        championship.governorate,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     const Icon(Iconsax.people_copy, color: VSPColors.textSecondary, size: 14),
                     const SizedBox(width: 4),
-                    Text(
-                      team.name,
-                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                    Flexible(
+                      child: Text(
+                        team.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
                     ),
                   ],
                 ),

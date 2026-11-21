@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../../shared/widgets/vsp_terms_checkbox.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,8 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/phone_utils.dart';
+import '../../../core/services/analytics_service.dart';
 import '../services/signup_validation_service.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 import '../widgets/owner_onboarding/owner_onboarding_exit_dialog.dart';
@@ -40,12 +43,14 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(AnalyticsService.logOwnerRegistrationStarted());
     _phoneController.addListener(() => setState(() {}));
     _firstNameController.addListener(() => setState(() {}));
     _lastNameController.addListener(() => setState(() {}));
     Future.microtask(() => _fetchAutoLocation());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final displayName = auth.userModel?.name ?? auth.currentUser?.userMetadata?['name'] as String?;
       if (displayName != null && displayName.trim().isNotEmpty) {
@@ -58,10 +63,13 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   }
 
   Future<void> _fetchAutoLocation() async {
+    if (!mounted) return;
     setState(() => _isFetchingLocation = true);
     try {
       final result = await Provider.of<AuthProvider>(context, listen: false).determineGPSGovernorate(force: true);
-      if (result != null && EgyptGovernorates.allGovernorates.contains(result) && mounted) {
+      if (!mounted) return;
+
+      if (result != null && EgyptGovernorates.allGovernorates.contains(result)) {
         setState(() {
           _selectedGovernorate = result;
           _isLocationFallbackActive = false;
@@ -71,6 +79,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
         HapticFeedback.lightImpact();
       }
     } catch (_) {
+      if (!mounted) return;
       setState(() => _isLocationFallbackActive = true);
       HapticFeedback.lightImpact();
     } finally {
@@ -85,7 +94,8 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       minYear: 1940,
       maxYear: DateTime.now().year - 18,
     );
-    if (picked != null) setState(() => _dateOfBirth = picked);
+    if (!mounted || picked == null) return;
+    setState(() => _dateOfBirth = picked);
   }
 
   @override
@@ -97,6 +107,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    if (_isLoading) return;
     final l10n = AppLocalizations.of(context)!;
     if (!_agreedToTerms) {
       VSPFeedback.showError(context, l10n.pleaseAgreeToTerms);
@@ -104,7 +115,8 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
     }
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
-    final phone = _phoneController.text.trim();
+    final rawPhone = _phoneController.text.trim();
+    final phone = PhoneUtils.normalize(rawPhone);
 
     if (firstName.isEmpty || lastName.isEmpty) {
       VSPFeedback.showError(context, l10n.fillAllFields);
@@ -118,7 +130,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       VSPFeedback.showError(context, l10n.mustBe18OrOlder);
       return;
     }
-    if (phone.length < 9) {
+    if (phone == null || phone.length != 11 || !phone.startsWith('01')) {
       VSPFeedback.showError(context, l10n.invalidPhone);
       return;
     }
@@ -126,6 +138,16 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
     setState(() => _isLoading = true);
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final submittingUserId = authProvider.currentUser?.id;
+      if (submittingUserId == null || submittingUserId.isEmpty) {
+        VSPFeedback.showError(
+          context,
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.'
+              : 'Your sign-in session ended. Please sign in again.',
+        );
+        return;
+      }
       final fullName = '$firstName $lastName';
 
       final success = await authProvider.completeSocialRegistration(
@@ -137,7 +159,19 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
 
       if (!mounted) return;
 
+      if (authProvider.currentUser?.id != submittingUserId) {
+        VSPFeedback.showError(
+          context,
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'تغيّر الحساب أثناء التسجيل. أعد فتح الخطوة من الحساب الحالي.'
+              : 'The account changed during registration. Reopen this step from the current account.',
+        );
+        return;
+      }
+
       if (success) {
+        unawaited(AnalyticsService.logSignupCompleted(role: 'owner'));
+        unawaited(AnalyticsService.logOwnerRegistrationCompleted());
         HapticFeedback.lightImpact();
         if (mounted) {
           context.go('/facility-onboarding');

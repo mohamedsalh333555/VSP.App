@@ -35,6 +35,31 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
   }
 
   @override
+  void didUpdateWidget(covariant StadiumImageCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // A reused stadium-details route can receive a different image collection
+    // without recreating this State. Reset the pager so its retained page index
+    // never points beyond the new collection or shows the previous stadium.
+    if (!_sameImages(oldWidget.displayImages, widget.displayImages)) {
+      _currentImageIndex = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_pageController.hasClients) return;
+        _pageController.jumpToPage(0);
+      });
+    }
+  }
+
+  bool _sameImages(List<String> first, List<String> second) {
+    if (identical(first, second)) return true;
+    if (first.length != second.length) return false;
+    for (var index = 0; index < first.length; index++) {
+      if (first[index] != second[index]) return false;
+    }
+    return true;
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
@@ -44,12 +69,12 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
     int activeIdx = initialIndex;
     final dialogPageController = PageController(initialPage: initialIndex);
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setDialogState) {
           return Dialog.fullscreen(
-            backgroundColor: Colors.black,
+            backgroundColor: VSPColors.black,
             child: Stack(
               children: [
                 PageView.builder(
@@ -74,26 +99,26 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: IconButton(
-                        icon: const Icon(Iconsax.close_circle_copy, color: Colors.white, size: 28),
+                        icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.white, size: 28),
                         onPressed: () => Navigator.pop(dialogCtx),
                       ),
                     ),
                   ),
                 ),
                 Positioned(
-                  bottom: 30,
+                  bottom: MediaQuery.of(context).padding.bottom + 30,
                   left: 0,
                   right: 0,
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white24,
+                        color: VSPColors.white24,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '${activeIdx + 1} / ${widget.displayImages.length}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -103,35 +128,43 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
           );
         },
       ),
-    );
+    ).whenComplete(dialogPageController.dispose);
   }
 
   Widget _buildCircularIcon({
     required IconData icon,
     required VoidCallback onTap,
+    required String tooltip,
     Color color = VSPColors.textPrimary,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: VSPColors.background.withValues(alpha: 0.6),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.12),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: VSPColors.transparent,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: VSPColors.background.withValues(alpha: 0.6),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: VSPColors.white12,
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: VSPColors.black15,
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
-          ],
+            child: Icon(icon, color: color, size: 20),
+          ),
         ),
-        child: Icon(icon, color: color, size: 20),
       ),
     );
   }
@@ -174,14 +207,22 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                         errorWidget: (ctx, url, _) => _buildVspLogoBackground(),
                       );
 
-                      return GestureDetector(
-                        onTap: () => _openFullScreenGallery(index),
-                        child: index == 0
-                            ? Hero(
-                                tag: 'stadium-hero-${widget.stadium.id}',
-                                child: imageWidget,
-                              )
-                            : imageWidget,
+                      return Tooltip(
+                        message: Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'فتح معرض الصور'
+                            : 'Open image gallery',
+                        child: Material(
+                          color: VSPColors.transparent,
+                          child: InkWell(
+                            onTap: () => _openFullScreenGallery(index),
+                            child: index == 0
+                                ? Hero(
+                                    tag: 'stadium-hero-${widget.stadium.id}',
+                                    child: imageWidget,
+                                  )
+                                : imageWidget,
+                          ),
+                        ),
                       );
                     },
                   )
@@ -197,9 +238,9 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.6),
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.6),
+                      VSPColors.black60,
+                      VSPColors.transparent,
+                      VSPColors.black60,
                     ],
                     stops: const [0.0, 0.4, 1.0],
                   ),
@@ -221,13 +262,16 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     VSPBackButton(
-                      size: 40,
+                      size: 48,
                       backgroundColor: VSPColors.background.withValues(alpha: 0.6),
                     ),
                     Row(
                       children: [
                         _buildCircularIcon(
                           icon: Iconsax.share_copy,
+                          tooltip: Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'مشاركة الملعب'
+                              : 'Share stadium',
                           onTap: () => SharePlus.instance.share(
                             ShareParams(text: l10n.shareStadiumText(widget.stadium.name, widget.stadium.location)),
                           ),
@@ -238,6 +282,13 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                             final isFav = auth.userModel?.favoriteStadiums.contains(widget.stadium.id) ?? false;
                             return _buildCircularIcon(
                               icon: isFav ? Iconsax.heart : Iconsax.heart_copy,
+                              tooltip: isFav
+                                  ? (Localizations.localeOf(context).languageCode == 'ar'
+                                      ? 'إزالة من المفضلة'
+                                      : 'Remove from favorites')
+                                  : (Localizations.localeOf(context).languageCode == 'ar'
+                                      ? 'إضافة إلى المفضلة'
+                                      : 'Add to favorites'),
                               color: VSPColors.accent,
                               onTap: () => auth.toggleFavoriteStadium(widget.stadium.id),
                             );
@@ -258,30 +309,39 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
               left: 0,
               right: 0,
               child: Center(
-                child: GestureDetector(
-                  onTap: () => _openFullScreenGallery(_currentImageIndex),
-                  child: Container(
+                child: Tooltip(
+                  message: Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'فتح معرض الصور'
+                      : 'Open image gallery',
+                  child: Material(
+                    color: VSPColors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () => _openFullScreenGallery(_currentImageIndex),
+                      child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
+                      color: VSPColors.black55,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                      border: Border.all(color: VSPColors.white15),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: List.generate(widget.displayImages.length, (idx) {
                         final isSelected = _currentImageIndex == idx;
                         return AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                          duration: VSPDSMotion.selection,
                           width: isSelected ? 14 : 6,
                           height: 6,
                           margin: const EdgeInsets.symmetric(horizontal: 3),
                           decoration: BoxDecoration(
-                            color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.5),
+                            color: isSelected ? VSPColors.accent : VSPColors.white50,
                             borderRadius: BorderRadius.circular(3),
                           ),
                         );
                       }),
+                    ),
+                      ),
                     ),
                   ),
                 ),

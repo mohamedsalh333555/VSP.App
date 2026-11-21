@@ -24,7 +24,7 @@ class BookTonightCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: Material(
-        color: Colors.transparent,
+        color: VSPColors.transparent,
         borderRadius: BorderRadius.circular(VSPRadius.xl),
         child: InkWell(
           borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -100,7 +100,7 @@ class BookTonightCard extends StatelessWidget {
                             child: Text(
                               isArabic ? 'سريع' : 'Fast',
                               style: const TextStyle(
-                                color: Colors.black,
+                                color: VSPColors.black,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),

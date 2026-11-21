@@ -4,6 +4,7 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../../data/models.dart';
 
+/// Aggregate opponent history, not a single-match score or live ranking.
 class TeamProfileHeadToHeadSection extends StatelessWidget {
   final Team team;
   final List<Map<String, dynamic>> headToHeadRecords;
@@ -14,9 +15,109 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
     required this.headToHeadRecords,
   });
 
+  /// Never invent a 0-0 record when the source omits or corrupts counters.
+  static int? validCount(dynamic value) =>
+      value is int && value >= 0 ? value : null;
+
+  /// Normalize aggregates relative to the displayed team. A mirrored
+  /// record must compare equal to its original (W/D/L, not A/B position).
+  static (int?, int?, int?) _countsForTeam(
+    String teamId,
+    Map<String, dynamic> row,
+  ) {
+    final isA = row['team_a_id'] == teamId;
+    return (
+      validCount(isA ? row['team_a_wins'] : row['team_b_wins']),
+      validCount(row['draws']),
+      validCount(isA ? row['team_b_wins'] : row['team_a_wins']),
+    );
+  }
+
+  /// A public opponent name or logo is identity metadata, not a score.
+  /// Two paginated/cached rows with equal counters but different identities
+  /// are still contradictory and must never pick the first team name.
+  static (String?, String?) _opponentIdentityForTeam(
+      String teamId, Map<String, dynamic> row) {
+    final opponent = row[row['team_a_id'] == teamId ? 'team_b' : 'team_a'];
+    final data = opponent is Map ? opponent : const {};
+    final rawName = data['name'];
+    final rawLogo = data['logo_url'];
+    return (
+      rawName is String && rawName.trim().isNotEmpty
+          ? rawName.trim() : null,
+      rawLogo is String && rawLogo.trim().isNotEmpty
+          ? rawLogo.trim() : null,
+    );
+  }
+
+  /// A repeated row for the same opponent must not create duplicate cards.
+  /// If two rows disagree, neither can be trusted: hide that opponent rather
+  /// than silently selecting the first or showing contradictory results.
+  /// Unrelated, self-play and incomplete team identifiers are also excluded.
+  static List<Map<String, dynamic>> recordsForTeam(
+    String teamId,
+    Iterable<Map<String, dynamic>> records,
+  ) {
+    final id = teamId.trim();
+    if (id.isEmpty) return const [];
+    final byOpponent = <String, Map<String, dynamic>>{};
+    final conflicts = <String>{};
+    for (final row in records) {
+      final a = row['team_a_id'];
+      final b = row['team_b_id'];
+      String? opponentId;
+      if (a == id && b is String && b.trim().isNotEmpty && b != id) {
+        opponentId = b;
+      } else if (b == id && a is String &&
+          a.trim().isNotEmpty && a != id) {
+        opponentId = a;
+      }
+      if (opponentId == null || conflicts.contains(opponentId)) continue;
+      final previous = byOpponent[opponentId];
+      if (previous == null) {
+        byOpponent[opponentId] = row;
+      } else if (_countsForTeam(id, previous) != _countsForTeam(id, row) ||
+          _opponentIdentityForTeam(id, previous) !=
+              _opponentIdentityForTeam(id, row)) {
+        byOpponent.remove(opponentId);
+        conflicts.add(opponentId);
+      }
+    }
+    return byOpponent.values.toList(growable: false);
+  }
+
+  /// Aggregate only authenticated head-to-head counters belonging to this
+  /// team. An invalid response, duplicate opponent, or unplayed zero row must
+  /// never be presented as progress or a ranking movement.
+  static ({int wins, int draws, int losses, int opponents})? recordedTotals(
+    String teamId,
+    Iterable<Map<String, dynamic>> records,
+  ) {
+    final seenOpponents = <String>{};
+    var wins = 0, draws = 0, losses = 0;
+    for (final row in recordsForTeam(teamId, records)) {
+      final isHome = row['team_a_id'] == teamId;
+      final opponent = isHome ? row['team_b_id'] : row['team_a_id'];
+      if (opponent is! String || seenOpponents.contains(opponent)) continue;
+      final w = validCount(isHome ? row['team_a_wins'] : row['team_b_wins']);
+      final l = validCount(isHome ? row['team_b_wins'] : row['team_a_wins']);
+      final d = validCount(row['draws']);
+      if (w == null || l == null || d == null || w + l + d == 0) continue;
+      seenOpponents.add(opponent);
+      wins += w;
+      losses += l;
+      draws += d;
+    }
+    if (seenOpponents.isEmpty) return null;
+    return (wins: wins, draws: draws, losses: losses,
+      opponents: seenOpponents.length);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final visibleRecords = recordsForTeam(team.id, headToHeadRecords);
+    final totals = recordedTotals(team.id, headToHeadRecords);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,28 +126,80 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
           children: [
             const Icon(Iconsax.status_up_copy, color: VSPColors.accent, size: 20),
             const SizedBox(width: 8),
-            Text(
-              isArabic ? 'سجل المواجهات المباشرة (Head-to-Head)' : 'Head-to-Head History',
+            Expanded(child: Text(
+              isArabic ? 'إجمالي المواجهات مع الفرق' : 'Head-to-head totals',
               style: Theme.of(context).textTheme.titleLarge,
-            ),
+            )),
           ],
         ),
         const SizedBox(height: VSPSpacing.sm),
+        if (totals != null) ...[
+          Text(
+            isArabic
+                ? 'المواجهات المسجلة: ${totals.wins} فوز • ${totals.draws} تعادل • ${totals.losses} خسارة'
+                : 'Recorded matchups: ${totals.wins} W • ${totals.draws} D • ${totals.losses} L',
+            style: const TextStyle(
+              color: VSPColors.textPrimary, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            isArabic
+                ? 'إجمالي المواجهات المباشرة فقط، وليس تغييرًا في الترتيب'
+                : 'Head-to-head totals only, not a ranking change',
+            style: const TextStyle(
+              color: VSPColors.textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: VSPSpacing.sm),
+        ],
+        if (visibleRecords.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md),
+            child: Text(
+              headToHeadRecords.isEmpty
+                  ? (isArabic
+                      ? 'لا توجد مواجهات مسجلة حتى الآن'
+                      : 'No recorded matchups yet')
+                  : (isArabic
+                      ? 'بيانات المواجهات المتاحة غير صالحة للعرض'
+                      : 'Available head-to-head records cannot be verified'),
+              style: const TextStyle(color: VSPColors.textSecondary),
+            ),
+          ),
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: headToHeadRecords.length,
+          itemCount: visibleRecords.length,
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
-            final rec = headToHeadRecords[index];
+            final rec = visibleRecords[index];
             final isTeamA = rec['team_a_id'] == team.id;
-            final opponent = isTeamA ? rec['team_b'] : rec['team_a'];
-            final opponentName = opponent?['name']?.toString() ?? 'فريق منافس';
-            final opponentLogo = opponent?['logo_url']?.toString() ?? '';
+            final dynamic opponent = isTeamA ? rec['team_b'] : rec['team_a'];
+            final opponentMap = opponent is Map ? opponent : const {};
+            final opponentName = opponentMap['name']?.toString().trim();
+            final displayName = opponentName == null || opponentName.isEmpty
+                ? (isArabic ? 'فريق منافس' : 'Opponent team')
+                : opponentName;
+            final opponentLogo = opponentMap['logo_url']?.toString() ?? '';
 
-            final teamWins = isTeamA ? (rec['team_a_wins'] ?? 0) : (rec['team_b_wins'] ?? 0);
-            final opponentWins = isTeamA ? (rec['team_b_wins'] ?? 0) : (rec['team_a_wins'] ?? 0);
-            final draws = rec['draws'] ?? 0;
+            final teamWins = validCount(isTeamA ? rec['team_a_wins'] : rec['team_b_wins']);
+            final opponentWins = validCount(isTeamA ? rec['team_b_wins'] : rec['team_a_wins']);
+            final draws = validCount(rec['draws']);
+            final complete = teamWins != null && opponentWins != null && draws != null;
+            // A valid 0/0/0 summary means no played fixture, not a
+            // verified defeat, clean sheet, or winning record.
+            final played = complete &&
+                teamWins + opponentWins + draws > 0;
+            final ahead = played && teamWins > opponentWins;
+            final summary = !complete
+                ? (isArabic
+                    ? 'بيانات المواجهات غير مكتملة'
+                    : 'Head-to-head counts unavailable')
+                : !played
+                    ? (isArabic
+                        ? 'لم تُلعب مواجهات مسجلة مع هذا الفريق'
+                        : 'No recorded games played against this team')
+                    : (isArabic
+                        ? 'فوز: $teamWins | تعادل: $draws | خسارة: $opponentWins'
+                        : 'Wins: $teamWins | Draws: $draws | Losses: $opponentWins');
 
             return Container(
               padding: const EdgeInsets.all(12),
@@ -74,12 +227,12 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ضد $opponentName',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          isArabic ? 'ضد $displayName' : 'vs $displayName',
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'فوز: $teamWins | تعادل: $draws | خسارة: $opponentWins',
+                          summary,
                           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                         ),
                       ],
@@ -88,18 +241,21 @@ class TeamProfileHeadToHeadSection extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: teamWins > opponentWins
+                      color: ahead
                           ? VSPColors.success.withValues(alpha: 0.15)
                           : VSPColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: teamWins > opponentWins ? VSPColors.success : VSPColors.borderLight,
+                        color: ahead ? VSPColors.success : VSPColors.borderLight,
                       ),
                     ),
                     child: Text(
-                      '$teamWins - $opponentWins',
+                      played
+                          ? (isArabic ? '$teamWins فوز'
+                              : (teamWins == 1 ? '1 win' : '$teamWins wins'))
+                          : '—',
                       style: TextStyle(
-                        color: teamWins > opponentWins ? VSPColors.success : Colors.white,
+                        color: ahead ? VSPColors.success : VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),

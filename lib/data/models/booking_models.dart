@@ -75,6 +75,8 @@ class Booking {
  final String paymentStatus; // 'pending', 'paid', 'refunded'
  final double depositPaid;
  final bool isDepositPaid;
+ final bool needsDeposit;
+ final double depositAmount;
  final String? instapay;
  final String? vodafoneCash;
  final String? binanceId;
@@ -171,6 +173,8 @@ class Booking {
  this.cancellationReason,
  this.depositPaid = 0.0,
  this.isDepositPaid = false,
+ this.needsDeposit = false,
+ this.depositAmount = 0.0,
  this.instapay,
  this.vodafoneCash,
  this.binanceId,
@@ -248,6 +252,8 @@ class Booking {
  isPaid: draft.isPaid,
  depositPaid: draft.depositPaid,
  isDepositPaid: draft.isDepositPaid,
+ needsDeposit: draft.needsDeposit,
+ depositAmount: draft.depositPaid,
  paymentStatus: draft.paymentStatus ?? (draft.isPaid ? 'paid' : (draft.isDepositPaid ? 'partially_paid' : 'pending')),
  instapay: draft.instapay,
  vodafoneCash: draft.vodafoneCash,
@@ -300,6 +306,8 @@ class Booking {
  String? paymentStatus,
  double? depositPaid,
  bool? isDepositPaid,
+ bool? needsDeposit,
+ double? depositAmount,
  String? instapay,
  String? vodafoneCash,
  String? binanceId,
@@ -350,6 +358,8 @@ class Booking {
  paymentStatus: paymentStatus ?? this.paymentStatus,
  depositPaid: depositPaid ?? this.depositPaid,
  isDepositPaid: isDepositPaid ?? this.isDepositPaid,
+ needsDeposit: needsDeposit ?? this.needsDeposit,
+ depositAmount: depositAmount ?? this.depositAmount,
  instapay: instapay ?? this.instapay,
  vodafoneCash: vodafoneCash ?? this.vodafoneCash,
  binanceId: binanceId ?? this.binanceId,
@@ -409,20 +419,45 @@ class Booking {
 
   /// مصدر الدفع الموحد للحجز
   String get effectivePaymentSource {
-    if (paymentSource != null && paymentSource!.isNotEmpty) {
-      return paymentSource!;
-    }
     final m = paymentMethod.toLowerCase().trim();
+    final stored = paymentSource?.toLowerCase().trim() ?? '';
+    if (stored.isNotEmpty) {
+      // Explicit conflict: a legacy 'cash' source accompanied by an
+      // electronic method is not evidence of pitch cash collection.
+      // Fail closed for owner reports until server reconciliation settles it.
+      if (stored == 'cash' &&
+          (m.contains('vodafone') || m.contains('فودافون') ||
+           m.contains('instapay') || m.contains('انستاباي') ||
+           m.contains('wallet') || m.contains('محفظة') ||
+           m.contains('card') || m.contains('visa') ||
+           m.contains('mastercard') || m.contains('meeza') ||
+           m.contains('ميزا') || m.contains('بطاقة') ||
+           m.contains('paymob') || m.contains('bank_transfer') ||
+           m.contains('bank transfer') || m.contains('تحويل بنكي'))) {
+        return 'unknown';
+      }
+      return stored;
+    }
     final tx = (paymentTransactionId ?? '').toUpperCase();
-    if (m == 'cash' || tx.startsWith('MANUAL') || m.contains('كاش')) return 'cash';
-    if (m.contains('instapay') || instapay != null) return 'instapay';
-    if (m.contains('vodafone') || vodafoneCash != null) return 'vodafone_cash';
+    // Vodafone Cash is an electronic wallet, not cash handed to the pitch.
+    // Check it before the legacy Arabic word 'كاش'; only an exact venue-cash
+    // method or a documented MANUAL transaction is classified as pitch cash.
+    if (m.contains('vodafone') || m.contains('فودافون') ||
+        vodafoneCash != null) return 'vodafone_cash';
+    if (m.contains('instapay') || m.contains('انستاباي') ||
+        instapay != null) return 'instapay';
+    if (m == 'cash' || m == 'كاش' || m == 'نقدي' ||
+        m == 'cash_on_arrival' || m == 'cash on arrival' ||
+        m == 'كاش عند الملعب' || m == 'دفع نقدي' ||
+        tx.startsWith('MANUAL')) return 'cash';
     if (m.contains('bank_transfer') || m.contains('bank') || m.contains('تحويل')) return 'bank_transfer';
     if (m.contains('paymob') ||
         m.contains('card') ||
         m.contains('visa') ||
         m.contains('mastercard') ||
-        m.contains('wallet') ||
+        m.contains('meeza') || m.contains('ميزا') ||
+        m.contains('فيزا') || m.contains('بطاقة') ||
+        m.contains('wallet') || m.contains('محفظة') ||
         m.contains('online') ||
         tx.startsWith('PAYMOB')) {
       return 'paymob';
@@ -534,7 +569,15 @@ class BookingPaymentMatrix {
   }) {
     final method = paymentMethod.toLowerCase().trim();
     final source = (paymentSource ?? '').toLowerCase().trim();
-    final isCash = method == 'cash' || source == 'cash' || method.contains('كاش');
+    // Arabic mobile wallets include the word "كاش" but are NOT venue cash.
+    final isMobileWallet = source == 'vodafone_cash' ||
+        method.contains('vodafone') || method.contains('فودافون');
+    final isCash = !isMobileWallet &&
+        !{'paymob','vodafone_cash','instapay','bank_transfer'}.contains(source) &&
+        (source == 'cash' ||
+         (method == 'cash' || method == 'كاش' || method == 'نقدي' ||
+          method == 'cash_on_arrival' || method == 'cash on arrival' ||
+          method == 'كاش عند الملعب' || method == 'دفع نقدي'));
     final isOnline = method == 'paymob' ||
         method == 'card' ||
         method == 'wallet' ||

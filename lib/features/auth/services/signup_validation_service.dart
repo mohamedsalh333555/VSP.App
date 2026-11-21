@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/phone_utils.dart';
+import '../../../core/utils/email_address_validator.dart';
 import '../../../l10n/app_localizations.dart';
 
 enum SignupValidationError {
@@ -9,8 +10,10 @@ enum SignupValidationError {
   pleaseEnterDob,
   mustBe18OrOlder,
   invalidPhone,
+  invalidEmail,
   passwordMismatch,
   passwordTooShort,
+  invalidPosition,
 }
 
 class SignupValidationResult {
@@ -72,6 +75,8 @@ class SignupValidationService {
     required String password,
     required String confirmPassword,
     required DateTime? dateOfBirth,
+    bool requirePlayerPosition = false,
+    String? selectedPosition,
   }) {
     if (!agreedToTerms) {
       return SignupValidationResult.invalid(SignupValidationError.pleaseAgreeToTerms);
@@ -88,6 +93,12 @@ class SignupValidationService {
         trimmedEmail.isEmpty ||
         password.isEmpty) {
       return SignupValidationResult.invalid(SignupValidationError.fillAllFields);
+    }
+
+    // Reject invalid email syntax before starting any registration request.
+    // The backend remains authoritative for actual email verification.
+    if (!EmailAddressValidator.isValid(trimmedEmail)) {
+      return SignupValidationResult.invalid(SignupValidationError.invalidEmail);
     }
 
     if (dateOfBirth == null) {
@@ -109,6 +120,14 @@ class SignupValidationService {
 
     if (password.length < 8) {
       return SignupValidationResult.invalid(SignupValidationError.passwordTooShort);
+    }
+
+    if (requirePlayerPosition) {
+      final allowed = SportPositionsRegistry.getPositionsForSport('Football')
+          .map((position) => position.code);
+      if (selectedPosition == null || !allowed.contains(selectedPosition)) {
+        return SignupValidationResult.invalid(SignupValidationError.invalidPosition);
+      }
     }
 
     return SignupValidationResult.valid(
@@ -140,31 +159,39 @@ class SignupValidationService {
         return l10n.mustBe18OrOlder;
       case SignupValidationError.invalidPhone:
         return l10n.invalidPhone;
+      case SignupValidationError.invalidEmail:
+        return l10n.invalidEmail;
       case SignupValidationError.passwordMismatch:
         return l10n.passwordMismatch;
       case SignupValidationError.passwordTooShort:
         return l10n.passwordTooShort;
+      case SignupValidationError.invalidPosition:
+        return l10n.localeName.startsWith('ar')
+            ? 'اختار مركز لعب صحيح قبل إنشاء الحساب.'
+            : 'Choose a valid playing position before creating your account.';
     }
   }
 
   /// Computes password strength, percentage and visual color indicator.
-  static PasswordStrength calculatePasswordStrength(String password) {
+  static PasswordStrength calculatePasswordStrength(
+    String password, {bool isArabic = false}
+  ) {
     double strength = 0.0;
     if (password.length >= 8) strength += 0.2;
-    if (password.length >= 8) strength += 0.2;
+    if (RegExp(r'[a-z]').hasMatch(password)) strength += 0.2;
     if (RegExp(r'[A-Z]').hasMatch(password)) strength += 0.2;
     if (RegExp(r'[0-9]').hasMatch(password)) strength += 0.2;
     if (RegExp(r'[!@#\$&*~]').hasMatch(password)) strength += 0.2;
 
     Color color = Colors.red;
-    String label = 'Weak';
+    String label = isArabic ? 'ضعيفة' : 'Weak';
     if (strength > 0.4) {
       color = Colors.orange;
-      label = 'Medium';
+      label = isArabic ? 'متوسطة' : 'Medium';
     }
     if (strength >= 0.8) {
       color = VSPColors.accent;
-      label = 'Strong';
+      label = isArabic ? 'قوية' : 'Strong';
     }
 
     return PasswordStrength(
@@ -185,7 +212,8 @@ class SignupValidationService {
     return {
       'name': fullName,
       'phone': normalizedPhone,
-      'position': isOwner ? null : (selectedPosition ?? 'GK'),
+      // Never silently register a player as goalkeeper when no choice exists.
+      'position': isOwner ? null : selectedPosition,
       'date_of_birth': dateOfBirth?.toUtc().toIso8601String(),
     };
   }
@@ -215,6 +243,9 @@ class SignupValidationService {
           : 'Could not send confirmation email. Please check email settings.';
     }
 
-    return errorMsg;
+    // Raw auth/provider messages can disclose account existence, SQL details,
+    // internal IDs or transport traces. Only the explicitly recognized error
+    // codes above are safe to expose; all other responses stay generic.
+    return defaultMsg;
   }
 }

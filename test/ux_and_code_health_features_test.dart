@@ -38,7 +38,7 @@ void main() {
  expect(invite, contains('ملعب النجوم الدولي'));
  expect(invite, contains('كابتن زياد'));
  expect(invite, contains('ناقص 3 لاعيبة'));
- expect(invite, contains('50 ج.م'));
+ expect(invite, contains('50.00 ج.م'));
  expect(invite, contains('https://maps.google.com/?q=30.0444,31.2357'));
  expect(invite, contains('https://vspapp.online/match/bk_test_123'));
  });
@@ -60,7 +60,7 @@ void main() {
 
  expect(invite, contains('Camp Nou Arena'));
  expect(invite, contains('2 more players needed'));
- expect(invite, contains('60 EGP'));
+ expect(invite, contains('60.00 EGP'));
  expect(invite, contains('https://vspapp.online/match/bk_eng_456'));
  });
  });
@@ -85,9 +85,9 @@ void main() {
 
  expect(receipt, contains('ستاد الملوك'));
  expect(receipt, contains('كابتن محمد صلاح'));
- expect(receipt, contains('400 ج.م'));
- expect(receipt, contains('عربون مسدد: 100 ج.م'));
- expect(receipt, contains('المتبقي: 300 ج.م عند الحضور'));
+ expect(receipt, contains('400.00 ج.م'));
+ expect(receipt, contains('عربون مسدد: 100.00 ج.م'));
+ expect(receipt, contains('المتبقي: 300.00 ج.م عند الحضور'));
  expect(receipt, contains('#BK-9921X'));
  expect(receipt, contains('01000000000'));
  expect(receipt, contains('يرجى الحضور قبل الموعد بـ 10 دقائق'));
@@ -119,7 +119,7 @@ void main() {
  depositPaid: 0.0,
  isArabic: false,
  );
- expect(cashAtPitch, contains('Cash at pitch: 300 EGP'));
+ expect(cashAtPitch, contains('Payment at pitch: 300.00 EGP'));
  });
  });
 

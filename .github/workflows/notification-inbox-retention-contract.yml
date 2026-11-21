@@ -1,0 +1,38 @@
+name: VSP Notification inbox retention policy contract
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'supabase/functions/_shared/notification_retention_policy.ts'
+      - 'supabase/functions/tests/notification_retention_policy_test.ts'
+      - 'supabase/functions/_shared/notification_retention_dry_run.ts'
+      - 'supabase/functions/tests/notification_retention_dry_run_test.ts'
+      - '.github/workflows/notification-inbox-retention-contract.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/_shared/notification_retention_policy.ts'
+      - 'supabase/functions/tests/notification_retention_policy_test.ts'
+      - 'supabase/functions/_shared/notification_retention_dry_run.ts'
+      - 'supabase/functions/tests/notification_retention_dry_run_test.ts'
+      - '.github/workflows/notification-inbox-retention-contract.yml'
+  workflow_dispatch:
+
+jobs:
+  retention-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.2.12"
+      - name: Verify reminder retention cutoffs and financial/audit safety (offline)
+        run: >-
+          deno test --no-config
+          supabase/functions/tests/notification_retention_policy_test.ts
+          supabase/functions/tests/notification_retention_dry_run_test.ts

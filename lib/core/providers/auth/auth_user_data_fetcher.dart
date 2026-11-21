@@ -47,6 +47,9 @@ class AuthUserDataFetcher {
       final prefs = await SharedPreferences.getInstance();
       final pendingRole = await SecureStorageService.readSecure('pending_oauth_role') ??
           prefs.getString('pending_oauth_role');
+      if (pendingRole != null && !const {'player', 'owner'}.contains(pendingRole)) {
+        return const UserDataFetchResult(dataFetchError: true);
+      }
       String? userType = pendingRole ?? currentUserType;
 
       Map<String, dynamic>? userData;
@@ -68,38 +71,21 @@ class AuthUserDataFetcher {
         final canProvisionOAuthRegistration = pendingRole != null && !isLoginOnly;
 
         if (canProvisionOAuthRegistration) {
-          final effectiveRole = pendingRole;
-          final userMeta = user.userMetadata ?? {};
-          final name = (userMeta['full_name'] ??
-                  userMeta['name'] ??
-                  user.email?.split('@').first ??
-                  'مستخدم جديد')
-              .toString();
-          final avatar =
-              (userMeta['avatar_url'] ?? userMeta['picture'])?.toString();
-
-          final fallbackMap = {
-            'id': user.id,
-            'email': user.email ?? '',
-            'name': name,
-            'role': effectiveRole,
-            'profile_image_url': avatar,
-            'is_email_verified': true,
-            'is_registration_complete': false,
-            'subscription_plan':
-                effectiveRole == 'owner' ? 'free_trial' : 'free',
-            'created_at': DateTime.now().toUtc().toIso8601String(),
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          };
-
           try {
-            await _supabase.from('users').upsert(fallbackMap);
+            // Identity, verification and subscription state are decided by the
+            // server. Never manufacture a usable local profile after failure.
+            final response = await _supabase.rpc(
+              'provision_registration_profile', params: {'p_role': pendingRole});
+            if (response is! Map || response['success'] != true) {
+              return const UserDataFetchResult(dataFetchError: true);
+            }
             userData = await _userRepository.getUserData(user.id);
           } catch (e) {
-            VSPLogger.w("OAuth registration profile provisioning failed: $e");
+            VSPLogger.w('OAuth profile provisioning failed (${e.runtimeType}).');
           }
-
-          userData ??= fallbackMap;
+          if (userData == null || userData['id'] != user.id) {
+            return const UserDataFetchResult(dataFetchError: true);
+          }
         } else {
           return const UserDataFetchResult(
             dataFetchError: true,
@@ -115,7 +101,7 @@ class AuthUserDataFetcher {
         isLoginOnly: isLoginOnly,
         userData: userData,
       )) {
-        VSPLogger.w("Unregistered social account attempted sign-in for UID: ${user.id} -> redirecting to onboarding as ghost user");
+        VSPLogger.w('Unregistered social account requires onboarding.');
         await prefs.remove('pending_oauth_is_login_only');
         return const UserDataFetchResult(
           shouldSignOut: false,
@@ -133,12 +119,19 @@ class AuthUserDataFetcher {
           pendingRole: effectiveRole,
           userData: userData,
         )) {
-          VSPLogger.i("Overriding OAuth trigger role from '${userData['role']}' to '$effectiveRole'");
-          await _userRepository.setUserRole(user.id, effectiveRole!);
+          final updated = await _userRepository.setUserRole(user.id, effectiveRole!);
+          if (!updated) {
+            return const UserDataFetchResult(dataFetchError: true);
+          }
+          final authoritative = await _userRepository.getUserData(user.id);
+          if (authoritative == null || authoritative['id'] != user.id ||
+              authoritative['role'] != effectiveRole) {
+            return const UserDataFetchResult(dataFetchError: true);
+          }
+          userData = authoritative;
           try {
             await _supabase.auth.updateUser(UserAttributes(data: {'role': effectiveRole}));
           } catch (_) {}
-          userData['role'] = effectiveRole;
           userType = effectiveRole;
           await prefs.remove('pending_oauth_role');
           await SecureStorageService.deleteSecure('pending_oauth_role');
@@ -167,13 +160,19 @@ class AuthUserDataFetcher {
         }
 
         if (AuthSessionValidator.shouldAutoPatchRegistrationComplete(userModel)) {
-          userModel = userModel.copyWith(isRegistrationComplete: true);
-          await _userRepository.updateUserProfile(
+          final completed = await _userRepository.updateUserProfile(
             user.id,
             {'isRegistrationComplete': true},
             authUser: user,
             role: userData['role']?.toString(),
           );
+          if (completed) {
+            final authoritative = await _userRepository.getUserData(user.id);
+            if (authoritative == null || authoritative['id'] != user.id) {
+              return const UserDataFetchResult(dataFetchError: true);
+            }
+            userModel = UserModel.fromFirestore(authoritative);
+          }
         }
 
         if (AuthSessionValidator.shouldClearUserTypeForAutoLogin(userModel)) {
@@ -192,8 +191,8 @@ class AuthUserDataFetcher {
           errorMessage: 'تعذر استرجاع بيانات حسابك. يرجى المحاولة مرة أخرى أو التواصل مع الدعم.',
         );
       }
-    } catch (e, stack) {
-      VSPLogger.e("AuthUserDataFetcher: Supabase fetch exception", e, stack);
+    } catch (e) {
+      VSPLogger.w('Account profile fetch failed (${e.runtimeType}).');
       return const UserDataFetchResult(dataFetchError: true);
     }
   }

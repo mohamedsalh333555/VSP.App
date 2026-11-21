@@ -25,6 +25,7 @@ void showQuickBookingReceiptSheet({
     endTime: endTime,
     totalPrice: totalPrice,
     depositPaid: paidAmount,
+    isCashConfirmed: totalPrice > 0 && paidAmount >= totalPrice,
     googleMapsUrl: stadium.googleMapsUrl,
     stadiumPhone: stadium.phone,
     isArabic: isAr,
@@ -32,11 +33,19 @@ void showQuickBookingReceiptSheet({
 
   showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     builder: (sheetCtx) {
-      final bottomPadding = MediaQuery.of(sheetCtx).padding.bottom;
+      final media = MediaQuery.of(sheetCtx);
+      final bottomPadding = media.padding.bottom;
+      final availableHeight = (media.size.height -
+              media.padding.top -
+              media.padding.bottom)
+          .clamp(240.0, media.size.height)
+          .toDouble();
       return Container(
+        constraints: BoxConstraints(maxHeight: availableHeight * 0.85),
         padding: EdgeInsets.fromLTRB(
           VSPSpacing.lg,
           VSPSpacing.lg,
@@ -47,9 +56,10 @@ void showQuickBookingReceiptSheet({
           color: VSPColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             Container(
               width: 40,
               height: 4,
@@ -71,7 +81,7 @@ void showQuickBookingReceiptSheet({
             const SizedBox(height: 12),
             Text(
               isAr ? 'تم تأكيد الحجز بنجاح!' : 'Booking Confirmed!',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
             ),
             const SizedBox(height: 6),
             Text(
@@ -100,10 +110,11 @@ void showQuickBookingReceiptSheet({
               text: isAr ? 'تم، إغلاق' : 'Done / Close',
               height: 48,
               color: VSPColors.surfaceAlt,
-              textColor: Colors.white,
+              textColor: VSPColors.white,
               onPressed: () => Navigator.pop(sheetCtx),
             ),
-          ],
+            ],
+          ),
         ),
       );
     },

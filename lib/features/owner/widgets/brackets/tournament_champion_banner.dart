@@ -42,7 +42,7 @@ class TournamentChampionBanner extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   championName,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
                 ),
               ],
             ),

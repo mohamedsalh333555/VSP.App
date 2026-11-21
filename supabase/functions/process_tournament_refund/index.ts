@@ -1,5 +1,9 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { isConfirmedPaymobRefund, isAlreadyRefundedProviderMessage } from "../_shared/paymob_refund_safety.ts";
+import { markTournamentRefundDispatched } from "../_shared/paymob_tournament_dispatch.ts";
+import { validatedPaymobRefundRequest } from "../_shared/paymob_refund_request.ts";
+import { confirmedRefundLedgerWrite } from "../_shared/paymob_refund_ledger.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 declare const Deno: any;
 
@@ -168,7 +172,7 @@ serve(async (req: Request) => {
         });
         const authData = await authRes.json();
         if (!authRes.ok || !authData.token) {
-          throw new Error("Paymob authentication failed: " + JSON.stringify(authData));
+          throw new Error("Paymob authentication failed");
         }
         return authData.token;
       };
@@ -177,9 +181,9 @@ serve(async (req: Request) => {
       try {
         paymobToken = await getPaymobToken();
       } catch (authErr: any) {
-        console.error("Paymob token generation failed:", authErr);
+        console.error("Paymob token generation failed");
         return new Response(
-          JSON.stringify({ success: false, message: "Paymob authentication failed", error: String(authErr?.message || authErr) }),
+          JSON.stringify({ success: false, message: "Paymob authentication failed" }),
           { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
@@ -254,95 +258,124 @@ serve(async (req: Request) => {
         }
 
         // 3. Call Paymob Refund API
-        const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
-        const refundAmtCents = Math.round(queueAmount * 100);
+        const refundRequest = validatedPaymobRefundRequest(item.paymob_transaction_id, queueAmount);
+        const txnId = refundRequest?.transactionId ?? "";
+        const refundAmtCents = refundRequest?.amountCents ?? 0;
 
         let refundSuccess = false;
         let refundError: string | null = null;
         let refundId: string | null = null;
+        let refundRequestSent = false;
 
         if (!txnId || refundAmtCents <= 0) {
           refundError = "Invalid transaction ID or zero amount";
         } else {
           try {
+            // A dispatched call may have succeeded even when its response is lost.
+            // Durably reserve this exact claim before any external refund.
+            // Crashes after dispatch must not cause a second refund after 15m.
+            const dispatchAllowed = await markTournamentRefundDispatched(adminClient, "cancellation_refund_queue", item);
+            if (!dispatchAllowed) {
+              results.push({ id: item.id, success: false, error: "REFUND_DISPATCH_GUARD_UNAVAILABLE" });
+              continue;
+            }
+            refundRequestSent = true;
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 auth_token: paymobToken,
-                transaction_id: Number(txnId),
+                transaction_id: refundRequest!.transactionIdNumber,
                 amount_cents: refundAmtCents,
               }),
             });
             const refundData = await refundRes.json();
-            const msgLower = JSON.stringify(refundData).toLowerCase();
-
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+            if (isConfirmedPaymobRefund(refundRes.ok, refundData)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "");
-            } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
-              // Double refund prevention: Paymob indicates already refunded
-              refundSuccess = true;
-              refundId = "ALREADY_REFUNDED_AT_GATEWAY";
+            } else if (isAlreadyRefundedProviderMessage(refundData)) {
+              // Text alone is not verified refund proof: manual reconciliation.
+              refundError = "GATEWAY_ALREADY_REFUNDED_NEEDS_VERIFICATION";
             } else {
-              refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
+              refundError = "GATEWAY_REFUND_RESPONSE_UNCONFIRMED";
             }
           } catch (e: any) {
-            const errStr = e?.message || String(e);
-            const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
-            refundError = isTimeout ? `NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS: ${errStr}` : errStr;
+            // Never retain raw provider/network exception diagnostics.
+            refundError = refundRequestSent
+              ? "GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH" : "GATEWAY_REQUEST_NOT_SENT";
           }
         }
 
         const nowIso = new Date().toISOString();
 
         if (refundSuccess) {
-          await adminClient.from("cancellation_refund_queue").update({
-            status: "completed",
-            processed_at: nowIso,
-            locked_until: null,
-            updated_at: nowIso,
-          }).eq("id", item.id);
-
-          await adminClient.from("tournament_orders").update({
-            payment_status: "refunded",
-            updated_at: nowIso,
-          }).eq("id", item.order_id);
-
-          await adminClient.from("championship_registrations").update({
-            payment_status: "refunded",
-            updated_at: nowIso,
-          }).eq("id", item.registration_id);
-
-          // 🛡️ Ledger Coherence: Close transaction to completed
-          await adminClient.from("transactions").update({
-            status: "completed",
-            metadata: {
-              paymob_refund_id: refundId,
-              refund_amount: queueAmount,
-              original_gross_amount: orderGross,
-              non_refundable_fee_amount: Number(Math.max(0, orderGross - queueAmount).toFixed(2)),
-              completed_at: nowIso,
-            },
-            updated_at: nowIso,
-          }).eq("championship_id", item.championship_id)
-            .eq("type", "refund_request")
-            .eq("paymob_transaction_id", item.paymob_transaction_id);
-
+          // An accepted Paymob response is not completed server accounting.
+          // Preserve the durable dispatch hold while updating all ledger rows.
+          const accountingSteps = [
+            adminClient.from("tournament_orders")
+              .update({ payment_status: "refunded", updated_at: nowIso })
+              .eq("id", item.order_id),
+            adminClient.from("championship_registrations")
+              .update({ payment_status: "refunded", updated_at: nowIso })
+              .eq("id", item.registration_id),
+            adminClient.from("transactions")
+              .update({
+                status: "completed",
+                metadata: {
+                  paymob_refund_id: refundId,
+                  refund_amount: queueAmount,
+                  original_gross_amount: orderGross,
+                  non_refundable_fee_amount: Number(Math.max(0, orderGross - queueAmount).toFixed(2)),
+                  completed_at: nowIso,
+                },
+                updated_at: nowIso,
+              })
+              .eq("championship_id", item.championship_id)
+              .eq("type", "refund_request")
+              .eq("paymob_transaction_id", item.paymob_transaction_id),
+          ];
+          let accountingOk = true;
+          for (const write of accountingSteps) {
+            if (!await confirmedRefundLedgerWrite(write)) {
+              accountingOk = false;
+              break;
+            }
+          }
+          if (accountingOk) {
+            // COMPLETE THE QUEUE LAST. A failed zero-row update must never
+            // produce a user-facing success notification.
+            accountingOk = await confirmedRefundLedgerWrite(
+              adminClient.from("cancellation_refund_queue")
+                .update({ status: "completed", processed_at: nowIso,
+                  locked_until: null, failure_reason: null, updated_at: nowIso })
+                .eq("id", item.id)
+                .eq("status", "processing"),
+            );
+          }
+          if (!accountingOk) {
+            console.error("Refund gateway acknowledged but server ledger requires reconciliation (cancellation_refund_queue)");
+            await adminClient.from("cancellation_refund_queue")
+              .update({ status: "failed_manual_review",
+                failure_reason: "GATEWAY_REFUNDED_LEDGER_RECONCILIATION_REQUIRED",
+                locked_until: null, updated_at: nowIso })
+              .eq("id", item.id).eq("status", "processing");
+            results.push({ id: item.id, success: false,
+              error: "GATEWAY_REFUNDED_LEDGER_RECONCILIATION_REQUIRED" });
+            continue;
+          }
           await ensureRefundNotification(adminClient, { userId: order.captain_user_id, queueId: item.id, title: "تم استرداد رسوم البطولة بنجاح 💳", body: `تم تأكيد استرداد مبلغ ${queueAmount.toFixed(2)} ج.م عبر بوابة الدفع. قد يستغرق ظهوره حسب البنك أو المحفظة.`, metadata: { order_reference: order.order_reference, championship_id: item.championship_id, refund_amount: queueAmount, paymob_refund_id: refundId } });
           results.push({ id: item.id, order_id: item.order_id, success: true, refund_id: refundId });
         } else {
           console.error(`Refund failed for queue item ${item.id}:`, refundError);
-          const isAmbiguousTimeout = refundError?.includes("NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS");
+          const isAmbiguousTimeout = refundError?.includes("GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH");
 
-          if (item.retry_count >= 3 || isAmbiguousTimeout) {
+          if (item.retry_count >= 3 || isAmbiguousTimeout || refundRequestSent) {
             // Escalate to manual review immediately on ambiguous timeout or max retries
             // to strictly protect against double refund!
             await adminClient.from("cancellation_refund_queue").update({
               status: "failed_manual_review",
-              failure_reason: isAmbiguousTimeout 
-                ? `GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY: ${refundError}` 
-                : refundError,
+              failure_reason: refundRequestSent
+                ? "GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY" : refundError,
               locked_until: null,
               updated_at: nowIso,
             }).eq("id", item.id);
@@ -459,92 +492,122 @@ serve(async (req: Request) => {
         }
 
         // 3. Call Paymob Refund API
-        const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
-        const refundAmtCents = Math.round(queueAmount * 100);
+        const refundRequest = validatedPaymobRefundRequest(item.paymob_transaction_id, queueAmount);
+        const txnId = refundRequest?.transactionId ?? "";
+        const refundAmtCents = refundRequest?.amountCents ?? 0;
 
         let refundSuccess = false;
         let refundError: string | null = null;
         let refundId: string | null = null;
+        let refundRequestSent = false;
 
         if (!txnId || refundAmtCents <= 0) {
           refundError = "Invalid transaction ID or zero amount";
         } else {
           try {
+            // A dispatched call may have succeeded even when its response is lost.
+            // Durably reserve this exact claim before any external refund.
+            // Crashes after dispatch must not cause a second refund after 15m.
+            const dispatchAllowed = await markTournamentRefundDispatched(adminClient, "vsp_1v1_cancellation_refund_queue", item);
+            if (!dispatchAllowed) {
+              results.push({ id: item.id, success: false, error: "REFUND_DISPATCH_GUARD_UNAVAILABLE" });
+              continue;
+            }
+            refundRequestSent = true;
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 auth_token: paymobToken,
-                transaction_id: Number(txnId),
+                transaction_id: refundRequest!.transactionIdNumber,
                 amount_cents: refundAmtCents,
               }),
             });
             const refundData = await refundRes.json();
-            const msgLower = JSON.stringify(refundData).toLowerCase();
-
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+            if (isConfirmedPaymobRefund(refundRes.ok, refundData)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "");
-            } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
-              refundSuccess = true;
-              refundId = "ALREADY_REFUNDED_AT_GATEWAY";
+            } else if (isAlreadyRefundedProviderMessage(refundData)) {
+              // Text alone is not verified refund proof: manual reconciliation.
+              refundError = "GATEWAY_ALREADY_REFUNDED_NEEDS_VERIFICATION";
             } else {
-              refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
+              refundError = "GATEWAY_REFUND_RESPONSE_UNCONFIRMED";
             }
           } catch (e: any) {
-            const errStr = e?.message || String(e);
-            const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
-            refundError = isTimeout ? `NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS: ${errStr}` : errStr;
+            // Never retain raw provider/network exception diagnostics.
+            refundError = refundRequestSent
+              ? "GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH" : "GATEWAY_REQUEST_NOT_SENT";
           }
         }
 
         const nowIso = new Date().toISOString();
 
         if (refundSuccess) {
-          await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
-            status: "completed",
-            processed_at: nowIso,
-            locked_until: null,
-            updated_at: nowIso,
-          }).eq("id", item.id);
-
-          await adminClient.from("vsp_1v1_tournament_orders").update({
-            payment_status: "refunded",
-            updated_at: nowIso,
-          }).eq("id", item.order_id);
-
-          await adminClient.from("vsp_1v1_tournament_players").update({
-            payment_status: "refunded",
-            updated_at: nowIso,
-          }).eq("tournament_id", item.tournament_id).eq("user_id", item.user_id);
-
-          // 🛡️ Gate 3: Close transaction to completed with metadata
-          await adminClient.from("transactions").update({
-            status: "completed",
-            metadata: {
-              paymob_refund_id: refundId,
-              refund_amount: queueAmount,
-              original_gross_amount: orderGross,
-              non_refundable_fee_amount: Number(Math.max(0, orderGross - queueAmount).toFixed(2)),
-              completed_at: nowIso,
-            },
-            updated_at: nowIso,
-          }).eq("user_id", item.user_id)
-            .eq("type", "refund_request")
-            .eq("paymob_transaction_id", item.paymob_transaction_id);
-
+          // An accepted Paymob response is not completed server accounting.
+          // Preserve the durable dispatch hold while updating all ledger rows.
+          const accountingSteps = [
+            adminClient.from("vsp_1v1_tournament_orders")
+              .update({ payment_status: "refunded", updated_at: nowIso })
+              .eq("id", item.order_id),
+            adminClient.from("vsp_1v1_tournament_players")
+              .update({ payment_status: "refunded", updated_at: nowIso })
+              .eq("tournament_id", item.tournament_id).eq("user_id", item.user_id),
+            adminClient.from("transactions")
+              .update({
+                status: "completed",
+                metadata: {
+                  paymob_refund_id: refundId,
+                  refund_amount: queueAmount,
+                  original_gross_amount: orderGross,
+                  non_refundable_fee_amount: Number(Math.max(0, orderGross - queueAmount).toFixed(2)),
+                  completed_at: nowIso,
+                },
+                updated_at: nowIso,
+              })
+              .eq("user_id", item.user_id)
+              .eq("type", "refund_request")
+              .eq("paymob_transaction_id", item.paymob_transaction_id),
+          ];
+          let accountingOk = true;
+          for (const write of accountingSteps) {
+            if (!await confirmedRefundLedgerWrite(write)) {
+              accountingOk = false;
+              break;
+            }
+          }
+          if (accountingOk) {
+            // COMPLETE THE QUEUE LAST. A failed zero-row update must never
+            // produce a user-facing success notification.
+            accountingOk = await confirmedRefundLedgerWrite(
+              adminClient.from("vsp_1v1_cancellation_refund_queue")
+                .update({ status: "completed", processed_at: nowIso,
+                  locked_until: null, failure_reason: null, updated_at: nowIso })
+                .eq("id", item.id)
+                .eq("status", "processing"),
+            );
+          }
+          if (!accountingOk) {
+            console.error("Refund gateway acknowledged but server ledger requires reconciliation (vsp_1v1_cancellation_refund_queue)");
+            await adminClient.from("vsp_1v1_cancellation_refund_queue")
+              .update({ status: "failed_manual_review",
+                failure_reason: "GATEWAY_REFUNDED_LEDGER_RECONCILIATION_REQUIRED",
+                locked_until: null, updated_at: nowIso })
+              .eq("id", item.id).eq("status", "processing");
+            results.push({ id: item.id, success: false,
+              error: "GATEWAY_REFUNDED_LEDGER_RECONCILIATION_REQUIRED" });
+            continue;
+          }
           await ensureRefundNotification(adminClient, { userId: item.user_id, queueId: item.id, title: "تم استرداد رسوم بطولة 1 ضد 1 بنجاح 💳", body: `تم تأكيد استرداد مبلغ ${queueAmount.toFixed(2)} ج.م عبر بوابة الدفع. قد يستغرق ظهوره حسب البنك أو المحفظة.`, metadata: { order_reference: order.order_reference, tournament_id: item.tournament_id, refund_amount: queueAmount, paymob_refund_id: refundId } });
           results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: true, refund_id: refundId });
         } else {
           console.error(`1v1 Refund failed for queue item ${item.id}:`, refundError);
-          const isAmbiguousTimeout = refundError?.includes("NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS");
+          const isAmbiguousTimeout = refundError?.includes("GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH");
 
-          if (item.retry_count >= 3 || isAmbiguousTimeout) {
+          if (item.retry_count >= 3 || isAmbiguousTimeout || refundRequestSent) {
             await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
               status: "failed_manual_review",
-              failure_reason: isAmbiguousTimeout 
-                ? `GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY: ${refundError}` 
-                : refundError,
+              failure_reason: refundRequestSent
+                ? "GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY" : refundError,
               locked_until: null,
               updated_at: nowIso,
             }).eq("id", item.id);
@@ -655,87 +718,119 @@ serve(async (req: Request) => {
         }
 
         // 3. Call Paymob Refund API
-        const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
-        const refundAmtCents = Math.round(queueAmount * 100);
+        const refundRequest = validatedPaymobRefundRequest(item.paymob_transaction_id, queueAmount);
+        const txnId = refundRequest?.transactionId ?? "";
+        const refundAmtCents = refundRequest?.amountCents ?? 0;
 
         let refundSuccess = false;
         let refundError: string | null = null;
         let refundId: string | null = null;
+        let refundRequestSent = false;
 
         if (!txnId || refundAmtCents <= 0) {
           refundError = "Invalid transaction ID or zero amount";
         } else {
           try {
+            // A dispatched call may have succeeded even when its response is lost.
+            // Durably reserve this exact claim before any external refund.
+            // Crashes after dispatch must not cause a second refund after 15m.
+            const dispatchAllowed = await markTournamentRefundDispatched(adminClient, "team_league_cancellation_refund_queue", item);
+            if (!dispatchAllowed) {
+              results.push({ id: item.id, success: false, error: "REFUND_DISPATCH_GUARD_UNAVAILABLE" });
+              continue;
+            }
+            refundRequestSent = true;
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 auth_token: paymobToken,
-                transaction_id: Number(txnId),
+                transaction_id: refundRequest!.transactionIdNumber,
                 amount_cents: refundAmtCents,
               }),
             });
             const refundData = await refundRes.json();
-            const msgLower = JSON.stringify(refundData).toLowerCase();
-
-            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+            if (isConfirmedPaymobRefund(refundRes.ok, refundData)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "");
-            } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
-              refundSuccess = true;
-              refundId = "ALREADY_REFUNDED_AT_GATEWAY";
+            } else if (isAlreadyRefundedProviderMessage(refundData)) {
+              // Text alone is not verified refund proof: manual reconciliation.
+              refundError = "GATEWAY_ALREADY_REFUNDED_NEEDS_VERIFICATION";
             } else {
-              refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
+              refundError = "GATEWAY_REFUND_RESPONSE_UNCONFIRMED";
             }
           } catch (e: any) {
-            const errStr = e?.message || String(e);
-            const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
-            refundError = isTimeout ? `NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS: ${errStr}` : errStr;
+            // Never retain raw provider/network exception diagnostics.
+            refundError = refundRequestSent
+              ? "GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH" : "GATEWAY_REQUEST_NOT_SENT";
           }
         }
 
         const nowIso = new Date().toISOString();
 
         if (refundSuccess) {
-          await adminClient.from("team_league_cancellation_refund_queue").update({
-            status: "completed",
-            processed_at: nowIso,
-            locked_until: null,
-            updated_at: nowIso,
-          }).eq("id", item.id);
-
-          await adminClient.from("team_league_payments").update({
-            payment_status: "refunded",
-            updated_at: nowIso,
-          }).eq("id", item.payment_id);
-
-          // 🛡️ Close transaction to completed with full metadata
-          await adminClient.from("transactions").update({
-            status: "completed",
-            metadata: {
-              paymob_refund_id: refundId,
-              refund_amount: queueAmount,
-              original_gross_amount: paymentGross,
-              non_refundable_fee_amount: Number(Math.max(0, paymentGross - queueAmount).toFixed(2)),
-              completed_at: nowIso,
-            },
-            updated_at: nowIso,
-          }).eq("championship_id", item.championship_id)
-            .eq("type", "refund_request")
-            .eq("paymob_transaction_id", item.paymob_transaction_id);
-
+          // An accepted Paymob response is not completed server accounting.
+          // Preserve the durable dispatch hold while updating all ledger rows.
+          const accountingSteps = [
+            adminClient.from("team_league_payments")
+              .update({ payment_status: "refunded", updated_at: nowIso })
+              .eq("id", item.payment_id),
+            adminClient.from("transactions")
+              .update({
+                status: "completed",
+                metadata: {
+                  paymob_refund_id: refundId,
+                  refund_amount: queueAmount,
+                  original_gross_amount: paymentGross,
+                  non_refundable_fee_amount: Number(Math.max(0, paymentGross - queueAmount).toFixed(2)),
+                  completed_at: nowIso,
+                },
+                updated_at: nowIso,
+              })
+              .eq("championship_id", item.championship_id)
+              .eq("type", "refund_request")
+              .eq("paymob_transaction_id", item.paymob_transaction_id),
+          ];
+          let accountingOk = true;
+          for (const write of accountingSteps) {
+            if (!await confirmedRefundLedgerWrite(write)) {
+              accountingOk = false;
+              break;
+            }
+          }
+          if (accountingOk) {
+            // COMPLETE THE QUEUE LAST. A failed zero-row update must never
+            // produce a user-facing success notification.
+            accountingOk = await confirmedRefundLedgerWrite(
+              adminClient.from("team_league_cancellation_refund_queue")
+                .update({ status: "completed", processed_at: nowIso,
+                  locked_until: null, failure_reason: null, updated_at: nowIso })
+                .eq("id", item.id)
+                .eq("status", "processing"),
+            );
+          }
+          if (!accountingOk) {
+            console.error("Refund gateway acknowledged but server ledger requires reconciliation (team_league_cancellation_refund_queue)");
+            await adminClient.from("team_league_cancellation_refund_queue")
+              .update({ status: "failed_manual_review",
+                failure_reason: "GATEWAY_REFUNDED_LEDGER_RECONCILIATION_REQUIRED",
+                locked_until: null, updated_at: nowIso })
+              .eq("id", item.id).eq("status", "processing");
+            results.push({ id: item.id, success: false,
+              error: "GATEWAY_REFUNDED_LEDGER_RECONCILIATION_REQUIRED" });
+            continue;
+          }
           await ensureRefundNotification(adminClient, { userId: item.user_id, queueId: item.id, title: "تم استرداد رسوم دوري الفرق بنجاح 💳", body: `تم تأكيد استرداد مبلغ ${queueAmount.toFixed(2)} ج.م عبر بوابة الدفع. قد يستغرق ظهوره حسب البنك أو المحفظة.`, metadata: { order_reference: payment.order_reference, championship_id: item.championship_id, refund_amount: queueAmount, paymob_refund_id: refundId } });
           results.push({ id: item.id, payment_id: item.payment_id, type: "team_league", success: true, refund_id: refundId });
         } else {
           console.error(`Team League Refund failed for queue item ${item.id}:`, refundError);
-          const isAmbiguousTimeout = refundError?.includes("NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS");
+          const isAmbiguousTimeout = refundError?.includes("GATEWAY_OUTCOME_AMBIGUOUS_AFTER_DISPATCH");
 
-          if (item.retry_count >= 3 || isAmbiguousTimeout) {
+          if (item.retry_count >= 3 || isAmbiguousTimeout || refundRequestSent) {
             await adminClient.from("team_league_cancellation_refund_queue").update({
               status: "failed_manual_review",
-              failure_reason: isAmbiguousTimeout 
-                ? `GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY: ${refundError}` 
-                : refundError,
+              failure_reason: refundRequestSent
+                ? "GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY" : refundError,
               locked_until: null,
               updated_at: nowIso,
             }).eq("id", item.id);
@@ -823,7 +918,11 @@ serve(async (req: Request) => {
     const orderReference = String(prep.order_reference || "");
     const transactionId = String(prep.paymob_transaction_id || "");
     const refundAmount = Math.round(Number(prep.refund_amount || 0) * 100) / 100;
-    if (!orderReference || !transactionId || refundAmount <= 0) {
+    // A malformed provider ID must NEVER be silently normalized by stripping
+    // non-digits; this can target a different Paymob transaction.
+    if (!orderReference || !/^[1-9][0-9]*$/.test(transactionId) ||
+      !Number.isSafeInteger(Number(transactionId)) ||
+      !Number.isFinite(refundAmount) || refundAmount <= 0) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -832,6 +931,45 @@ serve(async (req: Request) => {
         }),
         { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // The withdrawal RPC above checks the player's actual team/captain
+    // authority, but it only READS the paid order. Claim that order here
+    // before dispatching Paymob's irreversible refund endpoint.
+    //
+    // This CAS also blocks duplicate user/API retries and process crashes.
+    // Team-league states require the accompanying schema CHECK migration
+    // before Staging/Production can deploy this Edge Function safely.
+    const { data: withdrawalChampionship, error: withdrawalChampionshipError } =
+      await adminClient.from("championships")
+        .select("template_type")
+        .eq("id", championshipId)
+        .maybeSingle();
+    if (withdrawalChampionshipError || !withdrawalChampionship) {
+      return new Response(JSON.stringify({
+        success: false, refund_pending: true, manual_review: true,
+        message: "تعذر تأكيد نوع البطولة قبل الاسترداد. يلزم المراجعة.",
+      }), { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+    const withdrawalOrderTable = withdrawalChampionship.template_type === "team_league"
+      ? "team_league_payments" : "tournament_orders";
+    const { data: withdrawalClaim, error: withdrawalClaimError } = await adminClient
+      .from(withdrawalOrderTable)
+      .update({ payment_status: "refund_pending", updated_at: new Date().toISOString() })
+      .eq("order_reference", orderReference)
+      .eq("championship_id", championshipId)
+      .eq("team_id", teamId)
+      .eq("paymob_transaction_id", transactionId)
+      .eq("payment_status", "paid")
+      .select("id")
+      .maybeSingle();
+    if (withdrawalClaimError || !withdrawalClaim) {
+      // A prior request may have already reserved/refunded the same payment.
+      // Never retry the gateway call when the atomic claim is absent.
+      return new Response(JSON.stringify({
+        success: false, refund_pending: true, manual_review: true,
+        message: "تم حجز الاسترداد أو تعذر تثبيت الطلب. لن يتم إرسال طلب مكرر.",
+      }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
     let refundSuccess = false;
@@ -852,24 +990,21 @@ serve(async (req: Request) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           auth_token: authData.token,
-          transaction_id: Number(transactionId.replace(/\D/g, "")),
+          transaction_id: Number(transactionId),
           amount_cents: Math.round(refundAmount * 100),
         }),
       });
       const refundData = await refundRes.json();
-      const msgLower = JSON.stringify(refundData).toLowerCase();
-
-      if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+      if (isConfirmedPaymobRefund(refundRes.ok, refundData)) {
         refundSuccess = true;
         refundId = String(refundData.id || refundData.transaction_id || "");
-      } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
-        refundSuccess = true;
-        refundId = "ALREADY_REFUNDED_AT_GATEWAY";
       } else {
-        refundError = refundData.message || refundData.detail || JSON.stringify(refundData);
+        refundError = isAlreadyRefundedProviderMessage(refundData)
+          ? "GATEWAY_ALREADY_REFUNDED_NEEDS_VERIFICATION"
+          : "GATEWAY_REFUND_RESPONSE_UNCONFIRMED";
       }
     } catch (e: any) {
-      refundError = e?.message || String(e);
+      refundError = "GATEWAY_OUTCOME_AMBIGUOUS_NEEDS_RECONCILIATION";
     }
 
     const { data: finalized, error: finalizeError } = await adminClient.rpc(
@@ -884,7 +1019,15 @@ serve(async (req: Request) => {
         p_error_message: refundError,
       }
     );
-    if (finalizeError) throw finalizeError;
+    if (finalizeError || finalized?.success !== true) {
+      // The provider may already have moved money. Do not throw a 5xx which
+      // encourages a new client refund attempt; reconcile manually instead.
+      console.error("Team withdrawal refund ledger not confirmed");
+      return new Response(JSON.stringify({
+        success: false, refund_pending: true, manual_review: true,
+        message: "حالة الاسترداد تحتاج مراجعة محاسبية قبل أي إعادة محاولة.",
+      }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
 
     return new Response(
       JSON.stringify({
@@ -895,15 +1038,16 @@ serve(async (req: Request) => {
         refund_amount: refundAmount,
         refund_success: refundSuccess,
       }),
-      { status: refundSuccess ? 200 : 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (err: any) {
-    console.error("process_tournament_refund error", err);
+    // Errors can contain provider tokens or DB diagnostics; keep them out of
+    // public responses and logs. Operator reconciliation is required.
+    console.error("process_tournament_refund failed; investigate safe server traces");
     return new Response(
       JSON.stringify({
         success: false,
-        message: "تعذر إتمام استرداد اشتراك البطولة حالياً.",
-        error: String(err?.message || err),
+        message: "تعذر إتمام استرداد اشتراك البطولة حالياً؛ يرجى مراجعة الإدارة.",
       }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

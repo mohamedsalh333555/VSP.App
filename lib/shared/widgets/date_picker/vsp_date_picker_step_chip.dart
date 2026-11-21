@@ -29,7 +29,21 @@ class VspDatePickerStepChip extends StatelessWidget {
     final isDone = value != null;
 
     return Expanded(
-      child: GestureDetector(
+      child: Semantics(
+        button: true,
+                excludeSemantics: true,
+        selected: isCurrent,
+        enabled: isEnabled,
+        onTap: isEnabled
+            ? () {
+                VSPFeedback.triggerTap();
+                onTap();
+              }
+            : null,
+        label: value == null ? title : '$title, $value',
+        child: InkWell(
+        excludeFromSemantics: true,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
         onTap: isEnabled
             ? () {
                 VSPFeedback.triggerTap();
@@ -37,7 +51,7 @@ class VspDatePickerStepChip extends StatelessWidget {
               }
             : null,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: VSPDSMotion.selection,
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
           decoration: BoxDecoration(
             color: isCurrent
@@ -78,13 +92,14 @@ class VspDatePickerStepChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isCurrent ? Colors.white : (isDone ? VSPColors.textPrimary : VSPColors.textMuted),
+                  color: isCurrent ? VSPColors.white : (isDone ? VSPColors.textPrimary : VSPColors.textMuted),
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
+        ),
         ),
       ),
     );

@@ -32,6 +32,11 @@ class _TestBookingRepository implements BookingRepository {
 }
 
 class _FakeAuth extends ChangeNotifier implements AuthProvider {
+  // This navigation-only test uses an anonymous player, not an owner.
+  // A nullable noSuchMethod getter cannot satisfy the new bool role guard.
+  @override
+  bool get isOwner => false;
+
   @override
   dynamic noSuchMethod(Invocation i) {
     if (i.isGetter) return null;

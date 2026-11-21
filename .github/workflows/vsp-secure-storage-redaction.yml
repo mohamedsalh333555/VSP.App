@@ -1,0 +1,31 @@
+name: VSP Secure Storage Log Privacy
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - "lib/core/services/secure_storage_service.dart"
+      - "test/core/services/secure_storage_redaction_test.dart"
+      - ".github/workflows/vsp-secure-storage-redaction.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "lib/core/services/secure_storage_service.dart"
+      - "test/core/services/secure_storage_redaction_test.dart"
+      - ".github/workflows/vsp-secure-storage-redaction.yml"
+permissions:
+  contents: read
+jobs:
+  redaction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos lib/core/services/secure_storage_service.dart test/core/services/secure_storage_redaction_test.dart
+      - run: flutter test test/core/services/secure_storage_redaction_test.dart

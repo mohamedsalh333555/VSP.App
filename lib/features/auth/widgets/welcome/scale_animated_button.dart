@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 
 /// A reusable micro-animated button wrapper providing tactile scaling feedback and tap debouncing.
 class ScaleAnimatedButton extends StatefulWidget {
@@ -27,7 +28,7 @@ class _ScaleAnimatedButtonState extends State<ScaleAnimatedButton>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 120),
+      duration: VSPDSMotion.press,
       vsync: this,
       lowerBound: 0.94,
       upperBound: 1.0,
@@ -60,7 +61,7 @@ class _ScaleAnimatedButtonState extends State<ScaleAnimatedButton>
         setState(() => _isDebouncing = true);
         widget.onPressed();
         _debounceTimer?.cancel();
-        _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
+        _debounceTimer = Timer(VSPDSMotion.buttonDebounce, () {
           if (mounted) setState(() => _isDebouncing = false);
         });
       },

@@ -45,12 +45,22 @@ class VSPRefundTrackingSheet extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(VSPDSSpacing.lg, VSPDSSpacing.sm, VSPDSSpacing.lg, VSPDSSpacing.lg),
+      padding: EdgeInsets.fromLTRB(
+        VSPDSSpacing.lg,
+        VSPDSSpacing.sm,
+        VSPDSSpacing.lg,
+        VSPDSSpacing.lg + MediaQuery.paddingOf(context).bottom,
+      ),
       decoration: const BoxDecoration(color: VSPDSSemanticColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(VSPDSRadius.bottomSheet))),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Center(child: Container(width: VSPDSizes.iconXl, height: VSPDSSpacing.xxs, decoration: BoxDecoration(color: VSPDSSemanticColors.textMuted, borderRadius: BorderRadius.circular(VSPDSRadius.full)))),
           const SizedBox(height: VSPDSSpacing.md),
           Row(children: [
@@ -73,7 +83,15 @@ class VSPRefundTrackingSheet extends StatelessWidget {
             child: Column(children: [
               _DetailRow(label: isArabic ? 'الحجز' : 'Booking', value: '#$bookingReference'),
               const SizedBox(height: VSPDSSpacing.xs),
-              _DetailRow(label: isArabic ? 'المبلغ المسترد' : 'Refund amount', value: '${refundInfo.refundAmount.toStringAsFixed(0)} ${l10n.egCurrency}', valueColor: VSPDSSemanticColors.accent),
+              _DetailRow(
+          label: isArabic ? 'المبلغ المسترد' : 'Refund amount',
+          value: refundInfo.amountConfirmed
+              ? '${refundInfo.refundAmount.toStringAsFixed(0)} ${l10n.egCurrency}'
+              : (isArabic ? 'سيتم التأكيد بعد المعالجة' : 'Pending server confirmation'),
+          valueColor: refundInfo.amountConfirmed
+              ? VSPDSSemanticColors.accent
+              : VSPDSSemanticColors.warning,
+        ),
               const SizedBox(height: VSPDSSpacing.xs),
               _DetailRow(label: isArabic ? 'القناة' : 'Channel', value: channel),
               const SizedBox(height: VSPDSSpacing.xs),
@@ -88,7 +106,9 @@ class VSPRefundTrackingSheet extends StatelessWidget {
           ],
           const SizedBox(height: VSPDSSpacing.md),
           SizedBox(width: double.infinity, child: OutlinedButton(onPressed: () => Navigator.pop(context), style: OutlinedButton.styleFrom(minimumSize: const Size(0, VSPDSizes.buttonHeight), side: VSPDSBorders.subtle, shape: const StadiumBorder(), foregroundColor: VSPDSSemanticColors.textPrimary, textStyle: VSPDSTypography.compactButton), child: Text(isArabic ? 'إغلاق' : 'Close'))),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

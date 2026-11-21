@@ -1,0 +1,27 @@
+name: VSP Challenge Result Time Contract
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - 'supabase/migrations/20261003193000_challenge_mutual_result_agreement_and_points.sql'
+      - 'scripts/verify_challenge_result_time_contract.py'
+      - 'docs/VSP_CHALLENGE_RESULT_SUBMISSION_TIME_POLICY_36_01_2026_11_19.md'
+      - '.github/workflows/vsp-challenge-result-time-contract.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261003193000_challenge_mutual_result_agreement_and_points.sql'
+      - 'scripts/verify_challenge_result_time_contract.py'
+      - 'docs/VSP_CHALLENGE_RESULT_SUBMISSION_TIME_POLICY_36_01_2026_11_19.md'
+      - '.github/workflows/vsp-challenge-result-time-contract.yml'
+permissions:
+  contents: read
+jobs:
+  source-time-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify server-clock submission cutoff and eligibility checks
+        run: python3 scripts/verify_challenge_result_time_contract.py

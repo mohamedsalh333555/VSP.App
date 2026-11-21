@@ -1,0 +1,211 @@
+{
+  "date": "2026-11-11",
+  "runtime_sha": "0ef4af8b159f99f6f9a063fef0ffedf5c068785f",
+  "reviewed_candidate_inventory": {
+    "routines": 75,
+    "client_callable": 65,
+    "service_only": 10,
+    "not_a_vulnerability_count": true
+  },
+  "fixed_routines": 7,
+  "known_body_variants": 8,
+  "native_ci": {
+    "run": 43020116975,
+    "job": 130520912193,
+    "status": "success",
+    "sql_suites": 8,
+    "weakened_guards_rejected": 17,
+    "python_tests": 24,
+    "checks": [
+      "idempotency",
+      "source-checked inverse",
+      "unknown source refusal",
+      "private helper drift refusal",
+      "staging comparison variant",
+      "clean fixture/fresh database"
+    ]
+  },
+  "stage_before_probe": [
+    {
+      "cross_owner_financial_bug": true,
+      "cross_owner_operational_bug": true,
+      "cross_owner_comparison_bug": false
+    }
+  ],
+  "stage_after_probe": [
+    {
+      "result": "PASS 9 staged report denials and9 own/active-admin compatibility calls; all synthetic rows roll back"
+    }
+  ],
+  "stage_after_readback": [
+    {
+      "signature": "public.delete_user_permanently(uuid)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_admin_metrics()",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_admin_quick_metrics()",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_owner_ai_operational_insights(uuid,text)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_owner_ai_stadium_comparison(uuid,text)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_owner_financial_summary(uuid)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_tournament_financial_summary(uuid)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    }
+  ],
+  "production_after_readback": [
+    {
+      "signature": "public.delete_user_permanently(uuid)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_admin_metrics()",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_admin_quick_metrics()",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_owner_ai_operational_insights(uuid,text)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_owner_ai_stadium_comparison(uuid,text)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_owner_financial_summary(uuid)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    },
+    {
+      "signature": "public.get_tournament_financial_summary(uuid)",
+      "present": true,
+      "definer": true,
+      "source_matches": true
+    }
+  ],
+  "routine_metadata_preserved": true,
+  "new_helper": [
+    {
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=pg_catalog, public, pg_temp"
+      ],
+      "body_sha256": "11b7f2246119d27c200950bb04ebfb81fdd7d2a8e84e740885cc4852543f10ef",
+      "anon_exec": false,
+      "authenticated_exec": false,
+      "service_exec": false
+    }
+  ],
+  "production_advisors": [
+    {
+      "name": "authenticated_security_definer_function_executable",
+      "count": 197
+    },
+    {
+      "name": "auth_leaked_password_protection",
+      "count": 1
+    }
+  ],
+  "migration_history": {
+    "production": [
+      {
+        "version": "20261111122824",
+        "name": "secure_legacy_account_deletion_and_owner_reporting"
+      }
+    ],
+    "staging": [
+      {
+        "version": "20261111122649",
+        "name": "secure_legacy_account_deletion_and_owner_reporting"
+      }
+    ]
+  },
+  "all_runtime_workflows": [
+    {
+      "id": 43020117096,
+      "name": "Owner checkout security",
+      "conclusion": "success"
+    },
+    {
+      "id": 43020116975,
+      "name": "Account SQL security contracts",
+      "conclusion": "success"
+    },
+    {
+      "id": 43020117129,
+      "name": "Android E2E Smoke",
+      "conclusion": "success"
+    },
+    {
+      "id": 43020117237,
+      "name": "iOS compliance build",
+      "conclusion": "success"
+    },
+    {
+      "id": 43020117004,
+      "name": "Flutter CI",
+      "conclusion": "success"
+    },
+    {
+      "id": 43020108598,
+      "name": "Account SQL security contracts",
+      "conclusion": "success"
+    },
+    {
+      "id": 43020108642,
+      "name": "Flutter CI",
+      "conclusion": "success"
+    }
+  ],
+  "core_accepted": 82,
+  "core_pending": 538,
+  "store_ready": false,
+  "limits": [
+    "Only synthetic staging records/claims, no actual file/payment/OAuth execution",
+    "No production customer-row operations or exploitation",
+    "Remaining candidate routines need separate review; not all75 declared safe",
+    "Signed device/provider/store-console requirements remain open"
+  ]
+}

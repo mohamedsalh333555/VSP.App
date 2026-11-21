@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_money_formatter.dart';
 
 /// الشريط السفلي المتكامل لشاشة الحجز (الخيارات الإضافية، السعر الإجمالي، وزر التأكيد)
 class BookingBottomBar extends StatelessWidget {
@@ -46,6 +47,18 @@ class BookingBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    // The parent can briefly retain the previous slot's optional selection
+    // during date/network refreshes. Never display a stale add-on as selected
+    // or a previous booking total when there is no active slot selection.
+    final displayBallRented = isSlotSelected && isBallRented;
+    final displayTotalPrice = isSlotSelected ? totalPrice : 0.0;
+    // A selected slot is insufficient to authorize an invalid or stale quote.
+    // The parent must still independently re-verify the live server price.
+    final validFinancials = totalPrice.isFinite && totalPrice > 0 &&
+        (!displayBallRented || (ballPrice.isFinite && ballPrice >= 0)) &&
+        (isOpenJoin || (depositAmount.isFinite && depositAmount >= 0 &&
+            (!needsDeposit || (depositAmount > 0 && depositAmount <= totalPrice))));
+    final canConfirm = isSlotSelected && !isLoading && validFinancials;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -84,7 +97,7 @@ class BookingBottomBar extends StatelessWidget {
                         Text(
                           isArabic ? 'حجز تجميعي خاص' : 'Private Collective Booking',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: VSPColors.white,
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                           ),
@@ -114,29 +127,36 @@ class BookingBottomBar extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isArabic ? 'إجمالي عدد لاعبي الحجز' : 'Total players in booking',
-                      style: const TextStyle(
-                        color: Colors.white,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic ? 'إجمالي عدد لاعبي الحجز' : 'Total players in booking',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                        color: VSPColors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.3,
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      isArabic ? 'يشمل أنت وأي لاعبين ستضيفهم قبل إرسال الدعوة' : 'Includes you and any players you add before sharing the invite',
-                      style: const TextStyle(
-                        color: VSPColors.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        isArabic ? 'يشمل أنت وأي لاعبين ستضيفهم قبل إرسال الدعوة' : 'Includes you and any players you add before sharing the invite',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   decoration: BoxDecoration(
                     color: VSPColors.surfaceAlt,
@@ -146,8 +166,12 @@ class BookingBottomBar extends StatelessWidget {
                   child: Row(
                     children: [
                       IconButton(
-                        visualDensity: VisualDensity.compact,
-                        icon: const Icon(Iconsax.minus_copy, size: 16, color: Colors.white),
+                        tooltip: isArabic ? 'تقليل عدد اللاعبين' : 'Decrease player count',
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
+                        icon: const Icon(Iconsax.minus_copy, size: 16, color: VSPColors.white),
                         onPressed: initialPlayersCount > 1
                             ? () {
                                 HapticFeedback.selectionClick();
@@ -157,14 +181,29 @@ class BookingBottomBar extends StatelessWidget {
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Text(
-                          '$initialPlayersCount',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        child: Semantics(
+                          label: isArabic
+                              ? 'عدد اللاعبين: $initialPlayersCount'
+                              : 'Player count: $initialPlayersCount',
+                          child: ExcludeSemantics(
+                            child: Text(
+                              '$initialPlayersCount',
+                              style: const TextStyle(
+                                color: VSPColors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       IconButton(
-                        visualDensity: VisualDensity.compact,
-                        icon: const Icon(Iconsax.add_copy, size: 16, color: Colors.white),
+                        tooltip: isArabic ? 'زيادة عدد اللاعبين' : 'Increase player count',
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
+                        icon: const Icon(Iconsax.add_copy, size: 16, color: VSPColors.white),
                         onPressed: initialPlayersCount < maxPlayersCount
                             ? () {
                                 HapticFeedback.selectionClick();
@@ -182,18 +221,34 @@ class BookingBottomBar extends StatelessWidget {
 
           // ── خيار إيجار الكرة ──
           if (hasBallOption) ...[
-            GestureDetector(
-              onTap: () => onBallRentedChanged(!isBallRented),
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
+            Semantics(
+              button: true,
+              enabled: isSlotSelected && !isLoading,
+              toggled: displayBallRented,
+              label: isArabic
+                  ? 'إيجار كرة، ${VSPMoneyFormatter.amount(ballPrice)} جنيه'
+                  : 'Ball rental, ${VSPMoneyFormatter.amount(ballPrice)} EGP',
+              hint: !isSlotSelected
+                  ? (isArabic ? 'اختر موعد الحجز أولًا' : 'Select a booking slot first')
+                  : null,
+              onTap: isSlotSelected && !isLoading
+                  ? () => onBallRentedChanged(!displayBallRented)
+                  : null,
+              child: ExcludeSemantics(
+                child: GestureDetector(
+                  onTap: isSlotSelected && !isLoading
+                      ? () => onBallRentedChanged(!displayBallRented)
+                      : null,
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                duration: VSPDSMotion.navigationSwitch,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isBallRented ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surfaceAlt,
+                  color: displayBallRented ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(VSPRadius.lg),
                   border: Border.all(
-                    color: isBallRented ? VSPColors.accent : VSPColors.divider,
-                    width: isBallRented ? 1.5 : 1.0,
+                    color: displayBallRented ? VSPColors.accent : VSPColors.divider,
+                    width: displayBallRented ? 1.5 : 1.0,
                   ),
                 ),
                 child: Row(
@@ -204,16 +259,20 @@ class BookingBottomBar extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isArabic ? 'إيجار كرة / ${ballPrice.toInt()} ج.م' : 'Ball / ${ballPrice.toInt()}eg',
+                            isArabic
+                                ? 'إيجار كرة / ${VSPMoneyFormatter.amount(ballPrice)} ج.م'
+                                : 'Ball / ${VSPMoneyFormatter.amount(ballPrice)} EGP',
                             style: TextStyle(
-                              color: isBallRented ? Colors.white : VSPColors.textPrimary,
+                              color: displayBallRented ? VSPColors.white : VSPColors.textPrimary,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ).merge(VSPTypography.numericStyle),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            isArabic ? 'دفع رسوم إيجار الكرة في هذا الملعب' : 'Pay Per Ball At This Pitch',
+                            !isSlotSelected
+                                ? (isArabic ? 'اختار موعد الحجز أولًا' : 'Select a booking slot first')
+                                : (isArabic ? 'إضافة اختيارية للحجز' : 'Optional booking add-on'),
                             style: const TextStyle(
                               color: VSPColors.textSecondary,
                               fontSize: 11,
@@ -229,19 +288,21 @@ class BookingBottomBar extends StatelessWidget {
                       height: 24,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isBallRented ? VSPColors.accent : Colors.transparent,
+                        color: displayBallRented ? VSPColors.accent : VSPColors.transparent,
                         border: Border.all(
-                          color: isBallRented ? VSPColors.accent : VSPColors.textMuted,
+                          color: displayBallRented ? VSPColors.accent : VSPColors.textMuted,
                           width: 1.5,
                         ),
                       ),
-                      child: isBallRented
-                          ? const Icon(Iconsax.tick_circle_copy, size: 16, color: Colors.black)
+                      child: displayBallRented
+                          ? const Icon(Iconsax.tick_circle_copy, size: 16, color: VSPColors.black)
                           : null,
                     ),
                   ],
                 ),
+                ),
               ),
+            ),
             ),
             const SizedBox(height: 14),
           ],
@@ -256,7 +317,7 @@ class BookingBottomBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isArabic ? 'المبلغ المطلوب' : 'Amount due',
+                    isArabic ? 'إجمالي الحجز' : 'Booking total',
                     style: const TextStyle(
                       color: VSPColors.textSecondary,
                       fontSize: 11,
@@ -268,7 +329,7 @@ class BookingBottomBar extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '${totalPrice.toInt()} ${isArabic ? "ج.م" : "eg"}',
+                        '${VSPMoneyFormatter.amount(displayTotalPrice)} ${isArabic ? "ج.م" : "EGP"}',
                         style: TextStyle(
                           color: isSlotSelected ? VSPColors.accent : VSPColors.textPrimary,
                           fontSize: 22,
@@ -276,7 +337,7 @@ class BookingBottomBar extends StatelessWidget {
                           letterSpacing: -0.5,
                         ).merge(VSPTypography.numericStyle),
                       ),
-                      if (depositAmount > 0 && needsDeposit) ...[
+                      if (isSlotSelected && !isOpenJoin && depositAmount > 0 && needsDeposit) ...[
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -285,7 +346,7 @@ class BookingBottomBar extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            isArabic ? 'عربون ${depositAmount.toInt()}' : 'Dep ${depositAmount.toInt()}',
+                            isArabic ? 'عربون ${VSPMoneyFormatter.amount(depositAmount)}' : 'Dep ${VSPMoneyFormatter.amount(depositAmount)}',
                             style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold).merge(VSPTypography.numericStyle),
                           ),
                         ),
@@ -300,8 +361,8 @@ class BookingBottomBar extends StatelessWidget {
                   height: 52,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isSlotSelected ? VSPColors.accent : VSPColors.surfaceAlt,
-                      foregroundColor: isSlotSelected ? Colors.black : VSPColors.textMuted,
+                      backgroundColor: canConfirm ? VSPColors.accent : VSPColors.surfaceAlt,
+                      foregroundColor: canConfirm ? VSPColors.black : VSPColors.textMuted,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(
@@ -309,19 +370,21 @@ class BookingBottomBar extends StatelessWidget {
                       ),
                       overlayColor: VSPStates.pressedOverlay(),
                     ),
-                    onPressed: (!isSlotSelected || isLoading) ? null : onConfirmPressed,
+                    onPressed: canConfirm ? onConfirmPressed : null,
                     child: isLoading
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                           )
                         : Text(
-                            isSlotSelected
-                                ? (isArabic ? 'تأكيد الحجز' : 'Booking Confirmation')
-                                : (isArabic ? 'اختر الوقت أولاً' : 'Select Time'),
+                            !isSlotSelected
+                                ? (isArabic ? 'اختر الوقت أولاً' : 'Select Time')
+                                : !validFinancials
+                                    ? (isArabic ? 'راجع سعر الحجز' : 'Review booking price')
+                                    : (isArabic ? 'تأكيد الحجز' : 'Booking Confirmation'),
                             style: TextStyle(
-                              color: isSlotSelected ? Colors.black : VSPColors.textMuted,
+                              color: canConfirm ? VSPColors.black : VSPColors.textMuted,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),

@@ -1,8 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/ui/components/vsp_button.dart';
 import '../../core/ui/tokens/vsp_design_tokens.dart';
 
+/// Backward-compatible shared button adapter.
+///
+/// Keeps the existing debounce and haptic behavior while delegating all
+/// visual rendering to the canonical VSPPrimaryButton component.
 class PrimaryButton extends StatefulWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -41,71 +46,43 @@ class _PrimaryButtonState extends State<PrimaryButton> {
     super.dispose();
   }
 
+  void _handleTap() {
+    if (widget.isLoading || _isDebouncing || widget.onPressed == null) {
+      return;
+    }
+
+    HapticFeedback.mediumImpact();
+    setState(() => _isDebouncing = true);
+    try {
+      widget.onPressed?.call();
+    } finally {
+      // Always release the debounce state, even if a synchronous callback
+      // throws before it can start its own async operation.
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(VSPDSMotion.buttonDebounce, () {
+        if (mounted) {
+          setState(() => _isDebouncing = false);
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isButtonDisabled = widget.isLoading || _isDebouncing || widget.onPressed == null;
-    return AbsorbPointer(
-      absorbing: isButtonDisabled,
-      child: SizedBox(
-        width: widget.width ?? double.infinity,
-        height: widget.height ?? VSPDSizes.buttonHeight,
-        child: ElevatedButton(
-          onPressed: isButtonDisabled ? null : () {
-            HapticFeedback.mediumImpact();
-            setState(() => _isDebouncing = true);
-            widget.onPressed?.call();
-            _debounceTimer?.cancel();
-            _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
-              if (mounted) {
-                setState(() => _isDebouncing = false);
-              }
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: widget.color ?? VSPDSSemanticColors.accent,
-            foregroundColor: widget.textColor ?? VSPDSSemanticColors.background,
-            shape: const StadiumBorder(),
-            elevation: 0,
-            disabledBackgroundColor: (widget.color ?? VSPDSSemanticColors.accent).withValues(alpha: VSPDSOpacity.disabled),
-            disabledForegroundColor: (widget.textColor ?? VSPDSSemanticColors.background).withValues(alpha: VSPDSOpacity.disabled),
-            overlayColor: VSPDSColors.white12,
-            padding: widget.padding,
-          ),
-          child: widget.isLoading
-              ? const SizedBox(
-                  height: VSPDSizes.iconLg,
-                  width: VSPDSizes.iconLg,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      VSPDSSemanticColors.background,
-                    ),
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.icon != null) ...[
-                      Icon(widget.icon, size: VSPDSizes.iconMd),
-                      const SizedBox(width: VSPDSSpacing.xs),
-                    ],
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          widget.text,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: widget.textColor ?? VSPDSSemanticColors.background,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-      ),
+    final isDisabled =
+        widget.isLoading || _isDebouncing || widget.onPressed == null;
+
+    return VSPPrimaryButton(
+      text: widget.text,
+      onPressed: isDisabled ? null : _handleTap,
+      isLoading: widget.isLoading,
+      color: widget.color,
+      textColor: widget.textColor ?? VSPDSSemanticColors.background,
+      width: widget.width,
+      height: widget.height ?? VSPDSizes.buttonHeight,
+      padding: widget.padding ??
+          const EdgeInsets.symmetric(horizontal: VSPDSSpacing.md),
+      icon: widget.icon,
     );
   }
 }

@@ -18,33 +18,160 @@ import 'player_home_screen.dart';
 
 /// Screen displaying player bookings divided into pending, upcoming, and history with full match lifecycle actions.
 class BookingsScreen extends StatefulWidget {
-  const BookingsScreen({super.key});
+  const BookingsScreen({
+    super.key,
+    this.loadTeamIds,
+    this.loadCaptainTeamIds,
+  });
+
+  final Future<Set<String>> Function(String userId)? loadTeamIds;
+  final Future<Set<String>> Function(String userId)? loadCaptainTeamIds;
 
   @override
   State<BookingsScreen> createState() => _BookingsScreenState();
 }
 
 class _BookingsScreenState extends State<BookingsScreen> {
-  String? _myTeamId;
+  Set<String> _myTeamIds = <String>{};
+  Set<String> _myCaptainTeamIds = <String>{};
+  bool _isInitialLoadPending = true;
+  String? _activeUserScope;
+  bool _hasObservedUserScope = false;
+  int _userScopeGeneration = 0;
+  bool _hasTeamContextError = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadData();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userId = context.watch<app_auth.AuthProvider>().currentUser?.id;
+    if (!_hasObservedUserScope || userId != _activeUserScope) {
+      _hasObservedUserScope = true;
+      _activeUserScope = userId;
+      final generation = ++_userScopeGeneration;
+      _myTeamIds = <String>{};
+      _myCaptainTeamIds = <String>{};
+      _hasTeamContextError = false;
+      _isInitialLoadPending = userId != null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || generation != _userScopeGeneration) return;
+        if (userId == null) {
+          setState(() => _isInitialLoadPending = false);
+          return;
+        }
+        _loadDataForUser(userId, generation);
+      });
+    }
   }
 
-  Future<void> _loadData() async {
-    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-
-    final userId = authProvider.currentUser?.uid;
-    if (userId != null) {
-      bookingProvider.loadUserBookings(userId);
-      final team = await TeamRepository().getUserTeam(userId);
-      if (mounted) {
-        setState(() => _myTeamId = team?.id);
+  Future<void> _loadDataForUser(String userId, int generation) async {
+    try {
+      await context.read<BookingProvider>().loadUserBookings(userId);
+      if (!mounted ||
+          generation != _userScopeGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
+      final teamRepository = TeamRepository();
+      final teamIds = widget.loadTeamIds != null
+          ? await widget.loadTeamIds!(userId)
+          : await teamRepository.getUserTeamIdsStrict(userId);
+      final captainTeamIds = widget.loadCaptainTeamIds != null
+          ? await widget.loadCaptainTeamIds!(userId)
+          : await teamRepository.getUserCaptainTeamIdsStrict(userId);
+      if (mounted &&
+          generation == _userScopeGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
+        setState(() {
+          _myTeamIds = teamIds;
+          _myCaptainTeamIds = captainTeamIds;
+          _hasTeamContextError = false;
+        });
+      }
+    } catch (_) {
+      debugPrint('Player booking team context unavailable (details redacted)');
+      if (mounted &&
+          generation == _userScopeGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
+        setState(() {
+          _myTeamIds = <String>{};
+          _myCaptainTeamIds = <String>{};
+          _hasTeamContextError = true;
+        });
+      }
+    } finally {
+      if (mounted && generation == _userScopeGeneration) {
+        setState(() => _isInitialLoadPending = false);
       }
     }
+  }
+
+  Future<void> _refreshData() async {
+    final userId = context.read<app_auth.AuthProvider>().currentUser?.id;
+    if (userId == null) return;
+    final generation = ++_userScopeGeneration;
+    await _loadDataForUser(userId, generation);
+  }
+
+  String? _myTeamIdForBooking(Booking booking) {
+    final playerTeamId = booking.playerTeamId;
+    final opponentTeamId = booking.opponentTeamId;
+    if (playerTeamId == null || opponentTeamId == null) return null;
+    final isHome = _myTeamIds.contains(playerTeamId);
+    final isAway = _myTeamIds.contains(opponentTeamId);
+    if (isHome == isAway) return null;
+    return isHome ? playerTeamId : opponentTeamId;
+  }
+
+  String? _myCaptainTeamIdForBooking(Booking booking) {
+    final playerTeamId = booking.playerTeamId;
+    final opponentTeamId = booking.opponentTeamId;
+    if (playerTeamId == null || opponentTeamId == null) return null;
+    final isHomeCaptain = _myCaptainTeamIds.contains(playerTeamId);
+    final isAwayCaptain = _myCaptainTeamIds.contains(opponentTeamId);
+    // One account cannot submit for both sides of the same match.
+    if (isHomeCaptain == isAwayCaptain) return null;
+    return isHomeCaptain ? playerTeamId : opponentTeamId;
+  }
+
+  Widget _buildSyncWarning(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final errorColor = Theme.of(context).colorScheme.error;
+    return Container(
+      margin: const EdgeInsets.only(bottom: VSPDSSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: VSPDSSpacing.sm,
+        vertical: VSPDSSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: errorColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(VSPDSRadius.md),
+        border: Border.all(color: errorColor.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(Iconsax.info_circle_copy, color: errorColor, size: 18),
+          const SizedBox(width: VSPDSSpacing.sm),
+          Expanded(
+            child: Text(
+              _hasTeamContextError
+                  ? (isArabic
+                      ? 'تعذر التحقق من عضوية الفريق وصلاحية القائد. أعد التحديث قبل تسجيل النتيجة.'
+                      : 'Could not verify team membership/captain access. Refresh before recording a result.')
+                  : (isArabic
+                      ? 'تعذر تحديث الحجوزات. يتم عرض آخر بيانات تم تحميلها.'
+                      : 'Could not refresh bookings. Showing the last loaded data.'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: errorColor,
+                  ),
+            ),
+          ),
+          TextButton(
+            onPressed: _refreshData,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyState() {
@@ -67,6 +194,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    if (context.read<app_auth.AuthProvider>().currentUser == null) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return VSPScaffold(
+        backgroundColor: VSPDSSemanticColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Text(
+              isArabic ? 'سجّل الدخول لعرض حجوزاتك' : 'Sign in to view your bookings',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      );
+    }
 
     return VSPScaffold(
       backgroundColor: VSPDSSemanticColors.background,
@@ -81,41 +222,43 @@ class _BookingsScreenState extends State<BookingsScreen> {
         ),
       ),
       body: SafeArea(
-        top: true,
+        top: false,
         bottom: false,
         child: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, List<Booking> pending, bool loading, String? error})>(
           selector: (_, provider) => (
             upcoming: provider.upcomingBookings,
             history: provider.historyBookings,
             pending: provider.pendingBookings,
-            loading: provider.isLoading,
+            loading: provider.isLoadingUserBookings,
             error: provider.errorMessage,
           ),
           builder: (context, data, child) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-            if (data.loading) {
-              return const Center(
-                child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
+            final hasBookings =
+                data.upcoming.isNotEmpty || data.history.isNotEmpty || data.pending.isNotEmpty;
+
+            if (_isInitialLoadPending || (data.loading && !hasBookings)) {
+              return VSPStateView(
+                state: VSPUiState.loading,
+                title: isArabic ? 'جارٍ تحميل حجوزاتك' : 'Loading your bookings',
+                message: isArabic
+                    ? 'نحدّث مواعيدك وحجوزاتك الآن.'
+                    : 'Updating your bookings and match schedule.',
               );
             }
 
-            if (data.error != null && data.upcoming.isEmpty && data.history.isEmpty && data.pending.isEmpty) {
+            if (data.error != null && !hasBookings) {
               return VSPErrorState(
-                customMessage: data.error,
-                onRetry: _loadData,
+                customMessage: isArabic
+                    ? 'تعذر تحميل حجوزاتك. تحقق من اتصالك ثم حاول مرة أخرى.'
+                    : 'Could not load your bookings. Check your connection and try again.',
+                onRetry: _refreshData,
               );
             }
 
             if (data.upcoming.isEmpty && data.history.isEmpty && data.pending.isEmpty) {
               return RefreshIndicator(
-                onRefresh: () async {
-                  final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                  final userId = authProvider.currentUser?.uid;
-                  if (userId != null) {
-                    Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
-                    await Future.delayed(const Duration(seconds: 1));
-                  }
-                },
+                onRefresh: _refreshData,
                 color: VSPDSSemanticColors.accent,
                 backgroundColor: VSPDSSemanticColors.surface,
                 child: SingleChildScrollView(
@@ -133,13 +276,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             }
 
             return RefreshIndicator(
-              onRefresh: () async {
-                final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                final userId = authProvider.currentUser?.uid;
-                if (userId != null) {
-                  Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
-                }
-              },
+              onRefresh: _refreshData,
               color: VSPDSSemanticColors.accent,
               backgroundColor: VSPDSSemanticColors.surface,
               child: Builder(builder: (context) {
@@ -147,16 +284,26 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 final upcomingCount = data.upcoming.length;
                 final historyCount = data.history.length;
                 final hasUpcoming = upcomingCount > 0;
+                final hasPending = pendingCount > 0;
                 final hasHistory = historyCount > 0;
+                final hasSyncError = data.error != null || _hasTeamContextError;
 
                 return ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: VSPDSScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPDSSpacing.sm),
-                  itemCount: pendingCount +
+                  padding: VSPDSScrollPadding.forList(
+                    context,
+                    hasFloatingNavBar: true,
+                    top: VSPDSSpacing.sm,
+                  ),
+                  itemCount: (hasSyncError ? 1 : 0) +
                       (hasUpcoming ? 1 + upcomingCount : 0) +
+                      (hasPending ? 1 + pendingCount : 0) +
                       (hasHistory ? 1 + historyCount : 0),
                   itemBuilder: (context, index) {
-                    var cursor = index;
+                    if (hasSyncError && index == 0) {
+                      return _buildSyncWarning(context);
+                    }
+                    var cursor = hasSyncError ? index - 1 : index;
 
                     // Visual priority: Upcoming → Pending → History.
                     if (hasUpcoming) {
@@ -178,7 +325,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           child: Padding(
                             padding: EdgeInsets.only(
                               bottom: cursor == upcomingCount - 1 &&
-                                      (pendingCount > 0 || hasHistory)
+                                      (hasPending || hasHistory)
                                   ? VSPDSSpacing.md
                                   : VSPDSSpacing.sm,
                             ),
@@ -187,7 +334,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                 : PlayerBookingCard(
                                     booking: booking,
                                     isHistory: false,
-                                    myTeamId: _myTeamId,
+                                    myTeamId: _myTeamIdForBooking(booking),
+                                    myCaptainTeamId: _myCaptainTeamIdForBooking(booking),
                                   ),
                           ),
                         );
@@ -195,16 +343,35 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       cursor -= upcomingCount;
                     }
 
-                    if (cursor < pendingCount) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: VSPDSSpacing.sm),
-                        child: PendingBookingCard(
-                          pendingBooking: data.pending[cursor],
-                          isArabic: isArabic,
-                        ),
-                      );
+                    if (hasPending) {
+                      if (cursor == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: VSPDSSpacing.sm,
+                          ),
+                          child: Text(
+                            isArabic ? 'قيد الانتظار' : 'Pending',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        );
+                      }
+                      cursor -= 1;
+
+                      if (cursor < pendingCount) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: cursor == pendingCount - 1 && hasHistory
+                                ? VSPDSSpacing.md
+                                : VSPDSSpacing.sm,
+                          ),
+                          child: PendingBookingCard(
+                            pendingBooking: data.pending[cursor],
+                            isArabic: isArabic,
+                          ),
+                        );
+                      }
+                      cursor -= pendingCount;
                     }
-                    cursor -= pendingCount;
 
                     if (hasHistory) {
                       if (cursor == 0) {
@@ -228,7 +395,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                               : PlayerBookingCard(
                                   booking: booking,
                                   isHistory: true,
-                                  myTeamId: _myTeamId,
+                                  myTeamId: _myTeamIdForBooking(booking),
+                                  myCaptainTeamId: _myCaptainTeamIdForBooking(booking),
                                 ),
                         ),
                       );

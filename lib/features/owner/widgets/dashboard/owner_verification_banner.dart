@@ -205,7 +205,7 @@ class OwnerVerificationBanner extends StatelessWidget {
               child: Text(
                 isArabic ? 'توثيق الآن' : 'Verify Now',
                 style: const TextStyle(
-                  color: Colors.black,
+                  color: VSPColors.black,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w900,
                 ),
@@ -267,7 +267,7 @@ class OwnerSubscriptionExpiredAlert extends StatelessWidget {
               ),
               child: Text(
                 isArabic ? 'تجديد' : 'Renew',
-                style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: VSPColors.black, fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -356,7 +356,7 @@ class OwnerGracePeriodAlert extends StatelessWidget {
               child: Text(
                 isArabic ? 'تجديد' : 'Renew',
                 style: const TextStyle(
-                  color: Colors.black,
+                  color: VSPColors.black,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -453,7 +453,7 @@ class OwnerTrialEndingSoonAlert extends StatelessWidget {
               child: Text(
                 isArabic ? 'ترقية' : 'Upgrade',
                 style: const TextStyle(
-                  color: Colors.black,
+                  color: VSPColors.black,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),

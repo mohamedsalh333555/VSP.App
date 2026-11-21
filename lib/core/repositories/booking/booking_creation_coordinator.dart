@@ -26,6 +26,33 @@ class BookingCreationCoordinator {
         _teamRepository = teamRepository;
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
+  /// Only approved public error codes may reach the booking UI. A caller
+  /// must never see raw RPC message/error payloads, which may contain SQL,
+  /// account identifiers or infrastructure diagnostics.
+  static String safeRpcFailureMessage(Map<dynamic, dynamic> response) {
+    final rawCode = response['code'] ?? response['error'];
+    final code = rawCode is String ? rawCode.trim() : '';
+    switch (code) {
+      case 'CHALLENGE_CODE_INVALID_OR_USED':
+        return 'كود التحدي غير صالح أو تم استخدامه من قبل.';
+      case 'CALLER_NOT_A_CAPTAIN':
+        return 'يجب أن تكون كابتن فريق لتأكيد حجز التحدي.';
+      case 'CANNOT_CHALLENGE_OWN_TEAM':
+        return 'لا يمكن تحدي فريقك نفسه.';
+      case 'OPPONENT_TEAM_NOT_FOUND':
+        return 'تعذر العثور على الفريق المنافس.';
+      case 'SLOT_LOCKED_OR_TAKEN':
+        return 'عذراً، هذا الموعد محجوز لمباراة أخرى.';
+      case 'PRICE_MISMATCH':
+        // Keep this stable internal sentinel for AppErrorHandler translation.
+        return 'PRICE_MISMATCH';
+      case 'IDEMPOTENCY_KEY_CONFLICT':
+        return 'تعذر إعادة استخدام هذا الطلب لحجز مختلف. راجع بيانات الحجز وأعد المحاولة.';
+      default:
+        return 'تعذر إتمام الحجز حاليًا. راجع الموعد وحاول مرة أخرى.';
+    }
+  }
+
   /// Converts domain [BookingType] to canonical database string (SSOT: personal | open_join | challenge).
   static String dbBookingType(BookingType type) {
     switch (type) {
@@ -49,12 +76,25 @@ class BookingCreationCoordinator {
     required Future<Booking?> Function(String) getBookingById,
   }) async {
     try {
+      // Reject invalid drafts before either atomic RPC. Server-side validation
+      // remains authoritative for prices, permissions and slot conflicts.
+      final validationErrors = draft.validate();
+      if (validationErrors.isNotEmpty) {
+        throw FormatException(
+          'Invalid booking draft: ${validationErrors.join(', ')}',
+        );
+      }
+      if (userId.trim().isEmpty) {
+        throw const FormatException('Missing booking user ID');
+      }
       // The server calculates payment fees from the authoritative payment transaction.
       const double platformFee = 0.0;
       final dynamic rpcResult;
       if (draft.bookingType == BookingType.challenge &&
-          draft.challengeCode != null &&
-          draft.challengeCode!.trim().isNotEmpty) {
+          (draft.challengeCode == null || draft.challengeCode!.trim().isEmpty)) {
+        throw ArgumentError('كود التحدي مطلوب لإتمام حجز التحدي.');
+      }
+      if (draft.bookingType == BookingType.challenge) {
         rpcResult = await _supabase.rpc('create_challenge_booking_atomic', params: {
           'p_challenge_code': draft.challengeCode!.trim(),
           'p_stadium_id': draft.stadiumId,
@@ -92,47 +132,23 @@ class BookingCreationCoordinator {
               : 1,
 
           'p_total_capacity': draft.totalFieldCapacity,
+          // Preserve a stable draft key across retries when provided.
+          // The server rechecks key ownership after acquiring its slot lock.
+          'p_idempotency_key': draft.idempotencyKey ?? const Uuid().v4(),
         });
       }
 
       if (rpcResult is Map && rpcResult['success'] == false) {
-        final err = rpcResult['error']?.toString() ?? '';
-        if (err == 'CHALLENGE_CODE_INVALID_OR_USED') {
-          throw Exception('كود التحدي غير صالح أو تم استخدامه من قبل.');
-        } else if (err == 'CALLER_NOT_A_CAPTAIN') {
-          throw Exception('يجب أن تكون كابتن فريق لتأكيد حجز التحدي.');
-        } else if (err == 'CANNOT_CHALLENGE_OWN_TEAM') {
-          throw Exception('لا يمكن تحدي فريقك نفسه.');
-        } else if (err == 'OPPONENT_TEAM_NOT_FOUND') {
-          throw Exception('تعذر العثور على الفريق المنافس.');
-        } else if (err == 'SLOT_LOCKED_OR_TAKEN') {
-          throw Exception('عذراً، هذا الموعد محجوز لمباراة أخرى.');
-        }
-
-        String errorMessage = rpcResult['message']?.toString() ??
-            rpcResult['error']?.toString() ??
-            'عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.';
-        final errorCode = rpcResult['code']?.toString() ?? err;
-
-        if (errorMessage.contains('???')) {
-          if (errorCode == 'SLOT_LOCKED_OR_TAKEN') {
-            errorMessage = 'عذراً، هذا الموعد محجوز أو قيد الدفع من قِبل لاعب آخر حالياً.';
-          } else if (errorMessage.contains('????? ???? ?? ????? ??????')) {
-            errorMessage = 'حسابك مقيد عن الحجز النقدي بسبب تكرار عدم الحضور. يرجى السداد إلكترونياً.';
-          } else if (errorMessage.contains('???? ??? ???? ??? ??????')) {
-            errorMessage = 'لديك حجز نقدي نشط بالفعل. يرجى إنهاء الحجز السابق أو الدفع إلكترونياً.';
-          } else if (errorMessage.contains('????? ???? ??????')) {
-            errorMessage = 'حسابك مقيد حالياً. يرجى التواصل مع إدارة التطبيق.';
-          } else {
-            errorMessage = 'عذراً، تعذر إتمام الحجز. يرجى التأكد من الموعد والمحاولة لاحقاً.';
-          }
-        }
-
-        throw Exception(errorMessage);
+        throw Exception(safeRpcFailureMessage(rpcResult));
       }
 
-      final bookingId = (rpcResult is Map) ? rpcResult['booking_id']?.toString() : null;
-      if (bookingId == null) {
+      // Never treat an explicitly unsuccessful or malformed RPC response as
+      // a booking, even when it accidentally includes an identifier.
+      if (rpcResult is! Map || rpcResult['success'] != true) {
+        throw Exception('تعذر تأكيد الحجز من الخادم. يرجى المحاولة لاحقاً.');
+      }
+      final bookingId = rpcResult['booking_id']?.toString();
+      if (bookingId == null || bookingId.trim().isEmpty || bookingId == 'null') {
         throw Exception('فشل تسجيل الحجز في قاعدة البيانات.');
       }
 
@@ -144,15 +160,21 @@ class BookingCreationCoordinator {
       // Online payment notifications remain owned by the Paymob webhook.
 
       AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
-      VSPLogger.i('Atomic booking created: ${created.id}');
+      VSPLogger.i('Atomic booking created (booking ID redacted)');
       return created;
     } on PostgrestException catch (e) {
-      if (e.code == '23P11' || e.message.contains('overlapping') || e.message.contains('exclude') || e.code == '23505') {
+      if (e.code == '23P11' ||
+          e.code == '23P01' ||
+          e.code == '23505' ||
+          e.message.toLowerCase().contains('overlapping') ||
+          e.message.toLowerCase().contains('exclude')) {
         throw Exception('عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.');
       }
-      rethrow;
+      // PostgrestException can include SQL diagnostics, raw account IDs and
+      // backend details. Never bubble those to a UI caller unredacted.
+      throw Exception(safeRpcFailureMessage({'code': e.code}));
     } catch (e) {
-      VSPLogger.e('Error creating booking', e);
+      VSPLogger.e('Atomic booking creation failed (details redacted)');
       rethrow;
     }
   }

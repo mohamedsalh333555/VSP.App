@@ -22,7 +22,7 @@ class DrawRoomMatchupTile extends StatelessWidget {
     final pendingLabel = isArabic ? 'قيد السحب...' : 'Pending draw...';
 
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: VSPDSMotion.indicatorTransition,
       opacity: isRevealed ? 1.0 : 0.2,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
@@ -45,7 +45,7 @@ class DrawRoomMatchupTile extends StatelessWidget {
                 isRevealed ? matchup['home']! : pendingLabel,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: isRevealed ? Colors.white : VSPColors.textSecondary,
+                  color: isRevealed ? VSPColors.white : VSPColors.textSecondary,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
@@ -64,7 +64,7 @@ class DrawRoomMatchupTile extends StatelessWidget {
                 isRevealed ? matchup['away']! : pendingLabel,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: isRevealed ? Colors.white : VSPColors.textSecondary,
+                  color: isRevealed ? VSPColors.white : VSPColors.textSecondary,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),

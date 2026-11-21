@@ -10,6 +10,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../widgets/tournament/cups/cups_tab_selector.dart';
 import '../widgets/tournament/cups/cups_filter_dropdowns.dart';
 import '../widgets/tournament/cups/owner_cup_card.dart';
@@ -74,18 +75,16 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
       // The parent OwnerMainScreen owns the bottom navigation.
       // This Scaffold keeps the FAB, but its offset is shared with the
       // navigation geometry so the two nested Scaffolds cannot drift apart.
-      floatingActionButton: !_hasAnyChampionships
-          ? null
-          : Padding(
+      floatingActionButton: Padding(
               padding: const EdgeInsets.only(
-                bottom: VSPBottomNavBarMetrics.fabBottomOffset + 8,
+                bottom: VSPBottomNavMetrics.fabBottomOffset + 28,
               ),
               child: FloatingActionButton(
                 onPressed: () => showOwnerCupFormatModal(context),
-                backgroundColor: VSPColors.accent,
+                backgroundColor: VSPColors.surfaceAlt,
                 shape: const CircleBorder(),
                 elevation: 6,
-                child: const Icon(Iconsax.add_copy, color: Colors.black, size: 28),
+                child: const Icon(Iconsax.add_copy, color: VSPColors.textPrimary, size: 28),
               ),
             ),
       floatingActionButtonLocation: isArabic
@@ -130,13 +129,33 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             child: StreamBuilder<List<Championship>>(
               stream: _getChampionshipsStream(
                 _selectedSport,
-                Provider.of<AuthProvider>(context, listen: false).currentUser?.uid,
+                Provider.of<AuthProvider>(context, listen: false).currentUser?.id,
               ),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                  return VSPStateView(
+                    state: VSPUiState.loading,
+                    title: isArabic ? 'جارٍ تحميل البطولات' : 'Loading championships',
+                    message: isArabic ? 'نحدّث البطولات الخاصة بملاعبك.' : 'Fetching championships for your stadiums.',
+                  );
                 }
 
+                if (snapshot.hasError &&
+                    (snapshot.data == null || snapshot.data!.isEmpty)) {
+                  return VSPErrorState(
+                    onRetry: () {
+                      setState(() {
+                        _championshipsStream = null;
+                        _lastSport = null;
+                        _lastOwnerId = null;
+                      });
+                    },
+                  );
+                }
+
+                // Keep the last delivered snapshot visible if the realtime stream
+                // fails after its initial successful load; never turn a stream
+                // failure into a false empty-tournaments state.
                 final championships = snapshot.data ?? [];
                 final hasAny = championships.isNotEmpty;
                 if (_hasAnyChampionships != hasAny) {
@@ -172,6 +191,17 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 });
 
                 if (filtered.isEmpty) {
+                  if (snapshot.hasError) {
+                    return VSPErrorState(
+                      onRetry: () {
+                        setState(() {
+                          _championshipsStream = null;
+                          _lastSport = null;
+                          _lastOwnerId = null;
+                        });
+                      },
+                    );
+                  }
                   return OwnerCupEmptyView(
                     selectedTab: _selectedTab,
                     hasAnyChampionships: championships.isNotEmpty,
@@ -180,21 +210,68 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  padding: VSPScrollPadding.forList(
-                    context,
-                    hasFloatingNavBar: true,
-                    top: 0,
-                    horizontal: VSPSpacing.md,
-                  ),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    return VSPFadeInItem(
-                      index: index,
-                      child: OwnerCupCard(tournament: filtered[index]),
-                    );
-                  },
+                return Column(
+                  children: [
+                    if (snapshot.hasError)
+                      Material(
+                        color: VSPColors.surfaceAlt,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: VSPSpacing.md,
+                            vertical: VSPSpacing.sm,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Iconsax.warning_2_copy,
+                                color: VSPColors.warning,
+                                size: 18,
+                              ),
+                              const SizedBox(width: VSPSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  isArabic
+                                      ? 'تعذر تحديث البطولات. نعرض آخر بيانات تم تحميلها.'
+                                      : 'Could not refresh tournaments. Showing the last loaded data.',
+                                  style: const TextStyle(
+                                    color: VSPColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _championshipsStream = null;
+                                    _lastSport = null;
+                                    _lastOwnerId = null;
+                                  });
+                                },
+                                child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: VSPScrollPadding.forList(
+                          context,
+                          hasFloatingNavBar: true,
+                          top: 0,
+                          horizontal: VSPSpacing.md,
+                        ),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          return VSPFadeInItem(
+                            index: index,
+                            child: OwnerCupCard(tournament: filtered[index]),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 );
               },
             ),

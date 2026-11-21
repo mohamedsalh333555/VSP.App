@@ -35,7 +35,7 @@ class TeamProfileActionBar extends StatelessWidget {
               )
             : const Icon(Iconsax.key_copy, color: VSPColors.accent),
         label: Text(
-          isArabic ? 'توليد كود مواجهة جديد (صالحة لساعة)' : 'Generate Matchup Invite Code',
+          isArabic ? 'إنشاء كود دعوة مؤقت (ساعة)' : 'Create temporary invite code (1 hour)',
           style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
         ),
         style: OutlinedButton.styleFrom(
