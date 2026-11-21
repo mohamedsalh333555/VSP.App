@@ -21,7 +21,14 @@ jobs:
       # Manual test-release builds are blocked until all known critical
       # security findings have a current, evidence-backed owner sign-off.
       - name: Enforce signed release security acceptance
-        run: python3 scripts/check_release_security_gate.py --state docs/security/VSP_RELEASE_GATE_STATE.json --sha "${{ github.sha }}"
+        # The owner records approval after review, outside the commit being reviewed.
+        env:
+          VSP_RELEASE_APPROVAL: ${{ secrets.VSP_RELEASE_APPROVAL }}
+        shell: bash
+        run: |
+          python3 scripts/check_release_security_gate.py \
+            --state <(printf '%s' "$VSP_RELEASE_APPROVAL") \
+            --sha "$GITHUB_SHA"
 
       # Read-only, live project check. A missing token or any unresolved WARN/ERROR
       # blocks the signed release; this does not change Supabase or bypass HOLD.
