@@ -16,6 +16,7 @@ import 'faq_and_support_screen.dart';
 import 'profile_subscreens/language_screen.dart';
 import 'profile_subscreens/edit_profile_screen.dart';
 import 'profile_subscreens/favorites_screen.dart';
+import 'profile_subscreens/blocked_users_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -419,6 +420,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
  title: l10n.favoriteStadiums,
  subtitle: l10n.viewLikedFacilities,
  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
+ ),
+ ),
+ VSPFadeInItem(
+ index: 3,
+ child: VSPMenuItem(
+ icon: Iconsax.slash_copy,
+ title: isArabic ? 'المستخدمون المحظورون' : 'Blocked Users',
+ subtitle: isArabic ? 'إدارة قائمة الحظر وإلغائه' : 'Manage and unblock users',
+ onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BlockedUsersScreen())),
  ),
  ),
 

@@ -175,8 +175,8 @@ class VSPTermsAndPrivacyModal {
                               icon: Iconsax.document_text_copy,
                               title: isAr ? '١. طبيعة المنصة وشروط الأهلية' : '1. Platform Services & Eligibility',
                               content: isAr
-                                  ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم العادي (اللاعب) عن 16 عاماً، أو أن تتم المعاملات المالية تحت إشراف ولي الأمر.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
-                                  : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Regular users (players) must be at least 16 years of age, or conduct financial transactions under parental supervision.\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
+                                  ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم (اللاعب أو مالك الملعب) عن 18 عاماً، مع التمتع بالأهلية القانونية الكاملة لإجراء الحجوزات والمدفوعات الإلكترونية.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
+                                  : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Users (players and venue owners) must be at least 18 years of age and possess full legal capacity to make bookings and online payments.\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
                             ),
                             const SizedBox(height: 12),
                             _buildSectionCard(
