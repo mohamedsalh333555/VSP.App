@@ -190,8 +190,8 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
             id: 'Challenge Match',
             title: isArabic ? 'مباراة تحدي فرق' : 'Team Challenge Match',
             subtitle: isArabic
-                ? 'مباراة تحدي بين فريقك وفريق آخر واحتساب نقاط تصنيف ELO'
-                : 'Competitive match between two teams to earn ELO rank points',
+                ? 'مباراة تحدي بين فريقك وفريق آخر واحتساب نقاط الترتيب الشهري وXP الموسم'
+                : 'Competitive match between two teams for monthly standings & season XP',
             iconData: Iconsax.cup_copy,
           ),
         ],

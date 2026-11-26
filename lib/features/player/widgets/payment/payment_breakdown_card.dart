@@ -28,7 +28,8 @@ class PaymentBreakdownCard extends StatelessWidget {
       future: PaymobService.fetchFeePolicy(),
       builder: (context, snapshot) {
         final policy = snapshot.data;
-        final double serviceFee = policy?.serviceFee(amountToPay) ?? 0;
+        final double platformFeeAmount = policy?.platformFee(amountToPay) ?? 0;
+        final double gatewayFeeAmount = policy?.gatewayFee(amountToPay) ?? 0;
         final double totalWithFees = policy?.total(amountToPay) ?? amountToPay;
 
     final String displayStadiumName =
@@ -88,10 +89,16 @@ class PaymentBreakdownCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           _buildFeeRow(
-            label: isArabic ? 'مصاريف إدارية' : 'Administrative Fee',
-            value: '${serviceFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
+            label: isArabic ? 'عمولة المنصة (5%)' : 'Platform Fee (5%)',
+            value: '${platformFeeAmount.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
             isBold: false,
             onInfoTap: () => showFeeTransparencyModal(context, isArabic),
+          ),
+          const SizedBox(height: 6),
+          _buildFeeRow(
+            label: isArabic ? 'رسوم بوابة الدفع البنكية' : 'Payment Gateway Fee',
+            value: '${gatewayFeeAmount.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
+            isBold: false,
           ),
           const SizedBox(height: 6),
           _buildFeeRow(
