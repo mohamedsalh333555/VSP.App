@@ -50,7 +50,9 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isAr ? 'رصيد إلكتروني متاح للسحب' : 'Available online balance',
+                    isAr
+                        ? 'صافي مستحق المالك بعد خصم 5% عمولة VSP (لا تُخصم رسوم دفع اللاعب)'
+                        : 'Net owner earnings after 5% VSP fee (player gateway fees excluded)',
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                   ),
                 ],

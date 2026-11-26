@@ -89,12 +89,12 @@ void main() {
   });
 
   test('Arabic and English ARB catalogs stay key-compatible', () {
-    final en = jsonDecode(
-      File('lib/l10n/app_en.arb').readAsStringSync(),
-    ) as Map<String, dynamic>;
-    final ar = jsonDecode(
-      File('lib/l10n/app_ar.arb').readAsStringSync(),
-    ) as Map<String, dynamic>;
+    final en =
+        jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
+            as Map<String, dynamic>;
+    final ar =
+        jsonDecode(File('lib/l10n/app_ar.arb').readAsStringSync())
+            as Map<String, dynamic>;
 
     final enKeys = en.keys.where((key) => !key.startsWith('@')).toSet();
     final arKeys = ar.keys.where((key) => !key.startsWith('@')).toSet();
@@ -105,16 +105,12 @@ void main() {
     for (final key in enKeys.intersection(arKeys)) {
       final enText = en[key]?.toString() ?? '';
       final arText = ar[key]?.toString() ?? '';
-      final placeholders = RegExp(r'\{[^}]+\}')
-          .allMatches(enText)
-          .map((m) => m.group(0))
-          .toList()
-        ..sort();
-      final arabicPlaceholders = RegExp(r'\{[^}]+\}')
-          .allMatches(arText)
-          .map((m) => m.group(0))
-          .toList()
-        ..sort();
+      final placeholders = RegExp(
+        r'\{[^}]+\}',
+      ).allMatches(enText).map((m) => m.group(0)).toList()..sort();
+      final arabicPlaceholders = RegExp(
+        r'\{[^}]+\}',
+      ).allMatches(arText).map((m) => m.group(0)).toList()..sort();
       expect(
         arabicPlaceholders,
         placeholders,

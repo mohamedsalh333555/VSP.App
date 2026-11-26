@@ -271,40 +271,41 @@ serve(async (req: Request) => {
       );
     }
 
-    // Canonical fee SSOT. Never invent a fallback when the policy is unavailable.
-    const { data: feeConfig } = await supabase
-      .from("platform_fee_config")
-      .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_fixed_fee, paymob_applies_to_electronic, subscription_vsp_rate, subscription_paymob_rate, subscription_paymob_fixed_fee")
-      .eq("id", 1)
-      .maybeSingle();
+    // Canonical fee SSOT via calculate_booking_pricing_v2 (piaster-accurate, server-driven).
+    const requestedChannel = String(payload.payment_channel || "local_card").trim().toLowerCase();
+    const { data: pricing, error: pricingError } = await supabase.rpc(
+      "calculate_booking_pricing_v2",
+      {
+        p_base_price: finalBaseAmount,
+        p_channel: requestedChannel,
+      }
+    );
 
-    if (!feeConfig || feeConfig.paymob_applies_to_electronic !== true) {
+    if (pricingError || !pricing || pricing.success !== true) {
+      console.error("Failed to compute server pricing:", pricingError || pricing);
       return new Response(
         JSON.stringify({ error: "Payment fee policy unavailable. Checkout refused safely." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const vspRate = isOwnerSubscription
-      ? Number(feeConfig.subscription_vsp_rate)
-      : Number(feeConfig.booking_vsp_rate);
-    const gatewayRate = isOwnerSubscription
-      ? Number(feeConfig.subscription_paymob_rate)
-      : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
-    const gatewayFixed = isOwnerSubscription
-      ? Number(feeConfig.subscription_paymob_fixed_fee)
-      : Number(feeConfig.booking_paymob_fixed_fee);
-    if (![vspRate, gatewayRate, gatewayFixed].every(Number.isFinite) || vspRate < 0 || gatewayRate < 0 || gatewayRate >= 1 || gatewayFixed < 0) {
+    const vspFee = Number(pricing.player_vsp_fee);
+    const ownerVspFee = Number(pricing.owner_vsp_fee);
+    const ownerNetAmount = Number(pricing.owner_net_amount);
+    const gatewayFee = Number(pricing.gateway_fee);
+    const platformFee = Math.round((vspFee + gatewayFee) * 100) / 100;
+    const totalAmountEgp = Number(pricing.total_due);
+    const amountInCents = Number(pricing.total_due_piasters);
+    const feeVersion = String(pricing.fee_version || "v2026_11_paymob_24_26");
+    const gatewayFeeMode = String(pricing.gateway_fee_mode || "gross_up");
+    const channelClass = String(pricing.channel_class || requestedChannel);
+
+    if (!Number.isInteger(amountInCents) || amountInCents <= 0) {
       return new Response(
         JSON.stringify({ error: "Payment fee policy invalid. Checkout refused safely." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    const vspFee = Math.round(finalBaseAmount * vspRate * 100) / 100;
-    const gatewayFee = Math.round((finalBaseAmount * gatewayRate + gatewayFixed) * 100) / 100;
-    const platformFee = Math.round((vspFee + gatewayFee) * 100) / 100;
-    const totalAmountEgp = Math.round((finalBaseAmount + platformFee) * 100) / 100;
-    const amountInCents = Math.round(totalAmountEgp * 100);
 
     if (isOwnerSubscription) {
       const { error: subscriptionPricingError } = await supabase
@@ -420,6 +421,23 @@ serve(async (req: Request) => {
           .eq("status", "pending")
           .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`);
         if (error) throw error;
+
+        await supabase.from("payment_attempts").insert({
+          booking_id,
+          user_id: callerUser.id,
+          base_price_piasters: Math.round(finalBaseAmount * 100),
+          player_vsp_fee_piasters: Math.round(vspFee * 100),
+          owner_vsp_fee_piasters: Math.round(ownerVspFee * 100),
+          owner_net_piasters: Math.round(ownerNetAmount * 100),
+          gateway_fee_piasters: Math.round(gatewayFee * 100),
+          approved_total_piasters: amountInCents,
+          currency: "EGP",
+          payment_channel_class: channelClass,
+          fee_version: feeVersion,
+          gateway_fee_mode: gatewayFeeMode,
+          paymob_order_id: intentionOrderId,
+          status: "created",
+        });
       }
     };
 
