@@ -23,32 +23,26 @@ class OwnerPendingActionsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    // حساب عدد الحجوزات النقدية غير المؤكدة بعد لليوم وللملعب المختار
-    final unconfirmedCashBookings = allBookings.where((b) {
-      if (b.status == BookingStatus.cancelled || b.status == BookingStatus.completed) {
-        return false;
-      }
+    // حساب عدد الحجوزات الأونلاين المؤكدة القادمة لليوم وللملعب المختار
+    final upcomingOnlineToday = allBookings.where((b) {
+      if (b.status != BookingStatus.confirmed) return false;
       if (selectedStadiumFilter != 'all' && b.stadiumId != selectedStadiumFilter) {
         return false;
       }
-      final isCash = b.isCash ||
-          (b.paymentMethod.toLowerCase() == 'cash') ||
-          (b.paymentSource?.toLowerCase() == 'cash');
-      final isUnpaidOrUnconfirmed = !b.isPaid && b.paymentStatus != 'paid';
-      // Manual owner-created bookings are accounting records, not app cash-collection actions.
+      // Manual owner-created bookings are offline walk-ins/calls, not app online bookings.
       if (b.createdByUserId == b.ownerId) return false;
-      if (!isCash || !isUnpaidOrUnconfirmed) return false;
+      if (!b.startTime.isAfter(now)) return false;
 
       final effectiveDate = (b.operationalDate ?? b.startTime).toLocal();
       return DateUtils.isSameDay(effectiveDate, now);
     }).toList();
 
-    final count = unconfirmedCashBookings.length;
+    final count = upcomingOnlineToday.length;
 
     // لا يوجد إجراء = لا نستهلك مساحة من الرئيسية.
     if (count == 0) return const SizedBox.shrink();
 
-    final countText = ArabicPluralUtils.formatPendingCashBookingCount(count, isArabic: isArabic);
+    final countText = ArabicPluralUtils.formatTodayOnlineBookingCount(count, isArabic: isArabic);
 
     return Container(
       width: double.infinity,
@@ -72,9 +66,9 @@ class OwnerPendingActionsBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                // أيقونة الكاش بالأخضر النيون
+                // أيقونة الحجوزات الأونلاين بالأخضر النيون
                 const Icon(
-                  Iconsax.money_3_copy,
+                  Iconsax.calendar_tick_copy,
                   size: 20,
                   color: VSPColors.accent, // #9FDF02 الأخضر نيون
                 ),

@@ -3,7 +3,6 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/models/user_model.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
-import '../../screens/subscription_plans_screen.dart';
 import '../../services/facility_onboarding_service.dart';
 
 /// Modal bottom sheet prompting the owner to upgrade their subscription
@@ -152,18 +151,13 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // ─── Subscribe Button ───
+          // ─── Continue Button (Subscriptions removed) ───
           PrimaryButton(
-            text: isAr ? ' اشترك الآن في الباقة الاحترافية' : ' Upgrade to Pro Now',
+            text: isAr ? 'حسناً' : 'OK',
             color: VSPColors.proAccent,
             textColor: Colors.black,
-            onPressed: () async {
-              // Capture navigator reference before pop to avoid deactivation issues
-              final navigator = Navigator.of(context);
-              navigator.pop();
-              await navigator.push(
-                MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
-              );
+            onPressed: () {
+              Navigator.of(context).pop();
             },
           ),
           const SizedBox(height: 12),

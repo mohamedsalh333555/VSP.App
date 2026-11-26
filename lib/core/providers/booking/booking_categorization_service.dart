@@ -50,8 +50,6 @@ class BookingCategorizationService {
       );
       if (hasConfirmedSameSlot || !isFuture) return false;
       if (b.status != BookingStatus.pending) return false;
-      // Cash bookings remain pending until owner confirms/collects
-      if (b.isCash) return true;
       // Online unpaid checkouts have 10-minute payment grace period
       final isRecent = b.createdAt.isAfter(tenMinutesAgo);
       return !b.isPaid && isRecent;
@@ -93,7 +91,7 @@ class BookingCategorizationService {
     required DateTime now,
   }) {
     final upcoming = bookings
-        .where((b) => (b.status == BookingStatus.confirmed || (b.status == BookingStatus.pending && b.isCash)) && b.endTime.isAfter(now))
+        .where((b) => b.status == BookingStatus.confirmed && b.endTime.isAfter(now))
         .toList();
 
     final history = bookings

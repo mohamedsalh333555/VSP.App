@@ -72,28 +72,6 @@ class FilterPricePanel extends StatelessWidget {
             onChanged: onPriceChanged,
           ),
         ),
-        const SizedBox(height: 16),
-        const Divider(color: VSPColors.divider),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Checkbox(
-              value: noDepositOnly,
-              activeColor: VSPColors.accent,
-              checkColor: Colors.black,
-              onChanged: (val) => onNoDepositChanged(val ?? false),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => onNoDepositChanged(!noDepositOnly),
-                child: Text(
-                  isArabic ? 'ملاعب بدون عربون' : 'No Deposit Required',
-                  style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }

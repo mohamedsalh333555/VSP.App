@@ -15,7 +15,6 @@ import '../../../core/repositories/booking/booking_domain_rules.dart';
 import '../services/payment_checkout_coordinator.dart';
 import '../services/payment_checkout_service.dart';
 import '../../../core/services/paymob_service.dart';
-import '../../../core/repositories/league_repository.dart';
 import '../widgets/payment/payment_background_glow.dart';
 import '../widgets/payment/payment_breakdown_card.dart';
 import '../widgets/payment/payment_cancel_dialog.dart';
@@ -299,11 +298,15 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _coordinator.startTournamentOrderPolling(
               orderReference: orderReference,
               fetchStatus: (ref) async {
-                if (ref.startsWith('TOURN_1V1_')) {
-                  final paid = await LeagueRepository().is1v1OrderPaid(ref);
+                if (ref.startsWith('STRONGEST_')) {
+                  final res = await Supabase.instance.client
+                      .from('strongest_team_orders')
+                      .select('payment_status')
+                      .eq('order_reference', ref)
+                      .maybeSingle();
                   return {
                     'success': true,
-                    'payment_status': paid ? 'paid' : 'pending',
+                    'payment_status': res?['payment_status']?.toString() ?? 'pending',
                   };
                 }
                 final res = await Supabase.instance.client

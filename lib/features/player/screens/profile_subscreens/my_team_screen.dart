@@ -6,15 +6,20 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/models/user_model.dart';
 import '../../../../core/providers/auth_provider.dart';
+import '../../../../core/repositories/gamification_repository.dart';
 import '../../../../core/repositories/team_repository.dart';
 import '../../../../core/repositories/user_repository.dart';
 import '../../../../core/services/image_pick_service.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
+import '../../../../data/models/team_gamification_models.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/widgets/team_gamification_panel.dart';
 import '../../../../shared/widgets/vsp_back_button.dart';
+import '../../screens/player_home_screen.dart';
 import '../../widgets/my_team/my_team_controller.dart';
 import '../../widgets/my_team/team_achievements_section.dart';
 import '../../widgets/my_team/team_action_buttons.dart';
@@ -42,6 +47,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
   @override
   Team? localTeam;
 
+  List<Team> _userTeams = [];
+  TeamGamificationProfile? _gamificationProfile;
   bool _isLoadingMembers = true;
 
   bool _isSaving = false;
@@ -72,7 +79,11 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
   bool _isCaptain(Team? currentTeam) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (currentTeam == null) return true;
-    return auth.currentUser?.uid == currentTeam.memberUids.first;
+    final uid = auth.currentUser?.uid;
+    if (currentTeam.captainId.isNotEmpty) {
+      return uid == currentTeam.captainId;
+    }
+    return currentTeam.memberUids.isNotEmpty && uid == currentTeam.memberUids.first;
   }
 
   @override
@@ -114,6 +125,46 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     }
   }
 
+  Future<void> _selectActiveTeam(Team team) async {
+    _teamSubscription?.cancel();
+    _teamSubscription = null;
+    if (mounted) {
+      setState(() {
+        _teamNameController.text = team.name;
+        _selectedSport = team.sportType;
+        localTeam = team;
+        _gamificationProfile = null;
+        _isLoadingMembers = true;
+      });
+    }
+    _teamSubscription = TeamRepository().streamTeam(team.id).listen((data) async {
+      if (data.isNotEmpty && mounted) {
+        final updatedTeam = await TeamRepository().getTeam(team.id);
+        if (updatedTeam != null && mounted) {
+          setState(() {
+            _teamNameController.text = updatedTeam.name;
+            _selectedSport = updatedTeam.sportType;
+            localTeam = updatedTeam;
+          });
+        }
+      }
+    }, onError: (err) {
+      VSPLogger.w('Team realtime stream notice: $err');
+    });
+
+    await Future.wait([
+      _loadMemberDetails(team),
+      _loadGamificationProfile(team.id),
+    ]);
+  }
+
+  Future<void> _loadGamificationProfile(String teamId) async {
+    final profile = await GamificationRepository.instance.getTeamGamificationProfile(teamId);
+    if (mounted && localTeam?.id == teamId) {
+      setState(() => _gamificationProfile = profile);
+    }
+  }
+
   Future<void> _initialLoad() async {
     _teamSubscription?.cancel();
     _teamSubscription = null;
@@ -122,35 +173,20 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     final uid = auth.currentUser?.uid;
     if (uid == null) return;
 
-    final team = await TeamRepository().getUserTeam(uid);
-    if (mounted) {
-      if (team != null) {
-        _teamNameController.text = team.name;
-        _selectedSport = team.sportType;
-        localTeam = team;
-
-        _teamSubscription = TeamRepository().streamTeam(team.id).listen((data) async {
-          if (data.isNotEmpty && mounted) {
-            final updatedTeam = await TeamRepository().getTeam(team.id);
-            if (updatedTeam != null && mounted) {
-              setState(() {
-                _teamNameController.text = updatedTeam.name;
-                _selectedSport = updatedTeam.sportType;
-                localTeam = updatedTeam;
-              });
-            }
-          }
-        }, onError: (err) {
-          VSPLogger.w('Team realtime stream notice: $err');
-        });
-
-        await _loadMemberDetails(team);
-      } else {
-        setState(() {
-          localTeam = null;
-          _isLoadingMembers = false;
-        });
-      }
+    final teams = await TeamRepository().getUserTeams(uid);
+    if (!mounted) return;
+    _userTeams = teams;
+    final team = localTeam != null
+        ? teams.where((t) => t.id == localTeam!.id).firstOrNull ?? (teams.isNotEmpty ? teams.first : null)
+        : (teams.isNotEmpty ? teams.first : null);
+    if (team != null) {
+      await _selectActiveTeam(team);
+    } else {
+      setState(() {
+        localTeam = null;
+        _gamificationProfile = null;
+        _isLoadingMembers = false;
+      });
     }
   }
 
@@ -242,9 +278,63 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_userTeams.length > 1) ...[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _userTeams.map((t) {
+                final selected = t.id == team?.id;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8, left: 8, bottom: VSPSpacing.md),
+                  child: ChoiceChip(
+                    label: Text(t.name),
+                    selected: selected,
+                    selectedColor: VSPColors.accent,
+                    backgroundColor: VSPColors.surface,
+                    labelStyle: TextStyle(
+                      color: selected ? Colors.black : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                    onSelected: (_) => _selectActiveTeam(t),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
         if (team != null) ...[
           TeamStatsHeader(team: team, membersCount: 1 + teamMembers.length, isArabic: isArabic),
           const SizedBox(height: VSPSpacing.lg),
+          if (_gamificationProfile != null) ...[
+            TeamGamificationPanel(
+              profile: _gamificationProfile!,
+              team: team,
+              isPrivateView: true,
+              currentUserId: uid,
+              onSubmitImmortalSize: (entitlementId, targetUserId, size) async {
+                final ok = await GamificationRepository.instance.submitImmortalPlayerSize(
+                  entitlementId: entitlementId,
+                  targetUserId: targetUserId,
+                  jerseySize: size,
+                );
+                if (!mounted) return ok;
+                if (ok) {
+                  VSPFeedback.showSuccess(
+                    this.context,
+                    isArabic ? 'تم حفظ المقاس بنجاح' : 'Size saved successfully',
+                  );
+                  await _loadGamificationProfile(team.id);
+                }
+                return ok;
+              },
+              onRedeemFreeHour: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                playerHomeScreenKey.currentState?.switchToTab(0);
+              },
+            ),
+            const SizedBox(height: VSPSpacing.lg),
+          ],
         ],
         TeamProfileForm(
           teamNameController: _teamNameController,

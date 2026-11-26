@@ -187,7 +187,7 @@ void main() {
       expect(find.byIcon(Iconsax.document_text_copy), findsOneWidget);
     });
 
-    testWidgets('shows no-show button when unpaid and deposit < total', (tester) async {
+    testWidgets('does NOT show no-show button even when unpaid (no-show retired)', (tester) async {
       await tester.pumpWidget(_wrap(
         BookingSheetBottomActions(
           booking: _fakeBooking(isPaid: false, depositPaid: 50),
@@ -203,12 +203,12 @@ void main() {
         ),
       ));
       await tester.pump();
-      expect(find.byIcon(Iconsax.user_remove_copy), findsOneWidget);
+      expect(find.byIcon(Iconsax.user_remove_copy), findsNothing);
     });
   });
 
-  group('BookingSheetBottomActions — cash pending branch', () {
-    testWidgets('shows cash confirm, whatsapp, and cancel buttons', (tester) async {
+  group('BookingSheetBottomActions — legacy cash pending branch (cancel-only)', () {
+    testWidgets('shows cancel button only (cash confirm and whatsapp confirm removed)', (tester) async {
       await tester.pumpWidget(_wrap(
         BookingSheetBottomActions(
           booking: _fakeBooking(),
@@ -224,13 +224,12 @@ void main() {
         ),
       ));
       await tester.pump();
-      expect(find.byIcon(Iconsax.money_send_copy), findsOneWidget);
-      expect(find.byIcon(Iconsax.message_copy), findsOneWidget);
+      expect(find.byIcon(Iconsax.money_send_copy), findsNothing);
       expect(find.byIcon(Iconsax.close_circle_copy), findsOneWidget);
     });
 
-    testWidgets('cash confirm button does not fire when isSaving=true', (tester) async {
-      bool fired = false;
+    testWidgets('cancel button is disabled when isDeleting=true', (tester) async {
+      bool cancelled = false;
       await tester.pumpWidget(_wrap(
         BookingSheetBottomActions(
           booking: _fakeBooking(),
@@ -238,17 +237,17 @@ void main() {
           isPastCompleted: false,
           isUpcomingPendingCash: true,
           isUpcomingOnlinePaid: false,
-          isSaving: true,
-          isDeleting: false,
-          onConfirmCashPayment: () => fired = true,
-          onCancelBooking: () {},
+          isSaving: false,
+          isDeleting: true,
+          onConfirmCashPayment: () {},
+          onCancelBooking: () => cancelled = true,
           onConfirmBooking: () {},
         ),
       ));
       await tester.pump();
-      // While saving, the action is disabled and shows a spinner.
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(fired, isFalse);
+      await tester.tap(find.byIcon(Iconsax.close_circle_copy));
+      await tester.pump();
+      expect(cancelled, isFalse);
     });
 
     testWidgets('calls onCancelBooking when cancel tapped', (tester) async {

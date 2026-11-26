@@ -24,6 +24,7 @@ class BookingProvider with ChangeNotifier {
   bool _isLoadingPublicMatches = false;
   bool _hasMoreMatches = true;
   String? _errorMessage;
+  Map<String, dynamic>? _lastGamificationSummary;
   final Set<String> _cancellingIds = {};
 
   // Getters - _userBookings is the Single Source of Truth (SSOT)
@@ -62,6 +63,7 @@ class BookingProvider with ChangeNotifier {
   bool get isLoadingMoreMatches => _isLoadingPublicMatches;
   bool get hasMoreMatches => _hasMoreMatches;
   String? get errorMessage => _errorMessage;
+  Map<String, dynamic>? get lastGamificationSummary => _lastGamificationSummary;
 
   BookingProvider({
     BookingRepository? repository,
@@ -347,6 +349,7 @@ class BookingProvider with ChangeNotifier {
     String? review,
   }) async {
     _errorMessage = null;
+    _lastGamificationSummary = null;
 
     try {
       final success = await _repository.submitMatchResult(
@@ -356,6 +359,11 @@ class BookingProvider with ChangeNotifier {
         rating: rating,
         review: review,
       );
+
+      final repo = _repository;
+      if (repo is SupabaseBookingRepository) {
+        _lastGamificationSummary = repo.lastGamificationSummary;
+      }
 
       if (!success) {
         _errorMessage = 'Failed to submit result or results do not match.';

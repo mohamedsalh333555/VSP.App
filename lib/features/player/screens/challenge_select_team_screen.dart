@@ -8,6 +8,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/providers/booking_provider.dart';
+import '../../../core/repositories/gamification_repository.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -44,7 +45,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   bool _isGeneratingCode = false;
   Map<String, int>? _h2hStats;
   bool _isLoadingH2H = false;
-  final Map<String, bool> _championStatusMap = {};
+  final Map<String, ({bool isRepeat, int seasonMatches, num winXp, num drawXp, num lossXp})> _repeatStatusMap = {};
 
   @override
   void initState() {
@@ -71,17 +72,21 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     }
   }
 
-  Future<void> _check1v1ChampionForTeam(String teamId) async {
-    if (_championStatusMap.containsKey(teamId)) return;
+  Future<void> _fetchRepeatStatusForTeam(String opponentTeamId) async {
+    final myTeamId = _userTeam?.id;
+    if (myTeamId == null || _repeatStatusMap.containsKey(opponentTeamId)) return;
     try {
-      final hasChamp = await TeamRepository().has1v1Champion(teamId);
+      final status = await GamificationRepository.instance.getChallengeOpponentRepeatStatus(
+        teamId: myTeamId,
+        opponentTeamId: opponentTeamId,
+      );
       if (mounted) {
         setState(() {
-          _championStatusMap[teamId] = hasChamp;
+          _repeatStatusMap[opponentTeamId] = status;
         });
       }
     } catch (e) {
-      debugPrint('Error checking 1v1 champion for team $teamId: $e');
+      debugPrint('Error checking repeat status for team $opponentTeamId: $e');
     }
   }
 
@@ -119,12 +124,20 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             _h2hStats = null;
           });
 
-          // Fetch head-to-head stats if user has a team
+          // Fetch head-to-head & season repeat status if user has a team
           if (_userTeam != null) {
-            final stats = await TeamRepository().getHeadToHeadStats(_userTeam!.id, oppTeam.id);
+            final results = await Future.wait([
+              TeamRepository().getHeadToHeadStats(_userTeam!.id, oppTeam.id),
+              GamificationRepository.instance.getChallengeOpponentRepeatStatus(
+                teamId: _userTeam!.id,
+                opponentTeamId: oppTeam.id,
+              ),
+            ]);
             if (mounted) {
               setState(() {
-                _h2hStats = stats;
+                _h2hStats = results[0] as Map<String, int>;
+                _repeatStatusMap[oppTeam.id] = results[1]
+                    as ({bool isRepeat, int seasonMatches, num winXp, num drawXp, num lossXp});
                 _isLoadingH2H = false;
               });
             }
@@ -710,15 +723,14 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   }
 
   Widget _buildVerifiedTeamCard(Team team) {
-    _check1v1ChampionForTeam(team.id);
-    final bool hasChampion = _championStatusMap[team.id] ?? false;
+    _fetchRepeatStatusForTeam(team.id);
 
     return ChallengeTeamCard(
       team: team,
       isSelected: true,
-      hasChampion: hasChampion,
       isLoadingH2H: _isLoadingH2H,
       h2hStats: _h2hStats,
+      repeatStatus: _repeatStatusMap[team.id],
       onTap: () {},
     );
   }

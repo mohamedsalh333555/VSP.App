@@ -12,18 +12,18 @@ import '../../services/challenge_team_service.dart';
 class ChallengeTeamCard extends StatelessWidget {
   final Team team;
   final bool isSelected;
-  final bool hasChampion;
   final bool isLoadingH2H;
   final Map<String, int>? h2hStats;
+  final ({bool isRepeat, int seasonMatches, num winXp, num drawXp, num lossXp})? repeatStatus;
   final VoidCallback onTap;
 
   const ChallengeTeamCard({
     super.key,
     required this.team,
     required this.isSelected,
-    required this.hasChampion,
     required this.isLoadingH2H,
     this.h2hStats,
+    this.repeatStatus,
     required this.onTap,
   });
 
@@ -72,25 +72,6 @@ class ChallengeTeamCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (hasChampion) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: VSPColors.warning.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: VSPColors.warning, width: 1),
-                              ),
-                              child: const Text(
-                                ' يضم بطل 1 ضد 1',
-                                style: TextStyle(
-                                  color: VSPColors.warning,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -114,6 +95,10 @@ class ChallengeTeamCard extends StatelessWidget {
               ],
             ),
             if (isSelected) ...[
+              if (repeatStatus != null) ...[
+                const SizedBox(height: 12),
+                _buildRepeatXpNotice(context, repeatStatus!),
+              ],
               const Divider(color: VSPColors.divider, height: 32),
               if (isLoadingH2H)
                 const Center(
@@ -143,6 +128,54 @@ class ChallengeTeamCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRepeatXpNotice(
+    BuildContext context,
+    ({bool isRepeat, int seasonMatches, num winXp, num drawXp, num lossXp}) status,
+  ) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final isRepeat = status.isRepeat;
+    final color = isRepeat ? VSPColors.warning : VSPColors.accent;
+    String fmt(num n) => n % 1 == 0 ? n.toInt().toString() : n.toStringAsFixed(1);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.sm),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isRepeat ? Iconsax.info_circle_copy : Iconsax.flash_1_copy,
+            size: 18,
+            color: color,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isRepeat
+                  ? (isArabic
+                      ? 'تواجهتَ مع هذا الفريق من قبل هذا الموسم (${status.seasonMatches} مرة): نقاط الترتيب الشهري تبقى كاملة 100% (3/1/0)، أما XP المباراة فتُحتسب بالنصف (${fmt(status.winXp)} فوز / ${fmt(status.drawXp)} تعادل / ${fmt(status.lossXp)} خسارة).'
+                      : 'Repeat opponent this season (${status.seasonMatches}x): Monthly Ranking points remain 100% (3/1/0), while match XP is 50% (${fmt(status.winXp)}W / ${fmt(status.drawXp)}D / ${fmt(status.lossXp)}L).')
+                  : (isArabic
+                      ? 'منافس جديد في هذا الموسم! نقاط الترتيب (3/1/0) وXP كاملة 100% (${fmt(status.winXp)} فوز / ${fmt(status.drawXp)} تعادل / ${fmt(status.lossXp)} خسارة).'
+                      : 'New opponent this season! Full 100% Monthly Ranking (3/1/0) & Match XP (${fmt(status.winXp)}W / ${fmt(status.drawXp)}D / ${fmt(status.lossXp)}L).'),
+              style: TextStyle(
+                color: color,
+                fontSize: 11.5,
+                height: 1.4,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

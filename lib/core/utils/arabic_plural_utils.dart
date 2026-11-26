@@ -28,18 +28,18 @@ class ArabicPluralUtils {
     return '$count حجزاً';
   }
 
-  /// حجوزات نقدية معلقة / Pending Cash Bookings
-  static String formatPendingCashBookingCount(int count, {bool isArabic = true}) {
+  /// حجوزات أونلاين قادمة اليوم / Today's Upcoming Online Bookings
+  static String formatTodayOnlineBookingCount(int count, {bool isArabic = true}) {
     if (!isArabic) {
       return count == 1
-          ? '1 cash booking pending collection/confirmation'
-          : '$count cash bookings pending collection/confirmation';
+          ? '1 confirmed online booking today — pitch ready!'
+          : '$count confirmed online bookings today — pitch ready!';
     }
-    if (count <= 0) return 'كل الحجوزات النقدية مؤكدة ومحدثة';
-    if (count == 1) return 'حجز نقدي واحد بحاجة للتحصيل أو التأكيد';
-    if (count == 2) return 'حجزان نقديان بحاجة للتحصيل أو التأكيد';
-    if (count >= 3 && count <= 10) return '$count حجوزات نقدية بحاجة للتحصيل أو التأكيد';
-    return '$count حجزاً نقدياً بحاجة للتحصيل أو التأكيد';
+    if (count <= 0) return 'لا توجد حجوزات أونلاين قادمة اليوم';
+    if (count == 1) return 'حجز أونلاين واحد اليوم — الملعب في انتظارهم!';
+    if (count == 2) return 'حجزان أونلاين اليوم — الملعب في انتظارهم!';
+    if (count >= 3 && count <= 10) return '$count حجوزات أونلاين اليوم — الملعب في انتظارهم!';
+    return '$count حجزاً أونلاين اليوم — الملعب في انتظارهم!';
   }
 
   /// لاعبين / Players

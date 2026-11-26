@@ -295,55 +295,6 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         setDeleting: (v) => setState(() => _isDeleting = v),
       );
 
-  Future<void> _handleReportNoShow(Booking booking, bool isArabic) async {
-    final parentContext = widget.parentContext;
-    final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
-    final bookingProvider = Provider.of<BookingProvider>(parentContext, listen: false);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-        title: Text(isArabic ? 'تسجيل عدم حضور اللاعب' : 'Report Player No-Show'),
-        content: Text(
-          isArabic
-              ? 'لن يتم تنفيذ الإجراء إلا بعد انتهاء موعد الحجز. سيتم تسجيل البلاغ على الحجز واللاعب ومراجعته إداريًا عند الحاجة.'
-              : 'This action is available only after the booking ends. The no-show will be recorded against the booking/player and can be reviewed by administration.',
-          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.4),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'إلغاء' : 'Cancel')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.warning, foregroundColor: Colors.black),
-            child: Text(isArabic ? 'تأكيد عدم الحضور' : 'Confirm No-Show'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    setState(() => _isSaving = true);
-    try {
-      await OwnerRepository().recordPlayerNoShow(bookingId: booking.id);
-      final uid = authProvider.currentUser?.id;
-      if (uid != null) {
-        await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
-      }
-      if (mounted) {
-        Navigator.pop(context);
-        if (widget.parentContext.mounted) {
-          VSPFeedback.showSuccess(widget.parentContext, isArabic ? 'تم تسجيل عدم حضور اللاعب.' : 'Player no-show recorded.');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        VSPFeedback.showError(context, isArabic ? 'تعذر تسجيل عدم الحضور: $e' : 'Could not record no-show: $e');
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
-  }
-
   Future<void> _lockSlotForMaintenance(AppLocalizations l10n, bool isArabic) async {
     final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
     final ownerId = authProvider.currentUser?.id;
@@ -635,7 +586,6 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
             onCancelBooking: () {
               if (booking != null) _handleCancelBooking(booking, l10n, isArabic);
             },
-            onReportNoShow: booking == null ? null : () => _handleReportNoShow(booking, isArabic),
             onConfirmBooking: () => _handleConfirmBooking(l10n, isArabic),
             isOwnerManual: flags.isOwnerManual,
           ),

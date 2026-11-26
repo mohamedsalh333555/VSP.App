@@ -70,7 +70,6 @@ void main() {
       'lib/features/player/screens/stadium_details_screen.dart',
       'lib/features/player/screens/support_ticket_screen.dart',
       'lib/features/player/widgets/collective_match_invite_sheet.dart',
-      'lib/features/player/widgets/league/team_league_tab.dart',
     };
 
     final files = _dartFiles(Directory('lib'));

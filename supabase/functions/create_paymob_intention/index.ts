@@ -99,18 +99,30 @@ serve(async (req: Request) => {
     const isOwnerSubscription = Boolean(subscription_order_id);
 
     if (isOwnerSubscription) {
-      if (is_tournament_payment) return new Response(JSON.stringify({ error: "Invalid mixed payment request" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      const { data: subscriptionOrder, error: subscriptionOrderError } = await supabase.from("owner_subscription_orders").select("id, owner_id, plan_code, billing_period, amount, status").eq("id", String(subscription_order_id)).maybeSingle();
-      if (subscriptionOrderError || !subscriptionOrder) return new Response(JSON.stringify({ error: "Subscription payment order not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (subscriptionOrder.owner_id !== callerUser.id) return new Response(JSON.stringify({ error: "Forbidden: subscription order belongs to another user" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (subscriptionOrder.status !== "pending") return new Response(JSON.stringify({ error: "Subscription payment order is not pending" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      finalBaseAmount = Number(subscriptionOrder.amount) || 0;
+      return new Response(
+        JSON.stringify({ error: "Owner subscriptions have been retired. All owner features are unlocked." }),
+        { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     if (is_tournament_payment) {
+      if (typeof booking_id === "string" && booking_id.startsWith("TOURN_1V1_")) {
+        return new Response(
+          JSON.stringify({ error: "1v1 championship has been retired" }),
+          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (typeof booking_id === "string" && booking_id.startsWith("LEAGUE_")) {
+        return new Response(
+          JSON.stringify({ error: "Private team league has been retired" }),
+          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const recognizedTournamentReference =
         typeof booking_id === "string" &&
-        (booking_id.startsWith("TOURN_1V1_") || booking_id.startsWith("LEAGUE_") || booking_id.startsWith("TOURN_"));
+        (booking_id.startsWith("STRONGEST_") || booking_id.startsWith("TOURN_"));
 
       if (!recognizedTournamentReference) {
         return new Response(
@@ -127,43 +139,25 @@ serve(async (req: Request) => {
       );
     }
 
-    // 1v1 tournament payments are backed by a server-created order. Never trust the client amount.
-    if (is_tournament_payment && typeof booking_id === "string" && booking_id.startsWith("TOURN_1V1_")) {
-      const { data: oneVsOneOrder, error: oneVsOneOrderError } = await supabase
-        .from("vsp_1v1_tournament_orders")
-        .select("order_reference, amount, user_id, payment_status, paymob_order_id")
+    // Strongest Team official championship payments are backed by strongest_team_orders.
+    if (is_tournament_payment && typeof booking_id === "string" && booking_id.startsWith("STRONGEST_")) {
+      const { data: strongestOrder, error: strongestOrderError } = await supabase
+        .from("strongest_team_orders")
+        .select("order_reference, amount, captain_user_id, payment_status, paymob_order_id")
         .eq("order_reference", booking_id)
         .maybeSingle();
-      if (oneVsOneOrderError || !oneVsOneOrder) {
-        return new Response(JSON.stringify({ error: "1v1 tournament payment order not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (strongestOrderError || !strongestOrder) {
+        return new Response(JSON.stringify({ error: "Strongest Team payment order not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      if (oneVsOneOrder.user_id !== callerUser.id) {
+      if (strongestOrder.captain_user_id !== callerUser.id) {
         return new Response(JSON.stringify({ error: "Forbidden: payment order belongs to another user" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      if (oneVsOneOrder.payment_status !== "pending") {
-        return new Response(JSON.stringify({ error: "1v1 tournament payment order is not pending" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (strongestOrder.payment_status !== "pending") {
+        return new Response(JSON.stringify({ error: "Strongest Team payment order is not pending" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      finalBaseAmount = Number(oneVsOneOrder.amount) || 0;
+      finalBaseAmount = Number(strongestOrder.amount) || 0;
     }
 
-    // Team-league payments are backed by a server-created order. Never trust the client amount.
-    if (is_tournament_payment && typeof booking_id === "string" && booking_id.startsWith("LEAGUE_")) {
-      const { data: leaguePayment, error: leaguePaymentError } = await supabase
-        .from("team_league_payments")
-        .select("order_reference, amount, user_id, payment_status")
-        .eq("order_reference", booking_id)
-        .maybeSingle();
-      if (leaguePaymentError || !leaguePayment) {
-        return new Response(JSON.stringify({ error: "Team league payment order not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (leaguePayment.user_id !== callerUser.id) {
-        return new Response(JSON.stringify({ error: "Forbidden: payment order belongs to another user" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (leaguePayment.payment_status !== "pending") {
-        return new Response(JSON.stringify({ error: "Team league payment order is not pending" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      finalBaseAmount = Number(leaguePayment.amount) || 0;
-    }
     // Generic team-tournament payments must also be backed by a server-created order.
     if (
       is_tournament_payment &&
@@ -266,10 +260,8 @@ serve(async (req: Request) => {
         }
       }
 
-      // Trust only the DB price (prevent client price tampering)
-      finalBaseAmount = (!is_full_payment && booking.needs_deposit && Number(booking.deposit_amount) > 0)
-        ? Number(booking.deposit_amount)
-        : Number(booking.total_price);
+      // Trust only the DB total_price (100% online payment — deposits are retired)
+      finalBaseAmount = Number(booking.total_price);
     }
 
     if (finalBaseAmount <= 0) {
@@ -403,20 +395,12 @@ serve(async (req: Request) => {
         const { error } = await supabase.from("owner_subscription_orders").update({ paymob_order_id: intentionOrderId }).eq("id", String(subscription_order_id)).eq("owner_id", callerUser.id).eq("status", "pending");
         if (error) throw error;
       } else if (is_tournament_payment && typeof booking_id === "string") {
-        if (booking_id.startsWith("TOURN_1V1_")) {
+        if (booking_id.startsWith("STRONGEST_")) {
           const { error } = await supabase
-            .from("vsp_1v1_tournament_orders")
+            .from("strongest_team_orders")
             .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
             .eq("order_reference", booking_id)
-            .eq("user_id", callerUser.id)
-            .eq("payment_status", "pending");
-          if (error) throw error;
-        } else if (booking_id.startsWith("LEAGUE_")) {
-          const { error } = await supabase
-            .from("team_league_payments")
-            .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
-            .eq("order_reference", booking_id)
-            .eq("user_id", callerUser.id)
+            .eq("captain_user_id", callerUser.id)
             .eq("payment_status", "pending");
           if (error) throw error;
         } else if (booking_id.startsWith("TOURN_")) {

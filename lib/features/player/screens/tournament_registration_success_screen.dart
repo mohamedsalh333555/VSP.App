@@ -13,10 +13,10 @@ import '../../../core/utils/vsp_launcher_utils.dart';
 import 'champion_screen.dart';
 import 'player_home_screen.dart';
 
-/// الشاشة الاحتفالية بنجاح الاشتراك في البطولات (1v1، دوري الـ 4 فرق، والبطولات المجمعة)
+/// الشاشة الاحتفالية بنجاح الاشتراك في البطولات (بطولات الملاعب وبطولة أقوى فريق)
 /// تعرض بيانات ديناميكية حقيقية 100% مسترجعة لحظياً من قاعدة البيانات (Supabase)
 class TournamentRegistrationSuccessScreen extends StatefulWidget {
-  /// '1v1' أو 'championship' أو 'team_league'
+  /// 'strongest_team' أو 'championship'
   final String tournamentType;
   final String tournamentId;
   final String? orderReference;
@@ -102,102 +102,46 @@ class _TournamentRegistrationSuccessScreenState
     try {
       final supabase = Supabase.instance.client;
 
-      if (widget.tournamentType == '1v1') {
-        // جلب بيانات بطولة 1 ضد 1
-        final tourneyRes = await supabase
-            .from('vsp_1v1_tournaments')
+      if (widget.tournamentType == 'strongest_team') {
+        final eventRes = await supabase
+            .from('strongest_team_events')
             .select()
             .eq('id', widget.tournamentId)
             .maybeSingle();
 
-        // جلب قائمة اللاعبين المسجلين الفعليين المسددين للرسوم
-        final playersRes = await supabase
-            .from('vsp_1v1_tournament_players')
-            .select('id, user_id, player_name, registered_at')
-            .eq('tournament_id', widget.tournamentId)
-            .eq('payment_status', 'paid')
-            .order('registered_at', ascending: true);
-
-        final currentUid =
-            widget.userId ?? supabase.auth.currentUser?.id ?? '';
-        final playersList =
-            List<Map<String, dynamic>>.from(playersRes as List? ?? []);
-
-        int resolvedIndex =
-            playersList.indexWhere((p) => p['user_id'] == currentUid) + 1;
-        if (resolvedIndex <= 0) {
-          resolvedIndex = 0;
-        }
-
-        if (mounted) {
-          setState(() {
-            _tournamentName = tourneyRes?['name']?.toString() ??
-                widget.initialTournamentName ??
-                '';
-            final rawGov = tourneyRes?['governorate']?.toString() ?? '';
-            _governorate = EgyptGovernorates.governorateToArabic[rawGov] ??
-                rawGov;
-            if (tourneyRes?['scheduled_at'] != null) {
-              _scheduledDate = DateTime.tryParse(
-                      tourneyRes!['scheduled_at'].toString())
-                  ?.toLocal();
-            }
-            _entryFee =
-                (tourneyRes?['entry_fee'] as num?)?.toDouble() ?? 0.0;
-            _prizePool =
-                (tourneyRes?['prize_pool'] as num?)?.toDouble() ?? 0.0;
-            _maxCapacity =
-                (tourneyRes?['target_player_count'] as num?)?.toInt() ?? 0;
-            _myPosition = resolvedIndex;
-            _totalParticipants = playersList.length;
-            _isLoading = false;
-          });
-        }
-      } else if (widget.tournamentType == 'team_league') {
-        // جلب بيانات دوري الـ 4 فرق
-        final leagueRes = await supabase
-            .from('championships')
-            .select('*, stadiums(name)')
-            .eq('id', widget.tournamentId)
-            .maybeSingle();
-
-        final rostersRes = await supabase
-            .from('championship_rosters')
+        final teamsRes = await supabase
+            .from('strongest_team_participants')
             .select('id, team_id, created_at')
-            .eq('championship_id', widget.tournamentId)
+            .eq('event_id', widget.tournamentId)
+            .eq('payment_status', 'paid')
             .order('created_at', ascending: true);
 
-        final rostersList =
-            List<Map<String, dynamic>>.from(rostersRes as List? ?? []);
-        int teamOrder = 1;
-        if (widget.teamId != null) {
-          teamOrder =
-              rostersList.indexWhere((r) => r['team_id'] == widget.teamId) + 1;
-        }
-        if (teamOrder <= 0) {
-          teamOrder = 0;
-        }
+        final teamsList = List<Map<String, dynamic>>.from(teamsRes as List? ?? []);
+        int teamOrder = widget.teamId != null
+            ? teamsList.indexWhere((t) => t['team_id'] == widget.teamId) + 1
+            : 0;
+        if (teamOrder <= 0) teamOrder = teamsList.length;
 
         if (mounted) {
           setState(() {
-            _tournamentName = leagueRes?['name']?.toString() ??
+            _tournamentName = eventRes?['name']?.toString() ??
                 widget.initialTournamentName ??
                 '';
-            final rawGov = leagueRes?['governorate']?.toString() ?? '';
-            _governorate = EgyptGovernorates.governorateToArabic[rawGov] ??
-                rawGov;
-            if (leagueRes?['start_date'] != null) {
-              _scheduledDate = DateTime.tryParse(
-                      leagueRes!['start_date'].toString())
-                  ?.toLocal();
+            final rawGov = eventRes?['governorate']?.toString() ?? '';
+            _governorate =
+                EgyptGovernorates.governorateToArabic[rawGov] ?? rawGov;
+            if (eventRes?['scheduled_at'] != null) {
+              _scheduledDate =
+                  DateTime.tryParse(eventRes!['scheduled_at'].toString())
+                      ?.toLocal();
             }
-            _stadiumName = leagueRes?['stadiums']?['name']?.toString();
-            _entryFee = 30.0; // رسوم تنظيم المنصة الثابتة
-            _prizePool =
-                (leagueRes?['prize'] as num?)?.toDouble() ?? 0.0;
-            _maxCapacity = 4;
+            _stadiumName = eventRes?['venue_name']?.toString();
+            _entryFee =
+                (eventRes?['entry_fee_per_team'] as num?)?.toDouble() ?? 0.0;
+            _prizePool = 0.0;
+            _maxCapacity = (eventRes?['max_teams'] as num?)?.toInt() ?? 4;
             _myPosition = teamOrder;
-            _totalParticipants = rostersList.length;
+            _totalParticipants = teamsList.length;
             _isLoading = false;
           });
         }
@@ -263,33 +207,18 @@ class _TournamentRegistrationSuccessScreenState
   }
 
   void _shareViaWhatsApp() {
-    final bool isSolo = widget.tournamentType == '1v1';
-    final String shareMessage;
-
     final ref = widget.orderReference ??
         widget.tournamentId.substring(0, min(8, widget.tournamentId.length));
-    if (isSolo) {
-      final ranking = (_myPosition > 0 && _maxCapacity > 0)
-          ? '🏆 ترتيبي: اللاعب رقم #$_myPosition من أصل $_maxCapacity لاعب.'
-          : '';
-      shareMessage = [
-        '🔥 أنا اشتركت رسمي في "$_tournamentName" على تطبيق VSP!',
-        if (ranking.isNotEmpty) ranking,
-        '⚽ مين قد التحدي؟ حمل التطبيق وسجل مكانك قبل اكتمال المقاعد!',
-        '📌 كود الحجز: $ref',
-      ].join('\n');
-    } else {
-      final team = widget.teamName?.trim().isNotEmpty == true ? widget.teamName!.trim() : 'فريقك';
-      final ranking = (_myPosition > 0 && _maxCapacity > 0)
-          ? '🏆 ترتيبنا: الفريق رقم #$_myPosition من أصل $_maxCapacity فرق.'
-          : '';
-      shareMessage = [
-        '🔥 سجلنا رسمي لفريق "$team" في "$_tournamentName" على تطبيق VSP!',
-        if (ranking.isNotEmpty) ranking,
-        '⚽ جهزوا نفسكم للمنافسة على الكأس!',
-        '📌 كود الحجز: $ref',
-      ].join('\n');
-    }
+    final team = widget.teamName?.trim().isNotEmpty == true ? widget.teamName!.trim() : 'فريقك';
+    final ranking = (_myPosition > 0 && _maxCapacity > 0)
+        ? '🏆 ترتيبنا: الفريق رقم #$_myPosition من أصل $_maxCapacity فرق.'
+        : '';
+    final shareMessage = [
+      '🔥 سجلنا رسمي لفريق "$team" في "$_tournamentName" على تطبيق VSP!',
+      if (ranking.isNotEmpty) ranking,
+      '⚽ جهزوا نفسكم للمنافسة على الكأس!',
+      '📌 كود الحجز: $ref',
+    ].join('\n');
 
     VSPLauncherUtils.openWhatsApp(context, phone: '', message: shareMessage);
   }
@@ -318,7 +247,7 @@ class _TournamentRegistrationSuccessScreenState
     // تفعيل تبويب الأبطال (index 2 في الشريط السفلي)
     playerHomeScreenKey.currentState?.switchToTab(2);
 
-    if (widget.tournamentType == '1v1') {
+    if (widget.tournamentType == 'strongest_team') {
       championScreenKey.currentState?.switchToTab(2);
     } else {
       championScreenKey.currentState?.switchToTab(0);
@@ -332,8 +261,7 @@ class _TournamentRegistrationSuccessScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isSolo = widget.tournamentType == '1v1';
-    final participantLabel = isSolo ? 'اللاعب' : 'الفريق';
+    const participantLabel = 'الفريق';
 
     return PopScope(
       canPop: false,
@@ -485,8 +413,8 @@ class _TournamentRegistrationSuccessScreenState
                                 elevation: 0,
                               ),
                               child: Text(
-                                isSolo
-                                    ? 'عرض البطولة والمباريات'
+                                widget.tournamentType == 'strongest_team'
+                                    ? 'عرض بطولة أقوى فريق'
                                     : 'فتح البطولة وإدارة الفريق',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
@@ -505,11 +433,9 @@ class _TournamentRegistrationSuccessScreenState
                             child: OutlinedButton.icon(
                               onPressed: _shareViaWhatsApp,
                               icon: const Icon(Iconsax.message_copy, size: 19),
-                              label: Text(
-                                isSolo
-                                    ? 'مشاركة الاشتراك'
-                                    : 'مشاركة تسجيل الفريق',
-                                style: const TextStyle(
+                              label: const Text(
+                                'مشاركة تسجيل الفريق',
+                                style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 14,
                                 ),

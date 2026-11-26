@@ -6,11 +6,22 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../screens/player_home_screen.dart';
+import '../challenge_result_breakdown_dialog.dart';
 import '../match_result_modal.dart';
 
 /// يعرض نافذة منبثقة لإدخال نتيجة المباراة بعد انتهائها (للكابتن الأول)
-void showPostMatchAddResultDialog(BuildContext context, Booking booking, String userId) {
+void showPostMatchAddResultDialog(
+  BuildContext context,
+  Booking booking,
+  String userId, {
+  String? submittingTeamId,
+}) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  final resolvedTeamId = (submittingTeamId != null && submittingTeamId.isNotEmpty)
+      ? submittingTeamId
+      : (booking.playerTeamId ?? '');
+  if (resolvedTeamId.isEmpty) return;
+
   showDialog(
     context: context,
     barrierDismissible: true,
@@ -53,22 +64,35 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
                   context: context,
                   builder: (_) => MatchResultModal(
                     booking: booking,
-                    submittingTeamId: booking.playerTeamId ?? userId,
+                    submittingTeamId: resolvedTeamId,
                     onConfirm: (outcome, rating, review) async {
                       final provider = Provider.of<BookingProvider>(context, listen: false);
-                      await provider.submitMatchResult(
+                      final ok = await provider.submitMatchResult(
                         bookingId: booking.id,
-                        teamId: booking.playerTeamId ?? userId,
+                        teamId: resolvedTeamId,
                         outcome: outcome,
                         rating: rating,
                         review: review,
                       );
-                      if (context.mounted) {
+                      if (!context.mounted) return;
+                      if (ok && provider.lastGamificationSummary != null) {
+                        await showChallengeResultBreakdownDialog(
+                          context,
+                          summary: provider.lastGamificationSummary!,
+                          teamId: resolvedTeamId,
+                        );
+                      } else if (ok) {
                         VSPFeedback.showSuccess(
                           context,
                           isArabic
                               ? 'تم تسجيل النتيجة بنجاح وفي انتظار تأكيد الخصم.'
                               : 'Result submitted & waiting opponent confirmation.',
+                        );
+                      } else {
+                        VSPFeedback.showError(
+                          context,
+                          provider.errorMessage ??
+                              (isArabic ? 'تعذر تسجيل النتيجة.' : 'Failed to submit result.'),
                         );
                       }
                     },
@@ -96,10 +120,20 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
 }
 
 /// يعرض نافذة منبثقة لتأكيد أو الاعتراض على نتيجة المباراة المسجلة (للكابتن الخصم)
-void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, String userId) {
+void showPostMatchConfirmResultDialog(
+  BuildContext context,
+  Booking booking,
+  String userId, {
+  String? teamId,
+}) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
   final pending = booking.pendingOutcome;
-  final currentTeamId = booking.opponentTeamId ?? userId;
+  final currentTeamId = (teamId != null && teamId.isNotEmpty)
+      ? teamId
+      : (booking.resultSubmittedByTeamId == booking.playerTeamId
+          ? (booking.opponentTeamId ?? '')
+          : (booking.playerTeamId ?? ''));
+  if (currentTeamId.isEmpty) return;
   final isHome = currentTeamId == booking.playerTeamId;
 
   String claimText;
@@ -165,12 +199,19 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, Str
                     onPressed: () async {
                       Navigator.pop(ctx);
                       final provider = Provider.of<BookingProvider>(context, listen: false);
-                      await provider.submitMatchResult(
+                      final ok = await provider.submitMatchResult(
                         bookingId: booking.id,
                         teamId: currentTeamId,
                         outcome: agreeOutcome,
                       );
-                      if (context.mounted) {
+                      if (!context.mounted) return;
+                      if (ok && provider.lastGamificationSummary != null) {
+                        await showChallengeResultBreakdownDialog(
+                          context,
+                          summary: provider.lastGamificationSummary!,
+                          teamId: currentTeamId,
+                        );
+                      } else if (ok) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             backgroundColor: VSPColors.accent,

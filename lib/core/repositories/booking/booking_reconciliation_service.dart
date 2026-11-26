@@ -29,6 +29,9 @@ class BookingReconciliationService {
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
+  Map<String, dynamic>? _lastGamificationSummary;
+  Map<String, dynamic>? get lastGamificationSummary => _lastGamificationSummary;
+
   /// Submits match outcome and optional stadium rating review.
   Future<bool> submitMatchResult({
     required Booking booking,
@@ -37,6 +40,7 @@ class BookingReconciliationService {
     double? rating,
     String? review,
   }) async {
+    _lastGamificationSummary = null;
     try {
       if (BookingDomainRules.isResultSubmissionTimeLocked(booking.endTime, DateTime.now())) {
         throw Exception('Cannot submit results before the match officially ends.');
@@ -62,19 +66,25 @@ class BookingReconciliationService {
               'p_outcome': outcome.name,
             });
 
-      if (result is Map && result['success'] == false) {
-        if (result['error'] == 'RESULT_DISPUTED') {
-          if (rating != null && rating > 0) {
-            await _submitRating(
-              booking: booking,
-              userId: user.id,
-              rating: rating,
-              review: review ?? '',
-            );
-          }
-          return false;
+      if (result is Map) {
+        final rawSummary = result['gamification_summary'];
+        if (rawSummary is Map) {
+          _lastGamificationSummary = Map<String, dynamic>.from(rawSummary);
         }
-        throw Exception(result['error']?.toString() ?? 'RESULT_SUBMISSION_FAILED');
+        if (result['success'] == false) {
+          if (result['error'] == 'RESULT_DISPUTED') {
+            if (rating != null && rating > 0) {
+              await _submitRating(
+                booking: booking,
+                userId: user.id,
+                rating: rating,
+                review: review ?? '',
+              );
+            }
+            return false;
+          }
+          throw Exception(result['error']?.toString() ?? 'RESULT_SUBMISSION_FAILED');
+        }
       }
 
       if (rating != null && rating > 0) {

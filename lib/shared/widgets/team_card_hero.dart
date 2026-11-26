@@ -4,6 +4,8 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/models.dart';
+import '../../data/models/team_gamification_models.dart';
+import 'shields/vsp_shield_badge.dart';
 
 class TeamCardHero extends StatelessWidget {
   final Team team;
@@ -17,9 +19,14 @@ class TeamCardHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final winRate = team.matchesPlayed > 0 
-        ? (team.wins / team.matchesPlayed * 100).toStringAsFixed(0) 
-        : '0';
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final shieldTier = TeamShieldTier.fromCode(team.currentShield);
+    final winRate = team.matchesPlayed > 0
+        ? '${(team.wins / team.matchesPlayed * 100).toStringAsFixed(0)}%'
+        : '0%';
+    final xpFormatted = team.currentSeasonXp % 1 == 0
+        ? team.currentSeasonXp.toInt().toString()
+        : team.currentSeasonXp.toStringAsFixed(1);
 
     return Container(
       width: isScreenshotMode ? 350 : double.infinity,
@@ -53,11 +60,12 @@ class TeamCardHero extends StatelessWidget {
             padding: const EdgeInsets.all(VSPSpacing.xl),
             child: Column(
               children: [
-                // 1. Top Section: Rank & Points
+                // 1. Top Section: Season XP, Shield Crest & Championships
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildTopStat(AppLocalizations.of(context)!.ovrLabel, team.points.toString()),
+                    _buildTopStat(isArabic ? 'خبرة الموسم' : 'SEASON XP', xpFormatted),
+                    VspShieldBadge(tier: shieldTier, size: 46),
                     _buildTopStat(AppLocalizations.of(context)!.gldLabel, team.championshipsWon.toString(), isGold: true),
                   ],
                 ),
@@ -108,20 +116,23 @@ class TeamCardHero extends StatelessWidget {
                   ),
                 ),
                 
-                // 4. Rank Title
+                // 4. Annual Shield Title
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: VSPColors.accent.withValues(alpha: 0.2),
+                    color: shieldTier.primaryColor.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    border: Border.all(
+                      color: shieldTier.primaryColor.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: Text(
-                    team.rankTitle.toUpperCase(),
-                    style: const TextStyle(
-                      color: VSPColors.accent,
+                    shieldTier.label(isArabic).toUpperCase(),
+                    style: TextStyle(
+                      color: shieldTier.primaryColor,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ),

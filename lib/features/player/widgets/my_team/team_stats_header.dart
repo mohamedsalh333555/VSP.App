@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../../../../core/repositories/team_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../screens/player_home_screen.dart';
 
-/// Header section displaying the 1v1 champion banner and team stat metrics (Points, Members, Trophies, Wins).
+/// Header section displaying team monthly ranking & performance metrics (Points, Members, Trophies, Wins).
 class TeamStatsHeader extends StatelessWidget {
   final Team team;
   final int membersCount;
@@ -26,64 +25,16 @@ class TeamStatsHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. 1v1 Champion Banner (if applicable)
-        FutureBuilder<bool>(
-          future: TeamRepository().has1v1Champion(team.id),
-          builder: (context, champSnap) {
-            if (champSnap.data == true) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: VSPSpacing.md),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [VSPColors.warning.withValues(alpha: 0.25), VSPColors.surface],
-                  ),
-                  borderRadius: BorderRadius.circular(VSPRadius.lg),
-                  border: Border.all(color: VSPColors.warning, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox.shrink(),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isArabic ? 'فريق يضم بطل 1v1 رسمي!' : 'Home of Official 1v1 Champion!',
-                            style: const TextStyle(
-                              color: VSPColors.warning,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                          Text(
-                            isArabic
-                                ? 'أحد لاعبي هذا الفريق حاصل على المركز الأول في بطولة الفردي'
-                                : 'A member of this team won 1st place in the 1v1 tournament',
-                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-
-        // 2. 4-Metrics Row (Points, Members, Trophies, Wins)
+        // 4-Metrics Row (Monthly Points, Members, Trophies, Wins)
         Row(
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () => _showEloInfoDialog(context),
+                onTap: () => _showRankingInfoDialog(context),
                 child: _buildStatCard(
                   context,
                   team.points.toString(),
-                  isArabic ? 'نقاط الدوري' : l10n.points,
+                  isArabic ? 'نقاط الترتيب' : l10n.points,
                   showInfoIcon: true,
                 ),
               ),
@@ -150,7 +101,7 @@ class TeamStatsHeader extends StatelessWidget {
     );
   }
 
-  void _showEloInfoDialog(BuildContext context) {
+  void _showRankingInfoDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -162,7 +113,7 @@ class TeamStatsHeader extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                isArabic ? 'ترتيب فريقك الرسمي' : 'Official Elo Rating',
+                isArabic ? 'الترتيب الشهري بالمحافظة' : 'Monthly Governorate Ranking',
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
@@ -170,8 +121,8 @@ class TeamStatsHeader extends StatelessWidget {
         ),
         content: Text(
           isArabic
-              ? 'نقاط الترتيب تعبر عن الموقع الرسمي لفريقك بين كل فرق المحافظة. ترتفع النقاط وتتقدم في جدول الدوري عند الفوز في التحديات والبطولات.'
-              : 'Elo Rating reflects your official team standing across the governorate. Earn points and climb the leaderboard by winning challenges.',
+              ? 'يعتمد الترتيب الشهري على نظام نقاط كرة القدم داخل محافظتك فقط: الفوز 3 نقاط، التعادل نقطة واحدة، والخسارة 0 — ويتصفر أول كل شهر مع حفظ التاريخ، والمركز الأول يحصل على ساعة ملعب مجانية من VSP.'
+              : 'Monthly ranking uses classic football points inside your governorate: Win = 3 pts, Draw = 1 pt, Loss = 0. Resets monthly with history saved; #1 wins 1 free pitch hour funded by VSP.',
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
         ),
         actions: [

@@ -20,7 +20,7 @@ void main() {
       expect(user.isProPlan, isTrue); // Pro entitlement during trial
       expect(user.hasActiveSubscription, isFalse); // Trial entitlement is separate from paid subscription expiry.
       expect(user.isPlanExpired, isFalse);
-      expect(user.maxStadiums, equals(3)); // Unlocks 3 stadiums during trial
+      expect(user.maxStadiums, equals(999)); // No subscription limits — all owners can add freely
 
       // Should be roughly 7 days in the future
       final diff = user.effectiveTrialEndsAt!.difference(now).inDays;
@@ -39,9 +39,9 @@ void main() {
       expect(user.isProPlan, isFalse);
       expect(user.hasActiveSubscription, isFalse);
       expect(user.isPlanExpired, isFalse);
-      expect(user.maxStadiums, equals(1));
+      expect(user.maxStadiums, equals(999)); // No subscription limits — all owners can add freely
       expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 0), isTrue);
-      expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 1), isFalse);
+      expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 1), isTrue);
     });
 
     test('Pro subscription owner allows up to 3 stadiums', () {
@@ -55,10 +55,10 @@ void main() {
       );
 
       expect(user.isProPlan, isTrue);
-      expect(user.maxStadiums, equals(3));
+      expect(user.maxStadiums, equals(999)); // No subscription limits — all owners can add freely
       expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 0), isTrue);
       expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 2), isTrue);
-      expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 3), isFalse);
+      expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 3), isTrue);
     });
 
     test('Expired Pro owner automatically downgrades to Free (1 stadium capacity, perpetual)', () {
@@ -74,9 +74,9 @@ void main() {
       expect(user.hasActiveSubscription, isFalse);
       expect(user.isPlanExpired, isFalse);
       expect(user.isProPlan, isFalse);
-      expect(user.maxStadiums, equals(1));
+      expect(user.maxStadiums, equals(999)); // No subscription limits — all owners can add freely
       expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 0), isTrue);
-      expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 1), isFalse);
+      expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 1), isTrue);
     });
   });
 
@@ -95,7 +95,7 @@ void main() {
         user: user,
         currentStadiumsCount: currentActiveStadiums,
       );
-      expect(canReactivate, isFalse, reason: 'Reactivation must be blocked when at limit');
+      expect(canReactivate, isTrue, reason: 'No subscription limit: all owners can add/reactivate stadiums');
     });
 
     test('Pro owner with 3 active stadiums cannot reactivate a fourth', () {
@@ -113,7 +113,7 @@ void main() {
         user: user,
         currentStadiumsCount: currentActiveStadiums,
       );
-      expect(canReactivate, isFalse, reason: 'Pro reactivation blocked at 3 stadiums');
+      expect(canReactivate, isTrue, reason: 'No subscription limit: all owners can add/reactivate stadiums');
     });
 
     test('Reactivation succeeds when active stadium count is below allowed limit', () {

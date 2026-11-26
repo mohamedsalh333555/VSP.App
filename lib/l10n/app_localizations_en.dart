@@ -493,7 +493,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancelBookingConfirm =>
-      'Are you sure you want to cancel this booking? This action cannot be undone.';
+      'Are you sure you want to cancel this booking? Review the refund details below before confirming.';
 
   @override
   String get keepBooking => 'Keep Booking';
@@ -717,17 +717,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teams => 'Teams';
 
   @override
-  String get oneVsOnePlayers => '1v1 Players';
-
-  @override
-  String get noOneVsOneRanked => 'No 1v1 players ranked yet';
-
-  @override
-  String skillPointsLabel(int skill, int goals) {
-    return 'SKILL: $skill | G: $goals';
-  }
-
-  @override
   String get pts => 'PTS';
 
   @override
@@ -736,11 +725,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get vspOfficialLeague => 'VSP 1V1 OFFICIAL LEAGUE';
-
-  @override
   String get watchHighlights =>
-      'Watch highlights & follow the ultimate street ranking!';
+      'Compete with your team in your governorate league and official VSP championships!';
 
   @override
   String teamStats(int mp, int w, int d, int l) {
@@ -2459,18 +2445,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ownerFaq5_q =>
-      'What are the subscription plans for stadium owners?';
+      'Are there monthly subscription plans for stadium owners?';
 
   @override
   String get ownerFaq5_a =>
-      'Free lets you manage one stadium. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.';
+      'No, joining and managing all your stadiums is completely free with no monthly subscriptions. Only a 5% platform commission applies per booking.';
 
   @override
   String get ownerFaq6_q => 'How do platform fees and settlement work?';
 
   @override
   String get ownerFaq6_a =>
-      'Platform fees and payment processing are calculated by the server-side financial rules and reflected in the owner financial views.';
+      'A 5% VSP commission is deducted from the owner payout and a 5% non-refundable service fee applies to players, reflected automatically in your financial dashboard.';
 
   @override
   String get skipButton => 'Skip';
@@ -2484,4 +2470,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateNow => 'Update Now';
+
+  @override
+  String get strongestTeamTab => 'Strongest Team';
+
+  @override
+  String get specialVspReward => 'Special VSP Reward';
+
+  @override
+  String get monthlyChampionAward => 'Monthly Champion';
+
+  @override
+  String get seasonXpLabel => 'Season XP';
 }

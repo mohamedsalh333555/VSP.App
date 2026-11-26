@@ -25,10 +25,13 @@ import 'suspended_account_screen.dart';
 import 'root_screen.dart';
 import '../../features/player/screens/championship_details_screen.dart';
 import '../../core/repositories/tournament_repository.dart';
+import '../../core/repositories/stadium_repository.dart';
+import '../../core/services/analytics_service.dart';
+import '../../features/player/screens/bookings_screen.dart';
+import '../../features/player/screens/stadium_details_screen.dart';
+import '../../features/owner/screens/owner_ledger_screen.dart';
 import '../../data/models.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
-import '../../features/copilot/screens/vsp_copilot_screen.dart';
-import '../../features/copilot/screens/copilot_test_playground.dart';
 
 class AppRouter {
  static GoRouter createRouter(AuthProvider authProvider, GlobalKey<NavigatorState> navigatorKey) {
@@ -36,6 +39,7 @@ class AppRouter {
  navigatorKey: navigatorKey,
  initialLocation: '/splash',
  refreshListenable: authProvider,
+ observers: [AnalyticsService.observer],
  errorBuilder: (context, state) => const RootScreen(),
  routes: [
  GoRoute(
@@ -109,24 +113,7 @@ class AppRouter {
  path: '/player',
  builder: (context, state) => const PlayerHomeScreen(),
  ),
-      GoRoute(
-        path: '/copilot',
-        redirect: (context, state) {
-          if (!authProvider.isAuthenticated) {
-            return '/login';
-          }
-          if (!authProvider.isOwner) {
-            return '/player';
-          }
-          return null;
-        },
-        builder: (context, state) => const VspCopilotScreen(),
-      ),
- GoRoute(
- path: '/copilot-playground',
- redirect: (context, state) => authProvider.isAdmin ? null : (authProvider.isOwner ? '/owner' : '/player'),
- builder: (context, state) => const CopilotTestPlayground(),
- ),
+
  GoRoute(
  path: '/offline',
  builder: (context, state) => const OfflineErrorScreen(),
@@ -190,6 +177,47 @@ class AppRouter {
  path: '/notifications',
  builder: (context, state) => const NotificationsCenterScreen(),
  ),
+ GoRoute(
+ path: '/player/my-bookings',
+ builder: (context, state) => const BookingsScreen(),
+ ),
+ GoRoute(
+ path: '/booking/:bookingId',
+ builder: (context, state) {
+ final bookingId = state.pathParameters['bookingId'] ?? '';
+ return MatchDetailsScreen(bookingId: bookingId);
+ },
+ ),
+ GoRoute(
+ path: '/stadium/:stadiumId',
+ builder: (context, state) {
+ final id = state.pathParameters['stadiumId'] ?? '';
+ return FutureBuilder<Stadium?>(
+ future: StadiumRepository().getStadiumById(id),
+ builder: (context, snapshot) {
+ if (snapshot.hasData && snapshot.data != null) {
+ return StadiumDetailsScreen(stadium: snapshot.data!);
+ }
+ if (snapshot.connectionState == ConnectionState.done && snapshot.data == null) {
+ return const RootScreen();
+ }
+ return const Scaffold(
+ backgroundColor: VSPColors.background,
+ body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+ );
+ },
+ );
+ },
+ ),
+ GoRoute(
+ path: '/owner-ledger',
+ redirect: (context, state) => authProvider.isOwner ? null : '/player',
+ builder: (context, state) => const OwnerLedgerScreen(),
+ ),
+ GoRoute(
+ path: '/subscription-plans',
+ redirect: (context, state) => authProvider.isOwner ? '/owner' : '/player',
+ ),
  ],
  redirect: (context, state) => redirectLogic(context, state, authProvider),
  );
@@ -205,8 +233,8 @@ class AppRouter {
  
  final path = state.uri.path;
 
- // 0. Password recovery link bypass
- if (path == '/set-new-password') return null;
+ // 0. Password recovery link bypass (only while recovery session is active)
+ if (path == '/set-new-password' && isAuthenticated) return null;
 
  // 1. Session initialization check
  if (isInitializing) {

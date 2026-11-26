@@ -27,7 +27,6 @@ import '../../../core/repositories/team_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/stadium_provider.dart';
-import '../widgets/vsp_1v1_trophy_badge.dart';
 import '../widgets/create_team_sheet.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -262,10 +261,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
  overflow: TextOverflow.ellipsis,
  ),
  ),
- if (auth.currentUser?.uid != null) ...[
- const SizedBox(width: 8),
- Vsp1v1UserTrophyBadge(userId: auth.currentUser!.uid),
- ],
  ],
  ),
  const SizedBox(height: 2),
@@ -360,10 +355,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
  overflow: TextOverflow.ellipsis,
  ),
  ),
- if (auth.currentUser?.uid != null) ...[
- const SizedBox(width: 8),
- Vsp1v1UserTrophyBadge(userId: auth.currentUser!.uid),
- ],
  ],
  ),
  Text(

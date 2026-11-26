@@ -89,7 +89,7 @@ serve(async (req: Request) => {
           status: "rejected",
           error_message: `JSON parse error: ${parseErr?.message}`,
         });
-      } catch (_) {}
+      } catch (_) { }
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -126,7 +126,7 @@ serve(async (req: Request) => {
           status: "rejected",
           error_message: "Missing obj or obj.id in payload",
         });
-      } catch (_) {}
+      } catch (_) { }
       return new Response(JSON.stringify({ error: "Invalid Paymob payload: missing obj.id" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -149,7 +149,7 @@ serve(async (req: Request) => {
           status: "server_error",
           error_message: "PAYMOB_HMAC_SECRET environment variable is missing on server",
         });
-      } catch (_) {}
+      } catch (_) { }
       return new Response(
         JSON.stringify({ error: "Webhook temporarily unavailable" }),
         { status: 500, headers: { "Content-Type": "application/json" } }
@@ -171,7 +171,7 @@ serve(async (req: Request) => {
           status: "rejected",
           error_message: "Missing HMAC signature in query parameters (?hmac=...)",
         });
-      } catch (_) {}
+      } catch (_) { }
       return new Response(
         JSON.stringify({ error: "Unauthorized: Missing HMAC signature query parameter" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
@@ -212,7 +212,7 @@ serve(async (req: Request) => {
           status: "rejected",
           error_message: "HMAC signatures do not match",
         });
-      } catch (_) {}
+      } catch (_) { }
       return new Response(
         JSON.stringify({ error: "Unauthorized: Invalid HMAC signature" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
@@ -351,36 +351,43 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ status: "processed", type: "owner_subscription", success: true }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
 
-    // Team league payments: verify the server-created order, then atomically mark the team paid.
+    // Team league payments retired: never activate or confirm new league payments.
     if (specialReference.startsWith("LEAGUE_")) {
+      return new Response(
+        JSON.stringify({ status: "retired", type: "team_league", error: "Private team league has been retired" }),
+        { status: 410, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // 3.35 Handle Strongest Team Championship Orders
+    if (specialReference.startsWith("STRONGEST_")) {
       if (isSuccess) {
-        const { data: leaguePayment, error: leaguePaymentError } = await supabase
-          .from("team_league_payments")
-          .select("paymob_order_id, payment_status")
-          .eq("order_reference", specialReference)
-          .maybeSingle();
-
-        if (leaguePaymentError || !leaguePayment) {
-          return new Response(JSON.stringify({ error: "Team league payment order not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
-        }
-        if (leaguePayment.paymob_order_id && String(leaguePayment.paymob_order_id) !== String(orderId)) {
-          console.error("Rejected league webhook Paymob order correlation mismatch:", specialReference);
-          return new Response(JSON.stringify({ error: "Invalid payment order correlation" }), { status: 400, headers: { "Content-Type": "application/json" } });
-        }
-
         const sourceType = String(obj.source_data?.sub_type || obj.source_data?.type || "").toLowerCase();
-        const { data: leagueResult, error: leagueError } = await supabase.rpc("confirm_team_league_payment", {
-          p_order_reference: specialReference,
-          p_paymob_transaction_id: transactionId,
-          p_gross_amount_cents: Number(obj.amount_cents || 0),
-          p_gateway_type: sourceType,
-        });
-        if (leagueError || leagueResult?.success !== true) {
-          console.error("Team league payment confirmation failed:", leagueError || leagueResult);
-          return new Response(JSON.stringify({ error: "Team league payment confirmation failed" }), { status: 500, headers: { "Content-Type": "application/json" } });
+        const amountCheck = await validateTournamentGross("strongest_team_orders", specialReference, sourceType);
+        if (!amountCheck.ok) {
+          console.error("Rejected Strongest Team webhook gross mismatch:", specialReference, amountCheck);
+          return new Response(JSON.stringify({ error: "Invalid Strongest Team payment amount" }), {
+            status: 400, headers: { "Content-Type": "application/json" }
+          });
+        }
+        const { data: stResult, error: stErr } = await supabase.rpc(
+          "confirm_strongest_team_payment_atomic",
+          {
+            p_order_reference: specialReference,
+            p_paymob_txn_id: transactionId,
+            p_paymob_order_id: orderId,
+          }
+        );
+        if (stErr || stResult?.success === false) {
+          console.error("Failed to confirm Strongest Team order:", stErr || stResult);
+          return new Response(JSON.stringify({ error: "Strongest Team payment confirmation failed", detail: stResult?.error }), {
+            status: 500, headers: { "Content-Type": "application/json" }
+          });
         }
       }
-      return new Response(JSON.stringify({ status: "processed", type: "team_league", success: isSuccess }), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ status: "processed", type: "strongest_team", success: isSuccess }), {
+        status: 200, headers: { "Content-Type": "application/json" }
+      });
     }
 
     // 3.4 Handle 1v1 Tournament Orders (With Real Paymob Refund on Over-Capacity)
@@ -426,7 +433,7 @@ serve(async (req: Request) => {
         } else if (tournResult?.needs_refund === true) {
           // 🛡️ OVER-CAPACITY DETECTED: Real Paymob Refund API call FIRST
           console.warn(`🚨 Capacity exceeded for 1v1 order ${specialReference}. Initiating REAL Paymob Refund API call...`);
-          
+
           let refundSuccess = false;
           let refundId = null;
           let refundErrorMsg = null;
@@ -550,7 +557,7 @@ serve(async (req: Request) => {
         } else if (tournResult?.needs_refund === true || tournResult?.requires_refund === true) {
           // OVER-CAPACITY DETECTED: refund the exact gross amount charged to the payer.
           console.warn(`Capacity exceeded for tournament order ${specialReference}. Initiating REAL Paymob Refund API call...`);
-          
+
           let refundSuccess = false;
           let refundId = null;
           let refundErrorMsg = null;
@@ -723,7 +730,7 @@ serve(async (req: Request) => {
 
     // 4. Apply verified payment through the single financial SSOT RPC.
     if (isSuccess) {
-      if (existingBooking.status === "cancelled") {
+      if (existingBooking.status === "cancelled" || existingBooking.status === "expired") {
         const chargedAmountEgp = (obj.amount_cents || 0) / 100;
         let refundSuccess = false;
         let refundId = null;
@@ -780,7 +787,7 @@ serve(async (req: Request) => {
               updated_at: new Date().toISOString(),
             })
             .eq("id", bookingId)
-        .eq("status", "pending");
+            .eq("status", "pending");
         }
 
         await supabase.from("webhook_logs").insert({

@@ -20,8 +20,6 @@ class RemoteConfigService extends ChangeNotifier {
   bool _isMaintenanceMode = false;
   String _minAppVersion = '';
   String _forceUpdateUrl = '';
-  bool _is1v1RegistrationOpen = false;
-  String _vsp1v1Link = '';
   double _stadiumPriceDefault = 0.0;
   bool _copilotEnabled = false;
 
@@ -31,8 +29,6 @@ class RemoteConfigService extends ChangeNotifier {
   bool get isMaintenanceMode => _isMaintenanceMode;
   String get minAppVersion => _minAppVersion;
   String get forceUpdateUrl => _forceUpdateUrl;
-  bool get is1v1RegistrationOpen => _is1v1RegistrationOpen;
-  String get vsp1v1Link => _vsp1v1Link;
   double get stadiumPriceDefault => _stadiumPriceDefault;
   bool get copilotEnabled => _copilotEnabled;
   Map<String, dynamic> get features => Map.unmodifiable(_features);
@@ -93,8 +89,6 @@ class RemoteConfigService extends ChangeNotifier {
     _isMaintenanceMode = _parseBool(data['is_maintenance'] ?? data['isMaintenanceMode'], _isMaintenanceMode);
     _minAppVersion = _parseString(data['min_version'] ?? data['minAppVersion'], _minAppVersion);
     _forceUpdateUrl = _parseString(data['force_update_url'] ?? data['forceUpdateUrl'], _forceUpdateUrl);
-    _is1v1RegistrationOpen = _parseBool(data['vsp_1v1_is_open'] ?? data['vsp1v1IsOpen'], _is1v1RegistrationOpen);
-    _vsp1v1Link = _parseString(data['vsp_1v1_link'] ?? data['vsp1v1Link'], _vsp1v1Link);
     _stadiumPriceDefault = _parseDouble(data['stadium_price_default'] ?? data['stadiumPriceDefault'], _stadiumPriceDefault);
     _copilotEnabled = _parseBool(data['copilot_enabled'] ?? data['copilotEnabled'], _copilotEnabled);
 
@@ -105,7 +99,6 @@ class RemoteConfigService extends ChangeNotifier {
         _features[key.toString()] = val;
       });
     }
-    _features['1v1_enabled'] = _is1v1RegistrationOpen;
     _features['copilot_enabled'] = _copilotEnabled;
   }
 

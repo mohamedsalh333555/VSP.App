@@ -8,6 +8,7 @@ import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_animated_button.dart';
 import '../../screens/player_home_screen.dart';
+import '../challenge_result_breakdown_dialog.dart';
 import '../match_result_modal.dart';
 
 /// Challenge result flow: both captains submit independently.
@@ -115,12 +116,21 @@ class ChallengeResultActions extends StatelessWidget {
               Navigator.of(dialogContext).pop();
 
               if (success) {
-                VSPFeedback.showSuccess(
-                  context,
-                  isArabic
-                      ? 'تم تسجيل نتيجتك. لن تُعتمد المباراة إلا عند تطابق النتيجتين.'
-                      : 'Your result was recorded. The match is finalized only when both results match.',
-                );
+                final summary = provider.lastGamificationSummary;
+                if (summary != null) {
+                  await showChallengeResultBreakdownDialog(
+                    context,
+                    summary: summary,
+                    teamId: teamId,
+                  );
+                } else {
+                  VSPFeedback.showSuccess(
+                    context,
+                    isArabic
+                        ? 'تم تسجيل نتيجتك. لن تُعتمد المباراة إلا عند تطابق النتيجتين.'
+                        : 'Your result was recorded. The match is finalized only when both results match.',
+                  );
+                }
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

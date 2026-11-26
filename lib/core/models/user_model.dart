@@ -136,10 +136,7 @@ class UserModel {
     return DateTime.now().isAfter(subscriptionExpiresAt!);
   }
 
-  int get maxStadiums {
-    if (isProPlan) return 3;
-    return 1;
-  }
+  int get maxStadiums => 999; // No subscription stadium limits — all verified owners can add freely
 
   String get subscriptionPlanLabel {
     if (isProPlan) {

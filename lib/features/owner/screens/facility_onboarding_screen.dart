@@ -11,7 +11,6 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import 'add_stadium_wizard.dart';
 import '../services/facility_onboarding_service.dart';
-import '../widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart';
 import '../../../shared/widgets/stadium_card.dart';
 
 class FacilityOnboardingScreen extends StatefulWidget {
@@ -34,7 +33,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     return _stadiumsStream!;
   }
 
-  /// يتحقق من الباقة ويفتح Wizard أو يعرض Bottom Sheet الترقية
+  /// يفتح Wizard إضافة ملعب — مفيش قيود اشتراك
   Future<void> _onAddAnotherStadium(
     BuildContext context,
     List<Stadium> stadiums,
@@ -44,20 +43,11 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     final user = authProvider.userModel;
     if (user == null) return;
 
-    if (FacilityOnboardingService.canAddStadium(
-      user: user,
-      currentStadiumsCount: stadiums.length,
-    )) {
-      if (!context.mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
-      );
-      return;
-    }
-
     if (!context.mounted) return;
-    await FacilityUpgradeBottomSheet.show(context, isAr: isAr, user: user);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
+    );
   }
 
   double _calculateOnboardingProgress(Stadium? stadium) {

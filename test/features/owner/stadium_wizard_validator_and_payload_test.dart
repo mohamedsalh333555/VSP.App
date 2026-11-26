@@ -315,8 +315,8 @@ void main() {
 
       expect(payload['name'], equals('Anfield'));
       expect(payload['total_field_capacity'], equals(12));
-      expect(payload['needs_deposit'], isTrue);
-      expect(payload['deposit_amount'], equals(50.0));
+      expect(payload['needs_deposit'], isFalse); // Deposits retired — always false
+      expect(payload['deposit_amount'], equals(0.0)); // Deposits retired — always 0
       expect(payload['imageUrl'], equals('https://example.com/stadium.png'));
     });
   });

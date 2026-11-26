@@ -33,7 +33,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         if (mounted) {
           VSPFeedback.showError(
             context,
-            isArabic ? 'support_contact_not_configured' : 'support_contact_not_configured',
+            isArabic ? 'بيانات التواصل مع الدعم الفني غير متوفرة حالياً' : 'Support contact is not configured yet',
           );
         }
         return;
@@ -54,7 +54,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         if (mounted) {
           VSPFeedback.showError(
             context,
-            isArabic ? 'support_contact_not_configured' : 'support_contact_not_configured',
+            isArabic ? 'بيانات التواصل مع الدعم الفني غير متوفرة حالياً' : 'Support contact is not configured yet',
           );
         }
         return;

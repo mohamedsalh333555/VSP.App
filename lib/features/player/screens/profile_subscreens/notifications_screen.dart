@@ -161,8 +161,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                     const SizedBox(height: 20),
                     _buildSwitchTile(
-                      isAr ? 'تنبيهات التسويات والعربون' : 'Payouts & Deposit Settlements',
-                      isAr ? 'تنبيهات استلام مبالغ العربون والدفع الإلكتروني' : 'Alerts for received digital deposits and payout settlements',
+                      isAr ? 'تنبيهات التسويات والأرباح' : 'Payout & Earnings Settlements',
+                      isAr ? 'تنبيهات تحويل مستحقات الدفع الإلكتروني وتسوية الأرباح' : 'Alerts for online booking earnings and payout settlements',
                       _ownerPayouts,
                       _generalNotifications
                           ? (v) {
@@ -187,8 +187,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     // PLAYER SPECIFIC TOGGLES
                     const SizedBox(height: 20),
                     _buildSwitchTile(
-                      isAr ? 'تأكيدات الحجز والعربون' : 'Booking Confirmations',
-                      isAr ? 'تأكيد أو تعديل موعد حجز الملعب والعربون' : 'Confirmation or status updates for your pitch bookings',
+                      isAr ? 'تأكيدات الحجوزات' : 'Booking Confirmations',
+                      isAr ? 'تأكيد أو تعديل موعد حجز الملعب' : 'Confirmation or status updates for your pitch bookings',
                       _playerBookingConfirmations,
                       _generalNotifications
                           ? (v) {

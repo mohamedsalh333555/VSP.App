@@ -4,9 +4,8 @@ import '../../../../core/models/user_model.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../vsp_1v1_trophy_badge.dart';
 
-/// Section showing the team roster chips (Captain + active members) with addition/removal controls.
+/// Section showing the team roster chips (Captain + active members, max 8 players) with addition/removal controls.
 class TeamMembersSection extends StatelessWidget {
   final Team? team;
   final UserModel? captainUser;
@@ -41,10 +40,10 @@ class TeamMembersSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              l10n.teamMembersHeader(totalCount, 12),
+              l10n.teamMembersHeader(totalCount, 8),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            if (isCaptain && totalCount < 12)
+            if (isCaptain && totalCount < 8)
               TextButton.icon(
                 onPressed: onAddMember,
                 icon: const Icon(Iconsax.add_circle_copy, size: 16, color: VSPColors.accent),
@@ -123,18 +122,6 @@ class TeamMembersSection extends StatelessWidget {
               style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold),
             ),
           ),
-          Builder(builder: (_) {
-            final captainUid = (team?.captainId.isNotEmpty == true) ? team!.captainId : (currentUser?.uid ?? '');
-            if (captainUid.isEmpty) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Vsp1v1UserTrophyBadge(
-                userId: captainUid,
-                fontSize: 9,
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              ),
-            );
-          }),
         ],
       ),
     );
@@ -164,16 +151,7 @@ class TeamMembersSection extends StatelessWidget {
             user.name ?? 'Player',
             style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
           ),
-          if (user.uid.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Vsp1v1UserTrophyBadge(
-                userId: user.uid,
-                fontSize: 9,
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              ),
-            ),
-          if (isCaptain && (1 + teamMembers.length) <= 12)
+          if (isCaptain && (1 + teamMembers.length) <= 8)
             GestureDetector(
               onTap: () => onRemoveMember(user),
               child: const Padding(

@@ -8,7 +8,6 @@ import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import 'package:go_router/go_router.dart';
-import '../../owner/screens/subscription_plans_screen.dart';
 import '../../owner/screens/owner_ledger_screen.dart';
 import '../../../core/services/notification/notification_ui_helper.dart';
 import '../../../data/models.dart';
@@ -259,7 +258,7 @@ class _NotificationCard extends StatelessWidget {
     if (type == 'subscription') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
+        MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
       );
       return;
     }

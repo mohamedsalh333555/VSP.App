@@ -5,15 +5,12 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 
 /// Owner home finance panel.
-///
-/// Free users see the essential collected/cash/online numbers and the
-/// withdrawable balance. Pro users additionally get collection intelligence:
-/// cash still due at the pitch, online payments still pending, and online
-/// money collected but not yet eligible for withdrawal.
+/// Shows collected online revenue, available withdrawal balance,
+/// and online pending/held amounts. Cash columns removed — 100% online payments only.
 class OwnerOperationalFinanceCard extends StatelessWidget {
-  final double collectedCash;
+  final double collectedCash;   // kept for compat — always 0 for new bookings
   final double collectedOnline;
-  final double cashDue;
+  final double cashDue;         // kept for compat — always 0 for new bookings
   final double onlinePending;
   final double onlineHeld;
   final double availableBalance;
@@ -27,7 +24,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
 
   const OwnerOperationalFinanceCard({
     super.key,
-    required this.collectedCash,
+    this.collectedCash = 0.0,
     required this.collectedOnline,
     this.cashDue = 0.0,
     this.onlinePending = 0.0,
@@ -45,9 +42,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currency = isArabic ? 'ج.م' : 'EGP';
-    final collectedTotal = collectedCash + collectedOnline;
+    final collectedTotal = collectedOnline; // cash always 0 — 100% online
     final hasBalance = availableBalance > 0.009;
-    final dueTotal = cashDue + onlinePending;
+    final dueTotal = onlinePending; // cashDue always 0
     final hasDueMoney = dueTotal > 0.009;
 
     return Container(
@@ -128,41 +125,22 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _MoneySplit(
-                  icon: Iconsax.money_3_copy,
-                  label: isArabic ? 'كاش متحصل' : 'Cash collected',
-                  value: collectedCash,
-                  currency: currency,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MoneySplit(
-                  icon: Iconsax.card_copy,
-                  label: isArabic ? 'أونلاين متحصل' : 'Online collected',
-                  value: collectedOnline,
-                  currency: currency,
-                ),
-              ),
-            ],
+          // Only online collected — no cash column
+          _MoneySplit(
+            icon: Iconsax.card_copy,
+            label: isArabic ? 'أونلاين متحصل' : 'Online collected',
+            value: collectedOnline,
+            currency: currency,
           ),
           const SizedBox(height: 14),
-          if (isProOwner)
-            _buildProCollectionIntelligence(
-              currency: currency,
-              cashDue: cashDue,
-              onlinePending: onlinePending,
-              onlineHeld: onlineHeld,
-              dueTotal: dueTotal,
-              hasDueMoney: hasDueMoney,
-            )
-          else
-            _buildFreeUpgradePreview(
-              hasDueMoney: hasDueMoney,
-            ),
+          _buildProCollectionIntelligence(
+            currency: currency,
+            cashDue: 0.0, // always 0 — no cash
+            onlinePending: onlinePending,
+            onlineHeld: onlineHeld,
+            dueTotal: dueTotal,
+            hasDueMoney: hasDueMoney,
+          ),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -184,7 +162,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isArabic ? 'جاهز للسحب الآن' : 'Available for withdrawal',
+                        isArabic
+                            ? 'جاهز للسحب الآن'
+                            : 'Available for withdrawal',
                         style: const TextStyle(
                           color: VSPColors.textSecondary,
                           fontSize: 11,
@@ -219,7 +199,10 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                   },
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 13,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: hasBalance
                           ? VSPColors.accent
@@ -229,7 +212,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                     child: Text(
                       isArabic ? 'سحب' : 'Withdraw',
                       style: TextStyle(
-                        color: hasBalance ? Colors.black : VSPColors.textSecondary,
+                        color: hasBalance
+                            ? Colors.black
+                            : VSPColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                       ),
@@ -317,7 +302,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
               Text(
                 '${dueTotal.toStringAsFixed(0)} $currency',
                 style: TextStyle(
-                  color: hasDueMoney ? VSPColors.warning : VSPColors.textSecondary,
+                  color: hasDueMoney
+                      ? VSPColors.warning
+                      : VSPColors.textSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                 ),
@@ -325,28 +312,13 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _MoneySplit(
-                  icon: Iconsax.money_3_copy,
-                  label: isArabic ? 'كاش غير محصل' : 'Cash not collected',
-                  value: cashDue,
-                  currency: currency,
-                  highlight: cashDue > 0.009,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _MoneySplit(
-                  icon: Iconsax.card_copy,
-                  label: isArabic ? 'أونلاين غير محصل' : 'Online not collected',
-                  value: onlinePending,
-                  currency: currency,
-                  highlight: onlinePending > 0.009,
-                ),
-              ),
-            ],
+          // Only online pending — no cash column
+          _MoneySplit(
+            icon: Iconsax.card_copy,
+            label: isArabic ? 'أونلاين غير محصل' : 'Online not collected',
+            value: onlinePending,
+            currency: currency,
+            highlight: onlinePending > 0.009,
           ),
           if (onlineHeld > 0.009) ...[
             const SizedBox(height: 9),
@@ -361,156 +333,6 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFreeUpgradePreview({
-    required bool hasDueMoney,
-  }) {
-    final previewValue = isArabic ? 'متاح مع Pro' : 'Available with Pro';
-
-    return GestureDetector(
-      onTap: onUpgrade,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: VSPColors.proAccent.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: Border.all(
-            color: VSPColors.proAccent.withValues(alpha: 0.32),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Iconsax.money_remove_copy,
-                  size: 17,
-                  color: VSPColors.proAccent,
-                ),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Text(
-                    isArabic
-                        ? 'تفاصيل الفلوس اللي لسه ما اتحصلتش'
-                        : 'See money not collected yet',
-                    style: const TextStyle(
-                      color: VSPColors.textPrimary,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                const Text(
-                  'Pro',
-                  style: TextStyle(
-                    color: VSPColors.proAccent,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _LockedMoneyPreview(
-                    icon: Iconsax.money_3_copy,
-                    label: isArabic ? 'كاش غير محصل' : 'Cash not collected',
-                    value: previewValue,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _LockedMoneyPreview(
-                    icon: Iconsax.card_copy,
-                    label: isArabic ? 'أونلاين غير محصل' : 'Online not collected',
-                    value: previewValue,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 9),
-            Text(
-              hasDueMoney
-                  ? (isArabic
-                      ? 'فيه فلوس محتاجة متابعة. اشترك في Pro عشان تشوف القيمة والتفاصيل والإجراء المطلوب.'
-                      : 'Money needs attention. Subscribe to Pro to see the amounts, details, and required action.')
-                  : (isArabic
-                      ? 'مع Pro هتعرف الفلوس اللي لسه ما اتحصلتش وقيمتها فوراً بدل ما تكتشفها متأخر.'
-                      : 'With Pro, you can see money not collected yet and its value immediately instead of discovering it late.'),
-              style: const TextStyle(
-                color: VSPColors.textSecondary,
-                fontSize: 10.5,
-                height: 1.35,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }}
-
-
-
-class _LockedMoneyPreview extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _LockedMoneyPreview({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: BoxDecoration(
-        color: VSPColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.divider),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: VSPColors.textMuted),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: VSPColors.textSecondary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: VSPColors.proAccent,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
         ],
       ),
     );
@@ -553,9 +375,7 @@ class _MoneySplit extends StatelessWidget {
               Icon(
                 icon,
                 size: 14,
-                color: highlight
-                    ? VSPColors.warning
-                    : VSPColors.textSecondary,
+                color: highlight ? VSPColors.warning : VSPColors.textSecondary,
               ),
               const SizedBox(width: 5),
               Expanded(

@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/user_model.dart';
 import '../../repositories/user_repository.dart';
+import '../../services/connectivity_service.dart';
 import '../../services/logger_service.dart';
 import '../../services/secure_storage_service.dart';
 import 'auth_session_validator.dart';
@@ -101,6 +102,20 @@ class AuthUserDataFetcher {
 
           userData ??= fallbackMap;
         } else {
+          final isOAuthProvider = user.appMetadata['provider'] != null &&
+              user.appMetadata['provider'] != 'email';
+          final isOnline = isLoginOnly || (isOAuthProvider && await ConnectivityService().checkConnectivity());
+          if (isOnline && (isLoginOnly || isOAuthProvider)) {
+            VSPLogger.w(
+              "Unregistered OAuth account for UID: ${user.id} -> signing out and returning to welcome",
+            );
+            await prefs.remove('pending_oauth_is_login_only');
+            return const UserDataFetchResult(
+              shouldSignOut: true,
+              isGhostUser: false,
+              errorMessage: 'هذا الحساب غير مسجل بعد، يرجى إنشاء حساب جديد أولاً.',
+            );
+          }
           return const UserDataFetchResult(
             dataFetchError: true,
             errorMessage:

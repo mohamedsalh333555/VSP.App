@@ -74,6 +74,25 @@ class TeamRepository {
  }
  }
 
+ Future<List<Team>> getTeamsForUser(String userId) => getUserTeams(userId);
+
+ Future<List<Team>> getUserTeams(String userId) async {
+ try {
+ final response = await _supabase
+ .from('team_members')
+ .select('team_id')
+ .eq('user_id', userId);
+ final List membership = response as List;
+ if (membership.isEmpty) return [];
+ final teamIds = membership.map((m) => m['team_id'].toString()).toSet();
+ final teams = await Future.wait(teamIds.map(getTeam));
+ return teams.whereType<Team>().toList();
+ } catch (e) {
+ debugPrint('Error getting user teams: $e');
+ return [];
+ }
+ }
+
  Future<String?> createTeam(Map<String, dynamic> data) async {
   final memberUids = List<String>.from((data['memberUids'] as List? ?? []).map((e) => e.toString()).where((e) => !e.startsWith('guest_')));
   final pgData = TeamPayloadBuilder.buildCreatePayload(data);
@@ -207,18 +226,6 @@ class TeamRepository {
   final response = await _supabase.rpc('delete_team_atomic', params: {'p_team_id': teamId});
   if (response is Map && response['success'] == true) return true;
   throw Exception(response is Map ? response['error'] ?? 'فشل حذف الفريق' : 'فشل حذف الفريق');
- }
- Future<bool> has1v1Champion(String teamId) async {
- try {
- final response = await _supabase.rpc(
- 'check_team_has_1v1_champion',
- params: {'p_team_id': teamId},
- );
- return response == true;
- } catch (e) {
- debugPrint('Error checking if team has 1v1 champion: $e');
- return false;
- }
  }
 
   /// Stream user's membership changes

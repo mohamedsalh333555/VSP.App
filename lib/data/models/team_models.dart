@@ -1,4 +1,5 @@
 import '../../core/utils/elo_calculator.dart';
+import 'team_gamification_models.dart';
 
 class Team {
  final String id;
@@ -35,6 +36,14 @@ class Team {
  final int fairPlayScore; // Season score (0–100), default 100
  final int lastResetYear; // Year of last annual reset, default 2026
 
+ // ── Season XP & Annual Shields ──
+ final double currentSeasonXp;
+ final double lifetimeXp;
+ final String currentShield;
+ final String highestHistoricalShield;
+ final String previousSeasonShield;
+ final int immortalCount;
+
  final bool isOfficial;
  final String bio;
 
@@ -68,10 +77,18 @@ class Team {
  this.championshipsWon = 0,
  this.fairPlayScore = 100,
  this.lastResetYear = 2026,
+ this.currentSeasonXp = 0,
+ this.lifetimeXp = 0,
+ this.currentShield = 'none',
+ this.highestHistoricalShield = 'none',
+ this.previousSeasonShield = 'none',
+ this.immortalCount = 0,
  this.isOfficial = false,
  this.bio = '',
  });
 
+ TeamShieldTier get shieldTier => TeamShieldTier.fromCode(currentShield);
+ TeamShieldTier get highestShieldTier => TeamShieldTier.fromCode(highestHistoricalShield);
  String get rankTitle => EloCalculator.getRankTitle(points);
 
  factory Team.fromMap(Map<String, dynamic> data, [String? id]) =>
@@ -92,8 +109,8 @@ class Team {
  date: data['date'] ?? 'Upcoming',
  stadium: data['stadium'] ?? 'TBD',
  pricePerPerson: (data['pricePerPerson'] ?? data['price_per_person'] ?? 50).toDouble(),
- currentPlayers: data['playersCount'] ?? data['players_count'] ?? data['currentPlayers'] ?? data['current_players'] ?? 11,
- maxPlayers: data['maxPlayers'] ?? data['max_players'] ?? 11,
+ currentPlayers: data['playersCount'] ?? data['players_count'] ?? data['currentPlayers'] ?? data['current_players'] ?? 8,
+ maxPlayers: data['maxPlayers'] ?? data['max_players'] ?? 8,
  playerImages: List<String>.from(data['playerImages'] ?? data['player_images'] ?? data['members'] ?? []),
  points: data['points'] ?? 0,
  trend: data['trend'] ?? 'stable',
@@ -112,6 +129,12 @@ class Team {
  championshipsWon: data['championshipsWon'] ?? data['championships_won'] ?? 0,
  fairPlayScore: data['fairPlayScore'] ?? data['fair_play_score'] ?? 100,
  lastResetYear: data['lastResetYear'] ?? data['last_reset_year'] ?? 2026,
+ currentSeasonXp: (data['current_season_xp'] ?? data['currentSeasonXp'] ?? 0).toDouble(),
+ lifetimeXp: (data['lifetime_xp'] ?? data['lifetimeXp'] ?? 0).toDouble(),
+ currentShield: (data['current_shield'] ?? data['currentShield'] ?? 'none').toString(),
+ highestHistoricalShield: (data['highest_historical_shield'] ?? data['highestHistoricalShield'] ?? 'none').toString(),
+ previousSeasonShield: (data['previous_season_shield'] ?? data['previousSeasonShield'] ?? 'none').toString(),
+ immortalCount: (data['immortal_count'] ?? data['immortalCount'] ?? 0) as int,
  isOfficial: data['is_official'] ?? data['isOfficial'] ?? calculatedOfficial,
  bio: data['bio'] ?? '',
  );

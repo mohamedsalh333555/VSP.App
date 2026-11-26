@@ -158,6 +158,26 @@ class TournamentOverviewCard extends StatelessWidget {
                 ),
             ],
           ),
+          const Divider(color: VSPColors.divider, height: 24),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: VSPColors.accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
+              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+            ),
+            child: Text(
+              isArabic
+                  ? 'جوائز XP الموسم للبطولة: البطل +800 XP • الوصيف +600 XP • المشاركون المستوفون +200 XP (تُضاف تلقائياً عند اعتماد النتيجة).'
+                  : 'Season XP Rewards: 1st +800 XP • 2nd +600 XP • Qualified teams +200 XP (awarded automatically upon completion).',
+              style: const TextStyle(
+                color: VSPColors.accent,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
           if (championship.status == 'completed' && !championship.prizeDelivered) ...[
             const SizedBox(height: 12),
             SizedBox(

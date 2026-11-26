@@ -141,9 +141,8 @@ void main() {
         now: now,
       );
 
-      // Both pending cash bookings MUST be retained (take(1) removed, no 10-minute timeout for cash)
-      expect(categorized.pending.length, 2);
-      expect(categorized.pending.map((b) => b.id), containsAll(['b_pending_cash_1', 'b_pending_cash_2']));
+      // Pending cash bookings are no longer exempt from the 10-minute grace window (100% online policy)
+      expect(categorized.pending, isEmpty);
     });
 
     test('categorizeOwnerBookings accurately separates confirmed future vs completed/cancelled', () {

@@ -19,7 +19,6 @@ class StadiumBottomBookingBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final hasDeposit = stadium.depositAmount > 0.0;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(VSPSpacing.lg, VSPSpacing.md, VSPSpacing.lg, VSPSpacing.lg),
@@ -61,36 +60,19 @@ class StadiumBottomBookingBar extends StatelessWidget {
                         ),
                       ),
                     ),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      child: hasDeposit
-                          ? Row(
-                              key: const ValueKey('deposit'),
-                              children: [
-                                const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 11),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${isArabic ? 'عربون: ' : 'Deposit: '}${stadium.depositAmount.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                        color: VSPColors.accent,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                              ],
-                            )
-                          : Row(
-                              key: const ValueKey('cash'),
-                              children: [
-                                Text(
-                                  isArabic ? 'ادفع نقداً في الملعب' : 'Pay cash at stadium',
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                        color: VSPColors.textSecondary,
-                                        fontSize: 10,
-                                      ),
-                                ),
-                              ],
-                            ),
+                    Row(
+                      children: [
+                        const Icon(Iconsax.card_pos_copy, color: VSPColors.accent, size: 11),
+                        const SizedBox(width: 4),
+                        Text(
+                          isArabic ? 'دفع إلكتروني فوري 100%' : '100% Instant Online Payment',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: VSPColors.accent,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -14,7 +14,6 @@ import 'owner_cup_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_inbox_screen.dart';
 import 'owner_ledger_screen.dart';
-import 'subscription_plans_screen.dart';
 
 final GlobalKey<OwnerMainScreenState> ownerMainScreenKey =
     GlobalKey<OwnerMainScreenState>();
@@ -121,9 +120,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  }
 
  void openSubscriptionPlans() {
-   Navigator.of(context).push(
-     MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
-   );
+   // Subscription system removed — no-op
  }
 
  @override

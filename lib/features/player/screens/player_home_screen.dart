@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
+import '../../../core/repositories/team_repository.dart';
 import '../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
@@ -122,7 +123,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
   static bool _hasShownPostMatchPopupThisSession = false;
 
-  void _checkPendingChallengeResultPopup(BuildContext context) {
+  Future<void> _checkPendingChallengeResultPopup(BuildContext context) async {
     if (_hasShownPostMatchPopupThisSession) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final userId = auth.currentUser?.id;
@@ -130,8 +131,11 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
     bookingProvider.loadUserBookings(userId);
+    final userTeams = await TeamRepository().getUserTeams(userId);
+    final captainedTeamIds =
+        userTeams.where((t) => t.captainId == userId).map((t) => t.id).toSet();
 
-    if (!context.mounted) return;
+    if (!context.mounted || captainedTeamIds.isEmpty) return;
     final now = DateTime.now();
 
     for (final booking in bookingProvider.userBookings) {
@@ -142,20 +146,37 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       if (booking.endTime.isAfter(now)) continue;
       if (booking.endTime.add(const Duration(days: 30)).isBefore(now)) continue;
 
+      final String? myTeamId = captainedTeamIds.contains(booking.playerTeamId)
+          ? booking.playerTeamId
+          : (captainedTeamIds.contains(booking.opponentTeamId)
+              ? booking.opponentTeamId
+              : null);
+      if (myTeamId == null || myTeamId.isEmpty) continue;
+
       // Condition 1: No result submitted yet -> Open popup for First Captain to submit
       if (booking.matchResultStatus == MatchResultStatus.noResult) {
         _hasShownPostMatchPopupThisSession = true;
-        showPostMatchAddResultDialog(context, booking, userId);
+        showPostMatchAddResultDialog(
+          context,
+          booking,
+          userId,
+          submittingTeamId: myTeamId,
+        );
         break;
       }
 
-      // Condition 2: Opponent submitted result -> Open popup for Second Captain to confirm / dispute
+      // Condition 2: Opponent team submitted result -> Open popup for Second Captain to confirm / dispute
       if ((booking.matchResultStatus == MatchResultStatus.waitingOpponent ||
               booking.matchResultStatus == MatchResultStatus.disputed) &&
           booking.resultSubmittedByTeamId != null &&
-          booking.resultSubmittedByTeamId != userId) {
+          booking.resultSubmittedByTeamId != myTeamId) {
         _hasShownPostMatchPopupThisSession = true;
-        showPostMatchConfirmResultDialog(context, booking, userId);
+        showPostMatchConfirmResultDialog(
+          context,
+          booking,
+          userId,
+          teamId: myTeamId,
+        );
         break;
       }
     }
@@ -204,28 +225,28 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
         },
         items: [
           VspNavItem(
-            inactiveIcon: Iconsax.home_1,
-            activeIcon: Iconsax.home_1_copy,
+            activeIcon: Iconsax.home_1,
+            inactiveIcon: Iconsax.home_1_copy,
             label: AppLocalizations.of(context)!.homeNav,
           ),
           VspNavItem(
-            inactiveIcon: Iconsax.people,
-            activeIcon: Iconsax.people_copy,
+            activeIcon: Iconsax.people,
+            inactiveIcon: Iconsax.people_copy,
             label: AppLocalizations.of(context)!.matchesNav,
           ),
           VspNavItem(
-            inactiveIcon: Iconsax.cup,
-            activeIcon: Iconsax.cup_copy,
+            activeIcon: Iconsax.cup,
+            inactiveIcon: Iconsax.cup_copy,
             label: AppLocalizations.of(context)!.championNav,
           ),
           VspNavItem(
-            inactiveIcon: Iconsax.calendar_1,
-            activeIcon: Iconsax.calendar_1_copy,
+            activeIcon: Iconsax.calendar_1,
+            inactiveIcon: Iconsax.calendar_1_copy,
             label: AppLocalizations.of(context)!.bookedNav,
           ),
           VspNavItem(
-            inactiveIcon: Iconsax.user,
-            activeIcon: Iconsax.user_copy,
+            activeIcon: Iconsax.user,
+            inactiveIcon: Iconsax.user_copy,
             label: AppLocalizations.of(context)!.profileNav,
           ),
         ],

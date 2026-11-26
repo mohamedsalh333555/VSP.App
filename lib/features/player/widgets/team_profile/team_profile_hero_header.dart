@@ -3,19 +3,25 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../../data/models.dart';
+import '../../../../data/models/team_gamification_models.dart';
+import '../../../../shared/widgets/shields/vsp_shield_badge.dart';
 
 class TeamProfileHeroHeader extends StatelessWidget {
   final Team team;
-  final bool has1v1Champion;
+  final TeamShieldTier? currentShield;
+  final int? monthlyRank;
 
   const TeamProfileHeroHeader({
     super.key,
     required this.team,
-    required this.has1v1Champion,
+    this.currentShield,
+    this.monthlyRank,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final effectiveShield = currentShield ?? TeamShieldTier.fromCode(team.currentShield);
     return Center(
       child: Column(
         children: [
@@ -49,43 +55,39 @@ class TeamProfileHeroHeader extends StatelessWidget {
           ),
           const SizedBox(height: VSPSpacing.xs),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: VSPColors.accentSoft,
+              color: effectiveShield.primaryColor.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: VSPColors.borderAccent),
+              border: Border.all(color: effectiveShield.primaryColor.withValues(alpha: 0.55)),
             ),
-            child: Text(
-              team.rankTitle,
-              style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ),
-          if (has1v1Champion) ...[
-            const SizedBox(height: VSPSpacing.xs),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: VSPColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: VSPColors.warning.withValues(alpha: 0.6)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Iconsax.crown_1_copy, color: VSPColors.warning, size: 13),
-                  SizedBox(width: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                VspShieldBadge(tier: effectiveShield, size: 22),
+                const SizedBox(width: 6),
+                Text(
+                  effectiveShield.label(isArabic),
+                  style: TextStyle(
+                    color: effectiveShield.primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (monthlyRank != null) ...[
+                  const SizedBox(width: 8),
                   Text(
-                    'يضم بطل 1 ضد 1',
-                    style: TextStyle(
+                    isArabic ? '• الترتيب الشهري #$monthlyRank' : '• Monthly #$monthlyRank',
+                    style: const TextStyle(
                       color: VSPColors.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );

@@ -135,7 +135,6 @@ void main() {
                 tournamentName: 'Ramadan Cup',
                 teamsCount: 4,
                 paidTeamsCount: 2,
-                isTeamLeague: false,
               );
             },
             child: const Text('Open Cancel Dialog'),

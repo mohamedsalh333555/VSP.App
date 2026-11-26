@@ -1,4 +1,3 @@
-export 'vsp_1v1_player.dart';
 export 'tournament_match.dart';
 
 
@@ -114,7 +113,6 @@ class Championship {
  return 'GroupsAndKnockout';
  }
  if (lower == 'league') return 'League';
- if (lower == '1v1') return '1v1';
  return 'Cup';
  }
 

@@ -288,7 +288,6 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       tournamentName: _currentChampionship.name,
       teamsCount: actions['teams_count'] is int ? actions['teams_count'] as int : _currentChampionship.joinedTeams.length,
       paidTeamsCount: actions['payments_count'] is int ? actions['payments_count'] as int : _currentChampionship.paidTeams.length,
-      isTeamLeague: _currentChampionship.templateType == 'team_league',
     );
 
     if (confirmed != true || !mounted) return;

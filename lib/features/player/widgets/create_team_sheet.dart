@@ -82,7 +82,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
     int addedCount = 0;
     setState(() {
       for (int i = 0; i < parsedNames.length; i++) {
-        if (_teamMembers.length + 1 >= 12) break;
+        if (_teamMembers.length + 1 >= 8) break;
         final name = parsedNames[i];
         if (!_teamMembers.any((m) => m.name == name)) {
           _teamMembers.add(UserModel(
@@ -164,7 +164,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         'captainImageUrl': auth.userModel?.profileImageUrl ?? '',
         'logoUrl': _uploadedLogoUrl ?? '',
         'playersCount': _teamMembers.length + 1,
-        'maxPlayers': 12,
+        'maxPlayers': 8,
         'memberUids': [uid, ..._teamMembers.map((m) => m.uid)],
         'playerImages': [
           auth.userModel?.profileImageUrl ?? '',

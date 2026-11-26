@@ -75,13 +75,13 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               const SizedBox(height: VSPSpacing.md),
 
-              // Section 2: Payouts & Deposit Settlement Policy
+              // Section 2: Online Payments & Payout Settlement Policy
               _buildSectionCard(
                 context,
-                title: isArabic ? '2. سياسة العربون والتحصيل المباشر' : '2. Direct Deposit & Payout Policy',
+                title: isArabic ? '2. سياسة الدفع الإلكتروني وتسوية الأرباح' : '2. Online Payment & Payout Policy',
                 content: isArabic
-                    ? 'يلتزم المالك بتأكيد مبالغ العربون والحجوزات المستلمة مباشرة عبر (انستا باي أو فودافون كاش أو التحويل البنكي) وتحديث حالة الحجز في التطبيق فور استلام المبلغ، والالتزام بتوفير الملعب للحاجز.'
-                    : 'Owners must promptly verify and confirm direct deposits received via InstaPay, Vodafone Cash, or Bank Transfer in-app, honoring the reservation for the player.',
+                    ? 'تتم جميع الحجوزات عبر التطبيق بالدفع الإلكتروني الكامل 100% عبر بوابة الدفع المعتمدة، وتُضاف مستحقات صاحب الملعب إلى محفظته بعد انتهاء الحجز ليتم تحويلها عبر (إنستا باي أو فودافون كاش أو التحويل البنكي).'
+                    : 'All app bookings are 100% paid online via the approved payment gateway. Owner earnings are credited after the session for payout via InstaPay, Vodafone Cash, or Bank Transfer.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -91,7 +91,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '3. سياسة منع الإلغاء المفاجئ' : '3. Cancellation & Commitment Policy',
                 content: isArabic
-                    ? 'يُحظر على صاحب الملعب إلغاء أي حجز مؤكد إلا في حالات القوة القاهرة المثبتة، مع الالتزام بإخطار الحاجز وإعادة كامل العربون أو المبالغ المدفوعة إليه فوراً دون أي اقتطاع.'
+                    ? 'يُحظر على صاحب الملعب إلغاء أي حجز مؤكد إلا في حالات القوة القاهرة المثبتة، مع الالتزام بإخطار الحاجز وإعادة كامل المبالغ المدفوعة إليه فوراً دون أي اقتطاع.'
                     : 'Owners are prohibited from cancelling confirmed bookings except in proven force majeure cases, with mandatory immediate full refund to the customer.',
               ),
 
@@ -165,25 +165,15 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '3. أمان المدفوعات والشفافية (PCI-DSS & Paymob)' : '3. Payment Security & Transparency (PCI-DSS & Paymob)',
                 content: isArabic
-                    ? '• تتم معالجة كافة المدفوعات الإلكترونية عبر بيئة مشفرة تديرها بوابة الدفع المعتمدة Paymob والممتثلة لمعايير أمان بطاقات الدفع العالمية (PCI-DSS). لا نقوم بحفظ أرقام البطاقات السرية أو رموز CVC.\n• الشفافية ومنع الرسوم الخفية: يظهر إجمالي المبلغ المطلوب سداده وتفاصيله بوضوح في شاشة تأكيد الحجز قبل إتمام أي عملية دفع، ولا توجد أي رسوم غير معلنة.\n• الحجز النقدي: عند اختيار السداد النقدي بالملعب، يدفع اللاعب قيمة إيجار الملعب المحددة من الإدارة دون أي رسوم معالجة دفع رقمي إضافية من المنصة.'
-                    : '• All electronic transactions are processed through encrypted environments managed by certified gateway Paymob, complying with global Payment Card Industry Data Security Standards (PCI-DSS). We do not store CVV/PINs.\n• Full Transparency: Total breakdown is itemized before checkout with zero hidden fees.\n• Cash bookings cover regular venue rental without digital payment processing charges.',
+                    ? '• تتم معالجة كافة المدفوعات الإلكترونية عبر بيئة مشفرة تديرها بوابة الدفع المعتمدة Paymob والممتثلة لمعايير أمان بطاقات الدفع العالمية (PCI-DSS). لا نقوم بحفظ أرقام البطاقات السرية أو رموز CVC.\n• الشفافية ومنع الرسوم الخفية: يظهر إجمالي المبلغ المطلوب سداده وتفاصيله بوضوح في شاشة تأكيد الحجز قبل إتمام أي عملية دفع، ولا توجد أي رسوم غير معلنة.'
+                    : '• All electronic transactions are processed through encrypted environments managed by certified gateway Paymob, complying with global Payment Card Industry Data Security Standards (PCI-DSS). We do not store CVV/PINs.\n• Full Transparency: Total breakdown is itemized before checkout with zero hidden fees.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
 
               _buildSectionCard(
                 context,
-                title: isArabic ? '4. سياسة تتبع الحضور والغياب (No-Show)' : '4. Attendance & No-Show Policy',
-                content: isArabic
-                    ? '• تسجيل حالتي (2) غياب يؤدي إلى تقييد ميزة الحجز النقدي المباشر.\n• تسجيل 3 حالات غياب متكررة يؤدي إلى تعليق الحساب لحماية أوقات الملاعب واللاعبين الآخرين.\n• يمكن للاعب تقديم طعن جغرافي (GPS) لإثبات الحضور خلال 60 دقيقة من نهاية المباراة، بشرط التواجد ضمن نطاق 150 متراً من الملعب بدقة GPS تقل عن 50 متراً.'
-                    : '• 2 recorded no-shows restrict cash booking privileges.\n• 3 recorded no-shows lead to account suspension.\n• Players can dispute a no-show via GPS within 60 minutes post-match if present within 150m of the stadium with GPS accuracy under 50m.',
-              ),
-
-              const SizedBox(height: VSPSpacing.md),
-
-              _buildSectionCard(
-                context,
-                title: isArabic ? '5. نزاهة البطولات والتحديات ومنع المراهنات' : '5. Tournament Integrity & Anti-Wagering Policy',
+                title: isArabic ? '4. نزاهة البطولات والتحديات ومنع المراهنات' : '4. Tournament Integrity & Anti-Wagering Policy',
                 content: isArabic
                     ? '• بطولات كروية تنافسية بالكامل على أساس المهارة والأداء الرياضي. رسوم الاشتراك تُستخدم حصرياً لتغطية تكاليف تنظيم البطولة. الجوائز والكؤوس مقدَّمة من VSP والجهات الراعية للبطولة، وليست ممولة من رسوم اشتراك الفرق المتنافسة.\n• حظر تام للرهانات والمقامرة: نظام التحديات ونقاط Elo هو نظام تقني لقياس المهارة الرياضية فقط؛ يُحظر حظراً قاطعاً استخدام المنصة لأي مراهنات مالية أو مقامرة، وأي مخالفة تؤدي للحظر النهائي والمساءلة القانونية.\n• يلتزم كباتن الفرق بإدخال النتائج الحقيقية بعد المباراة بنزاهة وشفافية.'
                     : '• Purely skill-based competitive sports tournaments. Entry fees are utilized exclusively to cover operational costs. Trophies and prizes are sponsored by VSP and official partners and are not funded by competitor fees.\n• Strict Anti-Wagering Ban: The challenge and Elo system measures athletic skill only; monetary betting or gambling is strictly prohibited and results in permanent ban and legal liability.\n• Team captains must submit truthful, verified match results.',

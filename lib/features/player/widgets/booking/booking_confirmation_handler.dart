@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
-import '../../../../core/constants/egypt_governorates.dart';
-import '../../../../core/services/location_service.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/repositories/booking_repository.dart';
 import '../../../../core/services/logger_service.dart';
+import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
-import 'booking_payment_method_sheet.dart';
 import 'booking_slot_calculator.dart';
 import 'booking_slot_models.dart';
 import 'package:uuid/uuid.dart';
@@ -74,61 +72,19 @@ class BookingConfirmationHandler {
 
     final nav = Navigator.of(context);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+    final config = Provider.of<RemoteConfigService>(context, listen: false);
+    final isOnlineEnabled = config.isFeatureEnabled('online_payment_enabled', defaultValue: true);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    // Smart location check: determines whether cash booking is eligible
-    // or if the player must confirm via online payment/deposit (to protect venues against no-shows).
-    bool isCrossGovernorate = false;
-    String? crossGovMessage;
-
-    try {
-      final (position, resolvedGovernorate) =
-          await LocationService().getThrottledLocation(force: true);
-      if (!context.mounted) return;
-
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-      if (resolvedGovernorate == 'mock_location_detected') {
-        isCrossGovernorate = true;
-        crossGovMessage = isArabic
-            ? 'تم رصد موقع غير دقيق. لتأكيد الحجز بأمان يا كابتن، يرجى السداد الإلكتروني أو العربون.'
-            : 'Inaccurate location detected. Please confirm via electronic payment or deposit.';
-      } else if (position == null || resolvedGovernorate == null || resolvedGovernorate.trim().isEmpty) {
-        isCrossGovernorate = true;
-        crossGovMessage = isArabic
-            ? 'تعذر التحقق من موقعك بدقة. يمكنك تأكيد حجزك فوراً بالسداد الإلكتروني أو دفع العربون يا كابتن.'
-            : 'Could not verify exact location. You can confirm via electronic payment or deposit.';
-      } else {
-        final stadiumGovRaw = stadium.governorate?.trim() ?? '';
-        final playerGovernorate =
-            EgyptGovernorates.resolveGoogleName(resolvedGovernorate) ??
-                resolvedGovernorate.trim().toLowerCase();
-        final stadiumGovernorate =
-            EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ??
-                stadiumGovRaw.toLowerCase();
-
-        final pGov = playerGovernorate.toLowerCase();
-        final sGov = stadiumGovernorate.toLowerCase();
-        // Allow cross-booking within Greater Cairo metropolitan area (Cairo, Giza, Qalyubia)
-        final isGreaterCairo = (pGov == 'cairo' || pGov == 'giza' || pGov == 'qalyubia') &&
-                               (sGov == 'cairo' || sGov == 'giza' || sGov == 'qalyubia');
-
-        if (stadiumGovRaw.isNotEmpty && pGov != sGov && !isGreaterCairo) {
-          isCrossGovernorate = true;
-          final stadiumName = EgyptGovernorates.getLocalizedName(
-            EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ?? stadiumGovRaw,
-            isArabic,
-          );
-          final playerName = EgyptGovernorates.getLocalizedName(
-            EgyptGovernorates.resolveGoogleName(resolvedGovernorate) ?? resolvedGovernorate,
-            isArabic,
-          );
-          crossGovMessage = isArabic
-              ? 'أهلاً بك يا كابتن! نظراً لوجودك في محافظة $playerName والملعب في $stadiumName، الحجز النقدي متاح فقط للمتواجدين داخل المحافظة لحماية مواعيد الملعب. تقدر تأكد حجزك دلوقتي فوراً بالدفع الإلكتروني أو العربون.'
-              : 'Notice: Cash booking is reserved for in-governorate players ($playerName vs $stadiumName). You can confirm instantly via online payment or deposit.';
-        }
-      }
-    } catch (e) {
-      VSPLogger.w('Location verification fallback to online-preferred: $e');
-      isCrossGovernorate = true;
+    if (!isOnlineEnabled) {
+      onLoadingChanged(false);
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'الدفع الإلكتروني غير متاح حالياً، ولا يمكن تأكيد الحجز بدونه.'
+            : 'Online payment is currently unavailable, so bookings cannot be confirmed.',
+      );
+      return;
     }
 
     // ── Pre-confirmation double-check ────────────────────────────────────────
@@ -216,7 +172,6 @@ class BookingConfirmationHandler {
       bType = BookingType.personal;
     }
 
-    final depositAmount = stadium.depositAmount;
     final fieldCapacity = stadium.totalFieldCapacity > 0
         ? stadium.totalFieldCapacity
         : (stadium.seatsCapacity > 0 ? stadium.seatsCapacity * 2 : 10);
@@ -237,15 +192,17 @@ class BookingConfirmationHandler {
       opponentTeamId: opponentTeam?.id,
       opponentTeamName: opponentTeam?.name,
       totalPrice: totalPrice,
+      paymentMethod: 'paymob',
+      paymentStatus: 'pending',
       isPaid: false,
       isPrivate: isOpenJoin(bookingType) ? true : isPrivate,
       rentBall: isBallRented,
       currentPlayers: (bType == BookingType.openJoin) ? initialPlayersCount : currentPlayers,
       playersPerTeam: stadium.playersPerTeam,
       totalFieldCapacity: fieldCapacity,
-      depositPaid: depositAmount,
+      depositPaid: 0.0,
       isDepositPaid: false,
-      needsDeposit: stadium.needsDeposit,
+      needsDeposit: false,
       instapay: stadium.features is Map ? stadium.features['instapay'] : null,
       vodafoneCash: stadium.features is Map ? stadium.features['vodafoneCash'] : null,
       binanceId: stadium.features is Map ? stadium.features['binanceId'] : null,
@@ -254,100 +211,15 @@ class BookingConfirmationHandler {
     );
 
     onLoadingChanged(false);
-
-    // Collective bookings are host-paid and must be fully paid online.
-    // They never enter the payment-choice sheet.
-    if (isOpenJoin(bookingType)) {
-      if (!context.mounted) return;
-      final collectiveDraft = draft.copyWith(
-        paymentMethod: 'paymob',
-        paymentStatus: 'pending',
-        needsDeposit: false,
-        depositPaid: 0.0,
-        isDepositPaid: false,
-        isPaid: false,
-        isPrivate: true,
-      );
-      nav.push(
-        MaterialPageRoute(
-          builder: (_) => PaymentGatewayScreen(
-            bookingDraft: collectiveDraft,
-            forceFullPayment: true,
-          ),
-        ),
-      );
-      return;
-    }
-
-    // ── Route to payment ─────────────────────────────────────────────────────
-    final bool requiresDeposit = stadium.needsDeposit && depositAmount > 0;
-
-    if (!context.mounted) return;
-    final isCashLocked = currentUserModel.noShowCount >= 2;
-    if (isCashLocked && !requiresDeposit) {
-      HapticFeedback.vibrate();
-      final isAr = Localizations.localeOf(context).languageCode == 'ar';
-      VSPFeedback.showError(
-        context,
-        isAr
-            ? 'حسابك مقيد من الحجز النقدي لعدم الحضور السابق. يرجى الدفع أونلاين 100٪.'
-            : 'Cash bookings restricted due to missed attendance. Please pay 100% online.',
-      );
-      nav.push(MaterialPageRoute(
-        builder: (_) => PaymentGatewayScreen(bookingDraft: draft, forceFullPayment: true),
-      ));
-      return;
-    }
-
     if (!context.mounted) return;
 
-    // Business rule: while the player has an active unpaid cash booking,
-    // any additional booking must be paid in full online. This is mirrored
-    // by the database trigger as the final authority.
-    final directRepo = SupabaseBookingRepository();
-    final existingUserBookings = await directRepo.getUserBookingsDirectly(currentUserModel.uid);
-    if (!context.mounted) return;
-
-    final hasActiveCashBooking = existingUserBookings.any((b) =>
-        b.paymentMethod.toLowerCase() == 'cash' &&
-        !b.isPaid &&
-        (b.status == BookingStatus.pending || b.status == BookingStatus.confirmed) &&
-        b.endTime.isAfter(DateTime.now()));
-
-    if (hasActiveCashBooking) {
-      HapticFeedback.lightImpact();
-      VSPFeedback.showInfo(
-        context,
-        'عندك حجز كاش قائم، فالحجز الجديد لازم يتدفع بالكامل أونلاين.',
-      );
-
-      final forcedFullDraft = draft.copyWith(
-        paymentMethod: 'paymob',
-        needsDeposit: false,
-        depositPaid: 0.0,
-        isDepositPaid: false,
-      );
-
-      nav.push(MaterialPageRoute(
+    nav.push(
+      MaterialPageRoute(
         builder: (_) => PaymentGatewayScreen(
-          bookingDraft: forcedFullDraft,
+          bookingDraft: draft,
           forceFullPayment: true,
         ),
-      ));
-      return;
-    }
-
-    showBookingPaymentMethodSheet(
-      context: context,
-      draft: draft,
-      totalPrice: totalPrice,
-      depositAmount: depositAmount,
-      requiresDeposit: requiresDeposit,
-      currentUserModel: currentUserModel,
-      bookingProvider: bookingProvider,
-      nav: nav,
-      isCrossGovernorate: isCrossGovernorate,
-      crossGovMessage: crossGovMessage,
+      ),
     );
   }
 }

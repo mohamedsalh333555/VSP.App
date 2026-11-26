@@ -138,7 +138,27 @@ class OwnerCupCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: VSPColors.accent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+              ),
+              child: Text(
+                isArabic
+                    ? 'XP الموسم: المركز 1 (800) • المركز 2 (600) • المشاركون (200)'
+                    : 'Season XP: 1st (800) • 2nd (600) • Qualified (200)',
+                style: const TextStyle(
+                  color: VSPColors.accent,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
             Row(
               children: [
                 if (tournament.joinedTeams.isNotEmpty)

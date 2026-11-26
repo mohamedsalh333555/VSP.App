@@ -182,6 +182,9 @@ class SupabaseBookingRepository implements BookingRepository {
   Stream<List<Booking>> getBookingHistory(String userId) =>
       _queryCoordinator.getBookingHistory(userId);
 
+  Map<String, dynamic>? get lastGamificationSummary =>
+      _reconciliationService.lastGamificationSummary;
+
   @override
   Future<bool> submitMatchResult({
     required String bookingId,

@@ -5,7 +5,7 @@ class TournamentPayloadBuilder {
   const TournamentPayloadBuilder._();
 
   /// Normalizes the championship type string to the DB-accepted lowercase value.
-  /// Maps all variations to 'groups', 'league', '1v1', or 'cup'.
+  /// Maps all variations to 'groups', 'league', or 'cup'.
   static String normalizeType(String rawType) {
     final lower = rawType.trim().toLowerCase();
     if (lower == 'groupsandknockout' ||
@@ -14,7 +14,6 @@ class TournamentPayloadBuilder {
       return 'groups';
     }
     if (lower == 'league') return 'league';
-    if (lower == '1v1') return '1v1';
     if (lower == 'knockout') return 'knockout';
     if (lower == 'tournament') return 'tournament';
     return 'cup';

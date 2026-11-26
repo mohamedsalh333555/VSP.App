@@ -1025,7 +1025,7 @@ abstract class AppLocalizations {
   /// No description provided for @cancelBookingConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to cancel this booking? This action cannot be undone.'**
+  /// **'Are you sure you want to cancel this booking? Review the refund details below before confirming.'**
   String get cancelBookingConfirm;
 
   /// No description provided for @keepBooking.
@@ -1454,24 +1454,6 @@ abstract class AppLocalizations {
   /// **'Teams'**
   String get teams;
 
-  /// No description provided for @oneVsOnePlayers.
-  ///
-  /// In en, this message translates to:
-  /// **'1v1 Players'**
-  String get oneVsOnePlayers;
-
-  /// No description provided for @noOneVsOneRanked.
-  ///
-  /// In en, this message translates to:
-  /// **'No 1v1 players ranked yet'**
-  String get noOneVsOneRanked;
-
-  /// No description provided for @skillPointsLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'SKILL: {skill} | G: {goals}'**
-  String skillPointsLabel(int skill, int goals);
-
   /// No description provided for @pts.
   ///
   /// In en, this message translates to:
@@ -1484,16 +1466,10 @@ abstract class AppLocalizations {
   /// **'No teams in {location} yet'**
   String noTeamsInLoc(String location);
 
-  /// No description provided for @vspOfficialLeague.
-  ///
-  /// In en, this message translates to:
-  /// **'VSP 1V1 OFFICIAL LEAGUE'**
-  String get vspOfficialLeague;
-
   /// No description provided for @watchHighlights.
   ///
   /// In en, this message translates to:
-  /// **'Watch highlights & follow the ultimate street ranking!'**
+  /// **'Compete with your team in your governorate league and official VSP championships!'**
   String get watchHighlights;
 
   /// No description provided for @teamStats.
@@ -4595,13 +4571,13 @@ abstract class AppLocalizations {
   /// No description provided for @ownerFaq5_q.
   ///
   /// In en, this message translates to:
-  /// **'What are the subscription plans for stadium owners?'**
+  /// **'Are there monthly subscription plans for stadium owners?'**
   String get ownerFaq5_q;
 
   /// No description provided for @ownerFaq5_a.
   ///
   /// In en, this message translates to:
-  /// **'Free lets you manage one stadium. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.'**
+  /// **'No, joining and managing all your stadiums is completely free with no monthly subscriptions. Only a 5% platform commission applies per booking.'**
   String get ownerFaq5_a;
 
   /// No description provided for @ownerFaq6_q.
@@ -4613,7 +4589,7 @@ abstract class AppLocalizations {
   /// No description provided for @ownerFaq6_a.
   ///
   /// In en, this message translates to:
-  /// **'Platform fees and payment processing are calculated by the server-side financial rules and reflected in the owner financial views.'**
+  /// **'A 5% VSP commission is deducted from the owner payout and a 5% non-refundable service fee applies to players, reflected automatically in your financial dashboard.'**
   String get ownerFaq6_a;
 
   /// No description provided for @skipButton.
@@ -4639,6 +4615,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Update Now'**
   String get updateNow;
+
+  /// No description provided for @strongestTeamTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Strongest Team'**
+  String get strongestTeamTab;
+
+  /// No description provided for @specialVspReward.
+  ///
+  /// In en, this message translates to:
+  /// **'Special VSP Reward'**
+  String get specialVspReward;
+
+  /// No description provided for @monthlyChampionAward.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Champion'**
+  String get monthlyChampionAward;
+
+  /// No description provided for @seasonXpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Season XP'**
+  String get seasonXpLabel;
 }
 
 class _AppLocalizationsDelegate

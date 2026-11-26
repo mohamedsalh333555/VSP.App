@@ -276,20 +276,6 @@ class BookingBottomBar extends StatelessWidget {
                           letterSpacing: -0.5,
                         ).merge(VSPTypography.numericStyle),
                       ),
-                      if (depositAmount > 0 && needsDeposit) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: VSPColors.warning.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            isArabic ? 'عربون ${depositAmount.toInt()}' : 'Dep ${depositAmount.toInt()}',
-                            style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold).merge(VSPTypography.numericStyle),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ],

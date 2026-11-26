@@ -114,7 +114,6 @@ class TournamentDashboardDialogs {
     required String tournamentName,
     required int teamsCount,
     required int paidTeamsCount,
-    required bool isTeamLeague,
   }) {
     final l10n = AppLocalizations.of(context)!;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';

@@ -7,7 +7,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/repositories/league_repository.dart';
+import '../../../core/repositories/gamification_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../data/models.dart';
@@ -116,8 +116,8 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
       return false;
     }
     try {
-      if (widget.bookingId!.startsWith('TOURN_1V1_')) {
-        return await LeagueRepository().is1v1OrderPaid(widget.bookingId!);
+      if (widget.bookingId!.startsWith('STRONGEST_')) {
+        return await GamificationRepository.instance.isStrongestTeamOrderPaid(widget.bookingId!);
       }
 
       if (widget.bookingId!.startsWith('TOURN_')) {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
@@ -154,54 +153,6 @@ class AddStadiumStep2Features extends StatelessWidget {
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
             ),
           ],
-          const SizedBox(height: 20),
-          const Divider(color: VSPColors.divider),
-          const SizedBox(height: 20),
-          // ── Deposit (العربون) ──
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        isArabic ? 'اشتراط عربون حجز' : 'Require Booking Deposit',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  Switch.adaptive(
-                    value: requireDeposit,
-                    onChanged: onUpdateRequireDeposit,
-                    activeColor: VSPColors.accent,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                isArabic
-                    ? 'اشتراط دفع عربون مسبق لا يتجاوز 50% من سعر الساعة.'
-                    : 'Require upfront deposit that cannot exceed 50% of the hourly stadium price.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-              ),
-              if (requireDeposit) ...[
-                const SizedBox(height: 12),
-                _buildTextField(
-                  context,
-                  isArabic ? 'قيمة العربون (ج.م)' : 'Deposit Amount (EGP)',
-                  '0',
-                  controller: depositController,
-                  maxLength: 7,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
-                ),
-              ],
-            ],
-          ),
           const SizedBox(height: 40),
           PrimaryButton(
             text: isArabic ? 'متابعة' : 'Continue',

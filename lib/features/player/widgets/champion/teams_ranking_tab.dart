@@ -1,20 +1,23 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/providers/auth_provider.dart';
+import '../../../../core/repositories/gamification_repository.dart';
 import '../../../../core/repositories/team_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../../data/models.dart';
-import '../../../../l10n/app_localizations.dart';
+import '../../../../data/models/team_gamification_models.dart';
+import '../../../../shared/widgets/shields/vsp_shield_badge.dart';
 import '../../../../shared/widgets/vsp_error_state.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
-import 'champion_podium_components.dart';
+import '../../screens/team_profile_screen.dart';
 import 'champion_empty_state.dart';
+import 'champion_podium_components.dart';
 
+/// Monthly Competitive Ranking Tab (3/1/0 football points per governorate).
+/// Strictly separated from Annual Team XP and Tournament placements.
 class TeamsRankingTab extends StatefulWidget {
-  final Stream<List<Team>>? teamsStream;
+  final dynamic teamsStream; // Kept optional for backward widget test compatibility
   final String selectedLocation;
   final String selectedSport;
   final VoidCallback onRetry;
@@ -38,453 +41,526 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
   @override
   bool get wantKeepAlive => true;
 
-  late Stream<List<Team>> _stream;
+  bool _isLoading = true;
+  String? _error;
+  String _monthKey = '';
+  List<MonthlyRankingEntry> _entries = const [];
+  Set<String> _myTeamIds = const {};
 
   @override
   void initState() {
     super.initState();
-    _initStream();
-  }
-
-  void _initStream() {
-    if (widget.teamsStream != null) {
-      _stream = widget.teamsStream!;
-    } else {
-      _stream = (widget.teamRepository ?? TeamRepository()).getTeams();
-    }
+    _loadRanking();
   }
 
   @override
   void didUpdateWidget(covariant TeamsRankingTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.teamsStream != null && widget.teamsStream != oldWidget.teamsStream) {
-      _stream = widget.teamsStream!;
-    } else if (widget.teamsStream == null &&
-        oldWidget.selectedLocation != widget.selectedLocation) {
+    if (oldWidget.selectedLocation != widget.selectedLocation ||
+        oldWidget.selectedSport != widget.selectedSport) {
+      _loadRanking();
+    }
+  }
+
+  Future<void> _loadRanking() async {
+    if (mounted) {
       setState(() {
-        _initStream();
+        _isLoading = true;
+        _error = null;
+      });
+    }
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final uid = auth.currentUser?.uid;
+      final res = await GamificationRepository.instance.getMonthlyCompetitiveRanking(
+        governorate: widget.selectedLocation,
+      );
+
+      final Set<String> myIds = {};
+      if (uid != null && uid.isNotEmpty) {
+        final myTeams = await (widget.teamRepository ?? TeamRepository()).getTeamsForUser(uid);
+        myIds.addAll(myTeams.map((t) => t.id));
+      }
+
+      if (!mounted) return;
+      final filtered = widget.selectedSport == 'All'
+          ? res.teams
+          : res.teams
+              .where((t) => t.sportType.toLowerCase() == widget.selectedSport.toLowerCase())
+              .toList();
+
+      setState(() {
+        _monthKey = res.monthKey;
+        _entries = filtered;
+        _myTeamIds = myIds;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
       });
     }
   }
 
-  void _handleRetry() {
-    setState(() {
-      _initStream();
-    });
-    widget.onRetry();
+  void _showMostActiveModal(BuildContext context, bool isArabic) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: VSPColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.72,
+        maxChildSize: 0.9,
+        minChildSize: 0.45,
+        expand: false,
+        builder: (_, ctrl) => FutureBuilder<List<MostActiveTeamEntry>>(
+          future: GamificationRepository.instance.getMostActiveTeamsRanking(
+            governorate: widget.selectedLocation,
+          ),
+          builder: (ctx, snap) {
+            final rows = snap.data ?? const [];
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isArabic ? 'الفرق الأكثر نشاطاً (التصنيف السنوي)' : 'Most Active Teams (Annual)',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isArabic
+                        ? 'يعتمد على العدد الفعلي للتحديات المعتمدة خلال الموسم (مستقل عن ترتيب الشهر وعن الـ XP).'
+                        : 'Ranked by verified completed challenges this season (independent of monthly rank and XP).',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
+                  const SizedBox(height: 12),
+                  if (snap.connectionState == ConnectionState.waiting)
+                    const Expanded(child: Center(child: CircularProgressIndicator(color: VSPColors.accent)))
+                  else if (rows.isEmpty)
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          isArabic ? 'لا توجد تحديات مكتملة في هذا الموسم حتى الآن.' : 'No completed challenges recorded yet.',
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: ListView.separated(
+                        controller: ctrl,
+                        itemCount: rows.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final r = rows[i];
+                          return ListTile(
+                            tileColor: VSPColors.surfaceAlt,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                            leading: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('#${r.activityRank}',
+                                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900)),
+                                const SizedBox(width: 8),
+                                VspShieldBadge(tier: r.currentShield, size: 32, isArabic: isArabic),
+                              ],
+                            ),
+                            title: Text(r.teamName,
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5)),
+                            subtitle: Text('${r.governorate} • ${r.seasonYear}',
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  isArabic ? '${r.approvedChallenges} تحدٍ' : '${r.approvedChallenges} ch',
+                                  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 13),
+                                ),
+                                Text(
+                                  '${r.seasonXp.toStringAsFixed(0)} XP',
+                                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return StreamBuilder<List<Team>>(
-      stream: _stream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
-        }
-        if (snapshot.hasError) {
-          return VSPErrorState(
-            customMessage: snapshot.error?.toString(),
-            onRetry: _handleRetry,
-          );
-        }
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-        final List<Team> allTeams = snapshot.data ?? [];
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+    }
+    if (_error != null) {
+      return VSPErrorState(
+        customMessage: _error,
+        onRetry: () {
+          _loadRanking();
+          widget.onRetry();
+        },
+      );
+    }
 
-        final teams = allTeams.where((team) {
-          final matchesLocation = widget.selectedLocation == 'All' ||
-              team.governorate.toLowerCase() == widget.selectedLocation.toLowerCase() ||
-              EgyptGovernorates.resolveGoogleName(team.governorate) == widget.selectedLocation ||
-              (EgyptGovernorates.resolveGoogleName(team.governorate) != null &&
-                  EgyptGovernorates.resolveGoogleName(team.governorate) ==
-                      EgyptGovernorates.resolveGoogleName(widget.selectedLocation));
-
-          final matchesSport = team.sportType.toLowerCase() == widget.selectedSport.toLowerCase();
-
-          return matchesLocation && matchesSport;
-        }).toList();
-
-        if (teams.isEmpty) {
-          return const TeamsEmptyState();
-        }
-
-        // Sort by points desc
-        teams.sort((a, b) => b.points.compareTo(a.points));
-
-        final totalTeams = teams.length;
-        final top3 = teams.take(3).toList();
-        final rest = teams.skip(3).toList();
-
-        final auth = Provider.of<AuthProvider>(context, listen: false);
-        final currentUid = auth.currentUser?.uid;
-
-        bool isUserTeam(Team team) {
-          if (currentUid == null) return false;
-          return team.captainId == currentUid || team.memberUids.contains(currentUid);
-        }
-
-        final myTeamIndex = teams.indexWhere((t) => isUserTeam(t));
-        final myTeam = myTeamIndex != -1 ? teams[myTeamIndex] : null;
-        final myTeamRank = myTeamIndex != -1 ? myTeamIndex + 1 : null;
-
-        Widget content;
-
-        if (teams.length < 3) {
-          content = ListView.builder(
-            padding: EdgeInsets.fromLTRB(16, VSPSpacing.md, 16, MediaQuery.of(context).padding.bottom + (myTeam != null ? 80 : 24)),
-            physics: const BouncingScrollPhysics(),
-            itemCount: teams.length,
-            itemBuilder: (ctx, i) => VSPFadeInItem(
-              index: i,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildRankListItem(context, teams[i], i + 1, isMyTeam: isUserTeam(teams[i]), totalTeams: totalTeams),
-              ),
+    final headerBanner = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: VSPColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(VSPRadius.lg),
+              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
             ),
-          );
-        } else {
-          content = SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 12).copyWith(
-              bottom: (myTeam != null ? 90.0 : 40.0),
-            ),
-            physics: const BouncingScrollPhysics(),
-            child: Column(
+            child: Row(
               children: [
-                // Premium Podium
-                SizedBox(
-                  height: 290,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Rank 2 - Left (Silver)
-                      Expanded(
-                        child: VSPFadeInItem(
-                          index: 1,
-                          child: ChampionPodiumItem(
-                            rank: 2,
-                            name: top3[1].name,
-                            logo: top3[1].logoUrl.isNotEmpty ? top3[1].logoUrl : top3[1].captainImageUrl,
-                            points: top3[1].points,
-                            badgeIcon: Iconsax.medal_star_copy,
-                            borderColor: VSPColors.medalSilver,
-                            bgColor: VSPColors.surface,
-                            isMyTeam: isUserTeam(top3[1]),
-                          ),
-                        ),
+                      Text(
+                        isArabic
+                            ? 'الترتيب التنافسي الشهري (${_monthKey.isNotEmpty ? _monthKey : 'الشهر الحالي'})'
+                            : 'Monthly Competitive Ranking ($_monthKey)',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
                       ),
-                      const SizedBox(width: 10),
-                      // Rank 1 - Center (Gold)
-                      Expanded(
-                        child: VSPFadeInItem(
-                          index: 0,
-                          child: ChampionPodiumItem(
-                            rank: 1,
-                            name: top3[0].name,
-                            logo: top3[0].logoUrl.isNotEmpty ? top3[0].logoUrl : top3[0].captainImageUrl,
-                            points: top3[0].points,
-                            badgeIcon: Iconsax.crown_copy,
-                            borderColor: VSPColors.accent,
-                            bgColor: VSPColors.surfaceAlt,
-                            isCenter: true,
-                            isMyTeam: isUserTeam(top3[0]),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // Rank 3 - Right (Bronze)
-                      Expanded(
-                        child: VSPFadeInItem(
-                          index: 2,
-                          child: ChampionPodiumItem(
-                            rank: 3,
-                            name: top3[2].name,
-                            logo: top3[2].logoUrl.isNotEmpty ? top3[2].logoUrl : top3[2].captainImageUrl,
-                            points: top3[2].points,
-                            badgeIcon: Iconsax.award_copy,
-                            borderColor: VSPColors.medalBronze,
-                            bgColor: VSPColors.surface,
-                            isMyTeam: isUserTeam(top3[2]),
-                          ),
-                        ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isArabic
+                            ? 'جائزة متصدر المحافظة: ساعة حجز ملعب مجانية • الفوز 3 / التعادل 1 / الخسارة 0'
+                            : 'Governorate Leader Prize: 1 Free Pitch Hour • Win 3 / Draw 1 / Loss 0',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 28),
-
-                // Expanded Ranking List (#4, #5...)
-                ...List.generate(rest.length, (index) {
-                  final team = rest[index];
-                  final rank = index + 4;
-                  return VSPFadeInItem(
-                    index: index + 3,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _buildRankListItem(
-                        context,
-                        team,
-                        rank,
-                        isMyTeam: isUserTeam(team),
-                        totalTeams: totalTeams,
-                      ),
-                    ),
-                  );
-                }),
-
-                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => _showMostActiveModal(context, isArabic),
+                  child: Text(
+                    isArabic ? 'الأكثر نشاطاً' : 'Most Active',
+                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 11.5),
+                  ),
+                ),
               ],
             ),
-          );
-        }
+          ),
+        ],
+      ),
+    );
 
-        if (myTeam != null && myTeamRank != null) {
-          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-          return Stack(
-            children: [
-              content,
-              Positioned(
-                bottom: 12,
-                left: 16,
-                right: 16,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: VSPColors.surfaceAlt.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(VSPRadius.lg),
-                    border: Border.all(color: VSPColors.accent, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
+    if (_entries.isEmpty) {
+      return Column(
+        children: [
+          headerBanner,
+          const Expanded(child: TeamsEmptyState()),
+        ],
+      );
+    }
+
+    final top3 = _entries.take(3).toList();
+    final rest = _entries.skip(3).toList();
+    final myEntryIndex = _entries.indexWhere((e) => _myTeamIds.contains(e.teamId));
+    final myEntry = myEntryIndex != -1 ? _entries[myEntryIndex] : null;
+
+    Widget content;
+    if (_entries.length < 3) {
+      content = ListView.builder(
+        padding: EdgeInsets.fromLTRB(16, 4, 16, MediaQuery.of(context).padding.bottom + (myEntry != null ? 90 : 24)),
+        physics: const BouncingScrollPhysics(),
+        itemCount: _entries.length,
+        itemBuilder: (ctx, i) => VSPFadeInItem(
+          index: i,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _buildRankListItem(context, _entries[i], isMyTeam: _myTeamIds.contains(_entries[i].teamId), isArabic: isArabic),
+          ),
+        ),
+      );
+    } else {
+      content = SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 4).copyWith(
+          bottom: myEntry != null ? 96.0 : 40.0,
+        ),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 290,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: VSPFadeInItem(
+                      index: 1,
+                      child: ChampionPodiumItem(
+                        rank: top3[1].rank,
+                        name: top3[1].teamName,
+                        logo: top3[1].logoUrl,
+                        points: top3[1].rankingPoints,
+                        badgeIcon: Iconsax.medal_star_copy,
+                        borderColor: VSPColors.medalSilver,
+                        bgColor: VSPColors.surface,
+                        isMyTeam: _myTeamIds.contains(top3[1].teamId),
                       ),
-                      BoxShadow(
-                        color: VSPColors.accent.withValues(alpha: 0.25),
-                        blurRadius: 12,
-                        spreadRadius: 1,
-                      ),
-                    ],
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: VSPFadeInItem(
+                      index: 0,
+                      child: ChampionPodiumItem(
+                        rank: top3[0].rank,
+                        name: top3[0].teamName,
+                        logo: top3[0].logoUrl,
+                        points: top3[0].rankingPoints,
+                        badgeIcon: Iconsax.crown_copy,
+                        borderColor: VSPColors.accent,
+                        bgColor: VSPColors.surfaceAlt,
+                        isCenter: true,
+                        isMyTeam: _myTeamIds.contains(top3[0].teamId),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: VSPFadeInItem(
+                      index: 2,
+                      child: ChampionPodiumItem(
+                        rank: top3[2].rank,
+                        name: top3[2].teamName,
+                        logo: top3[2].logoUrl,
+                        points: top3[2].rankingPoints,
+                        badgeIcon: Iconsax.award_copy,
+                        borderColor: VSPColors.medalBronze,
+                        bgColor: VSPColors.surface,
+                        isMyTeam: _myTeamIds.contains(top3[2].teamId),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            ...List.generate(rest.length, (index) {
+              final entry = rest[index];
+              return VSPFadeInItem(
+                index: index + 3,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _buildRankListItem(
+                    context,
+                    entry,
+                    isMyTeam: _myTeamIds.contains(entry.teamId),
+                    isArabic: isArabic,
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        headerBanner,
+        Expanded(
+          child: myEntry != null
+              ? Stack(
+                  children: [
+                    content,
+                    Positioned(
+                      bottom: 12,
+                      left: 16,
+                      right: 16,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surfaceAlt.withValues(alpha: 0.96),
+                          borderRadius: BorderRadius.circular(VSPRadius.lg),
+                          border: Border.all(color: VSPColors.accent, width: 1.5),
+                        ),
+                        child: Row(
                           children: [
-                            Text(
-                              isArabic ? 'موقع فريقك في الترتيب العام' : 'Your Team Standing',
-                              style: TextStyle(
-                                color: VSPColors.textSecondary.withValues(alpha: 0.9),
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                            VspShieldBadge(tier: myEntry.currentShield, size: 34, isArabic: isArabic),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    isArabic ? 'ترتيب فريقك هذا الشهر (${myEntry.governorate})' : 'Your Monthly Standing (${myEntry.governorate})',
+                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    '${myEntry.teamName} • ${isArabic ? 'المركز #${myEntry.rank}' : 'Rank #${myEntry.rank}'}',
+                                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
                             ),
-                            Text(
-                              '${myTeam.name} • ${isArabic ? 'المركز #$myTeamRank' : 'Rank #$myTeamRank'}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: VSPColors.accent,
+                                borderRadius: BorderRadius.circular(VSPRadius.full),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              child: Text(
+                                isArabic ? '${myEntry.rankingPoints} نقطة ترتيب' : '${myEntry.rankingPoints} pts',
+                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent,
-                          borderRadius: BorderRadius.circular(VSPRadius.full),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context)!.pointsCount(myTeam.points),
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-
-        return content;
-      },
+                    ),
+                  ],
+                )
+              : content,
+        ),
+      ],
     );
   }
 
-  Widget _buildRankListItem(BuildContext context, Team team, int rank, {bool isMyTeam = false, int totalTeams = 10}) {
+  Widget _buildRankListItem(
+    BuildContext context,
+    MonthlyRankingEntry entry, {
+    required bool isMyTeam,
+    required bool isArabic,
+  }) {
     final initialLetter =
-        team.name.trim().isNotEmpty ? team.name.trim().split(' ').last.substring(0, 1).toUpperCase() : 'T';
+        entry.teamName.trim().isNotEmpty ? entry.teamName.trim().split(' ').last.substring(0, 1).toUpperCase() : 'T';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: isMyTeam ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: isMyTeam
-            ? Border.all(color: VSPColors.accent, width: 1.5)
-            : Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
-        boxShadow: isMyTeam
-            ? [
-                BoxShadow(
-                  color: VSPColors.accent.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                )
-              ]
-            : null,
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => TeamProfileScreen(teamId: entry.teamId)),
       ),
-      child: Row(
-        children: [
-          // Rank Number
-          SizedBox(
-            width: 28,
-            child: Text(
-              '#$rank',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: rank <= 3 ? VSPColors.accent : VSPColors.textSecondary,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                  ),
-            ),
-          ),
-
-          // Team Logo / Initial Avatar
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: VSPColors.surfaceAlt,
-              border: Border.all(color: VSPColors.divider, width: 1),
-            ),
-            child: ClipOval(
-              child: team.logoUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: team.logoUrl,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) =>
-                          ChampionInitialBadge(letter: initialLetter, accentColor: VSPColors.accent),
-                    )
-                  : ChampionInitialBadge(letter: initialLetter, accentColor: VSPColors.accent),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Team Name & Match Stats
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        team.name,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isMyTeam ? VSPColors.accent : VSPColors.textPrimary,
-                            ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+      borderRadius: BorderRadius.circular(VSPRadius.lg),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isMyTeam ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          border: isMyTeam
+              ? Border.all(color: VSPColors.accent, width: 1.5)
+              : Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 30,
+              child: Text(
+                '#${entry.rank}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: entry.rank <= 3 ? VSPColors.accent : VSPColors.textSecondary,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
                     ),
-                    if (isMyTeam)
-                      Container(
-                        margin: const EdgeInsetsDirectional.only(start: 6),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent,
-                          borderRadius: BorderRadius.circular(VSPRadius.full),
-                        ),
-                        child: Text(
-                          Localizations.localeOf(context).languageCode == 'ar' ? 'فريقك' : 'Your Team',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    FutureBuilder<bool>(
-                      future: TeamRepository().has1v1Champion(team.id),
-                      builder: (context, champSnap) {
-                        if (champSnap.data == true) {
-                          return Container(
-                            margin: const EdgeInsetsDirectional.only(start: 6),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: VSPColors.warning.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(VSPRadius.full),
-                              border: Border.all(color: VSPColors.warning, width: 0.8),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Iconsax.crown_copy, size: 11, color: VSPColors.warning),
-                                SizedBox(width: 3),
-                                Text(
-                                  'بطل 1v1',
-                                  style: TextStyle(
-                                      color: VSPColors.warning, fontSize: 9, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  AppLocalizations.of(context)!.teamStats(team.matchesPlayed, team.wins, team.draws, team.losses),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          // Points Column
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: VSPColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: VSPColors.divider.withValues(alpha: 0.4)),
-            ),
-            child: Text(
-              AppLocalizations.of(context)!.pointsCount(team.points),
-              style: const TextStyle(
-                color: VSPColors.accent,
-                fontWeight: FontWeight.w900,
-                fontSize: 12,
               ),
             ),
-          ),
-        ],
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: VSPColors.surfaceAlt,
+                border: Border.all(color: VSPColors.divider, width: 1),
+              ),
+              child: ClipOval(
+                child: entry.logoUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: entry.logoUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => ChampionInitialBadge(letter: initialLetter, accentColor: VSPColors.accent),
+                      )
+                    : ChampionInitialBadge(letter: initialLetter, accentColor: VSPColors.accent),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          entry.teamName,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: isMyTeam ? VSPColors.accent : VSPColors.textPrimary,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (entry.currentShield != TeamShieldTier.none) ...[
+                        const SizedBox(width: 6),
+                        VspShieldBadge(tier: entry.currentShield, size: 20, isArabic: isArabic),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isArabic
+                        ? '${entry.governorate} • لعب ${entry.matchesPlayed} • ف ${entry.wins} • ت ${entry.draws} • خ ${entry.losses}'
+                        : '${entry.governorate} • P ${entry.matchesPlayed} • W ${entry.wins} • D ${entry.draws} • L ${entry.losses}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.4)),
+              ),
+              child: Text(
+                isArabic ? '${entry.rankingPoints} نقطة' : '${entry.rankingPoints} pts',
+                style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

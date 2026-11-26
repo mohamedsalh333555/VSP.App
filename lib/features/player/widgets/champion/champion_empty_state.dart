@@ -130,22 +130,3 @@ class TeamsEmptyState extends StatelessWidget {
     );
   }
 }
-
-class OneVsOneEmptyState extends StatelessWidget {
-  final String locationName;
-
-  const OneVsOneEmptyState({super.key, required this.locationName});
-
-  @override
-  Widget build(BuildContext context) {
-    return ChampionEmptyState(
-      icon: Iconsax.user_copy,
-      titleArabic: 'لا توجد بطولة واحد ضد واحد حالياً',
-      titleEnglish: 'No active 1vs1 tournament',
-      descriptionArabic:
-          'لا توجد بطولة واحد ضد واحد نشطة حالياً في $locationName. ترقب إعلان البطولة القادمة.',
-      descriptionEnglish:
-          'There is no active 1vs1 tournament in $locationName right now. Stay tuned for the next tournament.',
-    );
-  }
-}

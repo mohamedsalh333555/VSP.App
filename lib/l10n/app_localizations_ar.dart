@@ -489,7 +489,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cancelBookingConfirm =>
-      'هل تريد إلغاء الحجز؟ سيعود المبلغ كاملاً إذا كان موعد المباراة بعد أكثر من 8 ساعات من الآن.';
+      'هل أنت متأكد من إلغاء هذا الحجز؟ راجع تفاصيل الاسترداد الموضحة أدناه قبل التأكيد.';
 
   @override
   String get keepBooking => 'لأ، أريد اللعب!';
@@ -713,17 +713,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get teams => 'الفرق';
 
   @override
-  String get oneVsOnePlayers => 'لاعبو 1v1';
-
-  @override
-  String get noOneVsOneRanked => 'لا يوجد لاعبون مصنفون بعد';
-
-  @override
-  String skillPointsLabel(int skill, int goals) {
-    return 'المهارة: $skill | أهداف: $goals';
-  }
-
-  @override
   String get pts => 'نقطة';
 
   @override
@@ -732,10 +721,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get vspOfficialLeague => 'دوري VSP الرسمي 1V1';
-
-  @override
-  String get watchHighlights => 'شاهد الملخصات وتابع أقوى تصنيف للشوارع!';
+  String get watchHighlights =>
+      'نافس مع فريقك في دوري المحافظة وبطولات VSP الرسمية!';
 
   @override
   String teamStats(int mp, int w, int d, int l) {
@@ -2435,18 +2422,18 @@ class AppLocalizationsAr extends AppLocalizations {
       'افتح قسم البطولات لإنشاء البطولة وضبط قواعد التسجيل والجوائز ومتابعة مبارياتها.';
 
   @override
-  String get ownerFaq5_q => 'ما هي باقات الاشتراك لأصحاب الملاعب؟';
+  String get ownerFaq5_q => 'هل توجد اشتراكات شهرية لأصحاب الملاعب؟';
 
   @override
   String get ownerFaq5_a =>
-      'الاستخدام مجاني لإدارة ملعب واحد، بينما تضيف Pro سعة ملاعب أكبر ومزايا تشغيلية متقدمة وVSP Copilot.';
+      'لا، التسجيل وإدارة جميع ملاعبك مجاني بالكامل بدون أي اشتراكات شهرية. تطبق المنصة فقط عمولة 5% على قيمة الحجز.';
 
   @override
   String get ownerFaq6_q => 'كيف يتم احتساب رسوم المنصة والتسوية؟';
 
   @override
   String get ownerFaq6_a =>
-      'تحسب الرسوم وعمليات معالجة الدفع وفق القواعد المالية على الخادم وتظهر في الشاشات المالية الخاصة بالمالك.';
+      'تُحتسب عمولة VSP بنسبة 5% من مالك الملعب (تُخصم من قيمة الحجز) و5% من اللاعب (غير مستردة) وتظهر التسوية تلقائياً في الشاشات المالية.';
 
   @override
   String get skipButton => 'تخطي';
@@ -2460,4 +2447,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get updateNow => 'تحديث الآن';
+
+  @override
+  String get strongestTeamTab => 'أقوى فريق';
+
+  @override
+  String get specialVspReward => 'جائزة خاصة من VSP';
+
+  @override
+  String get monthlyChampionAward => 'بطل الشهر';
+
+  @override
+  String get seasonXpLabel => 'خبرة الموسم';
 }

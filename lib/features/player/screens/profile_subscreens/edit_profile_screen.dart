@@ -16,7 +16,7 @@ import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../core/utils/phone_utils.dart';
-import '../../../auth/screens/welcome_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class EditProfileScreen extends StatefulWidget {
  const EditProfileScreen({super.key});
@@ -350,11 +350,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
  void _showDeleteAccountDialog(BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+ final confirmController = TextEditingController();
+ final requiredWord = isArabic ? 'حذف' : 'DELETE';
 
  showDialog(
  context: context,
  builder: (context) => StatefulBuilder(
  builder: (context, setDialogState) {
+ final isConfirmed = confirmController.text.trim().toUpperCase() == requiredWord.toUpperCase();
  return AlertDialog(
  backgroundColor: VSPColors.surface,
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -362,11 +365,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  isArabic ? 'حذف الحساب نهائياً؟ ' : 'Delete Account?', 
  style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
  ),
- content: Text(
+ content: Column(
+ mainAxisSize: MainAxisSize.min,
+ crossAxisAlignment: CrossAxisAlignment.start,
+ children: [
+ Text(
  isArabic 
  ? 'هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتك وفريقك وتاريخ مبارياتك نهائياً.' 
  : 'Are you sure? This action cannot be undone. You will lose all your data, teams, and match history permanently.',
  style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
+ ),
+ const SizedBox(height: VSPSpacing.md),
+ Text(
+ isArabic ? 'اكتب كلمة "$requiredWord" للتأكيد:' : 'Type "$requiredWord" to confirm:',
+ style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12),
+ ),
+ const SizedBox(height: VSPSpacing.xs),
+ TextField(
+ controller: confirmController,
+ onChanged: (_) => setDialogState(() {}),
+ style: const TextStyle(color: VSPColors.textPrimary),
+ decoration: InputDecoration(
+ hintText: requiredWord,
+ hintStyle: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.4)),
+ filled: true,
+ fillColor: VSPColors.surfaceAlt,
+ border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
+ ),
+ ),
+ ],
  ),
  actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
  actions: [
@@ -386,10 +413,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  child: PrimaryButton(
  text: isArabic ? 'حذف' : 'Delete',
  height: 48,
- color: VSPColors.error,
+ color: isConfirmed ? VSPColors.error : VSPColors.error.withValues(alpha: 0.35),
  textColor: VSPColors.background,
  isLoading: _isDeleting,
- onPressed: _isDeleting ? null : () async {
+ onPressed: (_isDeleting || !isConfirmed) ? null : () async {
  setDialogState(() => _isDeleting = true);
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
  final success = await authProvider.deleteAccount();
@@ -397,10 +424,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  if (!context.mounted) return;
  
  if (success) {
- Navigator.of(context).pushAndRemoveUntil(
- MaterialPageRoute(builder: (_) => const WelcomeScreen()),
- (route) => false,
- );
+ Navigator.pop(context);
+ context.go('/welcome');
  } else {
  setDialogState(() => _isDeleting = false);
  VSPFeedback.showError(context, authProvider.errorMessage ?? (isArabic ? "فشل حذف الحساب" : "Failed to delete account"));

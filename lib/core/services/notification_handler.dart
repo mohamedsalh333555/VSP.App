@@ -1,7 +1,5 @@
 import '../../data/models.dart';
-import '../repositories/booking_repository.dart';
 import '../repositories/notification_repository.dart';
-import 'logger_service.dart';
 import 'no_show_dispute_service.dart';
 
 /// Centralized factory for creating and sending notifications based on the VSP Notification Matrix.
@@ -275,28 +273,8 @@ class NotificationHandler {
   }
 
   // --------------------------------------------------------------------------
-  // 5. DEBT MANAGEMENT (Gentle Reminders Only — NO Auto-Blocking)
+  // 5. DEBT MANAGEMENT — Removed (100% online payments, no cash debt possible)
   // --------------------------------------------------------------------------
-
-  /// Gentle reminder: Notify player about outstanding cash payment
-  static Future<void> notifyDebtReminder({
-    required String userId,
-    required String stadiumName,
-    required double amount,
-  }) async {
-    final notif = AppNotification(
-      id: '',
-      title: 'Payment Reminder ',
-      body: 'You have a pending cash payment of ${amount.toStringAsFixed(0)} EGP for $stadiumName. Please settle it at the stadium at your earliest convenience.',
-      type: 'debt_reminder',
-      createdAt: DateTime.now(),
-      metadata: {
-        'amount': amount,
-        'stadiumName': stadiumName,
-      },
-    );
-    await _notificationRepo.sendNotification(userId, notif);
-  }
 
   // --------------------------------------------------------------------------
   // 6. MATCH RESULT NOTIFICATION
@@ -319,27 +297,8 @@ class NotificationHandler {
   }
 
   // --------------------------------------------------------------------------
-  // 7. DEBT CHECKER (callable from a scheduled job or app start)
+  // 7. DEBT CHECKER — Removed (100% online payments, no cash debt possible)
   // --------------------------------------------------------------------------
-
-  /// Check all unpaid bookings and send gentle reminder notifications.
-  /// NO blocking logic — only reminders.
-  static Future<void> checkAndSendDebtAlerts(String userId) async {
-    try {
-      final unpaidBookings = await SupabaseBookingRepository().getUnpaidBookingsForUser(userId);
-
-      for (final booking in unpaidBookings) {
-        // Send a gentle reminder for any unpaid booking
-        await notifyDebtReminder(
-          userId: userId,
-          stadiumName: booking.stadiumName,
-          amount: booking.totalPrice,
-        );
-      }
-    } catch (e) {
-      VSPLogger.e('Error checking debt alerts', e);
-    }
-  }
 
   /// Notify joined players that the host cancelled the match
   static Future<void> notifyMatchCancelledByHost({

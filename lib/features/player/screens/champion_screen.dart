@@ -4,13 +4,12 @@ import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/repositories/league_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../widgets/champion/champion_podium_components.dart';
 import '../widgets/champion/championships_list_tab.dart';
 import '../widgets/champion/teams_ranking_tab.dart';
-import '../widgets/champion/vsp_1v1_league_tab.dart';
+import '../widgets/champion/strongest_team_tab.dart';
 
 final GlobalKey<ChampionScreenState> championScreenKey = GlobalKey<ChampionScreenState>();
 
@@ -167,7 +166,7 @@ class ChampionScreenState extends State<ChampionScreen>
                           ),
                         ),
                       ),
-                      // Tab 2: 1vs1
+                      // Tab 2: Strongest Team Official VSP Championship
                       Expanded(
                         child: GestureDetector(
                           onTap: () => _tabController.animateTo(2),
@@ -175,8 +174,8 @@ class ChampionScreenState extends State<ChampionScreen>
                           child: Center(
                             child: Text(
                               Localizations.localeOf(context).languageCode == 'ar'
-                                  ? '1 ضد 1'
-                                  : '1vs1',
+                                  ? 'أقوى فريق'
+                                  : 'Strongest Team',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -242,12 +241,8 @@ class ChampionScreenState extends State<ChampionScreen>
                     selectedSport: _selectedSport,
                     onRetry: () => setState(() {}),
                   ),
-                  Vsp1v1LeagueTab(
+                  StrongestTeamTab(
                     selectedLocation: _selectedLocation,
-                    onLocationChanged: (loc) => setState(() => _selectedLocation = loc),
-                    getActive1v1Stream: (loc) => LeagueRepository().getActive1v1TournamentStream(governorate: loc),
-                    getTournamentPlayersStream: (id) => LeagueRepository().getTournamentPlayersStream(id, isCompleted: false),
-                    getStandingsStream: (id) => LeagueRepository().get1v1Standings(tournamentId: id),
                     onRetry: () => setState(() {}),
                   ),
                 ],

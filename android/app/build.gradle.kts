@@ -68,8 +68,8 @@ android {
                     "Release signing key missing. For a test-only APK, set VSP_TEST_RELEASE_APK=true."
                 )
             }
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
     }
 

@@ -15,8 +15,6 @@ import '../../../core/widgets/skeleton_loader.dart';
 import '../../../core/services/support_service.dart';
 import '../../../shared/widgets/public_match_card.dart';
 import '../../../shared/widgets/team_card_hero.dart';
-import '../../../core/repositories/league/team_league_repository.dart';
-import '../widgets/league/team_league_tab.dart';
 import 'player_home_screen.dart';
 
 class TeamDashboardScreen extends StatefulWidget {
@@ -30,7 +28,6 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Team? _userTeam;
   final ScrollController _scrollController = ScrollController();
   late final Stream<List<Booking>> _matchesStream;
-  int _selectedMainTab = 0; // 0 = تجميع افتراضياً، 1 = دوري
 
   @override
   void initState() {
@@ -51,12 +48,6 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
       if (mounted) {
         setState(() => _userTeam = team);
-        if (team != null) {
-          final activeLeague = await TeamLeagueRepository().getTeamActiveLeague(team.id);
-          if (mounted && activeLeague != null && (activeLeague.status == 'ongoing' || activeLeague.status == 'open')) {
-            setState(() => _selectedMainTab = 1);
-          }
-        }
       }
     }
   }
@@ -90,120 +81,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       body: SafeArea(
         top: true,
         bottom: false,
-        child: Column(
-          children: [
-            // Pill Switcher: [ تجميع ] [ دوري ] مطابقة 100% لشاشة الأبطال بدون إيموجي
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              height: 48,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-                border: Border.all(color: VSPColors.divider, width: 0.5),
-              ),
-              child: Stack(
-                children: [
-                  // Animated background pill for 2 tabs
-                  AnimatedAlign(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeInOut,
-                    alignment: Directionality.of(context) == TextDirection.rtl
-                        ? (_selectedMainTab == 0
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft)
-                        : (_selectedMainTab == 0
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight),
-                    child: FractionallySizedBox(
-                      widthFactor: 0.5,
-                      child: Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent,
-                          borderRadius: BorderRadius.circular(VSPRadius.full),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      // Tab 0: تجميع
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedMainTab = 0);
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
-                            child: Builder(
-                              builder: (context) {
-                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                final label = isArabic ? 'تجميع' : 'Gathering';
-                                return Text(
-                                  label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: _selectedMainTab == 0 ? Colors.black : Colors.white,
-                                        fontWeight: _selectedMainTab == 0 ? FontWeight.w900 : FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Tab 1: دوري
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedMainTab = 1);
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
-                            child: Builder(
-                              builder: (context) {
-                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                final label = isArabic ? 'دوري' : 'League';
-                                return Text(
-                                  label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: _selectedMainTab == 1 ? Colors.black : Colors.white,
-                                        fontWeight: _selectedMainTab == 1 ? FontWeight.w900 : FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: IndexedStack(
-                index: _selectedMainTab,
-                children: [
-                  _buildGatheringTab(),
-                  TeamLeagueTab(
-                    userTeam: _userTeam,
-                    onTeamCreated: _fetchUserTeam,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        child: _buildGatheringTab(),
       ),
     );
   }

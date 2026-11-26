@@ -109,9 +109,13 @@ void main() async {
     VSPLogger.w("Firebase auxiliary initialization notice: $e");
   }
   
-  // Initialize Remote Config & App Feature Engine
+  // Initialize Remote Config & App Feature Engine (non-blocking offline safe)
   final configService = RemoteConfigService();
-  await configService.initialize();
+  try {
+    await configService.initialize().timeout(const Duration(seconds: 5));
+  } catch (e) {
+    VSPLogger.w("RemoteConfig initialization notice (using defaults): $e");
+  }
  
  // System UI Style
  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);

@@ -3,6 +3,7 @@ import '../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
+import '../../../core/repositories/gamification_repository.dart';
 import '../../../core/repositories/matchup_repository.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/user_repository.dart';
@@ -10,6 +11,8 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/utils/vsp_launcher_utils.dart';
 import '../../../data/models.dart';
+import '../../../data/models/team_gamification_models.dart';
+import '../../../shared/widgets/team_gamification_panel.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/team_profile/team_profile_hero_header.dart';
 import '../widgets/team_profile/team_profile_stats_grid.dart';
@@ -39,7 +42,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   bool _isLoadingMembers = true;
   Team? _fetchedTeam;
   bool _isLoadingTeam = false;
-  bool _has1v1Champion = false;
+  TeamGamificationProfile? _gamificationProfile;
   List<Map<String, dynamic>> _headToHeadRecords = [];
   bool _isGeneratingCode = false;
 
@@ -50,7 +53,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     super.initState();
     final currentTeamId = widget.team?.id ?? widget.teamId;
     if (currentTeamId != null) {
-      _check1v1Champion(currentTeamId);
+      _loadGamificationProfile(currentTeamId);
       _loadHeadToHead(currentTeamId);
     }
     if (widget.team != null) {
@@ -73,16 +76,16 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     }
   }
 
-  Future<void> _check1v1Champion(String teamId) async {
+  Future<void> _loadGamificationProfile(String teamId) async {
     try {
-      final hasChamp = await TeamRepository().has1v1Champion(teamId);
+      final profile = await GamificationRepository.instance.getTeamGamificationProfile(teamId);
       if (mounted) {
         setState(() {
-          _has1v1Champion = hasChamp;
+          _gamificationProfile = profile;
         });
       }
     } catch (e) {
-      debugPrint('Error checking 1v1 champion in team profile: $e');
+      debugPrint('Error loading gamification profile in team profile: $e');
     }
   }
 
@@ -152,9 +155,19 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   }
 
   void _contactCaptain() async {
-    final phone = team.captainPhone;
+    var phone = team.captainPhone;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
+    if ((phone == null || phone.trim().isEmpty) && team.captainId.isNotEmpty) {
+      try {
+        final captainData = await UserRepository().getUserData(team.captainId);
+        phone = captainData?['phone']?.toString();
+      } catch (e) {
+        debugPrint('Error fetching captain phone: $e');
+      }
+    }
+
+    if (!mounted) return;
     if (phone == null || phone.trim().isEmpty) {
       VSPFeedback.showError(
         context,
@@ -218,7 +231,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             // 1. Team Hero Header
             TeamProfileHeroHeader(
               team: team,
-              has1v1Champion: _has1v1Champion,
+              currentShield: _gamificationProfile?.currentShield,
+              monthlyRank: _gamificationProfile?.monthlyRank,
             ),
 
             if (team.bio.trim().isNotEmpty) ...[
@@ -270,8 +284,16 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
 
             const SizedBox(height: 32),
 
-            // 5. Achievements
-            TeamProfileAchievementsSection(team: team),
+            // 5. Public Gamification, Shield, Achievements & Season History
+            if (_gamificationProfile != null) ...[
+              TeamGamificationPanel(
+                profile: _gamificationProfile!,
+                team: team,
+                isPrivateView: false,
+              ),
+              const SizedBox(height: 24),
+            ] else
+              TeamProfileAchievementsSection(team: team),
 
             // 6. Head to Head History
             if (_headToHeadRecords.isNotEmpty) ...[

@@ -27,6 +27,21 @@ class ChampionshipRulesTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _buildInfoSection(
+            isArabic ? 'نقاط الخبرة (XP) في البطولة' : 'Championship XP Rewards',
+            isArabic
+                ? '• المركز الأول (البطل): +800 XP\n'
+                    '• المركز الثاني (الوصيف): +600 XP\n'
+                    '• باقي الفرق المشاركة المستوفية لشروط اللعب: +200 XP\n'
+                    '• تُحتسب أيضاً كمشاركة بطولة في المهام الشهرية (+150 XP مرة واحدة شهرياً).\n'
+                    '• نتائج البطولات لا تغير نقاط الترتيب الشهري للدوري (التحديات فقط).'
+                : '• Champion (1st): +800 XP\n'
+                    '• Runner-up (2nd): +600 XP\n'
+                    '• Other qualified completer teams: +200 XP\n'
+                    '• Counts once per month toward the +150 XP Tournament Mission.\n'
+                    '• Tournament matches do not alter the Monthly Governorate League Ranking.',
+          ),
+          const SizedBox(height: 16),
+          _buildInfoSection(
             isArabic ? 'آلية تسليم الجوائز المالية' : 'Prize Handover & Distribution',
             isArabic
                 ? '• تُسلم الجوائز والمكافآت المالية للفرق الفائزة بالمركز الأول والوصيف فور انتهاء المباراة النهائية مباشرة.\n• التسليم يتم نقداً بالملعب أو عبر تحويل فوري معتمد (InstaPay / المحفظة الإلكترونية) بمعرفة إدارة الملعب والمنظم.'

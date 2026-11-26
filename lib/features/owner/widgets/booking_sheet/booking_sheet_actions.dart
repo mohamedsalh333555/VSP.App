@@ -234,7 +234,8 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
   }
 }
 
-/// Bottom action buttons for the booking sheet modal, adapting to booking payment and lifecycle state.
+/// Bottom action buttons for the booking sheet modal, adapting to booking lifecycle state.
+/// Note: cash confirmation and no-show reporting removed — all bookings are 100% online paid.
 class BookingSheetBottomActions extends StatelessWidget {
   final Booking? booking;
   final bool isEdit;
@@ -244,10 +245,10 @@ class BookingSheetBottomActions extends StatelessWidget {
   final bool isOwnerManual;
   final bool isSaving;
   final bool isDeleting;
-  final VoidCallback onConfirmCashPayment;
+  final VoidCallback onConfirmCashPayment; // kept for compat — no-op for new bookings
   final VoidCallback onCancelBooking;
   final VoidCallback onConfirmBooking;
-  final VoidCallback? onReportNoShow;
+  final VoidCallback? onReportNoShow; // kept for compat — no-op for new bookings
 
   const BookingSheetBottomActions({
     super.key,
@@ -278,8 +279,6 @@ class BookingSheetBottomActions extends StatelessWidget {
       return BookingSheetPastPanel(
         booking: booking!,
         isArabic: Localizations.localeOf(context).languageCode == 'ar',
-        onConfirmCashPayment: onConfirmCashPayment,
-        onReportNoShow: onReportNoShow,
         isSaving: isSaving,
       );
     }
@@ -289,7 +288,6 @@ class BookingSheetBottomActions extends StatelessWidget {
         isSaving: isSaving,
         isDeleting: isDeleting,
         isArabic: Localizations.localeOf(context).languageCode == 'ar',
-        onConfirmCashPayment: onConfirmCashPayment,
         onCancelBooking: onCancelBooking,
       );
     }

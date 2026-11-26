@@ -301,19 +301,6 @@
  "ranking": "Ranking",
  "championships": "Championships",
  "teams": "Teams",
- "oneVsOnePlayers": "1v1 Players",
- "noOneVsOneRanked": "No 1v1 players ranked yet",
- "skillPointsLabel": "SKILL: {skill} | G: {goals}",
- "@skillPointsLabel": {
- "placeholders": {
- "skill": {
- "type": "int"
- },
- "goals": {
- "type": "int"
- }
- }
- },
  "pts": "PTS",
  "noTeamsInLoc": "No teams in {location} yet",
  "@noTeamsInLoc": {
@@ -323,8 +310,7 @@
  }
  }
  },
- "vspOfficialLeague": "VSP 1V1 OFFICIAL LEAGUE",
- "watchHighlights": "Watch highlights & follow the ultimate street ranking!",
+ "watchHighlights": "Compete with your team in your governorate league and official VSP championships!",
  "teamStats": "MP: {mp} | W: {w} | D: {d} | L: {l}",
  "@teamStats": {
  "placeholders": {
@@ -1174,12 +1160,16 @@
   "ownerFaq3_a": "Use the Stadium Schedule and Operations views to block unavailable time, review incoming bookings, and manage the calendar.",
   "ownerFaq4_q": "How do I create and organize tournaments on my stadium?",
   "ownerFaq4_a": "Open the Tournaments section to create a tournament, configure its registration rules and prizes, and manage its matches.",
-  "ownerFaq5_q": "What are the subscription plans for stadium owners?",
-  "ownerFaq5_a": "Free lets you manage one stadium. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.",
+  "ownerFaq5_q": "Are there monthly subscription plans for stadium owners?",
+  "ownerFaq5_a": "No, joining and managing all your stadiums is completely free with no monthly subscriptions. Only a 5% platform commission applies per booking.",
   "ownerFaq6_q": "How do platform fees and settlement work?",
-  "ownerFaq6_a": "Platform fees and payment processing are calculated by the server-side financial rules and reflected in the owner financial views.",
+  "ownerFaq6_a": "A 5% VSP commission is deducted from the owner payout and a 5% non-refundable service fee applies to players, reflected automatically in your financial dashboard.",
   "skipButton": "Skip",
   "updateRequired": "Update Required",
   "updateAvailableMessage": "A new version of VSP is available with improved performance and new features.",
-  "updateNow": "Update Now"
+  "updateNow": "Update Now",
+  "strongestTeamTab": "Strongest Team",
+  "specialVspReward": "Special VSP Reward",
+  "monthlyChampionAward": "Monthly Champion",
+  "seasonXpLabel": "Season XP"
 }

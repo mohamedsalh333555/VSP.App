@@ -4,13 +4,12 @@ import '../../../core/models/user_model.dart';
 class FacilityOnboardingService {
   const FacilityOnboardingService._();
 
-  /// Determines whether the owner has stadium capacity remaining under their subscription tier.
+  /// All verified owners can add stadiums without subscription paywall limits.
   static bool canAddStadium({
     required UserModel? user,
     required int currentStadiumsCount,
   }) {
-    if (user == null) return false;
-    return currentStadiumsCount < user.maxStadiums;
+    return user != null;
   }
 
   /// Constructs the additionalData payload marking onboarding as confirmed.
@@ -22,18 +21,12 @@ class FacilityOnboardingService {
     return updated;
   }
 
-  /// Formats the current plan name based on trial status and user locale.
+  /// Formats the current account label (subscriptions removed — unified partner account).
   static String getPlanLabel({
     required UserModel user,
     required bool isArabic,
   }) {
-    if (user.isProPlan) {
-      if (user.isInActiveTrial) {
-        return isArabic ? 'تجربة Pro (7 أيام)' : 'Pro Trial (7 Days)';
-      }
-      return isArabic ? 'باقة الاحتراف (Pro)' : 'Pro Plan';
-    }
-    return isArabic ? 'الباقة الأساسية (مجاناً)' : 'Basic Plan (Free)';
+    return isArabic ? 'حساب شريك VSP (مجاني بدون اشتراك)' : 'VSP Partner Account (No Subscription)';
   }
 
   /// Calculates remaining trial days safely.

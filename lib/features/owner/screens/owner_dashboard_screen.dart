@@ -10,7 +10,6 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/services/logger_service.dart';
-import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_ledger_screen.dart';
 import 'add_stadium_wizard.dart';
@@ -33,13 +32,18 @@ import '../widgets/dashboard/owner_dashboard_header.dart';
 class OwnerDashboardScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
   final bool isHomeVisible;
-  const OwnerDashboardScreen({super.key, this.onNavigateTab, this.isHomeVisible = true});
+  const OwnerDashboardScreen({
+    super.key,
+    this.onNavigateTab,
+    this.isHomeVisible = true,
+  });
 
   @override
   State<OwnerDashboardScreen> createState() => _OwnerDashboardScreenState();
 }
 
-class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with SingleTickerProviderStateMixin {
+class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
+    with SingleTickerProviderStateMixin {
   int _selectedDashboardTab = 0; // 0 = التشغيل اليومي, 1 = التحليلات (Insights)
   String _selectedStadiumFilter = 'all';
   String _selectedTimePeriod = 'today';
@@ -66,7 +70,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   }
 
   String _generateMetricsCacheKey(List<Booking> bookings) {
-    final buffer = StringBuffer('$_selectedTimePeriod:$_selectedStadiumFilter:');
+    final buffer = StringBuffer(
+      '$_selectedTimePeriod:$_selectedStadiumFilter:',
+    );
     for (final b in bookings.take(50)) {
       buffer.write(
         '${b.id}:'
@@ -77,7 +83,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     }
     return buffer.toString().hashCode.toString();
   }
-
 
   Map<String, dynamic>? _financialSummary;
 
@@ -96,8 +101,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
   Future<void> _fetchOwnerChampionships(String uid) async {
     try {
-      final champs = await TournamentRepository()
-          .getChampionships(isOwner: true, ownerId: uid);
+      final champs = await TournamentRepository().getChampionships(
+        isOwner: true,
+        ownerId: uid,
+      );
       if (mounted) {
         setState(() {
           _ownerChampionships = champs;
@@ -109,15 +116,21 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     }
   }
 
-  Future<void> _claimApprovedChampionshipHomeNotices(List<Championship> champs) async {
+  Future<void> _claimApprovedChampionshipHomeNotices(
+    List<Championship> champs,
+  ) async {
     final repo = TournamentRepository();
     final now = DateTime.now().toUtc();
     for (final championship in champs) {
       if (!championship.isApproved) continue;
       try {
-        final response = await repo.claimOwnerChampionshipApprovalHomeNotice(championship.id);
+        final response = await repo.claimOwnerChampionshipApprovalHomeNotice(
+          championship.id,
+        );
         if (response['success'] == true && response['seen_until'] != null) {
-          final seenUntil = DateTime.tryParse(response['seen_until'].toString());
+          final seenUntil = DateTime.tryParse(
+            response['seen_until'].toString(),
+          );
           if (seenUntil != null && seenUntil.isAfter(now) && mounted) {
             setState(() {
               _approvalNoticeSeenUntil[championship.id] = seenUntil;
@@ -135,8 +148,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   bool _isLoadingAnalytics = false;
   String? _analyticsError;
 
-  Future<void> _loadDashboardAnalytics({String? ownerId, DashboardFilter? filter}) async {
-    final uid = ownerId ?? Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+  Future<void> _loadDashboardAnalytics({
+    String? ownerId,
+    DashboardFilter? filter,
+  }) async {
+    final uid =
+        ownerId ??
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
     if (uid == null) return;
     final activeFilter = filter ?? _currentFilter;
 
@@ -197,27 +215,38 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         _fetchFinancialSummary(uid);
         _loadDashboardAnalytics(ownerId: uid);
         _fetchOwnerChampionships(uid);
-        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
-        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
+        Provider.of<BookingProvider>(
+          context,
+          listen: false,
+        ).loadOwnerBookings(uid);
+        Provider.of<StadiumProvider>(
+          context,
+          listen: false,
+        ).listenToOwnerStadiums(uid);
         _champSubscription = TournamentRepository()
             .getChampionshipsStream(isOwner: true, ownerId: uid)
             .listen(
-          (champs) {
-            if (!mounted) return;
-            setState(() {
-              _ownerChampionships = champs;
-            });
-          },
-          onError: (e) {
-            VSPLogger.w('Owner championships subscription notice (handled): $e');
-          },
-        );
+              (champs) {
+                if (!mounted) return;
+                setState(() {
+                  _ownerChampionships = champs;
+                });
+              },
+              onError: (e) {
+                VSPLogger.w(
+                  'Owner championships subscription notice (handled): $e',
+                );
+              },
+            );
       }
     });
   }
 
   Future<void> onHomeBecameVisible() async {
-    final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    final uid = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    ).currentUser?.id;
     if (uid == null) return;
     await _fetchOwnerChampionships(uid);
   }
@@ -237,16 +266,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   }
 
   void _showProUpgradeSheet(BuildContext context) {
-    HapticFeedback.lightImpact();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()));
+    // Subscription system removed — no-op
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final userModel = auth.userModel;
-    final isProOwner = userModel?.isProPlan == true;
+    const bool isProOwner = true;
 
     final bookingProvider = Provider.of<BookingProvider>(context);
     final stadiumProvider = Provider.of<StadiumProvider>(context);
@@ -269,19 +296,27 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             final uid = auth.currentUser?.id;
             if (uid == null) return;
             if (context.mounted) {
-              Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
+              Provider.of<StadiumProvider>(
+                context,
+                listen: false,
+              ).listenToOwnerStadiums(uid);
             }
             await Future.wait([
               _fetchFinancialSummary(uid),
               _loadDashboardAnalytics(ownerId: uid, filter: _currentFilter),
               _fetchOwnerChampionships(uid),
               if (context.mounted)
-                Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid, forceRefresh: true),
+                Provider.of<BookingProvider>(
+                  context,
+                  listen: false,
+                ).loadOwnerBookings(uid, forceRefresh: true),
               auth.refreshProfile(),
             ]);
           },
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,20 +332,32 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 if (_analyticsError != null) ...[
                   Container(
                     margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: VSPColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(VSPRadius.sm),
-                      border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: VSPColors.error.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline, size: 14, color: VSPColors.error),
+                        const Icon(
+                          Icons.info_outline,
+                          size: 14,
+                          color: VSPColors.error,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _analyticsError!,
-                            style: const TextStyle(color: VSPColors.error, fontSize: 11.5),
+                            style: const TextStyle(
+                              color: VSPColors.error,
+                              fontSize: 11.5,
+                            ),
                           ),
                         ),
                       ],
@@ -344,14 +391,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              color: _selectedDashboardTab == 0 ? VSPColors.accent : Colors.transparent,
+                              color: _selectedDashboardTab == 0
+                                  ? VSPColors.accent
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(21),
                             ),
                             alignment: Alignment.center,
                             child: Text(
                               isArabic ? 'التشغيل اليومي' : 'Operations',
                               style: TextStyle(
-                                color: _selectedDashboardTab == 0 ? Colors.black : VSPColors.textSecondary,
+                                color: _selectedDashboardTab == 0
+                                    ? Colors.black
+                                    : VSPColors.textSecondary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
@@ -367,7 +418,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              color: _selectedDashboardTab == 1 ? VSPColors.proAccent : Colors.transparent,
+                              color: _selectedDashboardTab == 1
+                                  ? VSPColors.proAccent
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(21),
                             ),
                             alignment: Alignment.center,
@@ -377,7 +430,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                                 Text(
                                   isArabic ? 'التحليلات الذكية' : 'Insights',
                                   style: TextStyle(
-                                    color: _selectedDashboardTab == 1 ? Colors.black : VSPColors.textSecondary,
+                                    color: _selectedDashboardTab == 1
+                                        ? Colors.black
+                                        : VSPColors.textSecondary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
                                   ),
@@ -394,38 +449,46 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                 // ── TAB 0: التشغيل اليومي الموحد (مفتوح للباقتين لإدارة الملاعب) ──
                 if (_selectedDashboardTab == 0) ...[
-                // المالية أولاً: إجمالي المال المحقق ثم الكاش والأونلاين ثم الرصيد الجاهز للسحب.
-                OwnerOperationalFinanceCard(
-                  collectedCash: _dashboardAnalytics.revenue.cashCollected,
-                  collectedOnline: _dashboardAnalytics.revenue.onlineCollected,
-                  cashDue: _dashboardAnalytics.revenue.cashUncollected,
-                  onlinePending: _dashboardAnalytics.revenue.onlinePending,
-                  onlineHeld: _dashboardAnalytics.revenue.onlineUnavailable,
-                  availableBalance: availableBalance,
-                  upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
-                  isProOwner: isProOwner,
-                  onUpgrade: () => _showProUpgradeSheet(context),
-                  onOpenLedger: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
-                    );
-                  },
-                  onRequestPayout: () {
-                    OwnerPayoutDialog.show(context, availableBalance, isArabic);
-                  },
-                  onOpenPayoutHistory: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const OwnerLedgerScreen(payoutOnly: true),
-                      ),
-                    );
-                  },
-                  isArabic: isArabic,
-                ),
-                const SizedBox(height: 14),
-
+                  // المالية أولاً: إجمالي المال المحقق ثم الكاش والأونلاين ثم الرصيد الجاهز للسحب.
+                  OwnerOperationalFinanceCard(
+                    collectedCash: _dashboardAnalytics.revenue.cashCollected,
+                    collectedOnline:
+                        _dashboardAnalytics.revenue.onlineCollected,
+                    cashDue: _dashboardAnalytics.revenue.cashUncollected,
+                    onlinePending: _dashboardAnalytics.revenue.onlinePending,
+                    onlineHeld: _dashboardAnalytics.revenue.onlineUnavailable,
+                    availableBalance: availableBalance,
+                    upcomingValue:
+                        _dashboardAnalytics.revenue.upcomingConfirmedValue,
+                    isProOwner: isProOwner,
+                    onUpgrade: () => _showProUpgradeSheet(context),
+                    onOpenLedger: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OwnerLedgerScreen(),
+                        ),
+                      );
+                    },
+                    onRequestPayout: () {
+                      OwnerPayoutDialog.show(
+                        context,
+                        availableBalance,
+                        isArabic,
+                      );
+                    },
+                    onOpenPayoutHistory: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const OwnerLedgerScreen(payoutOnly: true),
+                        ),
+                      );
+                    },
+                    isArabic: isArabic,
+                  ),
+                  const SizedBox(height: 14),
 
                   // جدول حجوزات اليوم — يأتي مباشرة بعد الكارت المالي.
                   // ب. كارت جدول مواعيد اليوم بالنقط الملونة أو دعوة لإضافة الملعب الأول
@@ -443,45 +506,59 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                         } else {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const OwnerBookingsScreen(),
+                            ),
                           );
                         }
                       },
                     ),
 
-
                   // ج. تنبيه البطولة: انتظار الاعتماد ثم إشعار اعتماد لمدة 24 ساعة من أول زيارة Home.
                   Builder(
                     builder: (context) {
                       final nowUtc = DateTime.now().toUtc();
-                      final pending = _ownerChampionships
-                          .where((c) =>
-                              !c.isApproved &&
-                              c.creationFeePaid &&
-                              c.status.toLowerCase() != 'cancelled' &&
-                              c.status.toLowerCase() != 'completed')
-                          .toList()
-                        ..sort((a, b) => b.startDate.compareTo(a.startDate));
+                      final pending =
+                          _ownerChampionships
+                              .where(
+                                (c) =>
+                                    !c.isApproved &&
+                                    c.creationFeePaid &&
+                                    c.status.toLowerCase() != 'cancelled' &&
+                                    c.status.toLowerCase() != 'completed',
+                              )
+                              .toList()
+                            ..sort(
+                              (a, b) => b.startDate.compareTo(a.startDate),
+                            );
 
-                      final approvedVisible = _ownerChampionships.where((c) {
-                        final until = _approvalNoticeSeenUntil[c.id];
-                        return c.isApproved &&
-                            c.status.toLowerCase() != 'cancelled' &&
-                            c.status.toLowerCase() != 'completed' &&
-                            until != null &&
-                            until.isAfter(nowUtc);
-                      }).toList()
-                        ..sort((a, b) => b.startDate.compareTo(a.startDate));
+                      final approvedVisible =
+                          _ownerChampionships.where((c) {
+                            final until = _approvalNoticeSeenUntil[c.id];
+                            return c.isApproved &&
+                                c.status.toLowerCase() != 'cancelled' &&
+                                c.status.toLowerCase() != 'completed' &&
+                                until != null &&
+                                until.isAfter(nowUtc);
+                          }).toList()..sort(
+                            (a, b) => b.startDate.compareTo(a.startDate),
+                          );
 
-                      final Championship? championship =
-                          pending.isNotEmpty ? pending.first :
-                          (approvedVisible.isNotEmpty ? approvedVisible.first : null);
+                      final Championship? championship = pending.isNotEmpty
+                          ? pending.first
+                          : (approvedVisible.isNotEmpty
+                                ? approvedVisible.first
+                                : null);
                       if (championship == null) return const SizedBox.shrink();
 
                       final isPending = !championship.isApproved;
                       final title = isPending
-                          ? (isArabic ? 'في انتظار اعتماد البطولة' : 'Tournament awaiting approval')
-                          : (isArabic ? 'تم اعتماد البطولة' : 'Tournament approved');
+                          ? (isArabic
+                                ? 'في انتظار اعتماد البطولة'
+                                : 'Tournament awaiting approval')
+                          : (isArabic
+                                ? 'تم اعتماد البطولة'
+                                : 'Tournament approved');
                       final badge = isPending
                           ? (isArabic ? 'قيد المراجعة' : 'Pending')
                           : (isArabic ? 'معتمدة' : 'Approved');
@@ -550,11 +627,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                             Text(
                               isPending
                                   ? (isArabic
-                                      ? 'ستظل ظاهرة حتى اعتماد الأدمن.'
-                                      : 'This notice stays until admin approval.')
+                                        ? 'ستظل ظاهرة حتى اعتماد الأدمن.'
+                                        : 'This notice stays until admin approval.')
                                   : (isArabic
-                                      ? 'سيظل التنبيه ظاهرًا لمدة 24 ساعة من أول زيارة للرئيسية.'
-                                      : 'Shown for 24 hours from your first Home visit.'),
+                                        ? 'سيظل التنبيه ظاهرًا لمدة 24 ساعة من أول زيارة للرئيسية.'
+                                        : 'Shown for 24 hours from your first Home visit.'),
                               style: const TextStyle(
                                 color: VSPColors.textSecondary,
                                 fontSize: 12,
@@ -578,229 +655,95 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       } else {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const OwnerBookingsScreen(),
+                          ),
                         );
                       }
                     },
                   ),
                   const SizedBox(height: 16),
 
-                  SizedBox(height: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
+                  SizedBox(
+                    height: VSPScrollPadding.bottom(
+                      context,
+                      hasFloatingNavBar: true,
+                    ),
+                  ),
                 ]
-                // ── TAB 1: التحليلات والقرارات الذكية (Insights) ──
+                // ── TAB 1: التحليلات والقرارات (Insights) ──
                 else ...[
-                  if (isProOwner)
-                    OwnerProInsightsView(
-                      allBookings: allBookings,
-                      metrics: metrics,
-                      stadiums: stadiums,
-                      selectedTimePeriod: _selectedTimePeriod,
-                      selectedStadiumFilter: _selectedStadiumFilter,
-                      analytics: _dashboardAnalytics,
-                      dashboardFilter: _currentFilter,
-                      onCustomRangeSelected: (start, end) {
-                        final filter = DashboardFilter.custom(start, end).copyWith(
-                          courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
+                  OwnerProInsightsView(
+                    allBookings: allBookings,
+                    metrics: metrics,
+                    stadiums: stadiums,
+                    selectedTimePeriod: _selectedTimePeriod,
+                    selectedStadiumFilter: _selectedStadiumFilter,
+                    analytics: _dashboardAnalytics,
+                    dashboardFilter: _currentFilter,
+                    onCustomRangeSelected: (start, end) {
+                      final filter = DashboardFilter.custom(start, end)
+                          .copyWith(
+                            courtId: _selectedStadiumFilter != 'all'
+                                ? _selectedStadiumFilter
+                                : null,
+                          );
+                      setState(() {
+                        _selectedTimePeriod = 'custom';
+                        _currentFilter = filter;
+                        _cachedMetrics = null;
+                      });
+                      _loadDashboardAnalytics(filter: filter);
+                    },
+                    onTimePeriodChanged: (period) {
+                      DashboardFilter filter;
+                      if (period == 'yesterday') {
+                        filter = DashboardFilter.yesterday();
+                      } else if (period == 'week' || period == 'thisWeek') {
+                        filter = DashboardFilter.thisWeek();
+                      } else if (period == 'month' || period == 'thisMonth') {
+                        filter = DashboardFilter.thisMonth();
+                      } else if (period == 'year' || period == 'thisYear') {
+                        filter = DashboardFilter.thisYear();
+                      } else {
+                        filter = DashboardFilter.today();
+                      }
+                      filter = filter.copyWith(
+                        courtId: _selectedStadiumFilter != 'all'
+                            ? _selectedStadiumFilter
+                            : null,
+                      );
+                      setState(() {
+                        _selectedTimePeriod = period;
+                        _currentFilter = filter;
+                        _cachedMetrics = null;
+                      });
+                      _loadDashboardAnalytics(filter: filter);
+                    },
+                    onStadiumFilterChanged: (id) {
+                      setState(() {
+                        _selectedStadiumFilter = id;
+                        _cachedMetrics = null;
+                        _currentFilter = _currentFilter.copyWith(
+                          courtId: id != 'all' ? id : null,
                         );
-                        setState(() {
-                          _selectedTimePeriod = 'custom';
-                          _currentFilter = filter;
-                          _cachedMetrics = null;
-                        });
-                        _loadDashboardAnalytics(filter: filter);
-                      },
-                      onTimePeriodChanged: (period) {
-                        DashboardFilter filter;
-                        if (period == 'yesterday') {
-                          filter = DashboardFilter.yesterday();
-                        } else if (period == 'week' || period == 'thisWeek') {
-                          filter = DashboardFilter.thisWeek();
-                        } else if (period == 'month' || period == 'thisMonth') {
-                          filter = DashboardFilter.thisMonth();
-                        } else if (period == 'year' || period == 'thisYear') {
-                          filter = DashboardFilter.thisYear();
-                        } else {
-                          filter = DashboardFilter.today();
-                        }
-                        filter = filter.copyWith(
-                          courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
-                        );
-                        setState(() {
-                          _selectedTimePeriod = period;
-                          _currentFilter = filter;
-                          _cachedMetrics = null;
-                        });
-                        _loadDashboardAnalytics(filter: filter);
-                      },
-                      onStadiumFilterChanged: (id) {
-                        setState(() {
-                          _selectedStadiumFilter = id;
-                          _cachedMetrics = null;
-                          _currentFilter = _currentFilter.copyWith(courtId: id != 'all' ? id : null);
-                        });
-                        _loadDashboardAnalytics(filter: _currentFilter);
-                      },
-                      onNavigateTab: widget.onNavigateTab,
-                      isArabic: isArabic,
-                    )
-                  else
-                    _buildProInsightsLockedTeaser(context, isArabic),
-                  SizedBox(height: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
+                      });
+                      _loadDashboardAnalytics(filter: _currentFilter);
+                    },
+                    onNavigateTab: widget.onNavigateTab,
+                    isArabic: isArabic,
+                  ),
+                  SizedBox(
+                    height: VSPScrollPadding.bottom(
+                      context,
+                      hasFloatingNavBar: true,
+                    ),
+                  ),
                 ],
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildProInsightsLockedTeaser(BuildContext context, bool isArabic) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(VSPSpacing.xl),
-      decoration: BoxDecoration(
-        color: VSPColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(
-          color: VSPColors.accent.withValues(alpha: 0.22),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: VSPColors.accent.withValues(alpha: 0.06),
-            blurRadius: 22,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: VSPColors.accent.withValues(alpha: 0.10),
-                border: Border.all(
-                  color: VSPColors.accent.withValues(alpha: 0.28),
-                  width: 1,
-                ),
-              ),
-              child: const Icon(
-                Iconsax.chart_2_copy,
-                color: VSPColors.accent,
-                size: 28,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            isArabic ? 'تحليلات وقرارات الملاعب الذكية' : 'Smart Pitch Insights',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: VSPColors.textPrimary,
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            isArabic
-                ? 'أدوات احترافية تساعدك على فهم تشغيل ملعبك وزيادة الاستفادة منه.'
-                : 'Professional tools to understand your pitch operation and improve utilization.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: VSPColors.textSecondary,
-              fontSize: 12.5,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          _buildTeaserFeatureRow(
-            icon: Iconsax.status_up_copy,
-            title: isArabic ? 'معدل الإشغال الفعلي' : 'Actual Occupancy Rate',
-            subtitle: isArabic
-                ? 'اعرف نسبة استغلال ساعات ملعبك بدقة.'
-                : 'See how much of your available pitch time is actually used.',
-          ),
-          const SizedBox(height: 8),
-          _buildTeaserFeatureRow(
-            icon: Iconsax.money_remove_copy,
-            title: isArabic ? 'الإيراد الضائع' : 'Lost Revenue',
-            subtitle: isArabic
-                ? 'اكتشف قيمة الساعات الفارغة التي كان يمكن استغلالها.'
-                : 'Identify revenue opportunities from idle hours.',
-          ),
-          const SizedBox(height: 8),
-          _buildTeaserFeatureRow(
-            icon: Iconsax.card_pos_copy,
-            title: isArabic ? 'تفصيل الدخل' : 'Revenue Breakdown',
-            subtitle: isArabic
-                ? 'تابع الكاش والدفع الرقمي وأنواع الحجوزات الأكثر طلباً.'
-                : 'Understand cash, digital payments, and your most requested booking types.',
-          ),
-
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: () => _showProUpgradeSheet(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                ),
-              ),
-              child: Text(
-                isArabic
-                    ? 'الترقية للباقة الاحترافية — 1,000 ج.م/شهر'
-                    : 'Upgrade to Pro — 1,000 EGP/month',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13.5,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTeaserFeatureRow({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: VSPColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.borderLight),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: VSPColors.accent, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -863,7 +806,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
               icon: const Icon(Icons.add, size: 18),
               label: Text(
                 isArabic ? 'إضافة ملعب الآن' : 'Add Stadium Now',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13.5,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
