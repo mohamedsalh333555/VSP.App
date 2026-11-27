@@ -189,4 +189,14 @@ void main() {
     expect(typography['latinFont'], VSPDSTypography.latinFont);
     expect(typography['arabicFont'], VSPDSTypography.arabicFont);
   });
+
+  test('All 6 official Shield PNG assets exist on disk', () {
+    for (final tier in ['silver', 'gold', 'diamond', 'elite', 'legendary', 'immortal']) {
+      expect(
+        File('assets/images/shields/shield_$tier.png').existsSync(),
+        isTrue,
+        reason: 'Missing shield asset: assets/images/shields/shield_$tier.png',
+      );
+    }
+  });
 }

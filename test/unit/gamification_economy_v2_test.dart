@@ -9,22 +9,23 @@ void main() {
   group('VSP Gamification Economy v2 & Models', () {
     test('Annual Shield thresholds, nextTier progression, and asset paths match spec', () {
       expect(TeamShieldTier.none.requiredXp, equals(0));
-      expect(TeamShieldTier.gold.requiredXp, equals(1500));
-      expect(TeamShieldTier.platinum.requiredXp, equals(3000));
+      expect(TeamShieldTier.silver.requiredXp, equals(1500));
+      expect(TeamShieldTier.gold.requiredXp, equals(3000));
       expect(TeamShieldTier.diamond.requiredXp, equals(5000));
       expect(TeamShieldTier.elite.requiredXp, equals(8000));
       expect(TeamShieldTier.legendary.requiredXp, equals(12000));
       expect(TeamShieldTier.immortal.requiredXp, equals(15000));
       expect(TeamShieldTier.immortal.requiredWeightedChallenges, equals(60));
 
-      expect(TeamShieldTier.none.nextTier, equals(TeamShieldTier.gold));
-      expect(TeamShieldTier.gold.nextTier, equals(TeamShieldTier.platinum));
-      expect(TeamShieldTier.platinum.nextTier, equals(TeamShieldTier.diamond));
+      expect(TeamShieldTier.none.nextTier, equals(TeamShieldTier.silver));
+      expect(TeamShieldTier.silver.nextTier, equals(TeamShieldTier.gold));
+      expect(TeamShieldTier.gold.nextTier, equals(TeamShieldTier.diamond));
       expect(TeamShieldTier.diamond.nextTier, equals(TeamShieldTier.elite));
       expect(TeamShieldTier.elite.nextTier, equals(TeamShieldTier.legendary));
       expect(TeamShieldTier.legendary.nextTier, equals(TeamShieldTier.immortal));
       expect(TeamShieldTier.immortal.nextTier, isNull);
 
+      expect(TeamShieldTier.silver.assetPath, equals('assets/images/shields/shield_silver.png'));
       expect(TeamShieldTier.gold.assetPath, equals('assets/images/shields/shield_gold.png'));
       expect(TeamShieldTier.none.assetPath, isNull);
     });
@@ -145,7 +146,7 @@ void main() {
       expect(team.maxPlayers, equals(8));
       expect(team.currentSeasonXp, equals(3450.5));
       expect(team.lifetimeXp, equals(8200.0));
-      expect(team.shieldTier, equals(TeamShieldTier.platinum));
+      expect(team.shieldTier, equals(TeamShieldTier.silver));
       expect(team.highestShieldTier, equals(TeamShieldTier.diamond));
     });
 

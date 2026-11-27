@@ -32,9 +32,9 @@ class SelectRoleScreen extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: VSPColors.accentSoft,
+                  color: VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.borderAccent, width: 1),
+                  border: Border.all(color: VSPColors.divider, width: 1),
                 ),
                 child: const Icon(
                   Iconsax.cup_copy,
@@ -150,9 +150,9 @@ class _RoleCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: VSPColors.accentSoft,
+                color: VSPColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: VSPColors.borderAccent, width: 1),
+                border: Border.all(color: VSPColors.divider, width: 1),
               ),
               child: Icon(icon, color: VSPColors.accent, size: 22),
             ),

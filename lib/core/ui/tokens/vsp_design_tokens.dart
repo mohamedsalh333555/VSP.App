@@ -39,14 +39,14 @@ abstract final class VSPDSColors {
   static const Color bronze = Color(0xFFCD7F32);
   static const Color pitchJerseyGreen = Color(0xFF22C55E);
 
-  // Team shield tier palette (moved from domain model into canonical tokens).
+  // Team shield tier palette (moved from domain model into canonical tokens — zero green).
   static const Color tierNone = gray500;
+  static const Color tierSilver = Color(0xFFE2E8F0);
   static const Color tierGold = Color(0xFFFFC107);
-  static const Color tierPlatinum = Color(0xFFE2E8F0);
   static const Color tierDiamond = Color(0xFF38BDF8);
   static const Color tierElite = Color(0xFFA855F7);
   static const Color tierLegendary = Color(0xFFF97316);
-  static const Color tierImmortal = Color(0xFF00E676);
+  static const Color tierImmortal = Color(0xFFFFE082);
 
   // Alpha primitives derived from the same palette.
   static const Color voltGreenSoft = Color(0x1F9FDF02);

@@ -163,9 +163,9 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  Container(
    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
    decoration: BoxDecoration(
-     color: VSPColors.accentSoft,
+     color: VSPColors.surfaceAlt,
      borderRadius: BorderRadius.circular(VSPRadius.full),
-     border: Border.all(color: VSPColors.borderAccent),
+     border: Border.all(color: VSPColors.divider),
    ),
    child: Row(
      mainAxisSize: MainAxisSize.min,

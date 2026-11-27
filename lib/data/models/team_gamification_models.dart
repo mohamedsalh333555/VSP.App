@@ -3,8 +3,8 @@ import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 enum TeamShieldTier {
   none,
+  silver,
   gold,
-  platinum,
   diamond,
   elite,
   legendary,
@@ -12,10 +12,11 @@ enum TeamShieldTier {
 
   static TeamShieldTier fromCode(String? code) {
     switch ((code ?? '').trim().toLowerCase()) {
+      case 'silver':
+      case 'platinum':
+        return TeamShieldTier.silver;
       case 'gold':
         return TeamShieldTier.gold;
-      case 'platinum':
-        return TeamShieldTier.platinum;
       case 'diamond':
         return TeamShieldTier.diamond;
       case 'elite':
@@ -35,10 +36,10 @@ enum TeamShieldTier {
     switch (this) {
       case TeamShieldTier.none:
         return isArabic ? 'بدون درع' : 'No Shield';
+      case TeamShieldTier.silver:
+        return isArabic ? 'الفضي' : 'Silver';
       case TeamShieldTier.gold:
         return isArabic ? 'الذهبي' : 'Gold';
-      case TeamShieldTier.platinum:
-        return isArabic ? 'البلاتيني' : 'Platinum';
       case TeamShieldTier.diamond:
         return isArabic ? 'الماسي' : 'Diamond';
       case TeamShieldTier.elite:
@@ -54,9 +55,9 @@ enum TeamShieldTier {
     switch (this) {
       case TeamShieldTier.none:
         return 0;
-      case TeamShieldTier.gold:
+      case TeamShieldTier.silver:
         return 1500;
-      case TeamShieldTier.platinum:
+      case TeamShieldTier.gold:
         return 3000;
       case TeamShieldTier.diamond:
         return 5000;
@@ -74,10 +75,10 @@ enum TeamShieldTier {
   TeamShieldTier? get nextTier {
     switch (this) {
       case TeamShieldTier.none:
+        return TeamShieldTier.silver;
+      case TeamShieldTier.silver:
         return TeamShieldTier.gold;
       case TeamShieldTier.gold:
-        return TeamShieldTier.platinum;
-      case TeamShieldTier.platinum:
         return TeamShieldTier.diamond;
       case TeamShieldTier.diamond:
         return TeamShieldTier.elite;
@@ -94,10 +95,10 @@ enum TeamShieldTier {
     switch (this) {
       case TeamShieldTier.none:
         return VSPDSColors.tierNone;
+      case TeamShieldTier.silver:
+        return VSPDSColors.tierSilver;
       case TeamShieldTier.gold:
         return VSPDSColors.tierGold;
-      case TeamShieldTier.platinum:
-        return VSPDSColors.tierPlatinum;
       case TeamShieldTier.diamond:
         return VSPDSColors.tierDiamond;
       case TeamShieldTier.elite:
