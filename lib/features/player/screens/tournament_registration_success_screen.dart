@@ -407,7 +407,7 @@ class _TournamentRegistrationSuccessScreenState
                             child: ElevatedButton(
                               onPressed: _navigateToStandingsOrSchedule,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: VSPColors.info,
+                                backgroundColor: VSPColors.accent,
                                 foregroundColor: Colors.black,
                                 shape: const StadiumBorder(),
                                 elevation: 0,
