@@ -346,7 +346,7 @@ class _StrongestTeamTabState extends State<StrongestTeamTab>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
             VSPColors.surface,
             VSPColors.surfaceAlt,
