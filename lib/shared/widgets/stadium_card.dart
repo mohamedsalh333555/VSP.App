@@ -120,7 +120,7 @@ class StadiumCard extends StatelessWidget {
  decoration: BoxDecoration(
  color: VSPColors.background.withValues(alpha: 0.7),
  borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+ border: Border.all(color: VSPColors.divider),
  ),
  child: Row(
  mainAxisSize: MainAxisSize.min,
@@ -181,7 +181,7 @@ class StadiumCard extends StatelessWidget {
  decoration: BoxDecoration(
  color: VSPColors.background.withValues(alpha: 0.7),
  shape: BoxShape.circle,
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+ border: Border.all(color: VSPColors.divider),
  ),
  child: const Icon(
  Iconsax.edit_copy,

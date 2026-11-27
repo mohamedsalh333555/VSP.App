@@ -286,7 +286,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       decoration: BoxDecoration(
         color: VSPColors.surface, 
         borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: widget.highlighted ? VSPColors.accent : Colors.white.withValues(alpha: 0.08), width: 1),
+        border: Border.all(color: widget.highlighted ? VSPColors.medalGold : Colors.white.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.25),
