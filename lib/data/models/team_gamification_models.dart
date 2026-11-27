@@ -162,6 +162,86 @@ class MonthlyRankingEntry {
       );
 }
 
+enum RankingRewardZone {
+  cashRewards,
+  freeBooking,
+  competition,
+}
+
+class VspSeasonRewards {
+  const VspSeasonRewards._();
+
+  static const int seasonDurationMonths = 2;
+  static const int freeHourMinRank = 6;
+  static const int freeHourMaxRank = 10;
+  static const int freeHourMaxValueEgp = 180;
+
+  static const Map<int, int> cashPrizesEgp = {
+    1: 500,
+    2: 350,
+    3: 250,
+    4: 220,
+    5: 180,
+  };
+
+  static const List<String> rewardLifecycleStatuses = [
+    'pending',
+    'approved',
+    'available',
+    'reserved',
+    'redeemed',
+    'expired',
+    'revoked',
+  ];
+
+  static RankingRewardZone zoneForRank(int rank) {
+    if (rank >= 1 && rank <= 5) return RankingRewardZone.cashRewards;
+    if (rank >= freeHourMinRank && rank <= freeHourMaxRank) {
+      return RankingRewardZone.freeBooking;
+    }
+    return RankingRewardZone.competition;
+  }
+
+  static int? cashPrizeForRank(int rank) => cashPrizesEgp[rank];
+
+  static String rewardBadgeLabel(int rank, {required bool isArabic}) {
+    final cash = cashPrizeForRank(rank);
+    if (cash != null) {
+      return isArabic ? '$cash ج.م' : '$cash EGP';
+    }
+    if (rank >= freeHourMinRank && rank <= freeHourMaxRank) {
+      return isArabic ? 'ساعة مجانية' : 'Free 1h';
+    }
+    return isArabic ? 'منافسة' : 'Compete';
+  }
+
+  static String nextTargetSummary(
+    MonthlyRankingEntry entry,
+    List<MonthlyRankingEntry> entries, {
+    required bool isArabic,
+  }) {
+    final zone = zoneForRank(entry.rank);
+    if (zone == RankingRewardZone.cashRewards) {
+      final prize = cashPrizeForRank(entry.rank) ?? 0;
+      return isArabic
+          ? 'منطقة الجوائز النقدية • جائزة حالية $prize ج.م'
+          : 'Cash Zone • Current Prize $prize EGP';
+    }
+    if (zone == RankingRewardZone.freeBooking) {
+      final fifth = entries.where((e) => e.rank == 5).firstOrNull;
+      final gap = fifth != null ? (fifth.rankingPoints - entry.rankingPoints + 1).clamp(1, 9999) : 1;
+      return isArabic
+          ? 'حجز ساعة مجانية • باقي $gap نقطة على منطقة الكاش (Top 5)'
+          : 'Free 1h Zone • $gap pts to Cash Zone (Top 5)';
+    }
+    final tenth = entries.where((e) => e.rank == 10).firstOrNull;
+    final gap = tenth != null ? (tenth.rankingPoints - entry.rankingPoints + 1).clamp(1, 9999) : 1;
+    return isArabic
+        ? 'منطقة المنافسة • باقي $gap نقطة على Top 10 (ساعة مجانية)'
+        : 'Competition Zone • $gap pts to Top 10 (Free 1h)';
+  }
+}
+
 class MostActiveTeamEntry {
   final int activityRank;
   final String teamId;
