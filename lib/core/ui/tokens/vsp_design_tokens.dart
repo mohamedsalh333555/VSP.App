@@ -32,12 +32,9 @@ abstract final class VSPDSColors {
   static const Color amber500 = Color(0xFFF59E0B);
   static const Color blue500 = Color(0xFF3B82F6);
 
-  static const Color whatsappGreen = Color(0xFF25D366);
-
   static const Color gold = Color(0xFFFFD700);
   static const Color silver = Color(0xFFC0C0C0);
   static const Color bronze = Color(0xFFCD7F32);
-  static const Color pitchJerseyGreen = Color(0xFF22C55E);
 
   // Team shield tier palette (moved from domain model into canonical tokens — zero green).
   static const Color tierNone = gray500;

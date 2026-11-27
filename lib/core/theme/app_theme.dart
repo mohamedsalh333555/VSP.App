@@ -129,9 +129,9 @@ class AppTheme {
 
       chipTheme: const ChipThemeData(
         backgroundColor: VSPDSSemanticColors.surfaceRaised,
-        selectedColor: VSPDSSemanticColors.accentSoft,
+        selectedColor: VSPDSSemanticColors.surfaceElevated,
         disabledColor: VSPDSSemanticColors.surfaceRaised,
-        secondarySelectedColor: VSPDSSemanticColors.accentSoft,
+        secondarySelectedColor: VSPDSSemanticColors.surfaceElevated,
         padding: EdgeInsets.symmetric(
           horizontal: VSPDSSpacing.xs,
           vertical: VSPDSSpacing.xxs,
@@ -169,9 +169,9 @@ class AppTheme {
       ),
 
       tabBarTheme: const TabBarThemeData(
-        labelColor: VSPDSSemanticColors.accent,
+        labelColor: VSPDSSemanticColors.textPrimary,
         unselectedLabelColor: VSPDSSemanticColors.textSecondary,
-        indicatorColor: VSPDSSemanticColors.accent,
+        indicatorColor: VSPDSSemanticColors.textPrimary,
         dividerColor: VSPDSColors.transparent,
         indicatorSize: TabBarIndicatorSize.label,
       ),
@@ -192,8 +192,8 @@ class AppTheme {
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: VSPDSSemanticColors.accent,
-          side: VSPDSBorders.accent,
+          foregroundColor: VSPDSSemanticColors.textPrimary,
+          side: VSPDSBorders.divider,
           minimumSize: const Size(
             VSPDSElevation.none,
             VSPDSizes.buttonHeight,
@@ -206,7 +206,7 @@ class AppTheme {
       navigationBarTheme: const NavigationBarThemeData(
         backgroundColor: VSPDSSemanticColors.surface,
         elevation: VSPDSElevation.none,
-        indicatorColor: VSPDSSemanticColors.accentSoft,
+        indicatorColor: VSPDSSemanticColors.surfaceElevated,
         labelTextStyle: WidgetStatePropertyAll(
           VSPDSTypography.status,
         ),

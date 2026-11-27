@@ -211,8 +211,8 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       extendBody: true,
       backgroundColor: VSPDSSemanticColors.background,
       body: VSPAmbientBackground(
-        showTopGlow: true,
-        showBottomGlow: true,
+        showTopGlow: _selectedIndex == 0,
+        showBottomGlow: _selectedIndex == 0,
         child: IndexedStack(
           index: _selectedIndex,
           children: [

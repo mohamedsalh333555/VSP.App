@@ -219,4 +219,31 @@ void main() {
       expect(c, isNot(equals(VSPDSColors.voltGreen)));
     }
   });
+
+  test('Green Policy: No forbidden green hexes (#25D366, #22C55E) exist in lib/', () {
+    final forbidden = RegExp(r'(25D366|22C55E)', caseSensitive: false);
+    final hits = <String>[];
+    for (final entity in Directory('lib').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final content = entity.readAsStringSync();
+      if (forbidden.hasMatch(content)) {
+        hits.add(entity.path.replaceAll('\\', '/'));
+      }
+    }
+    expect(hits, isEmpty, reason: 'Forbidden green hexes found in: $hits');
+  });
+
+  test('Green Policy: VSPAmbientBackground glow is restricted to player_home_screen.dart only', () {
+    final hits = <String>[];
+    for (final entity in Directory('lib').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final path = entity.path.replaceAll('\\', '/');
+      if (path.endsWith('vsp_ambient_background.dart') || path.endsWith('player_home_screen.dart')) continue;
+      final content = entity.readAsStringSync();
+      if (content.contains('VSPAmbientBackground') && content.contains('showTopGlow: true')) {
+        hits.add(path);
+      }
+    }
+    expect(hits, isEmpty, reason: 'Green ambient glow must ONLY be enabled on player_home_screen.dart');
+  });
 }

@@ -36,7 +36,7 @@ class VSPColors {
   static const success = VSPDSSemanticColors.success;
   static const warning = VSPDSSemanticColors.warning;
   static const info = VSPDSSemanticColors.info;
-  static const Color whatsApp = VSPDSColors.whatsappGreen;
+  static const Color whatsApp = VSPDSColors.voltGreen;
   static const Color proAccent = accent;
   static const Color proAccentSoft = accentSoft;
 
