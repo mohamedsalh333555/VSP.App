@@ -82,13 +82,13 @@ class VSPTermsAndPrivacyModal {
                             padding: const EdgeInsets.all(12),
                             margin: const EdgeInsets.only(bottom: 16),
                             decoration: BoxDecoration(
-                              color: VSPColors.accent.withValues(alpha: 0.08),
+                              color: VSPColors.surfaceAlt,
                               borderRadius: BorderRadius.circular(VSPRadius.lg),
-                              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+                              border: Border.all(color: VSPColors.divider),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 18),
+                                const Icon(Iconsax.info_circle_copy, color: VSPColors.textSecondary, size: 18),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(

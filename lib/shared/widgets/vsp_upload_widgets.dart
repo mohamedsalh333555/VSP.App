@@ -28,7 +28,7 @@ class VspUploadMainCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
-          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
+          border: Border.all(color: VSPColors.divider),
         ),
         child: isLoading
             ? Center(
