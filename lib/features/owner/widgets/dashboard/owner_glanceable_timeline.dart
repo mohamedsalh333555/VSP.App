@@ -55,7 +55,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
               },
               child: Text(
                 isArabic ? 'عرض الكل' : 'View All',
-                style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600),
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -73,11 +73,11 @@ class OwnerGlanceableTimeline extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const Icon(Iconsax.calendar_tick_copy, size: 28, color: Colors.white54),
+                const Icon(Iconsax.calendar_tick_copy, size: 28, color: VSPColors.textMuted),
                 const SizedBox(height: 8),
                 Text(
                   isArabic ? 'لا توجد حجوزات مسجلة اليوم' : 'No bookings recorded today',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w500),
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(
@@ -186,7 +186,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                               Text(
                                 b.isPaid ? (isArabic ? 'مدفوع' : 'Paid') : (isArabic ? 'كاش' : 'Cash'),
                                 style: TextStyle(
-                                  color: b.isPaid ? VSPColors.accent : Colors.white60,
+                                  color: b.isPaid ? VSPColors.accent : VSPColors.textMuted,
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -200,12 +200,12 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                     if (b.playerPhone != null && b.playerPhone!.isNotEmpty && !isPassed) ...[
                       IconButton(
                         visualDensity: VisualDensity.compact,
-                        icon: const Icon(Iconsax.call_copy, size: 17, color: Colors.white70),
+                        icon: const Icon(Iconsax.call_copy, size: 17, color: VSPColors.textSecondary),
                         onPressed: () => VSPLauncherUtils.makePhoneCall(context, b.playerPhone!),
                       ),
                       IconButton(
                         visualDensity: VisualDensity.compact,
-                        icon: const Icon(Iconsax.message_copy, size: 17, color: Colors.white70),
+                        icon: const Icon(Iconsax.message_copy, size: 17, color: VSPColors.textSecondary),
                         onPressed: () => VSPLauncherUtils.openWhatsApp(
                           context,
                           phone: b.playerPhone!,

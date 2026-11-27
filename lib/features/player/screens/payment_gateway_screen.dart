@@ -220,6 +220,21 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Future<void> _startPaymobCheckout() async {
     if (_booking == null && !widget.isTournamentPayment) return;
     if (_isLoading || _isAwaitingWebhook) return;
+    if (_feePolicy == null) {
+      await _loadFeePolicy();
+      if (_feePolicy == null) {
+        if (mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isArabic
+                ? 'تعذر التحقق من سياسة الرسوم المعتمدة. أعد المحاولة.'
+                : 'Unable to verify fee policy. Please retry.',
+          );
+        }
+        return;
+      }
+    }
     setState(() {
       _isLoading = true;
       _isAwaitingWebhook = true;
@@ -241,6 +256,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       },
     );
 
+    if (!mounted) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.currentUser;
     final userName = auth.userModel?.name ?? 'Player';

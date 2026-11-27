@@ -40,21 +40,27 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isAr ? 'الرصيد الإلكتروني المتاح' : 'Available Digital Balance',
-                    style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isAr ? 'رصيد إلكتروني متاح للسحب' : 'Available online balance',
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAr ? 'الرصيد الإلكتروني المتاح' : 'Available Digital Balance',
+                      style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isAr
+                          ? 'صافي مستحق المالك بعد خصم 5% عمولة VSP (لا تُخصم رسوم دفع اللاعب)'
+                          : 'Net owner earnings after 5% VSP fee (player gateway fees excluded)',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '${digitalBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
                 style: const TextStyle(

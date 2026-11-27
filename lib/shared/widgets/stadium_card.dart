@@ -275,20 +275,20 @@ class StadiumCard extends StatelessWidget {
  if (hasBaths) ...[
  const Icon(Iconsax.drop, color: VSPColors.accent, size: 14),
  const SizedBox(width: 4),
- Text(isArabic ? 'حمامات ' : 'Baths ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+ Text(isArabic ? 'حمامات ' : 'Baths ', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
  ],
  if (hasCafe) ...[
  const Icon(Iconsax.coffee_copy, color: VSPColors.accent, size: 14),
  const SizedBox(width: 4),
- Text(isArabic ? 'كافتيريا ' : 'Cafeteria ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+ Text(isArabic ? 'كافتيريا ' : 'Cafeteria ', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
  ],
  if (hasGarage) ...[
  const Icon(Iconsax.car_copy, color: VSPColors.accent, size: 14),
  const SizedBox(width: 4),
- Text(isArabic ? 'جراج ' : 'Garage ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+ Text(isArabic ? 'جراج ' : 'Garage ', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
  ],
  if (!hasBaths && !hasCafe && !hasGarage)
- Text(isArabic ? 'لا توجد خدمات مضافة ' : 'No amenities listed ', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+ Text(isArabic ? 'لا توجد خدمات مضافة ' : 'No amenities listed ', style: const TextStyle(color: VSPColors.textMuted, fontSize: 11)),
  ],
  );
  }),
@@ -344,13 +344,13 @@ class StadiumCard extends StatelessWidget {
  Container(
  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
  decoration: BoxDecoration(
- color: Colors.white10,
- borderRadius: BorderRadius.circular(4),
+ color: VSPColors.surfaceAlt,
+ borderRadius: BorderRadius.circular(VSPRadius.xs),
  ),
  child: Text(
  _localizeSizeAndType(stadium.size, stadium.type, context),
  style: Theme.of(context).textTheme.labelSmall?.copyWith(
- color: Colors.white70,
+ color: VSPColors.textSecondary,
  fontWeight: FontWeight.w600,
  ),
  ),

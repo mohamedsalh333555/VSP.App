@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 enum TeamShieldTier {
   none,
@@ -92,19 +93,19 @@ enum TeamShieldTier {
   Color get primaryColor {
     switch (this) {
       case TeamShieldTier.none:
-        return const Color(0xFF6B7280);
+        return VSPDSColors.tierNone;
       case TeamShieldTier.gold:
-        return const Color(0xFFFFC107);
+        return VSPDSColors.tierGold;
       case TeamShieldTier.platinum:
-        return const Color(0xFFE2E8F0);
+        return VSPDSColors.tierPlatinum;
       case TeamShieldTier.diamond:
-        return const Color(0xFF38BDF8);
+        return VSPDSColors.tierDiamond;
       case TeamShieldTier.elite:
-        return const Color(0xFFA855F7);
+        return VSPDSColors.tierElite;
       case TeamShieldTier.legendary:
-        return const Color(0xFFF97316);
+        return VSPDSColors.tierLegendary;
       case TeamShieldTier.immortal:
-        return const Color(0xFF00E676);
+        return VSPDSColors.tierImmortal;
     }
   }
 

@@ -95,13 +95,13 @@ class TournamentSystemStep extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.1),
+              color: VSPColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+              border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                const Icon(Iconsax.lock_1_copy, color: Colors.amber, size: 20),
+                const Icon(Iconsax.lock_1_copy, color: VSPColors.warning, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -109,7 +109,7 @@ class TournamentSystemStep extends StatelessWidget {
                         ? 'إعدادات النظام وهيكل البطولة مقفولة: لا يمكن تعديل عدد الفرق أو نظام المجموعات بعد بدء التسجيل لحماية عدالة المنافسة.'
                         : 'Format settings are locked: Number of teams and group structure cannot be changed after registration starts.',
                     style: const TextStyle(
-                      color: Colors.amber,
+                      color: VSPColors.warning,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),

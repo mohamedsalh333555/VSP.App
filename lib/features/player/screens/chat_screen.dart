@@ -182,6 +182,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     bookingId: widget.reportBookingId ?? widget.booking?.id,
                     conversationId: widget.conversationId,
                   );
+                } else if (value == 'block') {
+                  ChatDialogs.showBlockUserDialog(
+                    context,
+                    targetUserId: targetUserId,
+                  );
                 } else if (value == 'delete') {
                   ChatDialogs.showConfirmDeleteConversationDialog(
                     context,
@@ -197,6 +202,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     const Icon(Iconsax.flag_copy, color: VSPColors.warning, size: 18),
                     const SizedBox(width: 8),
                     Text(ar ? 'إبلاغ عن المستخدم' : 'Report User', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  ]),
+                ),
+                PopupMenuItem(
+                  value: 'block',
+                  child: Row(children: [
+                    const Icon(Iconsax.slash_copy, color: VSPColors.error, size: 18),
+                    const SizedBox(width: 8),
+                    Text(ar ? 'حظر المستخدم' : 'Block User', style: const TextStyle(color: Colors.white, fontSize: 13)),
                   ]),
                 ),
                 PopupMenuItem(

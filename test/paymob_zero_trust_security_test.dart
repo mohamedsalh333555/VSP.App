@@ -15,18 +15,18 @@ void main() {
       expect(AppConfig.paymobWalletIntegrationId, '5772511');
     });
 
-    test('2. Verify Platform Fee calculation rule: (amount * 0.0475) + 3.0 EGP', () {
-      // Base: 100 EGP -> Fee: (100 * 0.0475) + 3 = 4.75 + 3 = 7.75 EGP -> Total: 107.75 EGP
+    test('2. Verify Platform Fee calculation rule: (5% VSP + 2.4%+3 Paymob gross-up)', () {
+      // Base: 100 EGP -> 105 EGP before Paymob -> Total: 110.66 EGP -> Fee: 10.66 EGP
       final fee100 = PaymobService.calculateServiceFee(100.0);
       final total100 = PaymobService.calculateTotalAmount(100.0);
-      expect(fee100, 7.75);
-      expect(total100, 107.75);
+      expect(fee100, 10.66);
+      expect(total100, 110.66);
 
-      // Base: 250 EGP -> Fee: (250 * 0.0475) + 3 = 11.875 + 3 = 14.88 EGP -> Total: 264.88 EGP
+      // Base: 250 EGP -> 262.50 EGP before Paymob -> Total: (262.50 + 3) / (1 - 0.024) = 272.03 EGP -> Fee: 22.03 EGP
       final fee250 = PaymobService.calculateServiceFee(250.0);
       final total250 = PaymobService.calculateTotalAmount(250.0);
-      expect(fee250, 14.88);
-      expect(total250, 264.88);
+      expect(fee250, 22.03);
+      expect(total250, 272.03);
 
       // Edge case: 0 EGP
       expect(PaymobService.calculateServiceFee(0.0), 0.0);

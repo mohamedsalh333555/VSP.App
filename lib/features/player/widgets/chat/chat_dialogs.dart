@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/repositories/block_repository.dart';
 import '../../../../core/repositories/report_repository.dart';
 import '../../../../core/repositories/chat_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -122,6 +123,54 @@ class ChatDialogs {
               }
             },
             child: Text(ar ? 'حذف' : 'Delete', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static void showBlockUserDialog(
+    BuildContext context, {
+    required String targetUserId,
+  }) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
+        title: Text(
+          ar ? 'حظر المستخدم؟' : 'Block User?',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          ar
+              ? 'لن يتمكن هذا المستخدم من مراسلتك أو التفاعل معك عبر التطبيق. يمكنك إلغاء الحظر لاحقاً من إعدادات الحساب.'
+              : 'This user will no longer be able to message or interact with you. You can unblock them later from Account Settings.',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx),
+            child: Text(ar ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dlgCtx);
+              final ok = await BlockRepository().blockUser(blockedUserId: targetUserId);
+              if (context.mounted) {
+                if (ok) {
+                  VSPFeedback.showSuccess(context, ar ? 'تم حظر المستخدم.' : 'User blocked.');
+                  Navigator.pop(context, true);
+                } else {
+                  VSPFeedback.showError(context, ar ? 'تعذر حظر المستخدم.' : 'Could not block user.');
+                }
+              }
+            },
+            child: Text(
+              ar ? 'حظر' : 'Block',
+              style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

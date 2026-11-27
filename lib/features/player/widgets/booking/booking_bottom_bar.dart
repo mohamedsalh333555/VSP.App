@@ -281,8 +281,8 @@ class BookingBottomBar extends StatelessWidget {
                   if (totalPrice > 0)
                     Text(
                       isArabic
-                          ? '+ 5% خدمة ومصاريف الدفع'
-                          : '+ 5% fee & payment gateway',
+                          ? '+ 5% عمولة المنصة ورسوم الدفع الإلكتروني'
+                          : '+ 5% VSP fee & online payment fees',
                       style: const TextStyle(
                         color: VSPColors.textMuted,
                         fontSize: 10,

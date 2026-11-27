@@ -1,0 +1,42 @@
+{
+  "$schema": "https://vsp.app/schemas/design-tokens.json",
+  "version": "2.0.0",
+  "source": "lib/core/ui/tokens/vsp_design_tokens.dart",
+  "colors": {
+    "background": "#09090B",
+    "surface": "#18181B",
+    "surfaceRaised": "#27272A",
+    "surfaceElevated": "#323238",
+    "accent": "#9FDF02",
+    "accentHover": "#8BC402",
+    "textPrimary": "#E4E4E7",
+    "textSecondary": "#A1A1AA",
+    "textMuted": "#6B7280",
+    "border": "#262626",
+    "error": "#EF4444",
+    "warning": "#F59E0B",
+    "info": "#3B82F6",
+    "success": "#9FDF02"
+  },
+  "typography": {
+    "latinFont": "Poppins",
+    "arabicFont": "Tajawal",
+    "fallback": ["Tajawal", "sans-serif"]
+  },
+  "spacing": {
+    "xxs": 4,
+    "xs": 8,
+    "sm": 12,
+    "md": 16,
+    "lg": 24,
+    "xl": 32
+  },
+  "radius": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "full": 999
+  }
+}

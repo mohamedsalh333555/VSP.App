@@ -94,14 +94,22 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('1. Authentication & Role Immutability Flow', () {
-    test('Password recovery deep links (/set-new-password) bypass all redirect gates', () {
-      final mockAuth = FakeAuthProvider(isAuthenticated: false);
-      final redirect = AppRouter.redirectLogic(
+    test('Password recovery deep links (/set-new-password) bypass redirect gates only with active recovery session', () {
+      final recoveryAuth = FakeAuthProvider(isAuthenticated: true);
+      final allowed = AppRouter.redirectLogic(
         DummyBuildContext(),
         FakeGoRouterState('/set-new-password'),
-        mockAuth,
+        recoveryAuth,
       );
-      expect(redirect, isNull);
+      expect(allowed, isNull);
+
+      final unauth = FakeAuthProvider(isAuthenticated: false);
+      final blocked = AppRouter.redirectLogic(
+        DummyBuildContext(),
+        FakeGoRouterState('/set-new-password'),
+        unauth,
+      );
+      expect(blocked, '/welcome');
     });
 
     test('Uncompleted profile (missing phone) redirects to /onboarding', () {
@@ -214,13 +222,13 @@ void main() {
       expect(calculateTotal(slotsCount, pricePerHour, false, ballPrice), equals(300.0));
     });
 
-    test('Paymob platform fee formula (amount * 0.0475) + 3.0 EGP', () {
+    test('Paymob platform fee formula (5% VSP + 2.4%+3 Paymob gross-up)', () {
       const baseAmount = 100.0;
       final serviceFee = PaymobService.calculateServiceFee(baseAmount);
-      expect(serviceFee, equals(7.75));
+      expect(serviceFee, equals(10.66));
 
       final totalAmount = PaymobService.calculateTotalAmount(baseAmount);
-      expect(totalAmount, equals(107.75));
+      expect(totalAmount, equals(110.66));
     });
 
     test('Deposit mode cap: deposit <= 50% of hourly price', () {

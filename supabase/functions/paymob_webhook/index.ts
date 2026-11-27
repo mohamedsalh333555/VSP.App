@@ -447,8 +447,8 @@ serve(async (req: Request) => {
               .eq("id", 1)
               .maybeSingle();
             const principal = Number(tournResult?.amount || 0);
-            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
-            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
+            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.05);
+            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.024);
             const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
             const vspFee = Math.round(principal * vspRate * 100) / 100;
             const gatewayFee = Math.round((principal * gatewayRate + gatewayFixed) * 100) / 100;
@@ -591,8 +591,8 @@ serve(async (req: Request) => {
               .eq("id", 1)
               .maybeSingle();
             const principal = Number(tournResult.amount || 0);
-            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
-            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
+            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.05);
+            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.024);
             const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
             const vspFee = Math.round(principal * vspRate * 100) / 100;
             const gatewayFee = Math.round((principal * gatewayRate + gatewayFixed) * 100) / 100;
@@ -852,47 +852,25 @@ serve(async (req: Request) => {
         Math.round((Number(existingBooking.total_price || 0) - collectedBefore) * 100) / 100
       );
 
-      const { data: feeConfigForBooking } = await supabase
-        .from("platform_fee_config")
-        .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_wallet_rate, booking_paymob_fixed_fee")
-        .eq("id", 1)
+      const { data: attemptRow } = await supabase
+        .from("payment_attempts")
+        .select("base_price_piasters, approved_total_piasters")
+        .eq("booking_id", bookingId)
+        .eq("paymob_order_id", orderId)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      const vspRateForBooking = Number(feeConfigForBooking?.booking_vsp_rate);
-      const cardRateForBooking = Number(
-        feeConfigForBooking?.booking_paymob_local_rate ?? feeConfigForBooking?.booking_paymob_rate
-      );
-      const walletRateForBooking = Number(
-        feeConfigForBooking?.booking_paymob_wallet_rate ?? cardRateForBooking
-      );
-      const gatewayRateForBooking =
-        resolvedPaymentMethod === "wallet" ? walletRateForBooking : cardRateForBooking;
-      const fixedFeeForBooking = Number(feeConfigForBooking?.booking_paymob_fixed_fee);
+      const { data: bookingPricing } = attemptRow
+        ? { data: null }
+        : await supabase.rpc("calculate_booking_pricing_v2", {
+            p_base_price: remainingBefore,
+            p_channel: resolvedPaymentMethod === "wallet" ? "wallet" : "local_card",
+          });
 
-      const expectedGrossForPrincipal = (principal: number) => {
-        const vspFee = Math.round(principal * vspRateForBooking * 100) / 100;
-        const gatewayFee = Math.round((principal * gatewayRateForBooking + fixedFeeForBooking) * 100) / 100;
-        return Math.round((principal + vspFee + gatewayFee) * 100) / 100;
-      };
-
-      const principalCandidates: number[] = [];
-      if (remainingBefore > 0) principalCandidates.push(remainingBefore);
-      if (
-        collectedBefore <= 0.01 &&
-        Boolean(existingBooking.needs_deposit) &&
-        Number(existingBooking.deposit_amount || 0) > 0
-      ) {
-        principalCandidates.push(Math.min(
-          remainingBefore,
-          Math.round(Number(existingBooking.deposit_amount) * 100) / 100
-        ));
-      }
-
-      const uniqueCandidates = [...new Set(principalCandidates.map((n) => Math.round(n * 100) / 100))];
-      const principalAmount =
-        uniqueCandidates.find((candidate) =>
-          Math.abs(expectedGrossForPrincipal(candidate) - paidAmountEgp) <= 0.01
-        ) ?? remainingBefore;
+      const principalAmount = attemptRow
+        ? Math.round(Number(attemptRow.base_price_piasters)) / 100
+        : remainingBefore;
 
       const isDepositOnly = principalAmount < remainingBefore - 0.01;
 

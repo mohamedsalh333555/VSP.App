@@ -96,8 +96,8 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                   key: ValueKey(notification.id),
                   direction: DismissDirection.endToStart,
                   background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
+                    alignment: AlignmentDirectional.centerEnd,
+                    padding: const EdgeInsetsDirectional.only(end: 20),
                     margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
                     decoration: BoxDecoration(
                       color: VSPColors.error.withValues(alpha: 0.2),
@@ -193,17 +193,18 @@ class _NotificationCard extends StatelessWidget {
                       Flexible(
                         child: Text(
                           _localizeText(context, notification.title),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                            color: VSPColors.textPrimary,
+                            fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.bold,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _formatTime(context, notification.createdAt),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ],
                   ),
@@ -211,7 +212,8 @@ class _NotificationCard extends StatelessWidget {
                   Text(
                     _localizeText(context, notification.body),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: notification.isRead ? VSPColors.textSecondary.withValues(alpha: 0.6) : VSPColors.textSecondary,
+                      color: notification.isRead ? VSPColors.textSecondary : VSPColors.textPrimary,
+                      height: 1.4,
                     ),
                   ),
   
