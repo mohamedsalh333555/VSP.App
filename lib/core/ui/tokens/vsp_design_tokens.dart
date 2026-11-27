@@ -561,6 +561,30 @@ abstract final class VSPDSTypography {
       FontFeature.tabularFigures(),
     ],
   );
+
+  static const TextStyle priceHero = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 20.0,
+    fontWeight: FontWeight.w900,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+    fontFeatures: <FontFeature>[
+      FontFeature.tabularFigures(),
+    ],
+  );
+
+  static const TextStyle priceCompact = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 14.0,
+    fontWeight: FontWeight.w800,
+    height: 1.20,
+    color: VSPDSSemanticColors.accent,
+    fontFeatures: <FontFeature>[
+      FontFeature.tabularFigures(),
+    ],
+  );
 }
 
 abstract final class VSPDSMotion {

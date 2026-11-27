@@ -146,13 +146,13 @@ class TournamentSchedulingStep extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.1),
+              color: VSPColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+              border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                const Icon(Iconsax.lock_1_copy, color: Colors.amber, size: 20),
+                const Icon(Iconsax.lock_1_copy, color: VSPColors.warning, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -160,7 +160,7 @@ class TournamentSchedulingStep extends StatelessWidget {
                         ? 'الحقول المقفولة (التواريخ أو الجوائز) لا يمكن تعديلها بعد اعتماد اللائحة وبدء التسجيل حفاظاً على التزامات البطولة.'
                         : 'Locked fields (dates or prizes) cannot be changed after registration begins to protect tournament commitments.',
                     style: const TextStyle(
-                      color: Colors.amber,
+                      color: VSPColors.warning,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
