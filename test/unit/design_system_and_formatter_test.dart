@@ -7,6 +7,7 @@ import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/core/ui/vsp_ui.dart';
 import 'package:vsp_application/core/utils/vsp_financial_formatter.dart';
 import 'package:vsp_application/features/dev/design_system_showcase_screen.dart';
+import 'package:vsp_application/features/owner/widgets/ledger/owner_ledger_balance_cards.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
 import 'package:vsp_application/shared/widgets/vsp_payment_summary_card.dart';
 
@@ -302,5 +303,51 @@ void main() {
       expect(find.text('VSP Design System Playground'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+
+    for (final isAr in [true, false]) {
+      testWidgets(
+        'OwnerDigitalBalanceCard & VSPStateView render cleanly (${isAr ? "AR/RTL" : "EN/LTR"}) at 360px 1.3x scale',
+        (tester) async {
+          await tester.binding.setSurfaceSize(const Size(360, 800));
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Directionality(
+                textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+                child: MediaQuery(
+                  data: const MediaQueryData(
+                    textScaler: TextScaler.linear(1.3),
+                  ),
+                  child: Scaffold(
+                    body: ListView(
+                      children: [
+                        OwnerDigitalBalanceCard(
+                          digitalBalance: 950.0,
+                          isAr: isAr,
+                          onRequestPayout: () {},
+                          completedBookingsCount: 10,
+                          upcomingOnlineRevenue: 190.0,
+                        ),
+                        const SizedBox(height: 12),
+                        VSPStateView(
+                          state: VSPUiState.empty,
+                          title: isAr ? 'لا توجد بيانات' : 'No Data Found',
+                          message: isAr
+                              ? 'ستظهر الحجوزات الجديدة هنا.'
+                              : 'New bookings will appear here.',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
   });
 }
