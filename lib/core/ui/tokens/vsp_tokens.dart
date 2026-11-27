@@ -14,119 +14,115 @@ import 'vsp_design_tokens.dart';
 /// الأخضر الوحيد المعتمد هو accent (#9FDF02) أو accentSoft.
 /// أي خلفية دائرية محايدة لازم تستخدم iconBadgeBg.
 class VSPColors {
-  static const background = Color(0xFF09090B); // Deep matte Zinc 950 (100% Solid)
-  static const surface = Color(0xFF18181B); // Zinc 900 (100% Solid Opaque)
-  static const surfaceAlt = Color(0xFF27272A); // Zinc 800 (100% Solid Opaque)
-  static const surfaceLight = surfaceAlt; 
-  static const accent = Color(0xFF9FDF02); 
+  static const background = VSPDSSemanticColors.background;
+  static const surface = VSPDSSemanticColors.surface;
+  static const surfaceAlt = VSPDSSemanticColors.surfaceRaised;
+  static const surfaceLight = surfaceAlt;
+  static const accent = VSPDSSemanticColors.accent;
   static const primary = accent;
-  static const accentSoft = Color(0x1F9FDF02);
-  static const accentMuted = Color(0x339FDF02);
-  static const accentGlow = Color(0x1F9FDF02);
+  static const accentSoft = VSPDSSemanticColors.accentSoft;
+  static const accentMuted = VSPDSColors.voltGreenMuted;
+  static const accentGlow = VSPDSColors.glassGlow;
 
   /// خلفية دائرية موحدة لأي أيقونة داخل شارة/badge/status circle
-  static const iconBadgeBg = surfaceAlt; // #27272A الفحمي
-  static const iconBadgeBgElevated = Color(0xFF323238); // درجة أفتح شوية لو محتاج تباين أعلى فوق surface
+  static const iconBadgeBg = VSPDSSemanticColors.iconBadge;
+  static const iconBadgeBgElevated = VSPDSSemanticColors.iconBadgeElevated;
 
-  static const textPrimary = Color(0xFFE4E4E7);
-  static const textSecondary = Color(0xFFA1A1AA);
-  static const textMuted = Color(0xFF6B7280);
-  static const divider = Color(0xFF262626);
-  static const inputFill = Color(0xFF1E1E22);
-  static const error = Color(0xFFEF4444);
-  static const success = accent; // Unified green: single source of truth for positive states
-  static const warning = Color(0xFFF59E0B);
-  static const info = Color(0xFF3B82F6);
-  static const Color whatsApp = Color(0xFF25D366);
-  static const Color proAccent = accent; // Unified to Neon Green (#9FDF02)
-  static const Color proAccentSoft = accentSoft; // 12% Neon Green Tint
+  static const textPrimary = VSPDSSemanticColors.textPrimary;
+  static const textSecondary = VSPDSSemanticColors.textSecondary;
+  static const textMuted = VSPDSSemanticColors.textMuted;
+  static const divider = VSPDSSemanticColors.border;
+  static const inputFill = VSPDSSemanticColors.inputFill;
+  static const error = VSPDSSemanticColors.error;
+  static const success = VSPDSSemanticColors.success;
+  static const warning = VSPDSSemanticColors.warning;
+  static const info = VSPDSSemanticColors.info;
+  static const Color whatsApp = VSPDSColors.whatsappGreen;
+  static const Color proAccent = accent;
+  static const Color proAccentSoft = accentSoft;
 
   // Aliased to clean surface tokens to completely eliminate legacy muddy olive tints
   static const cardGreen = surfaceAlt;
   static const cardDarkGreen = surface;
-  static const white12 = Color(0x1FFFFFFF);
-  static const white38 = Color(0x61FFFFFF);
-  static const white = Color(0xFFFFFFFF);
-  
+  static const white12 = VSPDSColors.white12;
+  static const white38 = VSPDSColors.white38;
+  static const white = VSPDSColors.white;
+
   // Podiums & Medals
-  static const Color medalGold = Color(0xFFFFD700);
-  static const Color medalSilver = Color(0xFFC0C0C0);
-  static const Color medalBronze = Color(0xFFCD7F32);
-  
-  static const Color borderLight = Color(0x1FFFFFFF); 
-  static const Color borderAccent = Color(0x409FDF02);
-  static const Color borderMedium = Color(0x33262626); 
-  static const Color glassSurface = Color(0x73141417); 
-  static const Color glassSurfaceAlt = Color(0x991C1C20); 
-  static const Color glassBorder = Color(0x26FFFFFF); 
-  static const Color glassBorderAccent = Color(0x409FDF02); 
-  static const Color glassGlow = Color(0x1F9FDF02); 
-  static const double glassBlurSigma = 16.0; 
-  static const Color black80 = Color(0xCC000000); 
-  static const Color white24 = Color(0x3DFFFFFF); 
+  static const Color medalGold = VSPDSColors.gold;
+  static const Color medalSilver = VSPDSColors.silver;
+  static const Color medalBronze = VSPDSColors.bronze;
+
+  static const Color borderLight = VSPDSColors.white12;
+  static const Color borderAccent = VSPDSSemanticColors.accentBorder;
+  static const Color borderMedium = Color(0x33262626);
+  static const Color glassSurface = VSPDSColors.glassSurface;
+  static const Color glassSurfaceAlt = VSPDSColors.glassSurfaceAlt;
+  static const Color glassBorder = VSPDSColors.glassBorder;
+  static const Color glassBorderAccent = VSPDSColors.glassBorderAccent;
+  static const Color glassGlow = VSPDSColors.glassGlow;
+  static const double glassBlurSigma = 16.0;
+  static const Color black80 = VSPDSColors.black80;
+  static const Color white24 = VSPDSColors.white24;
 
   static const RadialGradient backgroundAura = RadialGradient(
     center: Alignment(-0.4, -0.2),
     radius: 1.2,
     colors: [
-      Color(0x1F9FDF02), // subtle accent glow instead of murky olive
-      Color(0xFF09090B),
+      VSPDSColors.voltGreenSoft,
+      VSPDSColors.zinc950,
     ],
     stops: [0.0, 0.7],
   );
 
   static const surfaceGradient = LinearGradient(
-    colors: [Color(0xFF18181B), Color(0xFF27272A)],
+    colors: [VSPDSColors.zinc900, VSPDSColors.zinc800],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 }
 
 class VSPRadius {
-  static const double xs = 4.0;
-  static const double sm = 8.0;
-  static const double md = 16.0; 
-  static const double lg = 24.0; 
-  static const double xl = 32.0; 
-  static const double full = 999.0;
+  static const double xs = VSPDSRadius.xs;
+  static const double sm = VSPDSRadius.sm;
+  static const double md = VSPDSRadius.md;
+  static const double lg = VSPDSRadius.lg;
+  static const double xl = VSPDSRadius.xl;
+  static const double full = VSPDSRadius.full;
 
-  /// Centralized Component Tokens
-  /// Modifying any token below instantly updates all matching components across the entire app!
-  static const double button = full; // All primary, secondary, and social buttons
-  static const double card = lg; // All stadium cards, team cards, match cards, containers
-  static const double input = md; // All text fields and input boxes
-  static const double chip = sm; // All filter chips, tags, position badges
-  static const double dialog = xl; // All popup dialogs and modals
-  static const double bottomSheet = xl; // All bottom sheets
+  /// Centralized Component Tokens (aliased to VSPDSRadius)
+  static const double button = VSPDSRadius.button;
+  static const double card = VSPDSRadius.card;
+  static const double input = VSPDSRadius.input;
+  static const double chip = VSPDSRadius.chip;
+  static const double dialog = VSPDSRadius.dialog;
+  static const double bottomSheet = VSPDSRadius.bottomSheet;
   static const double sheet = bottomSheet;
 }
 
 class VSPSize {
-  /// Standard Unified Height (56.0px) for All Single-Line Input Fields
-  static const double inputHeight = 56.0;
-
-  /// Standard Unified Height (56.0px) for All Primary, Secondary & Social Buttons
-  static const double buttonHeight = 56.0;
+  static const double inputHeight = VSPDSizes.inputHeight;
+  static const double buttonHeight = VSPDSizes.buttonHeight;
 }
 
 class VSPSpacing {
-  // Backward-compatible tokens retained for existing feature code.
-  static const double xs = 4.0;
-  static const double sm = 8.0;
-  static const double md = 12.0;
-  static const double lg = 16.0;
-  static const double xl = 20.0;
-  static const double xxl = 24.0;
-  static const double xxxl = 32.0;
+  // Backward-compatible aliases mapped to VSPDSSpacing (preserving exact px values).
+  static const double xs = VSPDSSpacing.xxs;
+  static const double sm = VSPDSSpacing.xs;
+  static const double md = VSPDSSpacing.sm;
+  static const double lg = VSPDSSpacing.md;
+  static const double xl = VSPDSSpacing.inputHorizontal;
+  static const double xxl = VSPDSSpacing.lg;
+  static const double xxxl = VSPDSSpacing.xl;
 
-  // Canonical 8px visual grid used by new/refined screens.
-  static const double grid1 = 8.0;
-  static const double grid2 = 16.0;
-  static const double grid3 = 24.0;
-  static const double grid4 = 32.0;
-  static const double page = grid2;
-  static const double section = grid3;
-  static const double actionGap = grid1;
+  // Canonical 8px visual grid
+  static const double grid1 = VSPDSSpacing.xs;
+  static const double grid2 = VSPDSSpacing.md;
+  static const double grid3 = VSPDSSpacing.lg;
+  static const double grid4 = VSPDSSpacing.xl;
+  static const double page = VSPDSSpacing.pageHorizontal;
+  static const double section = VSPDSSpacing.section;
+  static const double actionGap = VSPDSSpacing.controlGap;
 }
 
 /// Shared geometry for the floating bottom navigation and content that must clear it.

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/utils/vsp_financial_formatter.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 
@@ -89,18 +90,22 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  ? widget.booking.id.substring(0, 8).toUpperCase() 
  : widget.booking.id.toUpperCase();
 
- final isDeposit = widget.booking.paymentStatus == 'partially_paid' ||
-     (widget.booking.depositPaid > 0 && widget.booking.depositPaid < widget.booking.totalPrice);
+ final isDeposit = widget.booking.paymentStatus == 'partially_paid' &&
+     !widget.booking.isPaid &&
+     widget.booking.depositPaid > 0 &&
+     widget.booking.depositPaid < widget.booking.totalPrice;
 
  final paymentMethodText = widget.booking.paymentMethod.toLowerCase() == 'cash'
- ? (isArabic ? 'دفع نقداً' : 'Cash')
+ ? (isArabic ? 'دفع نقداً (تاريخي)' : 'Cash (Legacy)')
  : isDeposit
-     ? (isArabic ? 'دفع عربون إلكتروني' : 'Online Deposit')
+     ? (isArabic ? 'دفع جزئي إلكتروني' : 'Partial Online Payment')
      : (isArabic ? 'دفع إلكتروني كامل' : 'Full Online Payment');
 
- final formattedPriceAndPayment = isArabic
- ? '${widget.booking.totalPrice.toInt()} ج.م • $paymentMethodText'
- : '${widget.booking.totalPrice.toInt()} EGP • $paymentMethodText';
+ final displayedTotal = widget.booking.grossAmountCharged > 0
+     ? widget.booking.grossAmountCharged
+     : widget.booking.totalPrice;
+ final formattedPriceAndPayment =
+     '${VSPFinancialFormatter.formatCurrency(displayedTotal, isArabic: isArabic)} • $paymentMethodText';
 
  return PopScope(
  canPop: false,

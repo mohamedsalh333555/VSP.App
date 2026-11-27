@@ -123,4 +123,13 @@ void main() {
     final source = File('analysis_options.yaml').readAsStringSync();
     expect(source.contains('test/**'), isFalse);
   });
+
+  test('Legacy vsp_tokens.dart aliases V2 colors instead of duplicating core hex literals', () {
+    final legacyTokens = File('lib/core/ui/tokens/vsp_tokens.dart').readAsStringSync();
+    expect(legacyTokens.contains('0xFF09090B'), isFalse);
+    expect(legacyTokens.contains('0xFF18181B'), isFalse);
+    expect(legacyTokens.contains('0xFF27272A'), isFalse);
+    expect(legacyTokens.contains('0xFF9FDF02'), isFalse);
+    expect(legacyTokens.contains('VSPDSSemanticColors'), isTrue);
+  });
 }
