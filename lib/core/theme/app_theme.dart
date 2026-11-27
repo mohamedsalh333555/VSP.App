@@ -30,8 +30,8 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: VSPDSSemanticColors.background,
       colorScheme: const ColorScheme.dark(
-        primary: VSPDSSemanticColors.accent,
-        secondary: VSPDSSemanticColors.accent,
+        primary: VSPDSSemanticColors.textPrimary,
+        secondary: VSPDSSemanticColors.textSecondary,
         surface: VSPDSSemanticColors.surface,
       ),
       fontFamily: VSPDSTypography.latinFont,
@@ -67,7 +67,7 @@ class AppTheme {
         backgroundColor: VSPDSSemanticColors.surface,
         surfaceTintColor: VSPDSColors.transparent,
         headerBackgroundColor: VSPDSSemanticColors.surface,
-        headerForegroundColor: VSPDSSemanticColors.accent,
+        headerForegroundColor: VSPDSSemanticColors.textPrimary,
         headerHelpStyle: VSPDSTypography.actionLabel,
         headerHeadlineStyle: VSPDSTypography.calendarHeadline,
         dayStyle: VSPDSTypography.calendarDay,
@@ -75,11 +75,11 @@ class AppTheme {
         yearStyle: VSPDSTypography.calendarDay,
         cancelButtonStyle: ButtonStyle(
           textStyle: WidgetStatePropertyAll(VSPDSTypography.actionLabel),
-          foregroundColor: WidgetStatePropertyAll(VSPDSSemanticColors.accent),
+          foregroundColor: WidgetStatePropertyAll(VSPDSSemanticColors.textPrimary),
         ),
         confirmButtonStyle: ButtonStyle(
           textStyle: WidgetStatePropertyAll(VSPDSTypography.actionLabel),
-          foregroundColor: WidgetStatePropertyAll(VSPDSSemanticColors.accent),
+          foregroundColor: WidgetStatePropertyAll(VSPDSSemanticColors.textPrimary),
         ),
       ),
 
@@ -153,7 +153,7 @@ class AppTheme {
       ),
 
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: VSPDSSemanticColors.accent,
+        color: VSPDSSemanticColors.textSecondary,
         linearTrackColor: VSPDSSemanticColors.surfaceRaised,
         circularTrackColor: VSPDSSemanticColors.surfaceRaised,
       ),
@@ -178,7 +178,7 @@ class AppTheme {
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: VSPDSSemanticColors.accent,
+          foregroundColor: VSPDSSemanticColors.textPrimary,
           minimumSize: const Size(
             0,
             VSPDSizes.textButtonMinHeight,
@@ -245,7 +245,7 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(VSPDSRadius.input),
           borderSide: const BorderSide(
-            color: VSPDSSemanticColors.accent,
+            color: VSPDSSemanticColors.focusRing,
             width: VSPDSBorders.fieldFocus,
           ),
         ),

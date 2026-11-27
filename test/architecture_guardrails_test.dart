@@ -246,4 +246,36 @@ void main() {
     }
     expect(hits, isEmpty, reason: 'Green ambient glow must ONLY be enabled on player_home_screen.dart');
   });
+
+  test('Green policy: shared decorative tokens are neutral', () {
+    expect(VSPDSSemanticColors.accent, VSPDSColors.voltGreen);
+    for (final c in [
+      VSPDSColors.voltGreenSoft,
+      VSPDSColors.voltGreenMuted,
+      VSPDSColors.voltGreenBorder,
+      VSPDSColors.glassBorderAccent,
+      VSPDSColors.glassGlow,
+      VSPDSSemanticColors.accentSoft,
+      VSPDSSemanticColors.accentBorder,
+      VSPDSTypography.priceCompact.color!,
+      VSPDSTypography.actionLabel.color!,
+    ]) {
+      final argb = c.toARGB32();
+      final red = (argb >> 16) & 0xff;
+      final green = (argb >> 8) & 0xff;
+      final blue = argb & 0xff;
+      expect(green > red && green > blue, isFalse);
+    }
+    expect(VSPDSColors.homeAmbientGlow.toARGB32() & 0xFFFFFF,
+        VSPDSColors.voltGreen.toARGB32() & 0xFFFFFF);
+    final home = File('lib/features/player/screens/player_home_screen.dart').readAsStringSync();
+    expect(home, contains('showTopGlow: _selectedIndex == 0'));
+    expect(home, contains('showBottomGlow: _selectedIndex == 0'));
+    final ambient = File('lib/shared/widgets/vsp_ambient_background.dart').readAsStringSync();
+    expect(ambient, contains('this.showTopGlow = false'));
+    final nav = File('lib/shared/widgets/vsp_bottom_nav_bar.dart').readAsStringSync();
+    expect(nav, isNot(contains('VSPDSSemanticColors.accent')));
+    final stadium = File('lib/shared/widgets/stadium_card.dart').readAsStringSync();
+    expect(stadium, isNot(contains('VSPColors.accent')));
+  });
 }

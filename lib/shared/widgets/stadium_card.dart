@@ -125,7 +125,7 @@ class StadiumCard extends StatelessWidget {
  child: Row(
  mainAxisSize: MainAxisSize.min,
  children: [
- const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
+ const Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 14),
  const SizedBox(width: 4),
  Flexible(
  child: Text(
@@ -185,7 +185,7 @@ class StadiumCard extends StatelessWidget {
  ),
  child: const Icon(
  Iconsax.edit_copy,
- color: VSPColors.accent,
+ color: VSPColors.textSecondary,
  size: 20,
  ),
  ),
@@ -211,7 +211,7 @@ class StadiumCard extends StatelessWidget {
  ),
  child: Icon(
  isFav ? Iconsax.heart : Iconsax.heart_copy,
- color: VSPColors.accent,
+ color: VSPColors.textSecondary,
  size: 22,
  ),
  ),
@@ -250,7 +250,7 @@ class StadiumCard extends StatelessWidget {
  ? 'ساعات العمل: ${stadium.openingTime} - ${stadium.closingTime}'
  : 'Working Hours: ${stadium.openingTime} - ${stadium.closingTime}',
  style: Theme.of(context).textTheme.bodySmall?.copyWith(
- color: VSPColors.accent,
+ color: VSPColors.textSecondary,
  fontWeight: FontWeight.bold,
  fontSize: 12,
  ),
@@ -273,17 +273,17 @@ class StadiumCard extends StatelessWidget {
  crossAxisAlignment: WrapCrossAlignment.center,
  children: [
  if (hasBaths) ...[
- const Icon(Iconsax.drop, color: VSPColors.accent, size: 14),
+ const Icon(Iconsax.drop, color: VSPColors.textSecondary, size: 14),
  const SizedBox(width: 4),
  Text(isArabic ? 'حمامات ' : 'Baths ', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
  ],
  if (hasCafe) ...[
- const Icon(Iconsax.coffee_copy, color: VSPColors.accent, size: 14),
+ const Icon(Iconsax.coffee_copy, color: VSPColors.textSecondary, size: 14),
  const SizedBox(width: 4),
  Text(isArabic ? 'كافتيريا ' : 'Cafeteria ', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
  ],
  if (hasGarage) ...[
- const Icon(Iconsax.car_copy, color: VSPColors.accent, size: 14),
+ const Icon(Iconsax.car_copy, color: VSPColors.textSecondary, size: 14),
  const SizedBox(width: 4),
  Text(isArabic ? 'جراج ' : 'Garage ', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
  ],
@@ -302,7 +302,7 @@ class StadiumCard extends StatelessWidget {
  ? 'السعر ${stadium.pricePerHour.toInt()} ج.م'
  : 'Price ${stadium.pricePerHour.toInt()} EGP',
  style: Theme.of(context).textTheme.titleMedium?.copyWith(
- color: VSPColors.accent,
+ color: VSPColors.white,
  fontWeight: FontWeight.w900,
  fontSize: 16,
  ),
@@ -362,7 +362,7 @@ class StadiumCard extends StatelessWidget {
  Text(
  '${stadium.pricePerHour.toInt()} ${AppLocalizations.of(context)!.egCurrency}',
  style: Theme.of(context).textTheme.titleMedium?.copyWith(
- color: VSPColors.accent,
+ color: VSPColors.white,
  fontWeight: FontWeight.w900,
  fontSize: 18,
  ),

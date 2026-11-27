@@ -1,6 +1,6 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 /// Reusable Ambient Background wrapper that provides a signature subtle neon glow
 /// in the background layers while completely isolating touch gestures (zero hit-test interference).
@@ -14,7 +14,7 @@ class VSPAmbientBackground extends StatelessWidget {
   const VSPAmbientBackground({
     super.key,
     required this.child,
-    this.showTopGlow = true,
+    this.showTopGlow = false,
     this.showBottomGlow = false,
     this.glowColor,
     this.backgroundColor = VSPColors.background,
@@ -22,7 +22,7 @@ class VSPAmbientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveGlowColor = glowColor ?? VSPColors.accentGlow;
+    final effectiveGlowColor = glowColor ?? VSPDSColors.homeAmbientGlow;
     final isRtl = Directionality.of(context) == TextDirection.rtl;
 
     return Container(

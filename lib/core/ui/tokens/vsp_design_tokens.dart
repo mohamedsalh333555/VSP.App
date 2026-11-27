@@ -46,9 +46,11 @@ abstract final class VSPDSColors {
   static const Color tierImmortal = Color(0xFFFFE082);
 
   // Alpha primitives derived from the same palette.
-  static const Color voltGreenSoft = Color(0x1F9FDF02);
-  static const Color voltGreenMuted = Color(0x339FDF02);
-  static const Color voltGreenBorder = Color(0x409FDF02);
+  // Legacy soft/border aliases are neutral. Only Home may opt into neon glow.
+  static const Color homeAmbientGlow = Color(0x1F9FDF02);
+  static const Color voltGreenSoft = Color(0x1FFFFFFF);
+  static const Color voltGreenMuted = Color(0x33FFFFFF);
+  static const Color voltGreenBorder = Color(0x40FFFFFF);
 
   static const Color white05 = Color(0x0DFFFFFF);
   static const Color white10 = Color(0x1AFFFFFF);
@@ -63,8 +65,8 @@ abstract final class VSPDSColors {
   static const Color glassSurface = Color(0x73141417);
   static const Color glassSurfaceAlt = Color(0x991C1C20);
   static const Color glassBorder = Color(0x26FFFFFF);
-  static const Color glassBorderAccent = Color(0x409FDF02);
-  static const Color glassGlow = Color(0x1F9FDF02);
+  static const Color glassBorderAccent = glassBorder;
+  static const Color glassGlow = transparent;
 }
 
 abstract final class VSPDSSemanticColors {
@@ -548,7 +550,7 @@ abstract final class VSPDSTypography {
     fontSize: 13.0,
     fontWeight: FontWeight.w700,
     height: 1.20,
-    color: VSPDSSemanticColors.accent,
+    color: VSPDSSemanticColors.textPrimary,
   );
 
   static const TextStyle numeric = TextStyle(
@@ -577,7 +579,7 @@ abstract final class VSPDSTypography {
     fontSize: 14.0,
     fontWeight: FontWeight.w800,
     height: 1.20,
-    color: VSPDSSemanticColors.accent,
+    color: VSPDSSemanticColors.textPrimary,
     fontFeatures: <FontFeature>[
       FontFeature.tabularFigures(),
     ],
