@@ -68,7 +68,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: isSelected ? VSPColors.accent : Colors.transparent,
+            color: isSelected ? VSPColors.textPrimary : Colors.transparent,
             borderRadius: BorderRadius.circular(VSPRadius.xl),
           ),
           alignment: Alignment.center,

@@ -50,7 +50,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
         actions: [
           TextButton(
             onPressed: () => NotificationRepository().markAllAsRead(_userId),
-            child: Text(AppLocalizations.of(context)!.markAll, style: const TextStyle(color: VSPColors.accent, fontSize: 13)),
+            child: Text(AppLocalizations.of(context)!.markAll, style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13)),
           ),
           const SizedBox(width: 8),
         ],
@@ -121,7 +121,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                         action: SnackBarAction(
                           label: isArabic ? 'تراجع' : 'Undo',
-                          textColor: VSPColors.accent,
+                          textColor: VSPColors.textPrimary,
                           onPressed: () {
                             NotificationRepository().sendNotification(_userId, deletedItem);
                           },
@@ -160,7 +160,7 @@ class _NotificationCard extends StatelessWidget {
           color: notification.isRead ? VSPColors.surface.withValues(alpha: 0.5) : VSPColors.surfaceAlt,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(
-            color: notification.isRead ? VSPColors.divider.withValues(alpha: 0.1) : VSPColors.accent.withValues(alpha: 0.3),
+            color: notification.isRead ? VSPColors.divider.withValues(alpha: 0.1) : VSPColors.textSecondary.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -306,7 +306,7 @@ class _NotificationCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(isArabic ? 'حسناً' : 'OK', style: const TextStyle(color: VSPColors.accent)),
+            child: Text(isArabic ? 'حسناً' : 'OK', style: const TextStyle(color: VSPColors.textPrimary)),
           ),
         ],
       ),
@@ -362,20 +362,20 @@ class _NotificationCard extends StatelessWidget {
       case 'announcement':
         return VSPColors.warning; // Amber / Gold for system alerts
       case 'subscription':
-        return VSPColors.proAccent;
+        return VSPColors.info;
       case 'refund':
       case 'tournament_refund':
       case 'tournament_refund_manual':
         return VSPColors.success;
       case 'payout':
-        return VSPColors.accent;
+        return VSPColors.info;
       case 'challenge':
       case 'booking_confirmed':
       case 'stadium_approved':
       case 'public_match_joined':
       case 'match_full':
       case 'result_confirmation':
-        return VSPColors.accent;
+        return VSPColors.info;
       case 'booking_cancelled':
       case 'debt_warning':
       case 'debt_grace':

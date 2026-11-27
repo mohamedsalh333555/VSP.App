@@ -88,7 +88,7 @@ class OwnerProfileScreen extends StatelessWidget {
             height: 64,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: VSPColors.accent, width: 2),
+              border: Border.all(color: VSPColors.divider, width: 2),
             ),
             child: ClipOval(
               child: photoUrl != null && photoUrl.isNotEmpty
@@ -139,12 +139,12 @@ class OwnerProfileScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: isVerified
-                            ? VSPColors.accent.withValues(alpha: 0.12)
+                            ? VSPColors.success.withValues(alpha: 0.12)
                             : VSPColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(VSPRadius.full),
                         border: Border.all(
                           color: isVerified
-                              ? VSPColors.accent.withValues(alpha: 0.3)
+                              ? VSPColors.success.withValues(alpha: 0.3)
                               : VSPColors.divider,
                         ),
                       ),
@@ -154,7 +154,7 @@ class OwnerProfileScreen extends StatelessWidget {
                           Icon(
                             isVerified ? Iconsax.verify_copy : Iconsax.clock_copy,
                             size: 11,
-                            color: isVerified ? VSPColors.accent : VSPColors.textSecondary,
+                            color: isVerified ? VSPColors.success : VSPColors.textSecondary,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -164,7 +164,7 @@ class OwnerProfileScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: isVerified ? VSPColors.accent : VSPColors.textSecondary,
+                              color: isVerified ? VSPColors.success : VSPColors.textSecondary,
                             ),
                           ),
                         ],
@@ -223,7 +223,7 @@ class OwnerProfileScreen extends StatelessWidget {
         style: const TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: VSPColors.accent,
+          color: VSPColors.textPrimary,
         ),
       ),
     );

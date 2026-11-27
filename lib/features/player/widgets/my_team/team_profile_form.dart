@@ -61,7 +61,7 @@ class TeamProfileForm extends StatelessWidget {
               value: selectedSport,
               isExpanded: true,
               dropdownColor: VSPColors.surface,
-              icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
+              icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary, size: 16),
               items: VSPConstants.sports.map((s) => DropdownMenuItem(
                 value: s,
                 child: Text(

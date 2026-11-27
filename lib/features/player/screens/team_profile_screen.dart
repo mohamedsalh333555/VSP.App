@@ -193,7 +193,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       return const VSPScaffold(
         backgroundColor: VSPColors.background,
         body: Center(
-          child: CircularProgressIndicator(color: VSPColors.accent),
+          child: CircularProgressIndicator(color: VSPColors.textSecondary),
         ),
       );
     }

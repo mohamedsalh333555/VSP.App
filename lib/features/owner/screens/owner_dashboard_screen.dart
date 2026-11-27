@@ -290,7 +290,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
       backgroundColor: VSPColors.background,
       body: SafeArea(
         child: RefreshIndicator(
-          color: VSPColors.accent,
+          color: VSPColors.textSecondary,
           backgroundColor: VSPColors.surface,
           onRefresh: () async {
             final uid = auth.currentUser?.id;
@@ -325,7 +325,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
                   const LinearProgressIndicator(
                     minHeight: 2,
                     backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
+                    valueColor: AlwaysStoppedAnimation<Color>(VSPColors.textSecondary),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -392,7 +392,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
                           child: Container(
                             decoration: BoxDecoration(
                               color: _selectedDashboardTab == 0
-                                  ? VSPColors.accent
+                                  ? VSPColors.textPrimary
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(21),
                             ),
@@ -419,7 +419,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
                           child: Container(
                             decoration: BoxDecoration(
                               color: _selectedDashboardTab == 1
-                                  ? VSPColors.proAccent
+                                  ? VSPColors.textPrimary
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(21),
                             ),
@@ -572,7 +572,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
                           border: Border.all(
                             color: isPending
                                 ? VSPColors.divider
-                                : VSPColors.accent.withValues(alpha: 0.35),
+                                : VSPColors.divider,
                           ),
                         ),
                         child: Column(
@@ -586,7 +586,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
                                       : Icons.verified_rounded,
                                   color: isPending
                                       ? VSPColors.textSecondary
-                                      : VSPColors.accent,
+                                      : VSPColors.success,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
@@ -605,7 +605,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
                                   style: TextStyle(
                                     color: isPending
                                         ? VSPColors.textSecondary
-                                        : VSPColors.accent,
+                                        : VSPColors.success,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -755,20 +755,20 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.card),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: VSPColors.accent.withValues(alpha: 0.12),
+              color: VSPColors.surfaceAlt,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Iconsax.building_3_copy,
               size: 32,
-              color: VSPColors.accent,
+              color: VSPColors.success,
             ),
           ),
           const SizedBox(height: 12),
