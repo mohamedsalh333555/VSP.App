@@ -184,5 +184,9 @@ void main() {
     expect(colors['warning'], toHex(VSPDSSemanticColors.warning));
     expect(colors['info'], toHex(VSPDSSemanticColors.info));
     expect(colors['success'], toHex(VSPDSSemanticColors.success));
+
+    final typography = jsonMap['typography'] as Map<String, dynamic>;
+    expect(typography['latinFont'], VSPDSTypography.latinFont);
+    expect(typography['arabicFont'], VSPDSTypography.arabicFont);
   });
 }

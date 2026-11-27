@@ -18,6 +18,11 @@
     "info": "#3B82F6",
     "success": "#9FDF02"
   },
+  "typography": {
+    "latinFont": "Poppins",
+    "arabicFont": "Tajawal",
+    "fallback": ["Tajawal", "sans-serif"]
+  },
   "spacing": {
     "xxs": 4,
     "xs": 8,
