@@ -115,10 +115,10 @@ class TeamAchievementsSection extends StatelessWidget {
                   width: 86,
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                   decoration: BoxDecoration(
-                    color: isUnlocked ? VSPColors.accent.withValues(alpha: 0.06) : VSPColors.surface,
+                    color: isUnlocked ? VSPColors.success.withValues(alpha: 0.06) : VSPColors.surface,
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                     border: Border.all(
-                      color: isUnlocked ? VSPColors.accent.withValues(alpha: 0.5) : VSPColors.divider,
+                      color: isUnlocked ? VSPColors.success.withValues(alpha: 0.5) : VSPColors.divider,
                       width: isUnlocked ? 1.5 : 1.0,
                     ),
                   ),
@@ -135,13 +135,13 @@ class TeamAchievementsSection extends StatelessWidget {
                               shape: BoxShape.circle,
                               color: VSPColors.iconBadgeBg,
                               border: Border.all(
-                                color: isUnlocked ? VSPColors.accent : VSPColors.divider,
+                                color: isUnlocked ? VSPColors.success : VSPColors.divider,
                                 width: isUnlocked ? 1.5 : 1.0,
                               ),
                             ),
                             child: Icon(
                               icon,
-                              color: isUnlocked ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.35),
+                              color: isUnlocked ? VSPColors.success : VSPColors.textSecondary.withValues(alpha: 0.35),
                               size: 22,
                             ),
                           ),
@@ -151,7 +151,7 @@ class TeamAchievementsSection extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                color: isUnlocked ? VSPColors.accent : VSPColors.surfaceAlt,
+                                color: isUnlocked ? VSPColors.success : VSPColors.surfaceAlt,
                                 shape: BoxShape.circle,
                                 border: Border.all(color: VSPColors.background, width: 1),
                               ),
@@ -180,7 +180,7 @@ class TeamAchievementsSection extends StatelessWidget {
                       Text(
                         isUnlocked ? (isArabic ? 'مكتمل' : 'Unlocked') : progress,
                         style: TextStyle(
-                          color: isUnlocked ? VSPColors.accent : VSPColors.textMuted,
+                          color: isUnlocked ? VSPColors.success : VSPColors.textMuted,
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
                         ),
@@ -206,7 +206,7 @@ class TeamAchievementsSection extends StatelessWidget {
           children: [
             Icon(
               isUnlocked ? Iconsax.award_copy : Iconsax.lock_1_copy,
-              color: isUnlocked ? VSPColors.accent : VSPColors.textSecondary,
+              color: isUnlocked ? VSPColors.success : VSPColors.textSecondary,
               size: 22,
             ),
             const SizedBox(width: 10),
@@ -233,7 +233,7 @@ class TeamAchievementsSection extends StatelessWidget {
               decoration: BoxDecoration(
                 color: VSPColors.iconBadgeBg,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: isUnlocked ? VSPColors.accent : VSPColors.divider),
+                border: Border.all(color: isUnlocked ? VSPColors.success : VSPColors.divider),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -247,7 +247,7 @@ class TeamAchievementsSection extends StatelessWidget {
                         ? (isArabic ? 'تم التحقيق ' : 'Unlocked ')
                         : (isArabic ? 'قيد التقدم ($progress)' : 'In Progress ($progress)'),
                     style: TextStyle(
-                      color: isUnlocked ? VSPColors.accent : VSPColors.warning,
+                      color: isUnlocked ? VSPColors.success : VSPColors.warning,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),

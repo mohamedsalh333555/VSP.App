@@ -295,7 +295,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
                           ? '#${p.monthlyRank}  •  ${p.monthlyRankingPoints} ${isArabic ? "نقطة" : "pts"}'
                           : (isArabic ? 'غير مصنف بعد هذا الشهر' : 'Unranked this month'),
                       style: const TextStyle(
-                        color: VSPColors.accent,
+                        color: VSPColors.info,
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
                       ),
@@ -339,7 +339,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
         children: [
           Row(
             children: [
-              const Icon(Iconsax.crown_1_copy, color: VSPColors.accent, size: 22),
+              const Icon(Iconsax.crown_1_copy, color: VSPColors.medalGold, size: 22),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -361,7 +361,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
                   child: Text(
                     reward.deliveryStatus,
                     style: const TextStyle(
-                      color: VSPColors.accent,
+                      color: VSPColors.info,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -429,7 +429,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: VSPColors.accent,
+                          color: VSPColors.info,
                         ),
                       )
                     else if (canEdit)
@@ -479,7 +479,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
                       Text(
                         snap.jerseySize ?? (isArabic ? 'غير محدد' : 'Not set'),
                         style: const TextStyle(
-                          color: VSPColors.accent,
+                          color: VSPColors.info,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -512,7 +512,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
         children: [
           Row(
             children: [
-              const Icon(Iconsax.gift_copy, color: VSPColors.accent, size: 20),
+              const Icon(Iconsax.gift_copy, color: VSPColors.textSecondary, size: 20),
               const SizedBox(width: 8),
               Text(
                 isArabic
@@ -561,7 +561,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
                                   : 'Available to redeem at any pitch in governorate — never expires')
                               : (isArabic ? 'تم الاستبدال' : 'Redeemed'),
                           style: TextStyle(
-                            color: isIssued ? VSPColors.accent : VSPColors.textSecondary,
+                            color: isIssued ? VSPColors.info : VSPColors.textSecondary,
                             fontSize: 11,
                           ),
                         ),
@@ -618,7 +618,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
                       ? '$current/$target (+$reward XP)'
                       : (isArabic ? 'مكتمل ✓' : 'Done ✓'),
                   style: TextStyle(
-                    color: next != null ? VSPColors.accent : VSPColors.success,
+                    color: next != null ? VSPColors.info : VSPColors.success,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
                   ),
@@ -633,7 +633,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
                 minHeight: 5,
                 backgroundColor: VSPColors.surfaceAlt,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  next != null ? VSPColors.accent : VSPColors.success,
+                  next != null ? VSPColors.info : VSPColors.success,
                 ),
               ),
             ),
@@ -821,7 +821,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
                         Text(
                           '#${r.finalRank} • +${_fmtNum(r.xpAwarded)} XP',
                           style: const TextStyle(
-                            color: VSPColors.accent,
+                            color: VSPColors.info,
                             fontWeight: FontWeight.w900,
                             fontSize: 12,
                           ),

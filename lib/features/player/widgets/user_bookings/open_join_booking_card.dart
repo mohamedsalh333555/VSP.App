@@ -212,7 +212,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: VSPColors.accent),
+          Icon(icon, size: 15, color: VSPColors.textSecondary),
           const SizedBox(height: 4),
           Text(
             label,
@@ -271,7 +271,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
       statusColor = VSPColors.textSecondary;
       statusText = isArabic ? 'انتهت المباراة' : 'Match ended';
     } else if (isHost) {
-      statusColor = VSPColors.accent;
+      statusColor = VSPColors.info;
       statusText = isArabic ? 'أنت المنظّم' : 'You are the host';
     } else if (hasJoined) {
       statusColor = VSPColors.info;
@@ -304,7 +304,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                   ? VSPColors.error.withValues(alpha: 0.25)
                   : isInactive
                   ? VSPColors.divider
-                  : VSPColors.accent.withValues(alpha: 0.22),
+                  : VSPColors.divider,
             ),
             boxShadow: isInactive ? null : const [VSPShadow.subtle],
           ),
@@ -381,7 +381,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                               color: VSPColors.surfaceAlt,
                               child: const Icon(
                                 Iconsax.location_copy,
-                                color: VSPColors.accent,
+                                color: VSPColors.textSecondary,
                               ),
                             ),
                     ),
@@ -430,7 +430,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                           child: Icon(
                             Iconsax.user_copy,
                             size: 17,
-                            color: VSPColors.accent,
+                            color: VSPColors.textSecondary,
                           ),
                         ),
                       ),
@@ -486,7 +486,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                     const Icon(
                       Iconsax.profile_2user_copy,
                       size: 16,
-                      color: VSPColors.accent,
+                      color: VSPColors.textSecondary,
                     ),
                     const SizedBox(width: VSPSpacing.sm),
                     Expanded(
@@ -504,7 +504,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                     Text(
                       '${(progress * 100).round()}%',
                       style: const TextStyle(
-                        color: VSPColors.accent,
+                        color: VSPColors.textSecondary,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                       ),
@@ -519,7 +519,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                     minHeight: 6,
                     backgroundColor: VSPColors.divider.withValues(alpha: 0.35),
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      VSPColors.accent,
+                      VSPColors.info,
                     ),
                   ),
                 ),

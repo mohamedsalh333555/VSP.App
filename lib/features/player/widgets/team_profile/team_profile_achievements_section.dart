@@ -69,14 +69,14 @@ class TeamProfileAchievementsSection extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: VSPColors.iconBadgeBg,
                       border: Border.all(
-                        color: isUnlocked ? VSPColors.accent : VSPColors.divider,
+                        color: isUnlocked ? VSPColors.success : VSPColors.divider,
                         width: 2,
                       ),
                     ),
                     child: Icon(
                       badge['icon'] as IconData,
                       color: isUnlocked
-                          ? VSPColors.accent
+                          ? VSPColors.success
                           : VSPColors.textSecondary.withValues(alpha: 0.3),
                       size: 30,
                     ),

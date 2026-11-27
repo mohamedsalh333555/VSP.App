@@ -41,19 +41,19 @@ class VspDatePickerStepChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
           decoration: BoxDecoration(
             color: isCurrent
-                ? VSPColors.accent.withValues(alpha: 0.18)
+                ? VSPColors.surfaceAlt
                 : (isDone ? VSPColors.surfaceAlt : VSPColors.surfaceAlt.withValues(alpha: 0.4)),
             borderRadius: BorderRadius.circular(VSPRadius.md),
             border: Border.all(
               color: isCurrent
-                  ? VSPColors.accent
-                  : (isDone ? VSPColors.accent.withValues(alpha: 0.3) : VSPColors.divider),
+                  ? VSPColors.textPrimary
+                  : (isDone ? VSPColors.divider : VSPColors.divider),
               width: isCurrent ? 2.0 : 1.0,
             ),
             boxShadow: isCurrent
                 ? [
                     BoxShadow(
-                      color: VSPColors.accent.withValues(alpha: 0.2),
+                      color: VSPColors.background.withValues(alpha: 0.2),
                       blurRadius: 10,
                       spreadRadius: 1,
                     )
@@ -66,7 +66,7 @@ class VspDatePickerStepChip extends StatelessWidget {
               Text(
                 title.toUpperCase(),
                 style: TextStyle(
-                  color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
+                  color: isCurrent ? VSPColors.textPrimary : VSPColors.textSecondary,
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.5,

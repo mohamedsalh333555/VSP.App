@@ -79,12 +79,12 @@ class OwnerDashboardHeader extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: VSPColors.surfaceAlt,
                         border: Border.all(
-                          color: VSPColors.accent.withValues(alpha: 0.35),
+                          color: VSPColors.divider,
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: VSPColors.accent.withValues(alpha: 0.15),
+                            color: VSPColors.background.withValues(alpha: 0.15),
                             blurRadius: 8,
                             spreadRadius: 1,
                           ),
@@ -107,7 +107,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                                     height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: VSPColors.accent,
+                                      color: VSPColors.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -177,7 +177,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                             message: 'حساب موثق ومعتمد',
                             child: Icon(
                               Icons.verified,
-                              color: VSPColors.accent,
+                              color: VSPColors.textPrimary,
                               size: 16,
                             ),
                           ),
@@ -205,7 +205,7 @@ class OwnerDashboardHeader extends StatelessWidget {
       child: Text(
         initials,
         style: const TextStyle(
-          color: VSPColors.accent,
+          color: VSPColors.textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w900,
         ),

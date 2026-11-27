@@ -48,16 +48,16 @@ class VspDatePickerYearStep extends StatelessWidget {
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
+              color: isSelected ? VSPColors.surfaceLight : VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
               border: Border.all(
-                color: isSelected ? VSPColors.accent : VSPColors.divider,
+                color: isSelected ? VSPColors.textSecondary : VSPColors.divider,
                 width: isSelected ? 2.0 : 1.0,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: VSPColors.accent.withValues(alpha: 0.3),
+                        color: VSPColors.background.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -70,14 +70,14 @@ class VspDatePickerYearStep extends StatelessWidget {
                 Text(
                   '$year',
                   style: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
+                    color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.5,
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
+                  const Icon(Iconsax.tick_circle_copy, color: Colors.white, size: 20),
               ],
             ),
           ),
@@ -123,16 +123,16 @@ class VspDatePickerMonthStep extends StatelessWidget {
             height: 54,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
+              color: isSelected ? VSPColors.surfaceLight : VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
               border: Border.all(
-                color: isSelected ? VSPColors.accent : VSPColors.divider,
+                color: isSelected ? VSPColors.textSecondary : VSPColors.divider,
                 width: isSelected ? 2.0 : 1.0,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: VSPColors.accent.withValues(alpha: 0.3),
+                        color: VSPColors.background.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -152,7 +152,7 @@ class VspDatePickerMonthStep extends StatelessWidget {
                     child: Text(
                       monthNum.toString().padLeft(2, '0'),
                       style: TextStyle(
-                        color: isSelected ? Colors.black : VSPColors.accent,
+                        color: VSPColors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                       ),
@@ -164,14 +164,14 @@ class VspDatePickerMonthStep extends StatelessWidget {
                   child: Text(
                     monthName,
                     style: TextStyle(
-                      color: isSelected ? Colors.black : Colors.white,
+                      color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
+                  const Icon(Iconsax.tick_circle_copy, color: Colors.white, size: 20),
               ],
             ),
           ),
@@ -223,16 +223,16 @@ class VspDatePickerDayStep extends StatelessWidget {
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
+              color: isSelected ? VSPColors.surfaceLight : VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
               border: Border.all(
-                color: isSelected ? VSPColors.accent : VSPColors.divider,
+                color: isSelected ? VSPColors.textSecondary : VSPColors.divider,
                 width: isSelected ? 2.0 : 1.0,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: VSPColors.accent.withValues(alpha: 0.3),
+                        color: VSPColors.background.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -245,13 +245,13 @@ class VspDatePickerDayStep extends StatelessWidget {
                 Text(
                   day.toString().padLeft(2, '0'),
                   style: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
+                    color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
+                  const Icon(Iconsax.tick_circle_copy, color: Colors.white, size: 20),
               ],
             ),
           ),

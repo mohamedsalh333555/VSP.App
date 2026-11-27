@@ -230,7 +230,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  crossAxisAlignment: CrossAxisAlignment.baseline,
  textBaseline: TextBaseline.alphabetic,
  children: [
- Text("$remaining", style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 20)),
+ Text("$remaining", style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 20)),
  const SizedBox(width: 4),
  Text(AppLocalizations.of(context)!.spotsLeft.toUpperCase(), style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 10)),
  ],
@@ -304,7 +304,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  children: [
  _buildTypeBadge(PublicMatchCardFormatter.getLocalizedBookingType(booking.bookingType, isArabic: isArabic)),
   if (isHost)
-  _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
+  _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.info)
   else if (isCancelled)
   _buildStatusBadge(isArabic ? 'ملغاة' : 'Cancelled', VSPColors.error)
   else if (isEnded)
@@ -327,10 +327,10 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  decoration: BoxDecoration(color: VSPColors.surfaceAlt, shape: BoxShape.circle, border: Border.all(color: VSPColors.divider, width: 1)),
  child: ClipOval(
  child: (booking.hostAvatarUrl != null && booking.hostAvatarUrl!.isNotEmpty)
- ? CachedNetworkImage(imageUrl: booking.hostAvatarUrl!, memCacheWidth: 200, memCacheHeight: 200, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Iconsax.user_copy, color: VSPColors.accent, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
+ ? CachedNetworkImage(imageUrl: booking.hostAvatarUrl!, memCacheWidth: 200, memCacheHeight: 200, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
  : (booking.playerTeamLogoUrl != null && booking.playerTeamLogoUrl!.isNotEmpty)
- ? CachedNetworkImage(imageUrl: booking.playerTeamLogoUrl!, memCacheWidth: 200, memCacheHeight: 200, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Iconsax.user_copy, color: VSPColors.accent, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
- : const Icon(Iconsax.user_copy, color: VSPColors.accent, size: 20),
+ ? CachedNetworkImage(imageUrl: booking.playerTeamLogoUrl!, memCacheWidth: 200, memCacheHeight: 200, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
+ : const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 20),
  ),
  ),
  const SizedBox(width: 12),
@@ -377,7 +377,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  ),
  const SizedBox(width: 12),
  Builder(builder: (context) {
- if (_isLoading) return const SizedBox(width: 100, height: 44, child: Center(child: CircularProgressIndicator(color: VSPColors.accent, strokeWidth: 2)));
+ if (_isLoading) return const SizedBox(width: 100, height: 44, child: Center(child: CircularProgressIndicator(color: VSPColors.textSecondary, strokeWidth: 2)));
  if (isEnded || isCancelled) {
    return _buildRawButton(
      label: isCancelled ? (isArabic ? 'المباراة ملغاة' : 'Match cancelled') : (isArabic ? 'انتهت المباراة' : 'Match ended'),
