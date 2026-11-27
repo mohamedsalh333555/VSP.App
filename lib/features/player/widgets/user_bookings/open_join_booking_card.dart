@@ -1,4 +1,3 @@
-
 import 'package:cached_network_image/cached_network_image.dart';
 // ignore_for_file: unnecessary_brace_in_string_interps
 
@@ -48,13 +47,24 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
-      final success = await MatchRepository().leavePublicMatch(widget.booking.id, userId);
+      final success = await MatchRepository().leavePublicMatch(
+        widget.booking.id,
+        userId,
+      );
       if (!mounted) return;
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (success) {
-        VSPFeedback.showSuccess(context, isArabic ? 'تم خروجك من المباراة بنجاح.' : 'You left the match successfully.');
+        VSPFeedback.showSuccess(
+          context,
+          isArabic
+              ? 'تم خروجك من المباراة بنجاح.'
+              : 'You left the match successfully.',
+        );
       } else {
-        VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
+        VSPFeedback.showError(
+          context,
+          AppLocalizations.of(context)!.leaveFailed,
+        );
       }
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, e.toString());
@@ -67,13 +77,22 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
-      final success = await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
+      final success = await MatchRepository().rejectJoinRequest(
+        widget.booking.id,
+        userId,
+      );
       if (!mounted) return;
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (success) {
-        VSPFeedback.showSuccess(context, isArabic ? 'تم إلغاء طلب الانضمام.' : 'Join request cancelled.');
+        VSPFeedback.showSuccess(
+          context,
+          isArabic ? 'تم إلغاء طلب الانضمام.' : 'Join request cancelled.',
+        );
       } else {
-        VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
+        VSPFeedback.showError(
+          context,
+          AppLocalizations.of(context)!.leaveFailed,
+        );
       }
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, e.toString());
@@ -83,9 +102,12 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
   }
 
   void _openDetails() {
-    Navigator.push(context, MaterialPageRoute(
-      builder: (_) => MatchDetailsScreen(bookingId: widget.booking.id),
-    ));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MatchDetailsScreen(bookingId: widget.booking.id),
+      ),
+    );
   }
 
   Future<void> _openChat() async {
@@ -106,9 +128,16 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
       );
       final chatId = chat['id']?.toString();
       if (chatId == null || !mounted) return;
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => ChatScreen(booking: widget.booking, conversationId: chatId, otherUserId: other),
-      ));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            booking: widget.booking,
+            conversationId: chatId,
+            otherUserId: other,
+          ),
+        ),
+      );
     } catch (e) {
       debugPrint('Open Join chat unavailable: $e');
     }
@@ -118,18 +147,23 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     SharingService.shareMatch(
       bookingId: widget.booking.id,
-      teamName: widget.booking.playerTeamName ??
+      teamName:
+          widget.booking.playerTeamName ??
           widget.booking.hostName ??
           (isArabic ? 'مباراة تجميعية' : 'Open Join Match'),
       stadiumName: widget.booking.stadiumName,
-      date: '${widget.booking.formattedDate} - ${widget.booking.formattedTimeRange}',
+      date:
+          '${widget.booking.formattedDate} - ${widget.booking.formattedTimeRange}',
     );
   }
 
   bool _canHostCancel() {
     final now = DateTime.now();
-    final deadline = widget.booking.startTime.subtract(const Duration(hours: 6));
-    final grace = now.difference(widget.booking.createdAt).inMinutes <= 20 &&
+    final deadline = widget.booking.startTime.subtract(
+      const Duration(hours: 6),
+    );
+    final grace =
+        now.difference(widget.booking.createdAt).inMinutes <= 20 &&
         !now.isAfter(widget.booking.startTime);
     return !now.isAfter(widget.booking.startTime) &&
         (now.isBefore(deadline) || grace);
@@ -138,7 +172,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
   Widget _statusPill(String text, Color color) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 150),
-      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: VSPSpacing.sm,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.11),
         borderRadius: BorderRadius.circular(VSPRadius.full),
@@ -147,14 +184,24 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
           const SizedBox(width: 6),
-          Flexible(child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w800),
-          )),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -167,11 +214,28 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
         children: [
           Icon(icon, size: 15, color: VSPColors.accent),
           const SizedBox(height: 4),
-          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 9, fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: VSPColors.textSecondary,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 3),
-          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
-              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 11, fontWeight: FontWeight.w800)),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: VSPColors.textPrimary,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ],
       ),
     );
@@ -182,13 +246,17 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     final booking = widget.booking;
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final currentUser = context.select((app_auth.AuthProvider a) => a.currentUser);
+    final currentUser = context.select(
+      (app_auth.AuthProvider a) => a.currentUser,
+    );
     final userId = currentUser?.id;
     final isHost = userId != null && booking.createdByUserId == userId;
     final hasJoined = userId != null && booking.joinedUserIds.contains(userId);
     final isPending = userId != null && booking.pendingUserIds.contains(userId);
 
-    final totalCapacity = booking.totalFieldCapacity > 0 ? booking.totalFieldCapacity : 1;
+    final totalCapacity = booking.totalFieldCapacity > 0
+        ? booking.totalFieldCapacity
+        : 1;
     final currentPlayers = booking.currentPlayers.clamp(0, totalCapacity);
     final remaining = (totalCapacity - currentPlayers).clamp(0, totalCapacity);
     final progress = (currentPlayers / totalCapacity).clamp(0.0, 1.0);
@@ -216,7 +284,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
       statusText = isArabic ? 'مفتوحة للانضمام' : 'Open to join';
     }
 
-    final isInactive = booking.status == BookingStatus.cancelled || _isEnded || widget.isHistory;
+    final isInactive =
+        booking.status == BookingStatus.cancelled ||
+        _isEnded ||
+        widget.isHistory;
 
     return Material(
       color: Colors.transparent,
@@ -232,8 +303,8 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
               color: booking.status == BookingStatus.cancelled
                   ? VSPColors.error.withValues(alpha: 0.25)
                   : isInactive
-                      ? VSPColors.divider
-                      : VSPColors.accent.withValues(alpha: 0.22),
+                  ? VSPColors.divider
+                  : VSPColors.accent.withValues(alpha: 0.22),
             ),
             boxShadow: isInactive ? null : const [VSPShadow.subtle],
           ),
@@ -243,28 +314,48 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: VSPSpacing.sm,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: VSPColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(VSPRadius.full),
-                      border: Border.all(color: VSPColors.divider.withValues(alpha: 0.65)),
+                      border: Border.all(
+                        color: VSPColors.divider.withValues(alpha: 0.65),
+                      ),
                     ),
                     child: Text(
                       isArabic ? 'تجميعية خاصة' : 'PRIVATE COLLECTIVE',
-                      style: const TextStyle(color: VSPColors.textPrimary, fontSize: 10, fontWeight: FontWeight.w900),
+                      style: const TextStyle(
+                        color: VSPColors.textPrimary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                   const SizedBox(width: VSPSpacing.sm),
                   if (booking.isPrivate)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: VSPSpacing.sm,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: VSPColors.warning.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(VSPRadius.full),
-                        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.28)),
+                        border: Border.all(
+                          color: VSPColors.warning.withValues(alpha: 0.28),
+                        ),
                       ),
-                      child: Text(l10n.private,
-                          style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.w800)),
+                      child: Text(
+                        l10n.private,
+                        style: const TextStyle(
+                          color: VSPColors.warning,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   const Spacer(),
                   _statusPill(statusText, statusColor),
@@ -280,10 +371,18 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                       width: 62,
                       height: 62,
                       child: booking.stadiumImageUrl.isNotEmpty
-                          ? ShimmerImage(imageUrl: booking.stadiumImageUrl, width: 62, height: 62, fit: BoxFit.cover)
+                          ? ShimmerImage(
+                              imageUrl: booking.stadiumImageUrl,
+                              width: 62,
+                              height: 62,
+                              fit: BoxFit.cover,
+                            )
                           : Container(
                               color: VSPColors.surfaceAlt,
-                              child: const Icon(Iconsax.location_copy, color: VSPColors.accent),
+                              child: const Icon(
+                                Iconsax.location_copy,
+                                color: VSPColors.accent,
+                              ),
                             ),
                     ),
                   ),
@@ -296,7 +395,8 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                           booking.stadiumName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
                                 fontWeight: FontWeight.w900,
                                 color: VSPColors.textPrimary,
                               ),
@@ -308,7 +408,11 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                               : 'Open Join • ${booking.hostName ?? 'Host'}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -323,7 +427,11 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                         errorWidget: (_, __, ___) => const CircleAvatar(
                           radius: 17,
                           backgroundColor: VSPColors.surfaceAlt,
-                          child: Icon(Iconsax.user_copy, size: 17, color: VSPColors.accent),
+                          child: Icon(
+                            Iconsax.user_copy,
+                            size: 17,
+                            color: VSPColors.accent,
+                          ),
                         ),
                       ),
                     ),
@@ -331,7 +439,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
               ),
               const SizedBox(height: VSPSpacing.md),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: VSPSpacing.sm),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: VSPSpacing.sm,
+                  vertical: VSPSpacing.sm,
+                ),
                 decoration: BoxDecoration(
                   color: VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -340,19 +451,29 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                   children: [
                     _infoCell(
                       isArabic ? 'التاريخ' : 'DATE',
-                      VSPFinancialFormatter.formatDate(booking.startTime, isArabic: isArabic),
+                      VSPFinancialFormatter.formatDate(
+                        booking.startTime,
+                        isArabic: isArabic,
+                      ),
                       Iconsax.calendar_1_copy,
                     ),
                     Container(width: 1, height: 34, color: VSPColors.divider),
                     _infoCell(
                       isArabic ? 'الوقت' : 'TIME',
-                      VSPFinancialFormatter.formatTimeRange(booking.startTime, booking.endTime, isArabic: isArabic),
+                      VSPFinancialFormatter.formatTimeRange(
+                        booking.startTime,
+                        booking.endTime,
+                        isArabic: isArabic,
+                      ),
                       Iconsax.clock_copy,
                     ),
                     Container(width: 1, height: 34, color: VSPColors.divider),
                     _infoCell(
                       isArabic ? 'رسوم الفرد' : 'PER PLAYER',
-                      VSPFinancialFormatter.formatCurrency(entryFee.toDouble(), isArabic: isArabic),
+                      VSPFinancialFormatter.formatCurrency(
+                        entryFee.toDouble(),
+                        isArabic: isArabic,
+                      ),
                       Iconsax.wallet_1_copy,
                     ),
                   ],
@@ -362,18 +483,32 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                 const SizedBox(height: VSPSpacing.md),
                 Row(
                   children: [
-                    const Icon(Iconsax.profile_2user_copy, size: 16, color: VSPColors.accent),
+                    const Icon(
+                      Iconsax.profile_2user_copy,
+                      size: 16,
+                      color: VSPColors.accent,
+                    ),
                     const SizedBox(width: VSPSpacing.sm),
                     Expanded(
                       child: Text(
                         isArabic
                             ? '${currentPlayers} من ${totalCapacity} لاعب • ${remaining > 0 ? 'متبقي ${remaining} أماكن' : 'اكتمل العدد'}'
                             : '${currentPlayers} of ${totalCapacity} players • ${remaining} spots left',
-                        style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          color: VSPColors.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                    Text('${(progress * 100).round()}%',
-                        style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.w900)),
+                    Text(
+                      '${(progress * 100).round()}%',
+                      style: const TextStyle(
+                        color: VSPColors.accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: VSPSpacing.sm),
@@ -383,27 +518,44 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                     value: progress,
                     minHeight: 6,
                     backgroundColor: VSPColors.divider.withValues(alpha: 0.35),
-                    valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      VSPColors.accent,
+                    ),
                   ),
                 ),
               ],
-              if (booking.rescheduleStatus == 'pending' && booking.proposedStartTime != null) ...[
+              if (booking.rescheduleStatus == 'pending' &&
+                  booking.proposedStartTime != null) ...[
                 const SizedBox(height: VSPSpacing.md),
                 RescheduleActionBanner(booking: booking),
               ],
               const SizedBox(height: VSPSpacing.sm),
               Row(
                 children: [
-                  const Icon(Iconsax.arrow_right_3_copy, size: 16, color: VSPColors.textSecondary),
+                  const Icon(
+                    Iconsax.arrow_right_3_copy,
+                    size: 16,
+                    color: VSPColors.textSecondary,
+                  ),
                   const SizedBox(width: 6),
-                  Expanded(child: Text(
-                    isArabic ? 'اضغط على الكارت لعرض التفاصيل' : 'Tap the card to view details',
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600),
-                  )),
+                  Expanded(
+                    child: Text(
+                      isArabic
+                          ? 'اضغط على الكارت لعرض التفاصيل'
+                          : 'Tap the card to view details',
+                      style: const TextStyle(
+                        color: VSPColors.textSecondary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: VSPSpacing.md),
-              if (widget.isHistory || _isEnded || booking.status == BookingStatus.cancelled) ...[
+              if (widget.isHistory ||
+                  _isEnded ||
+                  booking.status == BookingStatus.cancelled) ...[
                 Row(
                   children: [
                     Expanded(
@@ -435,7 +587,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                         text: isArabic ? 'إدارة اللاعبين' : 'Manage players',
                         color: VSPColors.accent,
                         textColor: Colors.black,
-                        onPressed: () => ManageParticipantsModal.show(context, booking: booking),
+                        onPressed: () => ManageParticipantsModal.show(
+                          context,
+                          booking: booking,
+                        ),
                       ),
                     ),
                     const SizedBox(width: VSPSpacing.sm),
@@ -455,7 +610,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                     text: isArabic ? 'إلغاء المباراة' : 'Cancel match',
                     color: VSPColors.error.withValues(alpha: 0.12),
                     textColor: VSPColors.error,
-                    onPressed: _isProcessing ? null : () => PlayerBookingCancelDialog.show(context, booking),
+                    onPressed: _isProcessing
+                        ? null
+                        : () =>
+                              PlayerBookingCancelDialog.show(context, booking),
                   ),
                 ],
               ] else if (hasJoined) ...[
@@ -475,7 +633,9 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                         text: l10n.leave,
                         color: VSPColors.error.withValues(alpha: 0.12),
                         textColor: VSPColors.error,
-                        onPressed: _isProcessing ? null : () => _leaveMatch(userId),
+                        onPressed: _isProcessing
+                            ? null
+                            : () => _leaveMatch(userId),
                       ),
                     ),
                   ],
@@ -488,7 +648,9 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                         text: isArabic ? 'إلغاء الطلب' : 'Cancel request',
                         color: VSPColors.error.withValues(alpha: 0.12),
                         textColor: VSPColors.error,
-                        onPressed: _isProcessing ? null : () => _cancelJoinRequest(userId),
+                        onPressed: _isProcessing
+                            ? null
+                            : () => _cancelJoinRequest(userId),
                       ),
                     ),
                     const SizedBox(width: VSPSpacing.sm),
