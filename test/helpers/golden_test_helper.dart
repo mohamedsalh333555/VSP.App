@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -34,36 +33,4 @@ Future<void> loadVspTestFonts() async {
   ]);
 
   _fontsLoaded = true;
-}
-
-/// Golden comparator with a strict 0.8% subpixel anti-aliasing tolerance to
-/// account for Skia rasterizer differences between Windows and Linux CI while
-/// still catching any real layout, color, or typography regression.
-class VspGoldenFileComparator extends LocalFileComparator {
-  final double tolerance;
-
-  VspGoldenFileComparator(
-    super.testFile, {
-    this.tolerance = 0.008,
-  });
-
-  @override
-  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
-    final result = await GoldenFileComparator.compareLists(
-      imageBytes,
-      await getGoldenBytes(golden),
-    );
-    if (!result.passed && result.diffPercent <= tolerance) {
-      debugPrint(
-        'Golden $golden passed within cross-OS raster tolerance '
-        '(${(result.diffPercent * 100).toStringAsFixed(2)}% <= ${(tolerance * 100).toStringAsFixed(2)}%).',
-      );
-      return true;
-    }
-    if (!result.passed) {
-      final error = await generateFailureOutput(result, golden, basedir);
-      throw FlutterError(error);
-    }
-    return result.passed;
-  }
 }

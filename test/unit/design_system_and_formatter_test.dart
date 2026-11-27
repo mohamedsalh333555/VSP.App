@@ -29,13 +29,6 @@ double _contrastRatio(Color a, Color b) {
 void main() {
   setUpAll(() async {
     await loadVspTestFonts();
-    if (goldenFileComparator is LocalFileComparator &&
-        goldenFileComparator is! VspGoldenFileComparator) {
-      final current = goldenFileComparator as LocalFileComparator;
-      goldenFileComparator = VspGoldenFileComparator(
-        Uri.file('${current.basedir.toFilePath()}design_system_and_formatter_test.dart'),
-      );
-    }
   });
 
   group('VSP Design System Token Aliasing', () {
