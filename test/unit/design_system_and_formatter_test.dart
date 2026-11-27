@@ -10,6 +10,8 @@ import 'package:vsp_application/features/dev/design_system_showcase_screen.dart'
 import 'package:vsp_application/shared/widgets/primary_button.dart';
 import 'package:vsp_application/shared/widgets/vsp_payment_summary_card.dart';
 
+import '../helpers/golden_test_helper.dart';
+
 double _relativeLuminance(Color c) {
   double channel(double v) =>
       v <= 0.03928 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
@@ -25,6 +27,17 @@ double _contrastRatio(Color a, Color b) {
 }
 
 void main() {
+  setUpAll(() async {
+    await loadVspTestFonts();
+    if (goldenFileComparator is LocalFileComparator &&
+        goldenFileComparator is! VspGoldenFileComparator) {
+      final current = goldenFileComparator as LocalFileComparator;
+      goldenFileComparator = VspGoldenFileComparator(
+        Uri.file('${current.basedir.toFilePath()}design_system_and_formatter_test.dart'),
+      );
+    }
+  });
+
   group('VSP Design System Token Aliasing', () {
     test('Legacy VSPColors aliases VSPDSSemanticColors', () {
       expect(VSPColors.background, VSPDSSemanticColors.background);
@@ -92,13 +105,18 @@ void main() {
     testWidgets(
       'matches golden snapshot for canonical 100 EGP breakdown (LTR)',
       (tester) async {
-        await tester.binding.setSurfaceSize(const Size(390, 420));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
+        tester.view.devicePixelRatio = 1.0;
+        tester.view.physicalSize = const Size(390, 420);
+        addTearDown(tester.view.reset);
 
         await tester.pumpWidget(
-          const MaterialApp(
+          MaterialApp(
             debugShowCheckedModeBanner: false,
-            home: Scaffold(
+            theme: ThemeData(
+              fontFamily: 'Poppins',
+              fontFamilyFallback: const ['Tajawal', 'sans-serif'],
+            ),
+            home: const Scaffold(
               backgroundColor: VSPDSSemanticColors.background,
               body: Padding(
                 padding: EdgeInsets.all(16),
@@ -125,12 +143,17 @@ void main() {
     testWidgets(
       'matches golden snapshot for PrimaryButton & VSPStateView',
       (tester) async {
-        await tester.binding.setSurfaceSize(const Size(390, 540));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
+        tester.view.devicePixelRatio = 1.0;
+        tester.view.physicalSize = const Size(390, 540);
+        addTearDown(tester.view.reset);
 
         await tester.pumpWidget(
           MaterialApp(
             debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              fontFamily: 'Poppins',
+              fontFamilyFallback: const ['Tajawal', 'sans-serif'],
+            ),
             home: Scaffold(
               backgroundColor: VSPDSSemanticColors.background,
               body: Padding(
