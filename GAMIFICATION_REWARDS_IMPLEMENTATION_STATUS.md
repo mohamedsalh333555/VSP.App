@@ -6,9 +6,11 @@
 **Production Project:** `mktqkddbcddrxjxabdua` (Untouched)  
 **Last Updated:** 2026-11-27
 
-## 1. Phase-by-Phase Classification (Section 24)
+## 1. Phase-by-Phase Classification (Section 38)
 
 | Phase / Area | Classification | Concrete Evidence (Files / DB / Tests) |
+|---|---|---|
+| **P0-01..P0-09 — Security, Constraints, Unification & Lifecycle** | **Completed & Verified (Staging)** | Applied `20261127100000_p0_security_constraints_lifecycle_fixes.sql` on `vsp-staging`: replaced `season_reward_entitlements_read_all` with strict team/owner/admin RLS + column grants; dropped `UNIQUE(season_id,team_id)` for `uq_season_reward_entitlements_period_team`; fixed `stadiums.is_verified` & exact 60m + `eligible_time_windows` in `redeem_competitive_free_hour_atomic`; bridged `close_monthly_ranking_period`; unified ranking overloads; added period state machine & separation-of-duties cash payout RPCs. |
 |---|---|---|
 | **Phase 01 — Repo & DB Sync** | **Completed & Verified** | Checked `git status` across `vsp_application`, `vsp_website`, `vsp_admin_panel`; preserved all local work on `feat/vsp-recovery-gamification-ds`. |
 | **Phase 02–03 — Existing Gamification & Staging Preview Sync** | **Completed & Verified** | Synced `get_bimonthly_ranking_preview` & `get_team_competitive_progress_preview` (`SECURITY INVOKER`, `REVOKE anon`, `GRANT authenticated`) into `supabase/migrations/20261127080000_competitive_rewards_lifecycle_and_hardening.sql` and applied via `supabase db query --linked` to `vsp-staging` (`bimonthly_teams_count: 10`). |
