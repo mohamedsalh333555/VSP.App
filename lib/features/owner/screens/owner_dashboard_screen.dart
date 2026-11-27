@@ -761,7 +761,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen>
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: VSPColors.surfaceAlt,
               shape: BoxShape.circle,
             ),
