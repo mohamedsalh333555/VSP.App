@@ -134,12 +134,12 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
         leading: const VSPBackButton(),
         actions: [
           IconButton(
-            icon: const Icon(Iconsax.refresh_copy, color: Colors.white70),
+            icon: const Icon(Iconsax.refresh_copy, color: VSPColors.textSecondary),
             tooltip: isAr ? 'تحديث السجل' : 'Refresh Ledger',
             onPressed: () => _loadSummary(),
           ),
           IconButton(
-            icon: const Icon(Iconsax.export_3_copy, color: Colors.white70),
+            icon: const Icon(Iconsax.export_3_copy, color: VSPColors.textSecondary),
             tooltip: isAr ? 'تصدير كشف الحساب' : 'Export Ledger',
             onPressed: () => _exportLedgerCsv(context, isAr),
           ),

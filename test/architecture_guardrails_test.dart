@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vsp_application/core/ui/tokens/vsp_design_tokens.dart';
 
 List<File> _dartFiles(Directory root) {
   return root
@@ -131,5 +133,56 @@ void main() {
     expect(legacyTokens.contains('0xFF27272A'), isFalse);
     expect(legacyTokens.contains('0xFF9FDF02'), isFalse);
     expect(legacyTokens.contains('VSPDSSemanticColors'), isTrue);
+    expect(RegExp(r'Color\(0x[0-9A-Fa-f]+\)').hasMatch(legacyTokens), isFalse);
+    expect(legacyTokens.contains('BoxShadow('), isFalse);
+    expect(legacyTokens.contains('TextStyle('), isFalse);
+  });
+
+  test('No non-token Color(0x...) literals exist outside lib/core/ui/tokens/', () {
+    final libDir = Directory('lib');
+    final violations = <String>[];
+    for (final entity in libDir.listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final normalized = entity.path.replaceAll('\\', '/');
+      if (normalized.contains('lib/core/ui/tokens/')) continue;
+      final content = entity.readAsStringSync();
+      if (RegExp(r'Color\(0x[0-9A-Fa-f]+\)').hasMatch(content)) {
+        violations.add(normalized);
+      }
+    }
+    expect(violations, isEmpty, reason: 'Use VSPDSColors / VSPDSSemanticColors instead of raw Color(0x...)');
+  });
+
+  test('Every *_screen.dart uses SafeArea, VSPScaffold, or VSPScrollPadding', () {
+    final libDir = Directory('lib');
+    final missingSafe = <String>[];
+    for (final entity in libDir.listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('_screen.dart')) continue;
+      final content = entity.readAsStringSync();
+      if (content.contains('Scaffold') &&
+          !content.contains('SafeArea') &&
+          !content.contains('VSPScaffold') &&
+          !content.contains('VSPScrollPadding')) {
+        missingSafe.add(entity.path.replaceAll('\\', '/'));
+      }
+    }
+    expect(missingSafe, isEmpty, reason: 'All Scaffold screens must protect safe areas');
+  });
+
+  test('Canonical design-tokens.json stays synced with vsp_design_tokens.dart', () {
+    final jsonMap = jsonDecode(File('design-tokens.json').readAsStringSync()) as Map<String, dynamic>;
+    final colors = jsonMap['colors'] as Map<String, dynamic>;
+    String toHex(Color c) =>
+        '#${c.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+
+    expect(colors['background'], toHex(VSPDSSemanticColors.background));
+    expect(colors['surface'], toHex(VSPDSSemanticColors.surface));
+    expect(colors['accent'], toHex(VSPDSSemanticColors.accent));
+    expect(colors['textPrimary'], toHex(VSPDSSemanticColors.textPrimary));
+    expect(colors['textSecondary'], toHex(VSPDSSemanticColors.textSecondary));
+    expect(colors['error'], toHex(VSPDSSemanticColors.error));
+    expect(colors['warning'], toHex(VSPDSSemanticColors.warning));
+    expect(colors['info'], toHex(VSPDSSemanticColors.info));
+    expect(colors['success'], toHex(VSPDSSemanticColors.success));
   });
 }

@@ -50,9 +50,10 @@ class _DesignSystemShowcaseScreenState
               style: const TextStyle(color: VSPDSSemanticColors.textPrimary),
             ),
           ),
-          body: ListView(
-            padding: const EdgeInsets.all(VSPDSSpacing.md),
-            children: [
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.all(VSPDSSpacing.md),
+              children: [
               _buildControlsCard(),
               const SizedBox(height: VSPDSSpacing.md),
               VSPSectionHeader(
@@ -115,6 +116,7 @@ class _DesignSystemShowcaseScreenState
                 ],
               ),
             ],
+            ),
           ),
         ),
       ),
@@ -225,20 +227,17 @@ class _DesignSystemShowcaseScreenState
       );
     }
 
-    return SizedBox(
-      height: 180,
-      child: VSPStateView(
-        state: previewState,
-        title: _useLongText
-            ? (_isArabic
-                ? 'عنوان طويل لاختبار التفاف النصوص في حالات التحميل والفراغ والخطأ'
-                : 'Long title to verify text wrapping across loading, empty, and error states')
-            : (_isArabic ? 'معاينة الحالة' : 'State Preview'),
-        message: _isArabic
-            ? 'رسالة توضيحية متوافقة مع نظام التصميم.'
-            : 'Supporting message aligned with VSP Design System.',
-        onRetry: () => setState(() => _previewState = null),
-      ),
+    return VSPStateView(
+      state: previewState,
+      title: _useLongText
+          ? (_isArabic
+              ? 'عنوان طويل لاختبار التفاف النصوص في حالات التحميل والفراغ والخطأ'
+              : 'Long title to verify text wrapping across loading, empty, and error states')
+          : (_isArabic ? 'معاينة الحالة' : 'State Preview'),
+      message: _isArabic
+          ? 'رسالة توضيحية متوافقة مع نظام التصميم.'
+          : 'Supporting message aligned with VSP Design System.',
+      onRetry: () => setState(() => _previewState = null),
     );
   }
 }
