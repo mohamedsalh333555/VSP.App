@@ -58,10 +58,10 @@ class OwnerVenueFilterChips extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.04),
+          color: isSelected ? VSPColors.surfaceAlt : Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(VSPRadius.full),
           border: Border.all(
-            color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.08),
+            color: isSelected ? VSPColors.textSecondary : Colors.white.withValues(alpha: 0.08),
             width: isSelected ? 1.2 : 0.8,
           ),
         ),
@@ -71,13 +71,13 @@ class OwnerVenueFilterChips extends StatelessWidget {
             Icon(
               icon,
               size: 13,
-              color: isSelected ? Colors.black : VSPColors.textSecondary,
+              color: isSelected ? VSPColors.white : VSPColors.textSecondary,
             ),
             const SizedBox(width: 5),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.black : Colors.white70,
+                color: isSelected ? VSPColors.white : Colors.white70,
                 fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),

@@ -41,7 +41,7 @@ class HomeTopBar extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: (auth.userModel?.isPro == true)
                           ? const SweepGradient(
-                              colors: [VSPColors.proAccent, VSPColors.accent, VSPColors.proAccent],
+                              colors: [VSPColors.textSecondary, VSPColors.white, VSPColors.textSecondary],
                             )
                           : null,
                       color: (auth.userModel?.isPro == true) ? null : VSPColors.surface,
@@ -51,7 +51,7 @@ class HomeTopBar extends StatelessWidget {
                       boxShadow: (auth.userModel?.isPro == true)
                           ? [
                               BoxShadow(
-                                color: VSPColors.proAccent.withValues(alpha: 0.35),
+                                color: VSPColors.background.withValues(alpha: 0.35),
                                 blurRadius: 10,
                                 spreadRadius: 1,
                               ),
@@ -133,7 +133,7 @@ class HomeTopBar extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Iconsax.search_normal_copy, color: VSPColors.accent, size: 20),
+                  const Icon(Iconsax.search_normal_copy, color: VSPColors.textSecondary, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -186,7 +186,7 @@ class HomeTopBar extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Iconsax.filter_copy, color: VSPColors.accent, size: 20),
+              child: const Icon(Iconsax.filter_copy, color: VSPColors.textSecondary, size: 20),
             ),
           ),
         ),

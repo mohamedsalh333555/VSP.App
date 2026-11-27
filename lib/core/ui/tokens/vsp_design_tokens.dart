@@ -240,7 +240,7 @@ abstract final class VSPDSElevation {
 
 abstract final class VSPDSComponentEffects {
   static const BoxShadow buttonShadow = BoxShadow(
-    color: Color(0x2E9FDF02),
+    color: Color(0x40000000),
     blurRadius: 12.0,
     offset: Offset(0, 4),
   );
