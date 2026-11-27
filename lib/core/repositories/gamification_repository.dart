@@ -190,4 +190,47 @@ class GamificationRepository {
       return false;
     }
   }
+
+  Future<Map<String, dynamic>?> getBimonthlyRankingPreview({
+    String? governorate,
+    List<String>? monthKeys,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      final govParam = (governorate == null || governorate == 'All' || governorate.trim().isEmpty)
+          ? null
+          : governorate.trim();
+      final res = await _db.rpc('get_bimonthly_ranking_preview', params: {
+        'p_governorate': govParam,
+        'p_month_keys': monthKeys,
+        'p_limit': limit,
+        'p_offset': offset,
+      });
+      if (res is Map) return Map<String, dynamic>.from(res);
+    } catch (e) {
+      VSPLogger.w('getBimonthlyRankingPreview error: $e');
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>> redeemCompetitiveFreeHour({
+    required String entitlementId,
+    required String stadiumId,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
+    try {
+      final res = await _db.rpc('redeem_competitive_free_hour_atomic', params: {
+        'p_entitlement_id': entitlementId,
+        'p_stadium_id': stadiumId,
+        'p_start_time': startTime.toUtc().toIso8601String(),
+        'p_end_time': endTime.toUtc().toIso8601String(),
+      });
+      if (res is Map) return Map<String, dynamic>.from(res);
+    } catch (e) {
+      VSPLogger.w('redeemCompetitiveFreeHour error: $e');
+    }
+    return {'success': false, 'error': 'UNKNOWN_ERROR'};
+  }
 }
