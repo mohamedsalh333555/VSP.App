@@ -85,7 +85,7 @@ class PendingBookingCard extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(isArabic ? ' تم تأكيد حجزك بنجاح!' : ' Booking Confirmed!'),
-                            backgroundColor: VSPColors.accent,
+                            backgroundColor: VSPColors.success,
                           ),
                         );
                       } else {

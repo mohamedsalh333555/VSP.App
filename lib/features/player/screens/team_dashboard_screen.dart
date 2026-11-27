@@ -68,7 +68,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         actions: [
           if (_userTeam != null)
             IconButton(
-              icon: const Icon(Iconsax.share_copy, color: VSPColors.accent),
+              icon: const Icon(Iconsax.share_copy, color: VSPColors.textPrimary),
               onPressed: () => _showTeamCard(context, _userTeam!),
             ),
           IconButton(
@@ -134,10 +134,10 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                   child: Text(
                     AppLocalizations.of(context)!.hostOne,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: VSPColors.accent,
+                      color: VSPColors.textPrimary,
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.underline,
-                      decorationColor: VSPColors.accent,
+                      decorationColor: VSPColors.textPrimary,
                     ),
                   ),
                 ),

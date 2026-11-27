@@ -42,7 +42,7 @@ class CupsTabSelector extends StatelessWidget {
                 child: Container(
                   height: 42,
                   decoration: BoxDecoration(
-                    color: VSPColors.accent,
+                    color: VSPColors.textPrimary,
                     borderRadius: BorderRadius.circular(VSPRadius.full),
                   ),
                 ),

@@ -218,7 +218,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     if (_isLoadingMembers && localTeam == null) {
       return const VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+        body: Center(child: CircularProgressIndicator(color: VSPColors.textPrimary)),
       );
     }
 
@@ -253,7 +253,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
       actions: [
         if (team != null)
           IconButton(
-            icon: const Icon(Iconsax.share_copy, color: VSPColors.accent),
+            icon: const Icon(Iconsax.share_copy, color: VSPColors.textPrimary),
             onPressed: () => SharingService.shareTeam(
               context,
               teamId: team.id,
@@ -289,7 +289,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
                   child: ChoiceChip(
                     label: Text(t.name),
                     selected: selected,
-                    selectedColor: VSPColors.accent,
+                    selectedColor: VSPColors.textPrimary,
                     backgroundColor: VSPColors.surface,
                     labelStyle: TextStyle(
                       color: selected ? Colors.black : Colors.white,

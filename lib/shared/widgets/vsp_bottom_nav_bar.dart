@@ -20,7 +20,7 @@ class VspNavItem {
 /// Canonical VSP bottom navigation.
 ///
 /// Navigation visual contract:
-/// - selected item: bold/filled active glyph, accent color, stronger scale and bold label;
+/// - selected item: bold/filled active glyph, white color, stronger scale and bold label;
 /// - unselected item: outline/inactive glyph, secondary color and regular label.
 /// Call sites must provide the matching active/inactive Iconsax variants.
 class VspBottomNavBar extends StatelessWidget {
@@ -97,7 +97,7 @@ class VspBottomNavBar extends StatelessWidget {
                                     : item.inactiveIcon,
                                 key: ValueKey(isSelected),
                                 color: isSelected
-                                    ? VSPDSSemanticColors.accent
+                                    ? VSPDSColors.white
                                     : VSPDSSemanticColors.textSecondary,
                                 size: isSelected ? VSPDSizes.navigationIconSelected : VSPDSizes.navigationIcon,
                               ),
@@ -115,7 +115,7 @@ class VspBottomNavBar extends StatelessWidget {
                                         : VSPDSTypography.navigationUnselected)
                                     .copyWith(
                                   color: isSelected
-                                      ? VSPDSSemanticColors.accent
+                                      ? VSPDSColors.white
                                       : VSPDSSemanticColors.textSecondary,
                                 ),
                               ),

@@ -62,7 +62,7 @@ class TeamStatsHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+        border: Border.all(color: VSPColors.divider),
         color: VSPColors.surface.withValues(alpha: 0.5),
       ),
       child: Stack(
@@ -94,7 +94,7 @@ class TeamStatsHeader extends StatelessWidget {
             const Positioned(
               top: 0,
               left: 4,
-              child: Icon(Iconsax.info_circle_copy, size: 12, color: VSPColors.accent),
+              child: Icon(Iconsax.info_circle_copy, size: 12, color: VSPColors.textSecondary),
             ),
         ],
       ),
@@ -109,7 +109,7 @@ class TeamStatsHeader extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
-            const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
+            const Icon(Iconsax.cup_copy, color: VSPColors.textSecondary, size: 24),
             const SizedBox(width: 10),
             Expanded(
               child: Text(

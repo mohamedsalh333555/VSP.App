@@ -133,16 +133,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
  return ListTile(
  leading: Icon(
  Iconsax.location_copy,
- color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+ color: isSelected ? VSPColors.textPrimary : VSPColors.textSecondary,
  ),
  title: Text(
  displayGovName,
  style: TextStyle(
- color: isSelected ? VSPColors.accent : Colors.white,
+ color: isSelected ? VSPColors.textPrimary : Colors.white,
  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
  ),
  ),
- trailing: isSelected ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null,
+ trailing: isSelected ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.textPrimary) : null,
  onTap: () async {
  await auth.updateProfile({'governorate': gov});
  if (context.mounted) {
@@ -206,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  return const Center(
  child: Padding(
  padding: EdgeInsets.all(40),
- child: CircularProgressIndicator(color: VSPColors.accent),
+ child: CircularProgressIndicator(color: VSPColors.textPrimary),
  ),
  );
  }
@@ -232,7 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  height: 42,
  decoration: BoxDecoration(
  shape: BoxShape.circle,
- border: Border.all(color: VSPColors.accent, width: 1.5),
+ border: Border.all(color: VSPColors.textPrimary, width: 1.5),
  image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
  ? DecorationImage(
  image: CachedNetworkImageProvider(userProfileUrl),
@@ -269,7 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  userPosition.isNotEmpty ? l10n.positionLabel(userPosition) : (isArabic ? 'المركز غير محدد' : 'Position not set'),
  style: const TextStyle(
  fontSize: 12,
- color: VSPColors.accent,
+ color: VSPColors.textPrimary,
  fontWeight: FontWeight.w600,
  ),
  ),
@@ -293,8 +293,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
  PrimaryButton(
  text: l10n.shareTeamCard,
  icon: Iconsax.share_copy,
- color: VSPColors.accent.withValues(alpha: 0.15),
- textColor: VSPColors.accent,
+ color: VSPColors.surfaceAlt,
+ textColor: VSPColors.textPrimary,
  isLoading: _isSharing,
  onPressed: () => _shareTeamCard(team.name),
  ),
@@ -306,7 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  decoration: BoxDecoration(
  color: VSPColors.surface,
  borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5), width: 2),
+ border: Border.all(color: VSPColors.divider, width: 2),
  ),
  padding: const EdgeInsets.all(VSPSpacing.xl),
  child: Column(
@@ -360,7 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  Text(
  l10n.positionLabel(userPosition),
- style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.accent),
+ style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary),
  ),
  const SizedBox(height: VSPSpacing.lg),
  Text(

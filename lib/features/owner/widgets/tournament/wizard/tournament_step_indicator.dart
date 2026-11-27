@@ -34,13 +34,13 @@ class TournamentStepIndicator extends StatelessWidget {
                 Expanded(
                   child: Container(
                     height: 2,
-                    color: currentStep >= 1 ? VSPColors.accent : VSPColors.divider,
+                    color: currentStep >= 1 ? VSPColors.textPrimary : VSPColors.divider,
                   ),
                 ),
                 Expanded(
                   child: Container(
                     height: 2,
-                    color: currentStep >= 2 ? VSPColors.accent : VSPColors.divider,
+                    color: currentStep >= 2 ? VSPColors.textPrimary : VSPColors.divider,
                   ),
                 ),
               ],
@@ -60,9 +60,9 @@ class TournamentStepIndicator extends StatelessWidget {
                     height: 28,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isActive ? VSPColors.accent : VSPColors.surface,
+                      color: isActive ? VSPColors.textPrimary : VSPColors.surface,
                       border: Border.all(
-                        color: isActive ? VSPColors.accent : VSPColors.divider,
+                        color: isActive ? VSPColors.textPrimary : VSPColors.divider,
                         width: 2,
                       ),
                     ),
@@ -83,7 +83,7 @@ class TournamentStepIndicator extends StatelessWidget {
                   Text(
                     labels[i],
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
+                          color: isCurrent ? VSPColors.textPrimary : VSPColors.textSecondary,
                           fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
                           fontSize: 10,
                         ),

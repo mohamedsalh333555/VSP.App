@@ -179,7 +179,7 @@ class _HomeMatchesSectionState extends State<HomeMatchesSection> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Iconsax.cup_copy, size: 24, color: VSPColors.accent),
+                      const Icon(Iconsax.cup_copy, size: 24, color: VSPColors.textSecondary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -296,7 +296,7 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Iconsax.cup_copy, size: 24, color: VSPColors.accent),
+                      const Icon(Iconsax.cup_copy, size: 24, color: VSPColors.textSecondary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

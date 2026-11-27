@@ -183,7 +183,7 @@ class PlayerBookingCard extends StatelessWidget {
             border: Border.all(
               color: (isHistory || booking.status == BookingStatus.cancelled)
                   ? VSPColors.divider
-                  : VSPColors.accent.withValues(alpha: 0.25),
+                  : VSPColors.divider,
               width: 1.0,
             ),
             boxShadow: (isHistory || booking.status == BookingStatus.cancelled)
@@ -213,7 +213,7 @@ class PlayerBookingCard extends StatelessWidget {
                             )
                           : Container(
                               color: VSPColors.surface,
-                              child: const Icon(Iconsax.location_copy, color: VSPColors.accent),
+                              child: const Icon(Iconsax.location_copy, color: VSPColors.textSecondary),
                             ),
                     ),
                   ),
@@ -249,7 +249,7 @@ class PlayerBookingCard extends StatelessWidget {
                           Text(
                             '${booking.playerTeamName ?? (isArabic ? "فريقنا" : "Our Team")} VS ${booking.opponentTeamName ?? (isArabic ? "الخصم" : "Opponent")}',
                             style: const TextStyle(
-                              color: VSPColors.accent,
+                              color: VSPColors.textPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -265,10 +265,10 @@ class PlayerBookingCard extends StatelessWidget {
                   ] else if (booking.status == BookingStatus.pending && !booking.isPaid) ...[
                     ChallengeResultActions.buildStatusBadge(isArabic ? 'بانتظار السداد' : 'Pending Payment', VSPColors.warning),
                   ] else if (!isHistory) ...[
-                    ChallengeResultActions.buildStatusBadge(l10n.confirmed, VSPColors.accent),
+                    ChallengeResultActions.buildStatusBadge(l10n.confirmed, VSPColors.success),
                   ] else ...[
                     if (booking.endTime.isAfter(DateTime.now()))
-                      ChallengeResultActions.buildStatusBadge(l10n.inProgress, VSPColors.accent)
+                      ChallengeResultActions.buildStatusBadge(l10n.inProgress, VSPColors.info)
                     else if (booking.bookingType == BookingType.challenge) ...[
                       Builder(
                         builder: (ctx) {

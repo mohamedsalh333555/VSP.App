@@ -44,13 +44,13 @@ class TeamCardHero extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: VSPColors.accent.withValues(alpha: 0.2),
+            color: VSPColors.background.withValues(alpha: 0.2),
             blurRadius: 20,
             spreadRadius: 2,
           ),
         ],
         border: Border.all(
-          color: VSPColors.accent.withValues(alpha: 0.3),
+          color: VSPColors.divider,
           width: 2,
         ),
       ),

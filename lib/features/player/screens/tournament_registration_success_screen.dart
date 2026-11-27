@@ -233,7 +233,7 @@ class _TournamentRegistrationSuccessScreenState
           'تم نسخ كود الاشتراك بنجاح',
           style: TextStyle(fontFamily: 'Tajawal', fontWeight: FontWeight.bold),
         ),
-        backgroundColor: VSPColors.accent,
+        backgroundColor: VSPColors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VSPRadius.sm)),
@@ -291,7 +291,7 @@ class _TournamentRegistrationSuccessScreenState
                 numberOfParticles: 12,
                 gravity: 0.18,
                 colors: const [
-                  VSPColors.accent,
+                  VSPColors.success,
                   VSPColors.white,
                   VSPColors.medalGold,
                 ],
@@ -344,12 +344,12 @@ class _TournamentRegistrationSuccessScreenState
                                 shape: BoxShape.circle,
                                 color: VSPColors.surfaceAlt,
                                 border: Border.all(
-                                  color: VSPColors.accent,
+                                  color: VSPColors.success,
                                   width: 2.5,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: VSPColors.accent.withValues(alpha: 0.35),
+                                    color: VSPColors.success.withValues(alpha: 0.35),
                                     blurRadius: 32,
                                     spreadRadius: 4,
                                   ),
@@ -358,7 +358,7 @@ class _TournamentRegistrationSuccessScreenState
                               child: const Center(
                                 child: Icon(
                                   Iconsax.cup_copy,
-                                  color: VSPColors.accent,
+                                  color: VSPColors.success,
                                   size: 52,
                                 ),
                               ),
@@ -493,7 +493,7 @@ class _TournamentRegistrationSuccessScreenState
             height: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: VSPColors.accent,
+              color: VSPColors.success,
             ),
           ),
         ),
@@ -513,7 +513,7 @@ class _TournamentRegistrationSuccessScreenState
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.card),
         border: Border.all(
-          color: VSPColors.accent.withValues(alpha: 0.4),
+          color: VSPColors.divider,
           width: 1.2,
         ),
         boxShadow: const [
@@ -535,20 +535,20 @@ class _TournamentRegistrationSuccessScreenState
                   color: VSPColors.accentSoft,
                   borderRadius: BorderRadius.circular(VSPRadius.full),
                   border: Border.all(
-                      color: VSPColors.accent.withValues(alpha: 0.4)),
+                      color: VSPColors.divider),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Iconsax.verify_copy,
-                        color: VSPColors.accent, size: 16),
+                        color: VSPColors.success, size: 16),
                     const SizedBox(width: 6),
                     Text(
                       hasPosition && hasCapacity
                           ? 'أنت $participantLabel رقم #$_myPosition من $_maxCapacity'
                           : 'تم تأكيد اشتراكك بنجاح',
                       style: const TextStyle(
-                        color: VSPColors.accent,
+                        color: VSPColors.success,
                         fontWeight: FontWeight.w900,
                         fontSize: 15,
                         fontFamily: 'Tajawal',
@@ -567,7 +567,7 @@ class _TournamentRegistrationSuccessScreenState
             child: LinearProgressIndicator(
               value: fillPercentage,
               backgroundColor: VSPColors.surfaceAlt,
-              valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
+              valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.info),
               minHeight: 8,
             ),
           ),
@@ -595,7 +595,7 @@ class _TournamentRegistrationSuccessScreenState
                 style: TextStyle(
                   color: _maxCapacity - _totalParticipants <= 2
                       ? VSPColors.warning
-                      : VSPColors.accent,
+                      : VSPColors.info,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -631,7 +631,7 @@ class _TournamentRegistrationSuccessScreenState
         children: [
           Row(
             children: [
-              const Icon(Iconsax.note_copy, color: VSPColors.accent, size: 18),
+              const Icon(Iconsax.note_copy, color: VSPColors.success, size: 18),
               const SizedBox(width: 8),
               const Text(
                 'بيانات الاشتراك المعتمدة',
@@ -651,7 +651,7 @@ class _TournamentRegistrationSuccessScreenState
                 child: const Text(
                   'مدفوع إلكترونياً ✓',
                   style: TextStyle(
-                    color: VSPColors.accent,
+                    color: VSPColors.success,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -737,7 +737,7 @@ class _TournamentRegistrationSuccessScreenState
                   child: Text(
                     refCode,
                     style: const TextStyle(
-                      color: VSPColors.accent,
+                      color: VSPColors.success,
                       fontFamily: 'monospace',
                       fontWeight: FontWeight.bold,
                       fontSize: 13,

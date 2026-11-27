@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
-/// Decorative neon blurred glow in the background of the payment checkout screen.
+/// Neutral blurred background in the background of the payment checkout screen.
 class PaymentBackgroundGlow extends StatelessWidget {
   const PaymentBackgroundGlow({super.key});
 
@@ -16,7 +16,7 @@ class PaymentBackgroundGlow extends StatelessWidget {
         height: 300,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: VSPColors.accent.withValues(alpha: 0.12),
+          color: VSPColors.surfaceAlt.withValues(alpha: 0.12),
         ),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),

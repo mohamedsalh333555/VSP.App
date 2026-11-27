@@ -246,4 +246,66 @@ void main() {
     }
     expect(hits, isEmpty, reason: 'Green ambient glow must ONLY be enabled on player_home_screen.dart');
   });
+
+  test('Green policy: shared decorative tokens are neutral', () {
+    expect(VSPDSSemanticColors.accent, VSPDSColors.voltGreen);
+    for (final c in [
+      VSPDSColors.voltGreenSoft,
+      VSPDSColors.voltGreenMuted,
+      VSPDSColors.voltGreenBorder,
+      VSPDSColors.glassBorderAccent,
+      VSPDSColors.glassGlow,
+      VSPDSSemanticColors.accentSoft,
+      VSPDSSemanticColors.accentBorder,
+      VSPDSTypography.priceCompact.color!,
+      VSPDSTypography.actionLabel.color!,
+    ]) {
+      final argb = c.toARGB32();
+      final red = (argb >> 16) & 0xff;
+      final green = (argb >> 8) & 0xff;
+      final blue = argb & 0xff;
+      expect(green > red && green > blue, isFalse);
+    }
+    expect(VSPDSColors.homeAmbientGlow.toARGB32() & 0xFFFFFF,
+        VSPDSColors.voltGreen.toARGB32() & 0xFFFFFF);
+    final home = File('lib/features/player/screens/player_home_screen.dart').readAsStringSync();
+    expect(home, contains('showTopGlow: _selectedIndex == 0'));
+    expect(home, contains('showBottomGlow: _selectedIndex == 0'));
+    final ambient = File('lib/shared/widgets/vsp_ambient_background.dart').readAsStringSync();
+    expect(ambient, contains('this.showTopGlow = false'));
+    final nav = File('lib/shared/widgets/vsp_bottom_nav_bar.dart').readAsStringSync();
+    expect(nav, isNot(contains('VSPDSSemanticColors.accent')));
+    final stadium = File('lib/shared/widgets/stadium_card.dart').readAsStringSync();
+    expect(stadium, isNot(contains('VSPColors.accent')));
+  });
+
+  test('Green policy: all literal Flutter green colors must be the canonical neon declarations', () {
+    final hits = <String>[];
+    final literal = RegExp(r'Color\s*\(\s*0x([0-9a-fA-F]{8})\s*\)');
+    for (final file in _dartFiles(Directory('lib'))) {
+      final path = file.path.replaceAll('\\', '/');
+      final source = file.readAsStringSync();
+      for (final match in literal.allMatches(source)) {
+        final argb = int.parse(match.group(1)!, radix: 16);
+        final r = (argb >> 16) & 255;
+        final g = (argb >> 8) & 255;
+        final b = argb & 255;
+        if (g <= r || g <= b) continue;
+        final line = source.substring(0, match.start).split('\n').length;
+        final canonical = path.endsWith('/vsp_design_tokens.dart') &&
+            (argb == 0xFF9FDF02 || argb == 0x1F9FDF02);
+        if (!canonical) hits.add('$path:$line');
+      }
+    }
+    expect(hits, isEmpty, reason: 'Unexpected green literals: $hits');
+  });
+
+  test('Green policy: canonical hover and payment background stay non-decorative', () {
+    final json = jsonDecode(File('design-tokens.json').readAsStringSync()) as Map<String, dynamic>;
+    final colors = json['colors'] as Map<String, dynamic>;
+    expect(colors['accentHover'], colors['accent']);
+    final payment = File('lib/features/player/widgets/payment/payment_background_glow.dart').readAsStringSync();
+    expect(payment, isNot(contains('VSPColors.accent')));
+    expect(VSPDSComponentEffects.buttonShadow.color.toARGB32() & 0xFFFFFF, 0);
+  });
 }

@@ -68,7 +68,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  ),
  title: Row(
  children: [
- const Icon(Iconsax.verify_copy, color: VSPColors.accent, size: 28),
+ const Icon(Iconsax.verify_copy, color: VSPColors.textPrimary, size: 28),
  const SizedBox(width: 12),
  Expanded(
  child: Text(
@@ -91,7 +91,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  _confettiController.stop();
  Navigator.of(ctx).pop();
  },
- child: Text(isAr ? 'رائع!' : 'Great!', style: const TextStyle(color: VSPColors.accent)),
+ child: Text(isAr ? 'رائع!' : 'Great!', style: const TextStyle(color: VSPColors.textPrimary)),
  ),
  ],
  ),
@@ -151,9 +151,9 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  blastDirectionality: BlastDirectionality.explosive,
  shouldLoop: false,
  colors: const [
- VSPColors.accent,
+ VSPColors.textPrimary,
  Colors.white,
- VSPColors.accentGlow,
+ VSPColors.textSecondary,
  ],
  ),
  ),

@@ -152,7 +152,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                   ),
                   const SizedBox(height: 12),
                   if (snap.connectionState == ConnectionState.waiting)
-                    const Expanded(child: Center(child: CircularProgressIndicator(color: VSPColors.accent)))
+                    const Expanded(child: Center(child: CircularProgressIndicator(color: VSPColors.textPrimary)))
                   else if (rows.isEmpty)
                     Expanded(
                       child: Center(
@@ -177,7 +177,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text('#${r.activityRank}',
-                                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900)),
+                                    style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900)),
                                 const SizedBox(width: 8),
                                 VspShieldBadge(tier: r.currentShield, size: 32, isArabic: isArabic),
                               ],
@@ -192,7 +192,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                               children: [
                                 Text(
                                   isArabic ? '${r.approvedChallenges} تحدٍ' : '${r.approvedChallenges} ch',
-                                  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 13),
+                                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 13),
                                 ),
                                 Text(
                                   '${r.seasonXp.toStringAsFixed(0)} XP',
@@ -219,7 +219,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+      return const Center(child: CircularProgressIndicator(color: VSPColors.textPrimary));
     }
     if (_error != null) {
       return VSPErrorState(
@@ -270,7 +270,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                   onPressed: () => _showMostActiveModal(context, isArabic),
                   child: Text(
                     isArabic ? 'الأكثر نشاطاً' : 'Most Active',
-                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 11.5),
+                    style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 11.5),
                   ),
                 ),
               ],
@@ -501,12 +501,12 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: VSPColors.accent,
+                                color: VSPColors.textPrimary,
                                 borderRadius: BorderRadius.circular(VSPRadius.full),
                               ),
                               child: Text(
                                 isArabic ? '${myEntry.rankingPoints} نقطة ترتيب' : '${myEntry.rankingPoints} pts',
-                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12),
+                                style: const TextStyle(color: VSPColors.background, fontWeight: FontWeight.w900, fontSize: 12),
                               ),
                             ),
                           ],
@@ -612,7 +612,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
               child: Text(
                 '#${entry.rank}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: entry.rank <= 3 ? VSPColors.accent : VSPColors.textSecondary,
+                      color: entry.rank <= 3 ? VSPColors.textPrimary : VSPColors.textSecondary,
                       fontWeight: FontWeight.w900,
                       fontSize: 13,
                     ),
@@ -631,9 +631,9 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                     ? CachedNetworkImage(
                         imageUrl: entry.logoUrl,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => ChampionInitialBadge(letter: initialLetter, accentColor: VSPColors.accent),
+                        errorWidget: (_, __, ___) => ChampionInitialBadge(letter: initialLetter, accentColor: VSPColors.textPrimary),
                       )
-                    : ChampionInitialBadge(letter: initialLetter, accentColor: VSPColors.accent),
+                    : ChampionInitialBadge(letter: initialLetter, accentColor: VSPColors.textPrimary),
               ),
             ),
             const SizedBox(width: 10),
@@ -648,7 +648,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                           entry.teamName,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: isMyTeam ? VSPColors.accent : VSPColors.textPrimary,
+                                color: isMyTeam ? VSPColors.textPrimary : VSPColors.textPrimary,
                               ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -715,7 +715,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
               ),
               child: Text(
                 isArabic ? '${entry.rankingPoints} نقطة' : '${entry.rankingPoints} pts',
-                style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 12),
+                style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 12),
               ),
             ),
           ],

@@ -10,7 +10,7 @@ import 'vsp_design_tokens.dart';
 export '../../constants/sport_positions.dart';
 
 /// ⚠️ ممنوع استخدام Colors.green أو أي hex أخضر مباشر في أي مكان بالتطبيق.
-/// الأخضر الوحيد المعتمد هو accent (#9FDF02) أو accentSoft.
+/// الأخضر الوحيد المعتمد هو CTA accent (#9FDF02)، وتوهج الرئيسية فقط عبر Home Ambient Glow.
 /// أي خلفية دائرية محايدة لازم تستخدم iconBadgeBg.
 class VSPColors {
   static const background = VSPDSSemanticColors.background;
@@ -36,7 +36,7 @@ class VSPColors {
   static const success = VSPDSSemanticColors.success;
   static const warning = VSPDSSemanticColors.warning;
   static const info = VSPDSSemanticColors.info;
-  static const Color whatsApp = VSPDSColors.voltGreen;
+  static const Color whatsApp = VSPDSSemanticColors.textPrimary;
   static const Color proAccent = accent;
   static const Color proAccentSoft = accentSoft;
 

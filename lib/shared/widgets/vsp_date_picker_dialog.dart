@@ -96,13 +96,13 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  color: VSPColors.surface,
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  border: Border.all(
- color: VSPColors.accent.withValues(alpha: 0.35),
+ color: VSPColors.divider,
  width: 1.5,
  ),
  boxShadow: [
  VSPShadow.strong,
  BoxShadow(
- color: VSPColors.accent.withValues(alpha: 0.08),
+ color: VSPColors.background.withValues(alpha: 0.08),
  blurRadius: 20,
  spreadRadius: 2,
  ),
@@ -122,13 +122,13 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  color: VSPColors.iconBadgeBg,
  shape: BoxShape.circle,
  border: Border.all(
- color: VSPColors.accent.withValues(alpha: 0.3),
+ color: VSPColors.divider,
  width: 1,
  ),
  ),
  child: const Icon(
  Iconsax.calendar_1_copy,
- color: VSPColors.accent,
+ color: VSPColors.textSecondary,
  size: 20,
  ),
  ),

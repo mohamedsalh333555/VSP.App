@@ -162,7 +162,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: VSPDSSpacing.xs),
-              Text(_type(context), style: const TextStyle(color: VSPDSSemanticColors.accent, fontWeight: FontWeight.bold)),
+              Text(_type(context), style: const TextStyle(color: VSPDSSemanticColors.textPrimary, fontWeight: FontWeight.bold)),
               const SizedBox(height: VSPDSSpacing.md),
               _row(Iconsax.calendar_1_copy, ar ? 'التاريخ' : 'Date', VSPFinancialFormatter.formatDate(booking.startTime, isArabic: ar)),
               _row(Iconsax.clock_copy, ar ? 'الوقت' : 'Time', VSPFinancialFormatter.formatTimeRange(booking.startTime, booking.endTime, isArabic: ar)),
@@ -203,7 +203,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: VSPSpacing.sm),
       child: Row(children: [
-        Icon(icon, size: 18, color: VSPColors.accent),
+        Icon(icon, size: 18, color: VSPColors.textSecondary),
         const SizedBox(width: VSPSpacing.sm),
         Text('$label: ', style: const TextStyle(color: VSPColors.textSecondary)),
         Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w800))),
