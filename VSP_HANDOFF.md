@@ -6,7 +6,8 @@
 **Production Project:** `mktqkddbcddrxjxabdua` (DO NOT TOUCH)
 
 ## 1. Completed in Current Pass
-- Replaced `assets/images/shields/shield_immortal.png` with royal-gold/obsidian 3D emblem (visually inspected, zero green) and deleted legacy `assets/images/shields/shield_platinum.png`.
+- Replaced/cleaned all 6 shields (`silver`, `gold`, `diamond`, `elite`, `legendary`, `immortal`) into uniform `512x512` transparent RGBA PNGs with `0` green-dominant pixels (`08c81409`), distinct crimson-obsidian Legendary vs brushed-gold Gold, and removed `shield_platinum.png`.
+- Built fresh local Staging APK: `build/app/outputs/flutter-apk/vsp-demo-staging-release.apk` (`39,305,912` bytes / `37.5 MB`, `2026-11-27 17:36`, Commit `08c81409`, pointed strictly to `vtwgqyxglevcsxwdmhop`).
 - Removed `#9FDF02` from `VSPDSSemanticColors.success` (`blue500`) and `focusRing` (`zinc400`), synced `design-tokens.json` across all 3 repos (`sync_design_tokens.mjs --check` & `test_token_propagation.mjs` PASS), and added automated guardrails in `test/architecture_guardrails_test.dart`.
 - Removed remaining green borders/glows from `team_card_hero.dart`, `team_gamification_panel.dart`, `stadium_card.dart`, and `public_match_card.dart`.
 - Verified `flutter analyze --no-pub` (0 issues), `58/58` Flutter tests, `54/54` Admin tests, and `vsp_website` `tsc --noEmit`.
