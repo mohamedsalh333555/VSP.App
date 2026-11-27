@@ -69,7 +69,7 @@ class VspDatePickerYearStep extends StatelessWidget {
               children: [
                 Text(
                   '$year',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -151,7 +151,7 @@ class VspDatePickerMonthStep extends StatelessWidget {
                   child: Center(
                     child: Text(
                       monthNum.toString().padLeft(2, '0'),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: VSPColors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
@@ -163,7 +163,7 @@ class VspDatePickerMonthStep extends StatelessWidget {
                 Expanded(
                   child: Text(
                     monthName,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
@@ -244,7 +244,7 @@ class VspDatePickerDayStep extends StatelessWidget {
               children: [
                 Text(
                   day.toString().padLeft(2, '0'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
