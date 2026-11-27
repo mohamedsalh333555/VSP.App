@@ -92,13 +92,13 @@ abstract final class VSPDSSemanticColors {
   static const Color error = VSPDSColors.red500;
   static const Color warning = VSPDSColors.amber500;
   static const Color info = VSPDSColors.blue500;
-  static const Color success = VSPDSColors.voltGreen;
+  static const Color success = VSPDSColors.blue500;
 
   static const Color iconBadge = VSPDSColors.zinc800;
   static const Color iconBadgeElevated = VSPDSColors.zinc750;
 
   static const Color overlay = VSPDSColors.black80;
-  static const Color focusRing = VSPDSColors.voltGreen;
+  static const Color focusRing = VSPDSColors.zinc400;
 }
 
 abstract final class VSPDSSpacing {

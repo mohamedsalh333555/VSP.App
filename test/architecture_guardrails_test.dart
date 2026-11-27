@@ -190,13 +190,33 @@ void main() {
     expect(typography['arabicFont'], VSPDSTypography.arabicFont);
   });
 
-  test('All 6 official Shield PNG assets exist on disk', () {
+  test('All 6 official Shield PNG assets exist on disk and legacy shield_platinum.png is removed', () {
     for (final tier in ['silver', 'gold', 'diamond', 'elite', 'legendary', 'immortal']) {
       expect(
         File('assets/images/shields/shield_$tier.png').existsSync(),
         isTrue,
         reason: 'Missing shield asset: assets/images/shields/shield_$tier.png',
       );
+    }
+    expect(
+      File('assets/images/shields/shield_platinum.png').existsSync(),
+      isFalse,
+      reason: 'Legacy shield_platinum.png must be removed',
+    );
+  });
+
+  test('Brand Rule: #9FDF02 is NOT used for success, focusRing, or shield tiers', () {
+    expect(VSPDSSemanticColors.success, isNot(equals(VSPDSColors.voltGreen)));
+    expect(VSPDSSemanticColors.focusRing, isNot(equals(VSPDSColors.voltGreen)));
+    for (final c in [
+      VSPDSColors.tierSilver,
+      VSPDSColors.tierGold,
+      VSPDSColors.tierDiamond,
+      VSPDSColors.tierElite,
+      VSPDSColors.tierLegendary,
+      VSPDSColors.tierImmortal,
+    ]) {
+      expect(c, isNot(equals(VSPDSColors.voltGreen)));
     }
   });
 }

@@ -16,7 +16,7 @@
     "error": "#EF4444",
     "warning": "#F59E0B",
     "info": "#3B82F6",
-    "success": "#9FDF02"
+    "success": "#3B82F6"
   },
   "typography": {
     "latinFont": "Poppins",
