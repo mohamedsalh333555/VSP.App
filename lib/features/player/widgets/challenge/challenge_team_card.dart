@@ -39,11 +39,11 @@ class ChallengeTeamCard extends StatelessWidget {
         padding: const EdgeInsets.all(VSPSpacing.md),
         decoration: BoxDecoration(
           color: isSelected
-              ? VSPColors.accent.withValues(alpha: 0.05)
+              ? VSPColors.surfaceAlt
               : VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(
-            color: isSelected ? VSPColors.accent : VSPColors.divider,
+            color: isSelected ? VSPColors.textPrimary : VSPColors.divider,
             width: 1.5,
           ),
         ),
@@ -86,7 +86,7 @@ class ChallengeTeamCard extends StatelessWidget {
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent)
+                  const Icon(Iconsax.tick_circle_copy, color: VSPColors.info)
                 else
                   Icon(
                     Iconsax.tick_circle_copy,
@@ -109,7 +109,7 @@ class ChallengeTeamCard extends StatelessWidget {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: VSPColors.accent,
+                        color: VSPColors.info,
                       ),
                     ),
                   ),
@@ -138,7 +138,7 @@ class ChallengeTeamCard extends StatelessWidget {
   ) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final isRepeat = status.isRepeat;
-    final color = isRepeat ? VSPColors.warning : VSPColors.accent;
+    final color = isRepeat ? VSPColors.warning : VSPColors.info;
     String fmt(num n) => n % 1 == 0 ? n.toInt().toString() : n.toStringAsFixed(1);
 
     return Container(
@@ -218,7 +218,7 @@ class ChallengeTeamCard extends StatelessWidget {
         const SizedBox(height: 16),
         Row(
           children: [
-            _buildH2HStatItem(l10n.yourWins, wins, VSPColors.accent),
+            _buildH2HStatItem(l10n.yourWins, wins, VSPColors.info),
             _buildH2HStatItem(l10n.draws, draws, VSPColors.textSecondary),
             _buildH2HStatItem(l10n.theirWins, opposingWins, VSPColors.error),
           ],
@@ -228,14 +228,14 @@ class ChallengeTeamCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
-            color: VSPColors.accent.withValues(alpha: 0.1),
+            color: VSPColors.info.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(VSPRadius.sm),
           ),
           child: Text(
             hypeMessage,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: VSPColors.accent,
+                  color: VSPColors.info,
                   fontWeight: FontWeight.bold,
                 ),
           ),

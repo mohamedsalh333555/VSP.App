@@ -278,4 +278,34 @@ void main() {
     final stadium = File('lib/shared/widgets/stadium_card.dart').readAsStringSync();
     expect(stadium, isNot(contains('VSPColors.accent')));
   });
+
+  test('Green policy: all literal Flutter green colors must be the canonical neon declarations', () {
+    final hits = <String>[];
+    final literal = RegExp(r'Color\s*\(\s*0x([0-9a-fA-F]{8})\s*\)');
+    for (final file in _dartFiles(Directory('lib'))) {
+      final path = file.path.replaceAll('\\', '/');
+      final source = file.readAsStringSync();
+      for (final match in literal.allMatches(source)) {
+        final argb = int.parse(match.group(1)!, radix: 16);
+        final r = (argb >> 16) & 255;
+        final g = (argb >> 8) & 255;
+        final b = argb & 255;
+        if (g <= r || g <= b) continue;
+        final line = source.substring(0, match.start).split('\n').length;
+        final canonical = path.endsWith('/vsp_design_tokens.dart') &&
+            (argb == 0xFF9FDF02 || argb == 0x1F9FDF02);
+        if (!canonical) hits.add('$path:$line');
+      }
+    }
+    expect(hits, isEmpty, reason: 'Unexpected green literals: $hits');
+  });
+
+  test('Green policy: canonical hover and payment background stay non-decorative', () {
+    final json = jsonDecode(File('design-tokens.json').readAsStringSync()) as Map<String, dynamic>;
+    final colors = json['colors'] as Map<String, dynamic>;
+    expect(colors['accentHover'], colors['accent']);
+    final payment = File('lib/features/player/widgets/payment/payment_background_glow.dart').readAsStringSync();
+    expect(payment, isNot(contains('VSPColors.accent')));
+    expect(VSPDSComponentEffects.buttonShadow.color.toARGB32() & 0xFFFFFF, 0);
+  });
 }

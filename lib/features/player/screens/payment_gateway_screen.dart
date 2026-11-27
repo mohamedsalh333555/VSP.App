@@ -564,7 +564,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                         children: [
                           const Icon(
                             Iconsax.card_copy,
-                            color: VSPColors.accent,
+                            color: VSPColors.textSecondary,
                             size: 20,
                           ),
                           const SizedBox(width: VSPSpacing.md),

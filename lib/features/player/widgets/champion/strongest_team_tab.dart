@@ -137,15 +137,15 @@ class _StrongestTeamTabState extends State<StrongestTeamTab>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: VSPColors.accent.withValues(alpha: 0.1),
+                    color: VSPColors.info.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+                    border: Border.all(color: VSPColors.info.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     isArabic
                         ? 'اختر خمسة لاعبين من فريقك للمشاركة في البطولة، على أن يكون من بينهم حارس مرمى. توجد جائزة خاصة لأفضل حارس مرمى.'
                         : 'Select exactly 5 players from your team, including a goalkeeper. There is a special award for Best Goalkeeper.',
-                    style: const TextStyle(color: VSPColors.accent, fontSize: 12, height: 1.4),
+                    style: const TextStyle(color: VSPColors.info, fontSize: 12, height: 1.4),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -160,7 +160,7 @@ class _StrongestTeamTabState extends State<StrongestTeamTab>
                       final isGk = gkId == u.uid;
                       return CheckboxListTile(
                         value: isSelected,
-                        activeColor: VSPColors.accent,
+                        activeColor: VSPColors.textPrimary,
                         checkColor: Colors.black,
                         title: Text(u.name ?? u.email, style: const TextStyle(color: Colors.white, fontSize: 13.5)),
                         subtitle: isSelected
@@ -273,7 +273,7 @@ class _StrongestTeamTabState extends State<StrongestTeamTab>
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+      return const Center(child: CircularProgressIndicator(color: VSPColors.info));
     }
     if (_error != null) {
       return VSPErrorState(
@@ -348,19 +348,19 @@ class _StrongestTeamTabState extends State<StrongestTeamTab>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            VSPColors.accent.withValues(alpha: 0.16),
+            VSPColors.surface,
             VSPColors.surfaceAlt,
           ],
         ),
         borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.45)),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Iconsax.crown_1_copy, color: VSPColors.accent, size: 22),
+              const Icon(Iconsax.crown_1_copy, color: VSPColors.info, size: 22),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -392,7 +392,7 @@ class _StrongestTeamTabState extends State<StrongestTeamTab>
       ),
       child: Column(
         children: [
-          const Icon(Iconsax.medal_star_copy, color: VSPColors.accent, size: 42),
+          const Icon(Iconsax.medal_star_copy, color: VSPColors.info, size: 42),
           const SizedBox(height: 10),
           Text(
             isArabic ? 'لا توجد بطولة أقوى فريق مفتوحة حالياً في هذه المحافظة' : 'No active Strongest Team event in this governorate',
@@ -453,10 +453,10 @@ class _StrongestTeamTabState extends State<StrongestTeamTab>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.15),
+                  color: VSPColors.info.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(VSPRadius.full),
                 ),
-                child: Text(statusLabel, style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold)),
+                child: Text(statusLabel, style: const TextStyle(color: VSPColors.info, fontSize: 11, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -508,7 +508,7 @@ class _StrongestTeamTabState extends State<StrongestTeamTab>
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   children: [
-                    Text(rank != null ? '#$rank' : '•', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+                    Text(rank != null ? '#$rank' : '•', style: const TextStyle(color: VSPColors.info, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text((t?['name'] ?? 'Team').toString(), style: const TextStyle(color: Colors.white, fontSize: 13)),

@@ -19,17 +19,17 @@ class TournamentChampionBanner extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: VSPColors.accent.withValues(alpha: 0.18),
+        color: VSPColors.medalGold.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.accent, width: 2),
+        border: Border.all(color: VSPColors.medalGold, width: 2),
         boxShadow: [
-          BoxShadow(color: VSPColors.accent.withValues(alpha: 0.25), blurRadius: 12),
+          BoxShadow(color: VSPColors.medalGold.withValues(alpha: 0.25), blurRadius: 12),
         ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 28),
+          const Icon(Iconsax.cup_copy, color: VSPColors.medalGold, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -37,7 +37,7 @@ class TournamentChampionBanner extends StatelessWidget {
               children: [
                 Text(
                   isArabic ? 'بطل البطولة النهائي' : 'Final Tournament Champion',
-                  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(color: VSPColors.medalGold, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 const SizedBox(height: 2),
                 Text(
