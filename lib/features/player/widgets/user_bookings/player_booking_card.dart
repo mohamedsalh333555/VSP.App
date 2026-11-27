@@ -65,7 +65,6 @@ class PlayerBookingCard extends StatelessWidget {
   }
 
   Widget _buildInfoColumn(BuildContext context, String label, String value, {bool isTime = false}) {
-    final isArabic = Localizations.localeOf(context).languageCode.startsWith('ar');
     return Column(
       children: [
         Text(
@@ -79,9 +78,7 @@ class PlayerBookingCard extends StatelessWidget {
         ),
         const SizedBox(height: VSPSpacing.xs),
         Directionality(
-          textDirection: isTime
-              ? (isArabic ? TextDirection.rtl : TextDirection.ltr)
-              : Directionality.of(context),
+          textDirection: isTime ? TextDirection.ltr : Directionality.of(context),
           child: Text(
             value,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -184,10 +181,14 @@ class PlayerBookingCard extends StatelessWidget {
             color: isHistory ? VSPColors.surface : VSPColors.surfaceAlt,
             borderRadius: BorderRadius.circular(VSPRadius.card),
             border: Border.all(
-              color: isHistory ? VSPColors.divider : VSPColors.accent.withValues(alpha: 0.25),
+              color: (isHistory || booking.status == BookingStatus.cancelled)
+                  ? VSPColors.divider
+                  : VSPColors.accent.withValues(alpha: 0.25),
               width: 1.0,
             ),
-            boxShadow: const [VSPShadow.subtle],
+            boxShadow: (isHistory || booking.status == BookingStatus.cancelled)
+                ? null
+                : const [VSPShadow.subtle],
           ),
           child: Column(
             children: [

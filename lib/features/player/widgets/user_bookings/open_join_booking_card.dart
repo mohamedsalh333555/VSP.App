@@ -12,6 +12,7 @@ import '../../../../core/repositories/chat_repository.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/vsp_financial_formatter.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -215,6 +216,8 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
       statusText = isArabic ? 'مفتوحة للانضمام' : 'Open to join';
     }
 
+    final isInactive = booking.status == BookingStatus.cancelled || _isEnded || widget.isHistory;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -228,9 +231,11 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
             border: Border.all(
               color: booking.status == BookingStatus.cancelled
                   ? VSPColors.error.withValues(alpha: 0.25)
-                  : VSPColors.accent.withValues(alpha: 0.18),
+                  : isInactive
+                      ? VSPColors.divider
+                      : VSPColors.accent.withValues(alpha: 0.22),
             ),
-            boxShadow: const [VSPShadow.subtle],
+            boxShadow: isInactive ? null : const [VSPShadow.subtle],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,42 +338,55 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                 ),
                 child: Row(
                   children: [
-                    _infoCell(isArabic ? 'التاريخ' : 'DATE', booking.formattedDate, Iconsax.calendar_1_copy),
+                    _infoCell(
+                      isArabic ? 'التاريخ' : 'DATE',
+                      VSPFinancialFormatter.formatDate(booking.startTime, isArabic: isArabic),
+                      Iconsax.calendar_1_copy,
+                    ),
                     Container(width: 1, height: 34, color: VSPColors.divider),
-                    _infoCell(isArabic ? 'الوقت' : 'TIME', booking.formattedTimeRange, Iconsax.clock_copy),
+                    _infoCell(
+                      isArabic ? 'الوقت' : 'TIME',
+                      VSPFinancialFormatter.formatTimeRange(booking.startTime, booking.endTime, isArabic: isArabic),
+                      Iconsax.clock_copy,
+                    ),
                     Container(width: 1, height: 34, color: VSPColors.divider),
-                    _infoCell(isArabic ? 'رسوم الفرد' : 'PER PLAYER',
-                        '${entryFee} ${l10n.egCurrency}', Iconsax.wallet_1_copy),
+                    _infoCell(
+                      isArabic ? 'رسوم الفرد' : 'PER PLAYER',
+                      VSPFinancialFormatter.formatCurrency(entryFee.toDouble(), isArabic: isArabic),
+                      Iconsax.wallet_1_copy,
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: VSPSpacing.md),
-              Row(
-                children: [
-                  const Icon(Iconsax.profile_2user_copy, size: 16, color: VSPColors.accent),
-                  const SizedBox(width: VSPSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      isArabic
-                          ? '${currentPlayers} من ${totalCapacity} لاعب • ${remaining > 0 ? 'متبقي ${remaining} أماكن' : 'اكتمل العدد'}'
-                          : '${currentPlayers} of ${totalCapacity} players • ${remaining} spots left',
-                      style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w800),
+              if (!isInactive) ...[
+                const SizedBox(height: VSPSpacing.md),
+                Row(
+                  children: [
+                    const Icon(Iconsax.profile_2user_copy, size: 16, color: VSPColors.accent),
+                    const SizedBox(width: VSPSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        isArabic
+                            ? '${currentPlayers} من ${totalCapacity} لاعب • ${remaining > 0 ? 'متبقي ${remaining} أماكن' : 'اكتمل العدد'}'
+                            : '${currentPlayers} of ${totalCapacity} players • ${remaining} spots left',
+                        style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w800),
+                      ),
                     ),
-                  ),
-                  Text('${(progress * 100).round()}%',
-                      style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.w900)),
-                ],
-              ),
-              const SizedBox(height: VSPSpacing.sm),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: VSPColors.divider.withValues(alpha: 0.35),
-                  valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
+                    Text('${(progress * 100).round()}%',
+                        style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.w900)),
+                  ],
                 ),
-              ),
+                const SizedBox(height: VSPSpacing.sm),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 6,
+                    backgroundColor: VSPColors.divider.withValues(alpha: 0.35),
+                    valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
+                  ),
+                ),
+              ],
               if (booking.rescheduleStatus == 'pending' && booking.proposedStartTime != null) ...[
                 const SizedBox(height: VSPSpacing.md),
                 RescheduleActionBanner(booking: booking),

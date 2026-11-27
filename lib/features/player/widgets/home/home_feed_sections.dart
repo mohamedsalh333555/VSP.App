@@ -156,58 +156,68 @@ class _HomeMatchesSectionState extends State<HomeMatchesSection> {
               onSeeAll: matches.isNotEmpty ? () => widget.onNavigate(1) : null,
             ),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 240,
-              child: isLoading
-                  ? ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: 3,
-                      itemBuilder: (_, __) => const CardSkeleton(),
-                    )
-                  : matches.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Iconsax.cup_copy, size: 40, color: VSPColors.textSecondary.withValues(alpha: 0.4)),
-                              const SizedBox(height: 10),
-                              Text(
-                                Localizations.localeOf(context).languageCode == 'ar'
-                                    ? 'لا توجد مباريات مفتوحة حالياً'
-                                    : 'No open matches right now',
-                                style: TextStyle(
-                                  color: VSPColors.textSecondary.withValues(alpha: 0.7),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                Localizations.localeOf(context).languageCode == 'ar'
-                                    ? 'احجز ملعبك وافتح مباراة للجميع!'
-                                    : 'Book a pitch and open a match for everyone!',
-                                style: TextStyle(
-                                  color: VSPColors.textSecondary.withValues(alpha: 0.45),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: matches.length,
-                          itemBuilder: (context, i) => Align(
-                            alignment: Alignment.topCenter,
-                            child: Container(
-                              width: 320,
-                              margin: const EdgeInsets.only(right: 6),
-                              child: PublicMatchCard(booking: matches[i]),
+            if (isLoading)
+              SizedBox(
+                height: 240,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: 3,
+                  itemBuilder: (_, __) => const CardSkeleton(),
+                ),
+              )
+            else if (matches.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.card),
+                    border: Border.all(color: VSPColors.divider),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Iconsax.cup_copy, size: 24, color: VSPColors.accent),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isArabic ? 'لا توجد مباريات مفتوحة حالياً' : 'No open matches right now',
+                              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w700),
                             ),
-                          ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isArabic ? 'احجز ملعبك وشارك رابط الدعوة مع فريقك.' : 'Book a pitch and share the invite link.',
+                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5),
+                            ),
+                          ],
                         ),
-            ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 240,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: matches.length,
+                  itemBuilder: (context, i) => Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      width: 320,
+                      margin: const EdgeInsets.only(right: 6),
+                      child: PublicMatchCard(booking: matches[i]),
+                    ),
+                  ),
+                ),
+              ),
           ],
         );
       },
@@ -263,58 +273,68 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
                   : null,
             ),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 250,
-              child: isLoading
-                  ? ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: 3,
-                      itemBuilder: (_, __) => const CardSkeleton(),
-                    )
-                  : championships.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Iconsax.cup_copy, size: 40, color: VSPColors.textSecondary.withValues(alpha: 0.4)),
-                              const SizedBox(height: 10),
-                              Text(
-                                isArabic
-                                    ? 'لا توجد بطولات متاحة حالياً'
-                                    : 'No tournaments available right now',
-                                style: TextStyle(
-                                  color: VSPColors.textSecondary.withValues(alpha: 0.7),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                isArabic
-                                    ? 'ترقب قريباً — البطولة القادمة في الطريق!'
-                                    : 'Stay tuned — the next tournament is on the way!',
-                                style: TextStyle(
-                                  color: VSPColors.textSecondary.withValues(alpha: 0.45),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: championships.length,
-                          itemBuilder: (context, i) => Align(
-                            alignment: Alignment.topCenter,
-                            child: Container(
-                              width: 320,
-                              margin: const EdgeInsets.only(right: 6),
-                              child: ChampionshipCard(championship: championships[i]),
+            if (isLoading)
+              SizedBox(
+                height: 250,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: 3,
+                  itemBuilder: (_, __) => const CardSkeleton(),
+                ),
+              )
+            else if (championships.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.card),
+                    border: Border.all(color: VSPColors.divider),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Iconsax.cup_copy, size: 24, color: VSPColors.accent),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isArabic ? 'لا توجد بطولات متاحة حالياً' : 'No tournaments available right now',
+                              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w700),
                             ),
-                          ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isArabic ? 'ترقب قريباً — البطولة القادمة في الطريق!' : 'Stay tuned — the next tournament is on the way!',
+                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5),
+                            ),
+                          ],
                         ),
-            ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 250,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: championships.length,
+                  itemBuilder: (context, i) => Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      width: 320,
+                      margin: const EdgeInsets.only(right: 6),
+                      child: ChampionshipCard(championship: championships[i]),
+                    ),
+                  ),
+                ),
+              ),
           ],
         );
       },

@@ -103,19 +103,21 @@ class VspBottomNavBar extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: VSPDSSpacing.xxs),
-                            Text(
-                              item.label,
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: (isSelected
-                                      ? VSPDSTypography.navigationSelected
-                                      : VSPDSTypography.navigationUnselected)
-                                  .copyWith(
-                                color: isSelected
-                                    ? VSPDSSemanticColors.accent
-                                    : VSPDSSemanticColors.textSecondary,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                item.label,
+                                maxLines: 1,
+                                softWrap: false,
+                                textAlign: TextAlign.center,
+                                style: (isSelected
+                                        ? VSPDSTypography.navigationSelected
+                                        : VSPDSTypography.navigationUnselected)
+                                    .copyWith(
+                                  color: isSelected
+                                      ? VSPDSSemanticColors.accent
+                                      : VSPDSSemanticColors.textSecondary,
+                                ),
                               ),
                             ),
                           ],
