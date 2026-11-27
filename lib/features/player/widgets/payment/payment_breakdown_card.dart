@@ -6,7 +6,7 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 
 /// Card showing the full transparent financial breakdown, stadium timing details, and service fees.
-class PaymentBreakdownCard extends StatelessWidget {
+class PaymentBreakdownCard extends StatefulWidget {
   final BookingDraft bookingDraft;
   final bool isChampionship;
   final bool hasDeposit;
@@ -23,102 +23,7 @@ class PaymentBreakdownCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<PaymobFeePolicy?>(
-      future: PaymobService.fetchFeePolicy(),
-      builder: (context, snapshot) {
-        final policy = snapshot.data;
-        final double platformFeeAmount = policy?.platformFee(amountToPay) ?? 0;
-        final double gatewayFeeAmount = policy?.gatewayFee(amountToPay) ?? 0;
-        final double totalWithFees = policy?.total(amountToPay) ?? amountToPay;
-
-    final String displayStadiumName =
-        (bookingDraft.stadiumName.trim().isEmpty || bookingDraft.stadiumName.trim() == 'Mo')
-            ? (isArabic ? 'الملعب الرئيسي' : 'Main Pitch')
-            : bookingDraft.stadiumName;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: VSPColors.divider),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(isChampionship ? Iconsax.cup_copy : Iconsax.building_copy,
-                  color: VSPColors.textSecondary, size: 16),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  displayStadiumName,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 14),
-              const SizedBox(width: 8),
-              Text(
-                DateFormat('yyyy/MM/dd').format(bookingDraft.startTime),
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-              ),
-              const SizedBox(width: 14),
-              const Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 14),
-              const SizedBox(width: 6),
-              Text(
-                DateFormat('hh:mm a').format(bookingDraft.startTime),
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-              ),
-            ],
-          ),
-          const Divider(color: VSPColors.divider, height: 20),
-          _buildFeeRow(
-            label: isChampionship
-                ? (isArabic ? 'رسوم اشتراك البطولة' : 'Championship Entry Fee')
-                : (hasDeposit
-                    ? (isArabic ? 'عربون حجز الملعب' : 'Stadium Deposit')
-                    : (isArabic ? 'إجمالي سعر حجز الملعب' : 'Stadium Total Price')),
-            value: '${amountToPay.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
-            isBold: false,
-          ),
-          const SizedBox(height: 6),
-          _buildFeeRow(
-            label: isArabic ? 'عمولة المنصة (5%)' : 'Platform Fee (5%)',
-            value: '${platformFeeAmount.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
-            isBold: false,
-            onInfoTap: () => showFeeTransparencyModal(context, isArabic),
-          ),
-          const SizedBox(height: 6),
-          _buildFeeRow(
-            label: isArabic ? 'رسوم بوابة الدفع البنكية' : 'Payment Gateway Fee',
-            value: '${gatewayFeeAmount.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
-            isBold: false,
-          ),
-          const SizedBox(height: 6),
-          _buildFeeRow(
-            label: isArabic ? 'إجمالي المطلوب دفعه الآن' : 'Total Amount Due Now',
-            value: '${totalWithFees.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
-            isBold: true,
-          ),
-          if (hasDeposit && (bookingDraft.totalPrice - amountToPay) > 0) ...[
-            const SizedBox(height: 6),
-            _buildFeeRow(
-              label: isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
-              value: '${(bookingDraft.totalPrice - amountToPay).toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
-            ),
-          ],
-        ],
-      ),
-        );
-      },
-    );
-  }
+  State<PaymentBreakdownCard> createState() => _PaymentBreakdownCardState();
 
   static void showFeeTransparencyModal(BuildContext context, bool isArabic) {
     showModalBottomSheet(
@@ -157,7 +62,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    isArabic ? 'تفاصيل المصاريف الإدارية' : 'Administrative Fee Details',
+                    isArabic ? 'تفاصيل الرسوم والعمولة' : 'Fee & Commission Details',
                     style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -165,8 +70,8 @@ class PaymentBreakdownCard extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 isArabic
-                    ? 'تشمل المصاريف الإدارية تأكيد الحجز الفوري، ومصاريف المعاملات البنكية المعتمدة، والدعم الفني المباشر على مدار الساعة.'
-                    : 'Administrative fees cover instant booking confirmation, certified banking processing, and 24/7 customer support.',
+                    ? 'تشمل الرسوم عمولة منصة VSP (5% من قيمة الحجز) لتأكيد الحجز الفوري وحماية المواعيد، بالإضافة إلى رسوم المعالجة البنكية لبوابة Paymob المعتمدة.'
+                    : 'Fees include the 5% VSP platform fee for instant slot locking and support, plus certified Paymob gateway processing fees.',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.6),
               ),
               const SizedBox(height: 20),
@@ -187,6 +92,172 @@ class PaymentBreakdownCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PaymentBreakdownCardState extends State<PaymentBreakdownCard> {
+  late Future<PaymobFeePolicy?> _policyFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _policyFuture = PaymobService.fetchFeePolicy();
+  }
+
+  void _retry() {
+    setState(() {
+      _policyFuture = PaymobService.fetchFeePolicy();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = widget.isArabic;
+    final amountToPay = widget.amountToPay;
+    final isChampionship = widget.isChampionship;
+    final hasDeposit = widget.hasDeposit;
+
+    final String displayStadiumName =
+        (widget.bookingDraft.stadiumName.trim().isEmpty || widget.bookingDraft.stadiumName.trim() == 'Mo')
+            ? (isArabic ? 'الملعب الرئيسي' : 'Main Pitch')
+            : widget.bookingDraft.stadiumName;
+
+    return FutureBuilder<PaymobFeePolicy?>(
+      future: _policyFuture,
+      builder: (context, snapshot) {
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+        final policy = snapshot.data;
+        final isError = !isLoading && (snapshot.hasError || policy == null);
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.xl),
+            border: Border.all(color: VSPColors.divider),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(isChampionship ? Iconsax.cup_copy : Iconsax.building_copy,
+                      color: VSPColors.textSecondary, size: 16),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      displayStadiumName,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 14),
+                  const SizedBox(width: 8),
+                  Text(
+                    DateFormat('yyyy/MM/dd').format(widget.bookingDraft.startTime),
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
+                  const SizedBox(width: 14),
+                  const Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    DateFormat('hh:mm a').format(widget.bookingDraft.startTime),
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
+                ],
+              ),
+              const Divider(color: VSPColors.divider, height: 20),
+              _buildFeeRow(
+                label: isChampionship
+                    ? (isArabic ? 'رسوم اشتراك البطولة' : 'Championship Entry Fee')
+                    : (hasDeposit
+                        ? (isArabic ? 'عربون حجز الملعب' : 'Stadium Deposit')
+                        : (isArabic ? 'إجمالي سعر حجز الملعب' : 'Stadium Total Price')),
+                value: '${amountToPay.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
+                isBold: false,
+              ),
+              const SizedBox(height: 8),
+              if (isLoading)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isArabic ? 'جاري احتساب الرسوم من السيرفر...' : 'Calculating server fees...',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                    ),
+                  ],
+                )
+              else if (isError)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: VSPColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    border: Border.all(color: VSPColors.error.withValues(alpha: 0.35)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isArabic
+                              ? 'تعذر تحميل سياسة الرسوم المعتمدة.'
+                              : 'Could not load fee policy.',
+                          style: const TextStyle(color: VSPColors.textPrimary, fontSize: 11.5),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _retry,
+                        child: Text(
+                          isArabic ? 'إعادة المحاولة' : 'Retry',
+                          style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                _buildFeeRow(
+                  label: isArabic ? 'عمولة المنصة (5%)' : 'Platform Fee (5%)',
+                  value: '${policy!.platformFee(amountToPay).toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
+                  isBold: false,
+                  onInfoTap: () => PaymentBreakdownCard.showFeeTransparencyModal(context, isArabic),
+                ),
+                const SizedBox(height: 6),
+                _buildFeeRow(
+                  label: isArabic ? 'رسوم بوابة الدفع البنكية' : 'Payment Gateway Fee',
+                  value: '${policy.gatewayFee(amountToPay).toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
+                  isBold: false,
+                ),
+                const SizedBox(height: 6),
+                _buildFeeRow(
+                  label: isArabic ? 'إجمالي المطلوب دفعه الآن' : 'Total Amount Due Now',
+                  value: '${policy.total(amountToPay).toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
+                  isBold: true,
+                ),
+              ],
+              if (hasDeposit && (widget.bookingDraft.totalPrice - amountToPay) > 0) ...[
+                const SizedBox(height: 6),
+                _buildFeeRow(
+                  label: isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
+                  value: '${(widget.bookingDraft.totalPrice - amountToPay).toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 

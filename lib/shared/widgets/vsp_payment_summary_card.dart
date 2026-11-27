@@ -79,27 +79,37 @@ class VSPPaymentSummaryCard extends StatelessWidget {
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: isTotal
-                ? VSPDSSemanticColors.textPrimary
-                : VSPDSSemanticColors.textSecondary,
-            fontSize: isTotal ? 14 : 12,
-            fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
-          ),
-        ),
-        Directionality(
-          textDirection: TextDirection.ltr,
+        Expanded(
           child: Text(
-            value,
+            label,
             style: TextStyle(
               color: isTotal
-                  ? VSPDSSemanticColors.accent
-                  : VSPDSSemanticColors.textPrimary,
-              fontSize: isTotal ? 15 : 12,
-              fontWeight: isTotal ? FontWeight.w900 : FontWeight.w700,
+                  ? VSPDSSemanticColors.textPrimary
+                  : VSPDSSemanticColors.textSecondary,
+              fontSize: isTotal ? 14 : 12,
+              fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(width: VSPDSSpacing.xs),
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerEnd,
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: isTotal
+                      ? VSPDSSemanticColors.accent
+                      : VSPDSSemanticColors.textPrimary,
+                  fontSize: isTotal ? 15 : 12,
+                  fontWeight: isTotal ? FontWeight.w900 : FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ),
