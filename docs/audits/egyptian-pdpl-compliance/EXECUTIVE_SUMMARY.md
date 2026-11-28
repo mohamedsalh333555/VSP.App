@@ -9,7 +9,7 @@
 
 ## 1. نطاق الحزمة وتقييم الجاهزية
 
-تمتد هذه الحزمة على **22 وثيقة مرجعية** تغطي الجوانب التقنية والتشغيلية والقانونية لقانون حماية البيانات الشخصية المصري رقم **151 لسنة 2020** ولائحته التنفيذية الصادرة بقرار رئيس مجلس الوزراء رقم **816 لسنة 2025**:
+تمتد هذه الحزمة على **23 وثيقة مرجعية** تغطي الجوانب التقنية والتشغيلية والقانونية لقانون حماية البيانات الشخصية المصري رقم **151 لسنة 2020** ولائحته التنفيذية الصادرة بقرار وزير الاتصالات وتكنولوجيا المعلومات رقم **816 لسنة 2025** (صدر في **1 نوفمبر 2025** ويعمل به من **2 نوفمبر 2025**):
 
 - **ما تم التحقق منه تقنيًا (Verified Evidence):**
   - تفعيل سياسات عزل الصفوف (RLS) على **104 من 104** جدول في مخطط `public` و**10 من 10** جداول في مخطط `storage` داخل Staging.
@@ -18,24 +18,28 @@
   - وجود آلية حذف نهائي آمنة للحساب داخل التطبيق (`public.delete_user_permanently`) تحمي الالتزامات المالية النشطة وتمنع الحذف الجزئي.
   - عدم تخزين بيانات البطاقات البنكية (PAN / CVV) داخل قواعد بيانات VSP، مع إسناد المعالجة لبوابة **Paymob** المتوافقة مع PCI-DSS.
 
-- **الإصلاحات التقنية المنفذة في المرحلة الأولى (`660f1aee` & `1922fc5`):**
-  1. إغلاق ثغرة وصول `anon` وتجاوز فحص `auth.uid() IS NULL` في الدالة المالية `public.import_paymob_reconciliation_row` وتشديد صلاحيات الدوال `trg_award_field_championship_xp` و`get_challenge_opponent_repeat_status` وتثبيت `search_path` للدوال `vsp_cairo_month_key` و`vsp_slice_avg_weight` وتحويل `public.immortal_winners_public` إلى `security_invoker = true` (`20261128080000_pdpl_and_security_advisor_remediation.sql`).
-  2. إزالة ادعاء الامتثال الكامل غير الموثق لـ PDPL من شاشة `lib/features/player/screens/terms_and_privacy_screen.dart` لتتطابق مع `vsp_terms_and_privacy_modal.dart` (بعد تعديل ChatGPT `c0213c34`).
-  3. توحيد نصوص الدفع الإلكتروني الكامل (100% Paymob)، وإزالة نصوص الحجز النقدي والعربون وحظر الكاش عند التغيب (2 no-shows) في التطبيق والموقع (`vsp_terms_and_privacy_modal.dart`, `vsp_website/src/locales/ar.ts`, `en.ts`).
-  4. توحيد التفرقة العمرية بوضوح: **18 عامًا** فأكثر لحسابات اللاعبين والملاك على المنصة، و**21 عامًا** فأكثر للمفوضين بتوقيع التعاقدات التجارية للمنشآت الرياضية.
+- **الإصلاحات التقنية المنفذة والموثقة (`660f1aee`, `1922fc5` + حزمة التصلب P0 في `20261128090000`):**
+  1. **إغلاق ثغرة `current_user` داخل دوال `SECURITY DEFINER` بالكامل (`20261128090000_p0_security_definer_auth_hardening.sql`):**
+     - استبدال فحص `current_user` غير الموثوق بدالة `public.vsp_is_service_or_db_owner()` و`public.require_active_admin_actor()` في `import_paymob_reconciliation_row` و**26 دالة وتريجر** مالية وإدارية أخرى (تشمل `request_owner_payout_settlement_atomic` و`owner_create_manual_booking_atomic` و`create_booking_atomic` و`get_owner_dashboard_analytics` و`get_owner_financial_summary` وتريجرز حماية الحجوزات والفرق والملاعب والبطولات).
+     - إثبات الإغلاق فعليًا على `vsp-staging` باختبار **35 حالة HTTP سلبية وإيجابية** (رفض `anon` و`authenticated` بلا سجل و`player` و`owner` و`blocked_admin`، وقبول `active_admin` و`service_role` فقط) + اختبار SQL عبر `SET LOCAL ROLE authenticated` (تفاصيل في `docs/audits/evidence/staging_p0_auth_verification.md`).
+  2. إغلاق التحذيرات الأمنية المتبقية في `vsp-staging`: تحويل 3 عروض مالية (`admin_pending_refunds`, `admin_stadium_settlements`, `v_financial_reconciliation`) مع `immortal_winners_public` إلى `security_invoker = true` (أصبح `views_without_invoker = 0`)، وإتاحة `get_server_timestamp()` كـ `SECURITY INVOKER` لـ `anon` لحل خطأ `42501` قبل تسجيل الدخول بأمان.
+  3. **إصلاح وصول حاوية `owner_documents` في `lib/core/services/no_show_dispute_service.dart`:** تغيير مسار الرفع إلى `${currentUid}/disputes/...` ليتوافق مع سياسة العزل (`folder[1] = auth.uid()`) وإلغاء استدعاء `getPublicUrl` على الحاوية الخاصة، دون جعل الحاوية عامة.
+  4. **إزالة رابط الإنتاج الثابت من `vsp_website/src/app/pricing/PricingClient.tsx` و`server.ts`:** مع التحقق من أن مسار `/pricing` يُحوّل تلقائيًا إلى `/` بعد إيقاف باقات اشتراكات الملاك (`create_paymob_intention` يرد `410`).
+  5. إزالة ادعاء الامتثال الكامل غير الموثق لـ PDPL من `terms_and_privacy_screen.dart` وتوحيد نصوص الدفع الإلكتروني الكامل (100% Paymob) والتفرقة العمرية (`18+` للحسابات و`21+` للتفويض التجاري).
 
-- **ما تبقى خارج نطاق التعديل الآلي (مُصنف بوضوح):**
-  - `[TECHNICAL_BACKLOG]`: تفعيل الحماية ضد كلمات المرور المسربة (HIBP) يتطلب خطة Supabase Pro فأعلى (فشل التفعيل على Staging Free-tier برسالة `entitlement_required`). كما أن خدمة طعن التغيب بالسيلفي (`no_show_dispute_service.dart:208-213`) ترفع في مسار `disputes/` داخل `owner_documents` الخاص وتستخدم `getPublicUrl` بدل `createSignedUrl`.
+- **ما تبقى خارج نطاق التعديل الآلي (مُصنف بصراحة كاملة):**
+  - `[TECHNICAL_BACKLOG]`: تفعيل الحماية ضد كلمات المرور المسربة (HIBP) يتطلب خطة Supabase Pro فأعلى (فشل التفعيل على Staging Free-tier برسالة `entitlement_required`؛ لم يتم شراء أو تعديل خطط مدفوعة دون إذن).
   - `[LEGAL_REVIEW_REQUIRED]`: مراجعة واعتماد النصوص القانونية بواسطة محامٍ مصري، واستكمال بيانات السجل التجاري/البطاقة الضريبية والكيان القانوني، وتوقيع عقود معالجة البيانات (DPAs) مع الموردين.
   - `[LICENSE_REQUIRED]`: استخراج تراخيص المراقب/المعالج، وتسجيل مسؤول حماية البيانات (DPO)، والحصول على تصريح نقل البيانات عبر الحدود من مركز حماية البيانات الشخصية (PDPC).
 
 ---
 
-## 2. فهرس ملفات الحزمة (22 وثيقة)
+## 2. فهرس ملفات الحزمة (23 وثيقة)
 
 | # | الملف | الموضوع |
 |---|---|---|
-| 1 | `EXECUTIVE_SUMMARY.md` | الملخص التنفيذي وخريطة الأدلة |
+| 0 | `EXECUTIVE_SUMMARY.md` | الملخص التنفيذي وخريطة الأدلة |
+| 1 | `01_DATA_FLOW_DIAGRAM_DFD.md` | مخطط تدفق البيانات الشخصية (DFD) ومسارات النقل عبر الحدود |
 | 2 | `02_LEGAL_GAP_MATRIX_151_2020_AND_816_2025.md` | مصفوفة الفجوات القانونية (قانون 151/2020 ولائحة 816/2025) |
 | 3 | `03_DATA_INVENTORY_AND_CLASSIFICATION.md` | جرد وتصنيف البيانات عبر الـ 104 جداول وحاويات التخزين |
 | 4 | `04_ROPA_PROCESSING_ACTIVITIES_REGISTER.md` | سجل أنشطة المعالجة (ROPA) لكل مسار بالمنصة |
