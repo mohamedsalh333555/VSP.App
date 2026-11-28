@@ -203,19 +203,26 @@ class NoShowDisputeService {
                 return false;
               }
 
+              final currentUid = Supabase.instance.client.auth.currentUser?.id;
+              if (currentUid == null || currentUid.isEmpty) {
+                if (context.mounted) {
+                  VSPFeedback.showError(context, 'يجب تسجيل الدخول لرفع إثبات النزاع.');
+                }
+                return false;
+              }
               final bytes = await selfieFile.readAsBytes();
-              final storagePath = 'disputes/selfie_${bookingId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+              final storagePath =
+                  '$currentUid/disputes/selfie_${bookingId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
               await Supabase.instance.client.storage
                   .from('owner_documents')
                   .uploadBinary(storagePath, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
-              final publicUrl = Supabase.instance.client.storage
-                  .from('owner_documents')
-                  .getPublicUrl(storagePath);
 
+              // owner_documents is a private bucket; store the storage object path
+              // rather than an unauthenticated public URL.
               final bool selfieSuccess = await disputeWithGeotaggedSelfie(
                 bookingId: bookingId,
-                playerId: playerId,
-                photoUrl: publicUrl,
+                playerId: currentUid,
+                photoUrl: storagePath,
                 stadiumLat: stadiumLat,
                 stadiumLng: stadiumLng,
               );

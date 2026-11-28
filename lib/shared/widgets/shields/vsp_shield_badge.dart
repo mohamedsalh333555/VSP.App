@@ -63,44 +63,19 @@ class _VspShieldBadgeState extends State<VspShieldBadge>
     final assetPath = widget.tier.assetPath;
     final color = widget.tier.primaryColor;
 
-    Widget crest = Container(
+    Widget crest = SizedBox(
       width: widget.size,
       height: widget.size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color.withValues(alpha: widget.tier == TeamShieldTier.none ? 0.12 : 0.28),
-            color.withValues(alpha: 0.04),
-            Colors.transparent,
-          ],
-        ),
-        border: Border.all(
-          color: color.withValues(alpha: widget.tier == TeamShieldTier.none ? 0.25 : 0.7),
-          width: widget.size >= 64 ? 2.0 : 1.2,
-        ),
-        boxShadow: (!widget.showGlow || widget.tier == TeamShieldTier.none)
-            ? null
-            : [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.25),
-                  blurRadius: widget.size * 0.22,
-                  spreadRadius: 1,
-                ),
-              ],
-      ),
       child: Center(
         child: assetPath != null
-            ? ClipOval(
-                child: Image.asset(
-                  assetPath,
-                  width: widget.size * 0.86,
-                  height: widget.size * 0.86,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => _FallbackMetallicCrest(
-                    tier: widget.tier,
-                    size: widget.size,
-                  ),
+            ? Image.asset(
+                assetPath,
+                width: widget.size,
+                height: widget.size,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => _FallbackMetallicCrest(
+                  tier: widget.tier,
+                  size: widget.size,
                 ),
               )
             : _FallbackMetallicCrest(

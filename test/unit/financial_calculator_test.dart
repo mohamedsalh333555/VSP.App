@@ -66,23 +66,33 @@ void main() {
       expect(metrics.activeBookingsCount, equals(2));
     });
 
-    test('Validates 100 EGP booking fee distribution between Platform (2%) and Paymob (2.75% + 3 EGP)', () {
+    test('Validates 100 EGP booking fee distribution between Platform (5% player + 5% owner) and Paymob (2.4% + 3 EGP)', () {
       const baseAmount = 100.0;
 
-      // Platform Owner Net Profit (2.0%): Exactly 2.00 EGP
+      // Player VSP fee (5.0%): Exactly 5.00 EGP
       final platformShare = PaymobService.calculatePlatformShare(baseAmount);
-      expect(platformShare, equals(2.00));
+      expect(platformShare, equals(5.00));
 
-      // Paymob Banking Gateway Share (2.75% + 3.0 EGP): Exactly 5.75 EGP
+      // Paymob Banking Gateway Share (2.4% + 3.0 EGP gross-up on 105): 5.66 EGP
       final gatewayShare = PaymobService.calculateGatewayShare(baseAmount);
-      expect(gatewayShare, equals(5.75));
+      expect(gatewayShare, equals(5.66));
 
-      // Total fee: 2.00 + 5.75 = 7.75 EGP
+      // Total fee paid by player: 5.00 + 5.66 = 10.66 EGP
       final totalFee = PaymobService.calculateServiceFee(baseAmount);
-      expect(totalFee, equals(7.75));
+      expect(totalFee, equals(10.66));
 
-      // Owner receives full pitch rental price: 100.00 EGP
-      expect(baseAmount, equals(100.00));
+      // Owner net after 5% owner commission: 95.00 EGP
+      expect(
+        const PaymobFeePolicy(
+          vspRate: 0.05,
+          ownerVspRate: 0.05,
+          gatewayRate: 0.024,
+          fixedGatewayFee: 3.0,
+          vspAppliesToCash: false,
+          paymobAppliesToElectronic: true,
+        ).ownerNet(baseAmount),
+        equals(95.00),
+      );
     });
 
     test('Validates normalized paymentSource and paymentReconcileState domain behavior', () {

@@ -32,11 +32,18 @@ abstract final class VSPDSColors {
   static const Color amber500 = Color(0xFFF59E0B);
   static const Color blue500 = Color(0xFF3B82F6);
 
-  static const Color whatsappGreen = Color(0xFF25D366);
-
   static const Color gold = Color(0xFFFFD700);
   static const Color silver = Color(0xFFC0C0C0);
   static const Color bronze = Color(0xFFCD7F32);
+
+  // Team shield tier palette (moved from domain model into canonical tokens — zero green).
+  static const Color tierNone = gray500;
+  static const Color tierSilver = Color(0xFFE2E8F0);
+  static const Color tierGold = Color(0xFFFFC107);
+  static const Color tierDiamond = Color(0xFF38BDF8);
+  static const Color tierElite = Color(0xFFA855F7);
+  static const Color tierLegendary = Color(0xFFF97316);
+  static const Color tierImmortal = Color(0xFFFFE082);
 
   // Alpha primitives derived from the same palette.
   static const Color voltGreenSoft = Color(0x1F9FDF02);
@@ -76,18 +83,19 @@ abstract final class VSPDSSemanticColors {
   static const Color textMuted = VSPDSColors.gray500;
 
   static const Color border = Color(0xFF262626);
+  static const Color borderMedium = Color(0x33262626);
   static const Color borderSubtle = VSPDSColors.white05;
 
   static const Color error = VSPDSColors.red500;
   static const Color warning = VSPDSColors.amber500;
   static const Color info = VSPDSColors.blue500;
-  static const Color success = VSPDSColors.voltGreen;
+  static const Color success = VSPDSColors.blue500;
 
   static const Color iconBadge = VSPDSColors.zinc800;
   static const Color iconBadgeElevated = VSPDSColors.zinc750;
 
   static const Color overlay = VSPDSColors.black80;
-  static const Color focusRing = VSPDSColors.voltGreen;
+  static const Color focusRing = VSPDSColors.zinc400;
 }
 
 abstract final class VSPDSSpacing {
@@ -546,6 +554,30 @@ abstract final class VSPDSTypography {
   static const TextStyle numeric = TextStyle(
     fontFamily: latinFont,
     fontFamilyFallback: fallback,
+    fontFeatures: <FontFeature>[
+      FontFeature.tabularFigures(),
+    ],
+  );
+
+  static const TextStyle priceHero = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 20.0,
+    fontWeight: FontWeight.w900,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+    fontFeatures: <FontFeature>[
+      FontFeature.tabularFigures(),
+    ],
+  );
+
+  static const TextStyle priceCompact = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 14.0,
+    fontWeight: FontWeight.w800,
+    height: 1.20,
+    color: VSPDSSemanticColors.accent,
     fontFeatures: <FontFeature>[
       FontFeature.tabularFigures(),
     ],

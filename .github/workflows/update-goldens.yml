@@ -1,0 +1,31 @@
+name: Update Linux Goldens
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-goldens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Generate localizations
+        run: flutter gen-l10n
+      - name: Update Golden Baselines on Linux
+        run: flutter test --update-goldens test/unit/design_system_and_formatter_test.dart
+      - name: Verify Golden Tests Twice on Linux
+        run: |
+          flutter test test/unit/design_system_and_formatter_test.dart
+          flutter test test/unit/design_system_and_formatter_test.dart
+      - name: Upload Linux Golden Baselines for Visual Inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-golden-baselines
+          path: test/unit/goldens/*.png

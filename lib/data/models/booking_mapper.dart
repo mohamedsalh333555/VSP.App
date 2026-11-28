@@ -229,6 +229,12 @@ class BookingMapper {
               ?.toString(),
       depositPaid: _parseDouble(
           data['deposit_paid'] ?? data['depositPaid'], 0.0),
+      grossAmountCharged: _parseDouble(
+          data['gross_amount_charged'] ?? data['grossAmountCharged'], 0.0),
+      vspCommission: _parseDouble(
+          data['vsp_commission'] ?? data['vspCommission'], 0.0),
+      gatewayFee: _parseDouble(
+          data['gateway_fee'] ?? data['gatewayFee'], 0.0),
       isDepositPaid: data['is_deposit_paid'] ?? data['isDepositPaid'] ?? false,
       instapay: data['instapay'] ?? data['insta_pay'],
       vodafoneCash: data['vodafoneCash'] ?? data['vodafone_cash'],

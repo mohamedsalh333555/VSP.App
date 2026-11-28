@@ -74,7 +74,7 @@ class _VSPCountdownTimerState extends State<VSPCountdownTimer> {
         decoration: BoxDecoration(
           color: VSPColors.background.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(VSPRadius.sm),
-          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 0.5),
+          border: Border.all(color: VSPColors.divider, width: 0.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

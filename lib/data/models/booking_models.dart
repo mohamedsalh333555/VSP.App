@@ -82,6 +82,9 @@ class Booking {
  final DateTime? lastMessageTime;
  final String? paymentSource;
  final String? paymentReconcileState;
+ final double grossAmountCharged;
+ final double vspCommission;
+ final double gatewayFee;
 
  // Emergency Cancellation & Rescheduling Fields
  final String rescheduleStatus; // 'none', 'pending', 'accepted', 'rejected'
@@ -191,6 +194,9 @@ class Booking {
  this.displayRefundRef,
  this.paymentSource,
  this.paymentReconcileState,
+ this.grossAmountCharged = 0.0,
+ this.vspCommission = 0.0,
+ this.gatewayFee = 0.0,
  });
 
   /// Create Booking from Firestore/Supabase document

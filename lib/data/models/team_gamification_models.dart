@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 enum TeamShieldTier {
   none,
+  silver,
   gold,
-  platinum,
   diamond,
   elite,
   legendary,
@@ -11,10 +12,11 @@ enum TeamShieldTier {
 
   static TeamShieldTier fromCode(String? code) {
     switch ((code ?? '').trim().toLowerCase()) {
+      case 'silver':
+      case 'platinum':
+        return TeamShieldTier.silver;
       case 'gold':
         return TeamShieldTier.gold;
-      case 'platinum':
-        return TeamShieldTier.platinum;
       case 'diamond':
         return TeamShieldTier.diamond;
       case 'elite':
@@ -34,10 +36,10 @@ enum TeamShieldTier {
     switch (this) {
       case TeamShieldTier.none:
         return isArabic ? 'بدون درع' : 'No Shield';
+      case TeamShieldTier.silver:
+        return isArabic ? 'الفضي' : 'Silver';
       case TeamShieldTier.gold:
         return isArabic ? 'الذهبي' : 'Gold';
-      case TeamShieldTier.platinum:
-        return isArabic ? 'البلاتيني' : 'Platinum';
       case TeamShieldTier.diamond:
         return isArabic ? 'الماسي' : 'Diamond';
       case TeamShieldTier.elite:
@@ -53,9 +55,9 @@ enum TeamShieldTier {
     switch (this) {
       case TeamShieldTier.none:
         return 0;
-      case TeamShieldTier.gold:
+      case TeamShieldTier.silver:
         return 1500;
-      case TeamShieldTier.platinum:
+      case TeamShieldTier.gold:
         return 3000;
       case TeamShieldTier.diamond:
         return 5000;
@@ -73,10 +75,10 @@ enum TeamShieldTier {
   TeamShieldTier? get nextTier {
     switch (this) {
       case TeamShieldTier.none:
+        return TeamShieldTier.silver;
+      case TeamShieldTier.silver:
         return TeamShieldTier.gold;
       case TeamShieldTier.gold:
-        return TeamShieldTier.platinum;
-      case TeamShieldTier.platinum:
         return TeamShieldTier.diamond;
       case TeamShieldTier.diamond:
         return TeamShieldTier.elite;
@@ -92,19 +94,19 @@ enum TeamShieldTier {
   Color get primaryColor {
     switch (this) {
       case TeamShieldTier.none:
-        return const Color(0xFF6B7280);
+        return VSPDSColors.tierNone;
+      case TeamShieldTier.silver:
+        return VSPDSColors.tierSilver;
       case TeamShieldTier.gold:
-        return const Color(0xFFFFC107);
-      case TeamShieldTier.platinum:
-        return const Color(0xFFE2E8F0);
+        return VSPDSColors.tierGold;
       case TeamShieldTier.diamond:
-        return const Color(0xFF38BDF8);
+        return VSPDSColors.tierDiamond;
       case TeamShieldTier.elite:
-        return const Color(0xFFA855F7);
+        return VSPDSColors.tierElite;
       case TeamShieldTier.legendary:
-        return const Color(0xFFF97316);
+        return VSPDSColors.tierLegendary;
       case TeamShieldTier.immortal:
-        return const Color(0xFF00E676);
+        return VSPDSColors.tierImmortal;
     }
   }
 
@@ -158,6 +160,86 @@ class MonthlyRankingEntry {
         currentShield: TeamShieldTier.fromCode(j['current_shield']?.toString()),
         monthKey: (j['month_key'] ?? '').toString(),
       );
+}
+
+enum RankingRewardZone {
+  cashRewards,
+  freeBooking,
+  competition,
+}
+
+class VspSeasonRewards {
+  const VspSeasonRewards._();
+
+  static const int seasonDurationMonths = 2;
+  static const int freeHourMinRank = 6;
+  static const int freeHourMaxRank = 10;
+  static const int freeHourMaxValueEgp = 180;
+
+  static const Map<int, int> cashPrizesEgp = {
+    1: 500,
+    2: 350,
+    3: 250,
+    4: 220,
+    5: 180,
+  };
+
+  static const List<String> rewardLifecycleStatuses = [
+    'pending',
+    'approved',
+    'available',
+    'reserved',
+    'redeemed',
+    'expired',
+    'revoked',
+  ];
+
+  static RankingRewardZone zoneForRank(int rank) {
+    if (rank >= 1 && rank <= 5) return RankingRewardZone.cashRewards;
+    if (rank >= freeHourMinRank && rank <= freeHourMaxRank) {
+      return RankingRewardZone.freeBooking;
+    }
+    return RankingRewardZone.competition;
+  }
+
+  static int? cashPrizeForRank(int rank) => cashPrizesEgp[rank];
+
+  static String rewardBadgeLabel(int rank, {required bool isArabic}) {
+    final cash = cashPrizeForRank(rank);
+    if (cash != null) {
+      return isArabic ? '$cash ج.م' : '$cash EGP';
+    }
+    if (rank >= freeHourMinRank && rank <= freeHourMaxRank) {
+      return isArabic ? 'ساعة مجانية' : 'Free 1h';
+    }
+    return isArabic ? 'منافسة' : 'Compete';
+  }
+
+  static String nextTargetSummary(
+    MonthlyRankingEntry entry,
+    List<MonthlyRankingEntry> entries, {
+    required bool isArabic,
+  }) {
+    final zone = zoneForRank(entry.rank);
+    if (zone == RankingRewardZone.cashRewards) {
+      final prize = cashPrizeForRank(entry.rank) ?? 0;
+      return isArabic
+          ? 'منطقة الجوائز النقدية • جائزة حالية $prize ج.م'
+          : 'Cash Zone • Current Prize $prize EGP';
+    }
+    if (zone == RankingRewardZone.freeBooking) {
+      final fifth = entries.where((e) => e.rank == 5).firstOrNull;
+      final gap = fifth != null ? (fifth.rankingPoints - entry.rankingPoints + 1).clamp(1, 9999) : 1;
+      return isArabic
+          ? 'حجز ساعة مجانية • باقي $gap نقطة على منطقة الكاش (Top 5)'
+          : 'Free 1h Zone • $gap pts to Cash Zone (Top 5)';
+    }
+    final tenth = entries.where((e) => e.rank == 10).firstOrNull;
+    final gap = tenth != null ? (tenth.rankingPoints - entry.rankingPoints + 1).clamp(1, 9999) : 1;
+    return isArabic
+        ? 'منطقة المنافسة • باقي $gap نقطة على Top 10 (ساعة مجانية)'
+        : 'Competition Zone • $gap pts to Top 10 (Free 1h)';
+  }
 }
 
 class MostActiveTeamEntry {

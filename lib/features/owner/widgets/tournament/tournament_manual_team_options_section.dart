@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 /// Form section managing payment status (paid/pending) and shirt color selection.
@@ -10,12 +11,12 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
   final ValueChanged<String> onColorSelected;
 
   static const List<Map<String, dynamic>> quickColors = [
-    {'name': 'أبيض', 'value': '#FFFFFF', 'color': Colors.white},
-    {'name': 'أحمر', 'value': '#EF4444', 'color': Colors.red},
-    {'name': 'أزرق', 'value': '#3B82F6', 'color': Colors.blue},
-    {'name': 'أخضر', 'value': '#22C55E', 'color': Color(0xFF22C55E)},
-    {'name': 'أصفر', 'value': '#F59E0B', 'color': Colors.amber},
-    {'name': 'أسود', 'value': '#18181B', 'color': Colors.black},
+    {'name': 'أبيض', 'value': '#FFFFFF', 'color': VSPDSColors.white},
+    {'name': 'أحمر', 'value': '#EF4444', 'color': VSPDSColors.red500},
+    {'name': 'أزرق', 'value': '#3B82F6', 'color': VSPDSColors.blue500},
+    {'name': 'بنفسجي', 'value': '#A855F7', 'color': VSPDSColors.tierElite},
+    {'name': 'أصفر', 'value': '#F59E0B', 'color': VSPDSColors.amber500},
+    {'name': 'أسود', 'value': '#18181B', 'color': VSPDSColors.zinc900},
   ];
 
   const TournamentManualTeamOptionsSection({
@@ -48,7 +49,9 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Payment Status
-        _buildSectionLabel(isArabic ? 'حالة سداد رسوم الاشتراك:' : 'Payment Status:'),
+        _buildSectionLabel(
+          isArabic ? 'حالة سداد رسوم الاشتراك:' : 'Payment Status:',
+        ),
         Row(
           children: [
             Expanded(
@@ -58,10 +61,14 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: isPaidOnCreation ? VSPColors.accent : VSPColors.surfaceAlt,
+                    color: isPaidOnCreation
+                        ? VSPColors.accent
+                        : VSPColors.surfaceAlt,
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                     border: Border.all(
-                      color: isPaidOnCreation ? VSPColors.accent : VSPColors.divider,
+                      color: isPaidOnCreation
+                          ? VSPColors.accent
+                          : VSPColors.divider,
                     ),
                   ),
                   child: Row(
@@ -69,7 +76,9 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                     children: [
                       Icon(
                         Iconsax.tick_circle_copy,
-                        color: isPaidOnCreation ? Colors.black : VSPColors.accent,
+                        color: isPaidOnCreation
+                            ? Colors.black
+                            : VSPColors.accent,
                         size: 16,
                       ),
                       const SizedBox(width: 6),
@@ -99,7 +108,9 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                         : VSPColors.surfaceAlt,
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                     border: Border.all(
-                      color: !isPaidOnCreation ? VSPColors.warning : VSPColors.divider,
+                      color: !isPaidOnCreation
+                          ? VSPColors.warning
+                          : VSPColors.divider,
                     ),
                   ),
                   child: Row(
@@ -107,14 +118,18 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                     children: [
                       Icon(
                         Iconsax.clock_copy,
-                        color: !isPaidOnCreation ? VSPColors.warning : VSPColors.textSecondary,
+                        color: !isPaidOnCreation
+                            ? VSPColors.warning
+                            : VSPColors.textSecondary,
                         size: 16,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         isArabic ? 'معلق / غير مدفوع ' : 'Pending ',
                         style: TextStyle(
-                          color: !isPaidOnCreation ? VSPColors.warning : Colors.white70,
+                          color: !isPaidOnCreation
+                              ? VSPColors.warning
+                              : Colors.white70,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -155,7 +170,9 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                   child: isSelected
                       ? Icon(
                           Iconsax.tick_circle_copy,
-                          color: item['color'] == Colors.white ? Colors.black : Colors.white,
+                          color: item['color'] == Colors.white
+                              ? Colors.black
+                              : Colors.white,
                           size: 16,
                         )
                       : null,

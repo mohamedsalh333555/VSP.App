@@ -63,7 +63,8 @@ class NotificationHandler {
     final notif = AppNotification(
       id: '',
       title: 'Booking Cancelled ',
-      body: '$playerName cancelled their booking for $stadiumName at $timeSlot.',
+      body:
+          '$playerName cancelled their booking for $stadiumName at $timeSlot.',
       type: 'booking_cancelled',
       bookingId: bookingId,
       createdAt: DateTime.now(),
@@ -80,7 +81,8 @@ class NotificationHandler {
     final notif = AppNotification(
       id: '',
       title: 'Booking Cancelled ',
-      body: 'Your booking for $stadiumName at $timeSlot was cancelled by the stadium owner.',
+      body:
+          'Your booking for $stadiumName at $timeSlot was cancelled by the stadium owner.',
       type: 'booking_cancelled',
       createdAt: DateTime.now(),
     );
@@ -157,7 +159,8 @@ class NotificationHandler {
     final notif = AppNotification(
       id: '',
       title: 'مباراة تحدي جديدة! ⚔️',
-      body: 'تم تثبيت مباراة تحدي بين فريقك وفريق $challengerTeamName في ملعب $stadiumName!',
+      body:
+          'تم تثبيت مباراة تحدي بين فريقك وفريق $challengerTeamName في ملعب $stadiumName!',
       type: 'challenge_confirmed',
       bookingId: bookingId,
       createdAt: DateTime.now(),
@@ -177,7 +180,8 @@ class NotificationHandler {
     final notif = AppNotification(
       id: '',
       title: 'Stadium Approved! ',
-      body: 'Congratulations! Your stadium "$stadiumName" has been verified and is now live.',
+      body:
+          'Congratulations! Your stadium "$stadiumName" has been verified and is now live.',
       type: 'stadium_approved',
       createdAt: DateTime.now(),
     );
@@ -185,13 +189,12 @@ class NotificationHandler {
   }
 
   /// Notify owner that documents need attention
-  static Future<void> notifyDocumentsNeeded({
-    required String ownerId,
-  }) async {
+  static Future<void> notifyDocumentsNeeded({required String ownerId}) async {
     final notif = AppNotification(
       id: '',
       title: 'Identity Verification Update ',
-      body: 'Your documents need attention. Please re-upload them to complete your verification.',
+      body:
+          'Your documents need attention. Please re-upload them to complete your verification.',
       type: 'stadium_verification_needed',
       createdAt: DateTime.now(),
     );
@@ -288,7 +291,8 @@ class NotificationHandler {
     final notif = AppNotification(
       id: '',
       title: 'Match Finished! ',
-      body: 'Please submit the final result to update your team\'s global ranking.',
+      body:
+          'Please submit the final result to update your team\'s global ranking.',
       type: 'match_result_pending',
       bookingId: bookingId,
       createdAt: DateTime.now(),
@@ -311,7 +315,8 @@ class NotificationHandler {
       final notif = AppNotification(
         id: '',
         title: 'Match Cancelled ',
-        body: 'The match at $stadiumName ($timeSlot) has been cancelled by the host.',
+        body:
+            'The match at $stadiumName ($timeSlot) has been cancelled by the host.',
         type: 'booking_cancelled',
         bookingId: bookingId,
         createdAt: DateTime.now(),
@@ -330,13 +335,12 @@ class NotificationHandler {
     String playerId,
     double stadiumLat,
     double stadiumLng,
-  ) =>
-      NoShowDisputeService.handleNoShowReport(
-        bookingId,
-        playerId,
-        stadiumLat,
-        stadiumLng,
-      );
+  ) => NoShowDisputeService.handleNoShowReport(
+    bookingId,
+    playerId,
+    stadiumLat,
+    stadiumLng,
+  );
 
   /// Forwarder to NoShowDisputeService for backward compatibility.
   static Future<bool> disputeNoShowWithGPS({
@@ -344,13 +348,12 @@ class NotificationHandler {
     required String playerId,
     required double stadiumLat,
     required double stadiumLng,
-  }) =>
-      NoShowDisputeService.disputeNoShowWithGPS(
-        bookingId: bookingId,
-        playerId: playerId,
-        stadiumLat: stadiumLat,
-        stadiumLng: stadiumLng,
-      );
+  }) => NoShowDisputeService.disputeNoShowWithGPS(
+    bookingId: bookingId,
+    playerId: playerId,
+    stadiumLat: stadiumLat,
+    stadiumLng: stadiumLng,
+  );
 
   /// Forwarder to NoShowDisputeService for backward compatibility.
   static Future<bool> disputeWithGeotaggedSelfie({
@@ -359,12 +362,11 @@ class NotificationHandler {
     required String photoUrl,
     required double stadiumLat,
     required double stadiumLng,
-  }) =>
-      NoShowDisputeService.disputeWithGeotaggedSelfie(
-        bookingId: bookingId,
-        playerId: playerId,
-        photoUrl: photoUrl,
-        stadiumLat: stadiumLat,
-        stadiumLng: stadiumLng,
-      );
+  }) => NoShowDisputeService.disputeWithGeotaggedSelfie(
+    bookingId: bookingId,
+    playerId: playerId,
+    photoUrl: photoUrl,
+    stadiumLat: stadiumLat,
+    stadiumLng: stadiumLng,
+  );
 }

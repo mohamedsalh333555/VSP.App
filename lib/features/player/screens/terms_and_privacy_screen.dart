@@ -53,8 +53,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     isArabic
-                        ? 'مطابق لقوانين وحماية البيانات المصرية (PDPL 2020)'
-                        : 'Compliant with Egyptian Data Protection Law (PDPL 2020)',
+                        ? 'معلومات الشروط والخصوصية وحماية البيانات'
+                        : 'Terms, privacy and data protection information',
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                   ),
                 ],
@@ -69,8 +69,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '1. شروط وإلتزامات تشغيل الملاعب والأهلية' : '1. Stadium Operations & Age Eligibility',
                 content: isArabic
-                    ? '• يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين دون أي تأخير أو تغيير في السعر المتفق عليه. تضمن المنصة تنظيم الحجوزات بدقة ومنع التضارب.\n• يُشترط في المفوض بإدارة حساب المنشأة الرياضية (صاحب الملعب) أو التوقيع على التعاقدات ألا يقل عمره عن 21 عاماً وأن يتمتع بالأهلية القانونية الكاملة للتعاقد وإدارة المنشأة.'
-                    : '• Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots without rate changes or delays. VSP ensures technical dispatching to prevent slot conflicts.\n• Authorized venue managers and signatories must be at least 21 years of age and possess full legal capacity to contract and manage operations.',
+                    ? '• يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين دون أي تأخير أو تغيير في السعر المتفق عليه. تضمن المنصة تنظيم الحجوزات بدقة ومنع التضارب.\n• يُشترط ألا يقل عمر صاحب حساب المالك عن 18 عاماً لاستخدام المنصة، وألا يقل عمر المفوض بالتوقيع على التعاقدات التجارية للمنشأة عن 21 عاماً وفقاً للأهلية القانونية الكاملة بموجب القانون المصري.'
+                    : '• Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots without rate changes or delays. VSP ensures technical dispatching to prevent slot conflicts.\n• Account holders must be at least 18 years of age to use the platform, while authorized signatories for commercial venue agreements must be at least 21 years of age with full legal capacity.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -78,10 +78,10 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 2: Online Payments & Payout Settlement Policy
               _buildSectionCard(
                 context,
-                title: isArabic ? '2. سياسة الدفع الإلكتروني وتسوية الأرباح' : '2. Online Payment & Payout Policy',
+                title: isArabic ? '2. سياسة الدفع الإلكتروني والعمولة وتسوية الأرباح' : '2. Online Payment, Commission & Payout Policy',
                 content: isArabic
-                    ? 'تتم جميع الحجوزات عبر التطبيق بالدفع الإلكتروني الكامل 100% عبر بوابة الدفع المعتمدة، وتُضاف مستحقات صاحب الملعب إلى محفظته بعد انتهاء الحجز ليتم تحويلها عبر (إنستا باي أو فودافون كاش أو التحويل البنكي).'
-                    : 'All app bookings are 100% paid online via the approved payment gateway. Owner earnings are credited after the session for payout via InstaPay, Vodafone Cash, or Bank Transfer.',
+                    ? 'تتم جميع الحجوزات الجديدة عبر التطبيق بالدفع الإلكتروني الكامل 100% في عملية واحدة عبر بوابة Paymob المعتمدة. تُحتسب عمولة المنصة بنسبة 5% تُضاف على اللاعب و5% تُخصم من مستحق صاحب الملعب من سعر الملعب الأساسي (مثلاً: حجز بـ 100 ج.م يصبح مستحق المالك الصافي منه 95 ج.م)، ولا تُخصم رسوم بوابة الدفع الخاصة بدفعة اللاعب من مستحق المالك. تُتاح المستحقات للسحب بعد انتهاء موعد الحجز وتُصرف عبر إنستاباي أو المحافظ الإلكترونية أو التحويل البنكي وفق جدول التسويات المعتمد.'
+                    : 'All new app bookings are 100% paid online in a single transaction via Paymob. Platform commission is 5% added to the player and 5% deducted from the owner base pitch price (e.g. a 100 EGP booking yields 95 EGP net to the owner). Player gateway processing fees are never deducted from owner earnings. Earnings become withdrawable after match completion via InstaPay, Mobile Wallet, or Bank Transfer.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -144,8 +144,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '1. طبيعة المنصة وشروط الأهلية' : '1. Platform Services & Eligibility',
                 content: isArabic
-                    ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم العادي (اللاعب) عن 16 عاماً، أو أن تتم المعاملات المالية تحت إشراف ولي الأمر.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
-                    : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Regular users (players) must be at least 16 years of age, or conduct financial transactions under parental supervision.\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
+                    ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم (اللاعب أو مالك الملعب) عن 18 عاماً لاستخدام المنصة وإجراء الحجوزات والمدفوعات الإلكترونية، و21 عاماً للتعاقد التجاري كمفوض عن منشأة رياضية.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
+                    : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Users (players and venue owners) must be at least 18 years of age to use the platform and make online bookings (and 21 years of age to execute commercial venue agreements).\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -163,10 +163,10 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 3: Fees & Pricing Transparency
               _buildSectionCard(
                 context,
-                title: isArabic ? '3. أمان المدفوعات والشفافية (PCI-DSS & Paymob)' : '3. Payment Security & Transparency (PCI-DSS & Paymob)',
+                title: isArabic ? '3. أمان المدفوعات والشفافية والعمولة (Paymob)' : '3. Payment Security, Fees & Transparency (Paymob)',
                 content: isArabic
-                    ? '• تتم معالجة كافة المدفوعات الإلكترونية عبر بيئة مشفرة تديرها بوابة الدفع المعتمدة Paymob والممتثلة لمعايير أمان بطاقات الدفع العالمية (PCI-DSS). لا نقوم بحفظ أرقام البطاقات السرية أو رموز CVC.\n• الشفافية ومنع الرسوم الخفية: يظهر إجمالي المبلغ المطلوب سداده وتفاصيله بوضوح في شاشة تأكيد الحجز قبل إتمام أي عملية دفع، ولا توجد أي رسوم غير معلنة.'
-                    : '• All electronic transactions are processed through encrypted environments managed by certified gateway Paymob, complying with global Payment Card Industry Data Security Standards (PCI-DSS). We do not store CVV/PINs.\n• Full Transparency: Total breakdown is itemized before checkout with zero hidden fees.',
+                    ? '• تتم كافة الحجوزات الجديدة بالدفع الإلكتروني الكامل 100% في عملية واحدة (لا يوجد دفع نقدي أو تقسيم مدفوعات على التجميعي) عبر بوابة Paymob المعتمدة وفق معايير PCI-DSS، ولا نقوم بحفظ أرقام البطاقات أو رموز CVV.\n• هيكل العمولة والرسوم: يُضاف على اللاعب 5% عمولة منصة VSP فوق سعر الملعب الأساسي + رسوم التحصيل الإلكتروني لبوابة Paymob (والتي قد تختلف حسب وسيلة الدفع أو نوع البطاقة)، ويُعرض الإجمالي النهائي بوضوح قبل الموافقة على الدفع.\n• تُخصم عمولة VSP على المالك (5%) من مستحقه من سعر الملعب الأساسي.'
+                    : '• All new bookings are 100% paid online in a single transaction (no cash or split-payment in collective matches) via PCI-DSS compliant Paymob rails; we never store card numbers or CVVs.\n• Fee Structure: Players pay base pitch price + 5% VSP platform fee + applicable Paymob processing fees (which may vary by payment method or card origin), with the final total shown clearly before checkout approval.\n• A separate 5% VSP commission is deducted from the owner payout.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -175,15 +175,15 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '4. نزاهة البطولات والتحديات ومنع المراهنات' : '4. Tournament Integrity & Anti-Wagering Policy',
                 content: isArabic
-                    ? '• بطولات كروية تنافسية بالكامل على أساس المهارة والأداء الرياضي. رسوم الاشتراك تُستخدم حصرياً لتغطية تكاليف تنظيم البطولة. الجوائز والكؤوس مقدَّمة من VSP والجهات الراعية للبطولة، وليست ممولة من رسوم اشتراك الفرق المتنافسة.\n• حظر تام للرهانات والمقامرة: نظام التحديات ونقاط Elo هو نظام تقني لقياس المهارة الرياضية فقط؛ يُحظر حظراً قاطعاً استخدام المنصة لأي مراهنات مالية أو مقامرة، وأي مخالفة تؤدي للحظر النهائي والمساءلة القانونية.\n• يلتزم كباتن الفرق بإدخال النتائج الحقيقية بعد المباراة بنزاهة وشفافية.'
-                    : '• Purely skill-based competitive sports tournaments. Entry fees are utilized exclusively to cover operational costs. Trophies and prizes are sponsored by VSP and official partners and are not funded by competitor fees.\n• Strict Anti-Wagering Ban: The challenge and Elo system measures athletic skill only; monetary betting or gambling is strictly prohibited and results in permanent ban and legal liability.\n• Team captains must submit truthful, verified match results.',
+                    ? '• بطولات كروية تنافسية بالكامل على أساس المهارة والأداء الرياضي. رسوم الاشتراك تُستخدم حصرياً لتغطية تكاليف تنظيم البطولة. الجوائز والكؤوس مقدَّمة من VSP والجهات الراعية للبطولة، وليست ممولة من رسوم اشتراك الفرق المتنافسة.\n• حظر تام للرهانات والمقامرة: نظام التحديات والترتيب الشهري وXP الموسم هو نظام تقني لقياس المهارة الرياضية فقط؛ يُحظر حظراً قاطعاً استخدام المنصة لأي مراهنات مالية أو مقامرة، وأي مخالفة تؤدي للحظر النهائي والمساءلة القانونية.\n• يلتزم كباتن الفرق بإدخال النتائج الحقيقية بعد المباراة بنزاهة وشفافية.'
+                    : '• Purely skill-based competitive sports tournaments. Entry fees are utilized exclusively to cover operational costs. Trophies and prizes are sponsored by VSP and official partners and are not funded by competitor fees.\n• Strict Anti-Wagering Ban: The challenge, monthly standings, and season XP system measures athletic skill only; monetary betting or gambling is strictly prohibited and results in permanent ban and legal liability.\n• Team captains must submit truthful, verified match results.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
 
               _buildSectionCard(
                 context,
-                title: isArabic ? '6. قواعد الفرق وحقوق الخصوصية وحذف الحساب' : '6. Team Rules, Privacy & Account Erasure',
+                title: isArabic ? '5. قواعد الفرق وحقوق الخصوصية وحذف الحساب' : '5. Team Rules, Privacy & Account Erasure',
                 content: isArabic
                     ? '• الحد الأقصى لقائمة الفريق هو 12 لاعباً، ويحق للاعب الانضمام إلى 3 فرق كحد أقصى.\n• نحن لا نبيع أو نؤجر بياناتك الشخصية لأي طرف ثالث نهائياً.\n• يحق لك في أي وقت تعديل بياناتك أو طلب حذف حسابك وكافة سجلاتك نهائياً من داخل التطبيق عبر: (الملف الشخصي -> حذف الحساب) أو بمراسلة فريق الدعم الفني.'
                     : '• Max 12 players per team roster, and players can join up to 3 teams.\n• We never sell or lease personal data to third parties.\n• You have the right to edit data or request permanent account deletion via Profile -> Delete Account or contacting support.',
@@ -191,10 +191,10 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               const SizedBox(height: VSPSpacing.md),
 
-              // Section 7: Jurisdiction
+              // Section 6: Jurisdiction
               _buildSectionCard(
                 context,
-                title: isArabic ? '7. القانون الواجب التطبيق والاختصاص القضائي' : '7. Governing Law & Jurisdiction',
+                title: isArabic ? '6. القانون الواجب التطبيق والاختصاص القضائي' : '6. Governing Law & Jurisdiction',
                 content: isArabic
                     ? 'تخضع هذه الشروط وكافة المعاملات الناتجة عنها وتُفسر وفقاً لقوانين جمهورية مصر العربية، وتختص محاكم أسوان بنظر أي نزاع قضائي قد ينشأ بخصوص هذه الاتفاقية.'
                     : 'These terms and all resulting transactions are governed by the laws of the Arab Republic of Egypt. The courts of Aswan hold exclusive jurisdiction over any legal disputes.',
@@ -202,10 +202,10 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               const SizedBox(height: VSPSpacing.md),
 
-              // Section 8: Contact Info
+              // Section 7: Contact Info
               _buildSectionCard(
                 context,
-                title: isArabic ? '8. بيانات المقر والتواصل الرسمي' : '8. Official Headquarters & Contact',
+                title: isArabic ? '7. بيانات المقر والتواصل الرسمي' : '7. Official Headquarters & Contact',
                 content: isArabic
                     ? '• المقر الرئيسي: أسوان، جمهورية مصر العربية.\n• البريد الإلكتروني الرسمي: vspapp.eg@gmail.com\n• الدعم الفني وخدمة العملاء: +201100229462 (متاح عبر WhatsApp).'
                     : '• Headquarters: Aswan, Arab Republic of Egypt.\n• Official Email: vspapp.eg@gmail.com\n• Customer Support: +201100229462 (available via WhatsApp).',

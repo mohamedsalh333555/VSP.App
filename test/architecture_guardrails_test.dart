@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vsp_application/core/ui/tokens/vsp_design_tokens.dart';
 
 List<File> _dartFiles(Directory root) {
   return root
@@ -89,12 +91,12 @@ void main() {
   });
 
   test('Arabic and English ARB catalogs stay key-compatible', () {
-    final en = jsonDecode(
-      File('lib/l10n/app_en.arb').readAsStringSync(),
-    ) as Map<String, dynamic>;
-    final ar = jsonDecode(
-      File('lib/l10n/app_ar.arb').readAsStringSync(),
-    ) as Map<String, dynamic>;
+    final en =
+        jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
+            as Map<String, dynamic>;
+    final ar =
+        jsonDecode(File('lib/l10n/app_ar.arb').readAsStringSync())
+            as Map<String, dynamic>;
 
     final enKeys = en.keys.where((key) => !key.startsWith('@')).toSet();
     final arKeys = ar.keys.where((key) => !key.startsWith('@')).toSet();
@@ -105,16 +107,12 @@ void main() {
     for (final key in enKeys.intersection(arKeys)) {
       final enText = en[key]?.toString() ?? '';
       final arText = ar[key]?.toString() ?? '';
-      final placeholders = RegExp(r'\{[^}]+\}')
-          .allMatches(enText)
-          .map((m) => m.group(0))
-          .toList()
-        ..sort();
-      final arabicPlaceholders = RegExp(r'\{[^}]+\}')
-          .allMatches(arText)
-          .map((m) => m.group(0))
-          .toList()
-        ..sort();
+      final placeholders = RegExp(
+        r'\{[^}]+\}',
+      ).allMatches(enText).map((m) => m.group(0)).toList()..sort();
+      final arabicPlaceholders = RegExp(
+        r'\{[^}]+\}',
+      ).allMatches(arText).map((m) => m.group(0)).toList()..sort();
       expect(
         arabicPlaceholders,
         placeholders,
@@ -126,5 +124,126 @@ void main() {
   test('test sources are not excluded from analyzer configuration', () {
     final source = File('analysis_options.yaml').readAsStringSync();
     expect(source.contains('test/**'), isFalse);
+  });
+
+  test('Legacy vsp_tokens.dart aliases V2 colors instead of duplicating core hex literals', () {
+    final legacyTokens = File('lib/core/ui/tokens/vsp_tokens.dart').readAsStringSync();
+    expect(legacyTokens.contains('0xFF09090B'), isFalse);
+    expect(legacyTokens.contains('0xFF18181B'), isFalse);
+    expect(legacyTokens.contains('0xFF27272A'), isFalse);
+    expect(legacyTokens.contains('0xFF9FDF02'), isFalse);
+    expect(legacyTokens.contains('VSPDSSemanticColors'), isTrue);
+    expect(RegExp(r'Color\(0x[0-9A-Fa-f]+\)').hasMatch(legacyTokens), isFalse);
+    expect(legacyTokens.contains('BoxShadow('), isFalse);
+    expect(legacyTokens.contains('TextStyle('), isFalse);
+  });
+
+  test('No non-token Color(0x...) literals exist outside lib/core/ui/tokens/', () {
+    final libDir = Directory('lib');
+    final violations = <String>[];
+    for (final entity in libDir.listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final normalized = entity.path.replaceAll('\\', '/');
+      if (normalized.contains('lib/core/ui/tokens/')) continue;
+      final content = entity.readAsStringSync();
+      if (RegExp(r'Color\(0x[0-9A-Fa-f]+\)').hasMatch(content)) {
+        violations.add(normalized);
+      }
+    }
+    expect(violations, isEmpty, reason: 'Use VSPDSColors / VSPDSSemanticColors instead of raw Color(0x...)');
+  });
+
+  test('Every *_screen.dart uses SafeArea, VSPScaffold, or VSPScrollPadding', () {
+    final libDir = Directory('lib');
+    final missingSafe = <String>[];
+    for (final entity in libDir.listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('_screen.dart')) continue;
+      final content = entity.readAsStringSync();
+      if (content.contains('Scaffold') &&
+          !content.contains('SafeArea') &&
+          !content.contains('VSPScaffold') &&
+          !content.contains('VSPScrollPadding')) {
+        missingSafe.add(entity.path.replaceAll('\\', '/'));
+      }
+    }
+    expect(missingSafe, isEmpty, reason: 'All Scaffold screens must protect safe areas');
+  });
+
+  test('Canonical design-tokens.json stays synced with vsp_design_tokens.dart', () {
+    final jsonMap = jsonDecode(File('design-tokens.json').readAsStringSync()) as Map<String, dynamic>;
+    final colors = jsonMap['colors'] as Map<String, dynamic>;
+    String toHex(Color c) =>
+        '#${c.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+
+    expect(colors['background'], toHex(VSPDSSemanticColors.background));
+    expect(colors['surface'], toHex(VSPDSSemanticColors.surface));
+    expect(colors['accent'], toHex(VSPDSSemanticColors.accent));
+    expect(colors['textPrimary'], toHex(VSPDSSemanticColors.textPrimary));
+    expect(colors['textSecondary'], toHex(VSPDSSemanticColors.textSecondary));
+    expect(colors['error'], toHex(VSPDSSemanticColors.error));
+    expect(colors['warning'], toHex(VSPDSSemanticColors.warning));
+    expect(colors['info'], toHex(VSPDSSemanticColors.info));
+    expect(colors['success'], toHex(VSPDSSemanticColors.success));
+
+    final typography = jsonMap['typography'] as Map<String, dynamic>;
+    expect(typography['latinFont'], VSPDSTypography.latinFont);
+    expect(typography['arabicFont'], VSPDSTypography.arabicFont);
+  });
+
+  test('All 6 official Shield PNG assets exist on disk and legacy shield_platinum.png is removed', () {
+    for (final tier in ['silver', 'gold', 'diamond', 'elite', 'legendary', 'immortal']) {
+      expect(
+        File('assets/images/shields/shield_$tier.png').existsSync(),
+        isTrue,
+        reason: 'Missing shield asset: assets/images/shields/shield_$tier.png',
+      );
+    }
+    expect(
+      File('assets/images/shields/shield_platinum.png').existsSync(),
+      isFalse,
+      reason: 'Legacy shield_platinum.png must be removed',
+    );
+  });
+
+  test('Brand Rule: #9FDF02 is NOT used for success, focusRing, or shield tiers', () {
+    expect(VSPDSSemanticColors.success, isNot(equals(VSPDSColors.voltGreen)));
+    expect(VSPDSSemanticColors.focusRing, isNot(equals(VSPDSColors.voltGreen)));
+    for (final c in [
+      VSPDSColors.tierSilver,
+      VSPDSColors.tierGold,
+      VSPDSColors.tierDiamond,
+      VSPDSColors.tierElite,
+      VSPDSColors.tierLegendary,
+      VSPDSColors.tierImmortal,
+    ]) {
+      expect(c, isNot(equals(VSPDSColors.voltGreen)));
+    }
+  });
+
+  test('Green Policy: No forbidden green hexes (#25D366, #22C55E) exist in lib/', () {
+    final forbidden = RegExp(r'(25D366|22C55E)', caseSensitive: false);
+    final hits = <String>[];
+    for (final entity in Directory('lib').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final content = entity.readAsStringSync();
+      if (forbidden.hasMatch(content)) {
+        hits.add(entity.path.replaceAll('\\', '/'));
+      }
+    }
+    expect(hits, isEmpty, reason: 'Forbidden green hexes found in: $hits');
+  });
+
+  test('Green Policy: VSPAmbientBackground glow is restricted to player_home_screen.dart only', () {
+    final hits = <String>[];
+    for (final entity in Directory('lib').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final path = entity.path.replaceAll('\\', '/');
+      if (path.endsWith('vsp_ambient_background.dart') || path.endsWith('player_home_screen.dart')) continue;
+      final content = entity.readAsStringSync();
+      if (content.contains('VSPAmbientBackground') && content.contains('showTopGlow: true')) {
+        hits.add(path);
+      }
+    }
+    expect(hits, isEmpty, reason: 'Green ambient glow must ONLY be enabled on player_home_screen.dart');
   });
 }

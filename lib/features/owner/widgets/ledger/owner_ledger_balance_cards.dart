@@ -6,12 +6,19 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
   final double digitalBalance;
   final bool isAr;
   final VoidCallback onRequestPayout;
+
   /// عدد الحجوزات المكتملة (اختياري — يُعرض كشرح للرصيد)
   final int? completedBookingsCount;
+
   /// المسحوب مسبقاً (اختياري — يُعرض كشرح)
   final double? totalWithdrawn;
+
   /// أرباح مباريات قادمة مؤكدة (غير متاحة للسحب حتى اكتمال المباراة)
   final double? upcomingOnlineRevenue;
+  /// إجمالي قيمة الساعات المجانية الممولة من VSP
+  final double? vspFundedAwardsAmount;
+  /// عدد الساعات المجانية برعاية الملعب
+  final int? sponsorFreeHoursCount;
 
   const OwnerDigitalBalanceCard({
     super.key,
@@ -21,11 +28,14 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
     this.completedBookingsCount,
     this.totalWithdrawn,
     this.upcomingOnlineRevenue,
+    this.vspFundedAwardsAmount,
+    this.sponsorFreeHoursCount,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool hasDetails = (completedBookingsCount != null && completedBookingsCount! > 0) ||
+    final bool hasDetails =
+        (completedBookingsCount != null && completedBookingsCount! > 0) ||
         (totalWithdrawn != null && totalWithdrawn! > 0);
 
     return Container(
@@ -40,21 +50,36 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isAr ? 'الرصيد الإلكتروني المتاح' : 'Available Digital Balance',
-                    style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isAr ? 'رصيد إلكتروني متاح للسحب' : 'Available online balance',
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAr
+                          ? 'الرصيد الإلكتروني المتاح'
+                          : 'Available Digital Balance',
+                      style: const TextStyle(
+                        color: VSPColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isAr
+                          ? 'صافي مستحق المالك بعد خصم 5% عمولة VSP (لا تُخصم رسوم دفع اللاعب)'
+                          : 'Net owner earnings after 5% VSP fee (player gateway fees excluded)',
+                      style: const TextStyle(
+                        color: VSPColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '${digitalBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
                 style: const TextStyle(
@@ -66,11 +91,43 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
             ],
           ),
           // ✅ سطر توضيحي يشرح مصدر الرصيد لتجنب قلق المالك
-          if (hasDetails) ...{
-            const SizedBox(height: 6),
-            _buildSourceHint(),
-          },
+          if (hasDetails) ...{const SizedBox(height: 6), _buildSourceHint()},
           if (upcomingOnlineRevenue != null && upcomingOnlineRevenue! > 0) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                border: Border.all(
+                  color: VSPColors.divider.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.access_time_rounded,
+                    size: 14,
+                    color: VSPColors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      isAr
+                          ? 'مباريات قادمة مؤكدة: ${upcomingOnlineRevenue!.toStringAsFixed(0)} ج.م (تتاح للسحب بعد انتهاء موعد اللعب)'
+                          : 'Upcoming confirmed: ${upcomingOnlineRevenue!.toStringAsFixed(0)} EGP (available after match)',
+                      style: const TextStyle(
+                        color: VSPColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if ((vspFundedAwardsAmount != null && vspFundedAwardsAmount! > 0) ||
+              (sponsorFreeHoursCount != null && sponsorFreeHoursCount! > 0)) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -81,13 +138,13 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.access_time_rounded, size: 14, color: VSPColors.textSecondary),
+                  const Icon(Icons.card_giftcard_rounded, size: 14, color: VSPColors.medalGold),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       isAr
-                          ? 'مباريات قادمة مؤكدة: ${upcomingOnlineRevenue!.toStringAsFixed(0)} ج.م (تتاح للسحب بعد انتهاء موعد اللعب)'
-                          : 'Upcoming confirmed: ${upcomingOnlineRevenue!.toStringAsFixed(0)} EGP (available after match)',
+                          ? 'ساعات جوائز مجانية: ${vspFundedAwardsAmount != null && vspFundedAwardsAmount! > 0 ? 'تمويل VSP ${vspFundedAwardsAmount!.toStringAsFixed(0)} ج.م' : ''}${sponsorFreeHoursCount != null && sponsorFreeHoursCount! > 0 ? ' • رعاية الملعب ($sponsorFreeHoursCount)' : ''}'
+                          : 'Free Hour Rewards: ${vspFundedAwardsAmount != null && vspFundedAwardsAmount! > 0 ? 'VSP-funded ${vspFundedAwardsAmount!.toStringAsFixed(0)} EGP' : ''}${sponsorFreeHoursCount != null && sponsorFreeHoursCount! > 0 ? ' • Sponsor-funded ($sponsorFreeHoursCount)' : ''}',
                       style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                     ),
                   ),
@@ -108,8 +165,14 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    isAr ? 'طلب تسوية وسحب الرصيد' : 'Request Payout Settlement',
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12.5),
+                    isAr
+                        ? 'طلب تسوية وسحب الرصيد'
+                        : 'Request Payout Settlement',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ),
               ),
@@ -123,14 +186,18 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
   Widget _buildSourceHint() {
     final parts = <String>[];
     if (completedBookingsCount != null && completedBookingsCount! > 0) {
-      parts.add(isAr
-          ? 'من ${completedBookingsCount!} حجز مكتمل'
-          : 'from $completedBookingsCount completed booking${completedBookingsCount! > 1 ? 's' : ''}');
+      parts.add(
+        isAr
+            ? 'من ${completedBookingsCount!} حجز مكتمل'
+            : 'from $completedBookingsCount completed booking${completedBookingsCount! > 1 ? 's' : ''}',
+      );
     }
     if (totalWithdrawn != null && totalWithdrawn! > 0) {
-      parts.add(isAr
-          ? 'بعد خصم ${totalWithdrawn!.toStringAsFixed(0)} ج.م تم سحبها مسبقاً'
-          : 'after ${totalWithdrawn!.toStringAsFixed(0)} EGP previously withdrawn');
+      parts.add(
+        isAr
+            ? 'بعد خصم ${totalWithdrawn!.toStringAsFixed(0)} ج.م تم سحبها مسبقاً'
+            : 'after ${totalWithdrawn!.toStringAsFixed(0)} EGP previously withdrawn',
+      );
     }
     final hint = parts.join(' — ');
     return Align(
@@ -172,12 +239,19 @@ class OwnerPitchCashCard extends StatelessWidget {
             children: [
               Text(
                 isAr ? 'إجمالي التحصيل النقدي' : 'Pitch Cash Collected',
-                style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
+                style: const TextStyle(
+                  color: VSPColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13.5,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 isAr ? 'تم استلامها كاش بالملعب' : 'Received in cash at pitch',
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                style: const TextStyle(
+                  color: VSPColors.textSecondary,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),

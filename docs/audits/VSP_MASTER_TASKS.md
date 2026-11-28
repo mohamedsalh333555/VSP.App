@@ -1,0 +1,21 @@
+# سجل المهام الموحد لمشروع VSP (Master Task Tracker)
+
+**آخر تحديث:** 2026-11-28  
+**المسؤول الفني والتدقيق:** Antigravity (بعد تجاوز ChatGPT Work لحد الاستخدام؛ دور ChatGPT لاحقًا مراجعة مستقلة فقط).  
+**الفروع المفتوحة للمراجعة (دون دمج في `main` ودون لمس Production `mktqkddbcddrxjxabdua`):**
+- `VSP.App`: `feat/vsp-recovery-gamification-ds` (Draft PR #47)
+- `vsp_website`: `feat/unify-commission-paymob-fees` (PR #5)
+- `vsp-admin-panel`: `feat/unify-commission-paymob-fees` (PR #11)
+
+---
+
+## جدول تتبع المهام الرئيسية والفرعيات
+
+| Task ID | المهمة / المرحلة | الأولوية | الحالة | الاعتماديات | معايير القبول | دليل التنفيذ | دليل التحقق الفعلي | Commit SHA | العمل المتبقي |
+|---|---|---|---|---|---|---|---|---|---|
+| **T1-SYNC** | مزامنة تعديلات ChatGPT (`c0213c34`, `06200410`) مع التعديلات المحلية | P0 | `DONE` | — | سحب التحديثات دون Force Push | `git merge --ff-only` | `git log` موثق | `06200410` | لا يوجد |
+| **T1-REMEDIATION** | معالجة ملاحظات الرفض المستقل (ثغرة `current_user` في 27 دالة `SECURITY DEFINER` + `get_server_timestamp` + `no_show_dispute_service.dart` + `PricingClient.tsx`) | P0 | `DONE` | T1-SYNC | إزالة `current_user` من منطق التفويض وتمرير `anon/auth/player/owner/blocked_admin` سلبيًا و`active_admin/service_role` إيجابيًا، وإصلاح التخزين الخاص ورابط الإنتاج | `supabase/migrations/20261128090000_p0_security_definer_auth_hardening.sql`, `no_show_dispute_service.dart`, `PricingClient.tsx`, `server.ts` | على `vtwgqyxglevcsxwdmhop`: مصفوفة HTTP الحية **`35/35` ناجحة** + اختبار SQL `ROLLBACK` + صفر منطق `current_user` متبقٍ + `ts_anon_exec=true` + `views_without_invoker=0`؛ موثق في `docs/audits/evidence/staging_p0_auth_verification.md` | `1ee04c05` (`VSP.App`), `5c63969` (`vsp_website`), `978c452` (`vsp-admin-panel`) | نشر `Edge Functions` المتبقية (`create_paymob_intention`, `paymob_webhook`, `process_paymob_refund`, `fcm_push`, `fcm_queue_worker`) إلى Staging مع الأسرار قبل الاختبار المباشر للبوابة؛ وتفعيل HIBP على خطة Pro+ |
+| **T1-READINESS** | تدقيق جاهزية البناء والاختبارات والـ CI والتسويات | P0 | `PARTIAL_GAP_DOCUMENTED` | T1-REMEDIATION | توثيق نتائج الاختبار الحقيقية دون مبالغة أو إخفاء فجوات | `docs/audits/evidence/production_readiness_reconciliation.md` | `flutter analyze`: 0 أخطاء؛ `flutter test`: 724 نجاح و2 فشل Golden Windows (`1.75%`/`2.28%` فرق خطوط عن Linux)؛ CI Ubuntu run `46117217355` Analyze+Test نجاح / APK Debug فشل؛ `next build` 17 مسارًا؛ `vite build` 1109 وحدة | `1ee04c05` | فحص سجل فشل خطوة `Build Android debug APK` في CI، ومعالجة فجوة نشر Edge Functions على Staging |
+| **T2-PDPL** | ترقية حزمة الامتثال للقانون المصري 151/2020 ولائحة 816/2025 (23 وثيقة مع DFD) | P0 | `DONE` | T1-REMEDIATION | إضافة مخطط تدفق البيانات `01_DATA_FLOW_DIAGRAM_DFD.md` والفصل بين الإلزامي والاسترشادي وما يلزمه محامٍ وتراخيص | `docs/audits/egyptian-pdpl-compliance/` (`01_` حتى `22_` + `EXECUTIVE_SUMMARY.md`) | تحقق كامل على الجداول الـ 104 والحاويات الـ 3 ودوال الحذف | `1ee04c05` | استكمال البنود القانونية والتنظيمية والتراخيص من المؤسس والمحامي (`22_FOUNDER_ACTION_CHECKLIST_AND_SIGNOFF.md`) |
+| **T3-AUDIT** | المراجعة البصرية الشاملة بواسطة لجنة الـ 50 خبير تصميم (قراءة فقط — صفر تعديلات كود في هذه المرحلة) | P1 | `DONE` | T1-REMEDIATION, T2-PDPL | **22 ملف تقرير وتحليل بصري + صور حية من Android + Web + Admin + توثيق `PROPOSED DESIGN — NOT IMPLEMENTED` وما تعذر فحصه** | `docs/audits/visual-design-audit/` (`01_` إلى `22_` + `77` لقطة شاشة حية: `48` Android + `13` Web + `16` Admin) | مراجعة فعلية بالعين لكل اللقطات الـ 77، وتنظيف كل بيانات الاختبار المؤقتة من Staging (`leftover_qa_users = 0`) مع صفر تعديل كود أثناء المراجعة | Commit المراجعة النهائية | تنفيذ التحسينات البصرية وعيوب `/` (`unsplash`) و`/teams` (`42501 teams_public`) بعد موافقة المستخدم الصريحة بـ **"نفّذ"** |
+| **T4-HANDOFF** | التحقق المستقل النهائي وتحديث `EVIDENCE_MANIFEST.json` ودفع الفروع المفتوحة | P0 | `DONE` | T3-AUDIT | مطابقة كاملة بين الأدلة الفعلية والملفات المنشورة، وخلو Staging/Git من بيانات الاختبار، وعدم الدمج في `main` | `docs/audits/EVIDENCE_MANIFEST.json`, `VSP_HANDOFF.md`, `VSP_MASTER_TASKS.md` | فحص نظافة Staging + فحص `git status` عبر الـ 3 مستودعات + Push للفروع فقط | Commit المرحلة 4 | انتظار موافقة المستخدم (`نفّذ`) لبدء تنفيذ إصلاحات التصميم والـ Web |

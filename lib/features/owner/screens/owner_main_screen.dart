@@ -129,8 +129,8 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  extendBody: true,
  backgroundColor: VSPColors.background,
  body: VSPAmbientBackground(
- showTopGlow: true,
- showBottomGlow: true,
+ showTopGlow: false,
+ showBottomGlow: false,
  child: Stack(
  alignment: Alignment.center,
  children: [

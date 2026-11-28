@@ -1,0 +1,123 @@
+{
+  "generated_at": "2026-11-28T09:32:00+02:00",
+  "lead_agent": "Antigravity",
+  "independent_reviewer_role": "ChatGPT (post-delivery verification only)",
+  "environments": {
+    "production": {
+      "project_ref": "mktqkddbcddrxjxabdua",
+      "region": "eu-west-1",
+      "modified": false
+    },
+    "staging": {
+      "project_ref": "vtwgqyxglevcsxwdmhop",
+      "region": "eu-west-2",
+      "migrations_applied": [
+        "supabase/migrations/20261128080000_pdpl_and_security_advisor_remediation.sql",
+        "supabase/migrations/20261128090000_p0_security_definer_auth_hardening.sql"
+      ],
+      "qa_fixtures_cleaned_up": true
+    }
+  },
+  "repositories": {
+    "VSP.App": {
+      "branch": "feat/vsp-recovery-gamification-ds",
+      "pr": "#47 (Draft)",
+      "merged_to_main": false,
+      "prior_verified_commit": "1ee04c05"
+    },
+    "vsp_website": {
+      "branch": "feat/unify-commission-paymob-fees",
+      "pr": "#5",
+      "merged_to_main": false,
+      "head_commit": "5c63969"
+    },
+    "vsp-admin-panel": {
+      "branch": "feat/unify-commission-paymob-fees",
+      "pr": "#11",
+      "merged_to_main": false,
+      "head_commit": "978c452"
+    }
+  },
+  "verification": {
+    "staging_p0_auth_matrix": {
+      "http_tests_total": 35,
+      "http_tests_passed": 35,
+      "http_tests_failed": 0,
+      "remaining_current_user_secdef_logic_branches": 0,
+      "views_without_security_invoker": 0,
+      "get_server_timestamp_anon_execute": true,
+      "evidence_file": "docs/audits/evidence/staging_p0_auth_verification.md"
+    },
+    "staging_rls": {
+      "public_tables_total": 104,
+      "public_tables_rls_enabled": 104,
+      "storage_tables_total": 10,
+      "storage_tables_rls_enabled": 10,
+      "auth_leaked_password_protection_enabled": false,
+      "auth_leaked_password_protection_blocker": "entitlement_required: Pro Plans and up"
+    },
+    "staging_edge_functions_parity": {
+      "status": "PARTIAL_DEPLOYMENT_GAP",
+      "deployed_on_staging": [
+        "create_owner_web_checkout",
+        "get_owner_web_checkout_status",
+        "process_tournament_refund"
+      ],
+      "in_repo_only_not_deployed_on_staging": [
+        "create_paymob_intention",
+        "paymob_webhook",
+        "process_paymob_refund",
+        "fcm_push",
+        "fcm_queue_worker"
+      ],
+      "evidence_file": "docs/audits/evidence/production_readiness_reconciliation.md"
+    },
+    "flutter_analyze": {
+      "command": "flutter analyze --no-pub",
+      "issues_found": 0
+    },
+    "flutter_test_local_windows": {
+      "command": "flutter test --no-pub --reporter expanded",
+      "passed": 724,
+      "failed": 2,
+      "failure_details": "Windows font-pixel golden diff (2.28%, 1.75%) in test/unit/design_system_and_formatter_test.dart",
+      "github_actions_run_46117217355": {
+        "analyze": "success",
+        "test": "success",
+        "build_android_debug_apk": "failure"
+      }
+    },
+    "web_builds": {
+      "vsp_website": "next build exit 0 (17 routes)",
+      "vsp_admin_panel": "vite build exit 0 (1109 modules)"
+    },
+    "pdpl_compliance_pack": {
+      "docs_count": 23,
+      "includes_dfd": true,
+      "path": "docs/audits/egyptian-pdpl-compliance/"
+    },
+    "visual_audit_evidence": {
+      "read_only_enforced": true,
+      "code_files_modified_during_visual_audit": 0,
+      "visual_audit_docs_count": 22,
+      "screenshots_total": 77,
+      "screenshots_breakdown": {
+        "android_pixel_9_staging": 48,
+        "website_chrome_devtools": 13,
+        "admin_panel_chrome_devtools_staging": 16
+      },
+      "live_website_findings_discovered": [
+        "Home `/` and `/en` stalled on loading.tsx due to unconfigured images.unsplash.com in next.config.js",
+        "`/teams` failed SSR due to 42501 permission denied for view teams_public",
+        "Footer leftmost support column is completely empty",
+        "`/ranking` table prints bare `#` without row numbers"
+      ],
+      "not_visually_verified": [
+        "Paymob live hosted iframe checkout (intentionally stopped at checkout summary to avoid real charge + edge functions not yet deployed to Staging)",
+        "iOS native rendering (Windows host, no Xcode/iOS Simulator)",
+        "Secondary Admin pages: BannersManagementPage, CRMSettingsPage, OwnerSubscriptionsPage, League1v1Page",
+        "App AddStadiumWizard step-by-step submit, ChatScreen, and live NoShow dispute upload"
+      ]
+    }
+  }
+}

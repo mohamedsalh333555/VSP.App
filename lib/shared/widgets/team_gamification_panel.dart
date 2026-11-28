@@ -505,7 +505,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -733,9 +733,9 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.1),
+                  color: VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+                  border: Border.all(color: VSPColors.divider),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -744,7 +744,7 @@ class _TeamGamificationPanelState extends State<TeamGamificationPanel> {
                     Text(
                       isArabic ? a.titleAr : a.titleEn,
                       style: const TextStyle(
-                        color: VSPColors.accent,
+                        color: VSPColors.medalGold,
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
                       ),

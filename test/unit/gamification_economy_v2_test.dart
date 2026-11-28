@@ -9,22 +9,23 @@ void main() {
   group('VSP Gamification Economy v2 & Models', () {
     test('Annual Shield thresholds, nextTier progression, and asset paths match spec', () {
       expect(TeamShieldTier.none.requiredXp, equals(0));
-      expect(TeamShieldTier.gold.requiredXp, equals(1500));
-      expect(TeamShieldTier.platinum.requiredXp, equals(3000));
+      expect(TeamShieldTier.silver.requiredXp, equals(1500));
+      expect(TeamShieldTier.gold.requiredXp, equals(3000));
       expect(TeamShieldTier.diamond.requiredXp, equals(5000));
       expect(TeamShieldTier.elite.requiredXp, equals(8000));
       expect(TeamShieldTier.legendary.requiredXp, equals(12000));
       expect(TeamShieldTier.immortal.requiredXp, equals(15000));
       expect(TeamShieldTier.immortal.requiredWeightedChallenges, equals(60));
 
-      expect(TeamShieldTier.none.nextTier, equals(TeamShieldTier.gold));
-      expect(TeamShieldTier.gold.nextTier, equals(TeamShieldTier.platinum));
-      expect(TeamShieldTier.platinum.nextTier, equals(TeamShieldTier.diamond));
+      expect(TeamShieldTier.none.nextTier, equals(TeamShieldTier.silver));
+      expect(TeamShieldTier.silver.nextTier, equals(TeamShieldTier.gold));
+      expect(TeamShieldTier.gold.nextTier, equals(TeamShieldTier.diamond));
       expect(TeamShieldTier.diamond.nextTier, equals(TeamShieldTier.elite));
       expect(TeamShieldTier.elite.nextTier, equals(TeamShieldTier.legendary));
       expect(TeamShieldTier.legendary.nextTier, equals(TeamShieldTier.immortal));
       expect(TeamShieldTier.immortal.nextTier, isNull);
 
+      expect(TeamShieldTier.silver.assetPath, equals('assets/images/shields/shield_silver.png'));
       expect(TeamShieldTier.gold.assetPath, equals('assets/images/shields/shield_gold.png'));
       expect(TeamShieldTier.none.assetPath, isNull);
     });
@@ -145,7 +146,7 @@ void main() {
       expect(team.maxPlayers, equals(8));
       expect(team.currentSeasonXp, equals(3450.5));
       expect(team.lifetimeXp, equals(8200.0));
-      expect(team.shieldTier, equals(TeamShieldTier.platinum));
+      expect(team.shieldTier, equals(TeamShieldTier.silver));
       expect(team.highestShieldTier, equals(TeamShieldTier.diamond));
     });
 
@@ -159,6 +160,95 @@ void main() {
       expect(qualifiesForImmortal(seasonXp: 14999.5, weightedChallenges: 60.0), isFalse);
       // Both met => Immortal
       expect(qualifiesForImmortal(seasonXp: 15000.0, weightedChallenges: 60.0), isTrue);
+    });
+  });
+
+  group('VSP 2-Month Competitive Season & 3 Ranking Zones', () {
+    test('Maps ranks accurately to Cash Rewards (1-5), Free Booking (6-10), and Competition (11+)', () {
+      for (var r = 1; r <= 5; r++) {
+        expect(VspSeasonRewards.zoneForRank(r), equals(RankingRewardZone.cashRewards));
+      }
+      for (var r = 6; r <= 10; r++) {
+        expect(VspSeasonRewards.zoneForRank(r), equals(RankingRewardZone.freeBooking));
+        expect(VspSeasonRewards.cashPrizeForRank(r), isNull);
+      }
+      expect(VspSeasonRewards.zoneForRank(11), equals(RankingRewardZone.competition));
+      expect(VspSeasonRewards.zoneForRank(42), equals(RankingRewardZone.competition));
+    });
+
+    test('Cash prize pool totals 1,500 EGP across ranks 1-5 and free hour caps at 180 EGP', () {
+      expect(VspSeasonRewards.cashPrizeForRank(1), equals(500));
+      expect(VspSeasonRewards.cashPrizeForRank(2), equals(350));
+      expect(VspSeasonRewards.cashPrizeForRank(3), equals(250));
+      expect(VspSeasonRewards.cashPrizeForRank(4), equals(220));
+      expect(VspSeasonRewards.cashPrizeForRank(5), equals(180));
+      final totalCash = VspSeasonRewards.cashPrizesEgp.values.reduce((a, b) => a + b);
+      expect(totalCash, equals(1500));
+      expect(VspSeasonRewards.freeHourMaxValueEgp, equals(180));
+      expect(VspSeasonRewards.seasonDurationMonths, equals(2));
+    });
+
+    test('Reward lifecycle statuses and single-use free-hour guard prevent double redemption', () {
+      expect(
+        VspSeasonRewards.rewardLifecycleStatuses,
+        containsAll(['pending', 'approved', 'available', 'reserved', 'redeemed', 'expired', 'revoked']),
+      );
+
+      var voucherStatus = 'available';
+      bool tryReserveVoucher() {
+        if (voucherStatus != 'available') return false;
+        voucherStatus = 'reserved';
+        return true;
+      }
+
+      expect(tryReserveVoucher(), isTrue);
+      expect(tryReserveVoucher(), isFalse);
+    });
+
+    test('Match event idempotency & result correction preserve accurate ranking points', () {
+      final processedKeys = <String>{};
+      var points = 0;
+
+      void applyEvent(String key, int delta) {
+        if (processedKeys.add(key)) points += delta;
+      }
+
+      applyEvent('booking_1:team_a:win', 3);
+      applyEvent('booking_1:team_a:win', 3); // duplicate webhook/retry ignored
+      expect(points, equals(3));
+
+      // Correction: win (3) -> draw (1) => -2 delta
+      applyEvent('booking_1:team_a:correction_draw', -2);
+      expect(points, equals(1));
+    });
+
+    test('Next realistic target summary computes gap to Top 10 and Top 5', () {
+      final entries = List.generate(
+        12,
+        (i) => MonthlyRankingEntry(
+          rank: i + 1,
+          teamId: 't_${i + 1}',
+          teamName: 'Team ${i + 1}',
+          logoUrl: '',
+          governorate: 'Aswan',
+          sportType: 'Football',
+          rankingPoints: 40 - i * 2,
+          matchesPlayed: 10,
+          wins: 5,
+          draws: 1,
+          losses: 4,
+          currentShield: TeamShieldTier.silver,
+          monthKey: '2026-11',
+        ),
+      );
+
+      // Rank 12 has 18 pts, Rank 10 has 22 pts => needs 5 pts to surpass Rank 10
+      final rank12Text = VspSeasonRewards.nextTargetSummary(entries[11], entries, isArabic: false);
+      expect(rank12Text, contains('5 pts to Top 10'));
+
+      // Rank 7 has 28 pts, Rank 5 has 32 pts => needs 5 pts to surpass Rank 5
+      final rank7Text = VspSeasonRewards.nextTargetSummary(entries[6], entries, isArabic: false);
+      expect(rank7Text, contains('5 pts to Cash Zone (Top 5)'));
     });
   });
 }

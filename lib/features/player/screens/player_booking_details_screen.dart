@@ -5,9 +5,12 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/chat_repository.dart';
 import '../../../core/repositories/report_repository.dart';
 import '../../../core/ui/vsp_ui.dart';
+import '../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/utils/vsp_financial_formatter.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/vsp_payment_summary_card.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import 'chat_screen.dart';
 
@@ -143,15 +146,36 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
               border: Border.all(color: VSPColors.divider),
             ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(booking.stadiumName, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-              const SizedBox(height: VSPSpacing.xs),
-              Text(_type(context), style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
-              const SizedBox(height: VSPSpacing.md),
-              _row(Iconsax.calendar_1_copy, ar ? 'التاريخ' : 'Date', booking.formattedDate),
-              _row(Iconsax.clock_copy, ar ? 'الوقت' : 'Time', booking.formattedTimeRange),
-              _row(Iconsax.wallet_1_copy, ar ? 'الإجمالي' : 'Total', '${booking.totalPrice.toInt()} ${booking.currency}'),
-              _row(Iconsax.info_circle_copy, ar ? 'الحالة' : 'Status', booking.status.name),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      booking.stadiumName,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                  VSPStatusPill(
+                    label: VSPFinancialFormatter.localizeBookingStatus(booking.status, isArabic: ar),
+                    color: VSPFinancialFormatter.statusColor(booking.status),
+                  ),
+                ],
+              ),
+              const SizedBox(height: VSPDSSpacing.xs),
+              Text(_type(context), style: const TextStyle(color: VSPDSSemanticColors.accent, fontWeight: FontWeight.bold)),
+              const SizedBox(height: VSPDSSpacing.md),
+              _row(Iconsax.calendar_1_copy, ar ? 'التاريخ' : 'Date', VSPFinancialFormatter.formatDate(booking.startTime, isArabic: ar)),
+              _row(Iconsax.clock_copy, ar ? 'الوقت' : 'Time', VSPFinancialFormatter.formatTimeRange(booking.startTime, booking.endTime, isArabic: ar)),
             ]),
+          ),
+          const SizedBox(height: VSPDSSpacing.md),
+          VSPPaymentSummaryCard(
+            baseAmount: booking.totalPrice,
+            playerVspFee: booking.vspCommission > 0 ? booking.totalPrice * 0.05 : null,
+            gatewayFee: booking.gatewayFee > 0 ? booking.gatewayFee : null,
+            totalAmount: booking.grossAmountCharged > 0 ? booking.grossAmountCharged : booking.totalPrice,
+            paymentStatus: booking.paymentStatus,
+            isArabic: ar,
           ),
           const SizedBox(height: VSPSpacing.md),
           ElevatedButton.icon(

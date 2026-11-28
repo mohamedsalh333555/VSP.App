@@ -78,13 +78,7 @@ class TeamCardHero extends StatelessWidget {
                   height: 140,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: VSPColors.accent, width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: VSPColors.accent.withValues(alpha: 0.4),
-                        blurRadius: 15,
-                      ),
-                    ],
+                    border: Border.all(color: VSPColors.divider, width: 2),
                   ),
                   child: ClipOval(
                     child: team.logoUrl.isNotEmpty 

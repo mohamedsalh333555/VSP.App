@@ -23,7 +23,8 @@ import 'profile_screen.dart';
 import 'team_dashboard_screen.dart';
 
 // المفتاح العالمي للتحكم في تبويبات الرئيسية والملاحة (يتم استيراد championScreenKey من champion_screen.dart)
-final GlobalKey<PlayerHomeScreenState> playerHomeScreenKey = GlobalKey<PlayerHomeScreenState>();
+final GlobalKey<PlayerHomeScreenState> playerHomeScreenKey =
+    GlobalKey<PlayerHomeScreenState>();
 
 /// دالة تنقل سريعة تأخذ المستخدم مباشرة لتبويب ترتيب الفرق في شاشة الأبطال
 void navigateToTeamsStandings(BuildContext context) {
@@ -73,7 +74,10 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       await _restoreSelectedTab();
       if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
+      final stadiumProvider = Provider.of<StadiumProvider>(
+        context,
+        listen: false,
+      );
 
       if (auth.isAuthenticated && !auth.isOwner) {
         String? gov = auth.userModel?.governorate;
@@ -83,7 +87,9 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
           final isAr = Localizations.localeOf(context).languageCode == 'ar';
           VSPFeedback.showSuccess(
             context,
-            isAr ? 'جاري تحديد موقعك الجغرافي تلقائياً...' : 'Determining your location automatically...',
+            isAr
+                ? 'جاري تحديد موقعك الجغرافي تلقائياً...'
+                : 'Determining your location automatically...',
           );
           final success = await auth.updateUserLocation();
 
@@ -110,7 +116,10 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
         // Load user bookings to populate Live Match Radar
         final userId = auth.currentUser?.uid;
         if (userId != null && mounted) {
-          Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
+          Provider.of<BookingProvider>(
+            context,
+            listen: false,
+          ).loadUserBookings(userId);
         }
 
         // Check for any pending challenge match result popup automatically on app launch
@@ -129,11 +138,16 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
     final userId = auth.currentUser?.id;
     if (userId == null) return;
 
-    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+    final bookingProvider = Provider.of<BookingProvider>(
+      context,
+      listen: false,
+    );
     bookingProvider.loadUserBookings(userId);
     final userTeams = await TeamRepository().getUserTeams(userId);
-    final captainedTeamIds =
-        userTeams.where((t) => t.captainId == userId).map((t) => t.id).toSet();
+    final captainedTeamIds = userTeams
+        .where((t) => t.captainId == userId)
+        .map((t) => t.id)
+        .toSet();
 
     if (!context.mounted || captainedTeamIds.isEmpty) return;
     final now = DateTime.now();
@@ -149,8 +163,8 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       final String? myTeamId = captainedTeamIds.contains(booking.playerTeamId)
           ? booking.playerTeamId
           : (captainedTeamIds.contains(booking.opponentTeamId)
-              ? booking.opponentTeamId
-              : null);
+                ? booking.opponentTeamId
+                : null);
       if (myTeamId == null || myTeamId.isEmpty) continue;
 
       // Condition 1: No result submitted yet -> Open popup for First Captain to submit
@@ -185,18 +199,20 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     // Set system status bar style to match the dark theme
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light, // White icons
-      statusBarBrightness: Brightness.dark, // iOS specific
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light, // White icons
+        statusBarBrightness: Brightness.dark, // iOS specific
+      ),
+    );
 
     return VSPScaffold(
       extendBody: true,
       backgroundColor: VSPDSSemanticColors.background,
       body: VSPAmbientBackground(
-        showTopGlow: true,
-        showBottomGlow: true,
+        showTopGlow: _selectedIndex == 0,
+        showBottomGlow: _selectedIndex == 0,
         child: IndexedStack(
           index: _selectedIndex,
           children: [
@@ -204,8 +220,12 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
               onNavigate: (index, {arguments}) {
                 setState(() {
                   _selectedIndex = index;
-                  if (index == 2 && arguments != null && arguments['initialTab'] != null) {
-                    championScreenKey.currentState?.switchToTab(arguments['initialTab']);
+                  if (index == 2 &&
+                      arguments != null &&
+                      arguments['initialTab'] != null) {
+                    championScreenKey.currentState?.switchToTab(
+                      arguments['initialTab'],
+                    );
                   }
                 });
               },

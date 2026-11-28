@@ -195,7 +195,7 @@ class StadiumInformationTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: VSPColors.surface,
                 borderRadius: BorderRadius.circular(VSPRadius.xl),
-                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                border: Border.all(color: VSPColors.divider),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

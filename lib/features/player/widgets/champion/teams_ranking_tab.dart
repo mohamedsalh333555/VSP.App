@@ -240,11 +240,11 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
             decoration: BoxDecoration(
               color: VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
-              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+              border: Border.all(color: VSPColors.divider),
             ),
             child: Row(
               children: [
-                const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 20),
+                const Icon(Iconsax.cup_copy, color: VSPColors.medalGold, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -252,15 +252,15 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                     children: [
                       Text(
                         isArabic
-                            ? 'الترتيب التنافسي الشهري (${_monthKey.isNotEmpty ? _monthKey : 'الشهر الحالي'})'
-                            : 'Monthly Competitive Ranking ($_monthKey)',
+                            ? 'الموسم التنافسي (${_monthKey.isNotEmpty ? _monthKey : 'شهرين'}) • جوائز الترتيب'
+                            : '2-Month Season (${_monthKey.isNotEmpty ? _monthKey : 'Current'}) • Rank Rewards',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         isArabic
-                            ? 'جائزة متصدر المحافظة: ساعة حجز ملعب مجانية • الفوز 3 / التعادل 1 / الخسارة 0'
-                            : 'Governorate Leader Prize: 1 Free Pitch Hour • Win 3 / Draw 1 / Loss 0',
+                            ? '1-5: جوائز كاش 1,500 ج.م • 6-10: ساعة مجانية • الفوز 3 / التعادل 1'
+                            : 'Top 1-5: 1,500 EGP Cash • 6-10: Free 1h • Win 3 / Draw 1',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                       ),
                     ],
@@ -275,6 +275,34 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildZonePill(
+                  icon: Iconsax.money_recive_copy,
+                  label: isArabic ? '1-5: كاش (500–180 ج.م)' : '1-5: 500–180 EGP',
+                  color: VSPColors.medalGold,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildZonePill(
+                  icon: Iconsax.ticket_discount_copy,
+                  label: isArabic ? '6-10: ساعة مجانية' : '6-10: Free 1h',
+                  color: VSPColors.medalSilver,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildZonePill(
+                  icon: Iconsax.ranking_1_copy,
+                  label: isArabic ? '11+: منافسة' : '11+: Compete',
+                  color: VSPColors.textSecondary,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -347,7 +375,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                         logo: top3[0].logoUrl,
                         points: top3[0].rankingPoints,
                         badgeIcon: Iconsax.crown_copy,
-                        borderColor: VSPColors.accent,
+                        borderColor: VSPColors.medalGold,
                         bgColor: VSPColors.surfaceAlt,
                         isCenter: true,
                         isMyTeam: _myTeamIds.contains(top3[0].teamId),
@@ -373,20 +401,52 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+            _buildZoneHeader(
+              icon: Iconsax.money_recive_copy,
+              title: isArabic ? 'منطقة الجوائز النقدية (المراكز 1–5)' : 'Cash Rewards Zone (Ranks 1–5)',
+              color: VSPColors.medalGold,
+            ),
+            const SizedBox(height: 8),
             ...List.generate(rest.length, (index) {
               final entry = rest[index];
-              return VSPFadeInItem(
-                index: index + 3,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _buildRankListItem(
-                    context,
-                    entry,
-                    isMyTeam: _myTeamIds.contains(entry.teamId),
-                    isArabic: isArabic,
+              final prevRank = index == 0 ? 3 : rest[index - 1].rank;
+              final showFreeZoneHeader = prevRank <= 5 && entry.rank >= 6 && entry.rank <= 10;
+              final showCompZoneHeader = prevRank <= 10 && entry.rank >= 11;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (showFreeZoneHeader) ...[
+                    const SizedBox(height: 8),
+                    _buildZoneHeader(
+                      icon: Iconsax.ticket_discount_copy,
+                      title: isArabic ? 'منطقة الساعة المجانية (المراكز 6–10)' : 'Free Booking Zone (Ranks 6–10)',
+                      color: VSPColors.medalSilver,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (showCompZoneHeader) ...[
+                    const SizedBox(height: 8),
+                    _buildZoneHeader(
+                      icon: Iconsax.ranking_1_copy,
+                      title: isArabic ? 'منطقة المنافسة (11 فأكثر)' : 'Competition Zone (Ranks 11+)',
+                      color: VSPColors.textSecondary,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  VSPFadeInItem(
+                    index: index + 3,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _buildRankListItem(
+                        context,
+                        entry,
+                        isMyTeam: _myTeamIds.contains(entry.teamId),
+                        isArabic: isArabic,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               );
             }),
           ],
@@ -411,7 +471,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                         decoration: BoxDecoration(
                           color: VSPColors.surfaceAlt.withValues(alpha: 0.96),
                           borderRadius: BorderRadius.circular(VSPRadius.lg),
-                          border: Border.all(color: VSPColors.accent, width: 1.5),
+                          border: Border.all(color: VSPColors.divider, width: 1.5),
                         ),
                         child: Row(
                           children: [
@@ -423,12 +483,15 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    isArabic ? 'ترتيب فريقك هذا الشهر (${myEntry.governorate})' : 'Your Monthly Standing (${myEntry.governorate})',
-                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
                                     '${myEntry.teamName} • ${isArabic ? 'المركز #${myEntry.rank}' : 'Rank #${myEntry.rank}'}',
                                     style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    VspSeasonRewards.nextTargetSummary(myEntry, _entries, isArabic: isArabic),
+                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -458,6 +521,63 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
     );
   }
 
+  Widget _buildZonePill({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildZoneHeader({
+    required IconData icon,
+    required String title,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: VSPColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRankListItem(
     BuildContext context,
     MonthlyRankingEntry entry, {
@@ -466,6 +586,8 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
   }) {
     final initialLetter =
         entry.teamName.trim().isNotEmpty ? entry.teamName.trim().split(' ').last.substring(0, 1).toUpperCase() : 'T';
+    final zone = VspSeasonRewards.zoneForRank(entry.rank);
+    final rewardLabel = VspSeasonRewards.rewardBadgeLabel(entry.rank, isArabic: isArabic);
 
     return InkWell(
       onTap: () => Navigator.push(
@@ -476,11 +598,12 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isMyTeam ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surface,
+          color: isMyTeam ? VSPColors.surfaceAlt : VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
-          border: isMyTeam
-              ? Border.all(color: VSPColors.accent, width: 1.5)
-              : Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: isMyTeam ? VSPColors.medalGold : VSPColors.divider.withValues(alpha: 0.35),
+            width: isMyTeam ? 1.5 : 1.0,
+          ),
         ),
         child: Row(
           children: [
@@ -547,6 +670,42 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                 ],
               ),
             ),
+            if (zone != RankingRewardZone.competition) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+                margin: const EdgeInsets.only(right: 6, left: 6),
+                decoration: BoxDecoration(
+                  color: VSPColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.divider),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      zone == RankingRewardZone.cashRewards
+                          ? Iconsax.money_recive_copy
+                          : Iconsax.ticket_discount_copy,
+                      size: 12,
+                      color: zone == RankingRewardZone.cashRewards
+                          ? VSPColors.medalGold
+                          : VSPColors.medalSilver,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      rewardLabel,
+                      style: TextStyle(
+                        color: zone == RankingRewardZone.cashRewards
+                            ? VSPColors.medalGold
+                            : VSPColors.medalSilver,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(

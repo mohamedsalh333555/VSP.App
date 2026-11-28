@@ -54,7 +54,7 @@
 	<!-- 
 		DEEP LINKING (Universal Links): 
 		Requires Associated Domains entitlement and AASA file on domain.
-		Domain verification (vsp.app) is still pending in production.
+		Domain verification (vspapp.online) for Universal Links requires Associated Domains + AASA file.
 	-->
 	<key>CFBundleURLTypes</key>
 	<array>
