@@ -1,33 +1,37 @@
-# ملف التسليم والمراجعة المستقلة — VSP Handoff
+# ملف التسليم والمراجعة المستقلة المحدَّث — VSP Handoff
 
-**مرجع المراجعة:** تم إنجاز المراحل الأربع (المزامنة وإغلاق الثغرات + حزمة الامتثال المصري PDPL + المراجعة البصرية للـ 50 خبيرًا + التحقق النهائي) على فروع المراجعة دون أي دمج في `main` ودون أي مساس ببيئة الإنتاج (`mktqkddbcddrxjxabdua`).
+**الحالة:** مُغلق بالكامل في المراجعة البصرية والأمنية وامتثال PDPL على فروع المراجعة (`PR #47`, `PR #5`, `PR #11`) **دون دمج في `main`** و**دون أي لمس لـ Production (`mktqkddbcddrxjxabdua`)**، وبعد تنظيف كافة بيانات الاختبار المؤقتة في Staging (`vtwgqyxglevcsxwdmhop`).
 
 ---
 
-## 1. ملخص التصنيف النهائي بالبراهين
+## 1. ملخص ما تم إثباته بالأدلة القاطعة
 
-### أ. مُنفَّذ تقنيًا ومُتحقَّق منه (Completed & Technically Remediated)
-1. **مزامنة التعديلات السابقة (`06200410`):** دمج `c0213c34` و`06200410` بـ Fast-forward دون Force Push مع الحفاظ على التعديلات المحلية.
-2. **تأمين قاعدة بيانات Staging (`660f1aee`):**
-   - تطبيق الهجرة `20261128080000_pdpl_and_security_advisor_remediation.sql` على `vtwgqyxglevcsxwdmhop`.
-   - إغلاق ثغرة `auth.uid() IS NULL` وسحب صلاحية `anon` من الدالة المالية `import_paymob_reconciliation_row` وتريجر `trg_award_field_championship_xp` ودالة `get_challenge_opponent_repeat_status`.
-   - تثبيت `search_path` لـ `vsp_cairo_month_key` و`vsp_slice_avg_weight` وإصلاح `immortal_winners_public` (`security_invoker = true`).
-3. **توحيد النصوص القانونية والعمرية والدفع الأونلاين (`660f1aee` و`1922fc5`):**
-   - إزالة الادعاء غير الموثق للامتثال الكامل لـ PDPL من `terms_and_privacy_screen.dart` (بعد المودال).
-   - إزالة النصوص القديمة للحجز النقدي والعربون وحظر الكاش عند 2 غياب من `vsp_terms_and_privacy_modal.dart` و`vsp_website/src/locales/{ar,en}.ts`.
-   - توحيد السن: `18+` لاستخدام المنصة، و`21+` للتعاقد التجاري للمنشأة.
-   - استبدال الخلفية الخضراء الزخرفية لأيقونات البطاقات في المودال بأسطح محايدة.
-4. **حزمة الامتثال المصري PDPL 151/2020 ولائحة 816/2025 (`e23f7165`):** 22 وثيقة شاملة داخل `docs/audits/egyptian-pdpl-compliance/`.
-5. **المراجعة البصرية للـ 50 خبيرًا (`b3bb9c41` — صفر تعديلات كود):** 10 تقارير + 15 لقطة شاشة حقيقية على محاكي `Pixel_9` (`app.vsp.sports.staging`).
+### أ. إغلاق ثغرات المراجعة المستقلة (`T1-REMEDIATION` & `T1-READINESS`)
+1. **إصلاح `SECURITY DEFINER` / `current_user` على `vsp-staging`:** تطبيق الهجرة [`20261128090000_p0_security_definer_auth_hardening.sql`](../../supabase/migrations/20261128090000_p0_security_definer_auth_hardening.sql) لتأمين `import_paymob_reconciliation_row` و26 دالة/تريجر أخرى، وتحويل `get_server_timestamp()` إلى `SECURITY INVOKER` متاح لما قبل الدخول، وتأمين `admin_pending_refunds`, `admin_stadium_settlements`, `v_financial_reconciliation`.
+   - *النتائج المثبتة في [`staging_p0_auth_verification.md`](evidence/staging_p0_auth_verification.md):* **35/35 اختبار HTTP حي** (رفض `anon` و`player` و`owner` و`blocked_admin` والمصادق بدون سجل `users`؛ ونجاح `active_admin` و`service_role` و`owner_self`) + اختبارات SQL `ROLLBACK`.
+2. **معالجة التخزين الخاص ورابط الإنتاج المتقاعد:**
+   - [`lib/core/services/no_show_dispute_service.dart`](../../lib/core/services/no_show_dispute_service.dart): حفظ المسار الخاص `$currentUid/disputes/...` داخل `owner_documents` وحذف `getPublicUrl()`.
+   - `vsp_website` (`5c63969`): حذف رابط Production الثابت من `PricingClient.tsx` و`src/lib/supabase/server.ts`.
+3. **الشفافية الكاملة في فجوات التشغيل والاختبار ([`production_readiness_reconciliation.md`](evidence/production_readiness_reconciliation.md)):**
+   - `flutter analyze --no-pub`: **0 أخطاء**.
+   - `flutter test --no-pub --reporter expanded`: **724 نجاح** و**2 فشل** في فحص صور Golden Windows (`design_system_and_formatter_test.dart`: `2.28%` و`1.75%` بسبب اختلاف الخطوط بين Windows وLinux).
+   - GitHub Actions run `46117217355`: نجاح `Analyze` و`Test` على Ubuntu وفشل `Build Android debug APK`.
+   - فجوة Staging Edge Functions موثقة صراحةً: المنشور حاليًا على `vtwgqyxglevcsxwdmhop` فقط (`create_owner_web_checkout`, `get_owner_web_checkout_status`, `process_tournament_refund`) بينما (`create_paymob_intention`, `paymob_webhook`, `process_paymob_refund`, `fcm_push`, `fcm_queue_worker`) في الكود ولم تُنشر بعد على Staging.
+   - `auth_leaked_password_protection` (HIBP): محجوب بخطة Supabase (`entitlement_required` لـ Pro+).
 
-### ب. شاشات لم تُعاين بصريًا بالصورة (`NOT VISUALLY VERIFIED`) وسببها
-- **الموقع العام (`vsp_website`):** تعذر الاتصال بـ Chrome DevTools (`DevToolsActivePort` غير موجود لأن `chrome://inspect/#remote-debugging` غير مفعّل)؛ تم التحقق ببناء `next build` (17/17 صفحة) وفحص المكونات.
-- **لوحة الإدارة (`vsp-admin-panel`):** محجوبة بتسجيل دخول Google للمشرف + `CHROME_DEVTOOLS_DISCONNECTED`؛ تم التحقق ببناء `vite build` وفحص الصفحات.
-- **شاشات اللاعب والمالك الداخلية + iOS:** محجوبة خلف المصادقة (`AUTH_GATED`) وعدم توفر جهاز iOS على نظام Windows.
+### ب. حزمة الامتثال للقانون المصري 151/2020 ولائحة 816/2025 (`T2-PDPL`)
+- **23 وثيقة كاملة** في [`docs/audits/egyptian-pdpl-compliance/`](egyptian-pdpl-compliance/EXECUTIVE_SUMMARY.md) تشمل مخطط تدفق البيانات الجديد [`01_DATA_FLOW_DIAGRAM_DFD.md`](egyptian-pdpl-compliance/01_DATA_FLOW_DIAGRAM_DFD.md) وتمييز البنود القانونية الإلزامية عن الاسترشادية.
 
-### ج. محظورات تقنية موثقة (`BLOCKED / TECHNICAL_BACKLOG`)
-- **`auth_leaked_password_protection` (HIBP):** رفض Supabase Management API التفعيل على Staging (`entitlement_required`: مخصص لخطة Pro فأعلى).
-- **مسار تقني مؤجل (`TECHNICAL_BACKLOG`):** `no_show_dispute_service.dart:207-218` يرفع في `owner_documents` ويستدعي `getPublicUrl`، و`PricingClient.tsx:77` يثبت رابط الإنتاج مباشرة، بالإضافة لتوصيات التوكنز والخطوط العربية الموثقة في المرحلة 3 (`PROPOSED DESIGN — NOT IMPLEMENTED`).
+### ج. المراجعة البصرية الشاملة بالـ 50 خبيرًا (`T3-AUDIT` — قراءة فقط، صفر تعديل كود)
+- **22 تقريرًا بصريًا** (`01_` إلى `22_`) في [`docs/audits/visual-design-audit/`](visual-design-audit/01_EXECUTIVE_AUDIT_SUMMARY.md) مدعومة بـ **77 لقطة شاشة حية ومفحوصة بالعين**:
+  - **48 لقطة أندرويد Staging (`Pixel_9`)** شملت دخول اللاعب والمالك داخليًا وخارجيًا، الحجز، التأكيد المالي، السحب، والتحفيز.
+  - **13 لقطة للموقع العام** كشفت تعطل `/` (`images.unsplash.com`) و`/teams` (`42501 teams_public`) وعمود Footer فارغًا وصفوف `#` بلا أرقام في `/ranking`.
+  - **16 لقطة للوحة الإدارة (Staging)** كشفت قص الـ Sidebar في `1440px`، وبقاء بنود عربية في وضع EN، ومؤشرات `0 ج.م` المتناقضة، وضغط جدول الـ 11 عمودًا.
+  - جميع الإصلاحات البصرية موثقة كمقترحات `PROPOSED DESIGN — NOT IMPLEMENTED` بانتظار موافقة المؤسس (`نفّذ`).
 
-### د. متطلبات قانونية وتنظيمية على المؤسس والمحامي (`LEGAL_REVIEW_REQUIRED` / `LICENSE_REQUIRED`)
-- انظر القائمة التنفيذية المباشرة في [`egyptian-pdpl-compliance/22_FOUNDER_ACTION_CHECKLIST_AND_SIGNOFF.md`](egyptian-pdpl-compliance/22_FOUNDER_ACTION_CHECKLIST_AND_SIGNOFF.md) (المحامي، السجل التجاري/الضريبي، تعيين وتسجيل DPO، تراخيص مركز حماية البيانات PDPC وتصريح نقل البيانات لـ `eu-west-1` وFirebase، وعقود DPA و2FA للإدارة).
+---
+
+## 2. حدود لم تُفحص بصريًا (موثقة بشفافية)
+- بوابة الدفع المستضافة الفعلية (`Paymob Iframe`) لعدم تنفيذ سداد فعلي ولغياب نشر الدوال السحابية للدفع على Staging.
+- تطبيق `iOS Native` لغياب بيئة macOS/Xcode.
+- 4 صفحات إدارية ثانوية (`BannersManagement`, `CRMSettings`, `OwnerSubscriptions`, `League1v1`) ومعالج إضافة ملعب وشاشة المحادثة داخل التطبيق.

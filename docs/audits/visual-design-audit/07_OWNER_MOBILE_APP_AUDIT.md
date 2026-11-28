@@ -1,36 +1,43 @@
-# التدقيق البصري لتطبيق صاحب الملعب — Owner App UI Audit
+# التدقيق البصري لتطبيق صاحب الملعب — Owner App Visual Audit
 
-**حالة المعاينة الحية:** شاشات المالك الداخلية تتطلب حساب مالك مُصادقًا في Staging — سيتم توثيق الشاشات المحجوبة بـ `NOT VISUALLY VERIFIED (AUTH_GATED)`، بينما تخضع جميع شاشات المالك المفحوصة في الكود (`owner_dashboard_screen.dart`, `owner_dashboard_header.dart`, `owner_operational_finance_card.dart`, `owner_delete_account_card.dart`, `owner_bookings_screen.dart`, `owner_ledger_screen.dart`, `stadium_card.dart`, `vsp_terms_and_privacy_modal.dart`) للتحليل المعماري والبصري الدقيق أدناه.
-
-*(ملاحظة: جميع الحلول المقترحة موسومة بـ `PROPOSED DESIGN — NOT IMPLEMENTED`).*
+**بيئة التشغيل الحية:** `VISUALLY VERIFIED ON LIVE DEVICE` على محاكي `Pixel_9` (`1080x2424`، `app.vsp.sports.staging`) من خلال **9 لقطات شاشة حية** للمالك (`35_owner_dashboard_ar.png` إلى `43_owner_payout_history_ar.png`) بحساب مالك موثق وبيانات حجز ومالية حقيقية في Staging.  
+*(جميع التحسينات المقترحة أدناه موسومة بـ `PROPOSED DESIGN — NOT IMPLEMENTED` دون أي تعديل كود).*
 
 ---
 
-## الاكتشافات البصرية والحلول المقترحة
+## الاكتشافات البصرية الحرجة والعالية والحلول المقترحة
 
-### `VSP-OWN-001` — هدف لمس صغير جدًا (`~16px`) في زر "كشف الحساب" وتضارب الأيقونات [CRITICAL]
-- **التخصصات:** Accessibility Designer (47)، Mobile Interface Designer (12)، Iconography Designer (21).
-- **الدليل الفعلي (`owner_operational_finance_card.dart:73-98`):**
-  - زر `"كشف الحساب"` مبني بـ `GestureDetector` مباشر حول `Row(Text(12px), Icon(14px))` دون `Padding` أو `ConstrainedBox(minHeight: 48)` — مساحة اللمس الفعلية لا تتجاوز ~16–20px مقارنةً بمعيار `VSPDSizes.touchTarget = 48.0`.
-  - يستخدم `Icons.arrow_back` / `Icons.arrow_forward` من Material بدل عائلة `Iconsax` المعتمدة في باقي البطاقة (`Iconsax.card_copy`, `Iconsax.wallet_3_copy`), ويفتقد `Semantics(button: true)`.
+### `VSP-OWN-001` — بقايا نظام الكاش المخالف لسياسة 100% أونلاين داخل واجهة المالك الحية [CRITICAL / GRC]
+- **التخصصات:** Fintech Interface Designer (43)، Product Designer (7)، Design QA Engineer (38)، Independent Auditor (50).
+- **الدليل الفعلي الحي (`36_owner_analytics_ar.png` و`40_owner_bookings_ar.png`):**
+  1. في `36_owner_analytics_ar.png` (`التحليلات الذكية`): قسم `"طرق التحصيل والإيراد"` لا يزال يعرض صفًا كاملاً باسم **`"تحصيل كاش ونقدي (0%)"`**، وبطاقة `"حجوزات اليوم"` أسفله تعرض **`0 أونلاين • 0 كاش`**!
+  2. في `40_owner_bookings_ar.png` (`جدول الحجوزات`): الحجز الفعلي للاعب (`كريم محمد — 300 ج.م`) يظهر تحته شارة عنبرية بارزة مكتوب عليها **`"كاش مطلوب تحصيله"`** رغم أن الحجز في نموذج المنصة أونلاين فقط!
 - **Before / After (`PROPOSED DESIGN — NOT IMPLEMENTED`):**
-  - **قبل:** `GestureDetector` عارٍ بأيقونة Material `14px`، صعب الضغط بالإبهام.
-  - **بعد:** غلاف `InkWell` أو `TextButton.icon` بحد أدنى للمس `48x44px`، مع `Iconsax.arrow_left_2_copy` / `Iconsax.arrow_right_3_copy` حسب RTL، وشارة خلفية خفيفة `VSPColors.surfaceAlt`.
+  - **قبل:** إظهار تسميات `"تحصيل كاش ونقدي"` و`"كاش مطلوب تحصيله"` في شاشات المالك التشغيلية.
+  - **بعد:** ربط البطاقتين بنوع الدفع المعتمد فقط (`في انتظار السداد الإلكتروني` بدل `كاش مطلوب تحصيله`، وإزالة سطر `كاش` من التحليلات لصالح تفصيل حالات الحجز المؤكد والمعلق).
 
-### `VSP-OWN-002` — غياب `tabularFigures` وفواصل الآلاف في الأرقام المالية الكبيرة + تكرار القيمة اليومية [HIGH]
-- **التخصصات:** Fintech Interface Designer (43)، Data Visualization Designer (39)، Information Designer (15).
-- **الدليل الفعلي (`owner_operational_finance_card.dart:106-135, 175-182`):**
-  - الرقم البارز (`collectedTotal.toStringAsFixed(0)`) يستخدم `TextStyle(fontSize: 38, letterSpacing: -1.2)` يدويًا بدل `VSPDSTypography.priceHero` الذي يوفر `FontFeature.tabularFigures()`، وبدون تنسيق فواصل الآلاف (`12500` بدل `12,500`).
-  - `_MoneySplit` في السطر `129` يعرض نفس القيمة مرة أخرى كـ `"أونلاين متحصل"` بعد إلغاء الكاش، ما يكرر المعلومة دون قيمة مضافة!
-- **Before / After (`PROPOSED DESIGN — NOT IMPLEMENTED`):**
-  - **قبل:** `12500 ج.م` بالأخضر المتكرر في سطرين متتاليين.
-  - **بعد:** استبدال السطر المكرر بملخص تفصيلي مفيد: **"صافي بعد عمولة 5%"** أو **"حجوزات مؤكدة اليوم (X)"** مع تنسيق `#,##0` و`FontFeature.tabularFigures()`.
+### `VSP-OWN-002` — انقلاب اتجاه أسهم RTL (`->`) ورمز السالب (`%-100.0`) وتضارب الأرقام [HIGH]
+- **التخصصات:** RTL and Localization Designer (49)، Typography Designer (19)، Fintech Interface Designer (43).
+- **الدليل الفعلي الحي (`35_owner_dashboard_ar.png`, `36_owner_analytics_ar.png`, `40_owner_bookings_ar.png`):**
+  - في `35_`: رابط **`"كشف الحساب ->"`** يضع السهم المتجه **يمينًا** على يسار النص في واجهة RTL، والأمر نفسه يتكرر في `40_` مع **`"300 ج.م ->"`**!
+  - في `36_`: نسبة الهبوط تُقرأ **`%-100.0 تراجع`** (العلامة السالبة مرمية على يمين الرقم والنسبة مقلوبة).
+  - في `35_` و`40_`: مزج الأرقام الهندية في التوقيت (`١٠:٠٠ ص`) مقابل أرقام غربية في جدول المواعيد (`10:00 ص`) والمبالغ (`285 ج.م`, `300 ج.م`).
+- **Before / After (`PROPOSED DESIGN — NOT IMPLEMENTED`):** استخدام أسهم منطقية (`Iconsax.arrow_left_2_copy` في RTL)، وعزل الأرقام والنسب بعلامة اتجاهية صحيحة (`-100%` عبر LTR inline span).
 
-### `VSP-OWN-003` — هالة خضراء على صورة المالك حتى مع غياب اشتراك Pro [LOW]
-- **التخصصات:** Visual Hierarchy Specialist (18)، Brand Identity Designer (26).
-- **الدليل الفعلي (`owner_dashboard_header.dart:80-91`):** رغم توثيق إزالة شارات Pro/Free في التعليق أعلى الملف، لا تزال صورة المالك محاطة بحد وظل `VSPColors.accent` الأخضر، مما يعطي ثقلًا زخرفيًا غير مبرر بدل ترك اللون الأخضر للأزرار والإجراءات الرئيسية.
-- **Before / After (`PROPOSED DESIGN — NOT IMPLEMENTED`):** إطار محايد `VSPColors.divider` (`#262626`) وظل ناعم محايد ما لم يكن هناك تنبيه حالة فعلي.
+### `VSP-OWN-003` — تكرار قيمة `300 ج.م` داخل إطارات متداخلة + صغر هدف لمس "كشف الحساب" [HIGH]
+- **التخصصات:** Information Designer (15)، Visual Hierarchy Specialist (18)، Accessibility Designer (47).
+- **الدليل الفعلي الحي (`35_owner_dashboard_ar.png` + `owner_operational_finance_card.dart:73-98`):**
+  - خانة `"فلوس لسه ما اتحصلتش"` تعرض **`300 ج.م`** في الترويسة ثم تفتح صندوقًا بحدود صفراء يحتوي **`"أونلاين غير محصل 300 ج.م"`** بنفس القيمة تمامًا؛ وكذلك `"المتحصل اليوم 0 ج.م"` يتكرر فوق `"أونلاين متحصل 0 ج.م"`!
+  - زر `"كشف الحساب"` بارتفاع لمس صغير (`~20dp`) ولا يحمل خلفية كبسولية مريحة للإبهام.
+- **Before / After (`PROPOSED DESIGN — NOT IMPLEMENTED`):** دمج القيمتين في سطر واحد مع إضافة تفاصيل مفيدة (`عدد الحجوزات المعلقة` / `المبلغ الصافي المتوقع`) ورفع منطقة لمس زر كشف الحساب إلى `48x44dp`.
 
-### `VSP-OWN-004` — ارتفاع ثابت (`height: 260`) لبطاقة الملعب في عرض المالك (`StadiumCard`) [MEDIUM]
-- **التخصصات:** Responsive Design Specialist (45)، Design QA Engineer (38).
-- **الدليل الفعلي (`stadium_card.dart:38`):** ارتفاع ثابت `isOwnerView ? 260 : 210` مع نصوص متراكبة بالأسفل؛ مع تكبير خط النظام (`textScaleFactor >= 1.3`) في أندرويد قد تتزاحم النصوص السفلية داخل الطبقة المتدرجة.
+### `VSP-OWN-004` — عرض علامة التحقق باللون الأزرق `#3B82F6` وتفعيل زر التصدير في سجل فارغ [MEDIUM]
+- **التخصصات:** Color and Contrast Specialist (20)، Component Design Specialist (34)، Design QA Engineer (38).
+- **الدليل الفعلي الحي (`42_owner_stadiums_ar.png`, `43_owner_payout_history_ar.png`):**
+  - في `42_`: أيقونة التحقق بجانب رقم الهاتف زرقاء (`VSPColors.success == #3B82F6`) وسط تصميم أخضر نيوني.
+  - في `43_`: شاشة السجل الفارغ (`لا توجد معاملات مالية بعد`) تبقي زر التصدير العلوي الأيسر مفعّلًا بصريًا دون تمييز `disabled`.
+- **Before / After (`PROPOSED DESIGN — NOT IMPLEMENTED`):** تحويل علامة الصحة الإيجابية إلى `#22C55E` وتعطيل زر التصدير (`opacity: 0.35`) عند خلو السجل.
+
+### `VSP-OWN-005` — اقتطاع شريط التاريخ (`الخميس 3`) وتغطية قائمة المواعيد بالـ BottomBar [MEDIUM]
+- **التخصصات:** Responsive Design Specialist (45)، Layout and Composition Designer (17).
+- **الدليل الفعلي الحي (`40_owner_bookings_ar.png`):** بطاقة اليوم الأخير يسارًا تقطع كلمة `الخميس` إلى `الخمي` عند الحافة اليسرى، وصفوف الساعات السفلية (`12:30` و`1:00 م`) تغوص خلف الـ BottomBar، بينما الشاشات `37_`, `38_`, `39_`, `41_` متزنة وواضحة جدًا.
