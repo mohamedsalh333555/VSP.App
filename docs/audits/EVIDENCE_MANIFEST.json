@@ -1,0 +1,107 @@
+{
+  "generated_at": "2026-11-28T08:33:00+02:00",
+  "lead_agent": "Antigravity",
+  "independent_reviewer_role": "ChatGPT (post-delivery verification only)",
+  "environments": {
+    "production": {
+      "project_ref": "mktqkddbcddrxjxabdua",
+      "region": "eu-west-1",
+      "modified": false
+    },
+    "staging": {
+      "project_ref": "vtwgqyxglevcsxwdmhop",
+      "region": "eu-west-2",
+      "modified_by_migration": "supabase/migrations/20261128080000_pdpl_and_security_advisor_remediation.sql"
+    }
+  },
+  "repositories": {
+    "VSP.App": {
+      "branch": "feat/vsp-recovery-gamification-ds",
+      "pr": "#47 (Draft)",
+      "merged_to_main": false,
+      "commits": {
+        "chatgpt_sync": ["c0213c344461dd413b821545e24631f86064d83a", "0620041034c193cc05c97e5f784998ac0e55dbee"],
+        "phase1_security_and_legal_copy": "660f1aeed240d6a251a27290f4055602e3e7d181",
+        "phase2_pdpl_compliance_pack": "e23f7165c9199b3db9b6c559093235e75efcfbec",
+        "phase3_visual_design_audit": "b3bb9c41fad2fc1a847bd589b80ea636bc12ab8e"
+      }
+    },
+    "vsp_website": {
+      "branch": "feat/unify-commission-paymob-fees",
+      "pr": "#5",
+      "merged_to_main": false,
+      "commits": {
+        "phase1_noshow_copy_parity": "1922fc5c2f3bacebe09a2f04f649c4d79fce825b"
+      }
+    },
+    "vsp-admin-panel": {
+      "branch": "feat/unify-commission-paymob-fees",
+      "pr": "#11",
+      "merged_to_main": false,
+      "pre_existing_local_changes_preserved": ["src/pages/PayoutSettlementsPage.jsx"]
+    }
+  },
+  "verification": {
+    "staging_rls": {
+      "public_tables_total": 104,
+      "public_tables_rls_enabled": 104,
+      "storage_tables_total": 10,
+      "storage_tables_rls_enabled": 10,
+      "storage_buckets": [
+        { "id": "owner_documents", "public": false },
+        { "id": "profile-pictures", "public": true },
+        { "id": "stadium-images", "public": true }
+      ]
+    },
+    "staging_security_advisors_post_remediation": {
+      "security_definer_view_errors": 0,
+      "function_search_path_mutable_warnings": 0,
+      "anon_import_paymob_reconciliation_row_execute": false,
+      "anon_trg_award_field_championship_xp_execute": false,
+      "anon_get_challenge_opponent_repeat_status_execute": false,
+      "remaining_anon_security_definer_warnings": 7,
+      "remaining_extension_in_public_warnings": 4,
+      "auth_leaked_password_protection": {
+        "enabled": false,
+        "reason": "entitlement_required: Configuring leaked password protection via HaveIBeenPwned.org is available on Pro Plans and up."
+      }
+    },
+    "flutter_analyze": {
+      "command": "flutter analyze --no-pub",
+      "issues_found": 0
+    },
+    "flutter_tests": {
+      "suites_run": 7,
+      "tests_passed": 81,
+      "tests_failed": 0,
+      "files": [
+        "test/unit/paymob_fee_calculation_test.dart",
+        "test/unit/gamification_economy_v2_test.dart",
+        "test/unit/owner_verification_and_payout_test.dart",
+        "test/unit/player_booking_ssot_remediation_test.dart",
+        "test/unit/signup_validation_service_test.dart",
+        "test/production_readiness_audit_test.dart",
+        "test/features/owner/tournament_dashboard_dialogs_test.dart"
+      ]
+    },
+    "web_builds": {
+      "vsp_website": "next build exit 0 (17/17 pages)",
+      "vsp_admin_panel": "vite build exit 0",
+      "flutter_web": "flutter build web --release exit 0",
+      "flutter_android_staging": "flutter build apk --flavor staging --debug --target-platform android-x64 exit 0"
+    },
+    "visual_audit_evidence": {
+      "read_only_enforced": true,
+      "code_files_modified_in_phase3": 0,
+      "pdpl_docs_count": 22,
+      "visual_audit_docs_count": 10,
+      "pixel_9_screenshots_captured": 15,
+      "not_visually_verified": [
+        "vsp_website live Chrome DevTools rendering (CHROME_DEVTOOLS_DISCONNECTED)",
+        "vsp-admin-panel live Chrome DevTools & authenticated routes (AUTH_GATED & CHROME_DEVTOOLS_DISCONNECTED)",
+        "VSP.App authenticated Player & Owner internal screens (AUTH_GATED)",
+        "VSP.App iOS native rendering (Windows host, no Xcode/iOS Simulator)"
+      ]
+    }
+  }
+}
