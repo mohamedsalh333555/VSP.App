@@ -53,8 +53,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     isArabic
-                        ? 'مطابق لقوانين وحماية البيانات المصرية (PDPL 2020)'
-                        : 'Compliant with Egyptian Data Protection Law (PDPL 2020)',
+                        ? 'معلومات الشروط والخصوصية وحماية البيانات'
+                        : 'Terms, privacy and data protection information',
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                   ),
                 ],
@@ -69,8 +69,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '1. شروط وإلتزامات تشغيل الملاعب والأهلية' : '1. Stadium Operations & Age Eligibility',
                 content: isArabic
-                    ? '• يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين دون أي تأخير أو تغيير في السعر المتفق عليه. تضمن المنصة تنظيم الحجوزات بدقة ومنع التضارب.\n• يُشترط في المفوض بإدارة حساب المنشأة الرياضية (صاحب الملعب) أو التوقيع على التعاقدات ألا يقل عمره عن 21 عاماً وأن يتمتع بالأهلية القانونية الكاملة للتعاقد وإدارة المنشأة.'
-                    : '• Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots without rate changes or delays. VSP ensures technical dispatching to prevent slot conflicts.\n• Authorized venue managers and signatories must be at least 21 years of age and possess full legal capacity to contract and manage operations.',
+                    ? '• يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين دون أي تأخير أو تغيير في السعر المتفق عليه. تضمن المنصة تنظيم الحجوزات بدقة ومنع التضارب.\n• يُشترط ألا يقل عمر صاحب حساب المالك عن 18 عاماً لاستخدام المنصة، وألا يقل عمر المفوض بالتوقيع على التعاقدات التجارية للمنشأة عن 21 عاماً وفقاً للأهلية القانونية الكاملة بموجب القانون المصري.'
+                    : '• Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots without rate changes or delays. VSP ensures technical dispatching to prevent slot conflicts.\n• Account holders must be at least 18 years of age to use the platform, while authorized signatories for commercial venue agreements must be at least 21 years of age with full legal capacity.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -144,8 +144,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '1. طبيعة المنصة وشروط الأهلية' : '1. Platform Services & Eligibility',
                 content: isArabic
-                    ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم (اللاعب أو مالك الملعب) عن 18 عاماً، مع التمتع بالأهلية القانونية الكاملة لإجراء الحجوزات والمدفوعات الإلكترونية.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
-                    : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Users (players and venue owners) must be at least 18 years of age and possess full legal capacity to make bookings and online payments.\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
+                    ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم (اللاعب أو مالك الملعب) عن 18 عاماً لاستخدام المنصة وإجراء الحجوزات والمدفوعات الإلكترونية، و21 عاماً للتعاقد التجاري كمفوض عن منشأة رياضية.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
+                    : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Users (players and venue owners) must be at least 18 years of age to use the platform and make online bookings (and 21 years of age to execute commercial venue agreements).\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -183,7 +183,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               _buildSectionCard(
                 context,
-                title: isArabic ? '6. قواعد الفرق وحقوق الخصوصية وحذف الحساب' : '6. Team Rules, Privacy & Account Erasure',
+                title: isArabic ? '5. قواعد الفرق وحقوق الخصوصية وحذف الحساب' : '5. Team Rules, Privacy & Account Erasure',
                 content: isArabic
                     ? '• الحد الأقصى لقائمة الفريق هو 12 لاعباً، ويحق للاعب الانضمام إلى 3 فرق كحد أقصى.\n• نحن لا نبيع أو نؤجر بياناتك الشخصية لأي طرف ثالث نهائياً.\n• يحق لك في أي وقت تعديل بياناتك أو طلب حذف حسابك وكافة سجلاتك نهائياً من داخل التطبيق عبر: (الملف الشخصي -> حذف الحساب) أو بمراسلة فريق الدعم الفني.'
                     : '• Max 12 players per team roster, and players can join up to 3 teams.\n• We never sell or lease personal data to third parties.\n• You have the right to edit data or request permanent account deletion via Profile -> Delete Account or contacting support.',
@@ -191,10 +191,10 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               const SizedBox(height: VSPSpacing.md),
 
-              // Section 7: Jurisdiction
+              // Section 6: Jurisdiction
               _buildSectionCard(
                 context,
-                title: isArabic ? '7. القانون الواجب التطبيق والاختصاص القضائي' : '7. Governing Law & Jurisdiction',
+                title: isArabic ? '6. القانون الواجب التطبيق والاختصاص القضائي' : '6. Governing Law & Jurisdiction',
                 content: isArabic
                     ? 'تخضع هذه الشروط وكافة المعاملات الناتجة عنها وتُفسر وفقاً لقوانين جمهورية مصر العربية، وتختص محاكم أسوان بنظر أي نزاع قضائي قد ينشأ بخصوص هذه الاتفاقية.'
                     : 'These terms and all resulting transactions are governed by the laws of the Arab Republic of Egypt. The courts of Aswan hold exclusive jurisdiction over any legal disputes.',
@@ -202,10 +202,10 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               const SizedBox(height: VSPSpacing.md),
 
-              // Section 8: Contact Info
+              // Section 7: Contact Info
               _buildSectionCard(
                 context,
-                title: isArabic ? '8. بيانات المقر والتواصل الرسمي' : '8. Official Headquarters & Contact',
+                title: isArabic ? '7. بيانات المقر والتواصل الرسمي' : '7. Official Headquarters & Contact',
                 content: isArabic
                     ? '• المقر الرئيسي: أسوان، جمهورية مصر العربية.\n• البريد الإلكتروني الرسمي: vspapp.eg@gmail.com\n• الدعم الفني وخدمة العملاء: +201100229462 (متاح عبر WhatsApp).'
                     : '• Headquarters: Aswan, Arab Republic of Egypt.\n• Official Email: vspapp.eg@gmail.com\n• Customer Support: +201100229462 (available via WhatsApp).',

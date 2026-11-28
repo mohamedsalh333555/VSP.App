@@ -112,17 +112,17 @@ class VSPTermsAndPrivacyModal {
                               icon: Iconsax.building_copy,
                               title: isAr ? '١. شروط وإلتزامات تشغيل الملاعب والأهلية' : '1. Stadium Operations & Age Eligibility',
                               content: isAr
-                                  ? '• يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين دون أي تأخير أو تغيير في السعر المتفق عليه. تضمن المنصة تنظيم الحجوزات بدقة ومنع التضارب.\n• يُشترط في المفوض بإدارة حساب المنشأة الرياضية (صاحب الملعب) أو التوقيع على التعاقدات ألا يقل عمره عن 21 عاماً وأن يتمتع بالأهلية القانونية الكاملة للتعاقد وإدارة المنشأة.'
-                                  : '• Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots without rate changes or delays. VSP ensures technical dispatching to prevent slot conflicts.\n• Authorized venue managers and signatories must be at least 21 years of age and possess full legal capacity to contract and manage operations.',
+                                  ? '• يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين دون أي تأخير أو تغيير في السعر المتفق عليه. تضمن المنصة تنظيم الحجوزات بدقة ومنع التضارب.\n• يُشترط ألا يقل عمر صاحب حساب المالك عن 18 عاماً لاستخدام المنصة، وألا يقل عمر المفوض بالتوقيع على التعاقدات التجارية للمنشأة عن 21 عاماً وفقاً للأهلية القانونية الكاملة بموجب القانون المصري.'
+                                  : '• Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots without rate changes or delays. VSP ensures technical dispatching to prevent slot conflicts.\n• Account holders must be at least 18 years of age to use the platform, while authorized signatories for commercial venue agreements must be at least 21 years of age with full legal capacity.',
                             ),
                             const SizedBox(height: 12),
                             _buildSectionCard(
                               dialogContext,
                               icon: Iconsax.wallet_1_copy,
-                              title: isAr ? '٢. سياسة العربون والتحصيل المباشر' : '2. Direct Deposit & Payout Policy',
+                              title: isAr ? '٢. السداد الإلكتروني والعمولة وصرف المستحقات' : '2. Online Payment, Commission & Payout Policy',
                               content: isAr
-                                  ? 'يلتزم المالك بتأكيد مبالغ العربون والحجوزات المستلمة مباشرة عبر (انستا باي أو فودافون كاش أو التحويل البنكي) وتحديث حالة الحجز في التطبيق فور استلام المبلغ، والالتزام بتوفير الملعب للحاجز.'
-                                  : 'Owners must promptly verify and confirm direct deposits received via InstaPay, Vodafone Cash, or Bank Transfer in-app, honoring the reservation for the player.',
+                                  ? 'تُسدد جميع الحجوزات الجديدة بالكامل أونلاين (100%) عبر بوابة Paymob المعتمدة دون إتاحة الدفع النقدي أو العربون للحجوزات الجديدة (مع بقاء الإيصالات التاريخية خاضعة لقواعد وقت إنشائها). تُخصم عمولة المنصة (5%) من سعر الملعب الأساسي دون خصم رسوم الدفع الخاصة باللاعب، وتُتاح المستحقات للسحب بعد إتمام الحجز عبر إنستاباي أو المحافظ الإلكترونية أو التحويل البنكي.'
+                                  : 'All new bookings are paid 100% online via Paymob; cash and deposit modes are retired for new bookings (historical receipts remain governed by rules at creation time). Only the 5% VSP commission is deducted from the base pitch price (player gateway fees are never deducted from owner earnings), and payouts are withdrawable post-match via InstaPay, Mobile Wallet, or Bank Transfer.',
                             ),
                             const SizedBox(height: 12),
                             _buildSectionCard(
@@ -130,7 +130,7 @@ class VSPTermsAndPrivacyModal {
                               icon: Iconsax.shield_cross_copy,
                               title: isAr ? '٣. سياسة منع الإلغاء المفاجئ' : '3. Cancellation & Commitment Policy',
                               content: isAr
-                                  ? 'يُحظر على صاحب الملعب إلغاء أي حجز مؤكد إلا في حالات القوة القاهرة المثبتة، مع الالتزام بإخطار الحاجز وإعادة كامل العربون أو المبالغ المدفوعة إليه فوراً دون أي اقتطاع.'
+                                  ? 'يُحظر على صاحب الملعب إلغاء أي حجز مؤكد إلا في حالات القوة القاهرة المثبتة، مع الالتزام بإخطار الحاجز وإعادة كامل المبالغ المدفوعة إليه فوراً دون أي اقتطاع.'
                                   : 'Owners are prohibited from cancelling confirmed bookings except in proven force majeure cases, with mandatory immediate full refund to the customer.',
                             ),
                             const SizedBox(height: 12),
@@ -175,8 +175,8 @@ class VSPTermsAndPrivacyModal {
                               icon: Iconsax.document_text_copy,
                               title: isAr ? '١. طبيعة المنصة وشروط الأهلية' : '1. Platform Services & Eligibility',
                               content: isAr
-                                  ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم (اللاعب أو مالك الملعب) عن 18 عاماً، مع التمتع بالأهلية القانونية الكاملة لإجراء الحجوزات والمدفوعات الإلكترونية.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
-                                  : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Users (players and venue owners) must be at least 18 years of age and possess full legal capacity to make bookings and online payments.\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
+                                  ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم (اللاعب أو مالك الملعب) عن 18 عاماً لاستخدام المنصة وإجراء الحجوزات والمدفوعات الإلكترونية، و21 عاماً للتعاقد التجاري كمفوض عن منشأة رياضية.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
+                                  : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Users (players and venue owners) must be at least 18 years of age to use the platform and make online bookings (and 21 years of age to execute commercial venue agreements).\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
                             ),
                             const SizedBox(height: 12),
                             _buildSectionCard(
@@ -193,8 +193,8 @@ class VSPTermsAndPrivacyModal {
                               icon: Iconsax.coin_copy,
                               title: isAr ? '٣. أمان المدفوعات والشفافية (PCI-DSS & Paymob)' : '3. Payment Security & Transparency (PCI-DSS & Paymob)',
                               content: isAr
-                                  ? '• تتم معالجة كافة المدفوعات الإلكترونية عبر بيئة مشفرة تديرها بوابة الدفع المعتمدة Paymob والممتثلة لمعايير أمان بطاقات الدفع العالمية (PCI-DSS). لا نقوم بحفظ أرقام البطاقات السرية أو رموز CVC.\n• الشفافية ومنع الرسوم الخفية: يظهر إجمالي المبلغ المطلوب سداده وتفاصيله بوضوح في شاشة تأكيد الحجز قبل إتمام أي عملية دفع، ولا توجد أي رسوم غير معلنة.\n• الحجز النقدي: عند اختيار السداد النقدي بالملعب، يدفع اللاعب قيمة إيجار الملعب المحددة من الإدارة دون أي رسوم معالجة دفع رقمي إضافية من المنصة.'
-                                  : '• All electronic transactions are processed through encrypted environments managed by certified gateway Paymob, complying with global Payment Card Industry Data Security Standards (PCI-DSS). We do not store CVV/PINs.\n• Full Transparency: Total breakdown is itemized before checkout with zero hidden fees.\n• Cash bookings cover regular venue rental without digital payment processing charges.',
+                                  ? '• تتم معالجة كافة المدفوعات الإلكترونية عبر بيئة مشفرة تديرها بوابة الدفع المعتمدة Paymob والممتثلة لمعايير أمان بطاقات الدفع العالمية (PCI-DSS). لا نقوم بحفظ أرقام البطاقات السرية أو رموز CVC.\n• الشفافية ومنع الرسوم الخفية: تُدفع جميع الحجوزات الجديدة أونلاين بالكامل (100%) في عملية واحدة مع إضافة عمولة المنصة (5%) ورسوم بوابة Paymob بوضوح في شاشة التأكيد قبل الدفع؛ ولا يتاح الدفع النقدي أو العربون للحجوزات الجديدة.'
+                                  : '• All electronic transactions are processed through encrypted environments managed by certified gateway Paymob, complying with global Payment Card Industry Data Security Standards (PCI-DSS). We do not store CVV/PINs.\n• Full Transparency: All new bookings are paid 100% online in a single transaction, with the 5% platform fee and Paymob gateway fees itemized clearly before checkout; cash and direct deposit bookings are retired for new bookings.',
                             ),
                             const SizedBox(height: 12),
                             _buildSectionCard(
@@ -202,8 +202,8 @@ class VSPTermsAndPrivacyModal {
                               icon: Iconsax.location_cross_copy,
                               title: isAr ? '٤. سياسة تتبع الحضور والغياب (No-Show)' : '4. Attendance & No-Show Policy',
                               content: isAr
-                                  ? '• تسجيل حالتي (2) غياب يؤدي إلى تقييد ميزة الحجز النقدي المباشر.\n• تسجيل 3 حالات غياب متكررة يؤدي إلى تعليق الحساب لحماية أوقات الملاعب واللاعبين الآخرين.\n• يمكن للاعب تقديم طعن جغرافي (GPS) لإثبات الحضور خلال 60 دقيقة من نهاية المباراة، بشرط التواجد ضمن نطاق 150 متراً من الملعب بدقة GPS تقل عن 50 متراً.'
-                                  : '• 2 recorded no-shows restrict cash booking privileges.\n• 3 recorded no-shows lead to account suspension.\n• Players can dispute a no-show via GPS within 60 minutes post-match if present within 150m of the stadium with GPS accuracy under 50m.',
+                                  ? '• التغيب عن الحجز المؤكد دون إلغاء رسمي مسبق يُسقط حق استرداد المبلغ المدفوع ويُعرض الحساب لقيود تصاعدية لحماية أوقات الملاعب.\n• تسجيل 3 حالات غياب متكررة يؤدي إلى تعليق الحساب لحماية أوقات الملاعب واللاعبين الآخرين.\n• يمكن للاعب تقديم طعن جغرافي (GPS) لإثبات الحضور خلال 60 دقيقة من نهاية المباراة، بشرط التواجد ضمن نطاق 150 متراً من الملعب بدقة GPS تقل عن 50 متراً.'
+                                  : '• Failing to attend a confirmed booking without prior cancellation forfeits the booking refund and triggers progressive account restrictions.\n• 3 recorded no-shows lead to account suspension to protect venues and other players.\n• Players can dispute a no-show via GPS within 60 minutes post-match if present within 150m of the stadium with GPS accuracy under 50m.',
                             ),
                             const SizedBox(height: 12),
                             _buildSectionCard(
@@ -290,10 +290,11 @@ class VSPTermsAndPrivacyModal {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.sm),
+                  border: Border.all(color: VSPColors.divider),
                 ),
-                child: Icon(icon, color: VSPColors.accent, size: 16),
+                child: Icon(icon, color: VSPColors.textSecondary, size: 16),
               ),
               const SizedBox(width: 10),
               Expanded(
