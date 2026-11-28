@@ -32,4 +32,9 @@ class AppEnv {
     const value = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
     return value.isNotEmpty ? value : _defaultGoogleIosClientId;
   }
+
+  static String get oauthRedirectScheme {
+    const value = String.fromEnvironment('OAUTH_REDIRECT_SCHEME', defaultValue: 'io.supabase.fluttervsp');
+    return value.isNotEmpty ? value : 'io.supabase.fluttervsp';
+  }
 }

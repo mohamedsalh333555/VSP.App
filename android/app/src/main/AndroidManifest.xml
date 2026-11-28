@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
-        android:label="VSP"
+        android:label="${appName}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true">
@@ -37,10 +37,10 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- Accepts URIs that begin with "io.supabase.fluttervsp://login-callback" -->
-                <data android:scheme="io.supabase.fluttervsp" android:host="login-callback" />
-                <!-- Accepts URIs that begin with "io.supabase.fluttervsp://reset-callback" -->
-                <data android:scheme="io.supabase.fluttervsp" android:host="reset-callback" />
+                <!-- Accepts URIs that begin with "${oauthScheme}://login-callback" -->
+                <data android:scheme="${oauthScheme}" android:host="login-callback" />
+                <!-- Accepts URIs that begin with "${oauthScheme}://reset-callback" -->
+                <data android:scheme="${oauthScheme}" android:host="reset-callback" />
             </intent-filter>
 
             <!-- DEEP LINKING (Android App Links for vspapp.online): Verified via assetlinks.json -->
@@ -56,7 +56,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="vspapp" />
+                <data android:scheme="${appScheme}" />
             </intent-filter>
         </activity>
 

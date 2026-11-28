@@ -61,8 +61,8 @@ class SocialAuthService {
       final String redirectUrl = kIsWeb
           ? '${Uri.base.origin}/'
           : (role != null
-                ? 'io.supabase.fluttervsp://login-callback/?role=$role'
-                : 'io.supabase.fluttervsp://login-callback/');
+                ? '${AppEnv.oauthRedirectScheme}://login-callback/?role=$role'
+                : '${AppEnv.oauthRedirectScheme}://login-callback/');
 
       final success = await _supabase.auth.signInWithOAuth(
         OAuthProvider.google,
@@ -84,8 +84,8 @@ class SocialAuthService {
       if (!kIsWeb) {
         try {
           final String redirectUrl = role != null
-              ? 'io.supabase.fluttervsp://login-callback/?role=$role'
-              : 'io.supabase.fluttervsp://login-callback/';
+              ? '${AppEnv.oauthRedirectScheme}://login-callback/?role=$role'
+              : '${AppEnv.oauthRedirectScheme}://login-callback/';
           final success = await _supabase.auth.signInWithOAuth(
             OAuthProvider.google,
             redirectTo: redirectUrl,
@@ -144,8 +144,8 @@ class SocialAuthService {
         final String redirectUrl = kIsWeb
             ? '${Uri.base.origin}/'
             : (role != null
-                  ? 'io.supabase.fluttervsp://login-callback/?role=$role'
-                  : 'io.supabase.fluttervsp://login-callback/');
+                  ? '${AppEnv.oauthRedirectScheme}://login-callback/?role=$role'
+                  : '${AppEnv.oauthRedirectScheme}://login-callback/');
 
         final success = await _supabase.auth.signInWithOAuth(
           OAuthProvider.apple,

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../config/app_env.dart';
 import 'auth/social_auth_service.dart';
 import 'logger_service.dart';
 import 'secure_storage_service.dart';
@@ -218,7 +219,7 @@ class AuthService {
     try {
       await _supabase.auth.resetPasswordForEmail(
         email.trim(),
-        redirectTo: kIsWeb ? null : 'io.supabase.fluttervsp://reset-callback/',
+        redirectTo: kIsWeb ? null : '${AppEnv.oauthRedirectScheme}://reset-callback/',
       );
       return true;
     } catch (e) {

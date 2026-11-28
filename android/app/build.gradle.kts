@@ -50,6 +50,24 @@ android {
         versionName = flutter.versionName
     }
 
+    flavorDimensions += "env"
+    productFlavors {
+        create("prod") {
+            dimension = "env"
+            manifestPlaceholders["appName"] = "VSP"
+            manifestPlaceholders["oauthScheme"] = "io.supabase.fluttervsp"
+            manifestPlaceholders["appScheme"] = "vspapp"
+        }
+        create("staging") {
+            dimension = "env"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            manifestPlaceholders["appName"] = "VSP Demo"
+            manifestPlaceholders["oauthScheme"] = "io.supabase.fluttervsp.staging"
+            manifestPlaceholders["appScheme"] = "vspapp.staging"
+        }
+    }
+
     buildTypes {
         debug {
             if (keystorePropertiesFile.exists()) {
