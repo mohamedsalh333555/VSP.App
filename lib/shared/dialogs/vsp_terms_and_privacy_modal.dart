@@ -5,7 +5,7 @@ import '../../core/ui/tokens/vsp_tokens.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/vsp_icon_badge.dart';
 
-/// Modal dialog displaying Terms of Service & Privacy Policy compliant with PDPL 2020.
+/// Modal dialog displaying Terms of Service & Privacy Policy.
 class VSPTermsAndPrivacyModal {
   static void show(BuildContext context, {bool isOwner = false}) {
     showDialog(
@@ -93,8 +93,8 @@ class VSPTermsAndPrivacyModal {
                                 Expanded(
                                   child: Text(
                                     isAr
-                                        ? 'مطابق لقوانين وحماية البيانات المصرية (PDPL 2020)'
-                                        : 'Compliant with Egyptian Data Protection Law (PDPL 2020)',
+                                        ? 'معلومات الشروط والخصوصية وحماية البيانات'
+                                        : 'Terms, privacy and data protection information',
                                     style: Theme.of(dialogContext).textTheme.bodySmall?.copyWith(
                                       color: VSPColors.accent,
                                       fontWeight: FontWeight.w600,
